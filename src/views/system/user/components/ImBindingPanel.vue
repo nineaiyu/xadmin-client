@@ -12,7 +12,7 @@ import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
 import { userApi } from "@/api/identity/user";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 
 /**
@@ -38,7 +38,7 @@ const loading = ref(false);
 
 async function load() {
   const res = await userApi.imBindingList(props.row.pk).catch(() => null);
-  if (res && res.code === SUCCESS_CODE) {
+  if (res && isSuccess(res)) {
     bindings.value = res.data ?? [];
   }
 }
@@ -53,7 +53,7 @@ async function save() {
     .imBinding(props.row.pk, { ...form.value })
     .catch(() => null);
   loading.value = false;
-  if (res?.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("imBinding.saved"), { type: "success" });
     form.value.subject = "";
     form.value.nickname = "";
@@ -66,7 +66,7 @@ async function save() {
 
 async function unbind(provider: string) {
   const res = await userApi.imUnbind(props.row.pk, provider).catch(() => null);
-  if (res?.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("imBinding.unbound"), { type: "success" });
     await load();
   } else {

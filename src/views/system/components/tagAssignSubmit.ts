@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { tagApi } from "@/api/system/tag";
 import { normalizeError } from "@/utils/apiError";
@@ -46,7 +46,7 @@ export async function submitTagBatchAssign({
   const res = (await tagApi
     .batchAssign({ resource, pks, tags, mode })
     .catch(normalizeError)) as BatchAssignResult;
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     const ok = res.success?.length ?? 0;
     const failed = res.failures?.length ?? 0;
     if (failed) {
@@ -75,7 +75,7 @@ export async function submitTagAssign({
   closeLoading
 }: TagAssignSubmitDeps & { pk: string }) {
   const res = await tagApi.assign({ resource, pk, tags }).catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("tag.assignDone"), { type: "success" });
     done();
     tableRef?.value?.handleGetData();

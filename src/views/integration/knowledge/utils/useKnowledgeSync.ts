@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { useI18n } from "vue-i18n";
 import { knowledgeApi, type KnowledgeSyncStatus } from "@/api/ai/knowledge";
 import { usePollTask } from "@/hooks/usePollTask";
@@ -59,7 +59,7 @@ export function useKnowledgeSync({
   const syncRepo = async () => {
     // 异常归一为可读失败结果：提交可能因仓库不可达等失败，需给出可读原因
     const res = await knowledgeApi.syncRepo().catch(normalizeError);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       // 已有同步在跑（1001，单飞锁）：提示进行中，不报错、不排队
       if (res.code === 1001) {
         message(t("aiKnowledge.syncAlreadyRunning"), { type: "info" });

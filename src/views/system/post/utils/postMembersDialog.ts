@@ -2,13 +2,18 @@ import { h, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { postApi, type PostItem } from "@/api/identity/post";
 import PostMembersDialog from "../components/PostMembersDialog.vue";
-import { normalizeError } from "@/utils/apiError";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
+
+/** 提交载荷（与 postApi.assign 的 data 契约一致） */
+type MembersPayload = {
+  add?: Array<number | string>;
+  remove?: Array<number | string>;
+};
 
 /**
  * 岗位成员分配弹窗（ReDialog + PostMembersDialog）：
@@ -27,6 +32,24 @@ export function openPostMembersDialog({
 }) {
   const membersRef = ref<InstanceType<typeof PostMembersDialog>>();
 
+  const { beforeSure } = useDialogForm<MembersPayload>({
+    formRef: membersRef,
+    submit: payload => postApi.assign(row.pk, payload),
+    // 成功文案动态：跳过明细非空时点名（失效/不存在用户的 pk 不阻断保存）
+    onSuccess: res => {
+      const skipped =
+        (res.data as { skipped?: string[] } | null)?.skipped?.length ?? 0;
+      if (skipped) {
+        message(t("post.memberSkipped", { count: skipped }), {
+          type: "warning"
+        });
+      } else {
+        message(t("post.memberSaveOk"), { type: "success" });
+      }
+      refresh();
+    }
+  });
+
   addDialog({
     title: `${t("post.members")}：${row.name}`,
     width: dialogSize("sm"),
@@ -36,35 +59,13 @@ export function openPostMembersDialog({
     sureBtnLoading: true,
     contentRenderer: () =>
       h(PostMembersDialog, { ref: membersRef, row, readonly }),
-    beforeSure: async (done, { closeLoading }) => {
+    beforeSure: (done, ctx) => {
       // 只读查看：直接关闭（不提交）
       if (readonly) {
         done();
         return;
       }
-      const payload = membersRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      const res = await postApi.assign(row.pk, payload).catch(normalizeError);
-      if (res.code === SUCCESS_CODE) {
-        // 跳过明细：失效/不存在用户的 pk 不阻断保存，但要点名（与 tags 批量打标同口径）
-        const skipped =
-          (res.data as { skipped?: string[] } | null)?.skipped?.length ?? 0;
-        if (skipped) {
-          message(t("post.memberSkipped", { count: skipped }), {
-            type: "warning"
-          });
-        } else {
-          message(t("post.memberSaveOk"), { type: "success" });
-        }
-        done();
-        refresh();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-      closeLoading();
+      return beforeSure(done, ctx);
     }
   });
 }

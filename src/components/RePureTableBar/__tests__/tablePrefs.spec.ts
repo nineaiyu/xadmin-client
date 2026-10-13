@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** 本地存储替身：响应式存储的读写语义（set 存串、getData 自动 JSON.parse） */
@@ -75,6 +77,27 @@ describe("RePureTableBar 表格偏好持久化", () => {
     expect(hoisted.setSiteConfig).toHaveBeenCalledWith({
       TablePrefs: { "system/user": { size: "large" } }
     });
+  });
+});
+
+/**
+ * 写入时机守护（静态）：列表页每次挂载都会改列并同步父组件，
+ * 若把持久化挂在变化 watcher 上，打开任意列表页都会 PATCH 一次站点配置
+ * （实测 5 页导航 4 次写入）——持久化必须只在用户交互路径触发。
+ */
+describe("RePureTableBar 偏好写入时机", () => {
+  const source = readFileSync(resolve(__dirname, "../src/bar.tsx"), "utf-8");
+
+  it("handleChange（元数据装配/首帧同步共用）不写远端", () => {
+    const start = source.indexOf("const handleChange = () => {");
+    expect(start).toBeGreaterThan(-1);
+    const body = source.slice(start, source.indexOf("};", start));
+    expect(body).not.toContain("save(");
+  });
+
+  it("持久化只经 persistPrefs 一处收口", () => {
+    const calls = source.match(/tablePrefs\.save\(/g) ?? [];
+    expect(calls.length).toBe(1);
   });
 });
 

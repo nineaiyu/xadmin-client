@@ -8,7 +8,7 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
 import HealthBanner from "./components/HealthBanner.vue";
@@ -152,7 +152,7 @@ const openThresholdDialog = () => {
         return;
       }
       const res = await saveThresholds(payload);
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(t("systemMonitor.thresholdSaved"), { type: "success" });
         // 先关弹窗再刷新（刷新慢时不滞留弹窗）
         done();

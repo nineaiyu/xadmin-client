@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
 import { useHistoryPagination } from "@/hooks/useHistoryPagination";
 
@@ -28,11 +28,14 @@ export function useChatHistory({
     scrollToBottom,
     // 首屏拉取用调用方传入的会话，上翻页用当前会话（切换会话后旧游标作废）
     fetchPage: async ({ beforeId, limit, initial }, room) => {
-      const { code, data } = await chatApi.history(
+      const res = await chatApi.history(
         initial ? { room, limit } : { room, before_id: beforeId, limit }
       );
-      if (code !== SUCCESS_CODE) return null;
-      return { results: data?.results ?? [], hasMore: !!data?.has_more };
+      if (!isSuccess(res)) return null;
+      return {
+        results: res.data?.results ?? [],
+        hasMore: !!res.data?.has_more
+      };
     },
     scopeForLoadMore: () => activeRoomId.value
   });

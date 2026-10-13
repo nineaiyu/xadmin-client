@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { isPasskeySupported } from "@/utils/webauthn";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -35,7 +35,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await passkeyApi.list({ page: 1, size: 50 });
-    if (res.code === SUCCESS_CODE) rows.value = res.data?.results ?? [];
+    if (isSuccess(res)) rows.value = res.data?.results ?? [];
   } catch (error: unknown) {
     message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
@@ -81,7 +81,7 @@ const remove = async (row: RecordType) => {
   if (!(await confirm(t("passkey.removeConfirm")))) return;
   // 异常归一为可读失败结果：删除失败（凭据已被移除等）需给出可读原因
   const res = await passkeyApi.destroy(row?.pk).catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("passkey.removeSuccess"), { type: "success" });
     await load();
   } else {

@@ -5,7 +5,7 @@ import {
   type ChatAttachment,
   type ChatAttachmentKind
 } from "@/api/chat";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { MessageAction } from "@/utils/websocket/protocol";
 import type { WS } from "@/utils/websocket";
@@ -48,7 +48,7 @@ export function useChatAttachments(deps: {
     let attachment: ChatAttachment | null = null;
     try {
       const res = await chatApi.uploadAttachment(file, kind);
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         attachment = res.data;
       } else {
         message(String(res.detail || t("chat.uploadFailed")), {

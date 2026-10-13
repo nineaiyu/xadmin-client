@@ -20,6 +20,12 @@
 
 /** 深色侧栏调色板（暗色外观下由 `:not(.dark)` 自动失效） */
 @mixin sidebar-dark-palette {
+  /* 侧栏容器底色由 `--sidebar`（= var(--pure-theme-menu-bg)）驱动，但它在 `:root`
+     已按浅色主题求值成字面量（白），后代覆盖 menu-bg **不会回填**——需在此作用域内
+     重新绑定，否则半暗侧栏下容器仍是白底，与调色板的浅色菜单文字相撞而不可见。
+     `--sidebar-deep`（双列一级窄列底色 = var(--sidebar)）同理，需一并重绑。 */
+  --sidebar: var(--pure-theme-menu-bg);
+  --sidebar-deep: var(--pure-theme-menu-bg);
   --pure-theme-menu-bg: #1d2b45;
   --pure-theme-sub-menu-bg: #14203a;
   --pure-theme-menu-hover: rgb(64 145 247 / 15%);
@@ -44,10 +50,16 @@ html.semi-dark-sidebar:not(.dark) {
 
 html.semi-dark-sidebar-sub:not(.dark) body[layout="sidebar-mixed-nav"],
 html.semi-dark-sidebar-sub:not(.dark) body[layout="header-mixed-nav"] {
-  .sidebar-container {
+  /* 只作用于次级列（`.sidebar-main`）：一级窄列维持浅色——与「半暗子侧栏」
+     的语义（深色只给第二列）一致；此前覆盖整个 .sidebar-container，连窄列
+     一起变深，与设置面板 tip 不符。 */
+  .sidebar-container .sidebar-main {
     --pure-theme-sidebar-logo: #17253f;
 
     @include sidebar-dark-palette;
+
+    /* 次级列自身铺底色：容器底色由 --sidebar 提供，此处只让第二列变深 */
+    background: var(--pure-theme-menu-bg);
   }
 
   .el-popper.pure-scrollbar {

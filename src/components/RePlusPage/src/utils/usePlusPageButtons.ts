@@ -7,6 +7,7 @@ import type { RePlusPageProps } from "./types";
 // 与 store/notice 的环，单测在模块求值期报 "Class extends value undefined"。
 import { buildDefaultToolbarButtons } from "./plusPageToolbarButtons";
 import { buildDefaultOperationButtons } from "./plusPageOperationButtons";
+import { useViewedRowBinding } from "./useViewedRowBinding";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -62,6 +63,13 @@ export function usePlusPageButtons({
   // 页面只要自有编辑弹窗、但要保留内联开关时，须用 hideEdit 而非关权限位
   const hideEdit = operationButtonsProps?.hideEdit === true;
 
+  // 表格已读行（默认关）：操作命中后标记行已读（行类 is-viewed）
+  const {
+    rowClassName: viewedRowClassName,
+    onRowAction,
+    wrapButtons
+  } = useViewedRowBinding(props);
+
   const defaultOperationButtons = shallowRef(
     buildDefaultOperationButtons({
       t,
@@ -73,14 +81,15 @@ export function usePlusPageButtons({
       hasDetailFetch: Boolean(props.detailRowFetch),
       handleAddOrEdit,
       handleDelete,
-      handleDetail
+      handleDetail,
+      onRowAction
     })
   );
 
   const operationButtons = computed(() => {
     return [
       ...defaultOperationButtons.value,
-      ...(operationButtonsProps?.buttons ?? [])
+      ...wrapButtons(operationButtonsProps?.buttons ?? [])
     ];
   });
 
@@ -106,5 +115,5 @@ export function usePlusPageButtons({
     ];
   });
 
-  return { operationButtons, tableBarButtons };
+  return { operationButtons, tableBarButtons, viewedRowClassName };
 }

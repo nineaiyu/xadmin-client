@@ -1,6 +1,6 @@
 import type { Reactive, Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type { menuApi } from "@/api/system/menu";
 import { flattenMenuTree } from "./normalize";
@@ -101,7 +101,7 @@ export function useMenuOrder({
       const res = await api.partialUpdate(node.pk as number, {
         parent: nextParent ?? null
       });
-      if (res.code !== SUCCESS_CODE) {
+      if (!isSuccess(res)) {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         reload();
         return;

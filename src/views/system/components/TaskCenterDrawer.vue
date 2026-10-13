@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -106,7 +106,7 @@ async function loadSection(
   }
   try {
     const res = await request();
-    const rows = res.code === SUCCESS_CODE ? toRows(res) : [];
+    const rows = isSuccess(res) ? toRows(res) : [];
     target.value = (filter ? rows.filter(filter) : rows).slice(0, SECTION_SIZE);
   } catch {
     target.value = [];

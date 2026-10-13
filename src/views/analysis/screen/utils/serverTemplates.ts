@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   listScreenTemplateVersions,
   rollbackScreenTemplate,
@@ -42,7 +42,7 @@ export async function fetchTemplateVersions(
   pk: string
 ): Promise<ScreenTemplateVersionItem[]> {
   const res = await listScreenTemplateVersions(pk).catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE) return [];
+  if (!res || !isSuccess(res)) return [];
   return res.data ?? [];
 }
 
@@ -52,7 +52,7 @@ export async function rollbackTemplate(
   version: number
 ): Promise<ScreenTemplateItem | null> {
   const res = await rollbackScreenTemplate(pk, version).catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE) return null;
+  if (!res || !isSuccess(res)) return null;
   return res.data as ScreenTemplateItem;
 }
 
@@ -64,7 +64,7 @@ export async function fetchCloudClipboard(): Promise<{
   const res = await screenClipboardApi
     .list({ page: 1, size: 1 })
     .catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE) return null;
+  if (!res || !isSuccess(res)) return null;
   const rows = ((res.data as { results?: unknown[] })?.results ?? []) as {
     pk: string;
     free_layout: Partial<ScreenFreeLayout>;
@@ -81,19 +81,19 @@ export async function saveCloudClipboard(payload: {
   const res = await screenClipboardApi
     .create({ free_layout: payload })
     .catch(() => null);
-  return Boolean(res && res.code === SUCCESS_CODE);
+  return Boolean(res && isSuccess(res));
 }
 
 /** 云端剪贴板：清空本人槽位 */
 export async function clearCloudClipboard(pk: string): Promise<boolean> {
   const res = await screenClipboardApi.destroy(pk).catch(() => null);
-  return Boolean(res && res.code === SUCCESS_CODE);
+  return Boolean(res && isSuccess(res));
 }
 
 /** 拉取当前用户可见的团队模板（失败返回空数组，调用方按「不可用」降级） */
 export async function fetchServerTemplates(): Promise<FreeTemplate[]> {
   const res = await screenTemplateApi.list({ size: 100 }).catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE) return [];
+  if (!res || !isSuccess(res)) return [];
   const rows = (res.data?.results ?? []) as ScreenTemplateItem[];
   return rows.map(toFreeTemplate);
 }
@@ -118,7 +118,7 @@ export async function saveServerTemplate(payload: {
       }
     })
     .catch(() => null);
-  return Boolean(res && res.code === SUCCESS_CODE);
+  return Boolean(res && isSuccess(res));
 }
 
 /** 重命名团队模板（仅创建者可改，服务端 1003 拒绝时返回 false） */
@@ -129,11 +129,11 @@ export async function renameServerTemplate(
   const res = await screenTemplateApi
     .partialUpdate(pk, { name })
     .catch(() => null);
-  return Boolean(res && res.code === SUCCESS_CODE);
+  return Boolean(res && isSuccess(res));
 }
 
 /** 删除团队模板（仅创建者可删） */
 export async function removeServerTemplate(pk: string): Promise<boolean> {
   const res = await screenTemplateApi.destroy(pk).catch(() => null);
-  return Boolean(res && res.code === SUCCESS_CODE);
+  return Boolean(res && isSuccess(res));
 }

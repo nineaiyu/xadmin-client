@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
-import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
-import { responsiveStorageNameSpace } from "@/config";
-import { isAllEmpty, storageLocal, useGlobal } from "@pureadmin/utils";
+import { isAllEmpty, useGlobal } from "@pureadmin/utils";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
 import { useSidebarResize } from "@/layout/hooks/useSidebarResize";
@@ -13,18 +11,13 @@ import {
   useMenuScrollActive,
   type ScrollbarExpose
 } from "@/layout/hooks/useMenuScrollActive";
-import { useHoverToggle } from "@/hooks/useHoverToggle";
+import { useSidebarHoverExpand } from "@/layout/hooks/useSidebarHoverExpand";
+import { useSidebarPinned } from "@/layout/hooks/useSidebarPinned";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
 import { hasNavbarLogo, isTwoColumnSidebar } from "@/layout/hooks/layoutModes";
+import { resolveBrandVisible } from "@/layout/hooks/logoPreferences";
 import { useSidebarNarrow } from "@/layout/hooks/useSidebarNarrow";
-import {
-  computed,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch
-} from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollapse.vue";
@@ -36,11 +29,6 @@ const route = useRoute();
 const isShow = ref(false);
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
-const showLogo = ref(
-  storageLocal().getItem<StorageConfigs>(
-    `${responsiveStorageNameSpace()}configure`
-  )?.showLogo ?? true
-);
 
 /** 侧栏手风琴：同级菜单只展开一项（默认开，等同项目历史行为） */
 const sidebarAccordion = computed(
@@ -52,23 +40,6 @@ const sidebarCollapseButton = computed(
   () => $storage?.configure?.sidebarCollapseButton ?? true
 );
 
-/**
- * 侧栏「钉住」按钮（设置面板 →「钉住按钮」，默认关）：
- * 钉住 = 侧栏常驻展开（关掉悬停展开），取消钉住 = 收起重回悬停展开形态。
- */
-const sidebarFixedButton = computed(
-  () => $storage?.configure?.sidebarFixedButton ?? false
-);
-const pinnedExpanded = computed(
-  () => !($storage?.configure?.sidebarExpandOnHover ?? true)
-);
-
-function toggleFixedExpand() {
-  const nextPinned = !pinnedExpanded.value;
-  storageConfigureChange("sidebarExpandOnHover", !nextPinned);
-  pureApp.toggleSideBar(nextPinned, "resize");
-}
-
 const {
   t,
   device,
@@ -79,48 +50,18 @@ const {
   toggleSideBar
 } = useNav();
 
-/**
- * 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」，默认开）：
- * 鼠标进入侧栏时视觉层展开、离开即复位；仅 hover 期间生效，不写回存储。
- *
- * 延迟取 0（不启用 leaveDelay 防闪断）：本场景「移开即收起」是既有行为，
- * 且展开态还受 `hoverExpandEnabled` 门控——若离开后快速返回仍在防闪断窗口内，
- * hover 布尔不产生变化沿，会漏掉期间的门控变化。
- */
+/** 侧栏「钉住」按钮（设置面板 →「钉住按钮」，默认关；实现见 hooks/useSidebarPinned） */
+const { sidebarFixedButton, pinnedExpanded, toggleFixedExpand } =
+  useSidebarPinned({
+    expandOnHover: () => $storage?.configure?.sidebarExpandOnHover ?? true,
+    fixedButton: () => $storage?.configure?.sidebarFixedButton ?? false,
+    saveExpandOnHover: value =>
+      storageConfigureChange("sidebarExpandOnHover", value),
+    toggleSideBar: (value, mode) => pureApp.toggleSideBar(value, mode)
+  });
+
+/** 侧栏根节点（折叠态悬停展开的检测锚点，模板 ref） */
 const sidebarRootRef = ref<HTMLElement>();
-const [sidebarHovered] = useHoverToggle(sidebarRootRef, 0);
-const hoverExpanded = ref(false);
-const hoverExpandEnabled = computed(
-  () =>
-    ($storage?.configure?.sidebarExpandOnHover ?? true) &&
-    isCollapse.value &&
-    device.value !== "mobile"
-);
-
-/** 菜单折叠态：悬停临时展开期间不折叠 */
-const menuCollapse = computed(() => isCollapse.value && !hoverExpanded.value);
-
-/** 折叠态显示菜单标题（设置面板 →「折叠态显示标题」，仅单列整树侧栏） */
-const collapseShowTitle = computed(
-  () =>
-    !submenuSidebar.value &&
-    menuCollapse.value &&
-    ($storage?.configure?.sidebarCollapsedShowTitle ?? false)
-);
-
-/** 悬停进入 / 离开：驱动折叠按钮显隐与临时展开 */
-watch(sidebarHovered, inside => {
-  isShow.value = inside;
-  hoverExpanded.value = inside && hoverExpandEnabled.value;
-});
-
-// 主动折叠 / 展开切换、或开关关闭时复位悬停态，避免残留
-watch(isCollapse, () => {
-  hoverExpanded.value = false;
-});
-watch(hoverExpandEnabled, enabled => {
-  if (!enabled) hoverExpanded.value = false;
-});
 
 /** 拖拽调宽：实现见 hooks/useSidebarResize（越界态视觉反馈 + 松开才落库） */
 const {
@@ -145,17 +86,36 @@ const { sidebarMode, splitActive, splitMenus } = useSplitSidebar(defaultActive);
 const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
 
 /**
- * 侧栏品牌区可见性：Logo 归顶栏的布局（混合 / 侧边导航）不在侧栏重复渲染，
+ * 侧栏品牌位可见性：Logo 归顶栏的布局（混合 / 侧边导航）不在侧栏重复渲染，
  * 顶栏被配置隐藏（顶栏整块不渲染）时回落侧栏，避免品牌位整体消失。
+ * 品牌内容显隐（图片 / 标题两个正交开关）由 resolveBrandVisible 统一判定，
+ * 同时决定 `has-logo` / `no-logo`（菜单滚动区高度）。
  */
 const sidebarLogoVisible = computed(
   () =>
-    showLogo.value &&
+    resolveBrandVisible($storage?.configure) &&
     (!hasNavbarLogo(sidebarMode.value) ||
       ($storage?.configure?.headerHidden ?? false))
 );
 /** 侧栏只显示「当前一级路由的子菜单」（一级导航在顶栏 / 窄列；受「导航切割」控制） */
 const submenuSidebar = splitActive;
+
+/** 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」，默认开；实现见 hooks/useSidebarHoverExpand） */
+const { sidebarHovered, hoverExpanded, menuCollapse, collapseShowTitle } =
+  useSidebarHoverExpand({
+    rootRef: sidebarRootRef,
+    collapsed: isCollapse,
+    device,
+    expandOnHover: () => $storage?.configure?.sidebarExpandOnHover ?? true,
+    submenuSidebar,
+    collapsedShowTitle: () =>
+      $storage?.configure?.sidebarCollapsedShowTitle ?? false
+  });
+
+/** 悬停进入 / 离开：驱动折叠按钮显隐 */
+watch(sidebarHovered, inside => {
+  isShow.value = inside;
+});
 
 /** 菜单数据装配（整树 / 二级列 + 一级高亮），实现见 hooks/useSidebarMenu */
 const { menuData, loading, topLevelActive } = useSidebarMenu(
@@ -173,7 +133,6 @@ const { scrollToActive } = useMenuScrollActive(mainScrollbarRef, [
 
 /** 双列窄列的数据与交互（窄列菜单装配 + 混合双列的悬停联动），实现见 hooks/useSidebarNarrow */
 const {
-  narrowSubmenuMode,
   narrowMenuData,
   extraVisible,
   narrowActive,
@@ -213,15 +172,6 @@ function handleMenuOpen() {
 
 onMounted(() => {
   scrollToActive();
-
-  emitter.on("logoChange", key => {
-    showLogo.value = key;
-  });
-});
-
-onBeforeUnmount(() => {
-  // 解绑`logoChange`公共事件，防止多次触发
-  emitter.off("logoChange");
 });
 </script>
 
@@ -234,7 +184,7 @@ onBeforeUnmount(() => {
       sidebarLogoVisible ? 'has-logo' : 'no-logo',
       {
         'is-two-column': twoColumn,
-        'is-narrow-only': narrowSubmenuMode && !extraVisible,
+        'is-narrow-only': twoColumn && !extraVisible,
         'sidebar-hover-expanded': hoverExpanded,
         'is-resizing': resizing,
         'is-resize-out': resizeOutOfRange
@@ -242,13 +192,14 @@ onBeforeUnmount(() => {
     ]"
     @mouseleave="handleNarrowMouseLeave"
   >
-    <!-- 双列侧栏的一级窄列：Logo（图标形态）+ 一级图标菜单；二级内容在右侧主列 -->
+    <!-- 双列侧栏的一级窄列：Logo（图标 + 站点标题的紧凑形态，居中）+ 一级图标菜单；
+         二级内容在右侧主列 -->
     <div v-if="twoColumn" class="sidebar-mixed-narrow">
       <LaySidebarLogo
         v-if="sidebarLogoVisible"
         class="sidebar-mixed-narrow__logo"
         collapse
-        hide-title
+        compact
       />
       <el-scrollbar class="sidebar-mixed-narrow__scroll">
         <el-menu
@@ -279,9 +230,10 @@ onBeforeUnmount(() => {
         </el-menu>
       </el-scrollbar>
     </div>
-    <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列（混合双列的次级菜单无内容时不渲染，
+    <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列（次级菜单无内容时不渲染——
+         混合双列是窄列项没有子级，双列菜单是当前一级为叶子菜单（如「关于」）——
          侧栏收为窄列宽度，与 vben 的 extra 隐藏同口径） -->
-    <div v-if="!narrowSubmenuMode || extraVisible" class="sidebar-main">
+    <div v-if="!twoColumn || extraVisible" class="sidebar-main">
       <LaySidebarLogo
         v-if="sidebarLogoVisible && !twoColumn"
         :collapse="menuCollapse"
@@ -466,11 +418,9 @@ onBeforeUnmount(() => {
 .sidebar-mixed-narrow__logo {
   flex: none;
 
-  /* 窄列容不下标题文字：标题经 hideTitle 由 Logo 组件自身不渲染（整图形态亦按整图定高居中） */
-  :deep(.sidebar-logo-link) {
-    justify-content: center;
-    padding-left: 0;
-  }
+  /* 紧凑形态（图标缩小 + 标题同排居中）由 Logo 组件的 compact 模式实现——样式落在
+     SidebarLogo 内部（同 scope），此处不再跨组件覆盖（scoped :deep 与子组件
+     同特异性时受样式加载顺序影响，曾导致居中失效、图标偏左） */
 }
 
 /* 一级窄列菜单本体（项形态见 style/sidebar/_sidebar-narrow.scss：竖排、实心激活块） */

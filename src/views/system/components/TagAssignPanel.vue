@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { tagApi, type TagItem } from "@/api/system/tag";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
@@ -49,7 +49,7 @@ const load = async () => {
   try {
     // 全量拉取（逐页循环），固定 size 会在标签超过接口分页上限时静默截断
     const list = await fetchAllRows<TagItem>(tagApi.list);
-    if (list.code === SUCCESS_CODE) {
+    if (isSuccess(list)) {
       tags.value = (list.data as { results?: TagItem[] })?.results ?? [];
     } else {
       // 业务失败（HTTP 200 但 code 非 1000）拦截器不提示，需显式给出失败原因
@@ -57,7 +57,7 @@ const load = async () => {
     }
     if (props.pk) {
       const current = await tagApi.getObjectTags(props.resource, props.pk);
-      if (current.code === SUCCESS_CODE) {
+      if (isSuccess(current)) {
         selected.value = (current.data?.tags ?? []).map(item => item.pk);
       }
     }
@@ -82,7 +82,7 @@ const createTag = async () => {
       detail?: string;
       data?: TagItem;
     };
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       message(String(res.detail || t("results.failed")), { type: "warning" });
       return;
     }

@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { systemUploadFileApi } from "@/api/file/file";
 import { getDictItems } from "@/utils/dict";
 import type { PageColumn } from "@/components/RePlusPage";
@@ -20,7 +20,7 @@ export function useFileQuotaStats({ hasListAuth }: { hasListAuth: boolean }) {
     systemUploadFileApi
       .stats(fresh ? { no_cache: "1" } : undefined)
       .then(res => {
-        if (res.code === SUCCESS_CODE) stats.value = res.data as FileStats;
+        if (isSuccess(res)) stats.value = res.data as FileStats;
       });
   };
   onMounted(loadStats);

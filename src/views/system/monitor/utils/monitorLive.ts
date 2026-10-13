@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { isOutboundMessage, MessageAction } from "@/utils/websocket/protocol";
 import { WS } from "@/utils/websocket";
 import { applyMonitorWsFrame } from "./monitorState";
@@ -56,7 +56,7 @@ export function createMonitorLive({
     ws.onMessage((res: unknown) => {
       if (!isOutboundMessage<MonitorPushPayload>(res, MessageAction.MONITOR))
         return;
-      if (res.code !== SUCCESS_CODE || !res.data) return;
+      if (!isSuccess(res) || !res.data) return;
       applyMonitorWsFrame(state, res.data);
     });
   };

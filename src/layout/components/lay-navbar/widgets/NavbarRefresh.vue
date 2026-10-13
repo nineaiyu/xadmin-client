@@ -20,7 +20,7 @@ function refreshPage() {
 <template>
   <span
     id="header-refresh"
-    class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+    class="navbar-action navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
     role="button"
     tabindex="0"
     :title="t('layout.refreshPage')"

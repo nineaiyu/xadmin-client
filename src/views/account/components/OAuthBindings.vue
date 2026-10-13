@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -51,8 +51,7 @@ const load = () => {
   oauthApi
     .bindings()
     .then(res => {
-      if (res.code === SUCCESS_CODE)
-        rows.value = (res.data ?? []) as BindingRow[];
+      if (isSuccess(res)) rows.value = (res.data ?? []) as BindingRow[];
     })
     .catch(() => undefined)
     .finally(() => {
@@ -65,7 +64,7 @@ const loadProviders = () => {
   oauthApi
     .providers()
     .then(res => {
-      if (res.code === SUCCESS_CODE)
+      if (isSuccess(res))
         providers.value = (res.data?.providers ?? []) as OAuthProvider[];
     })
     .catch(() => undefined)
@@ -85,7 +84,7 @@ const unbind = (row: BindingRow) => {
   })
     .then(({ value }) => oauthApi.unbind(row.pk, String(value)))
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(t("oauth.unbindSuccess"), { type: "success" });
         load();
       } else if (res.detail) {
@@ -101,7 +100,7 @@ const bind = (provider: OAuthProvider) => {
   oauthApi
     .bindAuthorize(provider.key)
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data?.url) {
+      if (isSuccess(res) && res.data?.url) {
         // 标记绑定意图（时间戳）：失败分支（后端错误响应/IdP error 回跳都不回传意图）
         // 的出口按钮只能靠它区分「返回账户设置」；成功跳转以后端载荷为准，不读它
         sessionStorage.setItem(OAUTH_BIND_FLAG, String(Date.now()));

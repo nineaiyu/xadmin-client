@@ -11,7 +11,7 @@ import { useI18n } from "vue-i18n";
 import { MagicStick, Download } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { downloadByData } from "@pureadmin/utils";
 import { systemCodeGenApi } from "@/api/system/codegen";
 import type {
@@ -96,7 +96,7 @@ async function loadModels() {
   try {
     // http 层失败已统一提示，归一为 null：模型下拉保持空态
     const res = await systemCodeGenApi.models().catch(() => null);
-    if (res?.code === SUCCESS_CODE) models.value = res.data ?? [];
+    if (res && isSuccess(res)) models.value = res.data ?? [];
   } finally {
     modelsLoading.value = false;
   }
@@ -115,7 +115,7 @@ async function loadPlan(label: string) {
   try {
     // http 层失败已统一提示，归一为 null：计划区保持空态
     const res = await systemCodeGenApi.modelFields(label).catch(() => null);
-    if (res?.code !== SUCCESS_CODE || !res.data) return;
+    if (!res || !isSuccess(res) || !res.data) return;
     planData.value = res.data;
     if (pendingPlanState.value) {
       // 载入保存方案：命名与字段配置以方案为准（仅保留当前模型仍存在的字段）
@@ -147,7 +147,7 @@ async function runPreview() {
     const res = await systemCodeGenApi
       .preview(buildSinglePayload())
       .catch(() => null);
-    if (res?.code !== SUCCESS_CODE) return;
+    if (!res || !isSuccess(res)) return;
     artifacts.value = res.data ?? [];
   } finally {
     previewLoading.value = false;

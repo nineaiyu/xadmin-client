@@ -17,7 +17,7 @@ function toggleTheme() {
 <template>
   <span
     id="header-theme-toggle"
-    class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+    class="navbar-action navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
     role="button"
     tabindex="0"
     :title="dataTheme ? t('layout.light') : t('layout.dark')"

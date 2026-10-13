@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { usePageLoading } from "@/hooks/usePageLoading";
 import {
   postApi,
@@ -38,7 +38,7 @@ async function loadMembers() {
   await runWithLoading(async () => {
     try {
       const res = await postApi.members(props.row.pk);
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         members.value = res.data?.members ?? [];
       } else if (res.detail) {
         message(String(res.detail), { type: "warning" });
@@ -53,9 +53,7 @@ async function loadMembers() {
 /** 远程搜索候选（≤20 条；无关键字时服务端返回空列表，需要输入才会出候选） */
 async function searchUsers(keyword: string) {
   const res = await postApi.userOptions(keyword ?? "");
-  return res.code === SUCCESS_CODE
-    ? ((res.data ?? []) as PostUserOption[])
-    : [];
+  return isSuccess(res) ? ((res.data ?? []) as PostUserOption[]) : [];
 }
 
 const getPayload = (): Record<string, unknown> | null =>

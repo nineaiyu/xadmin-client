@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -190,7 +190,7 @@ const saveLayout = async () => {
     current.value.pk,
     { layout: draftLayout.value }
   );
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("dashboard.saveOk"), { type: "success" });
     const index = dashboards.value.findIndex(
       item => item.pk === current.value?.pk
@@ -246,7 +246,7 @@ const removeDashboard = async () => {
   const res = await dashboardApi
     .destroy(current.value.pk)
     .catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     current.value = null;
     await loadDashboards();
     syncDashboardQuery();

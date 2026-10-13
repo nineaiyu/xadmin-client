@@ -5,7 +5,7 @@ import {
 } from "@/api/system/config/system";
 import { onMounted, reactive, ref, type Ref } from "vue";
 import type { PageColumn, RePlusPageProps } from "@/components/RePlusPage";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { useConfigPage } from "../../useConfigPage";
 import { createConfigKeyRenderField } from "./configKeyHints";
 
@@ -33,7 +33,7 @@ export function useSystemConfig(tableRef: Ref) {
     systemConfigApi
       .registeredKeys()
       .then(res => {
-        if (res.code === SUCCESS_CODE && Array.isArray(res.data?.keys)) {
+        if (isSuccess(res) && Array.isArray(res.data?.keys)) {
           registeredKeys.value = res.data.keys;
         }
       })

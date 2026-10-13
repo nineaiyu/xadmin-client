@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { isArray } from "@pureadmin/utils";
 import { handleOperation, openDialogDrawer } from "./handle";
 import { applyServerErrors } from "./serverErrors";
@@ -50,7 +50,7 @@ export function createAddOrEditAction({
     try {
       const res = await detail(pk, { mask: "false" });
       if (
-        res?.code === SUCCESS_CODE &&
+        isSuccess(res) &&
         res.data &&
         typeof res.data === "object" &&
         !isArray(res.data)

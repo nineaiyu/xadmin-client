@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { roleApi } from "@/api/identity/role";
 import {
@@ -46,7 +46,7 @@ const roleOptions = ref<{ pk: string; name: string; code: string }[]>([]);
 onMounted(async () => {
   try {
     const res = await fetchAllRows(roleApi.list);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       roleOptions.value = listRows<{ pk: string; name: string; code: string }>(
         res as never
       );

@@ -1,6 +1,7 @@
 import { onMounted, ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
+import { filterByKeyword } from "@/utils/keywordFilter";
 
 /** 用户候选项（值=用户名；label 形如「昵称(用户名)」） */
 export type AssigneeCandidateUser = { username: string; label: string };
@@ -37,14 +38,10 @@ export function useAssigneeCandidates() {
   function searchUsers(query: string) {
     userLoading.value = true;
     try {
-      const keyword = query.trim().toLowerCase();
-      const matched = keyword
-        ? allUsers.value.filter(
-            item =>
-              item.username.toLowerCase().includes(keyword) ||
-              item.label.toLowerCase().includes(keyword)
-          )
-        : allUsers.value;
+      const matched = filterByKeyword(allUsers.value, query, item => [
+        item.username,
+        item.label
+      ]);
       const matchedNames = new Set(matched.map(item => item.username));
       userOptions.value = [
         ...matched,
@@ -57,7 +54,7 @@ export function useAssigneeCandidates() {
 
   onMounted(async () => {
     const res = await approvalRuleApi.candidateOptions().catch(() => null);
-    if (!(res && res.code === SUCCESS_CODE && res.data)) return;
+    if (!(res && isSuccess(res) && res.data)) return;
     const data = res.data as {
       users?: Array<{ username: string; nickname?: string }>;
       roles?: Array<{ code: string; name: string }>;

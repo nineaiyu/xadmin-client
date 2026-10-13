@@ -2,8 +2,8 @@
 import { h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
-import { SUCCESS_CODE } from "@/api/types";
 import { directoryApi, type DirectoryMember } from "@/api/identity/directory";
+import { usePagedList } from "@/hooks/usePagedList";
 import { message } from "@/utils/message";
 import { addDrawer } from "@/components/ReDrawer";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -33,45 +33,34 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const keyword = ref("");
-const members = ref<DirectoryMember[]>([]);
-const total = ref(0);
-const page = ref(1);
-const size = ref(20);
-const loading = ref(false);
 const viewMode = ref<"card" | "list">("card");
 
-async function fetchData(resetPage = false) {
-  if (resetPage) page.value = 1;
-  loading.value = true;
-  try {
-    const res = await directoryApi.list({
-      page: page.value,
-      size: size.value,
+// 成员名录分页（异常归一与信封判定见 usePagedList；失败点名提示，用户可区分
+// 「无人」与「加载失败」）
+const {
+  loading,
+  page,
+  size,
+  total,
+  rows: members,
+  load: fetchData
+} = usePagedList<DirectoryMember>({
+  pageSize: 20,
+  fetch: params =>
+    directoryApi.list({
+      ...params,
       dept: props.mode === "dept" ? props.dept : "",
       posts: props.mode === "post" && props.post ? props.post : "",
       keyword: keyword.value.trim(),
       ordering: "username"
-    });
-    if (res.code === SUCCESS_CODE && res.data) {
-      const body = res.data as { results?: DirectoryMember[]; total?: number };
-      members.value = body.results ?? [];
-      total.value = body.total ?? 0;
-    } else {
-      message(String(res.detail || t("directory.membersLoadFailed")), {
-        type: "warning"
-      });
-    }
-  } catch (error) {
-    // 失败点名（此前静默吞错：用户只见空列表，无从判断是无人还是加载失败）
-    message(
-      (error as { detail?: string })?.detail ||
-        t("directory.membersLoadFailed"),
-      { type: "warning" }
-    );
-  } finally {
-    loading.value = false;
-  }
-}
+    }),
+  pickRows: res =>
+    (res.data as { results?: DirectoryMember[] } | null)?.results ?? [],
+  onFail: res =>
+    message(String(res.detail || t("directory.membersLoadFailed")), {
+      type: "warning"
+    })
+});
 
 onMounted(() => fetchData());
 

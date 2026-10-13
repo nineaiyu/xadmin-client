@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -49,7 +49,7 @@ export function useFormMySubmissions() {
   /** 可填报表单（启用中）：填报卡片数据源 */
   const loadForms = async () => {
     const res = await submissionApi.availableForms().catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       forms.value = (res.data ?? []) as FillableFormItem[];
     }
   };

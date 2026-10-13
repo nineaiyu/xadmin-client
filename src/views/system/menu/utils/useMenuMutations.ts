@@ -8,7 +8,7 @@
  */
 
 import type { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { toPayload } from "./normalize";
 import { displayTitle } from "./useMenuFilter";
@@ -39,7 +39,7 @@ export function useMenuMutations({
     const res = isAdd
       ? await api.create(payload)
       : await api.partialUpdate(model.pk as number, payload);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       upsertRow(res.data);
     }
     return res;
@@ -50,7 +50,7 @@ export function useMenuMutations({
     const res = await api.partialUpdate(row.pk as number, {
       meta: { title }
     });
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       upsertRow(res.data);
     }
     return res;
@@ -65,7 +65,7 @@ export function useMenuMutations({
       const res = await api.partialUpdate(row.pk as number, {
         is_active: value
       });
-      if (res.code !== SUCCESS_CODE) {
+      if (!isSuccess(res)) {
         patchRows(new Map([[String(row.pk), { is_active: previous }]]));
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         return false;
@@ -99,7 +99,7 @@ export function useMenuMutations({
   /** 提交排序：前序 pk 列表（后端单条 SQL 落库 rank） */
   const submitRank = async (pks: Array<number | string>) => {
     const res = await api.rank(pks);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       message(res.detail, { type: "error" });
       return false;
     }

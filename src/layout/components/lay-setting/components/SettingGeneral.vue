@@ -3,6 +3,7 @@
 // 页面（动态标题）、偏好入口与「检查更新」；快捷键见 SettingShortcut.vue，
 // 切换动画见 SettingAnimation.vue
 import { computed, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { useGlobal } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import { checkRemoteVersion } from "@/utils/versionCheck";
@@ -26,7 +27,8 @@ import SettingLine from "~icons/ri/settings-3-line";
 import InfoLine from "~icons/ri/information-line";
 import RefreshLine from "~icons/ri/refresh-line";
 
-const { t } = useNav();
+const { t, changeTitle } = useNav();
+const router = useRouter();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
 const confirm = useConfirm();
@@ -37,10 +39,18 @@ const {
 } = __APP_INFO__;
 
 const settings = reactive({
+  title: $storage.configure.title ?? "",
   headerAutoHide: $storage.configure.headerAutoHide ?? false,
   compactMode: $storage.configure.compactMode ?? false,
   dynamicTitle: $storage.configure.dynamicTitle ?? true
 });
+
+/** 站点标题：品牌区随响应式 title 自动更新；标签页标题只在路由切换时重算，
+ *  这里主动刷新一次。留空提交时回落 platform-config 的 Title（见 utils/preferences）。 */
+const titleChange = () => {
+  storageConfigureChange("title", settings.title.trim());
+  changeTitle(router.currentRoute.value.meta);
+};
 
 /** 固定顶栏：非固定头布局下没有可隐藏的固定头部，自动隐藏开关须禁用 */
 const headerFixed = computed(() => $storage?.configure?.headerFixed ?? true);
@@ -183,6 +193,18 @@ async function checkUpdate() {
 
 <template>
   <PrefBlock :title="t('layout.general')" :icon="SettingLine" list flush>
+    <PrefRow :label="t('layout.siteTitle')" :tip="t('layout.siteTitleTip')">
+      <template #control>
+        <el-input
+          v-model="settings.title"
+          size="small"
+          class="w-36"
+          maxlength="24"
+          :placeholder="t('layout.siteTitlePlaceholder')"
+          @change="titleChange"
+        />
+      </template>
+    </PrefRow>
     <PrefRow :label="t('layout.language')" :tip="t('layout.languageTip')">
       <template #control>
         <el-select v-model="language" size="small" style="width: 132px">

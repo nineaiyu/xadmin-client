@@ -1,8 +1,5 @@
-import {
-  formatPublicLabels,
-  uniqueArrayObj,
-  type OperationButtonsRow
-} from "@/components/RePlusPage";
+import { formatPublicLabels, uniqueArrayObj } from "./index";
+import type { OperationButtonsRow } from "../components/ButtonOperation";
 import { renderSwitch } from "./handle";
 import { OPERATION_COLUMN_KEY, SELECTION_COLUMN_KEY } from "./constants";
 import type { Ref } from "vue";

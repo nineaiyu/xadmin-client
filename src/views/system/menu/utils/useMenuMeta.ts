@@ -7,7 +7,7 @@
 import { ref, type Reactive } from "vue";
 import { isEmpty, isNullOrUnDef } from "@pureadmin/utils";
 import type { RecordType } from "plus-pro-components";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { formatFiledAppParent } from "@/views/system/hooks";
@@ -32,13 +32,13 @@ export function useMenuMeta({ api }: { api: Reactive<typeof menuApi> }) {
   const getMenuApiList = (auth: MenuAuths) => {
     if (auth.apiUrl) {
       api.apiUrl().then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           menuUrlList.value = res.data as MenuUrlItem[];
         }
       });
     }
     api.choices().then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         choicesDict.value = res.choices_dict as Record<
           string,
           MenuChoiceItem[]
@@ -53,7 +53,7 @@ export function useMenuMeta({ api }: { api: Reactive<typeof menuApi> }) {
       parent: 0,
       field_type: FieldChoices.ROLE
     }).then(res => {
-      if (res.code !== SUCCESS_CODE) return;
+      if (!isSuccess(res)) return;
       const results: RecordType[] = [];
       res.data.results.forEach(item => {
         // 级联值取 pk：与行数据 model（pk 列表）及提交载荷同口径，

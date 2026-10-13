@@ -3,7 +3,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi, type FileAccessLogResult } from "@/api/file/file";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -33,7 +33,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await systemUploadFileApi.accessLogs(props.row.pk);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       data.value = res.data;
     } else {
       message(String(res.detail), { type: "error" });

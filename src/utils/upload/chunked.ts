@@ -9,7 +9,7 @@
  * 与单请求直传（`http.upload`）的取舍由调用方按文件大小决定：
  * 小文件直传（一次往返），大文件分片（抗网络抖动 + 绕过单请求体限制）。
  */
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { systemUploadFileApi } from "@/api/file/file";
 
 /** 服务端建议的缺省分片大小（与服务端 DEFAULT_CHUNK_SIZE 对齐，服务端会钳制） */
@@ -96,7 +96,7 @@ export async function uploadFileChunked(
     chunk_size: planChunkSize,
     md5
   });
-  if (initRes.code !== SUCCESS_CODE || !initRes.data) {
+  if (!isSuccess(initRes) || !initRes.data) {
     throw new ChunkUploadBusinessError(
       initRes.code,
       initRes.detail || "init upload session failed"
@@ -141,7 +141,7 @@ export async function uploadFileChunked(
               );
           }
         });
-        if (res.code !== SUCCESS_CODE) {
+        if (!isSuccess(res)) {
           throw new ChunkUploadBusinessError(
             res.code,
             res.detail || "chunk part upload failed"
@@ -166,7 +166,7 @@ export async function uploadFileChunked(
 
   if (signal?.aborted) throw new ChunkUploadAbortedError(session);
   const completeRes = await systemUploadFileApi.chunkComplete(session, md5);
-  if (completeRes.code !== SUCCESS_CODE || !completeRes.data) {
+  if (!isSuccess(completeRes) || !completeRes.data) {
     throw new ChunkUploadBusinessError(
       completeRes.code,
       completeRes.detail || "complete upload session failed"

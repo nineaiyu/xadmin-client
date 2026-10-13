@@ -1,13 +1,6 @@
 <script setup lang="ts">
-import {
-  type EventType,
-  type ArgsType,
-  type ButtonProps,
-  type DialogOptions,
-  closeDialog,
-  dialogStore,
-  getDialogUid
-} from "./index";
+import type { EventType, ArgsType, ButtonProps, DialogOptions } from "./type";
+import { closeDialog, dialogStore, getDialogUid } from "./store";
 import { ref, computed, watch } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "~icons/ri/fullscreen-fill";

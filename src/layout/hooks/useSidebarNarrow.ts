@@ -37,10 +37,19 @@ export function useSidebarNarrow(
 
   /** 主列（混合双列）的次级菜单：窄列项的子级；悬停 / 路由联动刷新 */
   const extraMenus = ref<menuType[]>([]);
-  /** 主列是否存在可见内容：双列菜单恒有（当前一级的子菜单树）；混合双列随次级菜单显隐 */
-  const extraVisible = computed(() =>
-    narrowSubmenuMode.value ? extraMenus.value.length > 0 : true
-  );
+  /**
+   * 主列是否存在可见内容：
+   * - 双列菜单（`sidebar-mixed-nav`）：主列 = 当前一级的子菜单树。当前一级只有
+   *   ≤1 项可展示时不渲染整列、侧栏收为窄列宽度（vben 同口径）——0 项是叶子菜单
+   *   没有内容，1 项则与一级窄列的信息完全重复（如「首页」目录下仅一个首页页）；
+   *   菜单尚未装配完成时保守显示，避免首帧整列闪隐；
+   * - 混合双列（`header-mixed-nav`）：随窄列悬停 / 激活项的次级菜单显隐。
+   */
+  const extraVisible = computed(() => {
+    if (narrowSubmenuMode.value) return extraMenus.value.length > 0;
+    if (usePermissionStoreHook().wholeMenus.length === 0) return true;
+    return splitMenus.value.length > 1;
+  });
 
   /** 当前窄列菜单中命中激活路由的项（用于初始化与复位次级菜单） */
   function findActiveNarrowItem(path: string): menuType | null {

@@ -6,7 +6,7 @@
  * 验证交互（方式选择 / 发码冷却 / 动态码与 Passkey 提交）与登录 MFA
  * 共用 `useMfaVerify`，本组件只保留对话框布局与表单校验。
  */
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { passkeyApi } from "@/api/system/security";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -86,7 +86,7 @@ const loadMethods = () => {
   infoLoading.value = true;
   mfaConfirmInfoApi({ confirm_type: props.confirmType ?? "mfa" })
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         methods.value = res.data.methods;
       }
     })

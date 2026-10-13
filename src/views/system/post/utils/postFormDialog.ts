@@ -1,16 +1,14 @@
 import { h, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { postApi, type PostItem } from "@/api/identity/post";
 import PostForm from "../components/PostForm.vue";
-import { normalizeError } from "@/utils/apiError";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** 岗位新建/编辑弹窗（ReDialog + PostForm），提交异常归一避免 loading 悬挂 */
+/** 岗位新建/编辑弹窗（ReDialog + PostForm；提交底座见 useDialogForm） */
 export function openPostFormDialog({
   t,
   refresh,
@@ -21,6 +19,14 @@ export function openPostFormDialog({
   row: PostItem | null;
 }) {
   const formRef = ref<InstanceType<typeof PostForm>>();
+  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+  const { beforeSure } = useDialogForm<Record<string, unknown>>({
+    formRef,
+    submit: payload =>
+      row ? postApi.partialUpdate(row.pk, payload) : postApi.create(payload),
+    successText: t("post.saveOk"),
+    onSuccess: refresh
+  });
 
   addDialog({
     title: row ? t("post.edit") : t("post.create"),
@@ -30,24 +36,6 @@ export function openPostFormDialog({
     closeOnClickModal: false,
     sureBtnLoading: true,
     contentRenderer: () => h(PostForm, { ref: formRef, row }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = formRef.value?.getPayload();
-      if (!payload) {
-        closeLoading();
-        return;
-      }
-      // 异常归一为可读失败结果：避免 beforeSure 抛错导致弹窗 loading 悬挂
-      const res = await (
-        row ? postApi.partialUpdate(row.pk, payload) : postApi.create(payload)
-      ).catch(normalizeError);
-      if (res.code === SUCCESS_CODE) {
-        message(t("post.saveOk"), { type: "success" });
-        done();
-        refresh();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-      closeLoading();
-    }
+    beforeSure
   });
 }

@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
-import type { BaseResult, ListResult } from "@/api/types";
+import type { BaseResult } from "@/api/types";
+import { usePagedList } from "@/hooks/usePagedList";
 import { personalAccessTokenApi } from "@/api/user/token";
 import {
   ReReadonlyTable,
@@ -32,10 +33,6 @@ type CallStats = {
 };
 
 const { t } = useI18n();
-const loading = ref(false);
-const page = ref(1);
-const total = ref(0);
-const rows = ref<Array<CallLog>>([]);
 const stats = ref<CallStats>({
   total: 0,
   failed: 0,
@@ -43,31 +40,25 @@ const stats = ref<CallStats>({
   last_used_time: null
 });
 
-const fetchLogs = () => {
-  loading.value = true;
-  personalAccessTokenApi
-    .logs(props.pk, { page: page.value, size: 10 })
-    .then((res: ListResult) => {
-      if (res.code === SUCCESS_CODE && res.data) {
-        rows.value = res.data.results as Array<CallLog>;
-        total.value = res.data.total ?? 0;
-      }
-    })
-    .catch(() => {
-      // 失败提示由 http 拦截器统一处理，这里兜住 reject 避免 unhandled rejection
-      rows.value = [];
-      total.value = 0;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-};
+// 调用明细分页（异常归一与信封判定见 usePagedList；翻页失败保持现状不清空）
+const {
+  loading,
+  page,
+  total,
+  rows,
+  load: fetchLogs,
+  setPage
+} = usePagedList<CallLog>({
+  pageSize: 10,
+  fetch: params => personalAccessTokenApi.logs(props.pk, params),
+  pickRows: res => (res.data as { results?: CallLog[] } | null)?.results ?? []
+});
 
 const fetchStats = () => {
   personalAccessTokenApi
     .stats(props.pk)
     .then((res: BaseResult & { data?: CallStats }) => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         stats.value = res.data;
       }
     })
@@ -104,11 +95,6 @@ const columns = computed<ReadonlyColumn[]>(() => [
   }
 ]);
 
-const onPageChange = (value: number) => {
-  page.value = value;
-  fetchLogs();
-};
-
 onMounted(() => {
   fetchStats();
   fetchLogs();
@@ -143,8 +129,15 @@ onMounted(() => {
       size="small"
     >
       <template #status_code="{ row }">
+        <!-- status_code 为 HTTP 响应码（非业务码）：2xx 记成功色 -->
         <el-tag
-          :type="row.status_code === SUCCESS_CODE ? 'success' : 'danger'"
+          :type="
+            row.status_code != null &&
+            row.status_code >= 200 &&
+            row.status_code < 300
+              ? 'success'
+              : 'danger'
+          "
           size="small"
         >
           {{ row.status_code ?? "—" }}
@@ -160,7 +153,7 @@ onMounted(() => {
       :total="total"
       :page-size="10"
       :current-page="page"
-      @current-change="onPageChange"
+      @current-change="setPage"
     />
   </div>
 </template>

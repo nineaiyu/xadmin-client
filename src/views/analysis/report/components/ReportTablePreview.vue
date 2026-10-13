@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { datasetApi, type ExecuteResult } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
 
@@ -54,7 +54,7 @@ const load = async () => {
   errorMsg.value = "";
   try {
     const res = await datasetApi.execute<ExecuteResult>(props.datasetPk);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       errorMsg.value = String(res.detail ?? t("dataReport.tableLoadFailed"));
       return;
     }

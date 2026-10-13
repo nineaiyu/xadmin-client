@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
@@ -118,7 +118,7 @@ export const useUserStore = defineStore("pure-user", {
         loginBasicApi(data)
           .then(res => {
             // mfa_required 时后端未签发 token（data 中无 access），不能写入
-            if (res.code === SUCCESS_CODE && "access" in res.data) {
+            if (isSuccess(res) && "access" in res.data) {
               setToken(res.data);
             }
             resolve(res);
@@ -134,7 +134,7 @@ export const useUserStore = defineStore("pure-user", {
         userInfoApi
           .retrieve()
           .then(res => {
-            if (res.code === SUCCESS_CODE) {
+            if (isSuccess(res)) {
               this.updateUserInfo(res.data);
               // 水印配置写入水印 store（user → watermark 单向依赖）：
               // 由 App.vue 按「当前路由是否命中生效范围」应用/清除
@@ -155,7 +155,7 @@ export const useUserStore = defineStore("pure-user", {
       return new Promise<TokenResult>((resolve, reject) => {
         registerApi(data)
           .then(res => {
-            if (res.code === SUCCESS_CODE) {
+            if (isSuccess(res)) {
               setToken(res.data);
               resolve(res);
             } else {
@@ -176,7 +176,7 @@ export const useUserStore = defineStore("pure-user", {
       const { logoutApi } = await import("@/api/auth");
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
-          if (res.code === SUCCESS_CODE) {
+          if (isSuccess(res)) {
             message(transformI18n("login.logoutSuccess"), { type: "success" });
           }
         })
@@ -219,7 +219,7 @@ export const useUserStore = defineStore("pure-user", {
       return new Promise<void>((resolve, reject) => {
         exitImpersonateApi({ refresh: getRefreshToken() })
           .then(res => {
-            if (res.code === SUCCESS_CODE) {
+            if (isSuccess(res)) {
               // 本地先行清除模拟态（含持久化副本）：重载到 userinfo 返回前的
               // 窗口内横幅不再闪现
               this.impersonator = null;
@@ -243,7 +243,7 @@ export const useUserStore = defineStore("pure-user", {
       return new Promise<TokenResult>((resolve, reject) => {
         refreshTokenApi(data)
           .then(res => {
-            if (res.code === SUCCESS_CODE) {
+            if (isSuccess(res)) {
               setToken(res.data);
               resolve(res);
             } else {

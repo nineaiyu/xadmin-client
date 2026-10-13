@@ -1,6 +1,5 @@
 import { $t, transformI18n } from "@/plugins/i18n";
 import type { CheckboxValueType } from "element-plus";
-import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useSortable } from "@/hooks/useSortable";
 import {
   computed,
@@ -33,7 +32,6 @@ import { useI18n } from "vue-i18n";
 import {
   ICON_CLASS,
   TOP_CLASS,
-  buildDropdownItemStyle,
   buildRenderClass,
   rendTippyProps,
   resolveFixedState,
@@ -42,6 +40,7 @@ import {
   type TableColumnLike
 } from "./utils";
 import { useTablePrefs } from "./useTablePrefs";
+import { createSizeDropdown } from "./dropdown";
 
 export default defineComponent({
   name: "PureTableBar",
@@ -73,17 +72,21 @@ export default defineComponent({
     const dynamicColumns = ref(cloneDeep(props?.columns));
     const { t } = useI18n();
 
-    // 密度下拉项样式：选中项用主题色高亮
-    const themeColor = computed(() => useEpThemeStoreHook().epThemeColor);
-    const getDropdownItemStyle = computed(() =>
-      buildDropdownItemStyle(size, themeColor)
-    );
-
     const iconClass = computed(() => ICON_CLASS);
 
     const topClass = computed(() => TOP_CLASS);
 
     const renderClass = computed(() => buildRenderClass(isFullscreen.value));
+
+    /**
+     * 持久化当前列状态（本地即写 + 远端防抖）：只在用户交互路径调用
+     * （列勾选/全选、密度切换、列拖拽排序、重置列）。
+     * 元数据装配与首帧同步同样会改列并走 handleChange（emit 给父组件），
+     * 但绝不落远端——否则每打开一个列表页都会 PATCH 一次站点配置。
+     */
+    const persistPrefs = () => {
+      tablePrefs.save(dynamicColumns.value, size.value);
+    };
 
     function onReFresh() {
       loading.value = true;
@@ -108,6 +111,7 @@ export default defineComponent({
       dynamicColumns.value.map((column: TableColumnLike) =>
         val ? (column.hide = false) : (column.hide = true)
       );
+      persistPrefs();
     }
 
     function handleCheckedColumnsChange(value: CheckboxValueType[]) {
@@ -126,6 +130,7 @@ export default defineComponent({
         (item: TableColumnLike) =>
           transformI18n(item.label) === transformI18n(label)
       )[0].hide = !val;
+      persistPrefs();
     }
 
     function handleToggleColumnFixed(
@@ -141,7 +146,7 @@ export default defineComponent({
       }
     }
 
-    async function onReset() {
+    async function onReset(persist = false) {
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
@@ -154,6 +159,7 @@ export default defineComponent({
         cloneDeep(filterColumns.value),
         "label"
       );
+      if (persist) persistPrefs();
     }
 
     const handleChange = () => {
@@ -162,7 +168,6 @@ export default defineComponent({
         size: size.value,
         renderClass: slots?.default ? "" : renderClass.value
       });
-      tablePrefs.save(dynamicColumns.value, size.value);
     };
 
     watch(props?.columns, () => {
@@ -180,35 +185,15 @@ export default defineComponent({
       { deep: true, immediate: true }
     );
 
-    const sizeChange = (event: MouseEvent, val: string) => {
-      event.stopPropagation();
-      size.value = val;
-      handleChange();
-    };
-    const dropdown = {
-      dropdown: () => (
-        <el-dropdown-menu class="translation">
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("large")}
-            onClick={event => sizeChange(event, "large")}
-          >
-            {t("tableBar.loose")}
-          </el-dropdown-item>
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("default")}
-            onClick={event => sizeChange(event, "default")}
-          >
-            {t("tableBar.default")}
-          </el-dropdown-item>
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("small")}
-            onClick={event => sizeChange(event, "small")}
-          >
-            {t("tableBar.compact")}
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      )
-    };
+    // 密度下拉（渲染见 src/dropdown.tsx）：选中后写 size、同步父组件并持久化
+    const { dropdown } = createSizeDropdown({
+      size,
+      onSizeChange: (_event, val) => {
+        size.value = val;
+        handleChange();
+        persistPrefs();
+      }
+    });
 
     /** 列展示拖拽排序（手势由 useSortable 承载，sortablejs 按需加载） */
     // 复用同一实例：rowDrop 会在每次触发拖拽按钮时重整（先销毁再挂载），
@@ -245,6 +230,7 @@ export default defineComponent({
           }
           const currentRow = dynamicColumns.value.splice(oldIndex, 1)[0];
           dynamicColumns.value.splice(newIndex, 0, currentRow);
+          persistPrefs();
         }
       }
     );
@@ -353,7 +339,7 @@ export default defineComponent({
                     indeterminate={isIndeterminate.value}
                     onChange={value => handleCheckAllChange(value)}
                   />
-                  <el-button type="primary" link onClick={() => onReset()}>
+                  <el-button type="primary" link onClick={() => onReset(true)}>
                     {t("buttons.reset")}
                   </el-button>
                 </div>

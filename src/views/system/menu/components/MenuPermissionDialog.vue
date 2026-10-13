@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { menuApi } from "@/api/system/menu";
 import type { MenuPermissionPreview } from "@/api/system/menu";
@@ -96,7 +96,7 @@ const fetchPreview = () => {
         skip_existing: skipExisting.value,
         dry_run: true
       });
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         preview.value = res.data ?? null;
       } else {
         preview.value = null;
@@ -128,7 +128,7 @@ const submit = async (): Promise<boolean> => {
       skip_existing: skipExisting.value
     })
     .catch(normalizeError);
-  if (res.code !== SUCCESS_CODE) {
+  if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;
   }

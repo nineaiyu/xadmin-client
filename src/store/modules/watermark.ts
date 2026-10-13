@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { defineStore } from "pinia";
 import type { SiteWatermarkResultConfig } from "@/api/auth";
 import { defaultSiteWatermark, toSiteWatermarkConfig } from "@/utils/watermark";
@@ -39,7 +39,7 @@ export const useWatermarkStore = defineStore("pure-watermark", {
       // 环上 api/config 的类声明可能在基类就绪前求值（取决于加载入口）
       const { userInfoApi } = await import("@/api/user/userinfo");
       const res = await userInfoApi.retrieve();
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         this.applyFromUserInfo(res.config);
       }
     },

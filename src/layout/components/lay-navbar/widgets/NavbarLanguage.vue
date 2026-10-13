@@ -12,7 +12,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
 <template>
   <el-dropdown id="header-translation" trigger="click">
     <div
-      class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+      class="navbar-action globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
       role="button"
       tabindex="0"
       :aria-label="t('buttons.language')"

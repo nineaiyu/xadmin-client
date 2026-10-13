@@ -27,6 +27,7 @@ const {
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     recycleBin
+    viewed-row
     @searchComplete="searchComplete"
   />
 </template>

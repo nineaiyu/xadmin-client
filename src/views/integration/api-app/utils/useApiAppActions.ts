@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
@@ -30,7 +30,7 @@ export function useApiAppActions({
     const res = await apiApplicationApi
       .partialUpdate(row.pk, { is_active: value })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) return;
+    if (isSuccess(res)) return;
     row.is_active = !value;
     message(String(res.detail ?? t("apiApp.saveFailed")), { type: "warning" });
   };
@@ -40,7 +40,7 @@ export function useApiAppActions({
     const res = await apiApplicationApi
       .regenerateSecret(row.pk)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       openCredential(res.data);
       refresh();
     } else if (res.detail) {
@@ -73,7 +73,7 @@ export function useApiAppActions({
       .testCallback(row.pk)
       .catch(normalizeError);
     if (state) state.loading = false;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       const results = res.data?.results ?? [];
       if (state) state.results = results;
       const failed = results.filter(item => !item.success).length;

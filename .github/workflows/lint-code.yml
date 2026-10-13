@@ -91,6 +91,22 @@ jobs:
         # 超长 hook 形态文件防回潮：useXxx / hook 文件 ≥120 行新增即失败（scripts/check-hook-length.mjs）
         run: pnpm check:hook-length
 
+      - name: First-screen entry closure gate
+        # 首屏入口白名单：main.ts / App.vue 的顶层静态导入逐条登记（新增即失败）。
+        # bundle-size 的 15KB 预算是总账，拦不住数 KB 级块悄然进闭包；
+        # 本门禁把「谁能进首屏根」显式化（scripts/check-entry-closure.mjs）
+        run: pnpm check:entry-closure
+
+      - name: Success-code literal baseline gate
+        # 业务码判定散点防回潮：`code === SUCCESS_CODE` 式比较按文件基线只减不增，
+        # 统一入口是 isSuccess()（scripts/check-success-code.mjs）
+        run: pnpm check:success-code
+
+      - name: Platform-config params gate
+        # 项目参数生效门禁：platform-config.json 每个键必须有消费点（无死参数），
+        # 注入偏好存储的键必须登记在站点配置 PATCH 清单（scripts/check-platform-config.mjs）
+        run: pnpm check:platform-config
+
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
         # 两侧 key 集合必须完全对称；词条值含 <tag> 会让 unplugin-vue-i18n 转换期

@@ -1,5 +1,5 @@
 import { computed, reactive, ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { datasetApi, type DatasetItem } from "@/api/dataset/datasets";
 import { escapeCsvCell } from "./csv";
@@ -88,7 +88,7 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
             : undefined
         })
         .catch(() => null);
-      if (res?.code === SUCCESS_CODE) {
+      if (res && isSuccess(res)) {
         aggregateResult.value = res.data as never;
       } else {
         aggregateResult.value = null;
@@ -113,7 +113,7 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
     try {
       // http 层失败已统一提示，归一为 null：预览弹窗不打开
       const res = await datasetApi.execute(row.pk).catch(() => null);
-      if (res?.code === SUCCESS_CODE) {
+      if (res && isSuccess(res)) {
         preview.value = res.data as never;
         previewDialog.value = true;
       } else if (res) {

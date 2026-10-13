@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { knowledgeApi } from "@/api/ai/knowledge";
@@ -54,7 +54,7 @@ export function useKnowledgeActions({
     const res = await knowledgeApi
       .batchToggle(pks, isActive)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       const changed = (res.data as { changed?: number })?.changed ?? 0;
       message(t("aiKnowledge.batchToggleDone", { count: changed }), {
         type: "success"

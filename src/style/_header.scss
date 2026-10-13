@@ -24,3 +24,30 @@ html.semi-dark-header:not(.dark) {
     }
   }
 }
+
+/* ================ 下拉里的顶栏组件（设置面板 →「布局」→「顶栏组件」落位） ================
+   「更多」下拉与头像菜单复用顶栏组件本体（带 `navbar-action` 热区与 hover 底色）：
+   在下拉里需收敛为菜单项常规形态——16px 图标 + 名称内联（名称标签见 NavbarActions），
+   hover 交给菜单项本身；否则会显示为一个 36px 孤立方块（无名称、抢视觉）。 */
+.el-dropdown-menu.more-widgets,
+.el-dropdown-menu.logout {
+  .el-dropdown-menu__item {
+    .navbar-action {
+      display: inline-flex;
+      width: auto;
+      height: auto;
+      color: inherit;
+      background: transparent;
+      border-radius: 0;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .widget-menu__label {
+      margin-left: 8px;
+    }
+  }
+}

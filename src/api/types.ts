@@ -17,14 +17,30 @@ import type { SearchFieldsData } from "./types/search-fields";
 export type Envelope = Pick<ApiResponseEnvelope, "code" | "detail"> &
   Partial<Pick<ApiResponseEnvelope, "requestId" | "timestamp">>;
 
+/**
+ * 含 data 的宽松响应信封：data 形态由调用点解释（各接口契约不同，泛型化会引入
+ * 结构兼容负担）。用于统一判定（isSuccess）与回调的公共类型面——
+ * useDialogForm / usePagedList 的 submit / fetch 与成功 / 失败回调。
+ */
+export type DataEnvelope = {
+  code?: number;
+  data?: unknown;
+  detail?: unknown;
+};
+
 /** 业务成功码（与后端统一响应壳约定一致：common/core/response.py 的默认 code） */
 export const SUCCESS_CODE = 1000;
 
 /**
  * 判断业务响应是否成功（`code === SUCCESS_CODE`）。
  *
- * 统一入口：全库 165+ 处 `code === SUCCESS_CODE` 字面量收敛于此，
- * 成功码变更时只需改一处；与 http 层（axios 异常/状态码）错误策略互补。
+ * 业务码成功判定的统一入口：成功码变更时只需改一处；与 http 层
+ * （axios 异常/状态码）错误策略互补。存量调用点仍存在
+ * `code === SUCCESS_CODE` 字面量（按域滚动收敛），新代码请使用本函数。
+ *
+ * 注意：本函数不携带类型谓词（`res is T` 会把 else 分支收窄为 never），
+ * 对「响应可能为 null（经 `.catch(() => null)`）」的调用点，需先判空：
+ * `res && isSuccess(res) ? res.field : fallback`。
  */
 export function isSuccess(res?: { code?: number } | null): boolean {
   return res?.code === SUCCESS_CODE;

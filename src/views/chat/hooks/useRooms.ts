@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, ref } from "vue";
 import {
   chatApi,
@@ -43,8 +43,9 @@ export function useRooms() {
   async function loadRooms() {
     loadingRooms.value = true;
     try {
-      const { code, data } = await chatApi.roomList();
-      if (code === SUCCESS_CODE) {
+      const res = await chatApi.roomList();
+      if (isSuccess(res)) {
+        const data = res.data;
         rooms.value = data?.rooms ?? [];
         aiEnabled.value = !!data?.ai_enabled;
         aiHint.value = data?.ai_hint ?? "";
@@ -61,8 +62,8 @@ export function useRooms() {
   async function loadContacts() {
     loadingContacts.value = true;
     try {
-      const { code, data } = await chatApi.contacts();
-      if (code === SUCCESS_CODE) contacts.value = data?.results ?? [];
+      const res = await chatApi.contacts();
+      if (isSuccess(res)) contacts.value = res.data?.results ?? [];
     } finally {
       loadingContacts.value = false;
     }
@@ -74,10 +75,10 @@ export function useRooms() {
 
   /** 开通（或复用）私聊并切到该会话：对端已存在会话时幂等复用 */
   async function openPrivate(peerPk: number) {
-    const { code, data, detail } = await chatApi.openPrivate(peerPk);
-    if (code !== SUCCESS_CODE || !data) return { ok: false, detail };
-    upsertRoom(rooms.value, data);
-    activate(data.id);
+    const res = await chatApi.openPrivate(peerPk);
+    if (!isSuccess(res) || !res.data) return { ok: false, detail: res.detail };
+    upsertRoom(rooms.value, res.data);
+    activate(res.data.id);
     return { ok: true, detail: "" };
   }
 

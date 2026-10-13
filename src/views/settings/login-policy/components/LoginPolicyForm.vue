@@ -3,7 +3,7 @@ import { onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { loginPolicyApi } from "@/api/system/security";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -35,7 +35,7 @@ const actionOptions = ref<OptionItem[]>(fallbackActionOptions);
 onMounted(async () => {
   try {
     const res = await loginPolicyApi.choices();
-    if (res.code !== SUCCESS_CODE || !res.choices_dict) return;
+    if (!isSuccess(res) || !res.choices_dict) return;
     const { target_type: targetType, action } = res.choices_dict;
     if (Array.isArray(targetType) && targetType.length) {
       targetTypeOptions.value = targetType.map(item => ({

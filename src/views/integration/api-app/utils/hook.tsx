@@ -2,7 +2,7 @@ import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { buildScopeIndex } from "@/utils/scopeDisplay";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { apiApplicationApi, loadScopeCatalog } from "@/api/identity/open";
 import { useApiAppCredential } from "./useApiAppCredential";
 import { useApiAppActions } from "./useApiAppActions";
@@ -68,7 +68,7 @@ export function useApiApplication(tableRef: Ref) {
   const scopeIndex = shallowRef(buildScopeIndex());
   loadScopeCatalog()
     .then(res => {
-      if (res.code !== SUCCESS_CODE) return;
+      if (!isSuccess(res)) return;
       scopeIndex.value = buildScopeIndex(res.data?.groups);
     })
     .catch(() => undefined);

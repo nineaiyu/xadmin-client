@@ -1,5 +1,5 @@
 import type { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { useConfirm } from "@/hooks/useConfirm";
 
@@ -38,7 +38,7 @@ export function useLeaveRunner({
     // HTTP 层异常：提示由拦截器统一处理，这里静默返回
     const res = await run(row.pk as string | number).catch(() => undefined);
     if (!res) return;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t(`leaveApply.${successKey}`), { type: "success" });
       // 状态列/操作按钮随业务单状态联动（提交 → 审批中、撤回 → 已撤回），必须刷新
       refresh();

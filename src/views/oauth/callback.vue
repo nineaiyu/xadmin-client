@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -99,7 +99,7 @@ onMounted(async () => {
   }
   try {
     const res = await oauthApi.callback(provider, { code, state });
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       error.value = res.detail || t("oauth.loginFailed");
       return;
     }

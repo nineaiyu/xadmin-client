@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   knowledgeApi,
   type KnowledgeBuildStatus,
@@ -62,7 +62,7 @@ export function useKnowledgeBuild({
       return;
     }
     const res = await knowledgeApi.buildEmbeddings().catch(normalizeError);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       // 已有构建在跑（1001 + running 状态）：不报错，转为跟踪既有任务进度
       const running = (res as { data?: KnowledgeBuildStatus | null }).data;
       if (res.code === 1001 && running?.state === "running") {

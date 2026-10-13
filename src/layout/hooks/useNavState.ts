@@ -76,7 +76,8 @@ export function useNavState() {
 
   const layout = computed((): string => $storage?.layout?.layout ?? "vertical");
 
-  const title = computed(() => $config.Title);
+  /** 站点标题：偏好（设置面板 / 站点配置同步）优先，回落 platform-config 的 Title */
+  const title = computed(() => $storage?.configure?.title || $config.Title);
 
   return {
     pureApp,

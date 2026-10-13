@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -62,7 +62,7 @@ onMounted(() => {
   props
     .loadOptions()
     .then(res => {
-      if (res.code !== SUCCESS_CODE) return;
+      if (!isSuccess(res)) return;
       const payload = res.data ?? {};
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）

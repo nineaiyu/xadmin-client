@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type {
   FormDataApi,
   FormDataFormOption,
@@ -32,7 +32,7 @@ export function useFormDataSelection({
   /** 表单选项：全部非模板表单（含停用），默认选中第一个（打开即有数据） */
   const loadForms = async () => {
     const res = await api.formOptions().catch(() => null);
-    if (res?.code !== SUCCESS_CODE) {
+    if (!res || !isSuccess(res)) {
       formsLoadFailed.value = true;
       return;
     }

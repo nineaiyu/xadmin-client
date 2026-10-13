@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { Ref } from "vue";
 import { message } from "@/utils/message";
 import {
@@ -24,11 +24,11 @@ export function useChatReactions(deps: {
   ) => boolean;
 }) {
   async function recall(item: ChatMessageItem) {
-    const { code, detail } = await chatApi.recall(item.id);
-    if (code === SUCCESS_CODE) {
+    const res = await chatApi.recall(item.id);
+    if (isSuccess(res)) {
       deps.applyRecall({ message_id: item.id, room_id: item.room_id });
     } else {
-      message(detail, { type: "warning" });
+      message(res.detail, { type: "warning" });
     }
   }
 

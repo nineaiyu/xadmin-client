@@ -36,7 +36,6 @@ import plusEn from "plus-pro-components/es/locale/lang/en";
 import plusZhCn from "plus-pro-components/es/locale/lang/zh-cn";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useConfirm } from "@/hooks/useConfirm";
-import { epColor } from "@/utils/chartTheme";
 import { emitter } from "@/utils/mitt";
 import { checkUpdatesEnabled } from "@/utils/autoUpdate";
 
@@ -134,8 +133,9 @@ export default defineComponent({
     const { VITE_PUBLIC_PATH, MODE } = import.meta.env;
 
     function startVersionCheck() {
-      import("version-rocket")
-        .then(({ checkVersion }) =>
+      // chartTheme 仅此处用到：随版本检查按需加载，不进首屏闭包
+      Promise.all([import("version-rocket"), import("@/utils/chartTheme")])
+        .then(([{ checkVersion }, { epColor }]) =>
           checkVersion(
             // config
             {

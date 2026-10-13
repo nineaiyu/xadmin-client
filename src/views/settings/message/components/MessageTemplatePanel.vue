@@ -7,7 +7,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { formatDateTime } from "@/utils/format";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   messageTemplateApi,
   type MessageTemplateItem
@@ -70,7 +70,7 @@ const load = async () => {
   loading.value = true;
   try {
     const res = await messageTemplateApi.registry();
-    if (res.code === SUCCESS_CODE) rows.value = res.data ?? [];
+    if (isSuccess(res)) rows.value = res.data ?? [];
   } catch (error: unknown) {
     message(String((error as Error)?.message ?? error), { type: "error" });
   } finally {
@@ -100,7 +100,7 @@ const openEdit = (raw: RecordType) => {
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
       const res = await messageTemplateApi.save(payload).catch(normalizeError);
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(t("messageTemplate.saveSuccess"), { type: "success" });
         done();
         await load();
@@ -123,7 +123,7 @@ const previewRow = async (raw: RecordType) => {
   const res = await messageTemplateApi
     .preview({ message_type: row.message_type })
     .catch(normalizeError);
-  if (res.code !== SUCCESS_CODE || !res.data) {
+  if (!isSuccess(res) || !res.data) {
     message(String(res.detail || t("results.failed")), { type: "error" });
     return;
   }
@@ -158,7 +158,7 @@ const reset = async (raw: RecordType) => {
   const res = await messageTemplateApi
     .reset(row.message_type)
     .catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();
   } else {

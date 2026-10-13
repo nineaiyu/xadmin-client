@@ -6,7 +6,7 @@ import { credentialApi, type CredentialEntry } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
   ReReadonlyTable,
@@ -93,7 +93,7 @@ async function handleRotate(row: CredentialRowLike) {
     const res = await credentialApi
       .rotate({ key: String(row.name ?? ""), scope: row.scope })
       .catch(normalizeError);
-    if (res?.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("credential.rotateOk"), { type: "success" });
       emit("rotated");
     } else {

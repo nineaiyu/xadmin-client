@@ -3,7 +3,7 @@ import { h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElAlert, ElButton, ElInput, ElTag, ElTooltip } from "element-plus";
 import type { RecordType } from "plus-pro-components";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   addDialog,
   closeDialog,
@@ -67,7 +67,7 @@ const refresh = () => plusPageRef.value?.handleGetData();
 const scopeIndex = shallowRef(buildScopeIndex());
 loadPatScopeCatalog()
   .then(res => {
-    if (res.code !== SUCCESS_CODE) return;
+    if (!isSuccess(res)) return;
     scopeIndex.value = buildScopeIndex(res.data?.groups);
   })
   .catch(() => undefined);
@@ -139,7 +139,7 @@ const openCreate = () => {
       const res = await personalAccessTokenApi
         .create<{ token?: string }>(payload)
         .catch(normalizeError);
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         const token = String(res.data?.token ?? "");
         // 先关创建弹窗再打开明文弹层，避免双弹窗叠层
         done();

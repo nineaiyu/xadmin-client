@@ -13,7 +13,7 @@ import { message } from "@/utils/message";
 import { http } from "@/utils/http";
 import { formatFileSize } from "@/utils";
 import { formatMessageTime } from "@/utils/messageView";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { ChatAttachment, ChatMessageItem } from "@/api/chat";
 import AiMessageBlock from "@/components/AiMessageBlock";
 import ChatMessageAvatar from "@/components/ChatMessageAvatar";
@@ -148,7 +148,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
       room_id: props.item.room_id,
       message_id: props.item.id
     });
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       const detail = String(res.detail || t("chat.actionDone"));
       message(detail, { type: "success" });
       return { ok: true, detail };

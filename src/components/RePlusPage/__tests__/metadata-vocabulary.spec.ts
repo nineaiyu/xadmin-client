@@ -71,7 +71,7 @@ describe("input_type 词表 ⇄ 渲染器注册表 对账", () => {
     );
     expect(
       uncovered,
-      `词表类型缺少内置渲染器：${uncovered.join("、")}——补 renderers-*.tsx 映射或改登 x-fallback-rendered（扩展流程）`
+      `词表类型缺少内置渲染器：${uncovered.join("、")}——补 renderers-*.tsx 映射并在 fieldTypeRegistry 清单登记（扩展流程）`
     ).toEqual([]);
     const misRegistered = [...columnsContract.fallback].filter(type =>
       builtinKeys.has(type)

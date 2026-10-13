@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import type { Ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import MenuPermissionTree from "./MenuPermissionTree.vue";
 import { menuFieldKey } from "../utils/treeKeys";
@@ -88,8 +88,9 @@ function getCheckedMenu(pk?: string) {
     loading.value = true;
     props.api
       .retrieve?.(pk)
-      .then(({ code, data }) => {
-        if (code === SUCCESS_CODE) {
+      .then(res => {
+        const data = res.data;
+        if (isSuccess(res)) {
           formData.value.menu = getKeyList(data?.menu ?? [], "pk");
           const field: Array<string | number> = [];
           Object.keys(data?.field ?? {}).forEach(menuPk => {

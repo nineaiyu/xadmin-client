@@ -1,6 +1,6 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
@@ -59,7 +59,7 @@ export function useMfaVerify<
   const handleSendCode = () => {
     if (!currentMethod.value) return;
     options.sendCode(currentMethod.value).then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(res.detail || t("mfa.codeSent"), { type: "success" });
         startCooldown(MFA_CODE_COOLDOWN_SECONDS);
       } else {

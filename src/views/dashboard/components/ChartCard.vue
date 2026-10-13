@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ReSkeleton from "@/components/ReSkeleton";
@@ -141,7 +141,7 @@ const loadData = () =>
         const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
           count_only: true
         });
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           total.value = Number(res.data?.total ?? 0);
           return;
         }
@@ -154,7 +154,7 @@ const loadData = () =>
           const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
             count_only: true
           });
-          if (res.code === SUCCESS_CODE) {
+          if (isSuccess(res)) {
             total.value = Number(res.data?.total ?? 0);
             return;
           }
@@ -166,7 +166,7 @@ const loadData = () =>
           metric: card.metric ?? "count",
           value_field: card.value_field
         });
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           total.value = Number(res.data?.series?.[0]?.value ?? 0);
           return;
         }
@@ -180,7 +180,7 @@ const loadData = () =>
           card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
         value_field: card.value_field
       });
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         await renderAggregate(res.data);
         return;
       }

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { menuApi } from "@/api/system/menu";
@@ -131,7 +131,7 @@ const fetchAudit = async () => {
   loading.value = true;
   try {
     const res = await menuApi.permissionAudit();
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       result.value = res.data ?? null;
     } else {
       result.value = null;

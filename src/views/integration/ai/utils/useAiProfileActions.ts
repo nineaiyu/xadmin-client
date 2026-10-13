@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
@@ -28,7 +28,7 @@ export function useAiProfileActions({
     }
     // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
     const res = await action().catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(doneText, { type: "success" });
       refresh();
     } else if (res.detail) {
@@ -59,7 +59,7 @@ export function useAiProfileActions({
 
   const testProfile = async (row: AiProfileItem) => {
     const res = await aiProfileApi.test(row.pk);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(String(res.detail ?? t("aiConfig.testOk")), { type: "success" });
     } else if (res.detail) {
       message(String(res.detail), { type: "warning" });
@@ -72,7 +72,7 @@ export function useAiProfileActions({
     const res = await aiProfileApi
       .probe(row.pk, withVision ? { vision: true } : undefined)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       const data = ((res as { data?: Record<string, { ok?: boolean }> }).data ??
         {}) as Record<string, { ok?: boolean } | undefined>;
       const okList = ["json", "tool_calls", "reasoning"]

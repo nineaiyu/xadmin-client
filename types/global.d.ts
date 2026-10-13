@@ -330,6 +330,8 @@ declare global {
       footerFixed?: boolean;
       /** 页脚高度（px，0 = 自动） */
       footerHeight?: number;
+      /** 站点标题（侧栏 / 顶栏品牌区与动态标签页；空则回落 platform-config 的 Title） */
+      title?: string;
       showLogo?: boolean;
       logoSource?: string;
       logoShowText?: boolean;

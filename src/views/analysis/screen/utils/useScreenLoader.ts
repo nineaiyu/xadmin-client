@@ -1,6 +1,6 @@
 import { ref, type Ref } from "vue";
 import { useRoute } from "vue-router";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 import { loadScreenReferenceData } from "./referenceData";
@@ -26,7 +26,7 @@ export function useScreenLoader(deps: {
     loadFailed.value = false;
     const pk = String(route.query.pk ?? "");
     const res = pk ? await screenApi.retrieve(pk).catch(() => null) : null;
-    if (!res || res.code !== SUCCESS_CODE) {
+    if (!res || !isSuccess(res)) {
       loadFailed.value = true;
       return;
     }

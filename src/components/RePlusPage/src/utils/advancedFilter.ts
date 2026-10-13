@@ -11,7 +11,12 @@
  * 「字段 → 条件 → 取值」联动展开：选择型给下拉、日期给选择器、多值给多选。
  */
 
+import { filterKindOf } from "./fieldTypeRegistry";
+import type { LookupFieldKind } from "./fieldTypeRegistry";
 import type { PageColumn } from "./types";
+
+// 取值控件形态的类型与清单（单一事实源）在 fieldTypeRegistry.ts；此处仅维持导出兼容
+export type { LookupFieldKind } from "./fieldTypeRegistry";
 
 /** 支持的 lookup（顺序即兜底下拉顺序；icontains 为文本默认） */
 export const LOOKUP_OPTIONS = [
@@ -28,10 +33,6 @@ export const LOOKUP_OPTIONS = [
 export type LookupName = (typeof LOOKUP_OPTIONS)[number];
 
 export const DEFAULT_LOOKUP: LookupName = "icontains";
-
-/** 取值控件形态（由字段 input_type / choices 推导） */
-export type LookupFieldKind =
-  "text" | "number" | "boolean" | "date" | "datetime" | "time" | "choice";
 
 /** 选项条目（选择型字段的候选取值） */
 export type LookupOption = { value: string; label: string };
@@ -67,39 +68,6 @@ export const EMPTY_LOOKUP_ROW: LookupRow = {
   lookup: DEFAULT_LOOKUP,
   value: "",
   values: []
-};
-
-/** input_type → 取值形态（未收录的类型按自由文本处理） */
-const KIND_BY_INPUT_TYPE: Record<string, LookupFieldKind> = {
-  string: "text",
-  text: "text",
-  textarea: "text",
-  email: "text",
-  phone: "text",
-  color: "text",
-  url: "text",
-  password: "text",
-  integer: "number",
-  number: "number",
-  float: "number",
-  decimal: "number",
-  boolean: "boolean",
-  switch: "boolean",
-  date: "date",
-  datetime: "datetime",
-  datetimerange: "datetime",
-  time: "time",
-  select: "choice",
-  "select-multiple": "choice",
-  "select-ordering": "choice",
-  labeled_choice: "choice",
-  choice: "choice",
-  labeled_multiple_choice: "choice",
-  "multiple choice": "choice",
-  object_related_field: "choice",
-  m2m_related_field: "choice",
-  object_related_field_file: "choice",
-  m2m_related_field_file: "choice"
 };
 
 /** 值形态 → 可用条件（与后端 available_lookups 的同类型白名单求交） */
@@ -162,7 +130,7 @@ export function buildLookupFields(columns: PageColumn[]): LookupFieldFacet[] {
     if (!declared.length) return;
     const inputType = String(column._column?.input_type ?? "");
     const options = normalizeOptions(column);
-    let kind = KIND_BY_INPUT_TYPE[inputType] ?? "text";
+    let kind = filterKindOf(inputType) ?? "text";
     // 选择型但后端未下发选项（如未声明 choices 的关联列）：退化为自由文本，
     // 避免给出「没有选项的下拉」；值仍按后端 to_python（多为主键 / 名称）校验
     if (kind === "choice" && !options.length) kind = "text";

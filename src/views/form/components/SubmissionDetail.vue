@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
@@ -178,7 +178,7 @@ onMounted(async () => {
   // 列表行已瘦身（无 form_schema/approval_trail）：拉取 retrieve 全量
   // 后再准备字段展示辅助数据；请求失败时保留列表行初值（data 摘要仍可渲染）
   const res = await submissionApi.retrieve(props.row.pk).catch(() => null);
-  if (res?.code === SUCCESS_CODE && res.data) {
+  if (res && isSuccess(res) && res.data) {
     row.value = { ...props.row, ...(res.data as SubmissionItem) };
   }
   prepareFieldMetadata();

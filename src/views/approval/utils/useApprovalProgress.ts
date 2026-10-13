@@ -1,7 +1,7 @@
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 import { approvalApi } from "@/api/approval/approval";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { openApprovalProgressDialog, type TargetSnapshot } from "./dialogs";
 
@@ -17,7 +17,7 @@ export function useApprovalProgress() {
     approvalApi
       .retrieve?.(row.pk)
       ?.then(res => {
-        if (res.code !== SUCCESS_CODE || !res.data) {
+        if (!isSuccess(res) || !res.data) {
           message(t("approval.progressLoadFailed"), { type: "warning" });
           return;
         }

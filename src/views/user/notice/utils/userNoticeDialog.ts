@@ -1,5 +1,5 @@
 import { h } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -56,7 +56,7 @@ export function createUserNoticeDialog({
       api
         .batchRead({ pks: [row.pk] })
         .then(res => {
-          if (res.code !== SUCCESS_CODE) {
+          if (!isSuccess(res)) {
             message(String(res.detail || t("userNotice.readFailed")), {
               type: "warning"
             });

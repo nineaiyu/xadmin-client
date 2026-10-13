@@ -1,0 +1,6 @@
+{
+  "note": "业务码判定散点基线（文件 -> `code === SUCCESS_CODE` 式比较计数，只减不增）。迁移到 isSuccess() 后 --update 收敛；计数降为 0 的文件自动移出。",
+  "baseline": {
+    "src/api/types.ts": 1
+  }
+}

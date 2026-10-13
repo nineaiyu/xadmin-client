@@ -5,7 +5,7 @@
 
 import type { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type { MenuRow } from "./types";
 import { normalizeError } from "@/utils/apiError";
@@ -39,7 +39,7 @@ export function useMenuRename({
         const res = await renameNode(row, String(value).trim()).catch(
           normalizeError
         );
-        if (res.code !== SUCCESS_CODE) {
+        if (!isSuccess(res)) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           return;
         }

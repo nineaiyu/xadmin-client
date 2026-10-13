@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   getScreenCommandState,
@@ -65,7 +65,7 @@ const loadState = async () => {
     detail: String((error as { detail?: string })?.detail ?? error),
     data: { state: state.value }
   }));
-  if (res.code !== SUCCESS_CODE) {
+  if (!isSuccess(res)) {
     if (res.detail) message(String(res.detail), { type: "warning" });
     return;
   }
@@ -83,7 +83,7 @@ const apply = async (payload: ScreenCommandPayload) => {
       detail: String((error as { detail?: string })?.detail ?? error),
       data: { state: state.value }
     }));
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       state.value = res.data.state;
       syncTarget();
       message(t("dataScreen.controlSent"), { type: "success" });

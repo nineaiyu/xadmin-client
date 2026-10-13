@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onActivated, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -80,7 +80,7 @@ function fetchStats() {
   const load = props.loader ?? approvalApi.stats;
   load()
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         stats.value = res.data as ApprovalStatsData;
       }
     })

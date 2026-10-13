@@ -1,6 +1,6 @@
 import "@/utils/sso";
 import Cookies from "js-cookie";
-import { getConfig } from "@/config";
+import { resolveSiteTitle } from "@/utils/preferences";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
 import {
@@ -121,7 +121,7 @@ router.beforeEach((to: ToRouteType, _from) => {
   if (!externalLink && readConfigurePreferences().dynamicTitle !== false) {
     to.matched.some(item => {
       if (!item.meta.title) return "";
-      const Title = getConfig().Title;
+      const Title = resolveSiteTitle();
       if (Title)
         document.title = `${transformI18n(item.meta.title)} | ${Title}`;
       else document.title = transformI18n(item.meta.title);

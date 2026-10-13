@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import ReEmpty from "@/components/ReEmpty";
 import {
   ReActionPanel,
@@ -41,7 +41,7 @@ const loadDetail = async () => {
     const res = await knowledgeApi
       .retrieve<KnowledgeDocumentDetail>(props.row.pk)
       .catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       detail.value = res.data;
       detailFailed.value = false;
     } else {

@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, useSlots, type Ref } from "vue";
 import type { FormInstance } from "element-plus";
 import {
@@ -12,7 +12,7 @@ import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { AesEncrypted } from "@/utils/aes";
-import { handleOperation } from "@/components/RePlusPage";
+import { handleOperation } from "@/components/RePlusPage/src/utils/handle";
 import { useI18n } from "vue-i18n";
 
 /** 验证码表单数据（发送流程读写；索引签名兼容按 form_type 动态取 target） */
@@ -71,7 +71,7 @@ export const useSendVerifyCode = (
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
       getTempTokenApi().then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           formData.value.token = res.token;
         }
       });
@@ -230,7 +230,7 @@ export const useSendVerifyCode = (
   onMounted(() => {
     verifyCodeConfigApi({ category: props.category })
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           Object.keys(res.data).forEach(key => {
             (verifyCodeConfig as Record<string, unknown>)[key] = (
               res.data as Record<string, unknown>

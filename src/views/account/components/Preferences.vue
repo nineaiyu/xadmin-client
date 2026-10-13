@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { configApi } from "@/api/config";
 import { handleOperation } from "@/components/RePlusPage";
@@ -50,7 +50,7 @@ onMounted(async () => {
       list.value.map(config => configApi.getConfig(config.name))
     );
     // 全部读取成功才回填初态：部分失败时开关状态未知，保持禁用防反向写入
-    if (results.every(res => res.code === SUCCESS_CODE)) {
+    if (results.every(res => isSuccess(res))) {
       results.forEach((res, index) => {
         list.value[index].checked = res.config.value as boolean;
       });

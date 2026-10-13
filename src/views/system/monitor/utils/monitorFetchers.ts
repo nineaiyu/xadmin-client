@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
 import { monitorApi } from "@/api/system/monitor";
 import { ALERT_RANGE } from "./monitorState";
@@ -58,7 +58,7 @@ export function createMonitorFetchers(state: MonitorState) {
     state.historyLoading.value = true;
     try {
       const res = await monitorApi.history(params);
-      if (res.code === SUCCESS_CODE) state.history.value = res.data;
+      if (isSuccess(res)) state.history.value = res.data;
     } catch {
       // 请求失败（含切页/连点筛选被路由层取消）静默：保留旧数据，loading 由 finally 复位
     } finally {
@@ -69,7 +69,7 @@ export function createMonitorFetchers(state: MonitorState) {
   const fetchThresholds = async () => {
     try {
       const res = await monitorApi.thresholds();
-      if (res.code === SUCCESS_CODE) state.thresholds.value = res.data;
+      if (isSuccess(res)) state.thresholds.value = res.data;
     } catch {
       // 静默：阈值区块保留旧值
     }
@@ -87,7 +87,7 @@ export function createMonitorFetchers(state: MonitorState) {
         range: ALERT_RANGE,
         ...params
       });
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         state.alerts.value = res.data.results;
         if (res.data.counts) state.alertCounts.value = res.data.counts;
       }

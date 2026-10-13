@@ -7,7 +7,7 @@
 
 import { ref, type UnwrapNestedRefs } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
@@ -38,7 +38,7 @@ export function useMenuRows(api: MenuApi) {
       force: true
     })
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           rawRows.value = res.data.results as Array<Record<string, unknown>>;
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });

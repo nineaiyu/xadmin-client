@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
 import { useConfirm } from "@/hooks/useConfirm";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   chatApi,
   type ChatPeer,
@@ -69,8 +69,8 @@ function searchMemberOptions(value: string) {
   memberSearchTimer = window.setTimeout(async () => {
     searchingMembers.value = true;
     try {
-      const { code, data } = await chatApi.searchChatUsers(word);
-      if (code === SUCCESS_CODE) mergeMemberOptions(data ?? []);
+      const res = await chatApi.searchChatUsers(word);
+      if (isSuccess(res)) mergeMemberOptions(res.data ?? []);
     } finally {
       searchingMembers.value = false;
     }
@@ -86,12 +86,12 @@ async function loadMembers() {
   if (!props.room) return;
   membersLoading.value = true;
   try {
-    const { code, data, detail } = await chatApi.groupMembers(props.room.id);
-    if (code === SUCCESS_CODE && data) {
-      groupMemberList.value = data.members ?? [];
-      emit("roomChanged", data.room);
-    } else if (detail) {
-      message(String(detail), { type: "warning" });
+    const res = await chatApi.groupMembers(props.room.id);
+    if (isSuccess(res) && res.data) {
+      groupMemberList.value = res.data.members ?? [];
+      emit("roomChanged", res.data.room);
+    } else if (res.detail) {
+      message(String(res.detail), { type: "warning" });
     }
   } finally {
     membersLoading.value = false;
@@ -102,16 +102,15 @@ async function submitAddMembers() {
   if (!props.room || !addMemberPks.value.length) return;
   savingMembers.value = true;
   try {
-    const { code, data, detail } = await chatApi.updateGroupMembers(
-      props.room.id,
-      { add: [...addMemberPks.value] }
-    );
-    if (code === SUCCESS_CODE && data) {
+    const res = await chatApi.updateGroupMembers(props.room.id, {
+      add: [...addMemberPks.value]
+    });
+    if (isSuccess(res) && res.data) {
       addMemberPks.value = [];
-      emit("roomChanged", data);
+      emit("roomChanged", res.data);
       await loadMembers();
-    } else if (detail) {
-      message(String(detail), { type: "warning" });
+    } else if (res.detail) {
+      message(String(res.detail), { type: "warning" });
     }
   } finally {
     savingMembers.value = false;
@@ -122,15 +121,14 @@ async function removeMember(peer: ChatPeer) {
   if (!props.room) return;
   savingMembers.value = true;
   try {
-    const { code, data, detail } = await chatApi.updateGroupMembers(
-      props.room.id,
-      { remove: [peer.pk] }
-    );
-    if (code === SUCCESS_CODE && data) {
-      emit("roomChanged", data);
+    const res = await chatApi.updateGroupMembers(props.room.id, {
+      remove: [peer.pk]
+    });
+    if (isSuccess(res) && res.data) {
+      emit("roomChanged", res.data);
       await loadMembers();
-    } else if (detail) {
-      message(String(detail), { type: "warning" });
+    } else if (res.detail) {
+      message(String(res.detail), { type: "warning" });
     }
   } finally {
     savingMembers.value = false;
@@ -143,15 +141,12 @@ async function submitRename() {
   if (!name || name === currentName.value) return;
   renaming.value = true;
   try {
-    const { code, data, detail } = await chatApi.renameGroup(
-      props.room.id,
-      name
-    );
-    if (code === SUCCESS_CODE && data) {
+    const res = await chatApi.renameGroup(props.room.id, name);
+    if (isSuccess(res) && res.data) {
       currentName.value = name;
-      emit("roomChanged", data);
-    } else if (detail) {
-      message(String(detail), { type: "warning" });
+      emit("roomChanged", res.data);
+    } else if (res.detail) {
+      message(String(res.detail), { type: "warning" });
     }
   } finally {
     renaming.value = false;
@@ -171,12 +166,12 @@ async function leaveGroup() {
   ) {
     return;
   }
-  const { code, detail } = await chatApi.leaveGroup(room.id);
-  if (code === SUCCESS_CODE) {
+  const res = await chatApi.leaveGroup(room.id);
+  if (isSuccess(res)) {
     emit("left", room.id);
     emit("close");
-  } else if (detail) {
-    message(String(detail), { type: "warning" });
+  } else if (res.detail) {
+    message(String(res.detail), { type: "warning" });
   }
 }
 

@@ -69,3 +69,15 @@ export function resolveLogoTextVisible(
   if (resolveLogoMode(configure) === "full") return false;
   return configure?.logoShowText ?? true;
 }
+
+/**
+ * 品牌位是否有可见内容：「侧边栏Logo」（图片，`showLogo`）与「Logo 文字」
+ * （标题，`logoShowText`）两个开关相互正交——只关图片时标题仍在，两者都关时
+ * 品牌位整体收起（菜单滚动区上移，见 style/sidebar 的 has-logo / no-logo）。
+ */
+export function resolveBrandVisible(
+  configure: ResponsiveStorage["configure"] | undefined
+): boolean {
+  const showImage = configure?.showLogo ?? true;
+  return showImage || resolveLogoTextVisible(configure);
+}

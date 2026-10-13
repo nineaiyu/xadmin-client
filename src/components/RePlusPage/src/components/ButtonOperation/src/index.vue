@@ -71,7 +71,7 @@ import {
   OperationEmits,
   OperationProps
 } from "./types";
-import { uniqueArrayObj } from "@/components/RePlusPage";
+import { uniqueArrayObj } from "../../../utils/index";
 import OperationButton from "./OperationButton";
 
 const emit = defineEmits<OperationEmits>();

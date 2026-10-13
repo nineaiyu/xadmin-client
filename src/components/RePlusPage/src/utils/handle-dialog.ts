@@ -3,10 +3,8 @@ import {
   type ArgsType,
   type DialogOptions
 } from "@/components/ReDialog/index";
-import {
-  type ExposedFormInstance,
-  uniqueArrayObj
-} from "@/components/RePlusPage";
+import { uniqueArrayObj } from "./index";
+import type { ExposedFormInstance } from "./types";
 import { deviceDetection } from "@pureadmin/utils";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";

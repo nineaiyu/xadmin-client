@@ -1,5 +1,5 @@
 import { h } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { addDrawer } from "@/components/ReDrawer";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
@@ -49,7 +49,7 @@ export function createSubmissionActions({
     }
     // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
     const res = await submissionApi.destroy(row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       refresh();
       return;
     }
@@ -60,7 +60,7 @@ export function createSubmissionActions({
   /** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */
   const submitDraft = async (row: SubmissionItem) => {
     const res = await submissionApi.submit(row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("dform.submitDraftOk"), { type: "success" });
       refresh();
       return;
@@ -71,7 +71,7 @@ export function createSubmissionActions({
   /** 重新提交被驳回的填报（仅申请人、仅驳回态：按当前数据重新发起流程实例） */
   const resubmit = async (row: SubmissionItem) => {
     const res = await submissionApi.resubmit(row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("dform.resubmitOk"), { type: "success" });
       refresh();
       return;

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
+import { usePagedList } from "@/hooks/usePagedList";
 import { operationLogApi } from "@/api/audit/logs/operation";
 
 defineOptions({ name: "ApprovalLogsDialog" });
@@ -41,42 +41,27 @@ const formatCreator = (creator: LogRow["creator"]) => {
 };
 
 const { t } = useI18n();
-const loading = ref(false);
-const rows = ref<Array<LogRow>>([]);
-const total = ref(0);
-const page = ref(1);
 
-const fetchLogs = () => {
-  loading.value = true;
-  operationLogApi
-    .list({
-      page: page.value,
-      size: 10,
+// 相关日志分页（异常归一与信封判定见 usePagedList；翻页失败保持现状不清空）
+const {
+  loading,
+  page,
+  total,
+  rows,
+  load: fetchLogs,
+  setPage
+} = usePagedList<LogRow>({
+  pageSize: 10,
+  fetch: params =>
+    operationLogApi.list({
+      ...params,
       // path_exact 精确匹配审批单的请求路径（避免前缀命中同模块其他接口）
       path_exact: props.path,
       ...(props.objectPk ? { object_pk: props.objectPk } : {}),
       ...(props.creatorPk ? { creator: props.creatorPk } : {})
-    })
-    .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
-        rows.value = res.data.results as Array<LogRow>;
-        total.value = res.data.total ?? 0;
-      }
-    })
-    .catch(() => {
-      // 失败提示由 http 拦截器统一处理，这里兜住 reject 并清空
-      rows.value = [];
-      total.value = 0;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
-};
-
-const onPageChange = (value: number) => {
-  page.value = value;
-  fetchLogs();
-};
+    }),
+  pickRows: res => (res.data as { results?: LogRow[] } | null)?.results ?? []
+});
 
 onMounted(fetchLogs);
 </script>
@@ -132,7 +117,7 @@ onMounted(fetchLogs);
       :total="total"
       :page-size="10"
       :current-page="page"
-      @current-change="onPageChange"
+      @current-change="setPage"
     />
   </div>
 </template>

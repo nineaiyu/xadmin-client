@@ -6,8 +6,9 @@ import type { TreeV2Instance } from "element-plus";
 import type { TreeNodeData } from "element-plus/es/components/tree-v2/src/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { filterByKeyword } from "@/utils/keywordFilter";
 import { hasAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import {
   deptApi,
@@ -49,7 +50,7 @@ const loadScope = async () => {
   try {
     // 异常归一为失败结果：HTTP 层错误与业务失败走同一分支提示
     const res = await deptApi.managed().catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       scope.value = res.data;
     } else if (res.detail) {
       message(String(res.detail), { type: "warning" });
@@ -90,15 +91,9 @@ const foldUsers = (users: ManagedUserRef[]) => {
 
 // —— 关键字检索：卡片视图走内存过滤（超量收敛为「加载更多」），层级视图走树过滤 ——
 const keyword = ref("");
-const filteredDepts = computed(() => {
-  const value = keyword.value.trim().toLowerCase();
-  if (!value) return depts.value;
-  return depts.value.filter(
-    dept =>
-      dept.name?.toLowerCase().includes(value) ||
-      dept.code?.toLowerCase().includes(value)
-  );
-});
+const filteredDepts = computed(() =>
+  filterByKeyword(depts.value, keyword.value, dept => [dept.name, dept.code])
+);
 
 /** 单次渲染上限（具名常量）：超量部门收敛为「加载更多」逐步放量 */
 const RENDER_STEP = 200;

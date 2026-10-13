@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
@@ -41,7 +41,7 @@ export function createVerifySubmitters<
     options
       .verify(currentMethod.value, code.value)
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           options.onSuccess(res);
         } else {
           message(res.detail, { type: "warning" });
@@ -62,7 +62,7 @@ export function createVerifySubmitters<
       });
       if (!payload) return;
       const res = await options.verify("passkey", JSON.stringify(payload));
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         options.onSuccess(res);
       } else {
         message(res.detail, { type: "warning" });

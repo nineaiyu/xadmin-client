@@ -4,7 +4,7 @@ import { handleExportData, handleImportData } from "./handle";
 import AddFill from "~icons/ri/add-circle-line";
 import Upload from "~icons/ep/upload";
 import Download from "~icons/ep/download";
-import type { OperationButtonsRow } from "@/components/RePlusPage";
+import type { OperationButtonsRow } from "../components/ButtonOperation";
 import type { ApiAuthProps } from "./types";
 import type { BaseApi } from "@/api/base";
 import type { Ref } from "vue";

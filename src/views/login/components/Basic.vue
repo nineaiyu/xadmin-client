@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
@@ -78,7 +78,7 @@ const initToken = (force = false) => {
   if (!force && tokenPromise) return tokenPromise;
   tokenPromise = getTempTokenApi()
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         ruleForm.token = res.token;
       }
     })
@@ -117,7 +117,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       useUserStoreHook()
         .loginByUsername(cloneDeep(ruleForm), authInfo.encrypted)
         .then(res => {
-          if (res.code === SUCCESS_CODE) {
+          if (isSuccess(res)) {
             if ("mfa_required" in res.data && res.data.mfa_required) {
               // 密码阶段通过，切换到登录 MFA 动态码验证步骤
               loginMfaInfo.value = res.data;
@@ -157,7 +157,7 @@ onMounted(() => {
   configLoading.value = true;
   loginAuthApi()
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         const authData = res.data as RecordType;
         Object.assign(authInfo, authData);
         void initToken();

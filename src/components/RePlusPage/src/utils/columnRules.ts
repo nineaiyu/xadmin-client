@@ -4,14 +4,10 @@
  * 这些函数不持有 Vue 状态、不发起请求；装配流程见同目录 columns.tsx。
  */
 
-import { isEmail, isNumber } from "@pureadmin/utils";
+import { FIELD_TYPES } from "./fieldTypeRegistry";
 import { formatPublicLabels } from "./index";
+import type { ColumnMeta } from "./fieldTypeRegistry";
 import type { PageColumn } from "./types";
-import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
-
-/** 列元数据：同时兼容 search-fields 与 search-columns 接口返回（与 PlusColumnMeta 同口径） */
-type ColumnMeta = SearchFieldsResult["data"][0] &
-  Partial<SearchColumnsResult["data"][0]>;
 
 type ColumnLabelDeps = {
   t: (arg0: string, arg1?: object) => string;
@@ -53,59 +49,23 @@ export function applyChoicesTruncated(
   }
 }
 
-/** email / integer / 通用 required 三类校验规则（与原 switch-case 逐字段等价） */
+/**
+ * 生成表单校验规则：按字段类型能力清单（fieldTypeRegistry）的 rule 面查表，
+ * 未登记专属规则的类型兜底为通用 required 规则。
+ */
 export function buildColumnRule(
   column: ColumnMeta,
   message: string
 ): Record<string, unknown>[] {
-  switch (column.input_type) {
-    case "email":
-      return [
-        {
-          required: column.required,
-          validator: (
-            rule: unknown,
-            value: unknown,
-            callback: (error?: Error) => void
-          ) => {
-            if (value === "" || !value) {
-              callback();
-            } else if (!isEmail(value as string)) {
-              callback(new Error(message));
-            } else {
-              callback();
-            }
-          },
-          trigger: "blur"
-        }
-      ];
-    case "integer":
-      return [
-        {
-          required: column.required,
-          validator: (
-            rule: unknown,
-            value: unknown,
-            callback: (error?: Error) => void
-          ) => {
-            if (value && !isNumber(value)) {
-              callback(new Error("field must be a number"));
-            } else {
-              callback();
-            }
-          },
-          trigger: "blur"
-        }
-      ];
-    default:
-      return [
-        {
-          required: column.required,
-          message: message,
-          trigger: "blur"
-        }
-      ];
-  }
+  const factory = FIELD_TYPES[column.input_type]?.rule;
+  if (factory) return factory(column, message);
+  return [
+    {
+      required: column.required,
+      message: message,
+      trigger: "blur"
+    }
+  ];
 }
 
 /**

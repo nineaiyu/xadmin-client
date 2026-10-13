@@ -42,6 +42,7 @@ import {
   useGlobal,
   useResizeObserver
 } from "@pureadmin/utils";
+import { isEqual } from "lodash-es";
 
 import { useRoute } from "vue-router";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -165,11 +166,30 @@ useLayoutShortcutKeys({
 useSystemThemeWatch();
 
 // 项目设置实时生效：layout/configure 任意设置项变更即防抖自动 PATCH
-// （不再依赖面板里的「保存配置」按钮；首次挂载不触发）
+// （不再依赖面板里的「保存配置」按钮；首次挂载不触发）。
+// 两类无意义写入必须挡掉，否则每次页面加载都会整包 PATCH 一次站点配置：
+// - 启动静默窗口：首屏会把站点配置回写本地存储（主题色大小写归一、菜单布局、
+//   侧栏状态等初始化动作），窗口内的变化只重设同步基线，不发保存；
+// - 幂等跳过：窗口外的写入若与最近一次服务端同步快照深比较无差异也不发保存。
+const STARTUP_QUIET_MS = 700;
+const startupQuietUntil = Date.now() + STARTUP_QUIET_MS;
 watch(
   () => [$storage.layout, $storage.configure],
   () => {
-    useSiteConfigStoreHook().autoSaveSiteConfig();
+    const siteConfigStore = useSiteConfigStoreHook();
+    if (Date.now() < startupQuietUntil || !siteConfigStore.syncedSnapshot) {
+      siteConfigStore.captureSyncedSnapshot();
+      return;
+    }
+    if (
+      isEqual(
+        { layout: $storage.layout, configure: $storage.configure },
+        siteConfigStore.syncedSnapshot
+      )
+    ) {
+      return;
+    }
+    siteConfigStore.autoSaveSiteConfig();
   },
   { deep: true }
 );

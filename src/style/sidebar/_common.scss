@@ -60,6 +60,16 @@
     transform: scale(1.2);
   }
 
+  /* 顶栏动作项：热区尺寸 / 圆角 / 居中由 `navbar-action` 工具类提供
+     （tokens/primitives.scss 的 --navbar-action-*），此处只补图标尺寸与兜底布局。
+     类名保留以兼容半暗顶栏等既有选择器；不得再写死 width / height。 */
+  .navbar-action {
+    svg {
+      width: var(--navbar-action-icon);
+      height: var(--navbar-action-icon);
+    }
+  }
+
   .set-icon,
   .fullscreen-icon,
   .search-container,
@@ -67,8 +77,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: var(--layout-header-h);
     font-size: var(--font-size-lg);
     cursor: pointer;
   }
@@ -525,9 +533,11 @@
 
     .horizontal-header-right {
       display: flex;
+      gap: var(--navbar-action-gap);
       align-items: center;
       justify-content: flex-end;
       min-width: 340px;
+      padding-right: var(--navbar-action-pad-right);
 
       /* 动作区取常规文字色（与竖向顶栏 nav-actions 同口径）：此前误用「子菜单激活
          文字色」——亮色主题下该变量为主色，右上角的功能图标与用户名整体泛蓝 */
@@ -550,8 +560,8 @@
         }
       }
 
+      /* 通知：热区 / 高度由 navbar-action 提供，此处只绑定颜色 */
       .dropdown-badge {
-        height: var(--layout-header-h);
         color: var(--pure-theme-sub-menu-active-text);
       }
 
@@ -561,20 +571,23 @@
 
       .el-dropdown-link {
         display: flex;
+        gap: 8px;
         align-items: center;
-        justify-content: space-around;
-        height: var(--layout-header-h);
-        padding: 10px;
+        justify-content: center;
+        height: var(--navbar-action-size);
+        padding: 0 10px;
         color: var(--pure-theme-sub-menu-active-text);
         cursor: pointer;
+        border-radius: var(--navbar-action-radius);
+        transition: background var(--duration-fast) var(--ease-standard);
 
         p {
           font-size: var(--font-size-base);
         }
 
         img {
-          width: 22px;
-          height: 22px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
         }
       }

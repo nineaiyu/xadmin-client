@@ -99,6 +99,16 @@
   /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
   --nav-item-height-horizontal: 40px;
 
+  /* ================ 顶栏动作项（右上角图标按钮）================
+     所有顶栏动作共用同一热区 / 圆角 / 图标尺寸 / 间距——此前各组件各写一套
+     （40×48 / 40×50 / 裸 16×16 并存），高度与节奏不一致导致顶栏视觉杂乱。
+     热区 = 图标 + 四周留白（36px 热区 / 18px 图标 / 10px 圆角）。 */
+  --navbar-action-size: 36px;
+  --navbar-action-radius: 10px;
+  --navbar-action-icon: 18px;
+  --navbar-action-gap: 4px;
+  --navbar-action-pad-right: 12px;
+
   /* 侧栏结构高度：品牌区与顶栏等高，底部折叠条固定高 */
   --sidebar-logo-h: var(--layout-header-h);
   --sidebar-collapse-bar-h: 44px;

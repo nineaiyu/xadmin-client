@@ -72,7 +72,7 @@ describe("buildColumnRule", () => {
   });
 
   it("integer validator rejects non-numeric values", () => {
-    const [rule] = buildColumnRule(meta({ input_type: "integer" }), "");
+    const [rule] = buildColumnRule(meta({ input_type: "integer" }), "数量");
     const validator = rule.validator as (
       _rule: unknown,
       value: unknown,
@@ -81,7 +81,7 @@ describe("buildColumnRule", () => {
     expect(() => validator({}, 3, () => undefined)).not.toThrow();
     let error: Error | undefined;
     validator({}, "abc", e => (error = e));
-    expect(error?.message).toBe("field must be a number");
+    expect(error?.message).toBe("数量");
   });
 });
 

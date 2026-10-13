@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { getCaptchaApi } from "@/api/auth";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
@@ -14,7 +14,7 @@ export const useImageVerify = (imgCode: Ref<string | undefined>) => {
     loading.value = true;
     getCaptchaApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           imgUrl.value = res.captcha_image;
           imgCode.value = res.captcha_key;
           useLoginPageStoreHook().SET_VERIFY_CODE_LENGTH(res.length);

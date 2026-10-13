@@ -67,6 +67,7 @@ type BooleanPreferenceField =
   | "TagsKeepAlive"
   | "TagsVisitHistory"
   | "FooterFixed"
+  | "ShowLogo"
   | "LogoShowText"
   | "SidebarHidden"
   | "SidebarFixedButton"
@@ -1469,6 +1470,44 @@ test.describe("布局偏好（面板实时生效）", () => {
     ).toHaveText(/外观/, { timeout: 10_000 });
   });
 
+  test("通用：站点标题实时生效（品牌区 + 标签页）并落库", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+
+    const patchBodies: string[] = [];
+    page.on("request", req => {
+      if (req.url().includes(SITE_CONFIG_URL) && req.method() === "PATCH") {
+        patchBodies.push(req.postData() ?? "");
+      }
+    });
+
+    const input = row(page, /站点标题|Site title/).locator("input");
+    await expect(input).toBeVisible();
+
+    const nextTitle = `xAdmin-E2E-${Date.now()}`;
+    await input.fill(nextTitle);
+    await input.press("Enter");
+
+    // 品牌区（侧栏 Logo 文字）与浏览器标签页即时更新
+    await expect(page.locator(".sidebar-title").first()).toHaveText(nextTitle);
+    await expect
+      .poll(() => page.title(), { timeout: 10_000 })
+      .toContain(nextTitle);
+
+    // 回写后端：站点配置整包 PATCH 载荷含 Title（此前 Title 不在清单，改不动）
+    await expect
+      .poll(
+        () => patchBodies.some(body => body.includes(`"Title":"${nextTitle}"`)),
+        { timeout: SITE_CONFIG_PATCH_TIMEOUT }
+      )
+      .toBe(true);
+
+    // 复位（避免污染其它用例与视觉基线）
+    await input.fill("xAdmin");
+    await input.press("Enter");
+    await expect(page.locator(".sidebar-title").first()).toHaveText("xAdmin");
+  });
+
   test("布局：半暗侧栏与字号自定义档实时生效", async ({ page }) => {
     await ensureLightTheme(page);
     await openSettingPanel(page);
@@ -1487,6 +1526,21 @@ test.describe("布局偏好（面板实时生效）", () => {
     await setSwitch(page, "半暗侧栏", true, "SemiDarkSidebar");
     await expect(page.locator("html")).toHaveClass(/semi-dark-sidebar/);
     await expect.poll(menuBg, { timeout: 10_000 }).toBe("#1d2b45");
+
+    // 容器实际底色与菜单文字色必须同步变深/变浅（历史缺陷：`--sidebar` 在 :root
+    // 已按浅色主题求值，容器覆盖菜单调色板不会回填 → 白底 + 浅色文字，菜单不可见）
+    const containerBg = () =>
+      page
+        .locator(".sidebar-container")
+        .first()
+        .evaluate(el => getComputedStyle(el).backgroundColor);
+    const itemColor = () =>
+      page
+        .locator(".sidebar-container .el-menu-item")
+        .first()
+        .evaluate(el => getComputedStyle(el).color);
+    await expect.poll(containerBg, { timeout: 10_000 }).toBe("rgb(29, 43, 69)");
+    expect(await itemColor()).toMatch(/rgba\(254, 254, 254/);
 
     await setSwitch(page, "半暗侧栏", false, "SemiDarkSidebar");
     await expect(page.locator("html")).not.toHaveClass(/semi-dark-sidebar/);
@@ -2488,6 +2542,40 @@ test.describe("布局偏好（面板实时生效）", () => {
     ).toBeVisible();
   });
 
+  test("布局：「侧边栏Logo」与「Logo 文字」两开关正交（只关图片时文字保留）", async ({
+    page
+  }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    // 关「侧边栏Logo」：只隐藏 Logo 图片，标题文字保留（品牌位仍占位 has-logo）
+    await setSwitch(page, /侧边栏Logo|Sidebar Logo/, false, "ShowLogo");
+    await closePanel(page);
+    await expect(page.locator(".sidebar-logo-container img")).toHaveCount(0);
+    await expect(
+      page.locator(".sidebar-logo-container .sidebar-title")
+    ).not.toBeEmpty();
+    await expect(page.locator(".sidebar-container")).toHaveClass(/has-logo/);
+
+    // 再关「Logo 文字」：品牌位整块收起（no-logo，菜单滚动区上移）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, /Logo 文字|Logo text/, false, "LogoShowText");
+    await closePanel(page);
+    await expect(page.locator(".sidebar-logo-container")).toHaveCount(0);
+    await expect(page.locator(".sidebar-container")).toHaveClass(/no-logo/);
+
+    // 复位
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, /Logo 文字|Logo text/, true, "LogoShowText");
+    await setSwitch(page, /侧边栏Logo|Sidebar Logo/, true, "ShowLogo");
+    await closePanel(page);
+    await expect(page.locator(".sidebar-logo-container img")).toHaveCount(1);
+    await expect(page.locator(".sidebar-container")).toHaveClass(/has-logo/);
+  });
+
   test("布局：导航风格切朴素后菜单激活块去圆角", async ({ page }) => {
     await ensurePanelClosed(page);
     // 圆角基准取设计令牌现值：只校验「plain 归零 / rounded 恢复」
@@ -2647,6 +2735,44 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(page.locator("#header-refresh")).toBeVisible();
   });
 
+  test("布局：落位「更多下拉」的顶栏组件按菜单项形态展示（图标 + 名称）", async ({
+    page
+  }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+
+    // 刷新按钮落位改「更多下拉」：顶栏不再直挂，「更多」入口出现
+    await setWidgetPosition(page, "顶栏刷新", /更多下拉|More/, '["refresh"]');
+    await closePanel(page);
+    await expect(
+      page.locator(".vertical-header-right > #header-refresh")
+    ).toHaveCount(0);
+
+    await page.locator("#header-more").click();
+    const moreItem = page
+      .locator(".more-widgets:visible .el-dropdown-menu__item")
+      .first();
+    // 菜单项为「图标 + 名称」内联形态——组件本体带顶栏热区（navbar-action），
+    // 在下拉里必须收敛为 16px 图标，否则会显示为 36px 孤立方块（历史缺陷）
+    await expect(moreItem).toContainText(/刷新|Refresh/);
+    const iconSize = await moreItem
+      .locator(".navbar-action svg")
+      .first()
+      .evaluate(el => Math.round(el.getBoundingClientRect().width));
+    expect(iconSize).toBe(16);
+    await page.keyboard.press("Escape");
+
+    // 复位：顶栏（同时把 widgetPositions 与镜像旧键都归位）
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setWidgetPosition(page, "顶栏刷新", /顶栏|Header/, "[]");
+    await closePanel(page);
+    await expect(
+      page.locator(".vertical-header-right > #header-refresh")
+    ).toBeVisible();
+  });
+
   test("布局：双列菜单 / 侧边导航 / 混合双列三种模式可切换并复位", async ({
     page
   }) => {
@@ -2676,6 +2802,12 @@ test.describe("布局偏好（面板实时生效）", () => {
       page.locator(".sidebar-container.is-two-column")
     ).toBeVisible();
     await expect(page.locator(".sidebar-mixed-narrow")).toBeVisible();
+    // 二级列要有多项可展示才展开（首页目录下只有一个首页页，会收为窄列）：
+    // 先进入含多项子菜单的一级，再断言次级列内容
+    await page.goto("/#/system/user/index");
+    await expect(
+      page.locator(".sidebar-container .sidebar-main")
+    ).toBeVisible();
 
     // 左上角品牌不重复：站点 Logo 只在一级窄列顶部出现一次（图标形态）；
     // 次级列顶部是「当前一级菜单」的分区标题（vben side-extra-title 同口径），
@@ -2692,6 +2824,22 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(
       page.locator(".sidebar-container .sidebar-mixed-brand .sidebar-logo-link")
     ).toHaveCount(0);
+
+    // 窄列品牌位：站点标题与图标竖排居中展示（vben 窄列品牌形态；曾因父级 scoped
+    // 覆盖失效导致图标偏左 14px，且标题被 hideTitle 隐藏）
+    await expect(
+      page.locator(".sidebar-mixed-narrow__logo .sidebar-title")
+    ).not.toBeEmpty();
+    const brandOffset = await page
+      .locator(".sidebar-mixed-narrow__logo .sidebar-logo-link img")
+      .evaluate(el => {
+        const img = el.getBoundingClientRect();
+        const narrow = el
+          .closest(".sidebar-mixed-narrow")!
+          .getBoundingClientRect();
+        return Math.abs(img.x + img.width / 2 - (narrow.x + narrow.width / 2));
+      });
+    expect(brandOffset).toBeLessThanOrEqual(1);
 
     // 侧边导航：顶栏通栏（宽度 100%、只有面包屑与动作区）、侧栏排在顶栏下方并显示完整菜单
     await openSettingPanel(page);
@@ -2754,6 +2902,63 @@ test.describe("布局偏好（面板实时生效）", () => {
       .locator(".sidebar-container")
       .evaluate(el => el.getBoundingClientRect().width);
     expect(Math.abs(mixedHeader.x - mixedSidebarWidth)).toBeLessThan(2);
+
+    // 复位竖排
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：双列菜单下当前一级只有一项时第二列不渲染", async ({ page }) => {
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "sidebar-mixed-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="sidebar-mixed-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+
+    // 「首页」目录下只有一个首页页：二级列没有可展示内容（与一级窄列重复），
+    // 整列不渲染、侧栏收为窄列宽度，内容区随之占满（vben 同口径）
+    await page.goto("/#/welcome");
+    const container = page.locator(".sidebar-container").first();
+    await expect(container).toHaveClass(/is-narrow-only/);
+    await expect(page.locator(".sidebar-container .sidebar-main")).toHaveCount(
+      0
+    );
+    const widths = await page.evaluate(() => {
+      const box = document.querySelector<HTMLElement>(".sidebar-container");
+      const narrow = document.querySelector<HTMLElement>(
+        ".sidebar-mixed-narrow"
+      );
+      return {
+        container: box?.getBoundingClientRect().width ?? -1,
+        narrow: narrow?.getBoundingClientRect().width ?? -1
+      };
+    });
+    expect(widths.narrow).toBeGreaterThan(0);
+    expect(Math.abs(widths.container - widths.narrow)).toBeLessThan(2);
+
+    // 进入含多项子菜单的一级：二级列恢复展示
+    await page.goto("/#/system/user/index");
+    await expect(container).not.toHaveClass(/is-narrow-only/);
+    await expect(
+      page.locator(".sidebar-container .sidebar-main")
+    ).toBeVisible();
 
     // 复位竖排
     await openSettingPanel(page);

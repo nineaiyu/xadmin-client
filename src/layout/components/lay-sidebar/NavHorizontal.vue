@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
-import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
-import { responsiveStorageNameSpace } from "@/config";
-import { ref, nextTick, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, nextTick, computed, onMounted } from "vue";
 import {
-  storageLocal,
   isAllEmpty,
   useDark,
   useGlobal,
@@ -14,6 +11,7 @@ import {
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { groupMenuChildren } from "@/utils/menuGroups";
 import {
+  resolveBrandVisible,
   resolveLogoImageStyle,
   resolveLogoMode,
   resolveLogoSrc,
@@ -28,11 +26,6 @@ import NavbarActions from "../lay-navbar/NavbarActions.vue";
  */
 const menuRef = ref();
 const headerRef = ref();
-const showLogo = ref(
-  storageLocal().getItem<StorageConfigs>(
-    `${responsiveStorageNameSpace()}configure`
-  )?.showLogo ?? true
-);
 
 const route = useRoute();
 const { title, getLogo, backTopMenu } = useNav();
@@ -45,7 +38,11 @@ const logoSrc = computed(() =>
   resolveLogoSrc(configure.value, getLogo(), Boolean(isDark.value))
 );
 const logoMode = computed(() => resolveLogoMode(configure.value));
+/** Logo 图片显隐（「侧边栏Logo」开关，与「Logo 文字」正交） */
+const showLogoImage = computed(() => configure.value?.showLogo ?? true);
 const showLogoText = computed(() => resolveLogoTextVisible(configure.value));
+/** 品牌位是否有可见内容：图片与文字都关时整块不渲染 */
+const brandVisible = computed(() => resolveBrandVisible(configure.value));
 const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 
 const defaultActive = computed(() =>
@@ -70,13 +67,6 @@ useResizeObserver(headerRef, relayoutMenu);
 
 onMounted(() => {
   relayoutMenu();
-  emitter.on("logoChange", key => {
-    showLogo.value = key;
-  });
-});
-
-onBeforeUnmount(() => {
-  emitter.off("logoChange");
 });
 </script>
 
@@ -87,12 +77,12 @@ onBeforeUnmount(() => {
     class="horizontal-header"
   >
     <div
-      v-if="showLogo"
+      v-if="brandVisible"
       class="horizontal-header-left"
       :class="[`logo-mode-${logoMode}`]"
       @click="backTopMenu"
     >
-      <img :src="logoSrc" :style="logoStyle" alt="logo" />
+      <img v-if="showLogoImage" :src="logoSrc" :style="logoStyle" alt="logo" />
       <span v-if="showLogoText">{{ title }}</span>
     </div>
     <el-menu

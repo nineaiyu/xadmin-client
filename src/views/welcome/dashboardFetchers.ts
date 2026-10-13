@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   getDashBoardUserTotalApi,
   getDashBoardUserActiveApi,
@@ -28,7 +28,7 @@ export function createDashboardFetchers({
   const getUserActiveList = () => {
     getDashBoardUserActiveApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           res.data.forEach(item => {
             state.userActiveList.value.push({
               name:
@@ -47,7 +47,7 @@ export function createDashboardFetchers({
   const getTodayOperateTotal = () => {
     getDashBoardTodayOperateTotalApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           const results = res.results ?? [];
           // 空结果时按天取数的下标越界，value 兜底 0
           state.chartData.value[0] = {
@@ -66,7 +66,7 @@ export function createDashboardFetchers({
   const getUserTotal = () => {
     getDashBoardUserTotalApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           const results = res.results ?? [];
           state.chartData.value[1] = {
             ...state.chartData.value[1],
@@ -82,7 +82,7 @@ export function createDashboardFetchers({
   const getUserLoginTotal = () => {
     getDashBoardUserLoginTotalApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           const results = res.results ?? [];
           state.chartData.value[2] = {
             ...state.chartData.value[2],
@@ -98,7 +98,7 @@ export function createDashboardFetchers({
   const getUserLoginList = () => {
     getDashBoardUserLoginTrendApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           state.userLoginList.value = res.data;
         }
       })
@@ -108,7 +108,7 @@ export function createDashboardFetchers({
   const getUserRegisterList = () => {
     getDashBoardUserRegisterTrendApi()
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           state.userRegisterList.value = res.data;
         }
       })
@@ -123,7 +123,7 @@ export function createDashboardFetchers({
         ordering: "-created_time"
       })
       .then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           state.operateLogList.value = res.data?.results ?? [];
         }
       })

@@ -438,6 +438,9 @@ layout:
   tabGeneral: General
   tabShortcut: Shortcuts
   general: General settings
+  siteTitle: Site title
+  siteTitleTip: Site name in the brand area and browser tab (falls back to the platform-config Title when empty)
+  siteTitlePlaceholder: e.g. xAdmin Console
   language: Language
   languageTip: Interface language, the same switch as the one in the header
   headerAutoHide: Auto-hide header
@@ -450,6 +453,7 @@ layout:
   hideTabs: Hide tabs
   hideFooter: Hide Footer
   sidebarLogo: Sidebar Logo
+  sidebarLogoTip: Show the logo image in the brand area; the title text is controlled by "Logo text" separately, and the brand area collapses when both are off
   labelPersistence: Label persistence
   labelStyle: Label style
   tagsStylePlain: Plain
@@ -4214,9 +4218,9 @@ about:
   prodDeps: Production dependencies
   devDeps: Development dependencies
   version: Current version
-  buildTime: Last build time
-  nodeVersion: Recommended Node version
-  pnpmVersion: Recommended pnpm version
+  buildTime: Build time
+  nodeVersion: Node version
+  pnpmVersion: pnpm version
   webRepo: Frontend repository
   serverRepo: Backend repository
   docUrl: Documentation

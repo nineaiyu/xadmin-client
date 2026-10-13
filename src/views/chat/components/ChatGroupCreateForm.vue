@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   chatApi,
   type ChatGroupCreatePayload,
@@ -62,8 +62,8 @@ function onSearchMembers(value: string) {
   memberSearchTimer = window.setTimeout(async () => {
     searchingMembers.value = true;
     try {
-      const { code, data } = await chatApi.searchChatUsers(word);
-      if (code === SUCCESS_CODE) mergeGroupOptions(data ?? []);
+      const res = await chatApi.searchChatUsers(word);
+      if (isSuccess(res)) mergeGroupOptions(res.data ?? []);
     } finally {
       searchingMembers.value = false;
     }

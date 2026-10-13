@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 
 /**
@@ -42,7 +42,7 @@ defineExpose({ getPayload });
 onMounted(async () => {
   try {
     const res = await approvalInstanceApi.returnTargets(props.pk);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       targets.value = res.data;
       form.target_order = targets.value[0]?.order;
     }

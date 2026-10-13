@@ -25,7 +25,7 @@ watch(
 
 <template>
   <span
-    class="fullscreen-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+    class="navbar-action fullscreen-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
     :title="t('buttons.fullScreenToggle')"
     role="button"
     tabindex="0"

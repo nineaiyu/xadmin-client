@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { ref } from "vue";
 import { message } from "@/utils/message";
 import {
@@ -35,7 +35,7 @@ export function useApiAppUsage() {
       .catch(normalizeError);
     if (seq !== usageSeq) return;
     usageLoading.value = false;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       usage.value = res.data as ApplicationUsageStats;
     } else {
       usage.value = null;

@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { createTtlCache } from "./ttlCache";
 
 /**
@@ -55,7 +55,7 @@ export interface ScopeCatalogResponse {
 const catalogCache = createTtlCache<ScopeCatalogResponse>({
   ttl: 60 * 1000,
   // 业务失败不写缓存：调用方可重试，避免一次抖动把空目录缓存一整页
-  shouldCache: res => res?.code === SUCCESS_CODE
+  shouldCache: res => isSuccess(res)
 });
 
 /** 取接口范围目录（命中缓存则不发请求；同键并发只发一次） */

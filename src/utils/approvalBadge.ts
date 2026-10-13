@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, getCurrentScope, onScopeDispose, ref } from "vue";
 import { useIntervalFn } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
@@ -43,7 +43,7 @@ export function refreshApprovalBadge() {
     approvalApi
       .pendingCount()
       .then(res => {
-        if (res.code === SUCCESS_CODE && res.data) {
+        if (isSuccess(res) && res.data) {
           pendingCount.value = Number(res.data.pending ?? 0);
         }
       })
@@ -53,7 +53,7 @@ export function refreshApprovalBadge() {
     approvalInstanceApi
       .pendingCount()
       .then(res => {
-        if (res.code === SUCCESS_CODE && res.data) {
+        if (isSuccess(res) && res.data) {
           flowPendingCount.value = Number(res.data.pending ?? 0);
         }
       })

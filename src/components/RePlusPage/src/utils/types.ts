@@ -11,6 +11,7 @@ import type {
   TableColumns
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
+import type { UseViewedRowOptions } from "@/hooks/useViewedRow";
 import type {
   ApiResult,
   SearchColumnsResult,
@@ -19,7 +20,7 @@ import type {
 import type { Ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { formDialogDrawerOptions } from "./handle";
-import type { OperationProps } from "@/components/RePlusPage";
+import type { OperationProps } from "../components/ButtonOperation";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
 import type { VNode, Component } from "vue";
 import type { Mutable } from "@vueuse/core";
@@ -315,7 +316,16 @@ interface RePlusPageProps {
    * api 的方法挂在共享原型上，运行时遮蔽会影响所有复用该实例的消费方。
    */
   fetchSearchFields?: boolean;
+  /**
+   * 表格已读行：开启后「详情 / 编辑」操作自动标记该行为已读（行类 `is-viewed`
+   * 弱化显示）；记录按接口路径隔离，默认 local 存储跨刷新保持。默认关（零回归）。
+   * 传对象可覆盖 TTL / 容量上限 / 存储后端 / 行键字段（见 useViewedRow）。
+   */
+  viewedRow?: boolean | ViewedRowPageOptions;
 }
+
+/** 表格已读行的页面级配置（scope 由框架按接口路径注入） */
+export type ViewedRowPageOptions = Omit<UseViewedRowOptions, "scope">;
 
 export type {
   ApiAuthProps,

@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   aiAssistantApi,
   type AiConsoleFeature,
@@ -33,15 +33,15 @@ export function useAiConsoleHistory({
     scrollToBottom,
     // 两个入口方向都以调用时刻的当前入口为准
     fetchPage: async ({ beforeId, limit, initial }, current) => {
-      const { code, data } = await aiAssistantApi.history(
+      const res = await aiAssistantApi.history(
         initial
           ? { feature: current, limit }
           : { feature: current, before_id: beforeId, limit }
       );
-      if (code !== SUCCESS_CODE) return null;
+      if (!isSuccess(res)) return null;
       return {
-        results: ((data?.results ?? []) as AiConsoleMessage[]) || [],
-        hasMore: Boolean(data?.has_more)
+        results: ((res.data?.results ?? []) as AiConsoleMessage[]) || [],
+        hasMore: Boolean(res.data?.has_more)
       };
     },
     scopeForLoadMore: () => feature.value

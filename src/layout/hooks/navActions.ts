@@ -1,8 +1,10 @@
-import { getConfig } from "@/config";
 import { emitter } from "@/utils/mitt";
 import { getTopMenu } from "@/router/utils";
 import { transformI18n } from "@/plugins/i18n";
-import { readConfigurePreferences } from "@/utils/preferences";
+import {
+  readConfigurePreferences,
+  resolveSiteTitle
+} from "@/utils/preferences";
 import { remainingPaths, router } from "@/router";
 import { useUserStoreHook } from "@/store/modules/user";
 import type { menuType, routeMetaType } from "../types";
@@ -23,7 +25,7 @@ export function createNavActions({
   /** 动态title（设置面板 →「动态标题」关闭时保持平台标题） */
   function changeTitle(meta: routeMetaType) {
     if (readConfigurePreferences().dynamicTitle === false) return;
-    const Title = getConfig().Title;
+    const Title = resolveSiteTitle();
     if (Title) document.title = `${transformI18n(meta.title)} | ${Title}`;
     else document.title = transformI18n(meta.title);
   }

@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { h, ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
@@ -46,7 +46,7 @@ export function useApiAppDialog({
             ? apiApplicationApi.partialUpdate(row.pk, payload)
             : apiApplicationApi.create(payload)
         ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           // 资源授权为独立端点（全量替换）：加载失败时跳过，绝不覆盖为空
           const grants = formRef.value?.getGrants();
           const targetPk =
@@ -58,7 +58,7 @@ export function useApiAppDialog({
             const grantRes = await apiApplicationApi
               .updateGrants(targetPk, grants)
               .catch(normalizeError);
-            if (grantRes.code !== SUCCESS_CODE) {
+            if (!isSuccess(grantRes)) {
               grantsSaveFailed = true;
               message(String(grantRes.detail || t("apiApp.grant.saveFailed")), {
                 type: "warning"

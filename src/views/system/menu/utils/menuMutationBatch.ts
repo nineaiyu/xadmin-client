@@ -3,7 +3,7 @@
  * 删除走影响面预检 + 级联后代本地剔除；批量启停走 batch-update 后本地同步。
  */
 
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { confirmBatchActive, confirmMenuDelete } from "./menuActions";
 import { flattenMenuTree } from "./normalize";
@@ -37,7 +37,7 @@ export async function removeMenuRows({
     pks.length > 1
       ? await api.batchDestroy(pks, { impact_confirmed: true })
       : await api.destroy(pks[0] as number, { impact_confirmed: true });
-  if (res.code !== SUCCESS_CODE) {
+  if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;
   }
@@ -70,7 +70,7 @@ export async function setMenuRowsActive({
   ]);
   const unique = [...new Set(pks)];
   const res = await api.batchUpdate(unique, { is_active: isActive });
-  if (res.code !== SUCCESS_CODE) {
+  if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;
   }

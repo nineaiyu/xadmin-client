@@ -5,7 +5,7 @@ let defaultSizeWarned = false;
 </script>
 
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { SUCCESS_CODE, isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import type {
   UploadFile,
@@ -78,7 +78,7 @@ onMounted(() => {
   systemUploadFileApi
     .config()
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         uploadConfig.value = res.data;
       } else {
         warnDefaultUploadSize();
@@ -136,7 +136,7 @@ const uploadError = (_error: unknown, uploadFile: UploadFile) => {
 };
 const refreshData = throttle(() => props.tableRef?.handleGetData?.(), 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
-  if (response.code === SUCCESS_CODE) {
+  if (isSuccess(response)) {
     refreshData();
     // 优先展示服务端 detail：命中上传去重时会附带「已复用已有副本」提示，
     // 缺省回退通用成功文案（老后端/无 detail 场景）

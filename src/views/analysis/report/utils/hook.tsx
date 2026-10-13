@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { onMounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -53,7 +53,7 @@ export function useReport(tableRef: Ref) {
     if (loading) loading.value = true;
     const res = await runReport(row.pk).catch(normalizeError);
     if (loading) loading.value = false;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("dataReport.runOk"), { type: "success" });
       tableRef.value?.handleGetData();
       return;

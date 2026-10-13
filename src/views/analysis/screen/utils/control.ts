@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   isOutboundMessage,
   MessageAction,
@@ -91,13 +91,13 @@ export type ScreenInboundFrame =
  */
 export function resolveScreenInbound(raw: unknown): ScreenInboundFrame {
   if (isOutboundMessage<ScreenDataPayload>(raw, MessageAction.SCREEN_DATA)) {
-    if (raw.code !== SUCCESS_CODE || !raw.data) return null;
+    if (!isSuccess(raw) || !raw.data) return null;
     return { kind: "data", frame: raw.data };
   }
   if (
     isOutboundMessage<ScreenCommandPayload>(raw, MessageAction.SCREEN_COMMAND)
   ) {
-    if (raw.code !== SUCCESS_CODE || !raw.data) return null;
+    if (!isSuccess(raw) || !raw.data) return null;
     return { kind: "command", frame: raw.data };
   }
   return null;

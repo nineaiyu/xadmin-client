@@ -2,7 +2,7 @@ import { h } from "vue";
 import { ElMessageBox } from "element-plus";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { dynamicFormApi } from "@/api/dataset/dform";
@@ -89,7 +89,7 @@ export function createTemplateActions({
         approval_flow: null
       })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("dform.templateSaved"), { type: "success" });
       return;
     }

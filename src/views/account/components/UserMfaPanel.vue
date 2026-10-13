@@ -8,7 +8,7 @@
  * 排版对齐同页「个人信息」面板：上置标签的普通 el-form，控件与说明左缘同卡片内边距，
  * 操作按钮置于无标签的尾部 form-item。
  */
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -69,7 +69,7 @@ const statusText = () => {
 const loadRecoveryRemaining = () => {
   recoveryCodesStatusApi()
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         recoveryRemaining.value = res.data.remaining;
       }
     })
@@ -80,7 +80,7 @@ const loadStatus = () => {
   statusLoading.value = true;
   otpStatusApi()
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         status.value = res.data;
         if (res.data.bound) loadRecoveryRemaining();
       }
@@ -97,7 +97,7 @@ const handleStartBind = () => {
   bindLoading.value = true;
   otpStartApi()
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         bindInfo.value = res.data;
       } else {
         message(res.detail, { type: "warning" });
@@ -114,7 +114,7 @@ const handleConfirmBind = () => {
   bindLoading.value = true;
   otpConfirmApi({ code: code.value })
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(res.detail || t("mfa.bindSuccess"), { type: "success" });
         bindInfo.value = null;
         code.value = "";
@@ -147,7 +147,7 @@ const handleOpen = () => {
   openLoading.value = true;
   otpOpenApi({ code: verifyCode.value })
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(res.detail || t("mfa.otpEnabled"), { type: "success" });
         verifyCode.value = "";
         loadStatus();
@@ -166,7 +166,7 @@ const handleTest = () => {
   testLoading.value = true;
   otpTestApi({ code: verifyCode.value })
     .then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(res.detail || t("mfa.testSuccess"), { type: "success" });
       } else {
         message(res.detail, { type: "warning" });

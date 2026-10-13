@@ -13,6 +13,7 @@ import { ensureLocale, useI18n } from "@/plugins/i18n";
 import { responsiveStorageNameSpace } from "@/config";
 import { storageLocal } from "@pureadmin/utils";
 import { getPlatformConfig } from "./config";
+import { resolveSiteTitle } from "@/utils/preferences";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, defineAsyncComponent, type Directive } from "vue";
@@ -86,7 +87,9 @@ getPlatformConfig(app).then(async config => {
     )?.locale ?? "zh";
   document.documentElement.lang =
     initialLocale === "zh" ? "zh-CN" : initialLocale;
-  if (config?.Title) document.title = String(config.Title);
+  // 站点标题：偏好（设置面板 / 站点配置同步）优先，回落 platform-config 的 Title
+  const siteTitle = resolveSiteTitle();
+  if (siteTitle) document.title = siteTitle;
   if (getToken()) {
     try {
       await useSiteConfigStoreHook().getSiteConfig();

@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   oauthAuthorizeApi,
   type OAuthAuthorizeInfo
@@ -47,7 +47,7 @@ onMounted(async () => {
   }
   const res = await oauthAuthorizeApi.authorize(params).catch(normalizeError);
   loading.value = false;
-  if (res.code === SUCCESS_CODE && res.data) {
+  if (isSuccess(res) && res.data) {
     info.value = res.data;
   } else {
     errorText.value = String(res.detail ?? t("oauthAuthorize.loadFailed"));
@@ -61,7 +61,7 @@ const decide = async (approved: boolean) => {
     .approve({ ...readQuery(), approved })
     .catch(normalizeError);
   submitting.value = false;
-  if (res.code !== SUCCESS_CODE || !res.data) {
+  if (!isSuccess(res) || !res.data) {
     errorText.value = String(res.detail ?? t("oauthAuthorize.loadFailed"));
     return;
   }

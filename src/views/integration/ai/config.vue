@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -42,7 +42,7 @@ const loadGlobal = async () => {
   globalLoading.value = true;
   try {
     const res = await aiConfigApi.retrieve().catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       const data = res.data as Record<string, unknown>;
       globalForm.AI_ASSISTANT_ENABLED = Boolean(data?.AI_ASSISTANT_ENABLED);
       globalForm.AI_NL_QUERY_ENABLED = Boolean(data?.AI_NL_QUERY_ENABLED);
@@ -72,7 +72,7 @@ const saveGlobal = async () => {
   const res = await aiConfigApi
     .partialUpdate({}, { ...globalForm })
     .catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("aiConfig.globalSaved"), { type: "success" });
   } else if (res.detail) {
     message(String(res.detail), { type: "warning" });
@@ -110,7 +110,7 @@ const loadMetrics = async () => {
     const res = await aiAssistantApi
       .metrics(metricsDays.value)
       .catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       metrics.value = res.data as AiMetrics;
     }
   } finally {
@@ -153,7 +153,7 @@ const loadUsage = async () => {
   usageLoading.value = true;
   try {
     const res = await aiAssistantApi.usage(usageDays.value).catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       usage.value = res.data as AiUsageSummary;
     }
   } finally {

@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
 import type { RecordType } from "plus-pro-components";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
 import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
@@ -86,7 +86,7 @@ const loadScopeGroups = async () => {
   scopeLoading.value = true;
   try {
     const res = await loadPatScopeCatalog();
-    if (res.code !== SUCCESS_CODE || !res.data?.groups) return;
+    if (!isSuccess(res) || !res.data?.groups) return;
     scopeGroups.value = res.data.groups.map(group => {
       const seen = new Set<string>();
       const options = (group.options ?? [])

@@ -5,7 +5,8 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
 import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
+import { filterByKeyword } from "@/utils/keywordFilter";
 import {
   chatApi,
   type ChatGroupCreatePayload,
@@ -77,7 +78,7 @@ function openCreateGroupDialog() {
       }
       // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹层 loading 悬挂
       const res = await chatApi.createGroup(payload).catch(normalizeError);
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         done();
         emit("created", res.data);
         return;
@@ -88,23 +89,20 @@ function openCreateGroupDialog() {
   });
 }
 
-const filteredRooms = computed(() => filterByName(props.rooms, roomTitle));
-const filteredContacts = computed(() =>
-  filterByName(props.contacts, item => item.nickname || item.username || "")
+/** 房间过滤：标题（AI / 公开房间用 i18n 名）或最近消息命中 */
+const filteredRooms = computed(() =>
+  filterByKeyword(props.rooms, keyword.value, room => [
+    roomTitle(room),
+    (room as RoomLike).last_message
+  ])
 );
-
-function filterByName<T extends object>(
-  list: T[],
-  titleOf: (_item: T) => string
-) {
-  const word = keyword.value.trim().toLowerCase();
-  if (!word) return list;
-  return list.filter(item => {
-    if (titleOf(item).toLowerCase().includes(word)) return true;
-    const extra = (item as RoomLike).last_message;
-    return typeof extra === "string" && extra.toLowerCase().includes(word);
-  });
-}
+/** 联系人过滤：昵称或用户名命中 */
+const filteredContacts = computed(() =>
+  filterByKeyword(props.contacts, keyword.value, item => [
+    item.nickname,
+    item.username
+  ])
+);
 
 type RoomLike = { last_message?: string };
 

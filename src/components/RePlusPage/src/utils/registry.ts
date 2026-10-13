@@ -1,21 +1,19 @@
-import {
-  builtinSearchRenderers,
-  searchFallbackRenderer
-} from "./renderers-search";
-import { builtinFormRenderers, formFallbackRenderer } from "./renderers-form";
-import { builtinDetailRenderers } from "./renderers-detail";
+import { searchFallbackRenderer } from "./renderers-search";
+import { formFallbackRenderer } from "./renderers-form";
+import { pickRenderers } from "./fieldTypeRegistry";
 import type { PlusColumnHandler, PlusColumnRegistry } from "./types";
 
 /**
  * 列渲染器注册表。
  *
- * 内置渲染器按 input_type 查找；业务侧可通过 register*Renderer 注册自定义
- * input_type 的渲染器，或覆盖内置行为。注册为模块级全局生效，需在页面首次
- * 渲染（getColumnData）之前调用。
+ * 内置渲染器按 input_type 查找，实现体在 renderers-*.tsx、键与能力声明在
+ * fieldTypeRegistry.ts（字段类型能力清单，单一事实源）；业务侧可通过
+ * register*Renderer 注册自定义 input_type 的渲染器，或覆盖内置行为。注册为
+ * 模块级全局生效，需在页面首次渲染（getColumnData）之前调用。
  */
-const searchRenderers: PlusColumnRegistry = { ...builtinSearchRenderers };
-const formRenderers: PlusColumnRegistry = { ...builtinFormRenderers };
-const detailRenderers: PlusColumnRegistry = { ...builtinDetailRenderers };
+const searchRenderers: PlusColumnRegistry = pickRenderers("search");
+const formRenderers: PlusColumnRegistry = pickRenderers("form");
+const detailRenderers: PlusColumnRegistry = pickRenderers("detail");
 
 /** 注册/覆盖搜索列渲染器 */
 export function registerSearchRenderer(

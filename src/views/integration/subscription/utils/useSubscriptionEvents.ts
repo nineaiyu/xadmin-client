@@ -1,6 +1,6 @@
 import { onMounted, ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { webhookSubscriptionApi, type WebhookEvent } from "@/api/task/webhook";
 import { message } from "@/utils/message";
 
@@ -19,7 +19,7 @@ export function useSubscriptionEvents({ t }: { t: TFunction }) {
 
   onMounted(async () => {
     const res = await webhookSubscriptionApi.events().catch(() => null);
-    if (res?.code === SUCCESS_CODE) {
+    if (res && isSuccess(res)) {
       events.value = (res.data as never as WebhookEvent[]) ?? [];
     } else {
       message(t("webhook.eventsLoadFailed"), { type: "warning" });

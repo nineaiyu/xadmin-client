@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -86,7 +86,7 @@ const roleOptions = ref<Array<{ pk: string | number; name: string }>>([]);
 onMounted(async () => {
   try {
     const res = await fetchAllRows(roleApi.list);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       roleOptions.value = listRows<{ pk: string; name: string }>(res).map(
         row => ({ pk: row.pk, name: row.name })
       );
@@ -127,7 +127,7 @@ const onPreview = () => {
   maskApi
     .preview({ values, rule: previewRule, viewer_roles: viewerRoles.value })
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         const data = res.data as {
           results: Array<{ input: string; output: string }>;
           truncated?: boolean;

@@ -36,6 +36,8 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         hideFooter: config.HideFooter ?? false,
         footerFixed: config.FooterFixed ?? false,
         footerHeight: config.FooterHeight ?? 0,
+        // 站点标题：platform-config 的 Title 作为缺省，设置面板 / 站点配置同步可覆写
+        title: config.Title ?? "",
         showLogo: config.ShowLogo ?? true,
         logoSource: config.LogoSource ?? "",
         logoShowText: config.LogoShowText ?? true,

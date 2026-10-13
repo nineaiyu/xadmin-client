@@ -1,7 +1,7 @@
 import { computed, ref, type UnwrapNestedRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import type { accountRiskApi, AccountRiskStats } from "@/api/system/security";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { StatsGroup } from "./stats";
 import {
   LEVEL_LABEL_KEYS,
@@ -96,7 +96,7 @@ export function useRiskStats({
     api
       .stats()
       .then(res => {
-        stats.value = res.code === SUCCESS_CODE ? (res.data ?? null) : null;
+        stats.value = isSuccess(res) ? (res.data ?? null) : null;
       })
       .catch(() => {
         stats.value = null;

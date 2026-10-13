@@ -3,7 +3,7 @@ import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   aiAssistantApi,
   type AiConsoleFeature,
@@ -56,14 +56,14 @@ const loadStatus = async () => {
     aiAssistantApi.status().catch(() => null),
     aiAssistantApi.tools().catch(() => null)
   ]);
-  if (res?.code === SUCCESS_CODE) {
+  if (res && isSuccess(res)) {
     status.value = res.data as AiStatus;
     statusFailed.value = false;
   } else {
     // 重新进入页面（keep-alive）时的失败保留已渲染的控制台，只有无任何状态时才显错误态
     if (!status.value) statusFailed.value = true;
   }
-  if (toolRes && toolRes.code === SUCCESS_CODE) {
+  if (toolRes && isSuccess(toolRes)) {
     tools.value = toolRes.data as AiToolsResult;
   } else if (!tools.value) {
     // 工具清单失败且无缓存值：显式提示（此前静默，工具数恒显示 0 无从判断）

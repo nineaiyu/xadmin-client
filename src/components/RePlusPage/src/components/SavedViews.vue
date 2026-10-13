@@ -9,7 +9,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
 import { savedViewApi } from "@/api/system/security";
-import { SUCCESS_CODE, type DetailResult } from "@/api/types";
+import { type DetailResult, isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type { RecordType } from "plus-pro-components";
 import type { PageColumn } from "../utils/types";
@@ -82,10 +82,9 @@ const load = async () => {
       size: 100,
       page_key: pageKey.value
     });
-    rows.value =
-      res.code === SUCCESS_CODE
-        ? ((res.data?.results ?? []) as SavedViewRow[])
-        : [];
+    rows.value = isSuccess(res)
+      ? ((res.data?.results ?? []) as SavedViewRow[])
+      : [];
   } catch {
     rows.value = [];
   } finally {
@@ -162,7 +161,7 @@ const openForm = async (
               ...payload
             });
       const res = await request.catch(fallback);
-      if (res.code !== SUCCESS_CODE) {
+      if (!isSuccess(res)) {
         message(String(res.detail ?? t("results.failed")), { type: "error" });
         return;
       }
@@ -203,7 +202,7 @@ const updateWithCurrent = async (row: SavedViewRow) => {
   const res = await savedViewApi
     .partialUpdate(row.pk, { conditions })
     .catch(fallback);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("savedView.updated", { name: row.name }), { type: "success" });
     await load();
   } else {
@@ -215,7 +214,7 @@ const toggleDefault = async (row: SavedViewRow) => {
   const res = await savedViewApi
     .partialUpdate(row.pk, { is_default: !row.is_default })
     .catch(fallback);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     await load();
     message(
       row.is_default
@@ -233,7 +232,7 @@ const remove = async (row: SavedViewRow) => {
     return;
   }
   const res = await savedViewApi.destroy(row.pk).catch(fallback);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     if (String(currentPk.value) === String(row.pk)) currentPk.value = "";
     await load();
   } else {

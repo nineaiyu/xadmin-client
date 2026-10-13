@@ -25,7 +25,14 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      * （或首次打开面板兜底）时对 locale / layout / configure 三命名空间的
      * 深拷贝快照，与当前值比对得出「是否偏离同步态」。
      */
-    preferenceBaseline: null as PreferenceBaseline | null
+    preferenceBaseline: null as PreferenceBaseline | null,
+    /**
+     * 最近一次与服务端同步（读取/保存成功）时的 layout/configure 快照。
+     * 首屏会把站点配置回写本地存储（主题色 / 菜单布局等相同值），布局层的
+     * 自动保存用它与当前值深比较，无差异时不发整包 PATCH——否则每次页面加载
+     * 都会产生一次无意义写入。
+     */
+    syncedSnapshot: null as { layout: unknown; configure: unknown } | null
   }),
   actions: {
     setSiteConfig(config: PlatformConfigs) {
@@ -57,6 +64,13 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       if (!this.preferenceBaseline) {
         this.capturePreferenceBaseline();
       }
+    },
+    /** 捕获「已同步」快照（读取 / 保存成功后调用，供布局层跳过无差异的自动保存） */
+    captureSyncedSnapshot() {
+      this.syncedSnapshot = {
+        layout: cloneDeep(Storage.getData("layout", this.nameSpace) ?? {}),
+        configure: cloneDeep(Storage.getData("configure", this.nameSpace) ?? {})
+      };
     },
     async resetSiteConfig() {
       const { configApi } = await import("@/api/config");
@@ -93,6 +107,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           HideFooter: configure.hideFooter,
           FooterFixed: configure.footerFixed,
           FooterHeight: configure.footerHeight,
+          Title: configure.title,
           ShowLogo: configure.showLogo,
           LogoSource: configure.logoSource,
           LogoShowText: configure.logoShowText,
@@ -189,6 +204,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                 type: "success"
               });
             }
+            this.captureSyncedSnapshot();
             resolve(res);
           })
           .catch(error => {
@@ -246,6 +262,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                   hideFooter: config.HideFooter ?? false,
                   footerFixed: config.FooterFixed ?? false,
                   footerHeight: config.FooterHeight ?? 0,
+                  // 站点标题：后端下发优先，缺失时回落 platform-config 的 Title（responsive 注入）
+                  title: config.Title ?? "",
                   showLogo: config.ShowLogo ?? true,
                   logoSource: config.LogoSource ?? "",
                   logoShowText: config.LogoShowText ?? true,
@@ -340,6 +358,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               this.setSiteConfig(configObj);
               // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
               this.capturePreferenceBaseline();
+              // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
+              this.captureSyncedSnapshot();
               resolve(config as PlatformConfigs);
             } else {
               reject(config);

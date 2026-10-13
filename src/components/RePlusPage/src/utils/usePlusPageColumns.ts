@@ -1,7 +1,7 @@
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import type { OperationButtonsRow } from "@/components/RePlusPage";
-import { usePublicHooks } from "@/components/RePlusPage";
+import type { OperationButtonsRow } from "../components/ButtonOperation";
+import { usePublicHooks } from "./public";
 import type { RePlusPageProps } from "./types";
 import type { useBaseColumns } from "./columns";
 import {

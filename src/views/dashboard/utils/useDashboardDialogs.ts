@@ -1,12 +1,10 @@
 import { h, ref, type Ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import type { useI18n } from "vue-i18n";
 import { dashboardApi, type DashboardItem } from "@/api/dataset/datasets";
 import DashboardCreateForm from "../components/DashboardCreateForm.vue";
-import { normalizeError } from "@/utils/apiError";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -34,6 +32,23 @@ export function useDashboardDialogs({
 
   const openCreateDashboard = () => {
     dashFormRef.value = undefined;
+    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    const { beforeSure } = useDialogForm<Record<string, unknown>>({
+      formRef: dashFormRef,
+      submit: payload =>
+        dashboardApi.create<DashboardItem>({ ...payload, layout: [] }),
+      successText: t("dashboard.saveOk"),
+      failType: "error",
+      // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
+      onSuccess: async res => {
+        current.value = null;
+        await reload();
+        const created = res.data as DashboardItem | null | undefined;
+        current.value =
+          dashboards.value.find(item => item.pk === created?.pk) ?? null;
+        syncQuery();
+      }
+    });
     addDialog({
       title: t("dashboard.create"),
       width: dialogSize("sm"),
@@ -42,31 +57,7 @@ export function useDashboardDialogs({
       closeOnClickModal: false,
       sureBtnLoading: true,
       contentRenderer: () => h(DashboardCreateForm, { ref: dashFormRef }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = dashFormRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await dashboardApi
-          .create<DashboardItem>({ ...payload, layout: [] })
-          .catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("dashboard.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表（与原手写弹窗行为一致，避免刷新耗时导致弹窗滞留）
-          done();
-          current.value = null;
-          await reload();
-          current.value =
-            dashboards.value.find(item => item.pk === res.data?.pk) ?? null;
-          syncQuery();
-          return;
-        }
-        // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-        if (res.detail) message(String(res.detail), { type: "error" });
-        closeLoading();
-      }
+      beforeSure
     });
   };
 
@@ -77,6 +68,22 @@ export function useDashboardDialogs({
     if (!current.value) return;
     const editingPk = current.value.pk;
     dashSettingsRef.value = undefined;
+    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    const { beforeSure } = useDialogForm<Record<string, unknown>>({
+      formRef: dashSettingsRef,
+      submit: payload =>
+        dashboardApi.partialUpdate<DashboardItem>(editingPk, payload),
+      successText: t("dashboard.saveOk"),
+      failType: "error",
+      onSuccess: res => {
+        const index = dashboards.value.findIndex(item => item.pk === editingPk);
+        const updated = res.data as DashboardItem | null | undefined;
+        if (index >= 0 && updated) {
+          dashboards.value[index] = updated;
+          current.value = dashboards.value[index];
+        }
+      }
+    });
     addDialog({
       title: t("dashboard.settings"),
       width: dialogSize("sm"),
@@ -86,30 +93,7 @@ export function useDashboardDialogs({
       sureBtnLoading: true,
       contentRenderer: () =>
         h(DashboardCreateForm, { ref: dashSettingsRef, row: current.value }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = dashSettingsRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        const res = await dashboardApi
-          .partialUpdate<DashboardItem>(editingPk, payload)
-          .catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("dashboard.saveOk"), { type: "success" });
-          done();
-          const index = dashboards.value.findIndex(
-            item => item.pk === editingPk
-          );
-          if (index >= 0 && res.data) {
-            dashboards.value[index] = res.data;
-            current.value = dashboards.value[index];
-          }
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "error" });
-        closeLoading();
-      }
+      beforeSure
     });
   };
 

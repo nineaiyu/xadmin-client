@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -28,7 +28,7 @@ const fetchVersions = () => {
   approvalFlowApi
     .versions(props.flowPk)
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         rows.value = res.data;
         return;
       }
@@ -56,7 +56,7 @@ const handleRollback = (version: number) => {
       approvalFlowApi
         .rollback(props.flowPk, version, value || "")
         .then(res => {
-          if (res.code === SUCCESS_CODE) {
+          if (isSuccess(res)) {
             message(t("systemApprovalFlow.rollbackSuccess"), {
               type: "success"
             });

@@ -171,6 +171,17 @@ export interface NavbarWidgetLayout {
 }
 
 /**
+ * 固定元素（「更多」下拉 / 设置齿轮 / 用户下拉）的 flex order：必须**恒在**
+ * 组件序号空间（0..N，见 resolveNavbarLayout）右侧——缺省 order=0 会与首个
+ * 组件的序号相同，导致用户下拉被挤到动作区中段（历史缺陷）。
+ */
+export const NAVBAR_FIXED_ORDER = {
+  more: 9000,
+  preferences: 9001,
+  userDropdown: 9002
+} as const;
+
+/**
  * 依据偏好计算顶栏组件编排（纯函数，供顶栏渲染与单测）：
  * - 顺序：`navbarOrder`（缺省内置顺序；未知键忽略，未登记的组件按内置顺序补在末尾）；
  * - 落位：`widgetPositions`（缺省回落历史显隐开关与 `navbarMoreWidgets`）。

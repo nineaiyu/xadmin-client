@@ -3,7 +3,7 @@ import { reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useClipboard } from "@vueuse/core";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { sanitizeHtml } from "@/utils/sanitize";
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 import {
@@ -60,7 +60,7 @@ async function preview() {
         body_template: form.body_template
       })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       previewResult.value = {
         subject: res.data.subject,
         message: res.data.message

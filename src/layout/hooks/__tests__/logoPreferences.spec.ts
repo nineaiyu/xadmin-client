@@ -5,6 +5,7 @@ import {
   FULL_LOGO_HEIGHT_RANGE,
   ICON_LOGO_HEIGHT,
   normalizeFullLogoHeight,
+  resolveBrandVisible,
   resolveLogoImageStyle,
   resolveLogoMode,
   resolveLogoSrc,
@@ -96,5 +97,33 @@ describe("resolveLogoTextVisible", () => {
 describe("ICON_LOGO_HEIGHT", () => {
   it("图标形态固定高度不参与偏好（与既有样式一致）", () => {
     expect(ICON_LOGO_HEIGHT).toBe(32);
+  });
+});
+
+describe("resolveBrandVisible", () => {
+  it("图片与文字两开关正交：任一开启即渲染品牌位", () => {
+    expect(resolveBrandVisible({ showLogo: true, logoShowText: false })).toBe(
+      true
+    );
+    expect(resolveBrandVisible({ showLogo: false, logoShowText: true })).toBe(
+      true
+    );
+    expect(resolveBrandVisible({})).toBe(true);
+    expect(resolveBrandVisible(undefined)).toBe(true);
+  });
+
+  it("两者都关时品牌位整体收起（菜单滚动区随 has-logo 上移）", () => {
+    expect(resolveBrandVisible({ showLogo: false, logoShowText: false })).toBe(
+      false
+    );
+  });
+
+  it("整图形态下文字不单独渲染，可见性只取决于图片开关", () => {
+    expect(resolveBrandVisible({ logoMode: "full", showLogo: false })).toBe(
+      false
+    );
+    expect(resolveBrandVisible({ logoMode: "full", showLogo: true })).toBe(
+      true
+    );
   });
 });

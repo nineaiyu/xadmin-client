@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   aiAssistantApi,
   type AiActionDraft,
@@ -44,7 +44,7 @@ export function useAiConsoleActions({
       const res = (await aiAssistantApi
         .nlRun(dsl)
         .catch(normalizeError)) as ExecuteResponse;
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         const incoming = toIncoming(
           (res.data as Record<string, unknown>).message
         );
@@ -74,7 +74,7 @@ export function useAiConsoleActions({
         detail: String(error?.detail ?? error),
         type: error?.type
       }))) as ExecuteResponse;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       const incoming = toIncoming(
         (res.data as Record<string, unknown>)?.message
       );

@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import Axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
@@ -344,7 +344,7 @@ class PureHttp {
                     useUserStoreHook()
                       .handRefreshToken({ refresh: refresh_token })
                       .then(res => {
-                        if (res.code === SUCCESS_CODE) {
+                        if (isSuccess(res)) {
                           const token = res.data.access;
                           setToken(res.data);
                           config.headers!["Authorization"] = formatToken(token);
@@ -398,7 +398,7 @@ class PureHttp {
         // 携审批令牌的请求消费成功（业务码 1000）：按请求期写入的 key 清除暂存令牌
         // （一次性通行；不能重算 key——axios 已把 config.data 改成序列化字符串）
         const approvalKeyOfRequest = $config._approvalKey;
-        if (approvalKeyOfRequest && response.data?.code === SUCCESS_CODE) {
+        if (approvalKeyOfRequest && isSuccess(response.data)) {
           deletePendingApproval(approvalKeyOfRequest);
         }
         // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调

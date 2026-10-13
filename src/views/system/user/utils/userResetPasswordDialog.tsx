@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   ElButton,
@@ -112,7 +112,7 @@ export function openUserResetPasswordDialog({
           api
             .resetPassword(row.pk, { password })
             .then(res => {
-              if (res.code === SUCCESS_CODE) {
+              if (isSuccess(res)) {
                 message(t("results.success"), { type: "success" });
               } else {
                 message(`${t("results.failed")}，${res.detail}`, {

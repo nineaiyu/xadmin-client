@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, h, onMounted, ref } from "vue";
 import NoticeList from "./components/NoticeList.vue";
 import BellIcon from "~icons/lucide/bell";
@@ -50,7 +50,7 @@ const activeKey = ref();
 
 const getNoticeData = () => {
   userNoticeReadApi.unread().then(res => {
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       useNoticeStoreHook().SET_NOTICECOUNT(res.data.total);
       notices.value = res.data.results;
       if (notices.value.length > 0) {
@@ -128,6 +128,7 @@ const getLabel = computed(
   >
     <span
       :class="[
+        'navbar-action',
         'dropdown-badge',
         'navbar-bg-hover',
         'select-none',
@@ -226,8 +227,6 @@ const getLabel = computed(
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 48px;
   cursor: pointer;
 
   /* 减少动效偏好：铃铛摇摆是纯装饰，直接跳过 */

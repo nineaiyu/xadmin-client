@@ -1,6 +1,6 @@
 import { h, ref } from "vue";
 import { ElButton } from "element-plus";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   addDialog,
   closeDialog,
@@ -47,7 +47,7 @@ export function createSubmissionFormOpener({
       )
         .catch(normalizeError)
         .finally(() => (savingDraft.value = false));
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         message(t("dform.draftSaved"), { type: "success" });
         closeDialog(options, 0);
         refresh();
@@ -103,7 +103,7 @@ export function createSubmissionFormOpener({
             ? submissionApi.partialUpdate(submission.pk, payload)
             : submissionApi.create(payload)
         ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           message(t("dform.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表（避免刷新耗时导致弹窗滞留）
           done();

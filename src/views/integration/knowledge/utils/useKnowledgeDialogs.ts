@@ -2,7 +2,7 @@ import { h, ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { openManageDrawer } from "@/components/ReActionPanel";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { knowledgeApi } from "@/api/ai/knowledge";
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
@@ -60,8 +60,10 @@ export function useKnowledgeDialogs({
         const res = await knowledgeApi
           .upload(payload.name, payload)
           .catch(normalizeError);
-        if (res.code !== SUCCESS_CODE) {
+        if (!isSuccess(res)) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+          // 失败必须复位按钮 loading（否则确定按钮永久转圈）
+          closeLoading();
           return;
         }
         message(res.detail ?? t("aiKnowledge.uploadDone"), { type: "success" });

@@ -5,6 +5,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { userApi } from "@/api/identity/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
 import { hasAuth } from "@/router/utils";
+import { filterByKeyword } from "@/utils/keywordFilter";
 import {
   PreviewDescriptions,
   PreviewFieldMatrix,
@@ -49,17 +50,13 @@ const METHOD_TAG_TYPES: Record<
 };
 
 /** API 码按关键字过滤（code/path/title） */
-const filteredApiPermissions = computed(() => {
-  const items = preview.value?.api_permissions ?? [];
-  const kw = keyword.value.trim().toLowerCase();
-  if (!kw) return items;
-  return items.filter(
-    item =>
-      item.code.toLowerCase().includes(kw) ||
-      item.path.toLowerCase().includes(kw) ||
-      item.title.toLowerCase().includes(kw)
-  );
-});
+const filteredApiPermissions = computed(() =>
+  filterByKeyword(preview.value?.api_permissions ?? [], keyword.value, item => [
+    item.code,
+    item.path,
+    item.title
+  ])
+);
 </script>
 
 <template>

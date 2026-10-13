@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -26,7 +26,7 @@ export function useUserOptions(tableRef: Ref) {
     if (hasAuth("list:SystemDept")) {
       fetchAllRows(deptApi.list)
         .then(res => {
-          if (res.code === SUCCESS_CODE && res.data) {
+          if (isSuccess(res) && res.data) {
             treeData.value = handleTree(res.data.results);
           } else {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });

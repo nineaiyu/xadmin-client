@@ -1,7 +1,7 @@
 import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   webhookSubscriptionApi,
   type WebhookSubscriptionItem
@@ -48,7 +48,7 @@ export function useWebhookSubscription(tableRef: Ref) {
     const res = await webhookSubscriptionApi
       .partialUpdate(row.pk, { is_active: value })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("webhook.saveOk"), { type: "success" });
       return;
     }
@@ -61,7 +61,7 @@ export function useWebhookSubscription(tableRef: Ref) {
   const testSubscription = async (row: WebhookSubscriptionItem) => {
     // 异常归一为可读失败结果：测试触发失败（回调地址不通等）需给出可读原因
     const res = await webhookSubscriptionApi.test(row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(String(res.detail ?? t("webhook.testDispatched")), {
         type: "success"
       });

@@ -1,7 +1,7 @@
 import { h } from "vue";
 import type { Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   addDrawer,
@@ -34,7 +34,7 @@ export function useFlowDrawers({ tableRef }: { tableRef: Ref }) {
     if (row?.pk) {
       try {
         const res = await approvalFlowApi.retrieve(row.pk);
-        if (res.code !== SUCCESS_CODE || !res.data) {
+        if (!isSuccess(res) || !res.data) {
           message(String(res.detail || t("results.failed")), { type: "error" });
           return;
         }

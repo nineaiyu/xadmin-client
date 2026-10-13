@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useSaveShortcut } from "@/hooks/useSaveShortcut";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
@@ -137,7 +137,7 @@ onMounted(async () => {
     return;
   }
   const res = await reportApi.retrieve(pk).catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE || !res.data) {
+  if (!res || !isSuccess(res) || !res.data) {
     message(t("dataReport.loadFailed"), { type: "warning" });
     router.replace("/analysis/report/index");
     return;
@@ -203,7 +203,7 @@ async function save() {
     const res = await reportApi
       .partialUpdate(report.value.pk, { design: payload })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       design.value = payload;
       dirty.value = false;
       message(t("dataReport.designSaved"), { type: "success" });
@@ -227,7 +227,7 @@ async function runNow() {
   running.value = true;
   try {
     const res = await runReport(report.value.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("dataReport.runOk"), { type: "success" });
       return;
     }

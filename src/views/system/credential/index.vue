@@ -6,7 +6,7 @@ import {
   type CredentialOverview
 } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { type ReadonlyColumn } from "@/components/ReReadonlyTable";
 import ReEmpty from "@/components/ReEmpty";
 import CredentialTable from "./components/CredentialTable.vue";
@@ -103,7 +103,7 @@ async function loadData() {
   loading.value = true;
   try {
     const res = await credentialApi.overview();
-    if (res?.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       data.value = res.data;
     }
   } finally {

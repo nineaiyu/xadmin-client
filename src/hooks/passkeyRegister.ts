@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { passkeyApi } from "@/api/system/security";
 import {
@@ -29,7 +29,7 @@ export function createPasskeyRegister(t: TFunction) {
     const challengeApi =
       options.challengeApi ?? (() => passkeyApi.challenge("register"));
     const challengeRes = await challengeApi();
-    if (challengeRes.code !== SUCCESS_CODE) {
+    if (!isSuccess(challengeRes)) {
       message(String(challengeRes.detail), { type: "error" });
       return false;
     }
@@ -65,7 +65,7 @@ export function createPasskeyRegister(t: TFunction) {
       attestation_object: bufferToB64url(response.attestationObject),
       name: options.name || t("passkey.name")
     });
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("passkey.registerSuccess"), { type: "success" });
       return true;
     }

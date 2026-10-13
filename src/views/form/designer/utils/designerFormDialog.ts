@@ -1,9 +1,9 @@
 import { h, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { designerApi, dynamicFormApi } from "@/api/dataset/dform";
 import DynamicFormForm from "../components/DynamicFormForm.vue";
 import type { DynamicFormItem, FormSchema } from "@/api/dataset/dform";
@@ -15,7 +15,7 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 /** 编辑取原文：列表行不含 schema 全文，按主键取详情；失败返回 null（调用方中止） */
 export async function fetchFormDetail(pk: string) {
   const res = await designerApi.retrieveForm(pk).catch(() => null);
-  return res?.code === SUCCESS_CODE && res.data ? res.data : null;
+  return res && isSuccess(res) && res.data ? res.data : null;
 }
 
 /**
@@ -50,6 +50,17 @@ export function createFormDialogOpener({
       source = detail;
     }
     formRef.value = undefined;
+    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    const { beforeSure } = useDialogForm<Record<string, unknown>>({
+      formRef,
+      submit: payload =>
+        source
+          ? dynamicFormApi.partialUpdate(source.pk, payload)
+          : dynamicFormApi.create(payload),
+      successText: t("dform.saveOk"),
+      // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留（useDialogForm 内 done 先于回调）
+      onSuccess: () => tableRef.value?.handleGetData()
+    });
     addDialog({
       title: source ? t("dform.edit") : t("dform.create"),
       width: dialogSize("lg"),
@@ -60,28 +71,7 @@ export function createFormDialogOpener({
       sureBtnLoading: true,
       contentRenderer: () =>
         h(DynamicFormForm, { ref: formRef, row: source, prefill }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = formRef.value?.getPayload();
-        if (!payload) {
-          closeLoading();
-          return;
-        }
-        // 异常归一为可读失败结果：避免请求异常时 beforeSure 抛错、弹窗 loading 悬挂
-        const res = await (
-          source
-            ? dynamicFormApi.partialUpdate(source.pk, payload)
-            : dynamicFormApi.create(payload)
-        ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
-          message(t("dform.saveOk"), { type: "success" });
-          // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
-          done();
-          tableRef.value?.handleGetData();
-          return;
-        }
-        if (res.detail) message(String(res.detail), { type: "warning" });
-        closeLoading();
-      }
+      beforeSure
     });
   };
 }

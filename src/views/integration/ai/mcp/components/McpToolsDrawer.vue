@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   mcpServerApi,
   type McpCallResult,
@@ -39,7 +39,7 @@ const runSync = async () => {
   syncing.value = true;
   try {
     const res = await mcpServerApi.sync(props.row.pk).catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       tools.value =
         (res.data as { tools?: McpToolSnapshot[] } | null)?.tools ?? [];
       message(t("mcp.syncDone", { count: tools.value.length }), {
@@ -91,7 +91,7 @@ const runCall = async () => {
     const res = await mcpServerApi
       .call(props.row.pk, callTool.value, args)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       callResult.value = res.data as McpCallResult;
     } else {
       callResult.value = {

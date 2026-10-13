@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
@@ -45,7 +45,7 @@ export function usePermissionLookups() {
       // 菜单全量列表与菜单页 / 角色页 / 权限页共用缓存；菜单页为权威刷新方（force）
       fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list)).then(
         res => {
-          if (res.code === SUCCESS_CODE) {
+          if (isSuccess(res)) {
             menuRows.value = res.data.results as MenuScopeRow[];
           }
         }
@@ -55,7 +55,7 @@ export function usePermissionLookups() {
       fetchAllRows(modelLabelFieldApi.list, {
         field_type: FieldChoices.DATA
       }).then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           formatFiledAppParent(res.data.results);
           fieldLookupsData.value = handleTree(res.data.results);
         }
@@ -63,14 +63,14 @@ export function usePermissionLookups() {
       fetchAllRows(modelLabelFieldApi.list, {
         field_type: FieldChoices.ROLE
       }).then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           formatFiledAppParent(res.data.results);
           fieldLookupsRole.value = handleTree(res.data.results);
         }
       });
     }
     modelLabelFieldApi.choices().then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         const choicesDict = res.choices_dict as {
           choices?: FieldLookupItem[];
           matches?: Record<string, string>;

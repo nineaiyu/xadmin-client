@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { type FormInstance, type FormRules } from "element-plus";
@@ -85,7 +85,7 @@ async function searchUsers(query: string) {
         username: query
       })
       .catch(() => null);
-    if (res?.code === SUCCESS_CODE && res.data) {
+    if (res && isSuccess(res) && res.data) {
       const rows =
         (
           res.data as {
@@ -239,7 +239,7 @@ async function submit() {
       // 抄送人：与流程节点级默认抄送合并（后端去重、不含申请人）
       cc_users: form.ccUsers
     });
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("systemApprovalInstance.submitSuccess"), { type: "success" });
       emit("submitted");
       return;

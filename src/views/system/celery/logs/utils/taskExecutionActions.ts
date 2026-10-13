@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { taskCenterApi, type TaskCenterKind } from "@/api/task/task";
@@ -42,7 +42,7 @@ export function createTaskExecutionActions({
     const res = await taskCenterApi[action](kind, String(row.pk ?? "")).catch(
       normalizeError
     );
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(
         String(
           res.detail ??

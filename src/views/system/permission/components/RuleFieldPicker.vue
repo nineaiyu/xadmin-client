@@ -2,7 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CascaderOption } from "element-plus";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { modelLabelFieldApi } from "@/api/system/field";
 import type { FieldLookupItem, FieldLookupNode } from "./utils/types";
@@ -79,7 +79,7 @@ async function loadMatchOptions() {
   const res = await modelLabelFieldApi
     .lookups({ table: table.value, field: field.value })
     .catch(() => null);
-  if (res?.code !== SUCCESS_CODE) return;
+  if (!res || !isSuccess(res)) return;
   matchOptions.value = res.data as FieldLookupItem[];
   fieldMeta.value =
     (res as { field_meta?: Record<string, unknown> }).field_meta ?? null;

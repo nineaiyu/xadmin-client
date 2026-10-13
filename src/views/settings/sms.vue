@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   settingsSmsConfigApi,
   settingsSmsServerApi
@@ -44,7 +44,7 @@ async function loadBackends() {
   backendsFailed.value = false;
   try {
     const res = await settingsSmsServerApi.backends();
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       smsBackends.value = [];
       (Array.isArray(res.data) ? res.data : []).forEach((item: RecordType) => {
         smsBackends.value.push({

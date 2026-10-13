@@ -9,7 +9,7 @@ import {
 } from "@/api/task/webhook";
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import SubscriptionForm from "../components/SubscriptionForm.vue";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -52,7 +52,7 @@ export function useSubscriptionDialog({
             ? webhookSubscriptionApi.partialUpdate(row.pk, payload)
             : webhookSubscriptionApi.create(payload)
         ).catch(normalizeError);
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           message(t("webhook.saveOk"), { type: "success" });
           // 先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留
           done();

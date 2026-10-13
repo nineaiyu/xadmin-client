@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree } from "@/utils/tree";
@@ -80,7 +80,7 @@ export function createPageRequest({
       .then(res => {
         // 过期响应直接丢弃：不覆盖新数据、不触发 searchComplete、不关闭 loading
         if (requestSeq !== latestRequestSeq) return;
-        if (res.code === SUCCESS_CODE && res.data) {
+        if (isSuccess(res) && res.data) {
           if (searchResultFormat && typeof searchResultFormat === "function") {
             dataList.value = searchResultFormat(res.data.results);
           } else {

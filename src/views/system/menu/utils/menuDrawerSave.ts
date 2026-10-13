@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import type { Ref } from "vue";
@@ -33,7 +33,7 @@ export function createMenuNodeSaver({
     cascadePks: Array<number | string>
   ): Promise<boolean> => {
     const res = await saveNode(model, isAdd).catch(normalizeError);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       return false;
     }

@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   b64urlToBuffer,
@@ -24,7 +24,7 @@ export function createPasskeyAssert(t: TFunction) {
       return null;
     }
     const challengeRes = await options.challengeApi();
-    if (challengeRes.code !== SUCCESS_CODE) {
+    if (!isSuccess(challengeRes)) {
       message(String(challengeRes.detail), { type: "warning" });
       return null;
     }

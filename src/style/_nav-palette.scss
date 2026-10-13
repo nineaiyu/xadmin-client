@@ -1,0 +1,19 @@
+/* ================ 深色导航调色板（半暗侧栏 / 半暗顶栏共用） ================
+   覆盖菜单调色板令牌（tokens/semantic.scss 的 --pure-theme-*）：侧栏容器与
+   顶栏内嵌菜单（混合系布局）同源消费，因此两处「半暗」共用同一组取值。
+
+   要点：派生变量必须在本作用域内**重新绑定**——`--sidebar`（侧栏容器底色）
+   与其派生 `--sidebar-deep`（双列一级窄列底色）在 `:root` 已按浅色主题
+   **求值为字面量**，后代覆盖 `--pure-theme-menu-bg` 不会回填。历史缺陷：
+   半暗侧栏下容器保持白底 + 浅色菜单文字（菜单除选中项外不可见）。 */
+
+@mixin nav-dark-palette {
+  --sidebar: var(--pure-theme-menu-bg);
+  --sidebar-deep: var(--pure-theme-menu-bg);
+  --pure-theme-menu-bg: #1d2b45;
+  --pure-theme-sub-menu-bg: #14203a;
+  --pure-theme-menu-hover: rgb(64 145 247 / 15%);
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-title-hover: #fff;
+}

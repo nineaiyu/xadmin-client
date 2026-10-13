@@ -3,7 +3,7 @@ import { computed, shallowRef, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
-import { resolveNavbarLayout } from "./widgets/catalog";
+import { NAVBAR_FIXED_ORDER, resolveNavbarLayout } from "./widgets/catalog";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
@@ -87,9 +87,10 @@ const preferencesInDropdown = computed(
       v-if="widgetLayout.more.length"
       id="header-more"
       trigger="click"
+      :style="{ order: NAVBAR_FIXED_ORDER.more }"
     >
       <span
-        class="navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+        class="navbar-action navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
         role="button"
         tabindex="0"
         :title="t('layout.moreWidgets')"
@@ -99,11 +100,14 @@ const preferencesInDropdown = computed(
       </span>
       <template #dropdown>
         <el-dropdown-menu class="more-widgets">
+          <!-- 落位到「更多」的组件复用顶栏组件本体：样式在 sidebar/_common.scss
+               收敛为菜单项内联形态（图标 + 名称），此处补名称标签 -->
           <el-dropdown-item
             v-for="entry in widgetLayout.more"
             :key="entry.item.key"
           >
             <component :is="entry.item.component" />
+            <span class="widget-menu__label">{{ t(entry.item.labelKey) }}</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
@@ -111,7 +115,8 @@ const preferencesInDropdown = computed(
     <!-- 设置入口（顶栏齿轮形态） -->
     <span
       v-if="preferencesInHeader"
-      class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+      class="navbar-action set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
+      :style="{ order: NAVBAR_FIXED_ORDER.preferences }"
       :title="t('buttons.systemSet')"
       role="button"
       tabindex="0"
@@ -123,7 +128,10 @@ const preferencesInDropdown = computed(
       <IconifyIconOffline :icon="Setting" />
     </span>
     <!-- 用户下拉（可内嵌落位为 user-dropdown 的组件） -->
-    <el-dropdown trigger="click">
+    <el-dropdown
+      trigger="click"
+      :style="{ order: NAVBAR_FIXED_ORDER.userDropdown }"
+    >
       <span
         class="el-dropdown-link navbar-bg-hover select-none"
         role="button"
@@ -148,6 +156,7 @@ const preferencesInDropdown = computed(
             :key="entry.item.key"
           >
             <component :is="entry.item.component" />
+            <span class="widget-menu__label">{{ t(entry.item.labelKey) }}</span>
           </el-dropdown-item>
           <el-dropdown-item v-if="preferencesInDropdown" @click="onPanel">
             <IconifyIconOffline :icon="Setting" style="margin: 5px" />
@@ -166,28 +175,39 @@ const preferencesInDropdown = computed(
 <style lang="scss" scoped>
 .navbar-actions {
   display: flex;
+  gap: var(--navbar-action-gap);
   align-items: center;
   justify-content: flex-end;
-  height: 48px;
+  height: 100%;
+
+  /* 右侧留白：动作区不贴浏览器边缘（与内容区的 16px 节奏呼应） */
+  padding-right: var(--navbar-action-pad-right);
   color: hsl(var(--fg));
 }
 
 .el-dropdown-link {
   display: flex;
+  gap: 8px;
   align-items: center;
-  justify-content: space-around;
-  height: 48px;
-  padding: 10px;
+  justify-content: center;
+  height: var(--navbar-action-size);
+  padding: 0 10px;
   color: hsl(var(--fg));
   cursor: pointer;
+  border-radius: var(--navbar-action-radius);
+  transition: background var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    background: hsl(var(--fill-muted));
+  }
 
   p {
     font-size: var(--font-size-base);
   }
 
   img {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
   }
 }

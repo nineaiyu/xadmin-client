@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { useI18n } from "vue-i18n";
 import { handleOperation } from "@/components/RePlusPage";
 import { knowledgeApi, type KnowledgeDocumentItem } from "@/api/ai/knowledge";
@@ -30,7 +30,7 @@ export function useKnowledgeDocument({
         is_active: !row.is_active
       })
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("aiKnowledge.toggleDone"), { type: "success" });
       refresh();
     } else if (res.detail) {

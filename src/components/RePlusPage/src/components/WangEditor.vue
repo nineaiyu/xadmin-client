@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   defineAsyncComponent,
   onBeforeUnmount,
@@ -59,7 +59,7 @@ const emit = defineEmits<{
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
         uploadConfig.value = res.data as { file_upload_size: number };
       }
@@ -123,7 +123,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           insertFn(
             res.data?.[0]?.access_url ?? "",
             res.data?.[0]?.filename ?? "",
@@ -145,7 +145,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           insertFn(res.data?.[0]?.access_url ?? "", "");
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -163,7 +163,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === SUCCESS_CODE) {
+        if (isSuccess(res)) {
           insertFn(
             res.data?.[0]?.filename ?? "",
             res.data?.[0]?.access_url ?? ""

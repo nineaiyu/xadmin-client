@@ -1,5 +1,5 @@
 import { fetchReportChannels } from "@/api/dataset/analysis";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 
 /**
  * 报表投递渠道：**值集单源在后端**（`dataset/serializers/analysis.py` 的
@@ -34,7 +34,7 @@ export const channelLabelKey = (value: string): string | undefined =>
 /** 加载渠道枚举：元数据不可达时回落兜底清单——表单不因 choices 失败而不可用 */
 export async function loadReportChannels(): Promise<ReportChannelSet> {
   const res = await fetchReportChannels().catch(() => null);
-  const dict = res?.code === SUCCESS_CODE ? res.choices_dict : undefined;
+  const dict = res && isSuccess(res) ? res.choices_dict : undefined;
   const channels = dict?.notify_channels ?? [];
   const imChannels = dict?.im_notify_channels ?? [];
   if (!channels.length || !imChannels.length) {

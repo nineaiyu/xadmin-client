@@ -1,5 +1,5 @@
 import { onMounted, shallowRef } from "vue";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { modelLabelFieldApi } from "@/api/system/field";
 import { FieldChoices } from "@/views/system/constants";
 import { fetchAllRows } from "@/utils/fetchAllRows";
@@ -59,7 +59,7 @@ export function useMaskModelFieldOptions({
     if (!canPickModel) return;
     fetchAllRows(modelLabelFieldApi.list, { field_type: FieldChoices.ROLE })
       .then(res => {
-        if (res.code !== SUCCESS_CODE || !res.data) return;
+        if (!isSuccess(res) || !res.data) return;
         const rows = res.data.results as Array<{
           pk: string;
           name: string;

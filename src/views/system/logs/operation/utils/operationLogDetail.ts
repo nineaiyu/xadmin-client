@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { operationLogApi } from "@/api/audit/logs/operation";
 import type { useI18n } from "vue-i18n";
@@ -25,7 +25,7 @@ export async function fetchOperationLogDetail({
   if (!truncated || pk == null) return null;
   try {
     const res = await operationLogApi.retrieve(pk as number | string);
-    if (res.code === SUCCESS_CODE && res.data) {
+    if (isSuccess(res) && res.data) {
       return res.data as Record<string, unknown>;
     }
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });

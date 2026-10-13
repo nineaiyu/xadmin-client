@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { useConfirm } from "@/hooks/useConfirm";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { choiceValue } from "@/utils/dict";
 import {
@@ -220,7 +220,7 @@ onMounted(async () => {
     return;
   }
   const res = await screenApi.retrieve(pk).catch(() => null);
-  if (!res || res.code !== SUCCESS_CODE || !res.data) {
+  if (!res || !isSuccess(res) || !res.data) {
     message(t("dataScreen.loadFailed"), { type: "warning" });
     router.replace("/analysis/screen/index");
     return;
@@ -299,7 +299,7 @@ async function save() {
     const res = await screenApi
       .partialUpdate(screen.value.pk, payload)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       dirty.value = false;
       gridHistory.resetCoalesce();
       freeHistory.resetCoalesce();

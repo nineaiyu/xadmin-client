@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import {
   apiApplicationApi,
   loadScopeCatalog,
@@ -59,7 +59,7 @@ onMounted(async () => {
   grantsLoading.value = true;
   try {
     const res = await apiApplicationApi.grants(props.row.pk);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       grants.value = res.data?.results ?? [];
       grantsLoaded.value = true;
     }

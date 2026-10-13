@@ -2,7 +2,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { systemModuleApi } from "@/api/system/modules";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
@@ -31,7 +31,7 @@ export function useSystemModule() {
     // 统一归一异常：业务码非 1000（如无权限 403 归一）也要给出可读提示
     const res = await systemModuleApi.list().catch(normalizeError);
     loading.value = false;
-    if (res.code !== SUCCESS_CODE || !res.data) {
+    if (!isSuccess(res) || !res.data) {
       message(String(res.detail ?? t("systemModule.loadFailed")), {
         type: "warning"
       });
@@ -52,7 +52,7 @@ export function useSystemModule() {
       )
       .catch(normalizeError);
     saving.value = false;
-    if (res.code !== SUCCESS_CODE || !res.data) {
+    if (!isSuccess(res) || !res.data) {
       message(String(res.detail ?? t("systemModule.saveFailed")), {
         type: "warning"
       });
@@ -67,7 +67,7 @@ export function useSystemModule() {
     saving.value = true;
     const res = await systemModuleApi.reset().catch(normalizeError);
     saving.value = false;
-    if (res.code !== SUCCESS_CODE || !res.data) {
+    if (!isSuccess(res) || !res.data) {
       message(String(res.detail ?? t("systemModule.saveFailed")), {
         type: "warning"
       });

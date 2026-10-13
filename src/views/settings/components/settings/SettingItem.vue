@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import {
   handleOperation,
@@ -122,7 +122,7 @@ const getData = () => {
 
         retrieveRes
           .then(res => {
-            if (res && res.code === SUCCESS_CODE) {
+            if (res && isSuccess(res)) {
               addOrEditData.value.formData = pickBy(res.data, (_value, key) =>
                 keepField(key)
               );

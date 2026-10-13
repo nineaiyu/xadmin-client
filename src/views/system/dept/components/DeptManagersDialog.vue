@@ -2,7 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { deptApi, type DeptManagerItem } from "@/api/identity/dept";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import MemberTagEditor from "@/views/system/components/MemberTagEditor.vue";
 
 /**
@@ -35,9 +35,7 @@ const editorRef = ref<InstanceType<typeof MemberTagEditor>>();
 /** 远程搜索候选（≤20 条；无关键字时服务端返回空列表，需要输入才会出候选） */
 async function searchUsers(keyword: string) {
   const res = await deptApi.userOptions(keyword ?? "");
-  return res.code === SUCCESS_CODE
-    ? ((res.data ?? []) as DeptManagerItem[])
-    : [];
+  return isSuccess(res) ? ((res.data ?? []) as DeptManagerItem[]) : [];
 }
 
 const getPayload = (): Record<string, unknown> | null =>

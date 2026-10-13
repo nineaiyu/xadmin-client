@@ -9,7 +9,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
 import { userInfoApi } from "@/api/user/userinfo";
 import { AesEncrypted } from "@/utils/aes";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { useUserStoreHook } from "@/store/modules/user";
 import { Z_INDEX } from "@/utils/zIndex";
 
@@ -49,7 +49,7 @@ async function submit() {
   try {
     const encrypted = await AesEncrypted(username.value, password.value);
     const res = await userInfoApi.verifyPassword({ password: encrypted });
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       password.value = "";
       unlock();
       return;

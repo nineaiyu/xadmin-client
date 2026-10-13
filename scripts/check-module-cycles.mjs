@@ -55,7 +55,10 @@ const FORBIDDEN_EDGES = [
 ];
 
 /* ------------------------------------------------------------------ *
- * 环清单豁免（仅用于已知、且不在本次可改文件范围内的存量环）。
+ * 环清单豁免（当前为空：全库初等环已清零，任何新增环都必须就地破除）。
+ *
+ * 新登记豁免必须精确到环成员：优先用 kind=cycle（members 精确匹配），
+ * 前缀豁免（kind=prefix）只允许用于「确实无法改动的整目录」并给出原因。
  *
  * 每条豁免是一个对象：{ path | members, batch, reason, since }
  * - kind=prefix：环内【任一】节点命中 path 前缀即豁免（组件内部环）；
@@ -67,15 +70,7 @@ const FORBIDDEN_EDGES = [
  * 注意：命中豁免的环不再计入退出码；FORBIDDEN_EDGES 仍独立生效，
  * 因此核心环回归不会被下面的豁免掩盖。
  * ------------------------------------------------------------------ */
-const EXEMPT_PREFIX = [
-  {
-    path: "src/components/",
-    batch: "components-internal",
-    reason:
-      "组件目录内部 index.ts ↔ index.vue / 工具互引，属组件封装自洽，不在跨层收敛范围。",
-    since: "2026-10-09"
-  }
-];
+const EXEMPT_PREFIX = [];
 const EXEMPT_NODES = [];
 const ALLOWED_CYCLES = [];
 

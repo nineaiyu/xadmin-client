@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { computed, ref, watch } from "vue";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import { ExportImportFormatOptions } from "../utils/constants";
 import UploadIcon from "~icons/ep/upload";
 import { useI18n } from "vue-i18n";
-import { renderBooleanSegmentedOption } from "@/components/RePlusPage";
+import { renderBooleanSegmentedOption } from "../utils/renders";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
 import type { UploadUserFile } from "element-plus";
@@ -145,7 +145,7 @@ const loadTemplates = async () => {
     model: modelLabel.value,
     size: 100
   });
-  if (res?.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     templates.value = res.data.results ?? [];
   }
 };
@@ -156,7 +156,7 @@ const parseHeaders = async (file: File) => {
   parsing.value = true;
   try {
     const res = await state.value.api.importHeaders({}, file);
-    if (res.code !== SUCCESS_CODE) {
+    if (!isSuccess(res)) {
       message(res.detail || t("exportImport.mappingParseFailed"), {
         type: "warning"
       });
@@ -219,7 +219,7 @@ const saveTemplate = async () => {
     options: { ignore_unknown: state.value.ignore_unknown !== false },
     is_shared: false
   });
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("exportImport.templateSaved"), { type: "success" });
     newTemplateName.value = "";
     await loadTemplates();

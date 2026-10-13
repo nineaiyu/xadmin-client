@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type {
   DirectoryDeptNode,
@@ -10,6 +10,7 @@ import type {
 } from "@/api/identity/directory";
 import { searchDeptApi, searchPostApi } from "@/api/system/search";
 import { fetchAllRows } from "@/utils/fetchAllRows";
+import { filterByKeyword } from "@/utils/keywordFilter";
 import { handleTree } from "@/utils/tree";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Search from "~icons/ri/search-line";
@@ -51,15 +52,12 @@ const filterPlaceholder = computed(() =>
   mode.value === "dept" ? t("directory.searchDept") : t("directory.searchPost")
 );
 
-const filteredPosts = computed(() => {
-  const keyword = filterText.value.trim().toLowerCase();
-  if (!keyword) return postOptions.value;
-  return postOptions.value.filter(
-    item =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.code.toLowerCase().includes(keyword)
-  );
-});
+const filteredPosts = computed(() =>
+  filterByKeyword(postOptions.value, filterText.value, item => [
+    item.name,
+    item.code
+  ])
+);
 
 function loadDeptTree() {
   if (!canUseDept) return;
@@ -74,7 +72,7 @@ function loadDeptTree() {
     }
   )
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         deptTree.value = handleTree(res.data.results);
       }
     })
@@ -95,7 +93,7 @@ function loadPosts() {
     }
   )
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         postOptions.value = res.data.results;
       }
     })

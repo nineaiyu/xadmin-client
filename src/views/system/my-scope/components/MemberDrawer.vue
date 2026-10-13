@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
-import { SUCCESS_CODE } from "@/api/types";
+import { usePagedList } from "@/hooks/usePagedList";
 import { userApi } from "@/api/identity/user";
 import { formatDateTime } from "@/utils";
 import type { ManagedDeptItem } from "@/api/identity/dept";
@@ -37,37 +36,28 @@ interface MemberRow {
   last_login: string | null;
 }
 
-const loading = ref(false);
-const rows = ref<MemberRow[]>([]);
-const total = ref(0);
-const page = ref(1);
 const PAGE_SIZE = 10;
 
 const displayName = (row: Partial<MemberRow> | undefined) =>
   row?.nickname || row?.username || "-";
 
-const loadMembers = async () => {
-  if (!props.dept) return;
-  loading.value = true;
-  try {
-    // 异常归一为失败结果：HTTP 层错误与业务失败走同一分支提示
-    const res = await userApi
-      .list({
-        dept: props.dept.pk,
-        page: page.value,
-        size: PAGE_SIZE
-      })
-      .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
-      rows.value = (res.data?.results ?? []) as MemberRow[];
-      total.value = res.data?.total ?? rows.value.length;
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  } finally {
-    loading.value = false;
+// 成员分页（异常归一与信封判定见 usePagedList；失败经 onFail 统一提示）
+const {
+  loading,
+  page,
+  total,
+  rows,
+  load: loadMembers,
+  setPage
+} = usePagedList<MemberRow>({
+  pageSize: PAGE_SIZE,
+  fetch: params => userApi.list({ dept: props.dept?.pk, ...params }),
+  pickRows: res =>
+    (res.data as { results?: MemberRow[] } | null)?.results ?? [],
+  onFail: res => {
+    if (res.detail) message(String(res.detail), { type: "warning" });
   }
-};
+});
 
 /** 页脚跳转：带部门筛选进入用户管理（数据权限自动收敛到管辖范围） */
 const goUserPage = () => {
@@ -77,7 +67,7 @@ const goUserPage = () => {
 };
 
 watch(visible, open => {
-  if (open) {
+  if (open && props.dept) {
     page.value = 1;
     rows.value = [];
     total.value = 0;
@@ -143,12 +133,12 @@ watch(visible, open => {
       </el-table>
       <div class="flex justify-end mt-3">
         <el-pagination
-          v-model:current-page="page"
           layout="prev, pager, next"
           size="small"
           :total="total"
           :page-size="PAGE_SIZE"
-          @current-change="loadMembers"
+          :current-page="page"
+          @current-change="setPage"
         />
       </div>
     </div>

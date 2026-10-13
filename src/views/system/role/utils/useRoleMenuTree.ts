@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -64,7 +64,7 @@ export function useRoleMenuTree() {
     // 菜单全量列表与菜单页 / 权限页共用缓存；菜单页为权威刷新方（force）
     fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list))
       .then(res => {
-        if (res.code !== SUCCESS_CODE) {
+        if (!isSuccess(res)) {
           // 业务失败（权限不足/服务异常）也要给出反馈，否则用户只看到空树
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           return;
@@ -79,7 +79,7 @@ export function useRoleMenuTree() {
             field_type: FieldChoices.ROLE
           })
             .then(result => {
-              if (result.code === SUCCESS_CODE) {
+              if (isSuccess(result)) {
                 result.data.results.forEach(item => {
                   fieldLookupsData.value[item.pk] = item;
                 });

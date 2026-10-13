@@ -1,4 +1,4 @@
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { systemCodeGenApi, type CodegenPlanItem } from "@/api/system/codegen";
 import type { CodegenFormState } from "./payload";
 import { normalizeFormState } from "./payload";
@@ -35,7 +35,7 @@ function failDetail(res: { code?: number; detail?: string } | null): string {
 /** 方案列表（本人 + 共享，按更新时间倒序） */
 export async function listPlans(): Promise<SavedPlan[]> {
   const res = await systemCodeGenApi.planList().catch(() => null);
-  if (res?.code !== SUCCESS_CODE) return [];
+  if (!res || !isSuccess(res)) return [];
   return (res.data?.results ?? [])
     .map(toSavedPlan)
     .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
@@ -52,14 +52,14 @@ export async function savePlan(
   const res = await systemCodeGenApi
     .planSave({ name: trimmed, payload: state, is_shared: isShared })
     .catch(() => null);
-  if (res?.code !== SUCCESS_CODE) throw new Error(failDetail(res));
+  if (!isSuccess(res)) throw new Error(failDetail(res));
   return listPlans();
 }
 
 /** 删除方案（按主键），返回删除后的完整清单 */
 export async function removePlan(pk: string): Promise<SavedPlan[]> {
   const res = await systemCodeGenApi.planRemove(pk).catch(() => null);
-  if (res?.code !== SUCCESS_CODE) throw new Error(failDetail(res));
+  if (!isSuccess(res)) throw new Error(failDetail(res));
   return listPlans();
 }
 
@@ -85,7 +85,7 @@ export async function importPlan(json: string): Promise<number> {
         is_shared: Boolean(row.isShared)
       })
       .catch(() => null);
-    if (res?.code !== SUCCESS_CODE) throw new Error(failDetail(res));
+    if (!isSuccess(res)) throw new Error(failDetail(res));
   }
   return valid.length;
 }

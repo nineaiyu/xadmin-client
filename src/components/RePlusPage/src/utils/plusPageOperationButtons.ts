@@ -4,7 +4,7 @@ import View from "~icons/ep/view";
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
 import FileList from "~icons/ri/file-list-3-line";
-import type { OperationButtonsRow } from "@/components/RePlusPage";
+import type { OperationButtonsRow } from "../components/ButtonOperation";
 import type { ApiAuthProps } from "./types";
 import type { BaseApi } from "@/api/base";
 import type { useI18n } from "vue-i18n";
@@ -26,7 +26,8 @@ export function buildDefaultOperationButtons({
   hasDetailFetch,
   handleAddOrEdit,
   handleDelete,
-  handleDetail
+  handleDetail,
+  onRowAction
 }: {
   t: TFunction;
   api: Partial<BaseApi>;
@@ -42,6 +43,8 @@ export function buildDefaultOperationButtons({
     requestEnd?: (options?: object) => void
   ) => void;
   handleDetail: (row: Record<string, unknown>) => void | Promise<void>;
+  /** 行操作命中（编辑 / 详情）时的回调（已读行标记等；缺省零开销） */
+  onRowAction?: (row: Record<string, unknown>) => void;
 }): OperationButtonsRow[] {
   // 行级归属守卫：写守卫域（如 dataset 域 1003）的序列化器在行数据下发
   // is_owner（creator 本人或超管为 true），默认编辑/删除按钮按行收敛；
@@ -59,6 +62,7 @@ export function buildDefaultOperationButtons({
         link: true
       },
       onClick: ({ row }) => {
+        onRowAction?.(row);
         handleAddOrEdit(false, row);
       },
       index: -30,
@@ -97,6 +101,7 @@ export function buildDefaultOperationButtons({
         "aria-label": t("buttons.detail")
       },
       onClick: ({ row, loading }) => {
+        onRowAction?.(row);
         if (hasDetailFetch) {
           loading.value = true;
           Promise.resolve(handleDetail(row)).finally(() => {

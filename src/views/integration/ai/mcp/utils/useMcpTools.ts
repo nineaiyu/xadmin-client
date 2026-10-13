@@ -1,7 +1,7 @@
 import { h } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDrawer } from "@/components/ReDrawer";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { mcpServerApi, type McpServerItem } from "@/api/ai/mcp";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
@@ -24,7 +24,7 @@ export function useMcpTools({
     if (loading) loading.value = true;
     try {
       const res = await mcpServerApi.sync(row.pk).catch(normalizeError);
-      if (res.code === SUCCESS_CODE) {
+      if (isSuccess(res)) {
         const count = (res.data as { count?: number } | null)?.count ?? 0;
         message(t("mcp.syncDone", { count }), { type: "success" });
       } else {

@@ -8,7 +8,7 @@ import {
   rulesPasswordApi
 } from "@/api/auth";
 import type { PasswordRule } from "@/api/auth";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
@@ -97,7 +97,7 @@ async function submit() {
       password
     }).catch(() => null);
     if (!res) return;
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       state.value = "accepted";
       message(res.detail || t("invite.success"), { type: "success" });
       setTimeout(() => router.push("/login"), 1200);

@@ -129,6 +129,7 @@ const {
   tablePagination,
   tableBarButtons,
   operationButtons,
+  viewedRowClassName,
   handleReset,
   handleSearch,
   getSelectPks,
@@ -405,6 +406,7 @@ defineExpose({
       <pure-table
         ref="tableRef"
         :class="{ 're-plus-table-layout-pending': tableLayoutPending }"
+        :row-class-name="viewedRowClassName"
         :adaptiveConfig="{ offsetBottom: 110 }"
         :columns="tableBarData.dynamicColumns as never"
         :data="dataList"

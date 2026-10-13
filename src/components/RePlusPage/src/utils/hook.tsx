@@ -18,7 +18,6 @@ export function usePlusPage(
   props: RePlusPageProps
 ) {
   const { immediate, localeName } = props;
-
   const route = useRoute();
   const { t, te } = useI18n();
   const baseCols = useBaseColumns(localeName ?? "");
@@ -35,8 +34,7 @@ export function usePlusPage(
   });
   const { switchLoadMap, routeParams, ...viewState } = state;
 
-  // 列表列渲染：操作列需要按钮集合，而 buttons 子 hook 依赖 data/form 的动作，
-  // 故经 getter 延迟取值（formatColumnsRender 仅在挂载后执行，无初始化顺序风险）
+  // 列表列渲染：操作列需要 buttons（其依赖 data/form 动作），经 getter 延迟取值
   const { formatColumnsRender } = usePlusPageColumns({
     props,
     t,
@@ -104,6 +102,7 @@ export function usePlusPage(
     searchColumns,
     tableBarButtons: buttons.tableBarButtons,
     operationButtons: buttons.operationButtons,
+    viewedRowClassName: buttons.viewedRowClassName,
     handleReset,
     handleSearch,
     getPageColumn,

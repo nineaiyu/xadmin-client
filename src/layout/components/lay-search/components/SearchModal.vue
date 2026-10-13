@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { getConfig } from "@/config";
@@ -184,7 +184,7 @@ async function fetchGlobalResults() {
   globalLoading.value = true;
   try {
     const res = await searchGlobal(kw);
-    globalGroups.value = res.code === SUCCESS_CODE ? res.data.groups : [];
+    globalGroups.value = isSuccess(res) ? res.data.groups : [];
   } catch {
     globalGroups.value = [];
   } finally {

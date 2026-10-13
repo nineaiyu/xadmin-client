@@ -1,13 +1,6 @@
 <script lang="ts" setup>
-import {
-  type ButtonProps,
-  closeDrawer,
-  type DrawerOptions,
-  drawerStore,
-  type EventType,
-  type ArgsType,
-  getDrawerUid
-} from "./index";
+import type { ButtonProps, DrawerOptions, EventType, ArgsType } from "./type";
+import { closeDrawer, drawerStore, getDrawerUid } from "./store";
 import { computed, ref, watch } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";

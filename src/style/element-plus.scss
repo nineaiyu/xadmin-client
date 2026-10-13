@@ -203,3 +203,9 @@
 .el-alert--info .el-alert__title {
   color: var(--el-text-color-regular);
 }
+
+/* 表格已读行（RePlusPage 的 viewedRow 开关开启后挂 is-viewed 行类）：整行文字降级为
+   次要色（操作列仍可辨识）；未开启的页面不产生该类，零视觉变化。 */
+.re-plus-table-card .el-table__row.is-viewed {
+  color: var(--el-text-color-secondary);
+}

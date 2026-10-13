@@ -1,18 +1,26 @@
 import { onMounted, onUnmounted, ref, type Ref } from "vue";
 import {
   DEFAULT_ADAPTIVE_OFFSET_BOTTOM,
-  MIN_ADAPTIVE_TABLE_HEIGHT,
-  correctHeightByOverflow,
+  resolveAdaptiveHeight,
   resolvePageOverflow
 } from "./tableMeasureMath";
+
+/** 宽度变化后的稳定窗口（ms）：期间的宽度变化视为拖动，统一推迟到最后一次变化之后重算 */
+const WIDTH_SETTLE_MS = 200;
 
 /**
  * 表格自适应高度与可视区宽度测量（含根节点 ResizeObserver）。
  *
  * 表格 adaptive 高度仅在挂载与窗口 resize 时测量：搜索区依赖后端字段元数据异步
  * 渲染、或用户展开/收起搜索行时，上方高度变化不会触发重测，过时的高度会把分页
- * 挤出视口造成页面级滚动条。这里观察根节点高度变化后重算高度；可视区宽度供
+ * 挤出视口造成页面级滚动条。这里观察根节点尺寸变化后重算高度；可视区宽度供
  * 固定操作列宽度对齐使用（见 useTableLayout）。
+ *
+ * 重算用稳态解析解（见 tableMeasureMath.resolveAdaptiveHeight）：写入的值只依赖
+ * 「当前高度 + 实测带符号溢出 + 期望高度」，写完后的溢出必为 0 或负、再算结果不变，
+ * 因此一次收敛。此前的「按溢出增量回收」写法会让高度在期望值与回收值之间随
+ * ResizeObserver 每帧互推：拖拽窗口宽度后表现为「抖两次才稳定」，窄视口分页换行时
+ * 内容区整片残影。
  */
 export function useTableMeasure(
   rootRef: Ref<HTMLElement | undefined>,
@@ -29,18 +37,15 @@ export function useTableMeasure(
   const resolveOffsetBottom = () =>
     options?.offsetBottom?.() ?? DEFAULT_ADAPTIVE_OFFSET_BOTTOM;
 
-  /**
-   * 自适应高度的最小可用高度钳制（框架级兜底）：
-   * 库内 setAdaptive 的公式为「视口高 - 表格顶 - offsetBottom」，上方内容较多
-   * （如 AI 配置页的全局开关 + 调用观测卡片）且视口较矮时会算出不可用的小高度
-   * （实测 33px：表体被压成 0 高、行溢出到分页之下，页面不可用）。这里在同一
-   * 元素上把高度钳制到最小可用值，超出视口的部分交给页面级滚动兜底。
-   * 期望高度只依赖表格顶部位置（与当前高度无关），写定后不再变化，
-   * 因此不会与 ResizeObserver 形成收缩/放开的振荡循环。
-   */
   let adaptiveRaf = 0;
-  /** 自校正剩余轮次：溢出 → 回收 → 复测，最多两轮，避免与根 ResizeObserver 互推 */
-  let correctPasses = 0;
+  /**
+   * 写后复测轮次：稳态解正常一轮即收敛（复测拿到同一取值）；写高后内容仍在
+   * 折行/布局中间态时最多再复测两轮，避免无限递归。
+   */
+  let verifyPasses = 0;
+  /** 上次实测的侧栏/内容区宽度（拖动时逐步变化） */
+  let lastRootWidth = -1;
+  let widthSettleTimer: ReturnType<typeof setTimeout> | null = null;
 
   const applyAdaptiveTableHeight = () => {
     cancelAnimationFrame(adaptiveRaf);
@@ -51,26 +56,42 @@ export function useTableMeasure(
       if (!table || !table.isConnected) return;
       const rect = table.getBoundingClientRect();
       if (!rect.height) return;
-      // 1px 余量 + 按滚动容器实测溢出自校正：宁可少 1px，也不让内容区出现常驻滚动条
+      /**
+       * 宽度变化（拖拽窗口 / 拖拽侧栏）：内容折行结果滞后于宽度，此刻按当前
+       * 高度重算会「折行 → 校正 → 再折行」连续调整，观感就是拖动时反复抖动。
+       * 拖动期间保持当前高度不动，等宽度稳定后再一次算到位（稳态解一步收敛）。
+       */
+      const rootWidth = rootRef.value?.clientWidth ?? 0;
+      if (rootWidth !== lastRootWidth) {
+        const firstMeasure = lastRootWidth < 0;
+        lastRootWidth = rootWidth;
+        if (widthSettleTimer) clearTimeout(widthSettleTimer);
+        widthSettleTimer = setTimeout(() => {
+          widthSettleTimer = null;
+          applyAdaptiveTableHeight();
+        }, WIDTH_SETTLE_MS);
+        if (!firstMeasure) return;
+      }
+      // 1px 余量：宁可少 1px，也不让内容区出现常驻滚动条
       const desired =
         Math.round(window.innerHeight - rect.top - resolveOffsetBottom()) - 1;
-      const overflow = resolvePageOverflow(table);
-      const next = correctHeightByOverflow(
-        Math.max(MIN_ADAPTIVE_TABLE_HEIGHT, desired),
-        overflow
+      const next = resolveAdaptiveHeight(
+        rect.height,
+        desired,
+        resolvePageOverflow(table)
       );
       if (Math.abs(rect.height - next) <= 1) {
-        // 已收敛：允许下一轮重新自校正
-        correctPasses = 0;
+        // 已收敛：允许下一轮重新校正
+        verifyPasses = 0;
         return;
       }
       table.style.height = `${next}px`;
-      // 写高后复测一轮：首次测量拿到的溢出不包含本轮写入的影响
-      if (overflow > 1 && correctPasses < 2) {
-        correctPasses += 1;
+      // 本轮测量发生在写入之前：复测一轮确认稳态（分页折行等布局中间态可再等一轮）
+      if (verifyPasses < 2) {
+        verifyPasses += 1;
         applyAdaptiveTableHeight();
       } else {
-        correctPasses = 0;
+        verifyPasses = 0;
       }
     });
   };
@@ -108,6 +129,7 @@ export function useTableMeasure(
   onUnmounted(() => {
     rootResizeObserver?.disconnect();
     cancelAnimationFrame(adaptiveRaf);
+    if (widthSettleTimer) clearTimeout(widthSettleTimer);
   });
 
   return {

@@ -5,7 +5,7 @@ import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { deptApi } from "@/api/identity/dept";
 import { hasAuth } from "@/router/utils";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import type { PostItem } from "@/api/identity/post";
 
 /**
@@ -31,7 +31,7 @@ onMounted(() => {
   if (!hasAuth("list:SystemDept")) return;
   fetchAllRows(deptApi.list)
     .then(res => {
-      if (res.code === SUCCESS_CODE && res.data) {
+      if (isSuccess(res) && res.data) {
         deptOptions.value = (res.data.results ?? []) as Array<{
           pk: number;
           name: string;

@@ -7,7 +7,7 @@ import type {
   InstanceComment,
   NodeProgress
 } from "@/api/approval/approvalFlow";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -137,7 +137,7 @@ const canDeleteComment = (item: InstanceComment) =>
 async function loadComments() {
   try {
     const res = await approvalInstanceApi.comments(props.pk);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       comments.value = res.data ?? [];
     }
   } catch {
@@ -155,7 +155,7 @@ async function submitComment() {
     const res = await approvalInstanceApi
       .addComment(props.pk, content)
       .catch(normalizeError);
-    if (res.code === SUCCESS_CODE) {
+    if (isSuccess(res)) {
       message(t("approvalDiscussion.submitted"), { type: "success" });
       commentText.value = "";
       await loadComments();
@@ -174,7 +174,7 @@ async function removeComment(item: InstanceComment) {
     .deleteComment(props.pk, item.pk)
     .catch(() => null);
   if (!res) return;
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     await loadComments();
   } else {
     // 业务失败信封 detail 缺失时回退通用文案（不渲染字面 "undefined"）

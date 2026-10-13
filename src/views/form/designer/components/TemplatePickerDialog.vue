@@ -3,7 +3,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
-import { SUCCESS_CODE } from "@/api/types";
+import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { hasAuth } from "@/router/utils";
 import {
@@ -58,7 +58,7 @@ const fieldCount = (row: unknown) =>
 const pick = async (row: unknown) => {
   const item = row as DynamicFormItem;
   const res = await designerApi.retrieveForm(item.pk).catch(() => null);
-  if (res?.code !== SUCCESS_CODE || !res.data) {
+  if (!res || !isSuccess(res) || !res.data) {
     message(t("results.failed"), { type: "warning" });
     return;
   }
@@ -75,7 +75,7 @@ const remove = async (row: DynamicFormItem) => {
     return;
   }
   const res = await dynamicFormApi.destroy(row.pk).catch(normalizeError);
-  if (res.code === SUCCESS_CODE) {
+  if (isSuccess(res)) {
     message(t("dform.templateRemoved"), { type: "success" });
     await load();
     return;

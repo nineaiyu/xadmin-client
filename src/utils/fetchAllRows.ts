@@ -1,4 +1,4 @@
-import { SUCCESS_CODE, type ListResult } from "@/api/types";
+import { type ListResult, isSuccess } from "@/api/types";
 import type { RecordType } from "plus-pro-components";
 
 /** 单页条数：与后端 `DynamicPageNumber(1000)` 的分页上限对齐 */
@@ -59,7 +59,7 @@ export async function fetchAllRows<
 
   const first = await list(pageParams(1));
   // 业务失败（权限不足/服务异常）：原样返回，调用方既有 code/detail 分支照常提示
-  if (first.code !== SUCCESS_CODE || !first.data) return first;
+  if (!isSuccess(first) || !first.data) return first;
 
   const rows: T[] = [...(first.data.results ?? [])];
   // 后端各接口 max_page_size 不一（默认 100、部分视图集 1000），请求的 size
@@ -70,7 +70,7 @@ export async function fetchAllRows<
     if (typeof total === "number" && rows.length >= total) break;
     page += 1;
     const next = await list(pageParams(page));
-    if (next.code !== SUCCESS_CODE || !next.data) {
+    if (!isSuccess(next) || !next.data) {
       throw new Error(next.detail || "fetchAllRows: page request failed");
     }
     const chunk = next.data.results ?? [];
