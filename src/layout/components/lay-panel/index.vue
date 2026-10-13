@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
   right: 0;
 
   /* z-index 阶梯：面板必须低于 EP 弹层（2000 起），避免遮挡 dialog/confirm */
-  z-index: var(--pure-z-index-setting-panel);
+  z-index: var(--z-index-setting-panel);
   width: 100%;
   max-width: 360px;
   height: 100vh;
@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
   transition: all var(--duration-base) var(--ease-emphasized);
 
   .right-panel-background {
-    z-index: var(--pure-z-index-setting-mask);
+    z-index: var(--z-index-setting-mask);
     width: 100%;
     height: 100%;
     opacity: 1;

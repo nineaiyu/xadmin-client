@@ -94,6 +94,52 @@
   --color-info-active: var(--el-color-info-dark-2);
 }
 
+/* ============ 设计尺度令牌 → Tailwind 命名空间 ============
+   把 primitives.scss 的半径 / 间距 / 字号 / 阴影 / 动效令牌桥接进 Tailwind，
+   让工具类（rounded-md / text-xs / shadow-float / duration-fast / ease-standard 等）
+   与 CSS 变量同源，消除「令牌 + Tailwind 默认尺度」两套并存。
+   `inline` 形态不产出 :root 变量，工具类直接内联引用——--radius-* 等随设置面板
+   的圆角/字号偏好即时生效。逐档已按「与 Tailwind 默认值一致才映射」核对：
+   值不同的档位保留 Tailwind 默认，避免既有工具类出现像素漂移（差异见段内注释）。 */
+@theme inline {
+  /* 半径：五档与 Tailwind 默认逐档同值（2/4/6/8/12px），映射后随「圆角」偏好缩放 */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  /* 间距基准：--space-1 = 4px 与 Tailwind 默认 --spacing 同值；p-4 / m-2 / gap-3
+     等全部数值间距类由它派生（改 --space-1 即全站间距类同步） */
+  --spacing: var(--space-1);
+
+  /* 字号：xs/lg/xl/2xl 与 Tailwind 默认逐档同值；2xs/md 为项目独有档（新增工具类）。
+     sm/base 两档值不同（项目 13/14px vs Tailwind 14/16px）——保留 Tailwind 默认，
+     不改全站既有 text-sm/text-base 的渲染：页面排版走 Tailwind 梯度、
+     组件排版走 --font-size-* 阶梯，两套语义各有归属 */
+  --text-2xs: var(--font-size-2xs);
+  --text-xs: var(--font-size-xs);
+  --text-md: var(--font-size-md);
+  --text-lg: var(--font-size-lg);
+  --text-xl: var(--font-size-xl);
+  --text-2xl: var(--font-size-2xl);
+
+  /* 阴影：sm/md/lg 三档项目取值（均匀投影）与 Tailwind 默认不同，保留 Tailwind
+     默认不动；仅补项目独有的 float 档（深投影，供浮层/大屏消费） */
+  --shadow-float: var(--shadow-float);
+
+  /* 动效：命名缓动/时长补进 Tailwind 命名空间（ease-in/out/in-out 与项目曲线
+     取值不同，保留 Tailwind 默认） */
+  --ease-standard: var(--ease-standard);
+  --ease-emphasized: var(--ease-emphasized);
+  --duration-instant: var(--duration-instant);
+  --duration-fast: var(--duration-fast);
+  --duration-base: var(--duration-base);
+  --duration-slow: var(--duration-slow);
+  --duration-slower: var(--duration-slower);
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still

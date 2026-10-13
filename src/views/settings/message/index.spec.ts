@@ -14,8 +14,18 @@ vi.mock("@/api/system/settings", () => ({
 vi.mock("@/api/system/notifications", () => ({
   systemMsgSubscriptionApi: {}
 }));
+// 骨架桩：按 panes 渲染面板（与真实骨架同语义——不在 panes 里的面板不渲染），
+// 面板显隐断言落在具名插槽是否被挂载上
 vi.mock("@/views/settings/components/settings/index.vue", () => ({
-  default: { name: "Setting", template: "<div><slot /></div>" }
+  default: {
+    name: "Setting",
+    props: ["panes"],
+    template: `<div>
+      <template v-for="pane in panes" :key="pane.key">
+        <slot :name="pane.key" />
+      </template>
+    </div>`
+  }
 }));
 vi.mock("@/views/system/components/MessageNotifications.vue", () => ({
   default: {
@@ -32,18 +42,10 @@ vi.mock("./components/MessageTemplatePanel.vue", () => ({
 
 import index from "./index.vue";
 
-const mountPage = () =>
-  mount(index, {
-    global: {
-      // el-tab-pane 桩：始终渲染插槽，页签显隐断言落在面板是否存在上
-      stubs: {
-        "el-tab-pane": { template: "<div><slot /></div>" }
-      }
-    }
-  });
+const mountPage = () => mount(index, { global: {} });
 
-describe("SettingMessage 页签权限位", () => {
-  it("有订阅与模板权限时两个页签都渲染", () => {
+describe("SettingMessage 面板权限位", () => {
+  it("有订阅与模板权限时两个面板都渲染", () => {
     mocks.hasAuth.mockReturnValue(true);
     const wrapper = mountPage();
 
@@ -53,7 +55,7 @@ describe("SettingMessage 页签权限位", () => {
     expect(wrapper.find('[data-testid="template-panel"]').exists()).toBe(true);
   });
 
-  it("缺模板注册表权限（list:SettingMessage）时模板页签隐藏，订阅页签不受影响", () => {
+  it("缺模板注册表权限（list:SettingMessage）时模板面板隐藏，订阅面板不受影响", () => {
     mocks.hasAuth.mockImplementation(code => code !== "list:SettingMessage");
     const wrapper = mountPage();
 

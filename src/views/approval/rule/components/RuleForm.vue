@@ -7,6 +7,7 @@ import { SUCCESS_CODE } from "@/api/types";
 import { loadPatScopeCatalog } from "@/api/user/token";
 import { message } from "@/utils/message";
 import type { ScopeGroup } from "@/utils/scopeDisplay";
+import { mergeUnique } from "@/utils/unique";
 import { splitValues } from "@/views/approval/utils/assigneeValues";
 import RuleLevelsEditor from "./RuleLevelsEditor.vue";
 import { createLevelRow, type LevelRow } from "../utils/types";
@@ -154,8 +155,7 @@ onMounted(async () => {
 async function getPayload() {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return null;
-  const merged = [...form.pathSelected, ...customPathList.value];
-  const paths = merged.filter((item, index) => merged.indexOf(item) === index);
+  const paths = mergeUnique(form.pathSelected, customPathList.value);
   if (paths.length === 0) {
     message(t("approvalRule.pathsRequired"), { type: "error" });
     return null;

@@ -18,7 +18,7 @@ vi.mock("@/api/system/settings", () => ({
 vi.mock("@/views/settings/components/settings/index.vue", () => ({
   default: {
     name: "Setting",
-    props: ["modelValue"],
+    props: ["panes"],
     template: "<div data-testid='setting-host' />"
   }
 }));
@@ -46,13 +46,14 @@ const mountPage = () =>
   });
 
 const settingHostItems = (wrapper: Awaited<ReturnType<typeof mountPage>>) =>
-  wrapper.findComponent({ name: "Setting" }).props("modelValue") as Array<{
+  wrapper.findComponent({ name: "Setting" }).props("panes") as Array<{
+    key?: string;
     label?: string;
-    queryParams?: { category?: string };
+    item?: { queryParams?: { category?: string } };
   }>;
 
-describe("SettingSms 渠道页签装配", () => {
-  it("拉取 backends 期间页签容器处于 loading，结束后复位", async () => {
+describe("SettingSms 渠道面板装配", () => {
+  it("拉取 backends 期间面板容器处于 loading，结束后复位", async () => {
     let resolveBackends!: (value: unknown) => void;
     mocks.backends.mockImplementation(
       () =>
@@ -73,7 +74,7 @@ describe("SettingSms 渠道页签装配", () => {
     expect(loadingValues).toHaveBeenLastCalledWith(false);
   });
 
-  it("backends 数据并入动态子页签，静态渠道页签始终在前", async () => {
+  it("backends 数据并入动态子面板，静态渠道面板始终在前", async () => {
     mocks.backends.mockResolvedValue({
       code: SUCCESS_CODE,
       data: [
@@ -86,14 +87,16 @@ describe("SettingSms 渠道页签装配", () => {
 
     const items = settingHostItems(wrapper);
     expect(items).toHaveLength(3);
-    expect(items[0].label).toBeUndefined(); // 静态渠道项：标签走 i18n
+    expect(items[0].label).toBeUndefined(); // 静态渠道项：标题走 i18n 推导
     expect(items[1]).toMatchObject({
+      key: "alibaba",
       label: "Aliyun",
-      queryParams: { category: "alibaba" }
+      item: { queryParams: { category: "alibaba" } }
     });
     expect(items[2]).toMatchObject({
+      key: "tencent",
       label: "Tencent",
-      queryParams: { category: "tencent" }
+      item: { queryParams: { category: "tencent" } }
     });
   });
 

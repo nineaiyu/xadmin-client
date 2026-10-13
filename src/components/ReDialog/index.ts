@@ -1,13 +1,14 @@
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import reDialog from "./index.vue";
 import { useTimeoutFn } from "@vueuse/core";
-import { withInstall } from "@pureadmin/utils";
+import { isFunction, withInstall } from "@pureadmin/utils";
 import type {
   EventType,
   ArgsType,
   DialogProps,
   ButtonProps,
-  DialogOptions
+  DialogOptions,
+  DialogPayloadApi
 } from "./type";
 
 /** 兼容扩展：弹层内部挂载的不可枚举唯一标识 */
@@ -22,8 +23,53 @@ let dialogUid = 0;
 export const getDialogUid = (options: DialogOptions): number | undefined =>
   (options as DialogOptionsWithUid)?._uid;
 
-/** 打开弹框 */
-const addDialog = (options: DialogOptions) => {
+/**
+ * 创建类型化载荷通道：`ref` 作单一数据源，`getData/setData` 读写同一份，
+ * 同时挂到选项上（受控数据随弹层条目走，内容组件经 props 同名接收）。
+ *
+ * 三个字段一律挂为**不可枚举**：模板 `v-bind="options"` 会把可枚举字段透传给
+ * `el-dialog`，函数/对象值会被字符串化落到 DOM（同 `_uid` 的既有手段）。
+ */
+function attachPayloadChannel<T>(
+  options: DialogOptions<T>
+): DialogPayloadApi<T> {
+  const initial = options.payload as T;
+  const state = ref(initial) as Ref<T>;
+  const api: DialogPayloadApi<T> = {
+    getData: () => state.value,
+    setData: data => {
+      state.value = isFunction(data)
+        ? (data as (prev: T) => T)(state.value)
+        : (data as T);
+    }
+  };
+  const fields = [
+    ["payload", initial],
+    ["getData", api.getData],
+    ["setData", api.setData]
+  ] as const;
+  for (const [key, value] of fields) {
+    Object.defineProperty(options, key, {
+      value,
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+  }
+  return api;
+}
+
+/**
+ * 打开弹框。传入 `payload` 时启用类型化载荷通道并返回读写 API
+ * （内容组件经 props 同名接收 `getData/setData`；未传 `payload` 时行为不变、返回 `void`）。
+ */
+function addDialog<T>(
+  options: DialogOptions<T> & { payload: T }
+): DialogPayloadApi<T>;
+function addDialog(options: DialogOptions): void;
+function addDialog(options: DialogOptions) {
+  const channel =
+    options.payload === undefined ? undefined : attachPayloadChannel(options);
   const open = () => {
     Object.defineProperty(options, "_uid", {
       value: ++dialogUid,
@@ -40,7 +86,8 @@ const addDialog = (options: DialogOptions) => {
   } else {
     open();
   }
-};
+  return channel;
+}
 
 /** 关闭弹框 */
 const closeDialog = (
@@ -93,7 +140,14 @@ const closeAllDialog = () => {
  */
 const ReDialog = withInstall(reDialog);
 
-export type { EventType, ArgsType, DialogProps, ButtonProps, DialogOptions };
+export type {
+  EventType,
+  ArgsType,
+  DialogProps,
+  ButtonProps,
+  DialogOptions,
+  DialogPayloadApi
+};
 export {
   ReDialog,
   dialogStore,

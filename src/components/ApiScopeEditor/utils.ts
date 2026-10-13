@@ -6,6 +6,8 @@
  * - HTTP 方法 → 标签色
  */
 
+import { mergeUnique } from "@/utils/unique";
+
 export type MethodTagType =
   "success" | "primary" | "warning" | "danger" | "info";
 
@@ -32,8 +34,7 @@ export function splitCustomItems(text: string): string[] {
 
 /** 合并勾选与自定义条目（保序去重） */
 export function mergeScopes(picked: string[], custom: string[]): string[] {
-  const merged = [...picked, ...custom];
-  return merged.filter((item, index) => merged.indexOf(item) === index);
+  return mergeUnique(picked, custom);
 }
 
 /** 历史条目分流：命中选项的进勾选，其余（正则/白名单/历史手填）进自定义 */

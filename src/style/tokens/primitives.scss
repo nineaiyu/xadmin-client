@@ -77,14 +77,24 @@
   --nav-item-inset: 8px;
   --nav-item-inset-mix: 8px;
 
-  /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用） */
-  --nav-item-height: 38px;
+  /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用）。
+     取「舒展档」而非 vben 的紧凑档（vben 项高 38~42px、一级缩进 8px、纵距 2px，
+     实机观感偏挤、图标贴左）：项高 48px、纵距 4px（见下方 --nav-item-margin-y）、
+     一级缩进 16px（见 sidebar/_common.scss 的层级缩进段），行步进 52px。 */
+  --nav-item-height: 48px;
   --nav-item-indent: 16px;
-  --nav-item-icon-size: 16px;
-  --nav-item-icon-gap: 8px;
+  --nav-item-icon-size: 18px;
+  --nav-item-icon-gap: 10px;
 
-  /* 菜单项垂直外边距（激活块上下留白，圆角块的呼吸感来源） */
-  --nav-item-margin-y: 2px;
+  /* 双列侧栏一级窄列（vben NormalMenu 同口径）：竖排菜单项的尺度——
+     项高由内容决定（9px 内边距 ×2 + 20px 图标 + 8px 间距 + 12px 标题 ≈ 64px） */
+  --nav-item-padding-narrow: 9px;
+  --nav-item-margin-narrow: 4px;
+  --nav-item-radius-narrow: 6px;
+  --nav-item-icon-size-narrow: 20px;
+
+  /* 菜单项垂直外边距（激活块上下留白，圆角块的呼吸感来源）：4px 拉开项间节奏 */
+  --nav-item-margin-y: 4px;
 
   /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
   --nav-item-height-horizontal: 40px;
@@ -114,6 +124,18 @@
   /* 内容面板留白（系统设置 / 账户设置两模块共用）：面板 = 承载表单或列表的「内容纸」 */
   --panel-pad-y: var(--space-5);
   --panel-pad-x: var(--space-6);
+
+  /* ================ 栈层级（z-index 阶梯） ================
+     集中定义避免魔法数字互斗；JS 侧同值常量见 src/utils/zIndex.ts。
+     - layout 1000：侧栏/头部等布局固定层（sidebar/common 内 998/1001/1002 属该层内部细分）
+     - settingMask 1005 / settingPanel 1010：设置面板——必须低于 Element Plus
+       弹层起点 2000，否则打开的面板会遮挡 dialog/confirm
+     - Element Plus 弹层：2000 起动态递增（dialog/message-box/popper，不干预）
+     - tippy 9999：v-tippy 是独立于 EP 的 popper 引擎，必须高于 EP 弹层 */
+  --z-index-layout: 1000;
+  --z-index-setting-mask: 1005;
+  --z-index-setting-panel: 1010;
+  --z-index-tippy: 9999;
 
   /* ================ 动效尺度 ================
      时长分档覆盖项目既有取值（0.1~0.5s）；缓动曲线与 Element Plus 同源：
@@ -210,6 +232,7 @@ html[data-nav-style="plain"] {
   --nav-item-radius: 0px;
   --nav-item-inset: 0px;
   --nav-item-inset-mix: 0px;
+  --nav-item-radius-narrow: 0px;
 }
 
 /* 顶栏菜单对齐：仅水平 / 混合布局的顶栏菜单消费（侧栏菜单不受影响） */

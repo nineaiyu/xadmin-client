@@ -211,7 +211,17 @@ const initConfig = () => {
   refreshTheme();
   winWidth.value = divRef.value?.offsetWidth ?? 0;
   winHeight.value = divRef.value?.offsetHeight ?? 0;
-  radius.value = Math.round((winWidth.value * 3) / 4 / 98) - 1;
+  /**
+   * 半径按「一行 8 位（6 数字 + 2 冒号）恰好放下」反推，留 2% 余量。
+   *
+   * 点阵的一切尺度都以 `radius + 1`（记作 u）为单元：数字宽 = 7 列 × 2u、位间距 =
+   * distNumber × u，故一行实需 `marginLeft + (7 × distNumber + 14) × u`。
+   * 此前按「容器宽 × 3/4 ÷ 98」估算：在多列卡片（宽约 240~320px）下算出的 u 偏大，
+   * 点阵右侧越过画布被裁，表现为「时间只显示一部分」。此处按容器实宽闭环反推。
+   */
+  const unitBudget =
+    (winWidth.value - marginLeft.value) / (7 * distNumber.value + 14);
+  radius.value = Math.max(1, unitBudget * 0.98 - 1);
 };
 const initCanvas = () => {
   const context = canvasRef.value?.getContext("2d");

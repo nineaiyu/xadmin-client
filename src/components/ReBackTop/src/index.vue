@@ -84,7 +84,7 @@ function scrollToTop(): void {
 <style lang="scss" scoped>
 .re-backtop {
   position: fixed;
-  z-index: var(--pure-z-index-layout);
+  z-index: var(--z-index-layout);
   display: flex;
   align-items: center;
   justify-content: center;

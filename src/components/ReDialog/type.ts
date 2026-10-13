@@ -179,7 +179,30 @@ type DialogChangeData = {
   values: unknown;
 };
 
-interface DialogOptions extends DialogProps {
+/**
+ * 弹层载荷通道（类型化）：`addDialog` 传入 `payload` 时创建并返回本对象，
+ * 同时挂到弹层选项上（`options.getData / options.setData`）。
+ * - `getData()` 读取当前载荷——打开方与内容组件看到同一份数据；
+ * - `setData(data | updater)` 覆盖或增量更新载荷（内容组件回传、打开方预置）。
+ * 内容组件经 `props` 同名接收（仅在传了 `payload` 时注入，未传的弹层零影响）。
+ */
+interface DialogPayloadApi<T> {
+  /** 读取当前载荷 */
+  getData: () => T;
+  /** 覆盖载荷（或传入更新函数，基于旧值派生新值） */
+  setData: (data: T | ((prev: T) => T)) => void;
+}
+
+interface DialogOptions<T = Record<string, unknown>> extends DialogProps {
+  /**
+   * 类型化载荷：传入后框架创建受控载荷并注入 `getData / setData`
+   * （`addDialog` 返回值与选项上均可取用；内容组件经 `props` 同名接收）
+   */
+  payload?: T;
+  /** 读取载荷（由 `addDialog` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  getData?: () => T;
+  /** 写入载荷（由 `addDialog` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  setData?: (data: T | ((prev: T) => T)) => void;
   /** 内容区组件的 `props`，可通过 `defineProps` 接收 */
   props?: Record<string, unknown>;
   /** 是否隐藏 `Dialog` 按钮操作区的内容 */
@@ -206,7 +229,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义按钮操作区的内容渲染器，会覆盖`footerButtons`以及默认的 `取消` 和 `确定` 按钮 */
@@ -214,7 +237,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义底部按钮操作 */
@@ -224,7 +247,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => void;
   /** `Dialog` 关闭后的回调（只有点击右上角关闭按钮或空白页或按下了esc键关闭页面时才会触发） */
@@ -232,7 +255,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => void;
   /** `Dialog` 关闭后的回调。 `args` 返回的 `command` 值解析：`cancel` 点击取消按钮、`sure` 点击确定按钮、`close` 点击右上角关闭按钮或空白页或按下了esc键  */
@@ -241,7 +264,7 @@ interface DialogOptions extends DialogProps {
     index,
     args
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
     args?: ArgsType;
   }) => void;
@@ -250,7 +273,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => void;
   /** 输入焦点聚焦在 `Dialog` 内容时的回调 */
@@ -258,7 +281,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => void;
   /** 输入焦点从 `Dialog` 内容失焦时的回调 */
@@ -266,7 +289,7 @@ interface DialogOptions extends DialogProps {
     options,
     index
   }: {
-    options: DialogOptions;
+    options: DialogOptions<T>;
     index: number;
   }) => void;
   onChange?: (data: DialogChangeData) => void;
@@ -277,7 +300,7 @@ interface DialogOptions extends DialogProps {
       options,
       index
     }: {
-      options: DialogOptions;
+      options: DialogOptions<T>;
       index: number;
     }
   ) => void;
@@ -289,7 +312,7 @@ interface DialogOptions extends DialogProps {
       index,
       closeLoading
     }: {
-      options: DialogOptions;
+      options: DialogOptions<T>;
       index: number;
       /** 关闭确定按钮的 `loading` 加载动画 */
       closeLoading: () => void;
@@ -297,4 +320,11 @@ interface DialogOptions extends DialogProps {
   ) => void;
 }
 
-export type { EventType, ArgsType, DialogProps, ButtonProps, DialogOptions };
+export type {
+  EventType,
+  ArgsType,
+  DialogProps,
+  ButtonProps,
+  DialogOptions,
+  DialogPayloadApi
+};

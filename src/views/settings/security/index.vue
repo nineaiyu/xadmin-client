@@ -15,7 +15,7 @@ import {
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/settings/components/settings/index.vue";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingsPane } from "@/views/settings/components/settings/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 import { useI18n } from "vue-i18n";
@@ -24,66 +24,97 @@ defineOptions({
   name: "SettingSecurity"
 });
 
-const settingData = computed<Array<settingItemProps>>(() => [
+/** 面板键取各配置域标题（code/captcha/...），与 i18n 片段一一对应 */
+const settingData = computed<Array<settingsPane>>(() => [
   {
-    auth: settingAuth("SecurityVerifyCode"),
-    api: settingsVerifyCodeApi,
-    localeName: "settingSecurity",
-    title: "code"
+    key: "code",
+    item: {
+      auth: settingAuth("SecurityVerifyCode"),
+      api: settingsVerifyCodeApi,
+      localeName: "settingSecurity",
+      title: "code"
+    }
   },
   {
-    auth: settingAuth("SecurityCaptchaCode"),
-    api: settingsCaptchaApi,
-    localeName: "settingSecurity",
-    title: "captcha"
+    key: "captcha",
+    item: {
+      auth: settingAuth("SecurityCaptchaCode"),
+      api: settingsCaptchaApi,
+      localeName: "settingSecurity",
+      title: "captcha"
+    }
   },
   {
-    auth: settingAuth("SecurityLoginAuth"),
-    api: settingsLoginAuthApi,
-    localeName: "settingSecurity",
-    title: "login"
+    key: "login",
+    item: {
+      auth: settingAuth("SecurityLoginAuth"),
+      api: settingsLoginAuthApi,
+      localeName: "settingSecurity",
+      title: "login"
+    }
   },
   {
-    auth: settingAuth("SecurityLoginLimit"),
-    api: settingsLoginLimitApi,
-    localeName: "settingSecurity",
-    title: "limit"
+    key: "limit",
+    item: {
+      auth: settingAuth("SecurityLoginLimit"),
+      api: settingsLoginLimitApi,
+      localeName: "settingSecurity",
+      title: "limit"
+    }
   },
   {
-    auth: settingAuth("SecurityMFA"),
-    api: settingsMfaApi,
-    localeName: "settingSecurity",
-    title: "mfa"
+    key: "mfa",
+    item: {
+      auth: settingAuth("SecurityMFA"),
+      api: settingsMfaApi,
+      localeName: "settingSecurity",
+      title: "mfa"
+    }
   },
   {
-    auth: settingAuth("SecurityRegisterAuth"),
-    api: settingsRegisterAuthApi,
-    localeName: "settingSecurity",
-    title: "register"
+    key: "register",
+    item: {
+      auth: settingAuth("SecurityRegisterAuth"),
+      api: settingsRegisterAuthApi,
+      localeName: "settingSecurity",
+      title: "register"
+    }
   },
   {
-    auth: settingAuth("SecurityResetPasswordAuth"),
-    api: settingsResetPasswordCodeApi,
-    localeName: "settingSecurity",
-    title: "resetPassword"
+    key: "resetPassword",
+    item: {
+      auth: settingAuth("SecurityResetPasswordAuth"),
+      api: settingsResetPasswordCodeApi,
+      localeName: "settingSecurity",
+      title: "resetPassword"
+    }
   },
   {
-    auth: settingAuth("SecurityPasswordRule"),
-    api: settingsPasswordApi,
-    localeName: "settingSecurity",
-    title: "passwordRule"
+    key: "passwordRule",
+    item: {
+      auth: settingAuth("SecurityPasswordRule"),
+      api: settingsPasswordApi,
+      localeName: "settingSecurity",
+      title: "passwordRule"
+    }
   },
   {
-    auth: settingAuth("SecurityBindEmailAuth"),
-    api: settingsBindEmailApi,
-    localeName: "settingSecurity",
-    title: "bindEmail"
+    key: "bindEmail",
+    item: {
+      auth: settingAuth("SecurityBindEmailAuth"),
+      api: settingsBindEmailApi,
+      localeName: "settingSecurity",
+      title: "bindEmail"
+    }
   },
   {
-    auth: settingAuth("SecurityBindPhoneAuth"),
-    api: settingsBindPhoneApi,
-    localeName: "settingSecurity",
-    title: "bindPhone"
+    key: "bindPhone",
+    item: {
+      auth: settingAuth("SecurityBindPhoneAuth"),
+      api: settingsBindPhoneApi,
+      localeName: "settingSecurity",
+      title: "bindPhone"
+    }
   }
 ]);
 const auth = ref({
@@ -93,15 +124,19 @@ const auth = ref({
 });
 const api = ref(settingsBlockIpApi);
 const { t } = useI18n();
+
+/** 登录拦截 IP：列表型自定义面板，仅在有列表权限时并入导航 */
+const panes = computed<Array<settingsPane>>(() => [
+  ...settingData.value,
+  ...(auth.value.list
+    ? [{ key: "blockIp", label: t("settingSecurity.blockIp") }]
+    : [])
+]);
 </script>
 
 <template>
-  <setting :model-value="settingData">
-    <el-tab-pane
-      v-if="auth.list"
-      :label="t('settingSecurity.blockIp')"
-      :lazy="true"
-    >
+  <setting :panes="panes">
+    <template #blockIp>
       <RePlusPage
         ref="tableRef"
         :title="t('settingSecurity.blockIp')"
@@ -113,6 +148,6 @@ const { t } = useI18n();
           adaptiveConfig: { offsetBottom: 160 }
         }"
       />
-    </el-tab-pane>
+    </template>
   </setting>
 </template>

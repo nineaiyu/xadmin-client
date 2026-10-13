@@ -34,7 +34,7 @@ test("安全设置：登录拦截 IP 列表接口可用（E2E 档缓存后端能
   // UI 面回归：安全设置页正常渲染（接口 500 时页面仍会打开，故此处只守护
   // 页面可达；接口正确性以上方断言为准）
   await page.goto("/#/settings/security/index");
-  await expect(page.locator(".el-tabs--border-card").first()).toBeVisible({
+  await expect(page.locator(".setting-page").first()).toBeVisible({
     timeout: 15_000
   });
 });

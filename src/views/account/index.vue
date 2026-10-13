@@ -9,7 +9,7 @@ import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
-import { resolveInitialPane, syncTabQuery } from "./utils/tabQuery";
+import { resolveInitialPane, syncTabQuery } from "@/utils/tabQuery";
 import { createAccountPanes } from "./utils/panes";
 
 defineOptions({

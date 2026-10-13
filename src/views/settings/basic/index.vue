@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-// 系统设置 → 基本设置：三个页签（基本设置 / 水印设置 / 资源告警）。
-// 水印字段从基本页签拆分到独立页签（fields 白名单隔离渲染与提交，同一后端接口）；
-// 水印页签带实时预览（WatermarkSetting），保存后即时生效（onSaved → refreshSiteWatermark）。
+// 系统设置 → 基本设置：三个面板（基本设置 / 水印设置 / 资源告警）。
+// 水印字段从基本面板拆分到独立面板（fields 白名单隔离渲染与提交，同一后端接口）；
+// 水印面板带实时预览（WatermarkSetting），保存后即时生效（onSaved → refreshSiteWatermark）。
 import { settingsBasicApi, settingsMonitorApi } from "@/api/system/settings";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FieldValues } from "plus-pro-components";
 import { useWatermarkStoreHook } from "@/store/modules/watermark";
 import Setting from "@/views/settings/components/settings/index.vue";
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import {
+  settingItemProps,
+  settingsPane
+} from "@/views/settings/components/settings/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import WatermarkSetting from "./components/WatermarkSetting.vue";
 
@@ -51,17 +53,7 @@ const onSaved = async (values: FieldValues) => {
   }
 };
 
-/** 循环页签：基本设置（水印字段已拆走） */
-const settingData = computed<Array<settingItemProps>>(() => [
-  {
-    auth: basicAuth,
-    api: settingsBasicApi,
-    localeName: "settingBasic",
-    fields: basicFields
-  }
-]);
-
-/** 水印设置页签：独立权限位 + 实时预览，保存即时生效 */
+/** 水印面板：独立权限位 + 实时预览，保存即时生效（自定义面板经具名插槽提供） */
 const watermarkItem: settingItemProps = {
   auth: watermarkAuth,
   api: settingsBasicApi,
@@ -70,22 +62,38 @@ const watermarkItem: settingItemProps = {
   onSaved
 };
 
-/** 资源告警页签：运维监控配置，从安全设置移入（菜单按钮同步迁移） */
+/** 资源告警面板：运维监控配置，从安全设置移入（菜单按钮同步迁移） */
 const monitorItem: settingItemProps = {
   auth: settingAuth("SecurityMonitor"),
   api: settingsMonitorApi,
   localeName: "settingSecurity",
   title: "monitor"
 };
+
+const panes = computed<settingsPane[]>(() => [
+  {
+    key: "basic",
+    label: t("settingBasic.title"),
+    item: {
+      auth: basicAuth,
+      api: settingsBasicApi,
+      localeName: "settingBasic",
+      fields: basicFields
+    }
+  },
+  { key: "watermark", label: t("settingWatermark.title") },
+  {
+    key: "monitor",
+    label: t("settingSecurity.monitor"),
+    item: monitorItem
+  }
+]);
 </script>
 
 <template>
-  <setting :model-value="settingData">
-    <el-tab-pane :label="t('settingWatermark.title')" :lazy="true">
+  <setting :panes="panes">
+    <template #watermark>
       <WatermarkSetting :item="watermarkItem" />
-    </el-tab-pane>
-    <el-tab-pane :label="t('settingSecurity.monitor')" :lazy="true">
-      <SettingItem v-bind="monitorItem" />
-    </el-tab-pane>
+    </template>
   </setting>
 </template>

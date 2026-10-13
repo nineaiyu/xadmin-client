@@ -75,7 +75,7 @@ if (unref(layoutTheme)) {
   position: fixed;
   right: 24px;
   bottom: 24px;
-  z-index: var(--pure-z-index-layout);
+  z-index: var(--z-index-layout);
   width: 44px;
   height: 44px;
   font-size: var(--font-size-xl);

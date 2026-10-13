@@ -375,11 +375,11 @@ layout:
   leftMode: Left mode
   topMode: Top mode
   mixedMode: Mixed mode
-  menuLayoutVertical: Sidebar
+  menuLayoutVertical: Vertical
   menuLayoutVerticalTip: Sidebar vertical menu mode
-  menuLayoutHorizontal: Top
+  menuLayoutHorizontal: Horizontal
   menuLayoutHorizontalTip: Horizontal menu mode, all menus on the top
-  menuLayoutMix: Mixed
+  menuLayoutMix: Mixed Menu
   menuLayoutMixTip: Vertical and horizontal menus combined
   menuLayoutSidebarMixed: Two columns
   menuLayoutSidebarMixedTip: Vertical two-column menu

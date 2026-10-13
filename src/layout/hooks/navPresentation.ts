@@ -1,5 +1,6 @@
 import { computed } from "vue";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import type { menuType } from "@/layout/types";
 import { isTwoColumnSidebar } from "./layoutModes";
 
 /**
@@ -14,6 +15,26 @@ export function mixedExtraCollapsed(
   extraCollapse: unknown
 ): boolean {
   return isTwoColumnSidebar(layout) && Boolean(extraCollapse);
+}
+
+/**
+ * 在菜单列表中查找命中激活路径的项（前缀匹配、取最深命中；无命中返回 null）。
+ * 用于双列窄列的激活高亮与次级菜单复位（vben `useExtraMenu` 的命中口径）。
+ */
+export function findMenuByActivePath(
+  menus: menuType[],
+  path: string
+): menuType | null {
+  let matched: menuType | null = null;
+  for (const item of menus) {
+    const itemPath = String(item.path ?? "");
+    if (itemPath && (path === itemPath || path.startsWith(`${itemPath}/`))) {
+      if (!matched || itemPath.length > String(matched.path ?? "").length) {
+        matched = item;
+      }
+    }
+  }
+  return matched;
 }
 
 /**

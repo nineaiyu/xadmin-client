@@ -166,7 +166,32 @@ type DrawerChangeData = {
   values: unknown;
 };
 
-interface DrawerOptions extends DrawerProps {
+/**
+ * 抽屉载荷通道（类型化）：`addDrawer` 传入 `payload` 时创建并返回本对象，
+ * 同时挂到抽屉选项上（`options.getData / options.setData`）。
+ * - `getData()` 读取当前载荷——打开方与内容组件看到同一份数据；
+ * - `setData(data | updater)` 覆盖或增量更新载荷（内容组件回传、打开方预置）。
+ * 内容组件经 `props` 同名接收（仅在传了 `payload` 时注入，未传的抽屉零影响）。
+ *
+ * 与 `ReDialog` 的 `DialogPayloadApi` 同构（两套弹层体系各自自足，不互相 import）。
+ */
+interface DrawerPayloadApi<T> {
+  /** 读取当前载荷 */
+  getData: () => T;
+  /** 覆盖载荷（或传入更新函数，基于旧值派生新值） */
+  setData: (data: T | ((prev: T) => T)) => void;
+}
+
+interface DrawerOptions<T = Record<string, unknown>> extends DrawerProps {
+  /**
+   * 类型化载荷：传入后框架创建受控载荷并注入 `getData / setData`
+   * （`addDrawer` 返回值与选项上均可取用；内容组件经 `props` 同名接收）
+   */
+  payload?: T;
+  /** 读取载荷（由 `addDrawer` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  getData?: () => T;
+  /** 写入载荷（由 `addDrawer` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  setData?: (data: T | ((prev: T) => T)) => void;
   /** 内容区组件的 `props`，可通过 `defineProps` 接收 */
   props?: Record<string, unknown>;
   /** 是否隐藏 `Drawer` 按钮操作区的内容 */
@@ -193,7 +218,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义按钮操作区的内容渲染器，会覆盖`footerButtons`以及默认的 `取消` 和 `确定` 按钮 */
@@ -201,7 +226,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义底部按钮操作 */
@@ -211,7 +236,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** `Drawer` 关闭后的回调（只有点击右上角关闭按钮或空白页或按下了esc键关闭页面时才会触发） */
@@ -219,7 +244,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** `Drawer` 关闭后的回调。 `args` 返回的 `command` 值解析：`cancel` 点击取消按钮、`sure` 点击确定按钮、`close` 点击右上角关闭按钮或空白页或按下了esc键  */
@@ -228,7 +253,7 @@ interface DrawerOptions extends DrawerProps {
     index,
     args
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
     args?: ArgsType;
   }) => void;
@@ -237,7 +262,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** 输入焦点从 `Drawer` 内容失焦时的回调 */
@@ -245,7 +270,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   onChange?: (data: DrawerChangeData) => void;
@@ -256,7 +281,7 @@ interface DrawerOptions extends DrawerProps {
       options,
       index
     }: {
-      options: DrawerOptions;
+      options: DrawerOptions<T>;
       index: number;
     }
   ) => void;
@@ -268,11 +293,18 @@ interface DrawerOptions extends DrawerProps {
       index,
       closeLoading
     }: {
-      options: DrawerOptions;
+      options: DrawerOptions<T>;
       index: number;
       closeLoading: () => void;
     }
   ) => void;
 }
 
-export type { ButtonProps, DrawerOptions, ArgsType, DrawerProps, EventType };
+export type {
+  ButtonProps,
+  DrawerOptions,
+  DrawerPayloadApi,
+  ArgsType,
+  DrawerProps,
+  EventType
+};

@@ -49,6 +49,10 @@
     --pure-theme-menu-bg
   ); /* 侧栏背景（完整色值，由菜单调色板驱动） */
 
+  /* 双列侧栏一级窄列底色（vben --sidebar-deep 同口径）：浅色皮肤与侧栏同色
+     （双列靠分隔线分界），深色模式更深一档形成层次（见下方 html.dark） */
+  --sidebar-deep: var(--sidebar);
+
   /* ================ 阴影（明暗成对的完整值） ================ */
   --shadow-sm: 0 0 6px #0000001f;
   --shadow-md: 0 0 12px #0000001f;
@@ -104,6 +108,9 @@ html.dark {
   /* ================ 强调 ================ */
   --overlay: 0 0% 0% / 40%;
 
+  /* 双列侧栏一级窄列底色：深色模式深于侧栏一档（页底语义，vben 深色 sidebar-deep 同口径） */
+  --sidebar-deep: hsl(var(--bg-page));
+
   /* ================ 组件槽（暗色取值） ================ */
   --divider: hsl(var(--fg) / 12%);
   --switch-off: hsl(var(--fg) / 25%);
@@ -148,7 +155,9 @@ html.dark {
 }
 
 /* ================ 菜单调色板（自 style/theme.scss 迁入） ================
-   侧栏 / 顶栏菜单的导航配色：--sidebar 语义槽的来源。值为完整色值。 */
+   侧栏 / 顶栏菜单的导航配色：--sidebar 语义槽的来源。值为完整色值。
+   说明：--pure-theme-* 系列命名属有意保留（历史命名，与 theme.scss 时代的
+   TS 消费方/皮肤数据链保持同名），不是遗留残留——勿按「去 pure- 前缀」清理。 */
 
 :root {
   /** 主题色 */
@@ -196,6 +205,23 @@ html[data-theme="default"] {
   --pure-theme-menu-active-before: hsl(var(--primary));
   --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
   --pure-theme-menu-active-text: hsl(var(--primary));
+}
+
+/* 深色模式下的浅色皮肤（default / light）：侧栏与顶栏此时是深色面板，
+   导航调色切换为「深色菜单」口径（vben 深色菜单同源）——悬停 / 激活用提亮块、
+   文字用前景色派生；若不覆写，浅色皮肤的白色底与浅灰悬停会在深色面板上留下白块。
+   深色皮肤（紫罗兰 / 极客蓝等）自带深色调色板，不受此块影响。 */
+html.dark[data-theme="light"],
+html.dark[data-theme="default"] {
+  --pure-theme-menu-bg: hsl(var(--bg-card));
+  --pure-theme-sub-menu-bg: hsl(var(--bg-card));
+  --pure-theme-menu-hover: hsl(var(--fg) / 10%);
+  --pure-theme-menu-text: hsl(var(--fg) / 80%);
+  --pure-theme-menu-title-hover: hsl(var(--fg));
+  --pure-theme-sub-menu-active-text: hsl(var(--fg));
+  --pure-theme-menu-active-bg: hsl(var(--fg) / 12%);
+  --pure-theme-menu-active-text: hsl(var(--fg));
+  --pure-theme-sidebar-logo: hsl(var(--bg-card));
 }
 
 /* 深紫罗兰色 */

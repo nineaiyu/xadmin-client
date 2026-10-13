@@ -14,16 +14,16 @@ import { login, openUserPanel } from "./helpers";
  * 5. 用户管理行操作「管理」抽屉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
  *    时动作不渲染的回归）
  *
- * 注意：安全设置页的 el-tabs 为 border-card 类型，以此与右上角 lay-notice
- * 内的 tabs 区分，避免 tabpanel 断言命中两套 DOM 导致 strict violation。
+ * 注意：安全设置页的面板导航在设置页骨架内（.setting-page），以此与右上角
+ * lay-notice 内的 tabs 区分，避免 tabpanel 断言命中两套 DOM 导致 strict violation。
  */
 
 test.describe("MFA 功能入口", () => {
-  test("安全设置：MFA tab 渲染且验证方式为多选下拉", async ({ page }) => {
+  test("安全设置：MFA 面板渲染且验证方式为多选下拉", async ({ page }) => {
     await login(page);
     await page.goto("/#/settings/security/index");
 
-    const tabs = page.locator(".el-tabs--border-card").first();
+    const tabs = page.locator(".setting-page").first();
     const mfaTab = tabs.getByRole("tab", { name: "MFA 二次验证配置" });
     await expect(mfaTab).toBeVisible({ timeout: 15_000 });
     await mfaTab.click();
@@ -47,7 +47,7 @@ test.describe("MFA 功能入口", () => {
     await page.keyboard.press("Escape");
   });
 
-  test("基本设置：资源告警 tab 渲染阈值字段", async ({ page }) => {
+  test("基本设置：资源告警面板渲染阈值字段", async ({ page }) => {
     await login(page);
     // 基本设置菜单路径为 /settings/basic（无 /index 后缀，见 loadjson menu.json）
     await page.goto("/#/settings/basic");

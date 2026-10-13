@@ -57,8 +57,12 @@ body[layout="vertical"] {
         background: transparent !important;
       }
 
-      .el-sub-menu__title {
-        padding: 0;
+      /* 折叠态不做层级缩进（图标在整行内居中）：展开态的层级缩进规则特异性
+         高于本块，须显式压过——否则项内左侧留 padding、右侧为 0，图标会整体
+         偏右（实测 16px 缩进下图标中心 38px，侧栏中心 30px）。 */
+      .el-sub-menu__title,
+      .el-menu-item {
+        padding: 0 !important;
       }
     }
 

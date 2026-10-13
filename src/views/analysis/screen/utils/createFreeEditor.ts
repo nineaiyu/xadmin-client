@@ -1,5 +1,6 @@
 import { computed, ref, type Ref } from "vue";
 import { message } from "@/utils/message";
+import { mergeUnique } from "@/utils/unique";
 import type {
   ScreenFreeLayout,
   ScreenLayoutPane,
@@ -130,9 +131,7 @@ export function createFreeEditor(deps: {
       selection.value = [...pks];
       return;
     }
-    const merged = [...selection.value];
-    for (const pk of pks) if (!merged.includes(pk)) merged.push(pk);
-    selection.value = merged;
+    selection.value = mergeUnique(selection.value, pks);
   }
 
   const selectAll = () => {

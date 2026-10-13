@@ -2,7 +2,7 @@ import { computed, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { isAllEmpty, useGlobal } from "@pureadmin/utils";
 import type { menuType } from "@/layout/types";
-import { findRouteByPath, getParentPaths } from "@/router/utils";
+import { findRouteByPath, getParentPaths, toMenuTree } from "@/router/utils";
 import { useAppStoreHook } from "@/store/modules/app";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import {
@@ -56,7 +56,7 @@ export function useSplitSidebar(defaultActive?: Ref<string>) {
       parents[0] || activePath.value,
       wholeMenus as never
     );
-    return (parentRoute?.children ?? []) as unknown as menuType[];
+    return toMenuTree(parentRoute?.children ?? []);
   });
 
   /**

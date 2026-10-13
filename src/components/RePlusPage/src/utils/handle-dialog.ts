@@ -10,7 +10,8 @@ import {
 import { deviceDetection } from "@pureadmin/utils";
 import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
-import { h, ref, type Component, type Ref } from "vue";
+import { h, nextTick, ref, type Component, type Ref } from "vue";
+import { scrollToFirstError } from "@/hooks/useFormScrollToError";
 import type { PlusFormProps, RecordType } from "plus-pro-components";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import AddOrEdit from "../components/AddOrEdit.vue";
@@ -232,7 +233,11 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
   const finalWidth = isNarrowScreen
     ? Math.max(Math.round(clientWidth * 0.9), 320)
     : Math.max(minWidth, numberWidth);
-  const func = modeFuncMap[formOptions.mode ?? "dialog"] ?? addDialog;
+  // dialog/drawer 打开器是两个重载函数，联合后会失去可调用性（各自参数类型不兼容）；
+  // 此处不启用载荷通道，按二者共有的选项签名收口调用
+  const func = (modeFuncMap[formOptions.mode ?? "dialog"] ?? addDialog) as (
+    options: Partial<DrawerOptions & DialogOptions>
+  ) => void;
   func({
     title: formOptions.title,
     props: {
@@ -283,13 +288,18 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       };
 
       for (let i = 0; i < allFormInstances.length; i++) {
-        const valid = await allFormInstances[i]?.validate(valid => {
+        const instance = allFormInstances[i];
+        const valid = await instance?.validate(valid => {
           if (!valid) {
             formRef.value?.setActiveName?.(i);
             closeLoading();
           }
         });
         if (!valid) {
+          // 错误定位：先等页签切换渲染（上方回调）再滚动到首个错误字段并聚焦；
+          // EP 内置 scrollToError 发生在切页签之前，对未激活页签的滚动不可见
+          await nextTick();
+          scrollToFirstError(instance);
           return;
         }
       }

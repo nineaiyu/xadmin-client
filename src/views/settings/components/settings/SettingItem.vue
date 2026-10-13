@@ -10,12 +10,23 @@ import { PlusForm } from "plus-pro-components";
 import type { FieldValues, PlusColumn, RecordType } from "plus-pro-components";
 import { cloneDeep, pickBy } from "lodash-es";
 import { useI18n } from "vue-i18n";
-import { resolveSettingFieldSpan } from "@/views/settings/utils/settingLayout";
+import { useMediaQuery } from "@vueuse/core";
+import { BREAKPOINTS } from "@/utils/breakpoints";
+import { FORM_SPAN_FULL } from "@/utils/formSpan";
 import { settingItemProps } from "./types";
 
 defineOptions({
   name: "SettingItem"
 });
+
+/**
+ * 左置标签宽度：固定 260px（容纳最长设置项标题，如「登录二次验证临时令牌
+ * 有效期（秒）」实测 258px），使同面板内控件列起点对齐（与弹窗表单同观感）。
+ *
+ * 不用 `label-width="auto"`：EP 的自适应是**逐项**按内容取宽，长标签确实不折行，
+ * 但控件列起点参差（实测 90~258px 错落），观感不如对齐稳定。
+ */
+const LABEL_WIDTH = "260px";
 
 const emit = defineEmits<{
   /** 透传 PlusForm 的 submit 事件载荷 */
@@ -40,6 +51,7 @@ const props = withDefaults(defineProps<settingItemProps>(), {
 });
 
 const { t } = useI18n();
+const isNarrow = useMediaQuery(`(width <= ${BREAKPOINTS.md}px)`);
 const loading = ref(false);
 const submitLoading = ref(false);
 const testLoading = ref(false);
@@ -97,9 +109,9 @@ const getData = () => {
           addOrEditColumns.value
         ).filter(column => keepField(column.prop as string));
         addOrEditData.value.addOrEditColumns.forEach(column => {
-          // 宽度按控件形态分配（长文本独占整行、开关最窄），不再一律拉满：
-          // 后端的响应式默认值对设置页同样过宽，这里整体覆写
-          column["colProps"] = resolveSettingFieldSpan(column["_column"]);
+          // 布局：标签左置（右对齐）+ 单列——与弹窗表单（AddOrEdit）同形态；
+          // 后端下发的响应式列宽面向多列表单，这里统一整行，靠表单容器限宽收住控件
+          column["colProps"] = FORM_SPAN_FULL;
           (column["fieldProps"] as { disabled?: boolean })["disabled"] =
             !props.auth.partialUpdate;
         });
@@ -175,7 +187,8 @@ const handleTest = () => {
     :default-values="cloneDeep(addOrEditData.defaultData)"
     :row-props="{ gutter: 24 }"
     class="setting-form"
-    label-position="top"
+    :label-position="isNarrow ? 'top' : 'right'"
+    :label-width="isNarrow ? 'auto' : LABEL_WIDTH"
     :has-footer="auth.partialUpdate"
     v-bind="formProps"
     @submit="handleSubmitSettings"
@@ -205,16 +218,22 @@ const handleTest = () => {
 
 <style lang="scss" scoped>
 /**
- * 设置表单：标签置于控件上方（label-position="top"）。
+ * 设置表单：标签左置（右对齐，固定 `LABEL_WIDTH`）+ 单列控件——与弹窗表单
+ * （AddOrEdit）同形态；窄屏（<md）回退标签上置（top），避免左置标签挤压控件。
  *
- * 设置项标签普遍较长（如「登录 MFA 令牌有效期（秒）」），左置标签必须预留固定
- * 宽度，短标签被撑出大片空白、长标签又会溢出压到控件上；上置标签按内容自然换行，
- * 列宽只由控件形态决定（见 utils/settingLayout.ts）。
+ * 标签宽度取固定值（对齐控件列，见上方常量注释）；容器限宽 760px：大屏下内容纸
+ * 很宽，不限宽会把输入框拉成长条、视线在标签与控件之间横扫。
  *
- * 按钮组（重置 / 保存 / 测试）左对齐紧贴最后一行的列位，与页签内容区左内边距同一
- * 条竖向轴线；按钮间距交给 EP 默认的 12px。
+ * 按钮组（重置 / 保存 / 测试）与字段之间以上分隔线断开，形成「内容纸分区」，
+ * 并贴合内容纸左内边距轴线（与面板标题同行起线，不随标签宽度漂移）。
  */
+.setting-form {
+  max-width: 760px;
+}
+
 .setting-form :deep(.plus-form__footer) {
-  padding: var(--space-1) 0 0;
+  padding: var(--space-3) 0 0;
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--divider);
 }
 </style>

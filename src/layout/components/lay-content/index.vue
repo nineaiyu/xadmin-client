@@ -76,11 +76,20 @@ const impersonationExtra = computed(() => {
   return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
 });
 
-/** 布局语义模式（全屏内容不渲染固定头部，水平布局的顶栏自带高度） */
+/** 布局语义模式（全屏内容不渲染固定头部） */
 const layoutMode = computed(() => $storage?.layout.layout);
-/** 是否预留固定头部内边距：除水平布局与全屏内容外均需让位 */
+/**
+ * 是否需要为固定头部预留内边距。
+ *
+ * 「水平布局的顶栏自带高度」只在**非固定顶栏**时成立：那时顶栏在文档流内占位，
+ * 内容区无需让位。一旦开启固定顶栏（设置面板 →「顶栏」→ 固定），顶栏转为
+ * `position: fixed` 覆盖层、脱离文档流，内容区不让位就会被压住顶端——表现为
+ * 页面顶部一整行内容显示不全（如首页顶部统计卡只见数字、不见标题）。
+ */
 const reserveHeader = computed(
-  () => !isHeaderNav(layoutMode.value) && !isFullContent(layoutMode.value)
+  () =>
+    !isFullContent(layoutMode.value) &&
+    (!isHeaderNav(layoutMode.value) || props.fixedHeader)
 );
 
 const getMainWidth = computed(() => {
@@ -271,7 +280,7 @@ const transitionMain = defineComponent({
   position: fixed;
   top: -100px;
   left: 12px;
-  z-index: var(--pure-z-index-layout);
+  z-index: var(--z-index-layout);
   padding: 8px 14px;
   font-size: var(--font-size-base);
   color: var(--el-color-white);

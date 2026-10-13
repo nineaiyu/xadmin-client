@@ -374,11 +374,11 @@ layout:
   leftMode: 左侧菜单，亲切熟悉
   topMode: 顶部菜单，简洁概览
   mixedMode: 混合菜单，灵活多变
-  menuLayoutVertical: 侧边栏
+  menuLayoutVertical: 垂直
   menuLayoutVerticalTip: 侧边垂直菜单模式
-  menuLayoutHorizontal: 顶部
+  menuLayoutHorizontal: 水平
   menuLayoutHorizontalTip: 水平菜单模式，菜单全部显示在顶部
-  menuLayoutMix: 混合
+  menuLayoutMix: 混合垂直
   menuLayoutMixTip: 垂直水平菜单共存
   menuLayoutSidebarMixed: 双列菜单
   menuLayoutSidebarMixedTip: 垂直双列菜单模式

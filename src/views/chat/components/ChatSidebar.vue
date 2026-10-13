@@ -6,7 +6,12 @@ import ReEmpty from "@/components/ReEmpty";
 import { addDialog } from "@/components/ReDialog";
 import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
-import { chatApi, type ChatPeer, type ChatRoomItem } from "@/api/chat";
+import {
+  chatApi,
+  type ChatGroupCreatePayload,
+  type ChatPeer,
+  type ChatRoomItem
+} from "@/api/chat";
 import ChatGroupCreateForm from "./ChatGroupCreateForm.vue";
 import AiIcon from "~icons/ep/cpu";
 import RoomIcon from "~icons/ep/chat-dot-square";
@@ -47,19 +52,26 @@ const canCreateGroup = computed(() => hasAuth("createGroup:ChatRoom"));
 
 // ------------------------------------------------------------------ 新建群聊
 
-/** 打开新建群聊弹窗（弹层体系统一收敛：addDialog + 内容组件） */
+/** 打开新建群聊弹窗（弹层体系统一收敛：addDialog + 内容组件 + 类型化载荷通道） */
 function openCreateGroupDialog() {
-  const formRef = ref<InstanceType<typeof ChatGroupCreateForm> | null>(null);
-  addDialog({
+  addDialog<ChatGroupCreatePayload>({
     title: t("chat.newGroup"),
     width: "420px",
     destroyOnClose: true,
     closeOnClickModal: false,
     sureBtnLoading: true,
-    contentRenderer: () => h(ChatGroupCreateForm, { ref: formRef }),
-    beforeSure: async (done, { closeLoading }) => {
-      const payload = formRef.value?.getPayload();
-      if (!payload) {
+    payload: { name: "", member_pks: [] },
+    contentRenderer: () => h(ChatGroupCreateForm),
+    beforeSure: async (done, { options, closeLoading }) => {
+      // 草稿由内容组件经载荷通道实时回写；提交校验归打开方（空值时保持弹层打开）
+      const payload = options.getData?.();
+      if (!payload?.name) {
+        message(t("chat.groupNameRequired"), { type: "warning" });
+        closeLoading();
+        return;
+      }
+      if (!payload.member_pks.length) {
+        message(t("chat.membersRequired"), { type: "warning" });
         closeLoading();
         return;
       }

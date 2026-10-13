@@ -4,10 +4,8 @@ import { emitter } from "@/utils/mitt";
 import { useNav } from "@/layout/hooks/useNav";
 import { responsiveStorageNameSpace } from "@/config";
 import { isAllEmpty, storageLocal, useGlobal } from "@pureadmin/utils";
-import { usePermissionStoreHook } from "@/store/modules/permission";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { transformI18n } from "@/plugins/i18n";
-import { groupMenuChildren } from "@/utils/menuGroups";
 import { useSidebarResize } from "@/layout/hooks/useSidebarResize";
 import { useSidebarMenu } from "@/layout/hooks/useSidebarMenu";
 import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
@@ -18,6 +16,7 @@ import {
 import { useHoverToggle } from "@/hooks/useHoverToggle";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
 import { hasNavbarLogo, isTwoColumnSidebar } from "@/layout/hooks/layoutModes";
+import { useSidebarNarrow } from "@/layout/hooks/useSidebarNarrow";
 import {
   computed,
   nextTick,
@@ -141,9 +140,10 @@ const defaultActive = computed(() =>
 );
 
 /** 侧栏语义模式 + 切割形态（口径见 useSplitSidebar，与外壳守卫同一来源） */
-const { sidebarMode, splitActive } = useSplitSidebar(defaultActive);
+const { sidebarMode, splitActive, splitMenus } = useSplitSidebar(defaultActive);
 /** 双列侧栏（一级窄列 + 二级展开列） */
 const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
+
 /**
  * 侧栏品牌区可见性：Logo 归顶栏的布局（混合 / 侧边导航）不在侧栏重复渲染，
  * 顶栏被配置隐藏（顶栏整块不渲染）时回落侧栏，避免品牌位整体消失。
@@ -157,9 +157,12 @@ const sidebarLogoVisible = computed(
 /** 侧栏只显示「当前一级路由的子菜单」（一级导航在顶栏 / 窄列；受「导航切割」控制） */
 const submenuSidebar = splitActive;
 
-/** 菜单数据装配（整树 / 二级列 + 一级高亮与点击），实现见 hooks/useSidebarMenu */
-const { menuData, loading, topLevelActive, handleTopLevelSelect } =
-  useSidebarMenu(submenuSidebar, defaultActive, menuSelect);
+/** 菜单数据装配（整树 / 二级列 + 一级高亮），实现见 hooks/useSidebarMenu */
+const { menuData, loading, topLevelActive } = useSidebarMenu(
+  submenuSidebar,
+  defaultActive,
+  menuSelect
+);
 
 /** 激活项滚入可视区（长菜单下进入深层路由时保持高亮项可见） */
 const mainScrollbarRef = ref<ScrollbarExpose>();
@@ -168,8 +171,37 @@ const { scrollToActive } = useMenuScrollActive(mainScrollbarRef, [
   () => menuData.value
 ]);
 
-/** 主列渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
-const topMenuData = computed(() => groupMenuChildren(menuData.value));
+/** 双列窄列的数据与交互（窄列菜单装配 + 混合双列的悬停联动），实现见 hooks/useSidebarNarrow */
+const {
+  narrowSubmenuMode,
+  narrowMenuData,
+  extraVisible,
+  narrowActive,
+  handleNarrowMouseEnter,
+  handleNarrowMouseLeave,
+  handleNarrowSelect,
+  topMenuData
+} = useSidebarNarrow(
+  sidebarMode,
+  splitMenus,
+  defaultActive,
+  topLevelActive,
+  menuData
+);
+
+/** 双列次级列的分区标题：当前激活的一级菜单（vben side-extra-title 同口径） */
+const activeTopMenu = computed(() => {
+  const path = topLevelActive.value;
+  return (
+    [...topMenuData.value, ...narrowMenuData.value].find(
+      item => item.path === path
+    ) ?? null
+  );
+});
+const activeTopMenuTitle = computed(() =>
+  transformI18n(activeTopMenu.value?.meta?.title ?? "")
+);
+const activeTopMenuIcon = computed(() => activeTopMenu.value?.meta?.icon ?? "");
 
 /**
  * 子菜单展开后重算滚动定位：EP 会自动展开激活项所在的目录（初始化与路由切换时），
@@ -202,11 +234,13 @@ onBeforeUnmount(() => {
       sidebarLogoVisible ? 'has-logo' : 'no-logo',
       {
         'is-two-column': twoColumn,
+        'is-narrow-only': narrowSubmenuMode && !extraVisible,
         'sidebar-hover-expanded': hoverExpanded,
         'is-resizing': resizing,
         'is-resize-out': resizeOutOfRange
       }
     ]"
+    @mouseleave="handleNarrowMouseLeave"
   >
     <!-- 双列侧栏的一级窄列：Logo（图标形态）+ 一级图标菜单；二级内容在右侧主列 -->
     <div v-if="twoColumn" class="sidebar-mixed-narrow">
@@ -221,35 +255,47 @@ onBeforeUnmount(() => {
           mode="vertical"
           popper-class="pure-scrollbar"
           class="sidebar-mixed-menu select-none"
-          :default-active="topLevelActive"
+          :default-active="narrowActive"
           :popper-effect="tooltipEffect"
           :unique-opened="sidebarAccordion"
-          @select="handleTopLevelSelect"
+          @select="handleNarrowSelect"
         >
-          <!-- 窄列只显示一级图标（与 vben 的一级窄列同口径）：
-               列宽放不下「图标 + 标题」，标题在模板层不渲染（CSS 隐藏受
-               scoped/:deep 与组件作用域权重影响不可靠），改由原生 title /
-               aria-label 提供悬停提示与可访问名 -->
+          <!-- 窄列菜单（图标在上、标题在下，vben 一级窄列同口径）：
+               双列菜单为全局一级菜单；混合双列为当前一级的子菜单（悬停联动主列） -->
           <el-menu-item
-            v-for="item in usePermissionStoreHook().wholeMenus"
+            v-for="item in narrowMenuData"
             :key="item.path"
             :index="item.path ?? ''"
-            :title="transformI18n(item.meta?.title ?? '')"
             :aria-label="transformI18n(item.meta?.title ?? '')"
+            @mouseenter="handleNarrowMouseEnter(item as never)"
           >
             <div v-if="item.meta?.icon" class="sub-menu-icon">
               <component :is="useRenderIcon(item.meta.icon ?? '')" />
             </div>
+            <span class="sidebar-mixed-narrow__name">{{
+              transformI18n(item.meta?.title ?? "")
+            }}</span>
           </el-menu-item>
         </el-menu>
       </el-scrollbar>
     </div>
-    <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列 -->
-    <div class="sidebar-main">
+    <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列（混合双列的次级菜单无内容时不渲染，
+         侧栏收为窄列宽度，与 vben 的 extra 隐藏同口径） -->
+    <div v-if="!narrowSubmenuMode || extraVisible" class="sidebar-main">
       <LaySidebarLogo
         v-if="sidebarLogoVisible && !twoColumn"
         :collapse="menuCollapse"
       />
+      <!-- 双列侧栏次级列的分区标题（vben side-extra-title 同口径）：当前一级菜单的
+           图标 + 标题；站点 Logo 只在一级窄列顶部出现一次，不在此重复品牌 -->
+      <div v-else-if="twoColumn" class="sidebar-mixed-brand">
+        <div v-if="activeTopMenuIcon" class="sub-menu-icon">
+          <component :is="useRenderIcon(activeTopMenuIcon)" />
+        </div>
+        <span class="sidebar-mixed-brand__title">
+          {{ activeTopMenuTitle }}
+        </span>
+      </div>
       <el-scrollbar
         ref="mainScrollbarRef"
         wrap-class="scrollbar-wrapper"
@@ -409,7 +455,6 @@ onBeforeUnmount(() => {
   width: var(--sidebar-mixed-narrow-width);
   height: 100%;
   overflow: hidden;
-  background: var(--pure-theme-sub-menu-bg);
   border-right: 1px solid var(--divider);
 }
 
@@ -428,16 +473,38 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 一级窄列菜单：图标居中（激活项配色沿用公共菜单样式）
-   标题在模板层不渲染（见模板注释），此处只负责居中与项高 */
+/* 一级窄列菜单本体（项形态见 style/sidebar/_sidebar-narrow.scss：竖排、实心激活块） */
 .sidebar-mixed-menu {
   height: 100%;
   border: none;
+}
 
-  :deep(.el-menu-item) {
-    justify-content: center;
-    height: var(--nav-item-height);
-    padding-inline: 0;
+/* 双列次级列分区标题：与窄列 Logo 区同高（顶部基线对齐），左对齐弱化呈现 */
+.sidebar-mixed-brand {
+  display: flex;
+  flex: none;
+  gap: var(--nav-item-icon-gap);
+  align-items: center;
+  height: var(--sidebar-logo-h);
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--pure-theme-menu-text);
+
+  .sub-menu-icon {
+    flex: none;
+    height: var(--nav-item-icon-size);
+
+    svg {
+      width: var(--nav-item-icon-size);
+      height: var(--nav-item-icon-size);
+    }
   }
+}
+
+.sidebar-mixed-brand__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

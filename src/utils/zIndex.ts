@@ -1,5 +1,5 @@
 /**
- * z-index 阶梯（JS 侧；与 src/style/index.scss 的 `--pure-z-index-*` 变量同源）。
+ * z-index 阶梯（JS 侧；与 src/style/tokens/primitives.scss 的 `--z-index-*` 变量同源）。
  *
  * 分层约定（新增固定层 / 浮层一律取自本表，禁止直接写魔法数字）：
  * - layout 1000：侧栏/头部等布局固定层；

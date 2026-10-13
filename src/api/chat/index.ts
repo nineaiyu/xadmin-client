@@ -140,6 +140,12 @@ export interface ChatGroupMembersResult {
   members: ChatPeer[];
 }
 
+/** 创建群聊载荷（亦作新建群聊弹层的载荷通道类型契约） */
+export interface ChatGroupCreatePayload {
+  name: string;
+  member_pks: number[];
+}
+
 export interface ChatLeaveResult {
   room_id: number;
   /** 解散后为 false（最后一人退出） */
@@ -172,7 +178,7 @@ class ChatApi extends BaseRequest {
     );
   };
   /** 创建多人群聊（创建者为群主；成员至少 1 人且不含自己） */
-  createGroup = (data: { name: string; member_pks: number[] }) => {
+  createGroup = (data: ChatGroupCreatePayload) => {
     return this.request<DetailResult<ChatRoomItem>>(
       "post",
       {},

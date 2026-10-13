@@ -6,6 +6,7 @@ import { type FormInstance, type FormRules } from "element-plus";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { searchUserApi } from "@/api/system/search";
 import { message } from "@/utils/message";
+import { scrollToFirstError } from "@/hooks/useFormScrollToError";
 
 /**
  * 发起申请弹窗：选择启用中的流程 → 按 form_schema 渲染动态表单 → 提交。
@@ -218,7 +219,11 @@ async function loadFlows() {
 
 async function submit() {
   const valid = await formRef.value?.validate().catch(() => false);
-  if (!valid) return;
+  if (!valid) {
+    // 长表单（动态字段多）校验失败时滚动到首个错误字段并聚焦
+    scrollToFirstError(formRef.value);
+    return;
+  }
   submitting.value = true;
   try {
     const formData: Record<string, string | number> = {};

@@ -14,11 +14,16 @@ vi.mock("@/api/system/settings", () => ({
 vi.mock("@/store/modules/watermark", () => ({
   useWatermarkStoreHook: () => ({ refreshSiteWatermark: vi.fn() })
 }));
+// 骨架桩：按 panes 渲染面板（与真实骨架同语义）
 vi.mock("@/views/settings/components/settings/index.vue", () => ({
   default: {
     name: "Setting",
-    props: ["modelValue"],
-    template: "<div><slot /></div>"
+    props: ["panes"],
+    template: `<div>
+      <template v-for="pane in panes" :key="pane.key">
+        <slot :name="pane.key" />
+      </template>
+    </div>`
   }
 }));
 vi.mock("@/views/settings/components/settings/SettingItem.vue", () => ({
@@ -39,27 +44,20 @@ import Setting from "@/views/settings/components/settings/index.vue";
 import WatermarkSetting from "./components/WatermarkSetting.vue";
 import index from "./index.vue";
 
-const mountPage = () =>
-  mount(index, {
-    global: {
-      // el-tab-pane 桩：始终渲染插槽，页签内容断言落在挂载组件的 auth 装配上
-      stubs: {
-        "el-tab-pane": { template: "<div><slot /></div>" }
-      }
-    }
-  });
+const mountPage = () => mount(index, { global: {} });
 
-/** Setting 页签装配的 auth 形态（settingItemProps.auth 子集） */
+/** Setting 面板装配的 auth 形态（settingItemProps.auth 子集） */
 type TabAuth = { auth?: { partialUpdate?: boolean; retrieve: boolean } };
+type PaneLike = { item?: TabAuth };
 
 const getBasicAuth = (wrapper: ReturnType<typeof mountPage>) =>
-  (wrapper.findComponent(Setting).props("modelValue") as TabAuth[])[0]!.auth!;
+  (wrapper.findComponent(Setting).props("panes") as PaneLike[])[0]!.item!.auth!;
 
 const getWatermarkAuth = (wrapper: ReturnType<typeof mountPage>) =>
   (wrapper.findComponent(WatermarkSetting).props("item") as TabAuth).auth!;
 
-describe("SettingBasic 页签权限位拆分", () => {
-  it("基本页签按 SettingBasic 判权，水印页签按 SettingWatermark 独立判权", () => {
+describe("SettingBasic 面板权限位拆分", () => {
+  it("基本面板按 SettingBasic 判权，水印面板按 SettingWatermark 独立判权", () => {
     mocks.hasAuth.mockReturnValue(true);
     const wrapper = mountPage();
 
@@ -79,7 +77,7 @@ describe("SettingBasic 页签权限位拆分", () => {
     expect(mocks.hasAuth).toHaveBeenCalledWith("retrieve:SettingWatermark");
   });
 
-  it("仅回收水印权限位时不影响基本页签（授权粒度拆分的核心语义）", () => {
+  it("仅回收水印权限位时不影响基本面板（授权粒度拆分的核心语义）", () => {
     mocks.hasAuth.mockImplementation(
       (code: string) => !code.endsWith(":SettingWatermark")
     );

@@ -54,10 +54,10 @@
     }
   }
 
-  /* 菜单项 hover：图标轻微放大（配合文字提亮与浅背景，强化当前操作目标） */
+  /* 菜单项 hover：图标放大（vben 菜单 hover 的 `scale(1.2)` 同口径，强化操作目标） */
   .el-menu-item:hover .sub-menu-icon > *,
   .el-sub-menu__title:hover .sub-menu-icon > * {
-    transform: scale(1.1);
+    transform: scale(1.2);
   }
 
   .set-icon,
@@ -148,6 +148,11 @@
     /* 展开动画 */
     transition: width var(--duration-base);
 
+    /* 菜单区顶部留白（vben 菜单滚动区的 padding-top 8px 同口径） */
+    .el-scrollbar__view {
+      padding-top: 8px;
+    }
+
     .scrollbar-wrapper {
       overflow-x: hidden !important;
     }
@@ -203,6 +208,9 @@
     .el-menu-item,
     .el-sub-menu__title {
       height: var(--nav-item-height);
+
+      /* 项间纵距（vben 菜单项 margin-bottom 2px 同口径）：行步进 = 项高 + 该值 */
+      margin-bottom: var(--nav-item-margin-y);
       color: var(--pure-theme-menu-text);
       background-color: transparent !important;
 
@@ -218,6 +226,20 @@
         height: var(--nav-item-height);
         line-height: var(--nav-item-height);
       }
+    }
+
+    /* 层级缩进口径：一级 16px、二级 32px、三级 48px（步长 = --nav-item-indent 16px）；
+       一级起点取 16px（vben 为 8px，实机观感贴左显局促）——16px 起 + 激活块 8px
+       内缩 = 图标距侧栏边缘 16px，与内容纸留白同一节奏。EP 默认从 base 20px 起步，
+       此处按本项目的层级口径重写 */
+    .el-menu-item,
+    .el-sub-menu__title {
+      padding-left: calc(16px + var(--el-menu-level, 0) * 16px);
+    }
+
+    .outer-most > .el-menu-item,
+    .outer-most > .el-sub-menu > .el-sub-menu__title {
+      padding-left: 16px;
     }
 
     .is-active > .el-sub-menu__title,
@@ -506,7 +528,10 @@
       align-items: center;
       justify-content: flex-end;
       min-width: 340px;
-      color: var(--pure-theme-sub-menu-active-text);
+
+      /* 动作区取常规文字色（与竖向顶栏 nav-actions 同口径）：此前误用「子菜单激活
+         文字色」——亮色主题下该变量为主色，右上角的功能图标与用户名整体泛蓝 */
+      color: var(--el-text-color-regular);
 
       /* 搜索 */
       .search-container,
@@ -562,25 +587,25 @@
       border: none;
     }
 
+    /* 顶栏菜单项（水平 / 混合系共用）：项高 40 居中于顶栏、12px 左内距、圆角块，
+       与 vben 水平菜单的渲染结果一致（顶栏 50px 内上下各留 5px） */
     .el-menu-item,
+    .submenu-title-noDropdown,
     .el-sub-menu__title {
+      height: var(--nav-item-height-horizontal);
       padding-right: var(--el-menu-base-level-padding);
+      padding-left: 12px;
+      line-height: var(--nav-item-height-horizontal);
       color: var(--pure-theme-menu-text);
+      background: var(--pure-theme-menu-bg) !important;
+      border-radius: var(--radius-md);
 
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
 
-        /* 顶栏菜单项悬停浅背景（主题令牌）：覆盖下方「菜单底色」强制声明 */
+        /* 顶栏菜单项悬停浅背景（主题令牌）：覆盖「菜单底色」强制声明 */
         background: var(--pure-theme-menu-hover) !important;
       }
-    }
-
-    .submenu-title-noDropdown,
-    .el-sub-menu__title {
-      height: var(--nav-item-height-horizontal);
-      line-height: var(--nav-item-height-horizontal);
-      background: var(--pure-theme-menu-bg) !important;
-      border-radius: var(--radius-md);
 
       svg {
         position: static !important;
@@ -588,6 +613,7 @@
     }
 
     /* 顶栏菜单激活态：主色浅底圆角块 + 主色文字（与侧栏同一套令牌） */
+    .el-menu-item.is-active,
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
       color: var(--pure-theme-menu-active-text) !important;

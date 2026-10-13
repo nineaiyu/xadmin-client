@@ -1,21 +1,19 @@
 .pure-segmented {
-  --pure-control-padding-horizontal: 12px;
-  --pure-control-padding-horizontal-sm: 8px;
-  --pure-segmented-track-padding: 2px;
-  --pure-segmented-line-width: 1px;
-
-  --pure-segmented-border-radius-small: var(--radius-sm);
-  --pure-segmented-border-radius-base: var(--radius-md);
-  --pure-segmented-border-radius-large: var(--radius-lg);
+  /* 组件内部几何：轨道内边距、选中块描边宽、项水平内边距
+     （水平内边距对齐 EP 控件尺寸步进：默认 12px / small 8px） */
+  --segmented-track-padding: 2px;
+  --segmented-line-width: 1px;
+  --segmented-padding-horizontal: var(--space-3);
+  --segmented-padding-horizontal-sm: var(--space-2);
 
   box-sizing: border-box;
   display: inline-block;
-  padding: var(--pure-segmented-track-padding);
+  padding: var(--segmented-track-padding);
   font-size: var(--el-font-size-base);
   /* 未选中文案：72% 在 --bg-page 上 ≈5.1:1，满足 WCAG AA；与选中态 88% 保留层次差 */
   color: hsl(var(--fg) / 72%);
   background-color: hsl(var(--bg-page));
-  border-radius: var(--pure-segmented-border-radius-base);
+  border-radius: var(--radius-md);
 }
 
 .pure-segmented-block {
@@ -35,7 +33,7 @@
 
 /* small */
 .pure-segmented.pure-segmented--small {
-  border-radius: var(--pure-segmented-border-radius-small);
+  border-radius: var(--radius-sm);
 }
 
 .pure-segmented.pure-segmented--small .pure-segmented-item {
@@ -44,21 +42,18 @@
 
 .pure-segmented.pure-segmented--small .pure-segmented-item > div {
   min-height: calc(
-    var(--el-component-size-small) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size-small) - var(--segmented-track-padding) * 2
   );
   line-height: calc(
-    var(--el-component-size-small) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size-small) - var(--segmented-track-padding) * 2
   );
   padding: 0
-    calc(
-      var(--pure-control-padding-horizontal-sm) -
-        var(--pure-segmented-line-width)
-    );
+    calc(var(--segmented-padding-horizontal-sm) - var(--segmented-line-width));
 }
 
 /* large */
 .pure-segmented.pure-segmented--large {
-  border-radius: var(--pure-segmented-border-radius-large);
+  border-radius: var(--radius-lg);
 }
 
 .pure-segmented.pure-segmented--large .pure-segmented-item {
@@ -69,15 +64,13 @@
 
 .pure-segmented.pure-segmented--large .pure-segmented-item > div {
   min-height: calc(
-    var(--el-component-size-large) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size-large) - var(--segmented-track-padding) * 2
   );
   line-height: calc(
-    var(--el-component-size-large) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size-large) - var(--segmented-track-padding) * 2
   );
   padding: 0
-    calc(
-      var(--pure-control-padding-horizontal) - var(--pure-segmented-line-width)
-    );
+    calc(var(--segmented-padding-horizontal) - var(--segmented-line-width));
   font-size: var(--el-font-size-medium);
 }
 
@@ -92,15 +85,13 @@
 
 .pure-segmented .pure-segmented-item > div {
   min-height: calc(
-    var(--el-component-size) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size) - var(--segmented-track-padding) * 2
   );
   line-height: calc(
-    var(--el-component-size) - var(--pure-segmented-track-padding) * 2
+    var(--el-component-size) - var(--segmented-track-padding) * 2
   );
   padding: 0
-    calc(
-      var(--pure-control-padding-horizontal) - var(--pure-segmented-line-width)
-    );
+    calc(var(--segmented-padding-horizontal) - var(--segmented-line-width));
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

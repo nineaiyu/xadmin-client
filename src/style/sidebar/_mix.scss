@@ -66,9 +66,15 @@ body[layout="mix"] {
 
     /* 菜单折叠 */
     .el-menu--collapse {
+      /* 折叠态不做层级缩进（与竖排布局同口径）：显式压过展开态的层级缩进规则，
+         否则项内左 padding 与右侧 0 不对称，图标整体偏右（见 _vertical.scss 同款注释） */
+      .el-menu-item {
+        padding: 0 !important;
+      }
+
       .el-sub-menu {
         & > .el-sub-menu__title {
-          padding: 0;
+          padding: 0 !important;
 
           & > span {
             visibility: visible;

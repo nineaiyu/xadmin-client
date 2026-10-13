@@ -517,6 +517,30 @@ async function storedConfigureValue(page: Page, key: string) {
 }
 
 /**
+ * 外观归一：部分用例假设浅色外观（「半暗侧栏 / 半暗顶栏」的 `:not(.dark)` 选择器、
+ * 「顶栏明暗切换」的初始 `not.toHaveClass(/dark/)` 断言）——跑批前环境若被手动切成
+ * 深色会整条失败。用例内先经面板把主题模式切回「浅色」（实现与 e2e/theme-dark.e2e.ts
+ * 的 switchTheme 同口径：走面板控件，不直接写 localStorage）。
+ */
+async function ensureLightTheme(page: Page) {
+  const dark = await page.evaluate(() =>
+    document.documentElement.classList.contains("dark")
+  );
+  if (!dark) return;
+  await openSettingPanel(page);
+  await page
+    .locator(".right-panel")
+    .locator(".pure-segmented")
+    .first()
+    .locator(".pure-segmented-item", { hasText: /浅色|Light/ })
+    .click();
+  await page.waitForFunction(
+    () => !document.documentElement.classList.contains("dark")
+  );
+  await closePanel(page);
+}
+
+/**
  * 键位录制：点击键位控件进入录制态 → 按键 → 等待落库。
  * 当前值已等于目标值时跳过（避免等一次不会发生的 PATCH）。
  */
@@ -1131,9 +1155,13 @@ test.describe("布局偏好（面板实时生效）", () => {
   });
 
   test("外观：自定义主色写入主色令牌，可回退预设色", async ({ page }) => {
+    await ensureLightTheme(page);
     await openSettingPanel(page);
+    // 归一：先点回「亮白」预设色——前序失败用例可能未执行结尾的回退，
+    // 残留的自定义主色会让「默认无内联覆写」的初始断言级联失败
+    await page.locator(".right-panel .theme-color li").first().click();
     // 外观为默认页签；默认状态下主色无内联覆写
-    expect(await primaryTriplet(page)).toBe("");
+    await expect.poll(() => primaryTriplet(page), { timeout: 10_000 }).toBe("");
 
     await pickCustomColor(page, "#12b76a");
     // 主色令牌被覆写为取色值的 HSL 三元组，色块进入选中态
@@ -1281,6 +1309,84 @@ test.describe("布局偏好（面板实时生效）", () => {
       .toBe(true);
   });
 
+  /**
+   * 水平布局的顶栏在固定档下是覆盖层（`.fixed-header` 脱离文档流），内容区必须按
+   * 固定头部总高留出 padding-top。漏让位时页面顶部一整行被顶栏压住——首页顶部统计卡
+   * 只见数字不见标题、点阵时钟只露一部分。
+   */
+  test("布局：水平布局 + 固定顶栏时内容区为顶栏让位", async ({ page }) => {
+    /**
+     * 本用例要改「菜单布局」本身，故不走 `row()`（含 `:visible` 过滤，布局切到水平后
+     * 命中不稳），改用区块级定位——与其它用例的档位选择同口径的 `.pref-block`。
+     */
+    const setMenuLayout = async (choice: "vertical" | "horizontal") => {
+      const target = page
+        .locator(".right-panel .pref-block")
+        .filter({ hasText: /菜单布局/ })
+        .first();
+      await expect(target).toBeVisible({ timeout: 10_000 });
+      const option = target.locator(
+        `.pref-choice__item[data-choice="${choice}"]`
+      );
+      if ((await option.getAttribute("aria-pressed")) === "true") return;
+      await waitForSiteConfigPatch(page, "Layout", choice, async () => {
+        await option.click();
+      });
+    };
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    // 用例可能在任意持久化布局下开跑：先归位垂直（`setHeaderMode` 走 row()，依赖
+    // 垂直态的面板行结构），顶栏模式设好后再切水平
+    await setMenuLayout("vertical");
+    await setHeaderMode(page, "fixed");
+    await setMenuLayout("horizontal");
+    await closePanel(page);
+
+    await page.goto("/#/welcome");
+    await expect(page.locator(".fixed-header")).toBeVisible({
+      timeout: 10_000
+    });
+    // 首页卡片有入场位移（v-motion y: 100 → 0），等动画结束再量几何
+    await page.waitForTimeout(1200);
+
+    const geometry = await page.evaluate(() => {
+      const chrome = document.querySelector(
+        ".fixed-header"
+      ) as HTMLElement | null;
+      const main = document.querySelector(
+        "section.app-main"
+      ) as HTMLElement | null;
+      const firstCard = document.querySelector(
+        ".el-card.app-card"
+      ) as HTMLElement | null;
+      const chromeRect = chrome?.getBoundingClientRect();
+      const cardRect = firstCard?.getBoundingClientRect();
+      return {
+        chromeBottom: chromeRect ? Math.round(chromeRect.bottom) : 0,
+        chromePosition: chrome ? getComputedStyle(chrome).position : null,
+        paddingTop: main
+          ? Number.parseFloat(getComputedStyle(main).paddingTop)
+          : 0,
+        cardTop: cardRect ? Math.round(cardRect.top) : 0
+      };
+    });
+
+    // 固定档下顶栏是覆盖层（不是文档流内占位），让位必须由内容区自己完成
+    expect(geometry.chromePosition).toBe("fixed");
+    expect(geometry.paddingTop).toBeGreaterThanOrEqual(
+      geometry.chromeBottom - 2
+    );
+    expect(geometry.cardTop).toBeGreaterThanOrEqual(geometry.chromeBottom);
+
+    // 复位：垂直布局 + 固定档（后续用例与视觉基线依赖默认布局）
+    await ensurePanelClosed(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setMenuLayout("vertical");
+    await closePanel(page);
+  });
+
   test("布局：显示顶栏关闭后顶栏整块不渲染（页签条保留）", async ({ page }) => {
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
@@ -1342,6 +1448,7 @@ test.describe("布局偏好（面板实时生效）", () => {
   });
 
   test("布局：半暗侧栏与字号自定义档实时生效", async ({ page }) => {
+    await ensureLightTheme(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
 
@@ -1442,6 +1549,7 @@ test.describe("布局偏好（面板实时生效）", () => {
   test("布局：半暗顶栏与快捷键（Alt+S 折叠侧栏 / Alt+L 锁屏）", async ({
     page
   }) => {
+    await ensureLightTheme(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
 
@@ -1827,6 +1935,7 @@ test.describe("布局偏好（面板实时生效）", () => {
   });
 
   test("顶栏：刷新、折叠与明暗切换按钮开关与行为", async ({ page }) => {
+    await ensureLightTheme(page);
     await openMenuPath(page, ["系统管理"], "/system/user/index");
     const html = page.locator("html");
 
@@ -1906,6 +2015,20 @@ test.describe("布局偏好（面板实时生效）", () => {
   });
 
   test("侧栏：拖拽把手调宽并落库", async ({ page }) => {
+    // 基准宽度：当前有效值（内联覆写优先、默认档回落设计令牌），
+    // 拖拽断言基于该值推导，不依赖前序用例留下的宽度状态
+    const baseWidth = await page.evaluate(() => {
+      const inline =
+        document.documentElement.style.getPropertyValue("--sidebar-width");
+      const raw =
+        inline ||
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--sidebar-width"
+        );
+      return Number.parseInt(raw, 10);
+    });
+    const expectedWidth = Math.min(320, Math.max(160, baseWidth + 60));
+
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     await setSwitch(page, "拖拽调宽", true, "SidebarDraggable");
@@ -1924,25 +2047,29 @@ test.describe("布局偏好（面板实时生效）", () => {
     });
     await page.mouse.up();
 
-    // 默认 210 + 60 = 270px，落库到本地存储
+    // 基准 + 60px 落库到站点配置（宽度可调范围 160-320，拖拽量在范围内）
     await expect
       .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
-      .toBe("270px");
-    expect(await storedConfigureValue(page, "sidebarWidth")).toBe(270);
+      .toBe(`${expectedWidth}px`);
+    expect(await storedConfigureValue(page, "sidebarWidth")).toBe(
+      expectedWidth
+    );
 
-    // 复位：宽度回默认、关闭拖拽开关（面板内数字输入档仍可精确设置）
+    // 复位：宽度设回基准值、关闭拖拽开关（面板内数字输入档仍可精确设置）；
+    // 基准等于设计令牌默认时撤除内联覆写，容量内的历史基准则保留为内联值
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setNumber(
-      page,
-      "侧栏宽度",
-      "SidebarWidth",
-      Number.parseInt(await rootVar(page, "--sidebar-width"), 10)
-    );
+    await setNumber(page, "侧栏宽度", "SidebarWidth", baseWidth);
     await setSwitch(page, "拖拽调宽", false, "SidebarDraggable");
     await expect
-      .poll(() => sidebarWidthVar(page), { timeout: 10_000 })
-      .toBe("");
+      .poll(
+        async () => {
+          const value = await sidebarWidthVar(page);
+          return value === "" || value === `${baseWidth}px`;
+        },
+        { timeout: 10_000 }
+      )
+      .toBe(true);
   });
 
   test("偏好入口：位置切悬浮球；总开关关闭后入口与快捷键同步失效", async ({
@@ -2242,9 +2369,10 @@ test.describe("布局偏好（面板实时生效）", () => {
       .boundingBox();
     expect(Math.round(box?.height ?? 0)).toBe(42);
 
+    // 设回设计令牌默认档（38）：内联覆写撤除、回到令牌基准值
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setNumber(page, "页签高度", "TagsHeight", 34);
+    await setNumber(page, "页签高度", "TagsHeight", 38);
     expect(await inlineVar(page, "--layout-tags-item-h")).toBe("");
     await closePanel(page);
   });
@@ -2526,6 +2654,22 @@ test.describe("布局偏好（面板实时生效）", () => {
       page.locator(".sidebar-container.is-two-column")
     ).toBeVisible();
     await expect(page.locator(".sidebar-mixed-narrow")).toBeVisible();
+
+    // 左上角品牌不重复：站点 Logo 只在一级窄列顶部出现一次（图标形态）；
+    // 次级列顶部是「当前一级菜单」的分区标题（vben side-extra-title 同口径），
+    // 不得再渲染一次品牌 Logo
+    await expect(
+      page.locator(".sidebar-container .sidebar-logo-link")
+    ).toHaveCount(1);
+    await expect(
+      page.locator(".sidebar-container .sidebar-mixed-narrow__logo")
+    ).toHaveCount(1);
+    await expect(
+      page.locator(".sidebar-container .sidebar-mixed-brand")
+    ).toBeVisible();
+    await expect(
+      page.locator(".sidebar-container .sidebar-mixed-brand .sidebar-logo-link")
+    ).toHaveCount(0);
 
     // 侧边导航：顶栏通栏（宽度 100%、只有面包屑与动作区）、侧栏排在顶栏下方并显示完整菜单
     await openSettingPanel(page);
@@ -2854,7 +2998,8 @@ test.describe("布局：侧栏菜单装饰与激活联动", () => {
             .evaluate(el => getComputedStyle(el).transform),
         { timeout: 5_000 }
       )
-      .toContain("1.1");
+      /* 悬停缩放：vben 菜单 hover 的 scale(1.2) 同口径 */
+      .toContain("1.2");
   });
 
   test("侧栏装饰：折叠态目录徽标以角标显示", async ({ page }) => {

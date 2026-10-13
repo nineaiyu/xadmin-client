@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_OPTIONS='--max-old-space-size=4096 --trace-deprecation' vite",
     "serve": "pnpm dev",
-    "prebuild": "node scripts/gen-icon-subset.mjs",
+    "prebuild": "node scripts/gen-icon-subset.mjs && node scripts/gen-animate-subset.mjs",
     "build": "rimraf dist && NODE_OPTIONS=--max-old-space-size=8192 vite build && generate-version-file",
     "build:staging": "rimraf dist && vite build --mode staging",
     "report": "rimraf dist && vite build && generate-version-file",
@@ -52,7 +52,7 @@
     "test:e2e:parallel": "node scripts/e2e-run.mjs parallel",
     "test:e2e:quarantine": "node scripts/e2e-run.mjs quarantine",
     "check:quarantine": "node scripts/check-quarantine.mjs",
-    "postinstall": "node scripts/gen-icon-subset.mjs",
+    "postinstall": "node scripts/gen-icon-subset.mjs && node scripts/gen-animate-subset.mjs",
     "prepare": "husky",
     "preinstall": "npx only-allow pnpm"
   },

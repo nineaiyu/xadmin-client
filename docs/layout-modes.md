@@ -22,10 +22,14 @@
 
 - **Logo 归属**：`mix` / `header-sidebar-nav` 的 Logo 随顶栏（侧栏排在顶栏下方，
   没有侧栏顶部品牌位）；顶栏被配置隐藏时回落到侧栏，避免品牌位整体消失；
-  双列布局的 Logo 在一级窄列且只显示图标（列宽放不下标题）；
+  双列布局的 Logo 在一级窄列（只显示图标），次级列顶部另有一处「图标 + 站点名」
+  品牌区（vben `side-extra-title` 同口径）；
 - **侧栏菜单范围**：`mix` 的侧栏显示「当前一级路由的子菜单」（受「导航切割」
   `navigationSplit` 控制，关闭后回到完整菜单树）；`header-sidebar-nav` 恒为完整菜单树；
-  双列布局的窄列承担一级导航（只显示图标）、主列显示当前一级的子菜单；
+  双列菜单（`sidebar-mixed-nav`）的窄列承担全局一级导航、主列显示当前一级的子菜单树；
+  混合双列（`header-mixed-nav`）由顶栏承担一级导航，窄列显示「当前一级的子菜单」、
+  主列显示「窄列中悬停 / 激活项的 children」（vben `useExtraMenu` 同语义，
+  无内容时主列整列不渲染、侧栏收为窄列宽度）；
 - **侧栏偏移**：侧栏排在顶栏下方的布局（`mix` / `header-sidebar-nav`）以
   **固定头部总高**（顶栏 + 页签条，外壳写入 `--layout-chrome-h`）为起点，与
   「隐藏页签 / 隐藏顶栏 / 全屏内容」三态同源——只按顶栏高度会让侧栏与页签条重叠；
@@ -34,6 +38,9 @@
   （`sidebar-mixed-nav`）不参与该判定——它的一级窄列是唯一导航入口；
 - **顶栏菜单条**：`mix` / `header-mixed-nav` 在顶栏渲染一级菜单条（NavMix）；
   `horizontal` 由通栏顶栏组件渲染完整菜单；其余布局的顶栏只有面包屑与动作区；
+- **顶栏折叠按钮**：仅 `vertical` 与 `header-mixed-nav` 两种布局在顶栏左侧展示
+  侧栏折叠按钮（vben `showHeaderToggleButton` 同口径）——双列菜单 / 混合菜单 /
+  侧边导航的折叠入口在侧栏自身，水平与全屏内容无侧栏；
 - **全屏内容**没有顶栏，设置入口回落到右下悬浮球（保证始终有切回其它布局的入口），
   用户模拟横幅保持常驻（安全提示）。
 
@@ -94,27 +101,37 @@
 
 导航外壳的视觉取值集中在设计令牌里，改令牌即全局生效（无需改组件）：
 
-| 项目                  | 取值                             | 令牌                                                            |
-| --------------------- | -------------------------------- | --------------------------------------------------------------- |
-| 侧栏宽度 / 折叠宽度   | 224 / 60                         | `--sidebar-width` / `--sidebar-collapse-width`                  |
-| 顶栏高度              | 50                               | `--layout-header-h`                                             |
-| 页签项高度            | 38                               | `--layout-tags-item-h`                                          |
-| 菜单项高度            | 38（顶栏菜单 40）                | `--nav-item-height` / `--nav-item-height-horizontal`            |
-| 菜单层级缩进          | 16                               | `--nav-item-indent`                                             |
-| 菜单激活块圆角 / 内缩 | 8 / 8                            | `--nav-item-radius` / `--nav-item-inset`                        |
-| 菜单图标尺寸          | 16                               | `--nav-item-icon-size`                                          |
-| 侧栏底色（浅色皮肤）  | 白                               | `--pure-theme-menu-bg`                                          |
-| 菜单激活态            | 主色 15% 底 + 主色文字           | `--pure-theme-menu-active-bg` / `--pure-theme-menu-active-text` |
-| 菜单悬停底色          | `#f4f4f5` 浅灰                   | `--pure-theme-menu-hover`                                       |
-| 顶栏分隔              | 1px 底边框（不用投影）           | `border-bottom`（lay-navbar / `_horizontal.scss`）              |
-| 页签条底 / 激活标签   | 浅灰条 + 白底圆角块 + 主色文字   | `--fill-muted` / `--bg-card`                                    |
-| 内容区底色            | 与 vben `--background-deep` 同值 | `--bg-page`                                                     |
-| 卡片圆角              | 8px                              | `--radius-lg`（随「圆角」档位缩放）                             |
+| 项目                  | 取值                                     | 令牌                                                            |
+| --------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| 侧栏宽度 / 折叠宽度   | 224 / 60                                 | `--sidebar-width` / `--sidebar-collapse-width`                  |
+| 双列一级窄列宽度      | 80                                       | `--sidebar-mixed-narrow-width`                                  |
+| 顶栏高度              | 50                                       | `--layout-header-h`                                             |
+| 页签项高度            | 38                                       | `--layout-tags-item-h`                                          |
+| 侧栏菜单项高度        | 42                                       | `--nav-item-height`                                             |
+| 顶栏菜单项高度        | 40（顶栏内上下各留 5px）                 | `--nav-item-height-horizontal`                                  |
+| 菜单层级缩进          | 一级 8 / 二级 32 / 三级 48               | `--nav-item-indent`（公式 16px + level*16px）                   |
+| 顶栏菜单项左内距      | 12                                       | `_common.scss` 的 `.horizontal-header` 段                       |
+| 菜单激活块圆角 / 内缩 | 8 / 8                                    | `--nav-item-radius` / `--nav-item-inset`                        |
+| 菜单图标尺寸          | 16（窄列 20）                            | `--nav-item-icon-size` / `--nav-item-icon-size-narrow`          |
+| 窄列菜单项形态        | 竖排、9px 内边距、4px 纵距、6px 圆角     | `--nav-item-padding-narrow` / `--nav-item-margin-narrow` 等     |
+| 侧栏底色（浅色皮肤）  | 白                                       | `--pure-theme-menu-bg`                                          |
+| 一级窄列底色          | 浅色同侧栏 / 深色深一档                  | `--sidebar-deep`（深色模式取 `--bg-page`）                      |
+| 菜单激活态            | 主色 15% 底 + 主色文字                   | `--pure-theme-menu-active-bg` / `--pure-theme-menu-active-text` |
+| 窄列激活态            | 浅色主色实心块 + 白字（vben NormalMenu） | `_sidebar-narrow.scss`（深色模式提亮块 + 亮字）                 |
+| 菜单悬停底色          | `#f4f4f5` 浅灰                           | `--pure-theme-menu-hover`                                       |
+| 顶栏分隔              | 1px 底边框（不用投影）                   | `border-bottom`（lay-navbar / `_horizontal.scss`）              |
+| 页签条底 / 激活标签   | 浅灰条 + 白底圆角块 + 主色文字           | `--fill-muted` / `--bg-card`                                    |
+| 内容区底色            | 与 vben `--background-deep` 同值         | `--bg-page`                                                     |
+| 卡片圆角              | 8px                                      | `--radius-lg`（随「圆角」档位缩放）                             |
 
 - 浅色皮肤（`light` / 默认 `default`）走 vben 的「白底侧栏 + 主色浅底激活块」；
-  9 套深色导航皮肤保留各自底色，激活态统一为「主色 22% 底 + 白字」；
-- 「导航风格」档 `plain` 会把激活块收平（`--nav-item-radius` / `--nav-item-inset` 归零），
-  仍需「整行铺满」形态时使用；
+  深色模式（`html.dark`）下浅色皮肤会切换为「深色导航调色」（提亮块 + 前景色文字，
+  见 `tokens/semantic.scss` 的 `html.dark[data-theme=...]` 块），避免白底 / 浅灰悬停
+  在深色面板上留下白块；9 套深色导航皮肤保留各自底色，激活态统一为「主色 22% 底 + 白字」；
+- 「导航风格」档 `plain` 会把激活块收平（`--nav-item-radius` / `--nav-item-inset` /
+  `--nav-item-radius-narrow` 归零），仍需「整行铺满」形态时使用；
+- 折叠态「悬停临时展开」对全部侧栏布局生效（`vertical` 与两种双列布局均有宽度规则，
+  侧栏浮层式回展、内容区不动；`header-mixed-nav` 的窄列独显态无次级列可展开，不参与）；
 - 视觉基线（`e2e/visual.e2e.ts`）会随令牌改动失效，需按需 `--update-snapshots` 重录。
 
 ## 七、相关测试

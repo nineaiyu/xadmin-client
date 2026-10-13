@@ -2,7 +2,7 @@
 import { settingsEmailApi, settingsNotifyImApi } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingsPane } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
@@ -15,10 +15,10 @@ defineOptions({
 });
 const { t } = useI18n();
 
-// 企业 IM 通知渠道：钉钉/企微/飞书各一个独立页签。channel 既是后端字段
+// 企业 IM 通知渠道：钉钉/企微/飞书各一个独立面板。channel 既是后端字段
 // 作用域（retrieve/search-columns/partialUpdate 只读写本渠道），也是测试按钮的定位
 // 参数（?channel= 只测本渠道），避免"一个测试按钮测三家"的歧义；fields 白名单为前端
-// 兜底，确保字段不跨页签渲染
+// 兜底，确保字段不跨面板渲染
 const imChannelTabs: Array<{
   title: string;
   channel: string;
@@ -51,54 +51,59 @@ const imChannelTabs: Array<{
   }
 ];
 
-const settingData = computed<Array<settingItemProps>>(() => [
-  {
-    auth: settingAuth("EmailServerSetting", true),
-    api: settingsEmailApi,
-    localeName: "settingMessage",
-    title: "mailTitle"
-  },
-  ...imChannelTabs.map(item => ({
-    auth: settingAuth("ImNotifySetting", true),
-    api: settingsNotifyImApi,
-    localeName: "settingMessage",
-    title: item.title,
-    fields: item.fields,
-    queryParams: { channel: item.channel }
-  }))
-]);
-
 const auth = ref({
   partialUpdate: hasAuth("partialUpdate:SystemMsgSubscription"),
   list: hasAuth("list:SystemMsgSubscription"),
   backends: hasAuth("backends:SystemMsgSubscription"),
   // 消息模板注册表端点（/api/notifications/message-templates）的权限点挂在
-  // 本页面（SettingMessage）名下，与订阅页签的模型级权限码来源不同
+  // 本页面（SettingMessage）名下，与订阅面板的模型级权限码来源不同
   templateList: hasAuth("list:SettingMessage")
 });
+
+const panes = computed<Array<settingsPane>>(() => [
+  {
+    key: "email",
+    item: {
+      auth: settingAuth("EmailServerSetting", true),
+      api: settingsEmailApi,
+      localeName: "settingMessage",
+      title: "mailTitle"
+    }
+  },
+  ...imChannelTabs.map(item => ({
+    key: item.channel,
+    item: {
+      auth: settingAuth("ImNotifySetting", true),
+      api: settingsNotifyImApi,
+      localeName: "settingMessage",
+      title: item.title,
+      fields: item.fields,
+      queryParams: { channel: item.channel }
+    }
+  })),
+  // 消息通知订阅（列表型自定义面板）与消息模板：无对应权限时不并入导航
+  ...(auth.value.list
+    ? [{ key: "notifications", label: t("settingMessage.messageTitle") }]
+    : []),
+  ...(auth.value.templateList
+    ? [{ key: "templates", label: t("messageTemplate.title") }]
+    : [])
+]);
 </script>
 
 <template>
-  <setting :model-value="settingData">
-    <el-tab-pane
-      v-if="auth.list"
-      :label="t('settingMessage.messageTitle')"
-      :lazy="true"
-    >
+  <setting :panes="panes">
+    <template #notifications>
       <MessageNotifications
         :api="systemMsgSubscriptionApi"
         :auth="auth"
         :has-operations="true"
         :has-receivers="true"
       />
-    </el-tab-pane>
-    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层）；无注册表查看权限时隐藏页签 -->
-    <el-tab-pane
-      v-if="auth.templateList"
-      :lazy="true"
-      :label="t('messageTemplate.title')"
-    >
+    </template>
+    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
+    <template #templates>
       <MessageTemplatePanel />
-    </el-tab-pane>
+    </template>
   </setting>
 </template>

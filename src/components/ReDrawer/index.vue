@@ -125,6 +125,20 @@ function handleClose(
 function handleChange(options: DrawerOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
 }
+
+/**
+ * 内容组件 props：既有 `options.props` + （启用载荷通道时）注入 `getData/setData`。
+ * 仅在显式传入 `payload` 的抽屉注入，未传的抽屉零影响
+ * （避免未声明这两个 props 的内容组件把它们落到根元素 DOM 上）。
+ */
+function contentProps(options: DrawerOptions) {
+  if (!options.getData && !options.setData) return options?.props;
+  return {
+    ...options?.props,
+    getData: options.getData,
+    setData: options.setData
+  };
+}
 </script>
 
 <template>
@@ -153,7 +167,7 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
     <!--  body  -->
     <component
       :is="options.contentRenderer?.({ options, index })"
-      v-bind="options?.props"
+      v-bind="contentProps(options)"
       @change="(values: unknown) => handleChange(options, index, values)"
       @close="(args: ArgsType) => handleClose(options, index, args)"
     />

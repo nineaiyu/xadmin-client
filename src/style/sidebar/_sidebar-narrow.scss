@@ -1,0 +1,84 @@
+/* ================ 双列侧栏一级窄列（vben NormalMenu 同口径） ================
+   一级窄列只出现在双列菜单 / 混合双列两种布局（DOM 限定 .sidebar-mixed-narrow）。
+   菜单项为「图标在上、标题在下」的竖排形态：9px 内边距 + 20px 图标 + 8px 间距
+   + 12px 标题（合计 64px 项高），激活为实心圆角块，与 vben 一级窄列的渲染结果一致。
+
+   选择器统一带 `.sidebar-container.is-two-column` 前缀：公共菜单样式由 merge-style
+   以 `body[layout] .sidebar-container .el-menu-item`（0-3-1）展开，此处需以
+   同格式的更高特异性覆写（含 div/span 的项高规则，否则窄列的图标与标题会被钉成行高）。 */
+
+/* 一级窄列底色：浅色皮肤与侧栏同色（靠分隔线分界）、深色模式深一档（--sidebar-deep 语义） */
+.sidebar-container.is-two-column .sidebar-mixed-narrow {
+  background: var(--sidebar-deep);
+}
+
+/* 窄列菜单项：竖排布局（覆盖公共菜单的横向项高与缩进） */
+.sidebar-container.is-two-column .sidebar-mixed-menu .el-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  padding: var(--nav-item-padding-narrow) 0;
+  margin: var(--nav-item-margin-narrow) 8px;
+  line-height: normal;
+  border-radius: var(--nav-item-radius-narrow);
+  transition: background var(--duration-fast) var(--ease-standard);
+
+  .sub-menu-icon {
+    height: auto;
+    margin-right: 0;
+    font-size: var(--nav-item-icon-size-narrow);
+
+    svg,
+    .svg-raw-icon {
+      width: var(--nav-item-icon-size-narrow);
+      height: var(--nav-item-icon-size-narrow);
+    }
+  }
+
+  /* 悬停：图标微放大（与侧栏主列同口径） */
+  &:hover .sub-menu-icon > * {
+    transform: scale(1.2);
+  }
+}
+
+/* 窄列菜单项标题：12px 居中、单行省略（覆盖公共菜单对 span 的行高钉定） */
+.sidebar-container.is-two-column
+  .sidebar-mixed-menu
+  .sidebar-mixed-narrow__name {
+  max-width: 100%;
+  height: auto;
+  margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: inherit;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 窄列激活态：实心圆角块（vben NormalMenu：浅色主题主色实心 + 白字，
+   深色模式提亮块 + 亮字） */
+.sidebar-container.is-two-column .sidebar-mixed-menu .el-menu-item.is-active {
+  color: var(--el-color-white) !important;
+  background: hsl(var(--primary)) !important;
+
+  .sub-menu-icon {
+    color: var(--el-color-white);
+  }
+}
+
+html.dark
+  .sidebar-container.is-two-column
+  .sidebar-mixed-menu
+  .el-menu-item.is-active {
+  color: hsl(var(--fg)) !important;
+  background: hsl(var(--fg) / 12%) !important;
+
+  .sub-menu-icon {
+    color: hsl(var(--fg));
+  }
+}

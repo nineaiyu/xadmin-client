@@ -8,7 +8,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingsPane } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import type { RecordType } from "plus-pro-components";
@@ -18,14 +18,17 @@ defineOptions({
 });
 
 const { t } = useI18n();
-const smsBackends = ref<Array<settingItemProps>>([]);
-// 静态渠道项与动态后端子项按 settingItemProps 契约统一（api 槽位为结构化接口，
+const smsBackends = ref<Array<settingsPane>>([]);
+// 静态渠道项与动态后端子项按 settingsPane 契约统一（api 槽位为结构化接口，
 // ViewBaseApi 及其子类实例均可直接赋给）
-const settingData = computed<Array<settingItemProps>>(() => [
+const panes = computed<Array<settingsPane>>(() => [
   {
-    auth: settingAuth("SmsSetting"),
-    api: settingsSmsServerApi,
-    localeName: "settingSms"
+    key: "server",
+    item: {
+      auth: settingAuth("SmsSetting"),
+      api: settingsSmsServerApi,
+      localeName: "settingSms"
+    }
   },
   ...smsBackends.value
 ]);
@@ -45,11 +48,14 @@ async function loadBackends() {
       smsBackends.value = [];
       (Array.isArray(res.data) ? res.data : []).forEach((item: RecordType) => {
         smsBackends.value.push({
-          auth: settingAuth("SmsConfig", true),
-          api: settingsSmsConfigApi,
-          queryParams: { category: item.value },
-          localeName: "settingSms",
-          label: item.label
+          key: String(item.value || item.label),
+          label: item.label,
+          item: {
+            auth: settingAuth("SmsConfig", true),
+            api: settingsSmsConfigApi,
+            queryParams: { category: item.value },
+            localeName: "settingSms"
+          }
         });
       });
     } else {
@@ -82,7 +88,7 @@ onMounted(loadBackends);
         {{ t("buttons.reload") }}
       </el-button>
     </el-alert>
-    <setting v-loading="backendsLoading" :model-value="settingData" />
+    <setting v-loading="backendsLoading" :panes="panes" />
   </div>
 </template>
 

@@ -33,6 +33,17 @@ const headerLogoVisible = computed(
 const breadcrumbMode = computed(
   () => !headerMenuVisible.value && device.value !== "mobile"
 );
+
+/**
+ * 顶栏侧栏折叠按钮（vben `showHeaderToggleButton` 同口径）：
+ * 仅「垂直」与「混合双列」两种布局在顶栏展示——双列菜单 / 混合菜单 / 侧边导航
+ * 的折叠入口在侧栏自身，水平布局与全屏内容无侧栏。
+ */
+const headerToggleVisible = computed(
+  () =>
+    device.value !== "mobile" &&
+    (layout.value === "vertical" || layout.value === "header-mixed-nav")
+);
 </script>
 
 <template>
@@ -45,6 +56,13 @@ const breadcrumbMode = computed(
     />
 
     <NavbarLogo v-if="headerLogoVisible" />
+
+    <LaySidebarTopCollapse
+      v-if="headerToggleVisible"
+      class="hamburger-container"
+      :is-active="pureApp.sidebar.opened"
+      @toggleClick="toggleSideBar"
+    />
 
     <template v-if="headerMenuVisible">
       <LayNavMix />

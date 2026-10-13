@@ -1,28 +1,46 @@
 <script lang="ts" setup>
-import { computed, onUnmounted, ref } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { message } from "@/utils/message";
 import { SUCCESS_CODE } from "@/api/types";
-import { chatApi, type ChatUserOption } from "@/api/chat";
+import {
+  chatApi,
+  type ChatGroupCreatePayload,
+  type ChatUserOption
+} from "@/api/chat";
 
 /**
  * 新建群聊表单（弹层内容组件形态）。
  *
- * 由 ChatSidebar 经 `addDialog` 打开（弹层体系统一收敛，不在模板手挂 el-dialog）：
- * 群名称 + 成员远程搜索多选；`getPayload()` 校验通过返回创建载荷，失败返回 null
- * （调用方保持弹层打开）。
+ * 由 ChatSidebar 经 `addDialog` 以类型化载荷通道打开（弹层体系统一收敛，
+ * 不在模板手挂 el-dialog）：群名称 + 成员远程搜索多选；草稿变化即回写
+ * `props.setData`，打开方在 `beforeSure` 用 `getData()` 取最新载荷并做提交校验。
  */
+const props = defineProps<{
+  /** 初始载荷（打开方预置） */
+  payload?: ChatGroupCreatePayload;
+  /** 回写载荷（由 ReDialog 载荷通道注入） */
+  setData?: (_data: ChatGroupCreatePayload) => void;
+}>();
+
 const { t } = useI18n();
 
-const groupName = ref("");
-const groupMemberPks = ref<number[]>([]);
+const groupName = ref(props.payload?.name ?? "");
+const groupMemberPks = ref<number[]>([...(props.payload?.member_pks ?? [])]);
 /** 候选成员缓存：远程搜索与已选回显共用 */
 const groupOptions = ref<ChatUserOption[]>([]);
 const searchingMembers = ref(false);
 let memberSearchTimer: number | undefined;
 
-const canCreateGroup = computed(
-  () => !!groupName.value.trim() && groupMemberPks.value.length > 0
+/** 草稿变化即回写：打开方 `getData()` 读到的永远是当前值（含校验前的空值） */
+watch(
+  [groupName, groupMemberPks],
+  () => {
+    props.setData?.({
+      name: groupName.value.trim(),
+      member_pks: [...groupMemberPks.value]
+    });
+  },
+  { deep: true, immediate: true }
 );
 
 function mergeGroupOptions(rows: ChatUserOption[]) {
@@ -51,24 +69,6 @@ function onSearchMembers(value: string) {
     }
   }, 300);
 }
-
-/** 校验并生成创建载荷；校验失败返回 null（调用方保持弹层打开） */
-const getPayload = (): { name: string; member_pks: number[] } | null => {
-  if (!groupName.value.trim()) {
-    message(t("chat.groupNameRequired"), { type: "warning" });
-    return null;
-  }
-  if (!groupMemberPks.value.length) {
-    message(t("chat.membersRequired"), { type: "warning" });
-    return null;
-  }
-  return {
-    name: groupName.value.trim(),
-    member_pks: [...groupMemberPks.value]
-  };
-};
-
-defineExpose({ getPayload, canCreateGroup });
 
 onUnmounted(() => window.clearTimeout(memberSearchTimer));
 </script>
