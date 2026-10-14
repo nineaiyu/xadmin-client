@@ -9,12 +9,12 @@
 
 大多数场景（改页面 / 改组件 / 调样式 / 补测试）**只检出本仓库即可**：
 
-| 场景                            | 前置                                                                                        | 命令                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 开发页面                        | 一个可达的后端（远程环境，或本机 `xadmin-server` 的 `bash utils/dev_up.sh --backend-only`） | `pnpm install && pnpm dev`（默认代理到 `127.0.0.1:8896`，见 README） |
-| 单元测试 / lint / 构建          | 无                                                                                          | `pnpm test:run` / `pnpm lint` / `pnpm build`                         |
-| 契约校验 / 版本校验             | 需要 `xadmin-server` 检出（`XADMIN_SERVER_DIR` 指向它）                                     | `XADMIN_SERVER_DIR=<server 路径> pnpm check:contract`                |
-| E2E（Playwright，自带测试后端） | 需要 `xadmin-server` 检出                                                                   | `E2E_SERVER_DIR=<server 路径> pnpm test:e2e:smoke`                   |
+| 场景                            | 前置                                                                                      | 命令                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 开发页面                        | 一个可达的后端（远程环境，或本机 `xadmin-server` 的 `bash ops/dev_up.sh --backend-only`） | `pnpm install && pnpm dev`（默认代理到 `127.0.0.1:8896`，见 README） |
+| 单元测试 / lint / 构建          | 无                                                                                        | `pnpm test:run` / `pnpm lint` / `pnpm build`                         |
+| 契约校验 / 版本校验             | 需要 `xadmin-server` 检出（`XADMIN_SERVER_DIR` 指向它）                                   | `XADMIN_SERVER_DIR=<server 路径> pnpm check:contract`                |
+| E2E（Playwright，自带测试后端） | 需要 `xadmin-server` 检出                                                                 | `E2E_SERVER_DIR=<server 路径> pnpm test:e2e:smoke`                   |
 
 - 后端不可达时：只影响"页面调接口"的联调，**测试 / 构建 / lint 不受影响**；
 - 独立检出的 E2E 完整说明（含 `E2E_PYTHON` 覆盖解释器）见 [../e2e/README.md](../e2e/README.md) 的「独立检出运行」章节；

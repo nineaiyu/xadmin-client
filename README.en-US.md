@@ -27,7 +27,7 @@ pnpm dev                # http://127.0.0.1:8848
 ```
 
 Prerequisite: the backend runs at `127.0.0.1:8896` (start it with
-`bash xadmin-server/utils/dev_up.sh --backend-only`).
+`bash xadmin-server/ops/dev_up.sh --backend-only`).
 
 - Dev proxy (`vite.config.ts`): `/api`, `/media`, `/api-docs` → `http://127.0.0.1:8896`,
   `/ws` → `ws://127.0.0.1:8896` (preconfigured);

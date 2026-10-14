@@ -7,8 +7,8 @@
 | 文档                                                   | 内容                                                                                                                              |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | [development-guide.md](development-guide.md)           | **前端开发指引（含独立检出）**：独立检出场景与前置、目录速览、高频任务索引、跨仓文档地图、提交前自检、常见问题                    |
-| [layout-modes.md](layout-modes.md)                     | **布局模式（7 种）**：与 vben 布局矩阵的对应、形态约定、判定函数、渲染落点、切换与持久化、新增布局步骤                            |
-| [accessibility-audit.md](accessibility-audit.md)       | 可访问性（a11y）审计记录（N2）：键盘走查 / 读屏语义修复明细、axe-core 门禁豁免登记（随交付追加）                                  |
+| [layout-modes.md](layout-modes.md)                     | **布局模式（7 种）**：形态约定、判定函数、渲染落点、切换与持久化、新增布局步骤                                                    |
+| [accessibility-audit.md](accessibility-audit.md)       | 可访问性（a11y）审计记录：键盘走查 / 读屏语义修复明细、axe-core 门禁豁免登记（随交付追加）                                        |
 | [perf-firstscreen.md](perf-firstscreen.md)             | 首屏画像与体积治理：闭包体积构成 / 资源瀑布与 Long Task·TBT·LCP / 拆包改动账与遗留，含 `scripts/firstscreen-profile.mjs` 复跑方式 |
 | [metadata-driven-crud.md](metadata-driven-crud.md)     | 元数据驱动 CRUD 前端方案（RePlusPage + contract/schema）的复用说明：最小依赖集、后端前置、移植步骤、边界与耦合                    |
 | [component-dependencies.md](component-dependencies.md) | 依赖 → 消费组件映射：`vue-json-pretty` / `vue-tippy` / `sortablejs` / `echarts` 等既有依赖的实际使用方，用于裁剪与升级评估        |

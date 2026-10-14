@@ -5,6 +5,12 @@ xadmin 前端 —— 基于 [vue-pure-admin](https://github.com/pure-admin/vue-p
 
 后端：[xadmin-server](https://github.com/nineaiyu/xadmin-server)（Django 6 + DRF + Channels）
 
+> **版本 5.0.0**：前端与后端**必须同版本发布**（CI 三方校验 `xadmin-server/server/const.py` ↔
+> 本仓 `package.json` ↔ 发布 tag）。变更总览见
+> [xadmin-server/CHANGELOG.md](https://github.com/nineaiyu/xadmin-server/blob/dev/CHANGELOG.md)，
+> 4.x → 5.0 升级步骤见
+> [升级到 5.0](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/ops/upgrade-5.0.md)。
+
 ### 在线预览（线上演示）
 
 [https://xadmin.dvcloud.xin/](https://xadmin.dvcloud.xin/)
@@ -24,7 +30,7 @@ pnpm install
 pnpm dev                # http://127.0.0.1:8848
 ```
 
-前置：后端运行在 `127.0.0.1:8896`（后端仓库一键起：`bash xadmin-server/utils/dev_up.sh --backend-only`）。
+前置：后端运行在 `127.0.0.1:8896`（后端仓库一键起：`bash xadmin-server/ops/dev_up.sh --backend-only`）。
 
 - 开发代理（`vite.config.ts`）：`/api`、`/media`、`/api-docs` → `http://127.0.0.1:8896`，`/ws` → `ws://127.0.0.1:8896`（默认已配置）；
 - 后端不在默认端口：修改上述代理目标，或用环境变量 `E2E_API_PORT` 覆盖代理端口；

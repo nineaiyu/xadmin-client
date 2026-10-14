@@ -26,7 +26,7 @@
 | `@vueuse/core`                    | ^15.0.0           | `ReDialog`/`ReDrawer` 的 `useTimeoutFn`、`hooks/useScrollLock`（弹层滚动锁）、`hooks/useHoverToggle`（侧栏悬停）、`lay-*` 布局交互、`useNav` 等 20 处 | 否         | 滚动锁在弹层开启期间锁布局内容区滚动容器（防背景穿透 + 滚动条槽位预留） |
 | `axios`                           | ^1.20.0           | `utils/http`（请求层）、`config`（平台配置拉取）                                                                                                      | 否         |                                                                         |
 
-> 注：`clsx` + `tailwind-merge` 由四期批次一引入（唯一封装入口 `utils/cn`）；批次八起 `cn` 已有真实消费（`RePureTableBar` 的全屏宽度类冲突交由 twMerge 消解、去掉 important 压制），两者随之进入首屏闭包（`check:bundle-size` 守护，代码账本 +5.1 KB 在预算内）；升级时按「升级回归清单」跑 `table-column-align` 相关用例。
+> 注：`clsx` + `tailwind-merge` 经唯一封装入口 `utils/cn` 引入；`cn` 已有真实消费（`RePureTableBar` 的全屏宽度类冲突交由 twMerge 消解、去掉 important 压制），两者随之进入首屏闭包（`check:bundle-size` 守护，代码账本 +5.1 KB 在预算内）；升级时按「升级回归清单」跑 `table-column-align` 相关用例。
 
 ## 二、构建期依赖（`devDependencies`）
 
@@ -40,5 +40,5 @@
 
 1. **无多余依赖**：上表运行期依赖均有实际消费点，未发现「引入但零引用」的包；
 2. **单点消费待评估**：`highlight.js`（仅代码生成预览）、`@wangeditor/*`（仅富文本）——两者都已走懒加载，不影响首屏体积，裁剪与否取决于产品是否保留这两类能力；
-3. **收敛成果**：`sortablejs` 已收敛到 `hooks/useSortable` 单一入口（三期批次三）；`vue-json-pretty` / `vue3-ts-jsoneditor` / `@wangeditor/*` 均按需分片（`check:bundle-size` 守护首屏闭包）；
+3. **收敛成果**：`sortablejs` 已收敛到 `hooks/useSortable` 单一入口；`vue-json-pretty` / `vue3-ts-jsoneditor` / `@wangeditor/*` 均按需分片（`check:bundle-size` 守护首屏闭包）；
 4. **升级回归清单**：升级任一依赖时，按本表「主要消费点」列出的组件跑 `pnpm test:run` + 相关 E2E（`table-sort` / `knowledge` / `ai` / `monitor` / `dashboard` 等）。

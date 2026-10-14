@@ -1,6 +1,6 @@
 {
   "name": "xadmin",
-  "version": "4.2.5",
+  "version": "5.0.0",
   "private": true,
   "type": "module",
   "scripts": {
