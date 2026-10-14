@@ -37,9 +37,9 @@ export function useSystemUploadFile(tableRef: Ref) {
     selectionChange
   } = useFileTagActions({ tableRef });
 
-  // 配额统计与分类下拉（搜索区）
+  // 配额统计与分类下拉（搜索区）：统计端点与 retrieve 同权（服务端按路径匹配）
   const { stats, loadStats, searchColumnsFormat } = useFileQuotaStats({
-    hasListAuth: Boolean(auth.list)
+    hasStatsAuth: Boolean(auth.retrieve)
   });
 
   const { operationButtonsProps, tableBarButtonsProps } = useFileButtons({

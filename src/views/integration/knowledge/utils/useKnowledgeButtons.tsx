@@ -1,5 +1,6 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
+import { hasAuth } from "@/router/utils";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Plus from "~icons/ep/plus";
@@ -91,7 +92,8 @@ export function useKnowledgeButtons({
         props: { type: "primary", link: true },
         onClick: ({ row }) => openKnowledgePanel(row as KnowledgeRow),
         index: 10,
-        show: true
+        // 抽屉读文档详情（retrieve）：无权限时隐藏入口而不是点开报 403
+        show: hasAuth("retrieve:AiKnowledge")
       }
     ]
   });

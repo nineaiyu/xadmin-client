@@ -1,4 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils";
+import { beforeEach } from "vitest";
 import {
   ElButton,
   ElDescriptions,
@@ -12,6 +13,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { McpServerItem, McpToolSnapshot } from "@/api/ai/mcp";
 
+// 权限判定桩（默认有权限）：抽屉入口按 sync / call:AiMcpServers 收敛
+const mocks = vi.hoisted(() => ({ hasAuth: vi.fn(() => true) }));
+vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 vi.mock("@/utils/apiError", () => ({
@@ -81,6 +85,12 @@ const surfaceTags = async (wrapper: Awaited<ReturnType<typeof mountDrawer>>) =>
     .findAll("[data-testid='mcp-tools-table'] .el-table__row")
     .map(row => row.findAll(".el-tag").at(-1)?.text());
 
+beforeEach(() => {
+  // 每个用例重置为「有权限」基线，权限用例内再按权限码细分
+  mocks.hasAuth.mockReset();
+  mocks.hasAuth.mockReturnValue(true);
+});
+
 describe("McpToolsDrawer 工具动作面准入", () => {
   it("条目带 callable 布尔时直接消费后端标记（不重算镜像规则）", async () => {
     // 镜像规则本应为真（启用 + 暴露 + 白名单 + schema），但后端标记 false → false 优先
@@ -110,5 +120,29 @@ describe("McpToolsDrawer 工具动作面准入", () => {
       "mcp.actionSurfaceIn",
       "mcp.actionSurfaceOut"
     ]);
+  });
+});
+
+describe("McpToolsDrawer 入口权限收敛", () => {
+  it("无 sync/call 权限时两个入口都不渲染（避免点击后服务端 403）", async () => {
+    mocks.hasAuth.mockReturnValue(false);
+
+    const wrapper = await mountDrawer(server([tool({ name: "demo_tool" })]));
+
+    expect(wrapper.find("[data-testid='mcp-drawer-sync']").exists()).toBe(
+      false
+    );
+    expect(wrapper.find("[data-testid='mcp-call-run']").exists()).toBe(false);
+  });
+
+  it("仅有 sync 权限时只渲染同步入口（权限点各自独立）", async () => {
+    mocks.hasAuth.mockImplementation(
+      (code: string) => code === "sync:AiMcpServers"
+    );
+
+    const wrapper = await mountDrawer(server([tool({ name: "demo_tool" })]));
+
+    expect(wrapper.find("[data-testid='mcp-drawer-sync']").exists()).toBe(true);
+    expect(wrapper.find("[data-testid='mcp-call-run']").exists()).toBe(false);
   });
 });

@@ -10,6 +10,7 @@ import {
 } from "@/api/ai/mcp";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { hasAuth } from "@/router/utils";
 
 /**
  * 外部 MCP 服务器抽屉：资料卡 + 工具快照清单 + 调用测试（白名单内）。
@@ -17,6 +18,9 @@ import { normalizeError } from "@/utils/apiError";
  * - 「同步」拉取最新 tools/list（更新服务器快照，列表刷新由页面侧负责）；
  * - 「调用」仅白名单工具可用（服务端 fail-closed，未列出的工具被拒并落审计）；
  * - 参数按 JSON 对象填写，结果文本截断展示。
+ *
+ * 同步与调用各挂独立权限点（sync / call:AiMcpServers）：无授权时不渲染对应
+ * 入口，避免点击后服务端 403。
  */
 defineOptions({ name: "McpToolsDrawer" });
 
@@ -142,6 +146,7 @@ const runCall = async () => {
     <div class="mb-2 flex-bc">
       <span class="font-medium">{{ t("mcp.tools") }}</span>
       <el-button
+        v-if="hasAuth('sync:AiMcpServers')"
         size="small"
         :loading="syncing"
         data-testid="mcp-drawer-sync"
@@ -189,7 +194,12 @@ const runCall = async () => {
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="t('mcp.toolCall')" width="90" fixed="right">
+      <el-table-column
+        v-if="hasAuth('call:AiMcpServers')"
+        :label="t('mcp.toolCall')"
+        width="90"
+        fixed="right"
+      >
         <template #default="{ row: tool }">
           <el-button link type="primary" size="small" @click="pickTool(tool)">
             {{ t("mcp.toolCall") }}
@@ -199,7 +209,7 @@ const runCall = async () => {
       <template #empty>{{ t("mcp.empty") }}</template>
     </el-table>
 
-    <div class="mt-4">
+    <div v-if="hasAuth('call:AiMcpServers')" class="mt-4">
       <div class="mb-2 font-medium">
         {{ t("mcp.callTitle", { name: callTool || "-" }) }}
       </div>

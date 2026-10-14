@@ -314,3 +314,38 @@ test("文件中心：大文件上传走分片协议并落库", async ({ page }) 
   expect(results.length).toBe(1);
   expect(results[0].filesize).toBe(buffer.length);
 });
+
+/**
+ * 非超管视角回归：页面与接口权限点齐全时，打开文件中心全程零 403。
+ *
+ * 超管绕过权限链，上面 5 条用例看不到「页面有授权、接口权限点漏配」的缺口
+ * （曾发生：文件页新增 stats / access-logs 等接口后未同步授权给角色，非超管
+ * 打开页面即 403）。此处用 e2e_user（E2E-文件中心角色，页内权限点与字段白名单
+ * 全量授权）覆盖该视角；401/其它错误不在此断言面内。
+ */
+test("文件中心：非超管角色页面加载零 403（接口权限点齐全）", async ({
+  page
+}) => {
+  const forbidden: string[] = [];
+  page.on("response", response => {
+    if (response.status() === 403) forbidden.push(response.url());
+  });
+
+  await login(page, { username: "e2e_user", password: "E2E-User-2026!" });
+  // 直达路由：非超管侧栏的一级项名随授权收缩（system 目录下仅文件页时显示为
+  // 「文件管理」），openMenuPath 的固定一级名不适用；goto 同样触发整页初始化
+  // 与页内全部请求，零 403 断言面不变
+  await page.goto("/#/system/file/index");
+
+  // 配额卡片渲染 = stats 请求已成功（该端点由 retrieve 权限点覆盖）
+  await expect(
+    page.locator(".el-card", { hasText: "存储使用" }).first()
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  // 收尾窗口：等分类/趋势等尾随请求落定后再核对
+  await page.waitForTimeout(800);
+
+  expect(forbidden, `出现 403 响应：${forbidden.join(", ")}`).toEqual([]);
+});

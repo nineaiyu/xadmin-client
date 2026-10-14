@@ -61,7 +61,9 @@ export function detailRowButton(
     },
     onClick: ({ row }) => openInstanceDetail(row),
     index: 9,
-    show: true
+    // 抽屉读详情（retrieve）+ 审批轨迹（comments，失败静默）：按 retrieve 收敛入口，
+    // 避免只有 list 的角色点开必 403
+    show: hasAuth("retrieve:SystemApprovalInstance")
   };
 }
 

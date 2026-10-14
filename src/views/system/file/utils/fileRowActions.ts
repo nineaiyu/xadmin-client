@@ -1,4 +1,5 @@
 import { h } from "vue";
+import { hasAuth } from "@/router/utils";
 import { addDrawer } from "@/components/ReDrawer";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
@@ -34,8 +35,10 @@ export function openAccessLogsDrawer({
  * 文件列表行操作按钮（自 hook.tsx 抽出）：下载（受鉴权端点，服务端记访问
  * 审计）/ 访问记录 / 行内打标。
  *
- * 前两者无页面级权限点：属行级能力（服务端 get_object 数据权限 fail-closed +
- * 访问审计），能看到该行即可操作；打标按全局 assign:Tag 权限点显示，
+ * 下载与访问记录各自挂独立权限点（download / accessLogs:SystemUploadFile）：
+ * 无授权时按钮隐藏，避免点击后服务端 403（无权限点时按 `IsAuthenticated` 的
+ * 路径匹配 fail-closed 拒绝，与「能看到行即可操作」无关）；行级数据范围仍由
+ * 服务端 get_object 数据权限兜底。打标按全局 assign:Tag 权限点显示，
  * 对象级 update 权限由后端逐对象复核。
  */
 export function buildFileRowButtons({
@@ -58,14 +61,14 @@ export function buildFileRowButtons({
         // 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
         await api.download(row?.pk, row?.filename);
       },
-      show: true
+      show: hasAuth("download:SystemUploadFile")
     },
     {
       text: t("fileAccess.accessLogs"),
       code: "accessLogs",
       props: { type: "info", link: true },
       onClick: ({ row }) => openAccessLogsDrawer({ t, row: row as RecordType }),
-      show: true
+      show: hasAuth("accessLogs:SystemUploadFile")
     },
     {
       // 行内打标：单对象全量替换语义（弹窗内可选标签/就地新建）
