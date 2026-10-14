@@ -44,7 +44,7 @@ describe("injectResponsiveStorage", () => {
 
   it("顶栏 / 页签 / 侧栏新增偏好默认值（未配置时与迁移前行为一致）", () => {
     const configure = inject();
-    // 断言取设计令牌默认值常量：令牌调整（如对齐 vben）不牵动用例
+    // 断言取设计令牌默认值常量：令牌调整不牵动用例
     expect(configure.sidebarWidth).toBe(DEFAULT_SIDEBAR_WIDTH);
     expect(configure.sidebarCollapseWidth).toBe(DEFAULT_SIDEBAR_COLLAPSE_WIDTH);
     expect(configure.tagsHeight).toBe(DEFAULT_TAGS_HEIGHT);

@@ -35,7 +35,7 @@ const breadcrumbMode = computed(
 );
 
 /**
- * 顶栏侧栏折叠按钮（vben `showHeaderToggleButton` 同口径）：
+ * 顶栏侧栏折叠按钮：
  * 仅「垂直」与「混合双列」两种布局在顶栏展示——双列菜单 / 混合菜单 / 侧边导航
  * 的折叠入口在侧栏自身，水平布局与全屏内容无侧栏。
  */

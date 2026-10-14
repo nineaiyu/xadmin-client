@@ -72,7 +72,7 @@ export function normalizeSidebarCollapseWidth(value: unknown): number {
   );
 }
 
-/** 双列侧栏一级窄列宽度（vben `sidebar.mixedWidth`）：0 = 设计令牌默认档（80px），>0 = 覆写（px） */
+/** 双列侧栏一级窄列宽度：0 = 设计令牌默认档（80px），>0 = 覆写（px） */
 export const SIDEBAR_MIXED_WIDTH_RANGE = { min: 0, max: 160 } as const;
 export function normalizeSidebarMixedWidth(value: unknown): number {
   if (value === null || value === undefined || value === "") return 0;

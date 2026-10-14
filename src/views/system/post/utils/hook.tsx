@@ -11,7 +11,7 @@ import { openPostPreview } from "./postPreview";
 /**
  * 岗位管理表格：岗位 CRUD + 成员分配 + 成员数计数。
  *
- * - 新建/编辑/成员分配统一走 ReDialog + 内容组件（C5 方案 B：关闭框架默认
+ * - 新建/编辑/成员分配统一走 ReDialog + 内容组件（方案 B：关闭框架默认
  *   create/update/partialUpdate 按钮）；
  * - 启停用列渲染为只读标签（关闭 partialUpdate 后框架的开关恒禁用，避免双入口）；
  * - 删除保留框架默认入口（自带二次确认；软删除进回收站）。

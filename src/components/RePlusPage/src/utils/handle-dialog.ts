@@ -25,7 +25,7 @@ const modeFuncMap = {
   ) => void;
 };
 
-/** 导入/导出弹窗统一宽度（两弹窗视觉对称，取 T6 档位 md） */
+/** 导入/导出弹窗统一宽度（两弹窗视觉对称，取 md 档） */
 export const EXPORT_IMPORT_DIALOG_WIDTH = dialogSize("md");
 
 /**

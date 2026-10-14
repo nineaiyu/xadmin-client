@@ -18,7 +18,7 @@ import {
  * 当前一级路由的子菜单。菜单数据与侧栏可见性共用同一口径，避免多处各算一套。
  *
  * 关键边界：当前一级是叶子菜单（如「首页」）时没有子菜单可展示——此时侧栏整块
- * 不渲染（与 vben 的 `sidebarVisible = splitSideMenus.length > 0` 同口径），否则
+ * 不渲染（判据 `sidebarVisible = splitSideMenus.length > 0`），否则
  * 顶栏下方会留一条空白侧栏。
  */
 export function useSplitSidebar(defaultActive?: Ref<string>) {
@@ -60,7 +60,7 @@ export function useSplitSidebar(defaultActive?: Ref<string>) {
   });
 
   /**
-   * 切割形态下侧栏是否因无内容而整体隐藏（对齐 vben `sidebarVisible`）：仅
+   * 切割形态下侧栏是否因无内容而整体隐藏：仅
    * 「顶栏承担一级导航」的两种布局（混合 / 混合双列）在当前一级没有子菜单时
    * 隐藏——此时顶栏仍有完整一级菜单可导航；双列菜单（一级窄列）不参与该判定，
    * 否则会把唯一的一级导航一起隐藏掉。

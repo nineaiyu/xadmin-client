@@ -82,7 +82,7 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   await dialog
     .getByPlaceholder("OpenAI 兼容密钥，加密存储、不回显")
     .fill("sk-e2e-secret");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确定」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确定」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).toBeHidden({ timeout: 15_000 });
 

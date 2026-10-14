@@ -140,7 +140,7 @@ async function onPrefsEnabledChange(value: string | number | boolean) {
   storageConfigureChange("enablePreferences", false);
 }
 
-/** 入口位置（对齐 vben `preferencesButtonPosition` 五态）：
+/** 入口位置（五态）：
  *  auto = 水平布局走悬浮球、其余走顶栏齿轮；none = 不显示；user-dropdown = 收进头像菜单 */
 const preferencesPosition = computed<string>({
   get: () => $storage?.configure?.preferencesPosition ?? "header",
@@ -157,7 +157,7 @@ const preferencesPositionOptions = computed<PrefChoiceOption[]>(() => [
   { value: "none", label: t("layout.preferencesPositionNone") }
 ]);
 
-/** 面板「复制偏好」按钮显隐（对齐 vben `enableCopyPreferences`） */
+/** 面板「复制偏好」按钮显隐 */
 const copyPreferencesEnabled = computed(
   () => $storage?.configure?.enableCopyPreferences ?? true
 );

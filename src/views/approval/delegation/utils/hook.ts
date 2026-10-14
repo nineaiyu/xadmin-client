@@ -9,7 +9,7 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import type { PageColumn, PageTableColumn } from "@/components/RePlusPage";
 
 /**
- * 审批委托管理（审批流三期）。
+ * 审批委托管理。
  *
  * 列表与表单由服务端元数据驱动：delegator/delegate 为用户外键（用户搜索选择器）、
  * start_time/end_time 为 datetime、flow_codes 为流程 code 列表（空 = 全部流程）。

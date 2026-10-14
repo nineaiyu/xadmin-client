@@ -1225,7 +1225,7 @@ test.describe("布局偏好（面板实时生效）", () => {
         .locator(".sidebar-container")
         .first()
         .evaluate(el => getComputedStyle(el).width);
-    // 基准宽度取设计令牌现值：令牌调整（如对齐 vben 的 224px）不牵动用例
+    // 基准宽度取设计令牌现值：令牌调整（如 224px）不牵动用例
     const baseWidth = await rootVar(page, "--sidebar-width");
     expect(await sidebarWidth()).toBe(baseWidth);
 
@@ -2816,7 +2816,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     ).toBeVisible();
 
     // 左上角品牌不重复：站点 Logo 只在一级窄列顶部出现一次（图标形态）；
-    // 次级列顶部是「当前一级菜单」的分区标题（vben side-extra-title 同口径），
+    // 次级列顶部是「当前一级菜单」的分区标题，
     // 不得再渲染一次品牌 Logo
     await expect(
       page.locator(".sidebar-container .sidebar-logo-link")
@@ -2831,7 +2831,7 @@ test.describe("布局偏好（面板实时生效）", () => {
       page.locator(".sidebar-container .sidebar-mixed-brand .sidebar-logo-link")
     ).toHaveCount(0);
 
-    // 窄列品牌位：站点标题与图标竖排居中展示（vben 窄列品牌形态；曾因父级 scoped
+    // 窄列品牌位：站点标题与图标竖排居中展示（曾因父级 scoped
     // 覆盖失效导致图标偏左 14px，且标题被 hideTitle 隐藏）
     await expect(
       page.locator(".sidebar-mixed-narrow__logo .sidebar-title")
@@ -2939,7 +2939,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     await closePanel(page);
 
     // 「首页」目录下只有一个首页页：二级列没有可展示内容（与一级窄列重复），
-    // 整列不渲染、侧栏收为窄列宽度，内容区随之占满（vben 同口径）
+    // 整列不渲染、侧栏收为窄列宽度，内容区随之占满
     await page.goto("/#/welcome");
     const container = page.locator(".sidebar-container").first();
     await expect(container).toHaveClass(/is-narrow-only/);
@@ -3364,7 +3364,7 @@ test.describe("布局：侧栏菜单装饰与激活联动", () => {
             .evaluate(el => getComputedStyle(el).transform),
         { timeout: 5_000 }
       )
-      /* 悬停缩放：vben 菜单 hover 的 scale(1.2) 同口径 */
+      /* 悬停缩放：菜单 hover 的 scale(1.2) */
       .toContain("1.2");
   });
 

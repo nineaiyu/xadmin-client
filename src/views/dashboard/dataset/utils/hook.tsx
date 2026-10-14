@@ -14,7 +14,7 @@ import { useDatasetButtons } from "./datasetButtons";
  * - 新建/编辑走 ReDialog + DatasetForm（模型/列/过滤三层白名单选择器），
  *   设计器元数据（模型白名单 + 字段清单）见 datasetFormDialog.ts；
  * - 删除保留框架默认入口（带二次确认）；
- * - 执行预览为只读展示弹窗（C5 既定保留手写），状态与 CSV 导出见 datasetPreview.ts；
+ * - 执行预览为只读展示弹窗（既定保留手写），状态与 CSV 导出见 datasetPreview.ts；
  * - 列渲染（visibility 标签、引用报表计数跳转）见 datasetColumns.tsx，
  *   按钮见 datasetButtons.ts。
  */

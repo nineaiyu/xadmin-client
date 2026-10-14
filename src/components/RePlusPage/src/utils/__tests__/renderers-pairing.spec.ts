@@ -11,7 +11,7 @@ import {
 import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "../types";
 
 /**
- * 「列表 / 详情渲染器成对」守护（Q6）。
+ * 「列表 / 详情渲染器成对」守护。
  *
  * 背景：详情（PlusDescriptions）只认 `render` / `valueType`，列表（pure-table）只认
  * `cellRenderer`，两者互不兜底。历史上多次出现只写一侧的问题：

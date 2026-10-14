@@ -48,7 +48,7 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   await propsDialog.getByRole("button", { name: "保存" }).click();
   await expect(propsDialog).not.toBeVisible();
   // 外层弹窗保存时携带 filterable 标记（后端 schema 校验通过）
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   const designerRow = page.getByRole("row", { name: formName }).first();
@@ -69,7 +69,7 @@ test("动态表单：设计（含审批开关）→ 填报 → 提交可见", as
   await expect(fillDialog).toBeVisible();
   await fillDialog.getByLabel("设备名称").fill("E2E路由器");
   await fillDialog.getByLabel("存放位置").fill("A 机房 01 柜");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await fillDialog.getByRole("button", { name: "保存" }).click();
   await expect(fillDialog).not.toBeVisible();
 

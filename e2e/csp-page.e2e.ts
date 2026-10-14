@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { ADMIN, openMenuPath } from "./helpers";
 
 /**
- * 页面层 CSP 隔离验证（发布门禁 T3「CSP 页面层 enforce」的判据可判化）。
+ * 页面层 CSP 隔离验证（发布门禁「CSP 页面层强制」的判据可判化）。
  *
  * 按需运行：`pnpm test:e2e:csp`（E2E_CSP=1；脚本内先 `pnpm build`）
  *

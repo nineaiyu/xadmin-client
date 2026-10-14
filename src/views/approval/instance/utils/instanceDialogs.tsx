@@ -34,7 +34,7 @@ export function openStartInstanceDialog(
   };
   const options: DialogOptions = {
     title,
-    // 档位口径（T6 治理）：常规表单弹窗用 md；动态表单字段数不定，留足输入宽度
+    // 档位口径：常规表单弹窗用 md；动态表单字段数不定，留足输入宽度
     width: dialogSize("md"),
     draggable: true,
     closeOnClickModal: false,

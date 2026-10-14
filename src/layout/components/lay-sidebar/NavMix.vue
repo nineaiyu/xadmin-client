@@ -33,7 +33,7 @@ const { layout, resolvePath } = useNav();
 const navigationSplitConfig = computed(
   () => $storage?.configure?.navigationSplit ?? true
 );
-/** 切割生效：混合布局由开关控制；混合双列恒切割（vben 同口径） */
+/** 切割生效：混合布局由开关控制；混合双列恒切割 */
 const navigationSplit = computed(() =>
   isMixedNav(layout.value) ? navigationSplitConfig.value : true
 );

@@ -3,7 +3,7 @@
  * 「减弱动效」无障碍降级。时长与缓动统一消费 tokens/primitives.scss 的
  * --duration-* / --ease-*，不在本文件内联数值。
  *
- * 预设命名对齐 vue-vben-admin 的形态（本地命名，不引 vben 依赖），
+ * 预设命名为本地命名（不引第三方依赖），
  * 路由侧缺省过渡名仍为 fade-transform（见 layout/components/lay-content）。
  */
 
@@ -164,11 +164,11 @@
   transform: translateX(15px);
 }
 
-/* ============ 对齐 vben 的补充预设（本地命名，不引 vben 依赖） ============ */
+/* ============ 补充预设（本地命名） ============ */
 
 /**
  * 侧栏 / 面板按方向入场：容器固定时长与缓动，方向由 `data-side` 决定，
- * 位移 50px（对齐 vue-vben-admin `ui.css` 的 `.side-content`）。
+ * 位移 50px。
  * 用法：<div class="side-content" :data-side="side">…</div>
  */
 .side-content {
@@ -358,8 +358,8 @@
 }
 
 /**
- * 入场阶梯：按 `:nth-child(1..5)` 递增延迟逐个入场（对齐 vben 的
- * `.enter-x` / `.enter-y` / `.-enter-x` / `.-enter-y`）。
+ * 入场阶梯：按 `:nth-child(1..5)` 递增延迟逐个入场（
+ * `.enter-x` / `.enter-y` / `.-enter-x` / `.-enter-y` 四个方向预设）。
  * 供登录页等「整块内容阶梯入场」的页面复用；`-` 前缀为反向（自左 / 自上）。
  *
  * 实现取向：起始态写在 keyframes 的 `from`（而非基础声明），配

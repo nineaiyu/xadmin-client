@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 大屏画布设计器（P2.2 批次一）：
+ * 大屏画布设计器：
  * 素材走 API 直建（数据集 → 看板 1 张卡 → 大屏），UI 覆盖设计器主链路
  * （加时钟/文本/仪表盘窗格 → 拖动 → 保存落库），最后投屏断言画布渲染
  * （layout 非空走画布、清空则回退轮播，轮播由 visual.e2e 覆盖）。

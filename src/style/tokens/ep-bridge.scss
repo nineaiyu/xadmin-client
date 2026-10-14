@@ -43,7 +43,7 @@ html.dark {
   --el-bg-color-overlay: hsl(var(--bg-elevated));
   --el-text-color-primary: hsl(var(--fg));
 
-  /* EP 常规文字取主前景：对齐 vue-vben-admin（其 primary 与 regular 同源于 --foreground），
+  /* EP 常规文字取主前景（primary 与 regular 同源于 --foreground），
      表格单元格 / 表单标签等正文深度随之一致；次级与占位档仍走 --fg-subtle / -placeholder。 */
   --el-text-color-regular: hsl(var(--fg));
   --el-text-color-secondary: hsl(var(--fg-subtle));
@@ -72,7 +72,7 @@ html.dark {
 
   /* 空白填充（表格行底色 / 输入底 / 空态托底等组件共用）：
      项目引入了 EP 官方深色变量表（dark.scss），其自带硬编码 #141414，
-     这里显式收回卡面语义（对齐 vue-vben-admin 的 --el-fill-color-blank ← background）。 */
+     这里显式收回卡面语义（--el-fill-color-blank ← background）。 */
   --el-fill-color-blank: hsl(var(--bg-card));
 }
 
@@ -80,7 +80,7 @@ html.dark {
 :root {
   --el-border-radius-small: var(--radius-xs);
 
-  /* EP 基础圆角取 8px 档：对齐 vue-vben-admin 的 --radius（0.5rem），
+  /* EP 基础圆角取 8px 档（--radius = 0.5rem），
      按钮 / 输入 / 下拉等基础控件的圆角随之外观一致；
      small（2px）与 round 与 EP 缺省同值，保持像素中性。 */
   --el-border-radius-base: var(--radius-lg);

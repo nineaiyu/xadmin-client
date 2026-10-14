@@ -54,7 +54,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
   await dialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "identity.userinfo");
   await pickSelectOption(page, "数据列", "username");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
@@ -68,7 +68,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
   await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dashDialog.getByRole("button", { name: "保存" }).click();
   await expect(dashDialog).not.toBeVisible();
 

@@ -120,7 +120,7 @@ const refreshVisible = () => {
 };
 
 /**
- * 应用服务端聚合数据帧（screen_data，F2）：按 card id 免拉直渲。
+ * 应用服务端聚合数据帧（screen_data）：按 card id 免拉直渲。
  * 轮播模式帧按仪表盘分发（dashboard 与当前页不一致的帧不应用——其卡片未渲染）；
  * 画布模式单帧 dashboard=null，逐窗格路由（窗格持有该卡才应用）。
  */

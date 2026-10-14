@@ -18,7 +18,7 @@ import {
 } from "../utils/channels";
 
 /**
- * 定时报表表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 定时报表表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 数据集联动 + 载荷生成」，提交与列表刷新由页面在
  * `beforeSure` 中处理；校验失败返回 null，调用方保持弹窗打开。

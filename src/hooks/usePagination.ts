@@ -14,7 +14,7 @@ export function paginate<T>(list: T[], pageNo: number, pageSize: number): T[] {
 }
 
 /**
- * 前端分页（对齐 vben `usePagination`）：总条数变化时回到第一页，避免停在越界页。
+ * 前端分页：总条数变化时回到第一页，避免停在越界页。
  */
 export function usePagination<T = unknown>(
   list: Ref<T[]>,

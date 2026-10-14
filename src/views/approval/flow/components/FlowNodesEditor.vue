@@ -40,7 +40,7 @@ function updateMultiValue(index: number, value: unknown) {
   if (node) node.assignee_value = joinValues(value);
 }
 
-/** 分支路由编辑（C5：统一走 ReDialog，路由表格在 RouteEditorForm 中） */
+/** 分支路由编辑（统一走 ReDialog，路由表格在 RouteEditorForm 中） */
 const routeFormRef = ref<InstanceType<typeof RouteEditorForm>>();
 
 function openRouteEditor(nodes: NodeRow[], index: number) {

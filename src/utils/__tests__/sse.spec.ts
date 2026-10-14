@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { parseSseBuffer, SseError } from "../sse";
 
 /**
- * SSE 解析器单测（二期）：钉死服务端 `_sse_frames` 帧格式的解析口径，
+ * SSE 解析器单测：钉死服务端 `_sse_frames` 帧格式的解析口径，
  * 重点覆盖「一帧跨多个网络分片」「一分片含多帧」两类真实流式场景。
  */
 

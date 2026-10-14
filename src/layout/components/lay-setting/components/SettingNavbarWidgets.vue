@@ -27,7 +27,7 @@ const { storageConfigureChange } = useConfigureStorage();
 const listDom = ref<HTMLElement>();
 
 /**
- * 组件 ↔ 全局快捷键动作映射（对齐 vben 小部件开关行的 kbd 提示）：
+ * 组件 ↔ 全局快捷键动作映射（开关行的 kbd 提示）：
  * 有快捷键的组件在行内展示当前键位，提升快捷键可发现性。
  */
 type WidgetShortcut = {

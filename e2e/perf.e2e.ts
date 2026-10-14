@@ -5,7 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 前端体验基线（U1）：核心页 TTFB / FCP / LCP / CLS 实测采集。
+ * 前端体验基线：核心页 TTFB / FCP / LCP / CLS 实测采集。
  *
  * 按需运行：`pnpm test:e2e:perf`（E2E_PERF=1，chromium）
  * 刷新基线：`pnpm test:e2e:perf:update`（E2E_PERF_UPDATE=1）
@@ -18,7 +18,7 @@ import { login, openMenuPath } from "./helpers";
  * 前端体验回归进 CI 时，先 `E2E_PERF=1 E2E_PERF_UPDATE=1` 录制 `linux-ci`
  * 档入库再启用常态比对；无档环境首跑只立基线不判定（「无基线，先立基线」）。
  * 判定：现阶段只做「离谱回归」兜底（TTFB ≤ 2s / LCP ≤ 5s / CLS ≤ 0.25）；
- * 数据积累后再定预算（与首屏体积预算同思路，见长期优化方案 U1）。
+ * 数据积累后再定预算（与首屏体积预算同思路）。
  */
 
 test.skip(
@@ -38,7 +38,7 @@ const BASELINE_FILE = fileURLToPath(
  * 首轮实测（darwin-local）：TTFB ≤ 332ms、LCP ≤ 1224ms、CLS ≤ 0.2403——
  * 阈值取「明显超出实测」的量级，只拦离谱回归。
  * 2026-09-18 列表页 CLS 定位收口：0.2403 → ~0.02（搜索卡片高度占位 +
- * 列首帧隐藏，见 RePlusPage 组件内注释与长期优化方案 U1）；剩余为登录页/
+ * 列首帧隐藏，见 RePlusPage 组件内注释）；剩余为登录页/
  * 布局页脚等页面级小位移（各 ≤ 0.008）。
  */
 const CEILINGS = { ttfb: 2000, lcp: 5000, cls: 0.5 };
@@ -48,7 +48,7 @@ type PagePerfMetrics = {
   fcp: number | null;
   lcp: number | null;
   cls: number;
-  /** CLS 定位（U1 改进候选）：按影响值排序的前 5 个 layout-shift 来源明细（src 含位移/尺寸几何） */
+  /** CLS 定位（改进候选）：按影响值排序的前 5 个 layout-shift 来源明细（src 含位移/尺寸几何） */
   cls_top?: Array<{ v: number; t: number; src: string }>;
   dcl: number;
   load: number;
@@ -102,7 +102,7 @@ const INIT_PERF_SCRIPT = () => {
               typeof node?.className === "string" && node.className
                 ? `.${node.className.split(/\s+/)[0]}`
                 : "";
-            // 几何明细（U1 定位用）：位移量与尺寸变化，区分「整体下移」与「自身增高」
+            // 几何明细：位移量与尺寸变化，区分「整体下移」与「自身增高」
             const prev = s.previousRect;
             const cur = s.currentRect;
             const dx = Math.round(cur.x - prev.x);

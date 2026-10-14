@@ -8,7 +8,7 @@ withDefaults(
   defineProps<{
     label?: string;
     tip?: string;
-    /** 副文案：标签下方的小字说明（vben 的 sub 形态） */
+    /** 副文案：标签下方的小字说明 */
     desc?: string;
     /** 强制上下堆叠（控件较宽时使用，窄屏由样式自动堆叠） */
     stack?: boolean;

@@ -25,7 +25,7 @@ import {
 /**
  * 布局模式判定测试：这组纯函数替代原先按子串匹配的判定
  * （`layout.includes("mix")` 会把 `sidebar-mixed-nav` 误判；`header-sidebar-nav`
- * 两个分支都不命中）。7 种模式与 vben 布局矩阵一一对应，特征位须逐项吻合。
+ * 两个分支都不命中）。7 种模式的特征位须逐项吻合。
  */
 
 describe("normalizeLayoutMode", () => {
@@ -40,7 +40,7 @@ describe("normalizeLayoutMode", () => {
 });
 
 describe("布局模式特征位", () => {
-  it("vertical（vben sidebar-nav）：有侧栏、无顶栏菜单、非通栏、单列、非子菜单", () => {
+  it("vertical：有侧栏、无顶栏菜单、非通栏、单列、非子菜单", () => {
     expect(hasSidebar("vertical")).toBe(true);
     expect(isSideMode("vertical")).toBe(true);
     expect(hasHeaderMenu("vertical")).toBe(false);
@@ -50,7 +50,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("vertical")).toBe(false);
   });
 
-  it("horizontal（vben header-nav）：无侧栏、顶栏通栏、承载完整菜单", () => {
+  it("horizontal：无侧栏、顶栏通栏、承载完整菜单", () => {
     expect(hasSidebar("horizontal")).toBe(false);
     expect(isSideMode("horizontal")).toBe(false);
     expect(isHeaderNav("horizontal")).toBe(true);
@@ -61,7 +61,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("horizontal")).toBe(false);
   });
 
-  it("mix（vben mixed-nav）：顶栏通栏 + 顶栏菜单 + 侧栏排在顶栏下方", () => {
+  it("mix：顶栏通栏 + 顶栏菜单 + 侧栏排在顶栏下方", () => {
     expect(hasSidebar("mix")).toBe(true);
     expect(isMixedNav("mix")).toBe(true);
     expect(hasHeaderMenu("mix")).toBe(true);
@@ -71,7 +71,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("mix")).toBe(false);
   });
 
-  it("sidebar-mixed-nav（vben sidebar-mixed-nav）：双列侧栏、无顶栏菜单、非通栏", () => {
+  it("sidebar-mixed-nav：双列侧栏、无顶栏菜单、非通栏", () => {
     expect(hasSidebar("sidebar-mixed-nav")).toBe(true);
     expect(isSidebarMixedNav("sidebar-mixed-nav")).toBe(true);
     expect(hasHeaderMenu("sidebar-mixed-nav")).toBe(false);
@@ -80,7 +80,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("sidebar-mixed-nav")).toBe(true);
   });
 
-  it("header-sidebar-nav（vben header-sidebar-nav）：顶栏通栏（无菜单）+ 侧栏排在顶栏下方", () => {
+  it("header-sidebar-nav：顶栏通栏（无菜单）+ 侧栏排在顶栏下方", () => {
     expect(hasSidebar("header-sidebar-nav")).toBe(true);
     expect(isHeaderSidebarNav("header-sidebar-nav")).toBe(true);
     expect(hasHeaderMenu("header-sidebar-nav")).toBe(false);
@@ -90,7 +90,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("header-sidebar-nav")).toBe(false);
   });
 
-  it("header-mixed-nav（vben header-mixed-nav）：双列侧栏 + 顶栏在侧栏右侧（承载一级菜单）", () => {
+  it("header-mixed-nav：双列侧栏 + 顶栏在侧栏右侧（承载一级菜单）", () => {
     expect(hasSidebar("header-mixed-nav")).toBe(true);
     expect(isHeaderMixedNav("header-mixed-nav")).toBe(true);
     expect(hasHeaderMenu("header-mixed-nav")).toBe(true);
@@ -100,7 +100,7 @@ describe("布局模式特征位", () => {
     expect(isTwoColumnSidebar("header-mixed-nav")).toBe(true);
   });
 
-  it("full-content（vben full-content）：无侧栏、无顶栏菜单、无外壳", () => {
+  it("full-content：无侧栏、无顶栏菜单、无外壳", () => {
     expect(hasSidebar("full-content")).toBe(false);
     expect(isSideMode("full-content")).toBe(false);
     expect(isFullContent("full-content")).toBe(true);
@@ -139,7 +139,7 @@ describe("sidebarShowsSubmenu（含导航切割开关）", () => {
     expect(sidebarShowsSubmenu("header-mixed-nav", false)).toBe(true);
   });
 
-  it("mix 由导航切割开关决定（对齐 vben navigation.split）", () => {
+  it("mix 由导航切割开关决定", () => {
     expect(sidebarShowsSubmenu("mix", true)).toBe(true);
     expect(sidebarShowsSubmenu("mix", false)).toBe(false);
     expect(sidebarShowsSubmenu("mix", undefined)).toBe(false);

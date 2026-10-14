@@ -9,7 +9,7 @@ import type { RenderContentType } from "./types";
  *
  * 字符串与数字按**文本**渲染（不解析 HTML，无 XSS 面）；组件与 VNode 交给 `h()`；
  * `renderBr` 开启时字符串按换行拆成多个 `<p>`（多行文本展示）。
- * 对齐 vben 的 `RenderContent`（去掉了 `any` 与组件注册表依赖）。
+ * 不依赖 `any` 与组件注册表。
  */
 export default defineComponent({
   name: "ReRenderContent",

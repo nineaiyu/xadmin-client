@@ -22,7 +22,7 @@ export default {
       ]
     },
     {
-      // T2 存量豁免：下列文件在「禁止新增 !important」门禁落地前已含 !important，
+      // 存量豁免：下列文件在「禁止新增 !important」门禁落地前已含 !important，
       // 逐个甄别依赖视觉回归门禁（当前没有），因此只冻结存量、不强制清零，
       // 随页面迭代用 EP 变量/降特异性替代；新文件不得进入本清单。
       files: [
@@ -49,7 +49,7 @@ export default {
     "prettier/prettier": true,
     "selector-class-pattern": null,
     "no-descending-specificity": null,
-    // T2 治理：禁止新增 !important（存量 13 个文件在下方 overrides 中豁免；
+    // 治理：禁止新增 !important（存量 13 个文件在下方 overrides 中豁免；
     // 替代手段：EP CSS 变量 / 提高选择器特异性 / :where() 降特异性）
     "declaration-no-important": true,
     "scss/dollar-variable-pattern": null,

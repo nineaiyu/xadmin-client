@@ -3,7 +3,7 @@ import { responsiveStorageNameSpace } from "@/config";
 /**
  * 页签访问历史（设置面板 →「布局」→「页签访问历史」）。
  *
- * 语义（对齐 vben `tabbar.visitHistory`）：按访问顺序记录页面路径，关闭当前页签时
+ * 语义：按访问顺序记录页面路径，关闭当前页签时
  * 优先回到「上一个访问过的」页签，而不是简单地回到最后一个页签。
  *
  * 存储：sessionStorage（随浏览器会话，关窗即清），上限 50 条；

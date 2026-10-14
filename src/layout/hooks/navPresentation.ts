@@ -19,7 +19,7 @@ export function mixedExtraCollapsed(
 
 /**
  * 在菜单列表中查找命中激活路径的项（前缀匹配、取最深命中；无命中返回 null）。
- * 用于双列窄列的激活高亮与次级菜单复位（vben `useExtraMenu` 的命中口径）。
+ * 用于双列窄列的激活高亮与次级菜单复位。
  */
 export function findMenuByActivePath(
   menus: menuType[],

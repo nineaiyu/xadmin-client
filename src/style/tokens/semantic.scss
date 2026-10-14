@@ -11,7 +11,7 @@
 
 :root {
   /* ================ 背景 ================ */
-  --bg-page: 216 20.11% 95.47%; /* #eef2f7（与 vue-vben-admin --background-deep 一致） */
+  --bg-page: 216 20.11% 95.47%; /* #eef2f7 */
   --bg-card: 0 0% 100%; /* #ffffff */
   --bg-elevated: 0 0% 100%; /* #ffffff（弹层/浮层） */
 
@@ -49,7 +49,7 @@
     --pure-theme-menu-bg
   ); /* 侧栏背景（完整色值，由菜单调色板驱动） */
 
-  /* 双列侧栏一级窄列底色（vben --sidebar-deep 同口径）：浅色皮肤与侧栏同色
+  /* 双列侧栏一级窄列底色：浅色皮肤与侧栏同色
      （双列靠分隔线分界），深色模式更深一档形成层次（见下方 html.dark） */
   --sidebar-deep: var(--sidebar);
 
@@ -82,15 +82,15 @@
 
 html.dark {
   /* ================ 背景 ================
-     暗色底系对齐 vue-vben-admin：表面为蓝灰（background 12.27% / background-deep 9%），
+     暗色底系：表面为蓝灰（background 12.27% / background-deep 9%），
      与"中性近黑"相比整体提亮一档并带色相；三级表面仍保持 page < card = sidebar/header
      < elevated 的既有层级。 */
-  --bg-page: 220 13.06% 9%; /* #14161a（vben --background-deep） */
-  --bg-card: 222.34 10.43% 12.27%; /* #1c1e23（vben --background） */
-  --bg-elevated: 0 0% 14.2%; /* #242424（vben --popover） */
+  --bg-page: 220 13.06% 9%; /* #14161a */
+  --bg-card: 222.34 10.43% 12.27%; /* #1c1e23 */
+  --bg-elevated: 0 0% 14.2%; /* #242424 */
 
   /* ================ 前景 ================
-     主前景取中性 95%（vben --foreground）；次级/占位档继续沿用灰阶语义（两侧差异极小，
+     主前景取中性 95%（--foreground）；次级/占位档继续沿用灰阶语义（两侧差异极小，
      保持既有对比度层级）。 */
   --fg: 0 0% 95%; /* #f2f2f2 */
   --fg-muted: 221.5 15.7% 83.7%; /* #cfd3dc */
@@ -99,7 +99,7 @@ html.dark {
   --fg-disabled: 220 2.7% 43.5%; /* #6c6e72 */
 
   /* ================ 描边 ================
-     vben 的 EP 描边变量同源于单值 --border(240 3.7% 22%)；这里保留 strong 一档略亮，
+     EP 描边变量同源于单值 --border(240 3.7% 22%)；这里保留 strong 一档略亮，
      避免输入框聚焦/分隔线在主色之外缺少层级。 */
   --border: 240 3.7% 22%; /* #36363a */
   --border-light: 240 3.7% 22%; /* #36363a */
@@ -107,7 +107,7 @@ html.dark {
   --border-strong: 240 3.7% 26%; /* #3d3d42（保留一档，登记） */
 
   /* ================ 填充 ================
-     对齐 vben accent 族：accent 19% / accent-lighter 12% / accent-dark 22%；
+     accent 族：accent 19% / accent-lighter 12% / accent-dark 22%；
      其 EP fill-color 与 fill-color-light 同源（19%），故 fill 与 fill-muted 同值。 */
   --fill: 216 5% 19%; /* #2e3033 */
   --fill-muted: 216 5% 19%; /* #2e3033 */
@@ -117,7 +117,7 @@ html.dark {
   /* ================ 强调 ================ */
   --overlay: 0 0% 0% / 40%;
 
-  /* 双列侧栏一级窄列底色：深色模式深于侧栏一档（页底语义，vben 深色 sidebar-deep 同口径） */
+  /* 双列侧栏一级窄列底色：深色模式深于侧栏一档（页底语义） */
   --sidebar-deep: hsl(var(--bg-page));
 
   /* ================ 组件槽（暗色取值） ================ */
@@ -128,7 +128,7 @@ html.dark {
   --shadow-panel: -6px 0 16px rgb(0 0 0 / 45%);
 
   /* ================ 阴影 ================
-     暗色与亮色同值：vben 未覆盖 EP 阴影变量，EP 缺省（12% 黑）在暗色下同样生效，
+     暗色与亮色同值：EP 未覆盖阴影变量、EP 缺省（12% 黑）在暗色下同样生效，
      卡片/浮层靠表面色差而非重投影分层。 */
   --shadow-sm: 0 0 6px #0000001f;
   --shadow-md: 0 0 12px #0000001f;
@@ -190,7 +190,7 @@ html.dark {
   --pure-theme-sidebar-border: transparent;
 }
 
-/* 亮白色（vben 默认侧栏形态：白底 + 主色浅底激活块） */
+/* 亮白色（白底 + 主色浅底激活块的侧栏形态） */
 html[data-theme="light"] {
   --pure-theme-sub-menu-active-text: hsl(var(--primary));
   --pure-theme-menu-bg: #fff;
@@ -204,7 +204,7 @@ html[data-theme="light"] {
   --pure-theme-menu-active-text: hsl(var(--primary));
 }
 
-/* 道奇蓝（默认皮肤：白底浅色侧栏，对齐 vben 默认观感） */
+/* 道奇蓝（默认皮肤：白底浅色侧栏） */
 html[data-theme="default"] {
   --pure-theme-sub-menu-active-text: hsl(var(--primary));
   --pure-theme-menu-bg: #fff;
@@ -219,7 +219,7 @@ html[data-theme="default"] {
 }
 
 /* 深色模式下的浅色皮肤（default / light）：侧栏与顶栏此时是深色面板，
-   导航调色切换为「深色菜单」口径（vben 深色菜单同源）——悬停 / 激活用提亮块、
+   导航调色切换为「深色菜单」口径——悬停 / 激活用提亮块、
    文字用前景色派生；若不覆写，浅色皮肤的白色底与浅灰悬停会在深色面板上留下白块。
    深色皮肤（紫罗兰 / 极客蓝等）自带深色调色板，不受此块影响。 */
 html.dark[data-theme="light"],

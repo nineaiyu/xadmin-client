@@ -79,7 +79,7 @@ const saveGlobal = async () => {
   }
 };
 
-/* ---------------- B1 调用观测（权限复用 status:AiAssistant） ---------------- */
+/* ---------------- 调用观测（权限复用 status:AiAssistant） ---------------- */
 const canReadMetrics = hasAuth("status:AiAssistant");
 const metricsLoading = ref(false);
 const metricsDays = ref(30);
@@ -271,7 +271,7 @@ onMounted(() => {
       </div>
     </el-card>
 
-    <!-- B1 调用观测：近 N 天用量 / 成功率 / 类型分布 / 活跃用户 -->
+    <!-- 调用观测：近 N 天用量 / 成功率 / 类型分布 / 活跃用户 -->
     <el-card
       v-if="canReadMetrics"
       v-loading="metricsLoading"

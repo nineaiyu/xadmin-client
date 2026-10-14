@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 审批委托（审批流三期）：页面主链路。
+ * 审批委托：页面主链路。
  *
  * 解析语义（生效替换 / 期外回落 / 流程范围 / 申请人剔除 / 不递归防环）
  * 由后端集成测试 tests/integration/system/test_approval_delegation.py 覆盖；

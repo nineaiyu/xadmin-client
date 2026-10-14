@@ -5,7 +5,7 @@ import { getFirstNonNullOrUndefined } from "@/utils/inference";
 import { kebabToCamelCase } from "@/utils/letter";
 
 /**
- * 按「插槽 → attrs → props → state」的优先级取值（对齐 vben `usePriorityValue`）。
+ * 按「插槽 → attrs → props → state」的优先级取值。
  *
  * props 恒有默认值，会污染优先级判断，故先看 `instance.vnode.props`（仅记录
  * 调用方真实传入的键，且为 kebab 形态）是否出现该键，未出现则视为 props 未传。
@@ -37,7 +37,7 @@ export function usePriorityValue<T extends object, K extends keyof T>(
   });
 }
 
-/** 批量取值：每个键都是一个 `ComputedRef`（对齐 vben `usePriorityValues`）。 */
+/** 批量取值：每个键都是一个 `ComputedRef`。 */
 export function usePriorityValues<T extends object>(
   props: T,
   state?: Readonly<Ref<Record<string, unknown>>> | undefined
@@ -50,7 +50,7 @@ export function usePriorityValues<T extends object>(
 }
 
 /**
- * 批量取值并收敛为单个 computed（对齐 vben `useForwardPriorityValues`），
+ * 批量取值并收敛为单个 computed，
  * 便于 `v-bind="forward"` 整体透传给子组件。
  */
 export function useForwardPriorityValues<T extends object>(

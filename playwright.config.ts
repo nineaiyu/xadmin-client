@@ -96,7 +96,7 @@ export default defineConfig({
       timeout: 120_000
     },
     {
-      // 桩 LLM（scripts/stub_llm.py）：E2E 无真实模型，AI 动作草稿（A2）等链路
+      // 桩 LLM（scripts/stub_llm.py）：E2E 无真实模型，AI 动作草稿等链路
       // 需要确定性的 chat/completions 回答；AI 配置指向 http://127.0.0.1:<port>/v1
       command: `${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`} scripts/stub_llm.py`,
       cwd: serverDir,

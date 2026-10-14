@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
- * 文件中心增强（F2）：个人配额统计卡片 + 分类（字典驱动）下拉筛选 + 上传去重。
+ * 文件中心增强：个人配额统计卡片 + 分类（字典驱动）下拉筛选 + 上传去重。
  *
  * 保留期清理（FILE_KEEP_DAYS）默认 0 = 不清理，且属定时任务行为，由后端单测覆盖
  * （xadmin-server/tests/unit/system/test_upload_enhance.py 的守护与清理用例）。
@@ -121,7 +121,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
 });
 
 /**
- * 上传去重（F2）：同一文件重复上传复用磁盘副本（access_url 相同），
+ * 上传去重：同一文件重复上传复用磁盘副本（access_url 相同），
  * 配额仍按记录全量计入（保守口径：数量 +2、大小按两条记录计）。
  */
 test("文件中心：重复上传同一文件复用磁盘副本", async ({ page }) => {

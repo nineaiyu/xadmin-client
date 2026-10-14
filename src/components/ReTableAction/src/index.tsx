@@ -28,8 +28,8 @@ import "./style.css";
 
 /**
  * 通用表格操作列：把「行内主操作 + 更多下拉」收敛为一个可复用组件，
- * 契约对齐 vben `VbenTableAction`（actions / dropdownActions / auth / danger /
- * icon / ifShow / popConfirm / moreText）。
+ * 契约（actions / dropdownActions / auth / danger / icon / ifShow /
+ * popConfirm / moreText）。
  *
  * 单个按钮的渲染复用操作按钮渲染器（`OperationButton`），从而沿用 RePlusPage
  * 既有的图标与确认框约定（`useRenderIcon`、确认框在下拉内的交互兜底），

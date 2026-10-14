@@ -14,12 +14,12 @@ import {
 export { SCROLL_FIXED_CLASS };
 
 interface ScrollLockOptions {
-  /** 挂载后是否立即锁定（缺省 true，对齐 vben；仅应在弹层/锁屏类组件内使用） */
+  /** 挂载后是否立即锁定（缺省 true；仅应在弹层/锁屏类组件内使用） */
   immediate?: boolean;
 }
 
 /**
- * 带滚动条补偿的滚动锁（对齐 vben `useScrollLock`）：把锁滚动与「滚动条槽位
+ * 带滚动条补偿的滚动锁：把锁滚动与「滚动条槽位
  * 预留 / padding 补偿」接线在一起，具体补偿实现见 `scrollLockCompensation`。
  */
 export function useScrollLock(options: ScrollLockOptions = {}) {

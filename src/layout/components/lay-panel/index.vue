@@ -31,20 +31,20 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
 const siteConfig = useSiteConfigStoreHook();
 
-/** 面板页签导航吸顶（对齐 vben `enableStickyPreferencesNavigationBar`，面板头部 Pin 切换） */
+/** 面板页签导航吸顶（面板头部 Pin 切换） */
 const stickyNav = computed({
   get: () => $storage?.configure?.preferencesStickyNav ?? true,
   set: value => storageConfigureChange("preferencesStickyNav", value)
 });
 
-/** 「复制偏好」按钮显隐（对齐 vben `enableCopyPreferences`） */
+/** 「复制偏好」按钮显隐 */
 const copyPreferencesEnabled = computed(
   () => $storage?.configure?.enableCopyPreferences ?? true
 );
 
 /**
  * 偏好差异（「重置配置」脏标记）：当前值与同步完成基线比对，
- * 无差异时按钮禁用，有差异时可用并显示标记（对齐 vben 抽屉重置按钮）。
+ * 无差异时按钮禁用，有差异时可用并显示标记。
  */
 const preferenceDirty = computed(() =>
   hasPreferenceDiff(
@@ -304,7 +304,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 「重置配置」脏标记：存在未重置的偏好差异时显示（对齐 vben 抽屉重置按钮角标） */
+/* 「重置配置」脏标记：存在未重置的偏好差异时显示 */
 .lay-panel__dirty-dot {
   display: inline-block;
   width: 6px;

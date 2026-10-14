@@ -24,7 +24,7 @@ const PATTERN = /\bas\s+unknown\s+as\b/g;
 // 存量基线：相对路径 -> 基线出现次数（只减不增；降到 0 即可从此表移除）
 // 2026-09-30：初始登记 109 处 / 70 文件（热点：menu normalize.spec 7、router/index 6、
 // useMenuData 4——多为 element-plus 泛型组件与路由元数据互转的既有债务）
-// 2026-10-01 ~ 10-07：经 O6 收口与各批滚动拆分净减至 81 处 / 58 文件。
+// 2026-10-01 ~ 10-07：经收口与各批滚动拆分净减至 81 处 / 58 文件。
 // 2026-10-08：**全量清零**——81 处逐处重构（请求泛型管道补 retrieve/update/detail，
 // 路由/菜单跨类型边界改用显式 toMenuNode 转换，localforage 签名如实声明 `T | null`，
 // 测试替身改 Reflect 反射桥接与包装函数），基线清空。

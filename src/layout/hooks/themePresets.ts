@@ -1,7 +1,7 @@
 import { hslTripletToHex } from "@/utils/color";
 
 /**
- * 内置主题预设（对齐 vben `theme.builtinType`）：一套预设 = 一套中性表面色系
+ * 内置主题预设：一套预设 = 一套中性表面色系
  * （背景 / 卡片 / 描边 / 填充的色相倾向，落在 tokens/presets.scss 的
  * `html[data-theme-preset="<预设>"]`）+ 一支配套主色（选择时写入 `--primary`）。
  *

@@ -8,12 +8,12 @@ export type AiStatus = {
   configured: boolean;
   chunks: number;
   synced_at: string;
-  /** A2 受限动作：灰度开启且当前用户有可用动作时为 true */
+  /** 受限动作：灰度开启且当前用户有可用动作时为 true */
   action_enabled?: boolean;
   actions?: { key: string; label: string }[];
 };
 
-/** A2 受限动作草稿（LLM 产出、服务端校验后的结构，执行前需用户确认） */
+/** 受限动作草稿（LLM 产出、服务端校验后的结构，执行前需用户确认） */
 export type AiActionDraft = {
   action: string;
   label: string;
@@ -76,7 +76,7 @@ export type AiToolItem = {
 
 export type AiToolsResult = { action_enabled: boolean; tools: AiToolItem[] };
 
-/** B1 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
+/** 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
 export type AiMetrics = {
   days: number;
   total: number;
@@ -287,7 +287,7 @@ class AiAssistantApi extends BaseApi {
   status = () => {
     return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/status`);
   };
-  /** B1 观测：近 N 天用量 / 成功率 / 趋势 / 类型分布 / Top 用户 */
+  /** 观测：近 N 天用量 / 成功率 / 趋势 / 类型分布 / Top 用户 */
   metrics = (days = 30) => {
     return this.request<DetailResult>(
       "get",
@@ -407,7 +407,7 @@ class AiAssistantApi extends BaseApi {
     );
   };
   /**
-   * A2 受限动作：执行确认后的草稿（以当前用户身份执行，服务端重校验 + 审计）。
+   * 受限动作：执行确认后的草稿（以当前用户身份执行，服务端重校验 + 审计）。
    * 需审批的动作首次调用返回 412 + approval_required：令牌由 http 拦截器暂存，
    * 审批通过后原样重发即自动携带 X-Approval-Id。
    */

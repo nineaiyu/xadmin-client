@@ -39,7 +39,7 @@ const props = withDefaults(
     minHeight?: number;
     /**
      * 加载态延迟展示窗口（ms）：数据在该窗口内就绪则不渲染 loading 占位，
-     * 避免瞬时闪现；0 = 立即展示（对齐 vben loading 的默认 50ms 口径）
+     * 避免瞬时闪现；0 = 立即展示（默认 50ms 口径）
      */
     minLoadingTime?: number;
   }>(),

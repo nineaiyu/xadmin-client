@@ -167,7 +167,7 @@ describe("snapFreeBox 网格吸附（ADR-088）", () => {
     expect(hasGuide(result.guides, "x", 403)).toBe(true);
   });
 
-  it("网格关闭时行为与一期一致（越界不吸附）", () => {
+  it("网格关闭时行为保持不变（越界不吸附）", () => {
     const result = snapFreeBox(
       { x: 406, y: 103, w: 200, h: 100 },
       [OTHER],

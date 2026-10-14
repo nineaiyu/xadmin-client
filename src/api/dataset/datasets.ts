@@ -2,7 +2,7 @@ import type { RecordType } from "plus-pro-components";
 import { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 
-/** 数据集与仪表盘（可视化一期） */
+/** 数据集与仪表盘 */
 export type DatasetVisibility = "personal" | "shared";
 
 export type DatasetFilter = {

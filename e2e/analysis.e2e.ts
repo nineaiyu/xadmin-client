@@ -75,7 +75,7 @@ test("报表与大屏主链路", async ({ page }) => {
   await dsDialog.getByLabel("名称").fill(datasetName);
   await pickSelectOption(page, "绑定模型", "identity.userinfo");
   await pickSelectOption(page, "数据列", "username");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dsDialog.getByRole("button", { name: "保存" }).click();
   await expect(dsDialog).not.toBeVisible();
 
@@ -86,7 +86,7 @@ test("报表与大屏主链路", async ({ page }) => {
     .locator(".el-dialog")
     .filter({ hasText: "新建仪表盘" });
   await dashDialog.getByLabel("仪表盘名称").fill(dashboardName);
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dashDialog.getByRole("button", { name: "保存" }).click();
   await expect(dashDialog).not.toBeVisible();
   await page.getByRole("button", { name: "编辑布局" }).click();
@@ -107,7 +107,7 @@ test("报表与大屏主链路", async ({ page }) => {
   await reportDialog.getByLabel("名称").fill(reportName);
   await pickSelectOption(page, "数据集", datasetName);
   await reportDialog.getByLabel("收件人").fill("e2e@corp.com");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await reportDialog.getByRole("button", { name: "保存" }).click();
   await expect(reportDialog).not.toBeVisible();
 
@@ -154,7 +154,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   const dashB = `E2E遥控看板B-${suffix}`;
   const screenName = `E2E遥控大屏-${suffix}`;
 
-  // ---- 素材：数据集（F2 数据帧断言需要看板有卡：零卡片屏服务端不产数据帧） ----
+  // ---- 素材：数据集（数据帧断言需要看板有卡：零卡片屏服务端不产数据帧） ----
   await openMenuPath(page, ["数据分析"], "/analysis/dataset/index");
   await expect(page.getByRole("button", { name: "新建数据集" })).toBeVisible({
     timeout: 15_000
@@ -168,7 +168,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   await expect(dsDialog).not.toBeVisible();
 
   // ---- 素材：两块看板（展示端切换的前后目标），看板 A 带一张数字卡 ----
-  // F2 数据帧断言需要看板有卡（零卡片屏服务端不产数据帧）；「编辑布局」作用于
+  // 数据帧断言需要看板有卡（零卡片屏服务端不产数据帧）；「编辑布局」作用于
   // 当前选中的仪表盘，所以先建 A 并加卡（此刻 current=A），再建 B
   await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
   await page.getByRole("button", { name: "新建仪表盘" }).first().click();
@@ -215,7 +215,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   const screenPk = rows.find(item => item.name === screenName)?.pk;
   if (!screenPk) throw new Error(`未找到大屏 ${screenName}`);
   const display = await page.context().newPage();
-  // ---- F2 服务端聚合数据推送：挂上 ws/screen 通道监听（在导航前挂，避免漏连） ----
+  // ---- 服务端聚合数据推送：挂上 ws/screen 通道监听（在导航前挂，避免漏连） ----
   let screenDataSeen = false;
   display.on("websocket", ws => {
     ws.on("framereceived", frame => {
@@ -262,7 +262,7 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
   await expect(page.getByText("指令已下发").first()).toBeVisible();
   await expect(root.getByText("远程控制中")).toHaveCount(0);
 
-  // ---- F2 数据帧断言：「刷新数据」指令（REST refresh）触发服务端按观察者聚合，
+  // ---- 数据帧断言：「刷新数据」指令（REST refresh）触发服务端按观察者聚合，
   // 展示端本连接收到 screen_data 帧（逐卡免拉刷新的通道证明） ----
   await controlDialog.getByRole("button", { name: "刷新数据" }).click();
   await expect(page.getByText("指令已下发").first()).toBeVisible();

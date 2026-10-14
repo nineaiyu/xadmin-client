@@ -9,7 +9,7 @@ import {
 } from "./helpers";
 
 /**
- * AI 受限动作 E2E（A2 全链路）：AI 配置（桩 LLM）→ 聊天室 /do 生成动作草稿 →
+ * AI 受限动作 E2E：AI 配置（桩 LLM）→ 聊天室 /do 生成动作草稿 →
  * 确认卡片 → 以用户身份执行 → 结果回执。
  *
  * 桩 LLM：playwright webServer 拉起的 scripts/stub_llm.py（确定性草稿），

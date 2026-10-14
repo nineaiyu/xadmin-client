@@ -1,7 +1,7 @@
 /**
  * DOM 相关工具：元素可见区、滚动条宽度、是否需要滚动条、布局滚动容器。
  *
- * 与 vben `packages/@core/base/shared/src/utils/dom.ts` 对齐；布局滚动容器
+ * 布局滚动容器
  * 选择器换成本项目内容区的实际节点（固定头部模式下由 el-scrollbar 承载滚动，
  * 见 `layout/components/lay-content/index.vue`）。
  */

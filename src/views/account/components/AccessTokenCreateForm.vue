@@ -6,7 +6,7 @@ import ApiScopeEditor from "@/components/ApiScopeEditor";
 import { loadPatScopeCatalog } from "@/api/user/token";
 
 /**
- * 创建访问令牌表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 创建访问令牌表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 载荷生成」，提交与明文弹层展示由页面在 `beforeSure` 中处理。
  */

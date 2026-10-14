@@ -167,7 +167,7 @@ export type ReportItem = {
   metric: "count" | "sum" | "avg";
   date_trunc: string;
   value_field: string;
-  /** 报表设计（P2.2 批次二）：空 = 存量口径 */
+  /** 报表设计：空 = 存量口径 */
   design?: ReportDesign;
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;

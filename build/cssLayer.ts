@@ -24,7 +24,7 @@ function escapeRegExp(value: string): string {
 }
 
 /**
- * 把指定包的 CSS 包进 `@layer`（对齐 vue-vben-admin 的 css-layer 插件）。
+ * 把指定包的 CSS 包进 `@layer`。
  *
  * 组件库 CSS 是无层样式，无层样式在级联中永远压过 @layer 内的 Tailwind 工具类；
  * 包层后由层顺序声明决定优先级，使 Tailwind 工具类可以覆盖组件库样式。

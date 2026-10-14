@@ -21,7 +21,7 @@ import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import NavbarActions from "../lay-navbar/NavbarActions.vue";
 
 /**
- * 水平布局（vben `header-nav`）：通栏顶栏 = Logo + 一级菜单 + 右侧动作区。
+ * 水平布局：通栏顶栏 = Logo + 一级菜单 + 右侧动作区。
  * 动作区与纵向顶栏共用 NavbarActions（同一套落位编排与设置入口形态）。
  */
 const menuRef = ref();

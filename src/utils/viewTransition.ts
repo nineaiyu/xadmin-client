@@ -25,7 +25,7 @@ function trackPointer() {
   );
 }
 
-/** 圆形扩散时长（ms，对齐 vue-vben-admin 的 450ms）与最大半径覆盖范围以视口对角线为准 */
+/** 圆形扩散时长（450ms）与最大半径覆盖范围以视口对角线为准 */
 const REVEAL_DURATION = 450;
 
 /**

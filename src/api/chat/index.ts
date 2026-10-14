@@ -87,7 +87,7 @@ export interface ChatMessageItem {
     reasoning?: string;
     /** 模型只产出思考、未给出最终回答（内容为可读提示文案） */
     no_answer?: boolean;
-    /** A2 受限动作草稿（AI 消息携带，确认后执行；单动作契约） */
+    /** 受限动作草稿（AI 消息携带，确认后执行；单动作契约） */
     action_draft?: {
       action: string;
       label: string;
@@ -316,7 +316,7 @@ export interface ChatAiStreamEvents {
 }
 
 /**
- * AI 流式提问（SSE，二期）：POST /api/chat/ai/stream。
+ * AI 流式提问（SSE）：POST /api/chat/ai/stream。
  *
  * 服务端事件序 meta → reasoning* → delta* → done | error；响应头已发出后无法
  * 再改状态码，所以失败通过 error 带内下发光，非 SSE 错误（门禁/参数）由 postSse 抛 SseError。

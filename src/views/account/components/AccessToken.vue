@@ -115,7 +115,7 @@ const openPlainToken = (token: string) => {
   addDialog(options);
 };
 
-/** 创建令牌弹窗（C5：统一走 ReDialog，表单在 AccessTokenCreateForm 中） */
+/** 创建令牌弹窗（统一走 ReDialog，表单在 AccessTokenCreateForm 中） */
 const createFormRef = ref<InstanceType<typeof AccessTokenCreateForm>>();
 
 const openCreate = () => {

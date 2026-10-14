@@ -18,7 +18,7 @@ import type { InsertSummary } from "./types";
  */
 export const FREE_CLIPBOARD_KEY = "free-clipboard";
 export const FREE_CLIPBOARD_VERSION = 1;
-/** 粘贴 / 复制 / 应用模板的层叠偏移（px，同 D2 的层叠语义） */
+/** 粘贴 / 复制 / 应用模板的层叠偏移（px，同层叠语义） */
 export const FREE_PASTE_OFFSET = 24;
 
 export type FreeClipboard = {

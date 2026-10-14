@@ -148,7 +148,7 @@ const {
   menuData
 );
 
-/** 双列次级列的分区标题：当前激活的一级菜单（vben side-extra-title 同口径） */
+/** 双列次级列的分区标题：当前激活的一级菜单 */
 const activeTopMenu = computed(() => {
   const path = topLevelActive.value;
   return (
@@ -211,7 +211,7 @@ onMounted(() => {
           :unique-opened="sidebarAccordion"
           @select="handleNarrowSelect"
         >
-          <!-- 窄列菜单（图标在上、标题在下，vben 一级窄列同口径）：
+          <!-- 窄列菜单（图标在上、标题在下）：
                双列菜单为全局一级菜单；混合双列为当前一级的子菜单（悬停联动主列） -->
           <el-menu-item
             v-for="item in narrowMenuData"
@@ -232,13 +232,13 @@ onMounted(() => {
     </div>
     <!-- 侧栏主列：单列模式为整列；双列模式为二级展开列（次级菜单无内容时不渲染——
          混合双列是窄列项没有子级，双列菜单是当前一级为叶子菜单（如「关于」）——
-         侧栏收为窄列宽度，与 vben 的 extra 隐藏同口径） -->
+         侧栏收为窄列宽度） -->
     <div v-if="!twoColumn || extraVisible" class="sidebar-main">
       <LaySidebarLogo
         v-if="sidebarLogoVisible && !twoColumn"
         :collapse="menuCollapse"
       />
-      <!-- 双列侧栏次级列的分区标题（vben side-extra-title 同口径）：当前一级菜单的
+      <!-- 双列侧栏次级列的分区标题：当前一级菜单的
            图标 + 标题；站点 Logo 只在一级窄列顶部出现一次，不在此重复品牌 -->
       <div v-else-if="twoColumn" class="sidebar-mixed-brand">
         <div v-if="activeTopMenuIcon" class="sub-menu-icon">

@@ -1,6 +1,6 @@
 // 页面层 CSP 隔离验证服务器（E2E 专用：E2E_CSP=1 时由 playwright.config.ts 拉起）。
 //
-// 目的：把发布门禁 T3「CSP 页面层 enforce」的判据可判化——用「构建产物 + 强制 CSP 头」
+// 目的：把发布门禁「CSP 页面层强制」的判据可判化——用「构建产物 + 强制 CSP 头」
 // 复现 xadmin-web（nginx 托管 SPA）形态，让 e2e/csp-page.e2e.ts 在真实浏览器里采集
 // securitypolicyviolation：应用页面必须零违规，/__csp_probe 探针页必须命中（负对照，
 // 证明采集链路本身有效）。切换 nginx 头之前跑一次，替代「等真实流量观察 7 天」。
@@ -16,7 +16,7 @@
 // - E2E_CSP_TLS=1 时以 HTTPS 提供（openssl 自签证书，SAN 含 localhost/127.0.0.1；
 //   证书落 node_modules/.cache，playwright 侧以 ignoreHTTPSErrors 放行）——复现
 //   HTTPS 部署形态，让 webkit 接收 Secure 认证 Cookie（PROD 构建的 auth.ts 分支），
-//   把 CSP 隔离验证纳入 webkit（T3 口径：策略本身与引擎无关）。
+//   把 CSP 隔离验证纳入 webkit（策略本身与引擎无关）。
 import {
   createReadStream,
   existsSync,

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-// 偏好选择卡组（vben 的预览卡形态）：选项即卡片，可选图标或 `preview` 插槽自绘缩略图；
+// 偏好选择卡组：选项即卡片，可选图标或 `preview` 插槽自绘缩略图；
 // 选中态 = 主色描边 + 主色浅底 + 右上角勾选角标；原生 button 保证键盘可达
 import type { PrefChoiceOption } from "./prefTypes";
 import CheckIcon from "~icons/ep/select";

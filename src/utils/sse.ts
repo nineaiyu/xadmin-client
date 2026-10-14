@@ -1,7 +1,7 @@
 import { getToken, formatToken, getApiLanguage } from "@/utils/auth";
 
 /**
- * POST + SSE 流式读取（二期）。
+ * POST + SSE 流式读取。
  *
  * axios 不支持流式响应，这里用 fetch + ReadableStream 手工解析 text/event-stream：
  * - 帧格式与服务端 `message/views.py::_sse_frames` 对齐：`event: <name>\n` + `data: <json>\n` + 空行；

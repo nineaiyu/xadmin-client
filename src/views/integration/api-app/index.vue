@@ -32,7 +32,7 @@ const {
 
 <template>
   <div>
-    <!-- 一次性密钥为只读展示弹窗（C5 既定保留手写场景），
+    <!-- 一次性密钥为只读展示弹窗（既定保留手写场景），
          明文只在创建/重置响应中出现一次，列表与详情不回传 -->
     <div
       class="api-app-tip mb-3 flex w-99/100 items-center gap-2 px-3 py-2.5 text-sm text-fg-muted"

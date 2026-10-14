@@ -54,7 +54,7 @@
     }
   }
 
-  /* 菜单项 hover：图标放大（vben 菜单 hover 的 `scale(1.2)` 同口径，强化操作目标） */
+  /* 菜单项 hover：图标放大 `scale(1.2)`（强化操作目标） */
   .el-menu-item:hover .sub-menu-icon > *,
   .el-sub-menu__title:hover .sub-menu-icon > * {
     transform: scale(1.2);
@@ -129,7 +129,7 @@
   }
 
   /* 切割模式（混合 / 双列）当前一级没有子菜单：侧栏容器整块不渲染，顶栏与内容区占满
-     （与 vben 的「无子菜单即隐藏侧栏」同口径，否则顶栏下方会留一条空白侧栏） */
+     （无子菜单即隐藏侧栏，否则顶栏下方会留一条空白侧栏） */
   .no-sidebar {
     .main-container {
       margin-left: 0;
@@ -156,7 +156,7 @@
     /* 展开动画 */
     transition: width var(--duration-base);
 
-    /* 菜单区顶部留白（vben 菜单滚动区的 padding-top 8px 同口径） */
+    /* 菜单区顶部留白（padding-top 8px） */
     .el-scrollbar__view {
       padding-top: 8px;
     }
@@ -217,12 +217,12 @@
     .el-sub-menu__title {
       height: var(--nav-item-height);
 
-      /* 项间纵距（vben 菜单项 margin-bottom 2px 同口径）：行步进 = 项高 + 该值 */
+      /* 项间纵距（margin-bottom 2px）：行步进 = 项高 + 该值 */
       margin-bottom: var(--nav-item-margin-y);
       color: var(--pure-theme-menu-text);
       background-color: transparent !important;
 
-      /* 悬停/激活反馈节奏对齐 vben（0.15s；EP 缺省为 0.3s） */
+      /* 悬停/激活反馈节奏（0.15s；EP 缺省为 0.3s） */
       transition:
         background-color var(--duration-hover) var(--ease-standard),
         color var(--duration-hover) var(--ease-standard);
@@ -242,7 +242,7 @@
     }
 
     /* 层级缩进口径：一级 16px、二级 32px、三级 48px（步长 = --nav-item-indent 16px）；
-       一级起点取 16px（vben 为 8px，实机观感贴左显局促）——16px 起 + 激活块 8px
+       一级起点取 16px（实机观感贴左显局促）——16px 起 + 激活块 8px
        内缩 = 图标距侧栏边缘 16px，与内容纸留白同一节奏。EP 默认从 base 20px 起步，
        此处按本项目的层级口径重写 */
     .el-menu-item,
@@ -606,7 +606,7 @@
     }
 
     /* 顶栏菜单项（水平 / 混合系共用）：项高 40 居中于顶栏、12px 左内距、圆角块，
-       与 vben 水平菜单的渲染结果一致（顶栏 50px 内上下各留 5px） */
+       （顶栏 50px 内上下各留 5px） */
     .el-menu-item,
     .submenu-title-noDropdown,
     .el-sub-menu__title {

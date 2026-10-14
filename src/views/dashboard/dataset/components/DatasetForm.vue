@@ -10,7 +10,7 @@ import type {
 } from "@/api/dataset/datasets";
 
 /**
- * 数据集表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 数据集表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 模型字段联动 + 载荷生成」，提交与列表刷新由页面在
  * `beforeSure` 中处理；校验失败返回 null，调用方保持弹窗打开。

@@ -14,13 +14,13 @@
 
 :root {
   /* ================ 品牌语义色 ================
-     主色缺省为 hsl(212 100% 45%)（= #006be6，与 vue-vben-admin 默认主色一致，
+     主色缺省为 hsl(212 100% 45%)（= #006be6，
      解析值经 Chromium / WebKit 实测确认）；运行期用户自定义主色由 JS 覆写
      --primary 三元组，色阶交由 ep-bridge 派生。 */
   --primary: 212 100% 45%; /* #006be6 */
-  --success: 144 57% 58%; /* #57d188（对齐 vue-vben-admin 语义色） */
-  --warning: 42 84% 61%; /* #efbd48（对齐 vue-vben-admin 语义色） */
-  --danger: 348 100% 61%; /* #ff3860（对齐 vue-vben-admin 语义色） */
+  --success: 144 57% 58%; /* #57d188 */
+  --warning: 42 84% 61%; /* #efbd48 */
+  --danger: 348 100% 61%; /* #ff3860 */
   --info: 220 4.2% 58.2%; /* #909399（与灰阶 700 同值） */
 
   /* ================ 中性灰阶 ================
@@ -78,23 +78,23 @@
   --nav-item-inset-mix: 8px;
 
   /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用）。
-     项高与纵距对齐 vben 的紧凑档（实测项盒 42px、无额外外边距）：项高 42px、
-     纵距 0（见下方 --nav-item-margin-y），行步进 42px 与 vben 一致；
-     一级缩进保留本项目的 16px 起（vben 为 8px，登记为刻意不对齐，
+     项高与纵距取紧凑档（实测项盒 42px、无额外外边距）：项高 42px、
+     纵距 0（见下方 --nav-item-margin-y），行步进 42px；
+     一级缩进保留 16px 起（刻意不对齐 8px 贴边形态，
      见 sidebar/_common.scss 的层级缩进段）。 */
   --nav-item-height: 42px;
   --nav-item-indent: 16px;
   --nav-item-icon-size: 18px;
   --nav-item-icon-gap: 10px;
 
-  /* 双列侧栏一级窄列（vben NormalMenu 同口径）：竖排菜单项的尺度——
+  /* 双列侧栏一级窄列：竖排菜单项的尺度——
      项高由内容决定（9px 内边距 ×2 + 20px 图标 + 8px 间距 + 12px 标题 ≈ 64px） */
   --nav-item-padding-narrow: 9px;
   --nav-item-margin-narrow: 4px;
   --nav-item-radius-narrow: 6px;
   --nav-item-icon-size-narrow: 20px;
 
-  /* 菜单项垂直外边距：对齐 vben（项盒 42px 内部即含 2px 呼吸内距，不再加外边距） */
+  /* 菜单项垂直外边距（项盒 42px 内部即含 2px 呼吸内距，不再加外边距） */
   --nav-item-margin-y: 0px;
 
   /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
@@ -103,8 +103,7 @@
   /* ================ 顶栏动作项（右上角图标按钮）================
      所有顶栏动作共用同一热区 / 圆角 / 图标尺寸 / 间距——此前各组件各写一套
      （40×48 / 40×50 / 裸 16×16 并存），高度与节奏不一致导致顶栏视觉杂乱。
-     热区 = 图标 + 四周留白（32px 热区 / 18px 图标 / 圆形）——尺寸与形状对齐
-     vue-vben-admin 的 icon-button（32×32 + 圆角胶囊）。 */
+     热区 = 图标 + 四周留白（32px 热区 / 18px 图标 / 圆形）。 */
   --navbar-action-size: 32px;
   --navbar-action-radius: var(--radius-full);
   --navbar-action-icon: 18px;
@@ -126,7 +125,7 @@
   --sidebar-collapse-width: 60px;
 
   /* 双列侧栏（导航模式 → 双列 / 混合双列）的一级窄列宽度：设计令牌基准值，
-     设置面板 →「混合宽度」会以内联同名变量覆写（vben `sidebar.mixedWidth` 同口径） */
+     设置面板 →「混合宽度」会以内联同名变量覆写 */
   --sidebar-mixed-narrow-width: 80px;
 
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
@@ -153,7 +152,7 @@
      时长分档覆盖项目既有取值（0.1~0.5s）；缓动曲线与 Element Plus 同源：
      standard = 官方 ease-in-out-bezier（匀速段主用），
      emphasized = 官方 fast-bezier（入场/收尾的减速感）。
-     hover / slide 两档与 slide / out-expo 两条曲线对齐 vue-vben-admin 的实际预设：
+     hover / slide 两档与 slide / out-expo 两条曲线：
      菜单悬停 0.15s、slide 预设 0.25s / (0.25,0.8,0.5,1)、弹层 (0.16,1,0.3,1)。 */
   --duration-instant: 0.1s;
   --duration-hover: 0.15s;

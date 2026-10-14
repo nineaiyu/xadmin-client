@@ -114,7 +114,7 @@ const { hiddenByEmptySplit } = useSplitSidebar();
 
 /**
  * 是否渲染侧栏：水平布局与全屏内容不渲染；「顶栏承担一级导航」的混合系布局
- * 在当前一级没有子菜单时也不渲染（对齐 vben 的「无子菜单即隐藏侧栏」，否则
+ * 在当前一级没有子菜单时也不渲染（无子菜单即隐藏侧栏，否则
  * 顶栏下方会留一条空白侧栏）。
  */
 const sidebarVisible = computed(
@@ -122,7 +122,7 @@ const sidebarVisible = computed(
 );
 
 /**
- * 全屏内容模式（vben `full-content`）：不渲染侧栏 / 顶栏 / 页签条 / 页脚，
+ * 全屏内容模式：不渲染侧栏 / 顶栏 / 页签条 / 页脚，
  * 只显示内容主体；设置入口由设置面板的悬浮球兜底（见 lay-setting）。
  */
 const fullContent = computed(() => isFullContent(layoutMode.value));

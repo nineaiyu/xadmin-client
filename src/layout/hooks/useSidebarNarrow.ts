@@ -7,14 +7,14 @@ import { isHeaderMixedNav, type LayoutMode } from "./layoutModes";
 import { findMenuByActivePath } from "./navPresentation";
 
 /**
- * 双列侧栏一级窄列的数据与交互（vben `sidebar-mixed-nav` / `header-mixed-nav` 同口径）：
+ * 双列侧栏一级窄列的数据与交互：
  *
- * - 双列菜单（vben `sidebar-mixed-nav`）：窄列 = 全局一级菜单，主列 = 当前一级的
+ * - 双列菜单：窄列 = 全局一级菜单，主列 = 当前一级的
  *   完整子菜单树（恒定渲染）；
- * - 混合双列（vben `header-mixed-nav`）：顶栏承担一级导航，窄列 = 当前一级的子菜单，
+ * - 混合双列：顶栏承担一级导航，窄列 = 当前一级的子菜单，
  *   主列 = 窄列中悬停 / 激活项的 children（无内容时主列整列不渲染，侧栏收为窄列宽度）。
  *
- * 悬停进入窄列项即刷新主列，离开侧栏复位到当前激活链（与 vben useExtraMenu 同语义）。
+ * 悬停进入窄列项即刷新主列，离开侧栏复位到当前激活链。
  */
 export function useSidebarNarrow(
   sidebarMode: Ref<LayoutMode>,
@@ -40,7 +40,7 @@ export function useSidebarNarrow(
   /**
    * 主列是否存在可见内容：
    * - 双列菜单（`sidebar-mixed-nav`）：主列 = 当前一级的子菜单树。当前一级只有
-   *   ≤1 项可展示时不渲染整列、侧栏收为窄列宽度（vben 同口径）——0 项是叶子菜单
+   *   ≤1 项可展示时不渲染整列、侧栏收为窄列宽度——0 项是叶子菜单
    *   没有内容，1 项则与一级窄列的信息完全重复（如「首页」目录下仅一个首页页）；
    *   菜单尚未装配完成时保守显示，避免首帧整列闪隐；
    * - 混合双列（`header-mixed-nav`）：随窄列悬停 / 激活项的次级菜单显隐。

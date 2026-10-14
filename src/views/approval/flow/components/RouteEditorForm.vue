@@ -5,7 +5,7 @@ import { message } from "@/utils/message";
 import { CONDITION_OPS, type RouteItem } from "./flowConfig";
 
 /**
- * 节点出口路由编辑（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 节点出口路由编辑（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 纯本地 state 编辑：组件持有 routes 副本，确认时由页面把过滤后的 routes 回写到节点
  * （自环 / 越界 target 过滤口径与原实现一致）；未填条件字段的残缺行同样忽略并提示

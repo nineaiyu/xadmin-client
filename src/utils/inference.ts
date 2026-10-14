@@ -1,5 +1,5 @@
 /**
- * 值判定工具（对齐 vben `@core/base/shared/src/utils/inference.ts`）。
+ * 值判定工具。
  */
 
 /**

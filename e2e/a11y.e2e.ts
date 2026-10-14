@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * a11y 自动化门禁（N2）：axe-core 对关键页面做 wcag2a/wcag2aa 基线扫描。
+ * a11y 自动化门禁：axe-core 对关键页面做 wcag2a/wcag2aa 基线扫描。
  *
  * 口径：
  * - 只阻断 critical / serious 级违规，moderate 及以下不阻断，避免门禁常红失去信号；

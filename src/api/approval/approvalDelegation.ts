@@ -1,6 +1,6 @@
 import { BaseApi } from "@/api/base";
 
-/** 审批委托（审批流三期）：生效时段内由代理人代审，flow_codes 空 = 全部流程 */
+/** 审批委托：生效时段内由代理人代审，flow_codes 空 = 全部流程 */
 export type ApprovalDelegationRow = {
   pk: string;
   delegator: string;

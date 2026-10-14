@@ -10,7 +10,7 @@ export type PermissionResolver = (auth?: TableActionAuth) => boolean;
 
 /**
  * 操作项是否可见：权限命中 + ifShow（布尔或函数）。
- * 与 vben `VbenTableAction` 的可见性口径一致；auth 存在时由 hasPermission 判定。
+ * auth 存在时由 hasPermission 判定可见性。
  */
 export function checkActionVisible(
   item: ActionItem,
@@ -68,7 +68,7 @@ export function toOperationRow(
       ? toConfirm(item.popConfirm, confirmTitle)
       : undefined,
     onClick: params => {
-      // 确认型操作优先走 popConfirm.confirm（对齐 vben 契约），否则回退 onClick
+      // 确认型操作优先走 popConfirm.confirm，否则回退 onClick
       if (item.popConfirm?.confirm) {
         item.popConfirm.confirm();
         return;

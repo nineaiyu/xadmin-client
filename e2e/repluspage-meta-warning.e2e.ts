@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 元数据缺失的「失败可见」回归（G6 验收）。
+ * 元数据缺失的「失败可见」回归。
  *
  * 现象背景：RePlusPage 的搜索列 / 表格列全部来自后端元数据（`search-columns` /
  * `search-fields`，首开经 `with_meta=1` 内联进列表响应）。后端漏配时页面表现为

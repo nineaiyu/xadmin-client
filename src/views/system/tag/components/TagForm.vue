@@ -6,7 +6,7 @@ import { CHART_ACCENT, epColor } from "@/utils/chartTheme";
 import type { TagItem } from "@/api/system/tag";
 
 /**
- * 标签表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 标签表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 载荷生成」，提交与列表刷新由页面在 `beforeSure` 中处理。
  */

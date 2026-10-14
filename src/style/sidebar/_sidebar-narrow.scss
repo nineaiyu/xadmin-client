@@ -1,7 +1,7 @@
-/* ================ 双列侧栏一级窄列（vben NormalMenu 同口径） ================
+/* ================ 双列侧栏一级窄列 ================
    一级窄列只出现在双列菜单 / 混合双列两种布局（DOM 限定 .sidebar-mixed-narrow）。
    菜单项为「图标在上、标题在下」的竖排形态：9px 内边距 + 20px 图标 + 8px 间距
-   + 12px 标题（合计 64px 项高），激活为实心圆角块，与 vben 一级窄列的渲染结果一致。
+   + 12px 标题（合计 64px 项高），激活为实心圆角块。
 
    选择器统一带 `.sidebar-container.is-two-column` 前缀：公共菜单样式由 merge-style
    以 `body[layout] .sidebar-container .el-menu-item`（0-3-1）展开，此处需以
@@ -60,7 +60,7 @@
   white-space: nowrap;
 }
 
-/* 窄列激活态：实心圆角块（vben NormalMenu：浅色主题主色实心 + 白字，
+/* 窄列激活态：实心圆角块（浅色主题主色实心 + 白字，
    深色模式提亮块 + 亮字） */
 .sidebar-container.is-two-column .sidebar-mixed-menu .el-menu-item.is-active {
   color: var(--el-color-white) !important;

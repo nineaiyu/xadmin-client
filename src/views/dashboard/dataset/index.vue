@@ -45,7 +45,7 @@ const {
       :tableBarButtonsProps="tableBarButtonsProps"
     />
 
-    <!-- 执行预览：只读展示弹窗（C5 既定保留手写场景），明细 / 聚合双视图 -->
+    <!-- 执行预览：只读展示弹窗（既定保留手写场景），明细 / 聚合双视图 -->
     <el-dialog
       v-model="previewDialog"
       :title="t('dataDataset.preview')"

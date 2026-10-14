@@ -13,7 +13,7 @@ import ApiScopeEditor from "@/components/ApiScopeEditor";
 import ApiGrantEditor from "./ApiGrantEditor.vue";
 
 /**
- * API 应用表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * API 应用表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 载荷生成」，提交与列表刷新由页面在 `beforeSure` 中处理；
  * 名称等必填校验沿用后端口径（提交失败由页面统一提示）。

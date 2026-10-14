@@ -6,7 +6,7 @@ import { message } from "@/utils/message";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
 /**
- * 仪表盘表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 仪表盘表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 新建（row 缺省）与设置（row 非空：重命名 / 可见性）双模式，载荷同构。
  */

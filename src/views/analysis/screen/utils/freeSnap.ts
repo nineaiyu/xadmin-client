@@ -19,7 +19,7 @@ export const FREE_SNAP_THRESHOLD = 4;
 export const FREE_GRID_STEPS = [2, 4, 8, 10, 16, 20];
 export const FREE_GRID_DEFAULT_STEP = 8;
 
-/** 网格吸附配置：`step <= 0` 视为关闭（缺省 = 关闭，行为与一期完全一致） */
+/** 网格吸附配置：`step <= 0` 视为关闭（缺省 = 关闭，行为保持不变） */
 export type FreeGridSnap = { enabled: boolean; step: number };
 
 /** 参考线：axis=x 为竖线（position 为画布内 x 坐标），axis=y 为横线 */

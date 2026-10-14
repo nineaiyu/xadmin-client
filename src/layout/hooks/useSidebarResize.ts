@@ -10,8 +10,8 @@ import { useConfigureStorage } from "../components/lay-setting/hooks/useConfigur
 /**
  * 侧栏拖拽调宽（设置面板 →「侧栏拖拽」，默认关）：拖拽中只改 `--sidebar-width`
  * CSS 变量不落库，松开时才写回偏好（钳制在区间内，数字输入档仍可精确设置）。
- * 指针越过可调区间时给 `not-allowed` 光标与越界标记（视觉反馈，对齐 vben
- * use-sidebar-drag 的边界态）。
+ * 指针越过可调区间时给 `not-allowed` 光标与越界标记（视觉反馈，
+ * 拖拽的边界态）。
  *
  * @param enabled 是否允许拖拽（侧栏展开 + 开关开启 + 非移动端的响应式取值）
  */

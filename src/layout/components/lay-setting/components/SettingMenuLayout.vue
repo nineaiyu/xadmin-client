@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-// 系统设置面板：导航模式（7 种布局，与 vben 布局矩阵同序同口径）设置区块
+// 系统设置面板：导航模式（7 种布局，同序同口径）设置区块
 // —— 预览卡形态（悬停看说明，点选即切换）
 import { computed } from "vue";
 import { useGlobal } from "@pureadmin/utils";
@@ -74,13 +74,13 @@ const current = computed(() => layoutTheme.value.layout ?? "vertical");
 /** 布局语义模式（判定见 layoutModes.ts）：用于「导航切割」的条件启用 */
 const layoutMode = computed(() => normalizeLayoutMode(current.value));
 
-/** 导航风格（对齐 vben `navigation.styleType`）：圆角 = 激活块带圆角与内缩，朴素 = 整行铺满 */
+/** 导航风格：圆角 = 激活块带圆角与内缩，朴素 = 整行铺满 */
 const navigationStyle = computed({
   get: () => $storage?.configure?.navigationStyle ?? DEFAULT_NAVIGATION_STYLE,
   set: value => storageConfigureChange("navigationStyle", value)
 });
 
-/** 导航切割（对齐 vben `navigation.split`，仅混合模式生效）：
+/** 导航切割（仅混合模式生效）：
  *  开 = 顶栏一级 + 侧栏子菜单；关 = 顶栏与侧栏都显示完整菜单树 */
 const navigationSplit = computed({
   get: () => $storage?.configure?.navigationSplit ?? true,
@@ -188,7 +188,7 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
   }
 }
 
-/* 布局缩略图（与 vben 布局矩阵的形态一致）：nav = 侧栏区，head = 顶栏区；
+/* 布局缩略图：nav = 侧栏区，head = 顶栏区；
    承载菜单区域的块用主色标识，次级列用更浅一档的灰 */
 .layout-preview {
   position: relative;

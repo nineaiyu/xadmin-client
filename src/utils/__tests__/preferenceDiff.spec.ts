@@ -15,7 +15,7 @@ describe("diffNamespace（单命名空间差异）", () => {
     expect(diffNamespace({ extra: 1 }, {})).toEqual({});
   });
 
-  it("数组顺序敏感（对齐 vben diffStrict 口径）", () => {
+  it("数组顺序敏感（diffStrict 口径）", () => {
     expect(diffNamespace({ list: ["a", "b"] }, { list: ["b", "a"] })).toEqual({
       list: ["a", "b"]
     });

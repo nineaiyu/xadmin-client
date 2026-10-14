@@ -1,6 +1,6 @@
 @use "common" as *;
 
-/* 双列侧栏（vben `sidebar-mixed-nav`）：一级窄列 + 二级展开列并排，顶栏在侧栏右侧 */
+/* 双列侧栏：一级窄列 + 二级展开列并排，顶栏在侧栏右侧 */
 body[layout="sidebar-mixed-nav"] {
   $narrow: var(--sidebar-mixed-narrow-width);
   $sideBarWidth: calc(#{$narrow} + var(--sidebar-width));
@@ -9,7 +9,7 @@ body[layout="sidebar-mixed-nav"] {
   @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
 
   /* 主列（二级展开列）无内容：当前一级是叶子菜单（如「关于」）时没有子菜单可展示，
-     侧栏收为窄列宽度、内容区随之占满（vben 的 extra 隐藏同口径） */
+     侧栏收为窄列宽度、内容区随之占满（extra 隐藏） */
   .sidebar-container.is-narrow-only {
     width: $narrow !important;
   }
@@ -39,7 +39,7 @@ body[layout="sidebar-mixed-nav"] {
     }
 
     /* 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」）：侧栏浮层式回到展开宽度，
-       主列菜单随 menuCollapse 解除折叠，内容区不动（vben 折叠态悬停展开同口径）；
+       主列菜单随 menuCollapse 解除折叠，内容区不动（折叠态悬停展开同口径）；
        窄列独显时无次级列可展开，不参与 */
     .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
       width: $sideBarWidth !important;

@@ -1,7 +1,7 @@
 @use "nav-palette" as nav;
 
 /* ================ 半暗顶栏（设置面板 →「布局」→「顶栏」→「半暗顶栏」） ================
-   浅色外观下顶栏保持深色调色板（内容区与页签条维持浅色，与 vben 的 semiDarkHeader 口径一致）。
+   浅色外观下顶栏保持深色调色板（内容区与页签条维持浅色）。
    - 底色：`.navbar` 浅色态由 Tailwind `bg-white` 给色；本文件不在 Tailwind 的
      `@layer utilities` 内，选择器特异性（html + 3 个类）也更高，直接声明即可覆盖；
    - 文字/图标：顶栏文字色走 `--fg` 语义槽（.vertical-header-right /

@@ -247,7 +247,7 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
 </template>
 
 <style lang="scss" scoped>
-/* 主题色色卡（vben 的 outline-box 形态）：外框预览盒 + 居中色块 + 名称标签，
+/* 主题色色卡：外框预览盒 + 居中色块 + 名称标签，
    选中项以外框主色描边标记 */
 .theme-color {
   display: grid;

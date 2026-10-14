@@ -162,7 +162,7 @@ const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
 const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
 
 /**
- * 搜索卡片高度占位是否生效（体验基线 U1 / CLS 主因修复）：
+ * 搜索卡片高度占位是否生效（CLS 主因修复）：
  * 搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
  * 到达后叠加一行字段（+50px），中间帧会被真实绘制产生位移。
  * 这里在「元数据到达前」按「按钮行 + 一行字段」预留高度；到达后必须撤掉占位
@@ -462,7 +462,7 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-/* 搜索卡片高度占位（体验基线 U1 / CLS 主因修复）：**仅在列元数据到达前生效**。
+/* 搜索卡片高度占位（CLS 主因修复）：**仅在列元数据到达前生效**。
    搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），到达后
    叠加一行字段（+50px），同帧还伴随 el-table 列宽首绘与自适应高度重算，中间帧会被
    真实绘制（表头换行 155px → 41px 的瞬态位移）。数值 = py-3(24) + 按钮行(32) + 行间距

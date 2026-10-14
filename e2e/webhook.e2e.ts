@@ -29,7 +29,7 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   await dialog.getByLabel("地址").fill("http://127.0.0.1:9/hook");
   await dialog.getByLabel("签名密钥", { exact: false }).fill("e2e-secret");
   await pickOption(page, "订阅事件", "连接测试");
-  // C5 收敛后弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
+  // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确认」）
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible();
   const subRow = page.getByRole("row", { name: subName });

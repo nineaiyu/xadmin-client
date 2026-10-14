@@ -13,7 +13,7 @@ import type { CollapseParamValues, ReCollapseParamsProps } from "./types";
 defineOptions({ name: "ReCollapseParams" });
 
 /**
- * 参数折叠面板（对齐 vben `CollapsibleParams`）：以「名称 / 值 / 说明」三列编辑一组
+ * 参数折叠面板：以「名称 / 值 / 说明」三列编辑一组
  * 参数，默认只展示前若干行、其余折叠，点「展开 / 收起」切换。
  *
  * 控件用 Element Plus（`el-input` / `el-input-number` / `el-select`），未引 reka-ui；

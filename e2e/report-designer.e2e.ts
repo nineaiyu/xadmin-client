@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 报表设计器（P2.2 批次二）：
+ * 报表设计器：
  * 素材走 API 直建（数据集 + 报表）→ 设计器套用「分组统计」模板（列 + 两个分组图表）
  * → 加指标卡并改标题 → 保存并读接口校验落库 → 明细表预览与组件实时渲染。
  *

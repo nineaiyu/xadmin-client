@@ -13,7 +13,7 @@ import { message } from "@/utils/message";
 import { CARD_HEIGHT_OPTIONS, DEFAULT_CARD_HEIGHT } from "@/utils/cardHeight";
 
 /**
- * 仪表盘卡片表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 仪表盘卡片表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 卡片是内存草稿（随「保存布局」统一提交），组件只负责表单数据与校验，
  * 草稿的增/改由页面在 `beforeSure` 中处理。

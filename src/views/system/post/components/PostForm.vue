@@ -9,7 +9,7 @@ import { isSuccess } from "@/api/types";
 import type { PostItem } from "@/api/identity/post";
 
 /**
- * 岗位表单（C5：弹窗体系收敛到 ReDialog 的 content 组件形态）。
+ * 岗位表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
  *
  * 组件负责「表单数据 + 载荷生成」，提交与列表刷新由页面在 `beforeSure` 中处理。
  * 部门下拉依赖部门列表权限：无权限时保持为空并可留空（组织通用岗），不阻塞提交。

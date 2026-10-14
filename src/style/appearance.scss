@@ -61,7 +61,7 @@
 
 /* ============ 微交互统一 ============
    hover / active / focus 的反馈时长与缓动统一为令牌口径：按钮取 0.1s
-   （对齐 vue-vben-admin 与其 EP 缺省口径）、表格行与标签补上与菜单项、
+   （EP 缺省口径）、表格行与标签补上与菜单项、
    卡片同源的过渡（此两类 EP 默认无过渡）。 */
 .el-button {
   transition: all var(--duration-instant) var(--ease-standard);

@@ -11,7 +11,7 @@ import {
 } from "./helpers";
 
 /**
- * 移动端形态守护（P2.6）：iPhone 13 视口下的核心页可用性。
+ * 移动端形态守护：iPhone 13 视口下的核心页可用性。
  *
  * 背景：`deviceDetection()` 走 UA 判定（`@pureadmin/utils`），命中的 UA 会进入
  * 「移动形态」——侧栏变成抽屉、页面按移动分支渲染（如用户管理改成上下堆叠）。

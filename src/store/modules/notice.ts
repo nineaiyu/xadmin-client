@@ -79,7 +79,7 @@ export const useNoticeStore = defineStore("pure-notice", {
         ) {
           const data = raw.data ?? {};
           let message: string | VNode | undefined = data?.message;
-          // 桌面通知（二期）：聊天类（@提及/私聊）前台也弹，
+          // 桌面通知：聊天类（@提及/私聊）前台也弹，
           // 其余站内推送仅页面不可见时弹；点击行为与应用内通知一致
           // （聊天类直达会话，站内信就地弹出详情弹窗）
           const isChatPush =

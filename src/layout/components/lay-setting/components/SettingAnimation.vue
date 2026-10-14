@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-// 系统设置面板「通用」：页面切换动画（预览卡片常驻循环播放，与 vben 口径一致，
+// 系统设置面板「通用」：页面切换动画（预览卡片常驻循环播放，
 // 无需重新触发即可实时看到每个预设的动效）。
 // 预设清单与 style/transition.scss 的过渡类名前缀一一对应，none = 关闭过渡。
 import type { Component } from "vue";
@@ -145,7 +145,7 @@ const pageTransition = computed<PageTransitionType>({
 
 <style lang="scss" scoped>
 /* 预览关键帧按各预设的进入/离开位移等比缩小（原值见 style/transition.scss），
-   形态对齐 vben：0% → 50% → 100% 位移穿越，中途完全可见 */
+   形态：0% → 50% → 100% 位移穿越，中途完全可见 */
 @keyframes anim-card-fade-transform {
   0% {
     opacity: 0;
@@ -284,7 +284,7 @@ const pageTransition = computed<PageTransitionType>({
     background: var(--el-color-primary);
     border-radius: var(--radius-xs);
 
-    /* 常驻循环播放（vben 口径：所有预览块实时演示各自动效，无需 hover / 重选触发）；
+    /* 常驻循环播放（所有预览块实时演示各自动效，无需 hover / 重选触发）；
        none 预设无 animation-name，方块保持静止 */
     animation-duration: 3s;
     animation-timing-function: var(--ease-standard);

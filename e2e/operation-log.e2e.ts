@@ -4,7 +4,7 @@ import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 /**
  * 审计日志增强：
- * 1. DELETE 操作（删除数据字典项）落操作日志，且可按 method 检索（F5 检索扩展）；
+ * 1. DELETE 操作（删除数据字典项）落操作日志，且可按 method 检索（检索扩展）；
  * 2. 操作日志页面渲染（耗时列 / 检索项）。
  */
 test("审计日志：DELETE 操作入日志且可按方法检索", async ({ page }) => {
@@ -49,6 +49,6 @@ test("操作日志页面渲染", async ({ page }) => {
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
-  // 检索区提供耗时区间与字段变更过滤（F5 检索扩展）
+  // 检索区提供耗时区间与字段变更过滤（检索扩展）
   await expect(page.getByText("耗时", { exact: false }).first()).toBeVisible();
 });

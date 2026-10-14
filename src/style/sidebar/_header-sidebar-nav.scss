@@ -1,6 +1,6 @@
 @use "common" as *;
 
-/* 侧边导航（vben `header-sidebar-nav`）：顶栏通栏（Logo + 面包屑，无水平菜单）
+/* 侧边导航：顶栏通栏（Logo + 面包屑，无水平菜单）
    + 侧栏排在顶栏下方并显示完整菜单树 */
 body[layout="header-sidebar-nav"] {
   $sideBarWidth: var(--sidebar-width);

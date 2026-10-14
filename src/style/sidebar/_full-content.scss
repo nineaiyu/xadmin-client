@@ -1,4 +1,4 @@
-/* 全屏内容（vben `full-content`）：不渲染侧栏 / 顶栏 / 页签条 / 页脚，只显示内容主体。
+/* 全屏内容：不渲染侧栏 / 顶栏 / 页签条 / 页脚，只显示内容主体。
    外壳结构已按模式整块不渲染（见 layout/index.vue），这里只兜底内容区不让位。 */
 body[layout="full-content"] {
   .main-container {

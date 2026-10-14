@@ -1,9 +1,9 @@
 @use "common" as *;
 
-/* 混合导航（vben `mixed-nav`）：顶栏通栏（Logo + 一级菜单）+ 侧栏排在顶栏下方
+/* 混合导航：顶栏通栏（Logo + 一级菜单）+ 侧栏排在顶栏下方
    （显示所属一级的子菜单；导航切割关时回到完整菜单树） */
 body[layout="mix"] {
-  /* 侧栏宽度跟随「侧栏宽度」令牌（vben `sidebar.width` 同口径） */
+  /* 侧栏宽度跟随「侧栏宽度」令牌 */
   $sideBarWidth: var(--sidebar-width);
 
   @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));

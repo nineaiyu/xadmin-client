@@ -93,7 +93,7 @@ const downloadAttachment = () => {
     http.autoDownload(withApiDomain(attachment.value.url));
 };
 
-/* ---------------- 表情回应（chat_reaction，F5） ---------------- */
+/* ---------------- 表情回应（chat_reaction） ---------------- */
 
 /** 快捷回应表情（面板网格与徽标共用；上限与服务端每消息 20 键、每 emoji 16 字符对齐绰绰有余） */
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢", "🔥", "👏"];
@@ -127,7 +127,7 @@ const displayName = computed(() =>
     : props.item.sender_name || t("chat.unknownUser")
 );
 
-/* ---------------- A2 受限动作确认卡片 ---------------- */
+/* ---------------- 受限动作确认卡片 ---------------- */
 /** 只读动作执行结果（结果表渲染） */
 const actionResult = computed(() => props.item.extra?.action_result ?? null);
 
@@ -414,7 +414,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         </el-button>
       </div>
 
-      <!-- A2 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认
+      <!-- 受限动作确认卡片：AI 只产出草稿，执行必须由用户在此二次确认
            （与助手页同一套动作渲染；执行端点归属助手页权限点） -->
       <MessageActionAttachments
         v-if="!item.is_recalled"
