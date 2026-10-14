@@ -63,12 +63,9 @@ vi.mock("@/store/modules/user", () => ({
   useUserStoreHook: vi.fn(() => ({ handRefreshToken: vi.fn() }))
 }));
 
+// 提示统一走项目 message 包装（pure-message 视觉）：断言按包装签名 (text, params)
 vi.mock("@/utils/message", () => ({
-  message: vi.fn()
-}));
-
-vi.mock("element-plus/es/components/message/index.mjs", () => ({
-  ElMessage: { error: elMessageMock, warning: elMessageMock }
+  message: elMessageMock
 }));
 
 vi.mock("@/components/ReMfaConfirm", () => ({
@@ -301,7 +298,8 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     expect(confirmMfaMock).not.toHaveBeenCalled();
     expect(instanceMock.request).toHaveBeenCalledTimes(1);
     expect(elMessageMock).toHaveBeenCalledWith(
-      "操作已提交审批（单号：A1B2C3D4）"
+      "操作已提交审批（单号：A1B2C3D4）",
+      { type: "warning" }
     );
   });
 

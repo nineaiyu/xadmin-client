@@ -23,7 +23,6 @@ import {
 } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
-import { ElMessage } from "element-plus/es/components/message/index.mjs";
 import { announce } from "@/utils/announcer";
 import { downloadByData } from "@pureadmin/utils";
 import { resolveDownloadFilename } from "@/utils/download";
@@ -195,13 +194,13 @@ class PureHttp {
             const detail = String(
               data?.detail ?? error.response.statusText ?? ""
             );
-            ElMessage.error(detail);
+            message(detail, { type: "error" });
             // 读屏播报：全局兜底错误提示同步播报到 aria-live 区域
             announce(detail);
             // router.push("/error/500");
             reject(error.response.data);
           } else {
-            ElMessage.error(error.message);
+            message(String(error.message ?? ""), { type: "error" });
             announce(String(error.message ?? ""));
             reject(error);
           }

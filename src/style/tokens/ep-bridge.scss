@@ -117,24 +117,35 @@ html.dark {
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
-  /* 需要派生色阶的语义色令牌（主色 + 成功 / 警告 / 危险 / error），
-     公式与 EP 原生一致（light-i = (100-i*10)% 本色 + 表面底色，dark-2 = 80% 本色 + 黑/白） */
-  $derived-colors: "primary", "success", "warning", "danger", "error";
+  /* 需要派生色阶的语义色：色阶名 → 令牌名前缀，公式与 EP 原生一致
+     （light-i = (100-i*10)% 本色 + 表面底色，dark-2 = 80% 本色 + 黑/白）。
+     映射不可省：EP 的 error 与 danger 同源（缺省两套色阶同值），而令牌层只有
+     --danger，按色阶名取 `var(--error)` 会取到空值——整条 color-mix 变成
+     「计算期无效」，反而覆盖掉 EP 自带 error 色阶，el-message / el-alert 等
+     error 形态会退化成透明底 + currentColor 描边。新增色阶名须在此登记令牌，
+     tokens 层是否真实定义由单测守护。 */
+  $derived-colors: (
+    "primary": "primary",
+    "success": "success",
+    "warning": "warning",
+    "danger": "danger",
+    "error": "danger"
+  );
 
   :root,
   html.dark {
-    @each $name in $derived-colors {
+    @each $name, $token in $derived-colors {
       /* dark-2：hover / active 的加深档（亮色向黑压暗，暗色向白提亮，同 EP 缺省语义） */
       --el-color-#{$name}-dark-2: color-mix(
         in srgb,
-        hsl(var(--#{$name})) 80%,
+        hsl(var(--#{$token})) 80%,
         black
       );
 
       @for $i from 1 through 9 {
         --el-color-#{$name}-light-#{$i}: color-mix(
           in srgb,
-          hsl(var(--#{$name})) #{100 - $i * 10}%,
+          hsl(var(--#{$token})) #{100 - $i * 10}%,
           hsl(var(--bg-card))
         );
       }
@@ -142,10 +153,10 @@ html.dark {
   }
 
   html.dark {
-    @each $name in $derived-colors {
+    @each $name, $token in $derived-colors {
       --el-color-#{$name}-dark-2: color-mix(
         in srgb,
-        hsl(var(--#{$name})) 80%,
+        hsl(var(--#{$token})) 80%,
         white
       );
     }

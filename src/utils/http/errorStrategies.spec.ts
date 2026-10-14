@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { elMessageMock } = vi.hoisted(() => ({ elMessageMock: vi.fn() }));
 
-vi.mock("element-plus/es/components/message/index.mjs", () => ({
-  ElMessage: { error: elMessageMock, warning: elMessageMock }
+// 提示统一走项目 message 包装（pure-message 视觉）：断言按包装签名 (text, params)
+vi.mock("@/utils/message", () => ({
+  message: elMessageMock
 }));
 vi.mock("@/utils/auth", () => ({
   remoteAccessToken: vi.fn(),
@@ -78,7 +79,9 @@ describe("模块停用网关 404（code=1001）策略", () => {
     });
     expect(strategy!.match(ctx)).toBe(true);
     expect(strategy!.handle(ctx)).toBe(true);
-    expect(elMessageMock).toHaveBeenCalledWith("功能未启用 (chat)");
+    expect(elMessageMock).toHaveBeenCalledWith("功能未启用 (chat)", {
+      type: "warning"
+    });
     expect(ctx.reject).toHaveBeenCalledWith(
       expect.objectContaining({ code: 1001, module: "chat" })
     );
@@ -91,7 +94,9 @@ describe("模块停用网关 404（code=1001）策略", () => {
     });
     expect(strategy!.match(ctx)).toBe(true);
     strategy!.handle(ctx);
-    expect(elMessageMock).toHaveBeenCalledWith("功能未启用");
+    expect(elMessageMock).toHaveBeenCalledWith("功能未启用", {
+      type: "warning"
+    });
   });
 
   it("GET 页面取数失败 → 整页化跳「模块已停用」并携带模块 id", () => {
@@ -231,7 +236,9 @@ describe("429 限流策略", () => {
     rateLimitStrategy!.handle(ctx);
     expect(ctx.resend).not.toHaveBeenCalled();
     expect(ctx.resolve).not.toHaveBeenCalled();
-    expect(elMessageMock).toHaveBeenCalledWith("请求过于频繁");
+    expect(elMessageMock).toHaveBeenCalledWith("请求过于频繁", {
+      type: "error"
+    });
     expect(ctx.reject).toHaveBeenCalledWith(
       expect.objectContaining({ detail: "请求过于频繁" })
     );
@@ -245,7 +252,7 @@ describe("429 限流策略", () => {
     });
     rateLimitStrategy!.handle(ctx);
     expect(ctx.resend).not.toHaveBeenCalled();
-    expect(elMessageMock).toHaveBeenCalledWith("操作太频繁");
+    expect(elMessageMock).toHaveBeenCalledWith("操作太频繁", { type: "error" });
     expect(ctx.reject).toHaveBeenCalledTimes(1);
   });
 
@@ -304,7 +311,8 @@ describe("业务 400 策略（PROTECT 引用不可删除 code=998 等）", () =>
     expect(badRequest!.match(ctx)).toBe(true);
     expect(badRequest!.handle(ctx)).toBe(true);
     expect(elMessageMock).toHaveBeenCalledWith(
-      "该数据被其它部门引用，无法删除"
+      "该数据被其它部门引用，无法删除",
+      { type: "error" }
     );
     expect(announceMock).toHaveBeenCalledWith("该数据被其它部门引用，无法删除");
     expect(ctx.reject).toHaveBeenCalledWith({
