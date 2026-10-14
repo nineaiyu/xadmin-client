@@ -10,8 +10,9 @@ import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetail
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNoticeStoreHook } from "@/store/modules/notice";
-import { useApprovalBadge } from "@/utils/approvalBadge";
-import { useTaskCenter } from "@/utils/taskCenter";
+import { refreshApprovalBadge, useApprovalBadge } from "@/utils/approvalBadge";
+import { refreshTaskCenter, useTaskCenter } from "@/utils/taskCenter";
+import { buildBadgeSources, sumBadgeSources } from "./badgeSources";
 import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
 
 const { t } = useI18n();
@@ -30,6 +31,26 @@ const badgeCount = computed(
     Number(useNoticeStoreHook().noticeCount || 0) +
     Number(pendingCount.value || 0) +
     Number(runningCount.value || 0)
+);
+
+/**
+ * 角标里「非站内信」那两路的拆解（待我审批 / 进行中任务）。
+ *
+ * 弹层只列站内信，若不明示这两路，用户点开铃铛会觉得角标数字来路不明
+ * （站内信为 0 时尤其明显）。这两路的明细都在任务中心抽屉里，因此数量挂在
+ * 底栏「任务中心」入口上，悬停可看到逐项拆分。
+ */
+const badgeSources = computed(() =>
+  buildBadgeSources({
+    pending: pendingCount.value,
+    running: runningCount.value
+  })
+);
+const otherBadgeCount = computed(() => sumBadgeSources(badgeSources.value));
+const badgeSourcesTip = computed(() =>
+  badgeSources.value
+    .map(item => `${t(item.labelKey)} ${item.count}`)
+    .join(" · ")
 );
 const notices = ref<TabItem[]>([
   {
@@ -91,6 +112,10 @@ const goTaskCenter = () => {
 const handleCommand = (flag: Boolean) => {
   if (flag) {
     getNoticeData();
+    // 角标另两路（待我审批 / 进行中任务）与站内信同源刷新：否则弹层里的来源
+    // 拆解可能与角标数字不一致（轮询间隔内新建的待办）
+    refreshApprovalBadge();
+    refreshTaskCenter();
   }
 };
 const loading = ref(true);
@@ -159,7 +184,10 @@ const getLabel = computed(
               </el-tab-pane>
             </template>
           </span>
-          <!-- 底栏常驻：无未读站内信时也要能进任务中心 -->
+          <!-- 底栏常驻：无未读站内信时也要能进任务中心。
+               角标里「待我审批 / 进行中任务」两路的内容都在任务中心抽屉里，
+               故把该路数量直接挂在入口上（悬停可看拆分），否则站内信为 0 时
+               用户点开弹层只看到「暂无结果」，无从解释角标数字。 -->
           <el-divider />
           <el-row style="height: 30px; text-align: center">
             <el-col :span="12">
@@ -168,9 +196,24 @@ const getLabel = computed(
               }}</el-link>
             </el-col>
             <el-col :span="12">
-              <el-link underline="never" @click="goTaskCenter">{{
-                t("taskCenter.title")
-              }}</el-link>
+              <el-tooltip
+                :disabled="otherBadgeCount === 0"
+                :content="badgeSourcesTip"
+                placement="top"
+              >
+                <el-badge
+                  :value="otherBadgeCount"
+                  :max="99"
+                  :hidden="otherBadgeCount === 0"
+                  type="danger"
+                  :offset="[6, -2]"
+                  data-testid="notice-task-badge"
+                >
+                  <el-link underline="never" @click="goTaskCenter">{{
+                    t("taskCenter.title")
+                  }}</el-link>
+                </el-badge>
+              </el-tooltip>
             </el-col>
           </el-row>
         </el-tabs>

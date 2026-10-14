@@ -63,9 +63,10 @@ function clampLabelWidth(width: number): string {
 }
 
 /**
- * 用离屏 span 实测文本宽度。span 挂在 body 下继承页面字体，与标签字体
- * （Element Plus 标签字号 14px、字体族继承）一致；无 DOM 宽度（jsdom）时
- * 回退估算，保证纯函数可测。
+ * 用离屏 span 实测文本宽度。span 挂在 body 下继承页面字体，字号显式取
+ * `--font-size-base`（Element Plus 的 `--el-font-size-base` 同源映射到它，
+ * 见 style/tokens/ep-bridge.scss），因此既与标签字体一致，也跟随字号档位缩放；
+ * 无 DOM 宽度（jsdom）时回退估算，保证纯函数可测。
  */
 function measureAllTextWidths(texts: string[]): number[] {
   if (typeof document === "undefined" || texts.length === 0) {
@@ -74,7 +75,8 @@ function measureAllTextWidths(texts: string[]): number[] {
   const probe = document.createElement("span");
   probe.style.cssText =
     "position:absolute;left:-9999px;top:-9999px;visibility:hidden;" +
-    "white-space:nowrap;pointer-events:none;font-size:14px;font-family:inherit;";
+    "white-space:nowrap;pointer-events:none;" +
+    "font-size:var(--font-size-base);font-family:inherit;";
   document.body.appendChild(probe);
   const widths = texts.map(text => {
     probe.textContent = text;

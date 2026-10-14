@@ -1,4 +1,4 @@
-import { resolveAdaptiveHeight, resolvePageOverflow } from "./tableMeasureMath";
+import { resolveAdaptiveHeight, resolveContentSlack } from "./tableMeasureMath";
 import type { Ref } from "vue";
 
 /** 宽度变化后的稳定窗口（ms）：期间的宽度变化视为拖动，统一推迟到最后一次变化之后重算 */
@@ -12,10 +12,13 @@ const WIDTH_SETTLE_MS = 200;
  * 挤出视口造成页面级滚动条。这里按根节点尺寸变化重算高度。
  *
  * 重算用稳态解析解（见 tableMeasureMath.resolveAdaptiveHeight）：写入的值只依赖
- * 「当前高度 + 实测带符号溢出 + 期望高度」，写完后的溢出必为 0 或负、再算结果不变，
- * 因此一次收敛。此前的「按溢出增量回收」写法会让高度在期望值与回收值之间随
- * ResizeObserver 每帧互推：拖拽窗口宽度后表现为「抖两次才稳定」，窄视口分页换行时
- * 内容区整片残影。
+ * 「当前高度 + 实测带符号闲置量 + 期望高度」，写完后再算结果不变，因此一次收敛。
+ * 此前的「按溢出增量回收」写法会让高度在期望值与回收值之间随 ResizeObserver
+ * 每帧互推：拖拽窗口宽度后表现为「抖两次才稳定」，窄视口分页换行时内容区整片残影。
+ *
+ * 闲置量取自内容容器实测（`resolveContentSlack`），不能用滚动容器的
+ * `scrollHeight - clientHeight`：内容不足时该值恒为 0，表格偏小后永远长不回去
+ * （刷新后搜索区占位收缩导致表格顶上移的场景，见 tableMeasureMath 内说明）。
  *
  * 以工厂导出（内核 + 显式 `dispose`），hook 只留生命周期与观察器接线，
  * 算法可被单测直接驱动。
@@ -69,7 +72,7 @@ export function createAdaptiveHeightApplier(options: {
       const next = resolveAdaptiveHeight(
         rect.height,
         desired,
-        resolvePageOverflow(table)
+        resolveContentSlack(options.rootRef.value)
       );
       if (Math.abs(rect.height - next) <= 1) {
         // 已收敛：允许下一轮重新校正
