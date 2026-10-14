@@ -114,7 +114,7 @@ Object.keys(devDependencies).forEach(key => {
           target="_blank"
           rel="noopener noreferrer"
           type="primary"
-          :underline="false"
+          underline="never"
         >
           {{ link.label }}
           <el-icon class="ml-0.5"><TopRight /></el-icon>

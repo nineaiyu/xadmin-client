@@ -54,7 +54,7 @@ export function useDatasetColumns({ t }: { t: TFunction }) {
             ElLink,
             {
               type: "primary",
-              underline: false,
+              underline: "never",
               onClick: () =>
                 router.push({
                   path: "/analysis/report/index",

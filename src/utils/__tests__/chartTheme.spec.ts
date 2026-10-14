@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHART_ACCENT,
   CHART_FALLBACK_FONT_FAMILY,
@@ -23,15 +23,15 @@ describe("chartTheme 取色与回退", () => {
 
   it("EP 语义色在变量缺失时回退到默认主色体系", () => {
     expect(epColor("primary")).toBe("#006be6");
-    expect(epColor("success")).toBe("#67c23a");
-    expect(epColor("warning")).toBe("#e6a23c");
-    expect(epColor("danger")).toBe("#f56c6c");
+    expect(epColor("success")).toBe("#57d188");
+    expect(epColor("warning")).toBe("#efbd48");
+    expect(epColor("danger")).toBe("#ff3860");
     expect(epColor("info")).toBe("#909399");
   });
 
   it("浅色档缺失时回退到默认 tint（图标底托用）", () => {
     expect(epColorLight("primary")).toBe("#e6f0fd");
-    expect(epColorLight("warning")).toBe("#fdf6ec");
+    expect(epColorLight("warning")).toBe("#fdf8ed");
   });
 
   it("任意变量缺失时用调用方给的兜底值（图表底色等）", () => {
@@ -77,6 +77,63 @@ describe("chartFontFamily 字体栈注入", () => {
       '-apple-system,\n    "PingFang SC",\n    sans-serif'
     );
     expect(chartFontFamily()).toBe('-apple-system, "PingFang SC", sans-serif');
+  });
+});
+
+/**
+ * 变量值 → 字面量色值：项目 EP 桥接层把颜色写成 hsl(var(--token))，computed value
+ * 展开后是 CSS Color 4 空格语法（如 `hsl(217 85% 45%)`），而 zrender 的颜色解析
+ * 只认逗号语法（parse 前会整体删空格再匹配）——直接喂给图表会让渐变 colorStops
+ * 落成 undefined，悬停等状态动画插值时持续抛 Cannot read properties of undefined。
+ * 这里守护「经浏览器探针解析为 rgb 字面量」与「解析失败回退」两条路径。
+ */
+describe("chartTheme 取色的字面量解析", () => {
+  afterEach(() => {
+    document.documentElement.style.cssText = "";
+    vi.restoreAllMocks();
+  });
+
+  /** 构造 getComputedStyle 的桩返回值（Partial 中转避免整体实现 CSSStyleDeclaration） */
+  const fakeStyle = (patch: Partial<CSSStyleDeclaration>) =>
+    patch as CSSStyleDeclaration;
+
+  it("空格语法 hsl 经浏览器解析为 rgb（zrender 只认逗号语法）", () => {
+    // jsdom 的 supports 语法校验偏旧，这里显式声明该值有效，聚焦探针解析路径
+    vi.spyOn(CSS, "supports").mockReturnValue(true);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+      if (el === document.documentElement) {
+        return fakeStyle({
+          getPropertyValue: (name: string) =>
+            name === "--el-bg-color-overlay" ? "hsl(0 0% 100%)" : ""
+        });
+      }
+      // 探针元素：模拟浏览器把空格语法解析成 rgb 形式
+      return fakeStyle({ color: "rgb(255, 255, 255)" });
+    });
+
+    expect(cssVarColor("--el-bg-color-overlay", "#ffffff")).toBe(
+      "rgb(255, 255, 255)"
+    );
+  });
+
+  it("解析不出颜色时回退兜底值（不把非法色值喂给图表）", () => {
+    vi.spyOn(CSS, "supports").mockReturnValue(true);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el: Element) => {
+      if (el === document.documentElement) {
+        return fakeStyle({ getPropertyValue: () => "var(--not-defined)" });
+      }
+      return fakeStyle({ color: "" });
+    });
+
+    expect(cssVarColor("--el-bg-color-overlay", "#ffffff")).toBe("#ffffff");
+  });
+
+  it("hex 与 rgb 字面量直连返回（不走 DOM 解析）", () => {
+    document.documentElement.style.setProperty("--brand-hex", "#123456");
+    document.documentElement.style.setProperty("--brand-rgb", "rgb(1, 2, 3)");
+
+    expect(cssVarColor("--brand-hex", "#ffffff")).toBe("#123456");
+    expect(cssVarColor("--brand-rgb", "#ffffff")).toBe("rgb(1, 2, 3)");
   });
 });
 

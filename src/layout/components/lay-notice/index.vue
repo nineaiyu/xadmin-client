@@ -1,14 +1,12 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
-import { computed, h, onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import NoticeList from "./components/NoticeList.vue";
 import BellIcon from "~icons/lucide/bell";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem, ListItem } from "@/layout/components/lay-notice/data";
-import { addDialog } from "@/components/ReDialog";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
-import { deviceDetection } from "@pureadmin/utils";
+import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useNoticeStoreHook } from "@/store/modules/notice";
@@ -16,7 +14,6 @@ import { useApprovalBadge } from "@/utils/approvalBadge";
 import { useTaskCenter } from "@/utils/taskCenter";
 import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
 
-import { dialogSize } from "@/components/ReDialog/size";
 const { t } = useI18n();
 
 /**
@@ -73,28 +70,16 @@ const goUserNotice = () => {
 /**
  * 点击未读消息：就地弹出详情并标记已读。
  * 铃铛列表接口（unread）返回的行已含 notice_type/level/message 全量字段，
- * 与「我的通知」页的行同构，可直接复用 NoticeShowForm，无需跳转携带 ?pk=，
- * 也就不存在刷新后 URL 参数反复触发弹窗的问题。
+ * 与「我的通知」页的行同构，可直接复用详情弹窗（见 openNoticeDetailDialog，
+ * 站内信推送点击亦走该入口），无需跳转携带 ?pk=，也就不存在刷新后 URL
+ * 参数反复触发弹窗的问题。
  */
 const handleItemClick = (item: ListItem) => {
   dropdownRef.value?.handleClose();
   if (item.unread) {
     userNoticeReadApi.batchRead({ pks: [item.pk] }).then(() => getNoticeData());
   }
-  addDialog({
-    title: t("userNotice.showSystemNotice"),
-    props: {
-      formInline: { ...item },
-      hasPublish: false
-    },
-    width: dialogSize("xl"),
-    draggable: true,
-    fullscreen: deviceDetection(),
-    fullscreenIcon: true,
-    closeOnClickModal: false,
-    hideFooter: true,
-    contentRenderer: () => h(NoticeShowForm)
-  });
+  openNoticeDetailDialog({ ...item });
 };
 
 /** 打开任务中心聚合抽屉（审批待办 / 进行中任务 / 最近导出 / 最近导入） */

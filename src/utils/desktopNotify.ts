@@ -62,7 +62,7 @@ export interface DesktopNotifyPayload {
   type: DesktopNotifyType;
   title: string;
   body: string;
-  /** 点击通知：聚焦窗口后执行（路由跳转由调用方传入） */
+  /** 点击通知：聚焦窗口后执行（行为由调用方注入：路由跳转 / 就地弹详情） */
   onClick?: () => void;
   /** 同 tag 的通知会被系统合并替换（避免同一会话刷屏） */
   tag?: string;

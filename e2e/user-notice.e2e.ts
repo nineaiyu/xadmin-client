@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { FRONT_URL, login, logout, PLAIN_USER } from "./helpers";
+import {
+  FRONT_URL,
+  login,
+  logout,
+  PLAIN_USER,
+  waitAppWebSocket
+} from "./helpers";
 
 /**
  * 我的通知（个人中心 → 我的通知）+ 顶栏铃铛：
@@ -117,5 +123,51 @@ test.describe("我的通知", () => {
     await expect(
       page.locator(".dropdown-badge .el-badge__content")
     ).toBeHidden();
+  });
+
+  test("推送弹窗点击：就地弹出详情弹窗，不跳转「我的通知」页", async ({
+    page,
+    browser
+  }) => {
+    test.setTimeout(120_000);
+    // 接收者先登录并确保推送通道就绪（站内信只推给在线用户）
+    const wsOpened = waitAppWebSocket(page);
+    await login(page, PLAIN_USER);
+    await wsOpened;
+
+    // 独立超管上下文创建定向通知（接收者本人无创建权限）
+    const adminContext = await browser.newContext({
+      baseURL: FRONT_URL,
+      locale: "zh-CN"
+    });
+    const adminPage = await adminContext.newPage();
+    try {
+      await login(adminPage);
+      const title = await seedFreshNotice(adminPage);
+
+      // 右上角应用内通知到达（push_message 帧，message_type=notify_message）
+      const notification = page
+        .locator(".el-notification")
+        .filter({ hasText: title })
+        .first();
+      await expect(notification).toBeVisible({ timeout: 20_000 });
+
+      const urlBefore = page.url();
+      await notification.click();
+
+      // 与顶栏铃铛一致：就地弹出详情弹窗（NoticeShowForm），URL 保持不变
+      const dialog = page.locator(".el-dialog").filter({ hasText: title });
+      await expect(dialog).toBeVisible({ timeout: 10_000 });
+      await expect(dialog.getByText(NOTICE_BODY)).toBeVisible();
+      expect(page.url()).toBe(urlBefore);
+
+      // 通知仍在右上角（点击不关闭；悬停会暂停其自动消失，鼠标正停在其上）：
+      // 显式关掉它再收尾，否则通知层会拦截弹窗右上角关闭按钮的点击
+      await page.locator(".el-notification__closeBtn").first().click();
+      await expect(notification).toBeHidden();
+      await dialog.locator(".el-dialog__headerbtn").click();
+    } finally {
+      await adminContext.close();
+    }
   });
 });

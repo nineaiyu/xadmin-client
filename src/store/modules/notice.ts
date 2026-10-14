@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { h, type VNode } from "vue";
+import { isSuccess } from "@/api/types";
 import {
   MessageAction,
   isOutboundMessage,
@@ -7,6 +8,7 @@ import {
 } from "@/utils/websocket/protocol";
 import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
+import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
 import type { NotificationOptions, NotificationType } from "element-plus";
 
@@ -40,6 +42,29 @@ export const useNoticeStore = defineStore("pure-notice", {
       this.websocket = null;
     },
     /**
+     * 站内信点击：就地弹出通知详情弹窗（与顶栏铃铛未读点击同形态，不跳转页面），
+     * 并标记该条已读、同步未读角标。
+     */
+    async openNoticeDetail(data: PushMessagePayload) {
+      openNoticeDetailDialog({ ...data });
+      const pk = data?.pk;
+      if (pk == null) return;
+      // 打开即读（与铃铛一致）；业务码失败静默，角标由后续刷新纠正。
+      // api 层动态引入：本 store 顶层静态引用走 http 链路的 api 模块会形成模块环
+      // （api/base → utils/http → store/user → store/notice → api/user/notice）
+      const { userNoticeReadApi } = await import("@/api/user/notice");
+      userNoticeReadApi
+        .batchRead({ pks: [pk] })
+        .then(res => {
+          if (isSuccess(res)) {
+            this.SET_NOTICECOUNT(
+              Math.max(0, Number(this.noticeCount ?? 0) - 1)
+            );
+          }
+        })
+        .catch(() => undefined);
+    },
+    /**
      * 建立消息推送通道并分派通知。
      *
      * :param identity: WS 连接标识（登录名，登录态归 user store，经参数注入）
@@ -55,7 +80,8 @@ export const useNoticeStore = defineStore("pure-notice", {
           const data = raw.data ?? {};
           let message: string | VNode | undefined = data?.message;
           // 桌面通知（二期）：聊天类（@提及/私聊）前台也弹，
-          // 其余站内推送仅页面不可见时弹；点击行为与各分支的应用内通知一致
+          // 其余站内推送仅页面不可见时弹；点击行为与应用内通知一致
+          // （聊天类直达会话，站内信就地弹出详情弹窗）
           const isChatPush =
             data?.message_type === "chat_message" ||
             data?.message_type === "chat_private" ||
@@ -72,7 +98,7 @@ export const useNoticeStore = defineStore("pure-notice", {
                   query: data?.room_id ? { room: String(data.room_id) } : {}
                 });
               } else {
-                router.push({ name: "UserNotice", query: { pk: data?.pk } });
+                this.openNoticeDetail(data);
               }
             }
           });
@@ -97,12 +123,8 @@ export const useNoticeStore = defineStore("pure-notice", {
                   ?.replace("primary", "")
                   ?.replace("danger", "warning") ?? undefined) as
                   NotificationType | undefined,
-                onClick: () => {
-                  router.push({
-                    name: "UserNotice",
-                    query: { pk: data?.pk }
-                  });
-                }
+                // 点击就地弹出通知详情弹窗（与顶栏铃铛一致），不再跳转「我的通知」页
+                onClick: () => this.openNoticeDetail(data)
               };
               ElNotification(options);
               this.INCR_NOTICECOUNT();

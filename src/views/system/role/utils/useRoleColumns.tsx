@@ -30,7 +30,7 @@ export function useRoleColumns() {
             ElLink,
             {
               type: "primary",
-              underline: false,
+              underline: "never",
               onClick: () =>
                 router.push({
                   path: "/system/user/index",

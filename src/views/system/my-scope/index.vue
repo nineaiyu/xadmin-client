@@ -335,7 +335,7 @@ onMounted(loadScope);
           <div class="flex-bc mt-3">
             <el-link
               :disabled="!canListUsers"
-              :underline="false"
+              underline="never"
               data-testid="my-scope-members"
               @click="openMembers(dept)"
             >
