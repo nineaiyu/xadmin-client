@@ -29,6 +29,21 @@ async function pickOption(page: Page, scope: Locator, text: string) {
 
 test.describe("数据权限配置（抽屉式新增/编辑）", () => {
   test("新增：行内配置规则并保存，列表展示生效范围", async ({ page }) => {
+    // 弹层装配不得产生控制台噪音：列解析器改 undefined 会抛错（被框架吞成 warn），
+    // 元数据输入框 props 透传给多根节点组件会触发 Vue 的 attrs 告警
+    const consoleNoise: string[] = [];
+    page.on("console", msg => {
+      if (!["error", "warning"].includes(msg.type())) return;
+      const text = msg.text();
+      if (
+        /hideInForm|Extraneous non-props attributes|Cannot set properties of undefined/.test(
+          text
+        )
+      ) {
+        consoleNoise.push(text);
+      }
+    });
+
     await login(page);
     await openMenuPath(
       page,
@@ -144,5 +159,8 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
       .getByRole("button", { name: "取消" })
       .click();
     await expect(editDrawer).not.toBeVisible();
+
+    // 新增 / 编辑两次表单列装配均无控制台噪音
+    expect(consoleNoise).toEqual([]);
   });
 });

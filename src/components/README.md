@@ -21,6 +21,14 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 | AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                            |
 | 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`          |
 
+> **弹窗表单标签宽度**：`RePlusPage` 的新增/编辑弹窗（`AddOrEdit`）标签宽度按当前页签
+> 最长标签自适应（`src/components/RePlusPage/src/utils/adaptiveLabelWidth.ts`）：列元数据
+> 离屏估算出首帧宽度，挂载后按真实标签内容（文本 + 冒号 + 帮助图标）克隆实测校正，
+> 上限 300px、窄视口按 40% 视口宽收敛。多页签表单各页签独立取宽，避免一个页签的长标签
+> 压窄另一个页签；标签占宽导致半宽列（`colProps` 的 `md/lg/xl: 12`，如售价
+> `el-input-number`、上传区）控件列不足 160px 时，该列自动升为整行。
+> 长标签与带帮助文本图标的标签不再折成两行，守护见 `e2e/form-label-width.e2e.ts`。
+
 ## 二、AI / 聊天域组件
 
 两条消息线（聊天室 `views/chat`、AI 控制台 `views/integration/ai`）共用同一套展示组件，

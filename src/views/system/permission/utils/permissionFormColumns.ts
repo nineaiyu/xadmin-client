@@ -10,17 +10,23 @@ import type { TreeResult } from "@/utils/tree";
 
 type LookupRows = Ref<TreeResult<RecordType>[]>;
 
-/** 列解析器上下文（与 RePlusPage 的 ColumnSpec 同形，做最小化声明） */
+/**
+ * 列解析器上下文（与 RePlusPage 的 ColumnSpec 同形，做最小化声明）。
+ * `column` 可缺失：键对应的元数据列只读时框架不会把它装进表单列集合
+ * （如 `pk` 与统计列），解析器需按「本列不参与表单」处理。
+ */
 type ColumnCtx = {
-  column: Record<string, unknown> & { prop?: string };
+  column?: Record<string, unknown> & { prop?: string };
   formValue?: Ref<RecordType>;
   rawRow?: RecordType;
   isAdd?: boolean;
 };
 
-type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown>;
+/** 返回空值 = 该列不参与表单（框架跳过该键） */
+type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown> | undefined;
 
 const hideInForm: ColumnHandler = ({ column }) => {
+  if (!column) return undefined;
   column["hideInForm"] = true;
   return column;
 };
@@ -54,6 +60,11 @@ export function buildPermissionFormColumns({
 
   /** 后端 menu choices 已截断，清掉 api-search 回退渲染器，改用全量菜单树 */
   const menu: ColumnHandler = ({ column }) => {
+    if (!column) return undefined;
+    // 全量菜单树接管该字段后，元数据派生的输入框 props（maxlength / showWordLimit /
+    // multiple）不再适用：plus-pro 会把 fieldProps 透传给渲染组件，而 ScopeSelect
+    // 是多根节点结构，继承不了这些非 prop 属性（Vue 会告警）
+    column["fieldProps"] = {};
     delete column["renderField"];
     column["hasLabel"] = true;
     column["renderField"] = (
@@ -69,6 +80,7 @@ export function buildPermissionFormColumns({
   };
 
   const modeType: ColumnHandler = ({ column, formValue }) => {
+    if (!column) return undefined;
     column["renderField"] = (
       value: unknown,
       onChange: (val: unknown) => void
@@ -82,6 +94,7 @@ export function buildPermissionFormColumns({
   };
 
   const rules: ColumnHandler = ({ column, formValue }) => {
+    if (!column) return undefined;
     column["hasLabel"] = false;
     column["renderField"] = (
       value: unknown,

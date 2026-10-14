@@ -250,6 +250,35 @@ visual --grep "视觉基线：system-" --update-snapshots`，基线文件为 git
 改动这类等待前先确认没有可替代的 web-first 信号（`toBeVisible` / `waitFor` 状态 / `expect.poll`）；
 有确定性强信号的地方一律不留固定窗口。
 
+## ⚠️ 弹层类用例：断言控制台噪音（`warn` 也算）
+
+页面「能跑通」不等于装配无缺陷：RePlusPage 打开弹层时会逐个调用页面声明的表单列解析器
+（`addOrEditOptions.props.columns`），解析器内部抛错会被框架 `try/catch` 吞成 `console.warn`，
+页面照常渲染、只在控制台留下 `TypeError`；同类还有 plus-pro 把列的 `fieldProps` 透传给自定义
+渲染组件（多根节点组件继承不了这些非 prop 属性 → Vue 的 `Extraneous non-props attributes` 告警）。
+
+弹层用例在 `login()` 之前挂 `page.on("console")`，按关键字采集 warning/error 并断言为空即可纳入门禁：
+
+```ts
+const consoleNoise: string[] = [];
+page.on("console", msg => {
+  if (!["error", "warning"].includes(msg.type())) return;
+  if (
+    /hideInForm|Extraneous non-props attributes|Cannot set properties of undefined/.test(
+      msg.text()
+    )
+  ) {
+    consoleNoise.push(msg.text());
+  }
+});
+// …用例流程（新增 + 编辑各开一次弹层）…
+expect(consoleNoise).toEqual([]);
+```
+
+判据要具体到关键字：全量断言 `consoleNoise === []` 会被页面其它既有告警干扰（如资源 404）。
+负对照已验证有效性——`e2e/data-permission.e2e.ts` 把解析器的判空还原后，该断言立即收到
+5 条 `Cannot set properties of undefined (setting 'hideInForm')` + 1 条 attrs 告警而失败。
+
 ## ⚠️ 布局类断言：必须显式给视口（默认 1280×720 高度偏矮）
 
 「列表拿到多少可用高度」这类断言的取值强依赖视口高度：默认 1280×720 下可用空间本身

@@ -74,7 +74,11 @@ type EditableColumn = ColumnBase & {
   };
 };
 
-/** 表单列属性表：键值可为静态列对象或解析器（解析器上下文附带当前列 `column`） */
+/**
+ * 表单列属性表：键值可为静态列对象或解析器（解析器上下文附带当前列 `column`）。
+ * 解析器可返回 `undefined` 表示「该列不参与表单」——元数据未下发该键（如只读列被
+ * 框架过滤后不在表单列集合内）时页面无需额外判空，直接放弃该列即可。
+ */
 type ColumnSpec = {
   [key: string]:
     | RawColumn
@@ -82,7 +86,7 @@ type ColumnSpec = {
         formOptions: Partial<formDialogDrawerOptions> & {
           column: EditableColumn;
         }
-      ) => RawColumn);
+      ) => RawColumn | undefined);
 };
 
 /**
@@ -197,13 +201,16 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
     const getValue = formOptions.columns?.[key];
     if (typeof getValue === "function") {
       try {
-        editColumns[key] = getValue({
+        const resolved = getValue({
           ...cloneDeep({
             ...formOptions,
             column: rawColumnsMap[key] as EditableColumn
           }),
           formValue: formOptions.formValue
         });
+        // 解析器返回空值表示「该列不参与表单」（键不在表单列集合内时的默认口径），
+        // 此时不注入，避免把无 prop 的空列塞进表单
+        if (resolved) editColumns[key] = resolved;
       } catch (err) {
         console.warn(err);
       }

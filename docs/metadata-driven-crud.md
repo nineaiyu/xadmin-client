@@ -69,6 +69,11 @@
   DEV 环境已有警示条（请求完成后 1.5s 仍无元数据即提示）；
 - **契约变更需三方同步**：服务端 `docs/schema` → 前端 `contract/schema` 镜像 → 生成类型，
   本仓库用 `pnpm sync:contract` 一键完成镜像与再生成，CI 用 `check:contract` 防绕过；
+- **表单列解析器（`addOrEditOptions.props.columns`）的键不一定有对应元数据列**：只读列（`pk`、
+  `SerializerMethodField` 统计列）不会进入表单列集合，解析器拿到的 `column` 为 `undefined`——
+  此时应**返回空值**表示「该列不参与表单」而非直接改属性（框架只合并非空返回值；改 `undefined`
+  会抛错并被框架吞成 `console.warn`）。另：列上的 `fieldProps` 会透传给 `renderField` 渲染的组件，
+  替换成自定义（尤其多根节点）组件时要清空，否则触发 Vue 的非 prop 属性告警；
 - 本方案覆盖「标准 CRUD 列表页」；非列表形态（看板、画布、聊天等）不适用。
 
 ## 六、相关文档
