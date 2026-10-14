@@ -250,6 +250,32 @@ visual --grep "视觉基线：system-" --update-snapshots`，基线文件为 git
 改动这类等待前先确认没有可替代的 web-first 信号（`toBeVisible` / `waitFor` 状态 / `expect.poll`）；
 有确定性强信号的地方一律不留固定窗口。
 
+## ⚠️ 布局类断言：必须显式给视口（默认 1280×720 高度偏矮）
+
+「列表拿到多少可用高度」这类断言的取值强依赖视口高度：默认 1280×720 下可用空间本身
+已接近表格自适应高度下限（实测约 269px），量不出布局改动的真实差异——首版守护断言
+`tableHeight > 300` 就是这样直接失败的。布局类用例请用 `test.use({ viewport })` 固定
+桌面档（1440×900），阈值按「改动前实测值」设定：
+
+| 文件管理页顶部统计区（`file-center.e2e.ts` 布局守护） | 收敛前                     | 收敛后        |
+| ----------------------------------------------------- | -------------------------- | ------------- |
+| 统计区高度（三张图表卡 + 最大文件卡）                 | 605px（空库 793px）        | 指标条 42px   |
+| 表格高度 / 表体可视                                   | 260px（自适应下限）/ 220px | 449px / 409px |
+| 首屏完整可见行数（41px 行高）                         | 5 行                       | 9 行          |
+| 页面纵向溢出（`.app-main .el-scrollbar__wrap`）       | 312px                      | 0             |
+
+## ⚠️ 无布局全屏页：布局层初始化缺位（图标集与 `v-tippy`）
+
+`showLink: false` 的菜单外页面（登录 / 账户设置 / 邀请激活 / OAuth 同意页）**不套布局**，
+而布局 `setup` 里承担了两项全局初始化：离线图标集的「随包注册」与 `vue-tippy` 的指令注册。
+缺位时的表现分别是 DEV 告警 `[ReIcon] 图标 "ep/box" 未随包内置…`（图标渲染空白）与
+`Failed to resolve directive: tippy`（页内 RePlusPage / 表格栏按钮的 JSX `v-tippy`）。
+
+处置：图标名经 `iconRegistry.normalizeIconName` 把斜杠名与冒号名归一（懒加载的图标集
+只登记 `prefix:name`，代码里的 `ep/box` 才能命中）；用到 RePlusPage / 表格栏的全屏页
+需在页面 `setup` 里调 `setupTippy(...)`（幂等，见 `src/layout/tippy.ts`）。
+守护用例：`account-settings.e2e.ts` 断言该页零 `[ReIcon]` 与零指令解析告警。
+
 ## ⚠️ 主题 / 站点配置类用例会污染同库其它 spec
 
 整体风格（浅色 / 深色 / 自动）与「灰色模式」等属**服务端站点配置**（`WEB_SITE_CONFIG`，

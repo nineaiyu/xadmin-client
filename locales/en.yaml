@@ -2342,6 +2342,8 @@ systemUploadFile:
   uploadTrend: Uploads (7 Days)
   trendSummary: "Files uploaded in the last 7 days: {count}, total {size}"
   largestFiles: Largest Files
+  statsDetail: Statistics Details
+  statsTitle: File Statistics
   preview: Preview
   previewPreparing: Document is being converted, please wait... (first preview requires conversion)
   previewUnsupported: This file type does not support online preview, please download it

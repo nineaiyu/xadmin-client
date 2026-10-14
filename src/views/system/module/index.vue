@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed } from "vue";
-import type { ModuleLevel } from "@/api/system/modules";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -18,8 +17,8 @@ const {
   data,
   draftPreset,
   draftEnabled,
-  LEVEL_TAG_TYPE,
-  LEVEL_KEY,
+  moduleLevelKey,
+  moduleLevelTagType,
   canApply,
   canReset,
   presets,
@@ -236,8 +235,8 @@ const moduleColumns = computed<ReadonlyColumn[]>(() => [
         data-testid="module-table"
       >
         <template #level="{ row }">
-          <el-tag :type="LEVEL_TAG_TYPE[row.level as ModuleLevel]">
-            {{ t(`systemModule.${LEVEL_KEY[row.level as ModuleLevel]}`) }}
+          <el-tag :type="moduleLevelTagType(row.level)">
+            {{ t(`systemModule.${moduleLevelKey(row.level)}`) }}
           </el-tag>
         </template>
         <template #status="{ row }">

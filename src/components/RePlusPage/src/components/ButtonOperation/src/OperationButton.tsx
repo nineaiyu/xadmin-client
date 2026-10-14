@@ -154,12 +154,50 @@ export default defineComponent({
         explicitAriaLabel ??
         (!buttonRow?.text && tooltipContent ? tooltipContent : undefined);
 
+      // 「更多」下拉内的按钮：统一挂动作类；危险动作（如删除）另挂语义类，
+      // 具体视觉见 index.vue 的 .re-plus-more-dropdown
+      const actionClass = props.isSubButton
+        ? [
+            "re-plus-more-action",
+            (buttonRowProps as Record<string, unknown>)?.type === "danger"
+              ? "is-danger"
+              : ""
+          ]
+        : undefined;
+
+      // 下拉内无图标项补等宽占位：与有图标项的文字左边界对齐（菜单文字列不成锯齿）
+      const hasIcon = Boolean(
+        (buttonRowProps as Record<string, unknown>)?.icon
+      );
+
+      const buttonChildren = {
+        ...(buttonRow?.text
+          ? {
+              default: () => renderString(buttonRow.text, row, buttonRow)
+            }
+          : {}),
+        ...(props.isSubButton && !hasIcon
+          ? {
+              icon: () =>
+                h("span", { class: "re-plus-more-action__icon-placeholder" })
+            }
+          : {})
+      };
+
       const buttonComponent = h(
         ElButton,
         {
           size: props.size,
           loading: loading.value,
           ...buttonRowProps,
+          ...(actionClass
+            ? {
+                class: [
+                  (buttonRowProps as Record<string, unknown>)?.class,
+                  actionClass
+                ]
+              }
+            : {}),
           ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
           onClick: buttonRow.confirm?.title
             ? undefined
@@ -168,11 +206,7 @@ export default defineComponent({
                 closeDropdownIfSub();
               }
         },
-        buttonRow?.text
-          ? () => {
-              return renderString(buttonRow.text, row, buttonRow);
-            }
-          : {}
+        buttonChildren
       );
 
       if (buttonRow.confirm?.title) {

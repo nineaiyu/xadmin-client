@@ -2342,6 +2342,8 @@ systemUploadFile:
   uploadTrend: 近 7 天上传
   trendSummary: 近 7 天上传 {count} 个文件，共 {size}
   largestFiles: 占用最大的文件
+  statsDetail: 统计详情
+  statsTitle: 文件统计
   preview: 预览
   previewPreparing: 文档转换中，请稍候……（首次预览需要转换）
   previewUnsupported: 该文件类型不支持在线预览，请下载后查看

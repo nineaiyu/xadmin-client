@@ -9,4 +9,6 @@ export interface ReBackTopProps {
   bottom?: number;
   /** 按钮 title（留空取内置文案） */
   title?: string;
+  /** 滚动行为（与 el-backtop 同口径，默认平滑；系统开启「减弱动态效果」时自动退化为立即） */
+  behavior?: ScrollBehavior;
 }

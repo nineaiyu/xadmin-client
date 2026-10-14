@@ -12,6 +12,8 @@ defineOptions({ name: "ReBackTop" });
  * 代理节点），省去各处重复填写 target；用原生 `<button>` 实现（可聚焦、Enter /
  * Space 原生触发点击），可访问名取 `title` 或内置文案。
  *
+ * 滚动行为与 el-backtop 对齐（默认平滑），可用 `behavior` 覆盖。
+ *
  * 不封装 el-backtop 的原因：其渲染为多根（过渡包裹）导致 `role` / `tabindex` /
  * `aria-label` 等 attrs 无法透传，键盘不可达。
  */
@@ -20,7 +22,8 @@ const props = withDefaults(defineProps<ReBackTopProps>(), {
   visibilityHeight: 200,
   right: 24,
   bottom: 24,
-  title: ""
+  title: "",
+  behavior: "smooth"
 });
 
 const { t } = useI18n();
@@ -50,7 +53,13 @@ onBeforeUnmount(() => {
 });
 
 function scrollToTop(): void {
-  scrollEl?.scrollTo({ top: 0 });
+  const el = scrollEl;
+  if (!el) return;
+  // 显式传 behavior 会压过 CSS 的 scroll-behavior；系统开启「减弱动态效果」时退回瞬时，
+  // 与 style/transition.scss 的全局退让口径一致
+  const reduceMotion =
+    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  el.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : props.behavior });
 }
 </script>
 

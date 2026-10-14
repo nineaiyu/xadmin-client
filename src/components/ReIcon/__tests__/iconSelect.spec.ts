@@ -15,6 +15,8 @@ vi.mock("../src/iconRegistry", () => ({
   isIconAvailable: () => true,
   isIconSetSupported: () => true,
   iconPrefixOf: () => "ep",
+  // 渲染入口（IconifyIconOffline）依赖它做名称归一
+  normalizeIconName: (name: string) => name,
   supportedIconPrefixes: ["ep", "ri", "fa-solid"],
   markIconAvailable: vi.fn()
 }));

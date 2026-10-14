@@ -1,6 +1,8 @@
 import { h, defineComponent } from "vue";
 import { Icon as IconifyIcon, addIcon } from "@iconify/vue/dist/offline";
 
+import { normalizeIconName } from "./iconRegistry";
+
 // Iconify Icon在Vue里本地使用（用于内网环境）
 export default defineComponent({
   name: "IconifyIconOffline",
@@ -27,10 +29,12 @@ export default defineComponent({
       attrs?.["aria-expanded"] != null;
     const ariaHidden = attrs?.["aria-hidden"] ?? !interactive;
     if (typeof this.icon === "string") {
+      // 离线 Icon 按名精确查存储键（懒加载的图标集只登记 `prefix:name`），
+      // 故渲染入口统一归一为冒号形态——代码里的斜杠名（`ep/box`）与元数据的冒号名同源
       return h(
         IconifyIcon,
         {
-          icon: this.icon,
+          icon: normalizeIconName(this.icon),
           "aria-hidden": ariaHidden,
           style: attrs?.style
             ? Object.assign(attrs.style, { outline: "none" })

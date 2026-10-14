@@ -3,6 +3,10 @@ import { hasAuth } from "@/router/utils";
 import { addDrawer } from "@/components/ReDrawer";
 import AccessLogPanel from "../components/AccessLogPanel.vue";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Download from "~icons/ri/download-2-line";
+import History from "~icons/ri/history-line";
+import Tag from "~icons/ri/price-tag-3-line";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
 import type { systemUploadFileApi } from "@/api/file/file";
 import type { UnwrapNestedRefs } from "vue";
@@ -56,7 +60,7 @@ export function buildFileRowButtons({
     {
       text: t("fileAccess.download"),
       code: "download",
-      props: { type: "success", link: true },
+      props: { type: "success", icon: useRenderIcon(Download), link: true },
       onClick: async ({ row }) => {
         // 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
         await api.download(row?.pk, row?.filename);
@@ -66,7 +70,7 @@ export function buildFileRowButtons({
     {
       text: t("fileAccess.accessLogs"),
       code: "accessLogs",
-      props: { type: "info", link: true },
+      props: { type: "info", icon: useRenderIcon(History), link: true },
       onClick: ({ row }) => openAccessLogsDrawer({ t, row: row as RecordType }),
       show: hasAuth("accessLogs:SystemUploadFile")
     },
@@ -74,7 +78,7 @@ export function buildFileRowButtons({
       // 行内打标：单对象全量替换语义（弹窗内可选标签/就地新建）
       text: t("tag.assignTitle"),
       code: "assignTags",
-      props: { type: "warning", link: true },
+      props: { type: "warning", icon: useRenderIcon(Tag), link: true },
       onClick: ({ row }) =>
         openTagDialog({
           resource: TAGGABLE_RESOURCE.file,

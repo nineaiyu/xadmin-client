@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test";
 
 import { FRONT_URL, login, openMenuPath } from "./helpers";
 
+/** 顶部指标条高度（px） */
+const barHeight = (page: import("@playwright/test").Page) =>
+  page
+    .locator('[data-testid="file-stats-bar"]')
+    .evaluate(el => Math.round(el.getBoundingClientRect().height));
+
 /**
  * 文件中心增强：个人配额统计卡片 + 分类（字典驱动）下拉筛选 + 上传去重。
  *
@@ -27,23 +33,33 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
     timeout: 15_000
   });
 
-  // 顶部配额统计卡片：初始数量与基线一致
-  const card = page.locator(".el-card", { hasText: "存储使用" }).first();
-  await expect(card).toBeVisible();
-  await expect(card.locator('[data-testid="stat-count"]')).toHaveText(
+  // 顶部紧凑指标条：初始数量与基线一致（重型图表已移入「统计详情」抽屉）
+  const bar = page.locator('[data-testid="file-stats-bar"]');
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('[data-testid="stat-count"]')).toHaveText(
     String(baseCount)
   );
-  // 分类分布饼图与最大文件卡片（echarts 懒加载就绪后渲染 SVG）
+  await expect(bar.locator('[data-testid="stat-remaining"]')).toHaveText(/\S/);
+  // 指标条为单行轻量条（重型图表见详情抽屉，不再常驻顶部）
+  expect(await barHeight(page)).toBeLessThan(80);
+
+  // 统计详情抽屉：分类分布饼图与最大文件卡片（echarts 懒加载就绪后渲染 SVG）
+  await bar.locator('[data-testid="file-stats-detail"]').click();
+  const statsDrawer = page.locator(".el-drawer:visible").first();
+  await expect(statsDrawer).toBeVisible({ timeout: 15_000 });
   await expect(
-    page
+    statsDrawer
       .locator(".el-card", { hasText: "分类分布" })
       .first()
       .locator("svg")
       .first()
   ).toBeVisible({ timeout: 15_000 });
   await expect(
-    page.locator(".el-card", { hasText: "占用最大的文件" }).first()
+    statsDrawer.locator(".el-card", { hasText: "占用最大的文件" }).first()
   ).toBeVisible();
+  // 详情为只读弹层：Escape 收回，后续上传入口不被遮挡
+  await page.keyboard.press("Escape");
+  await expect(statsDrawer).toBeHidden({ timeout: 15_000 });
 
   // 上传弹窗上传一个文件：成功后 loadStats(true) 穿透短缓存刷新卡片数量
   const filename = `e2e-file-${Date.now()}.txt`;
@@ -58,7 +74,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
       mimeType: "text/plain",
       buffer: Buffer.from("hello e2e file center")
     });
-  await expect(card.locator('[data-testid="stat-count"]')).toHaveText(
+  await expect(bar.locator('[data-testid="stat-count"]')).toHaveText(
     String(baseCount + 1),
     { timeout: 15_000 }
   );
@@ -337,10 +353,10 @@ test("文件中心：非超管角色页面加载零 403（接口权限点齐全�
   // 与页内全部请求，零 403 断言面不变
   await page.goto("/#/system/file/index");
 
-  // 配额卡片渲染 = stats 请求已成功（该端点由 retrieve 权限点覆盖）
-  await expect(
-    page.locator(".el-card", { hasText: "存储使用" }).first()
-  ).toBeVisible({ timeout: 15_000 });
+  // 指标条渲染 = stats 请求已成功（该端点由 retrieve 权限点覆盖）
+  await expect(page.locator('[data-testid="file-stats-bar"]')).toBeVisible({
+    timeout: 15_000
+  });
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
   });
@@ -348,4 +364,52 @@ test("文件中心：非超管角色页面加载零 403（接口权限点齐全�
   await page.waitForTimeout(800);
 
   expect(forbidden, `出现 403 响应：${forbidden.join(", ")}`).toEqual([]);
+});
+
+/**
+ * 布局守护：统计区收敛为单行指标条后，文件列表拿到完整可用高度。
+ *
+ * 固定 1440×900 桌面视口——E2E 默认 1280×720 高度偏矮（可用空间本身已接近
+ * 自适应高度下限），量不出真实差异。收敛前同视口实测：统计区 605px（空库
+ * 793px）→ 表格被自适应高度钳到最小 260px、表体可视 220px（约 5 行）、
+ * 整页纵向溢出 312px。
+ */
+test.describe("文件中心布局", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test("统计区收敛为指标条，列表高度不再被统计图表挤压", async ({ page }) => {
+    await login(page);
+    await openMenuPath(page, ["系统管理"], "/system/file/index");
+    await expect(page.locator(".el-table").first()).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(page.locator('[data-testid="file-stats-bar"]')).toBeVisible({
+      timeout: 15_000
+    });
+    await page.waitForTimeout(500);
+
+    const layout = await page.evaluate(() => {
+      const rect = (sel: string) => {
+        const el = document.querySelector<HTMLElement>(sel);
+        return el ? Math.round(el.getBoundingClientRect().height) : 0;
+      };
+      const scroller = document.querySelector<HTMLElement>(
+        ".app-main .el-scrollbar__wrap"
+      );
+      return {
+        bar: rect('[data-testid="file-stats-bar"]'),
+        table: rect(".pure-table .el-table"),
+        body: rect(".pure-table .el-table__body-wrapper"),
+        overflow: scroller ? scroller.scrollHeight - scroller.clientHeight : 0
+      };
+    });
+
+    // 单行指标条（收敛前统计区为 605px）
+    expect(layout.bar).toBeLessThan(80);
+    // 表格拿到真实可用高度（收敛前被钳到自适应高度下限 260px；此处约 9 行 @41px）
+    expect(layout.table).toBeGreaterThan(400);
+    expect(layout.body).toBeGreaterThan(380);
+    // 列表不再把页面撑出纵向滚动条（收敛前溢出 312px）
+    expect(layout.overflow).toBeLessThanOrEqual(8);
+  });
 });

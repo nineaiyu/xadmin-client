@@ -3425,13 +3425,22 @@ test.describe("布局：内容区回顶", () => {
 
     await wrap.evaluate(el => (el as HTMLElement).scrollTo({ top: 9999 }));
     await expect(backtop).toBeVisible({ timeout: 5_000 });
+    const start = await wrap.evaluate(el => (el as HTMLElement).scrollTop);
+    expect(start).toBeGreaterThan(200);
 
-    await backtop.click();
-    await expect
-      .poll(() => wrap.evaluate(el => (el as HTMLElement).scrollTop), {
-        timeout: 5_000
-      })
-      .toBeLessThan(10);
+    // 平滑回顶守护：采样 scroll 事件，必须出现中间位置（瞬跳只有一次 scroll 且直接落 0）
+    const samples = await wrap.evaluate(async el => {
+      const node = el as HTMLElement;
+      const seen: number[] = [];
+      const onScroll = () => seen.push(node.scrollTop);
+      node.addEventListener("scroll", onScroll);
+      document.querySelector<HTMLElement>(".re-backtop")?.click();
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      node.removeEventListener("scroll", onScroll);
+      return { seen, top: node.scrollTop };
+    });
+    expect(samples.top).toBeLessThan(10);
+    expect(samples.seen.some(value => value > 10 && value < start)).toBe(true);
     await expect(backtop).toBeHidden({ timeout: 5_000 });
   });
 });

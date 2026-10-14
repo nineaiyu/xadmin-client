@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { FieldValues, PlusColumn, PlusForm } from "plus-pro-components";
 import type { ExposedFormInstance } from "../utils/types";
+import { resolveAdaptiveLabelWidth } from "../utils/adaptiveLabelWidth";
 
 defineOptions({ name: "AddOrEditForm" });
 
@@ -28,6 +29,14 @@ const emit = defineEmits<{
   /** PlusForm change 透传载荷 */
   change: [payload: { values: FieldValues; column: PlusColumn }];
 }>();
+
+/**
+ * 表单标签宽度：按可见列（隐藏列不渲染标签）的最长标签自适应，长标签不折行；
+ * 仍可被 `addOrEditOptions.props.labelWidth` 覆盖（`v-bind="formProps"` 在后）。
+ */
+const labelWidth = computed(() =>
+  resolveAdaptiveLabelWidth(props.columns.filter(column => !column.hideInForm))
+);
 
 const isTabs = computed(() => {
   return (
@@ -111,7 +120,7 @@ defineExpose({ getRef, setActiveName });
           :hasFooter="false"
           :row-props="{ gutter: 24 }"
           label-position="right"
-          label-width="100px"
+          :label-width="labelWidth"
           v-bind="formProps"
           @change="
             (values, column) => {
@@ -129,7 +138,7 @@ defineExpose({ getRef, setActiveName });
       :hasFooter="false"
       :row-props="{ gutter: 24 }"
       label-position="right"
-      label-width="100px"
+      :label-width="labelWidth"
       v-bind="formProps"
       @change="
         (values, column) => {

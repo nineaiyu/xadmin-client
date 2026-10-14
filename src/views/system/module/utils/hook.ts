@@ -8,7 +8,7 @@ import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { copyText as copyTextWithFeedback } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
-import { MODULE_LEVEL_KEY, MODULE_LEVEL_TAG_TYPE } from "./moduleDraft";
+import { moduleLevelKey, moduleLevelTagType } from "./moduleDraft";
 import { useSystemModuleDraft } from "./useSystemModuleDraft";
 
 /**
@@ -91,8 +91,8 @@ export function useSystemModule() {
     data: draft.data,
     draftPreset: draft.draftPreset,
     draftEnabled: draft.draftEnabled,
-    LEVEL_TAG_TYPE: MODULE_LEVEL_TAG_TYPE,
-    LEVEL_KEY: MODULE_LEVEL_KEY,
+    moduleLevelKey,
+    moduleLevelTagType,
     canApply,
     canReset,
     presets: draft.presets,

@@ -28,7 +28,7 @@ const SET_LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   "fa-solid": () => import("../data/subsets/fa-solid.json")
 };
 
-/** 已注册（可直接渲染）的图标名 */
+/** 已注册（可直接渲染）的图标名：统一以冒号形态（`prefix:name`）承载 */
 const availableIcons = shallowRef<ReadonlySet<string>>(new Set());
 /** 已加载完成的图标集前缀 */
 const loadedIconSets = shallowRef<ReadonlySet<string>>(new Set());
@@ -41,8 +41,9 @@ export function markIconAvailable(...names: string[]) {
   const next = new Set(availableIcons.value);
   let changed = false;
   for (const name of names) {
-    if (name && !next.has(name)) {
-      next.add(name);
+    const key = name ? normalizeIconName(name) : "";
+    if (key && !next.has(key)) {
+      next.add(key);
       changed = true;
     }
   }
@@ -51,7 +52,7 @@ export function markIconAvailable(...names: string[]) {
 
 /** 图标是否可本地渲染（响应式：读取即建立依赖） */
 export function isIconAvailable(name: string): boolean {
-  return availableIcons.value.has(name);
+  return availableIcons.value.has(normalizeIconName(name));
 }
 
 /** 图标集是否已加载完成（供选择器等展示加载态） */
@@ -64,10 +65,30 @@ export function isIconSetSupported(prefix: string): boolean {
   return prefix in SET_LOADERS;
 }
 
-/** 取图标名的 set 前缀（`ep:refrigerator` → `ep`；无冒号返回空串） */
+/**
+ * 归一化图标名：斜杠与冒号视为等价（`ep/box` ↔ `ep:box`）。
+ *
+ * 代码内约定斜杠名（`useRenderIcon("ri/search-line")`），服务端菜单元数据与图标选择器
+ * 用冒号名（`loadjson/menumeta.json` 的 `"ep:refrigerator"`、选择器的 `ep:` 页签）；
+ * 二者必须落到同一份注册数据（可用名集合与 iconify 存储键），否则会出现
+ * 「随包注册过却判定未内置」——**布局外的全屏页**（登录 / 账户设置 / 邀请激活等不套布局）
+ * 拿不到随包注册，只能靠图标集懒加载，形态不一致时会直接告警并渲染空白。
+ *
+ * 已含冒号的名字原样返回（避免误改 `https://…` 之类的非图标名）。
+ */
+export function normalizeIconName(name: string): string {
+  if (name.includes(":")) return name;
+  const index = name.indexOf("/");
+  return index === -1
+    ? name
+    : `${name.slice(0, index)}:${name.slice(index + 1)}`;
+}
+
+/** 取图标名的 set 前缀（`ep:refrigerator` / `ep/box` → `ep`；无分隔符返回空串） */
 export function iconPrefixOf(name: string): string {
-  const index = name.indexOf(":");
-  return index === -1 ? "" : name.slice(0, index);
+  const normalized = normalizeIconName(name);
+  const index = normalized.indexOf(":");
+  return index === -1 ? "" : normalized.slice(0, index);
 }
 
 /**

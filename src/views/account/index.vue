@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { useRoute } from "vue-router";
-import { computed, onBeforeMount, ref } from "vue";
+import { computed, getCurrentInstance, onBeforeMount, ref } from "vue";
 import { deviceDetection, useGlobal } from "@pureadmin/utils";
 import AccountSidebar from "./components/AccountSidebar.vue";
 import TopCollapse from "@/layout/components/lay-sidebar/components/SidebarTopCollapse.vue";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { setupTippy } from "@/layout/tippy";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { ReSplitPane } from "@/components/ReSplitPane";
@@ -15,6 +16,14 @@ import { createAccountPanes } from "./utils/panes";
 defineOptions({
   name: "Account"
 });
+
+/**
+ * vue-tippy 全局注册：本页是菜单外全屏页（`showLink: false`，不套布局），而指令只在
+ * 布局 setup 里注册。页内的 RePlusPage 与表格栏按钮（JSX 的 `v-tippy`）依赖它，
+ * 缺失时表现为「Failed to resolve directive: tippy」且提示气泡失效。
+ * `setupTippy` 幂等（WeakSet 记忆已装配的应用），从布局页往返不会重复 `app.use`。
+ */
+setupTippy(getCurrentInstance()!.appContext.app);
 
 const route = useRoute();
 const isOpen = ref(!deviceDetection());

@@ -61,7 +61,27 @@ describe("ReBackTop", () => {
     );
 
     await wrapper.find(".re-backtop").trigger("click");
-    expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+    // 默认平滑滚动（el-backtop 同口径）：不得退化为直接跳顶
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+  });
+
+  it("behavior 可覆盖；系统减弱动效时强制瞬时", async () => {
+    const wrap = createLayoutTarget();
+    const scrollTo = vi.fn();
+    wrap.scrollTo = scrollTo;
+    setScrollTop(wrap, 300);
+
+    const wrapper = mountBackTop({ behavior: "auto" });
+    await nextTick();
+    await wrapper.find(".re-backtop").trigger("click");
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+
+    scrollTo.mockClear();
+    const reduce = vi.fn(() => ({ matches: true }));
+    vi.stubGlobal("matchMedia", reduce);
+    await wrapper.find(".re-backtop").trigger("click");
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    vi.unstubAllGlobals();
   });
 
   it("原生按钮语义：type=button + title / aria-label（键盘可聚焦，Enter 原生触发点击）", async () => {

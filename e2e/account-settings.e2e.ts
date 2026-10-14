@@ -12,6 +12,9 @@ import { login } from "./helpers";
  * 3. 布局插件注册幂等——账户设置是无布局页面（`showLink: false`），往返会重建布局
  *    组件，布局 setup 里重复 `app.use` 会命中 Vue 的「Plugin has already been
  *    applied to target app」告警。
+ * 4. 无布局页自足——vue-tippy 指令与离线图标集都挂在布局 setup 里，本页不套布局，
+ *    页内 RePlusPage / 表格栏按钮（JSX 的 `v-tippy`）与空态图标（`ep/box`）曾分别
+ *    报「Failed to resolve directive: tippy」与「[ReIcon] 图标 ep/box 未随包内置」。
  */
 
 const paneMenuItem = (page: import("@playwright/test").Page, text: string) =>
@@ -95,4 +98,37 @@ test("账户设置往返：布局重建不重复注册 vue-tippy（无重复插�
   }
 
   expect(dupeWarnings).toEqual([]);
+});
+
+test("账户设置（无布局页）：图标与 v-tippy 指令自足，无未内置 / 指令未解析告警", async ({
+  page
+}) => {
+  const iconWarnings: string[] = [];
+  const directiveWarnings: string[] = [];
+  page.on("console", message => {
+    const text = message.text();
+    if (text.includes("[ReIcon]")) iconWarnings.push(text);
+    if (text.includes("Failed to resolve directive: tippy")) {
+      directiveWarnings.push(text);
+    }
+  });
+
+  await login(page);
+  // 安全日志页签内是 RePlusPage：表格栏按钮的 JSX `v-tippy` 与列表空态图标都在此触发
+  await page.goto("/#/account-settings?tab=securityLog");
+  await expect(page.locator("h3").first()).toContainText("安全日志", {
+    timeout: 15_000
+  });
+  await expect(page.locator(".re-plus-search-card").first()).toBeVisible();
+
+  // 列表到达：有数据行或空态（ReEmpty 默认图标 `ep/box`）二者必有其一
+  await expect
+    .poll(
+      async () => await page.locator(".el-table__row, .re-empty-art").count(),
+      { timeout: 15_000 }
+    )
+    .toBeGreaterThan(0);
+
+  expect(iconWarnings).toEqual([]);
+  expect(directiveWarnings).toEqual([]);
 });

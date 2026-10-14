@@ -25,6 +25,24 @@ export const MODULE_LEVEL_KEY: Record<ModuleLevel, string> = {
   optional: "levelOptional"
 };
 
+/**
+ * 等级 → 词条后缀（缺省回退「标配」）。
+ *
+ * 必须容错：el-table 在挂载/无数据帧会以空行（`{}`）占位渲染一次具名插槽单元格，
+ * 此时 `row.level` 为 undefined，直接索引会拼出 `systemModule.undefined` 并在
+ * 控制台抛 intlify 缺失词条告警。
+ */
+export function moduleLevelKey(level?: string): string {
+  return MODULE_LEVEL_KEY[level as ModuleLevel] ?? MODULE_LEVEL_KEY.standard;
+}
+
+/** 等级 → 标签色（未知等级回退中性色，同样为占位帧兜底） */
+export function moduleLevelTagType(
+  level?: string
+): "info" | "success" | "warning" {
+  return MODULE_LEVEL_TAG_TYPE[level as ModuleLevel] ?? "info";
+}
+
 /** 预设对应的模块 id 集合 */
 export function presetModuleIds(
   presets: Array<{ value: string; module_ids: string[] }>,
