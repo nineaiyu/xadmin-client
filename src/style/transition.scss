@@ -12,7 +12,7 @@
 /* fade */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity var(--duration-base) var(--ease-standard);
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 /* Vue 2 / Vue 3 兼容：-enter 为 2.x 类名，-enter-from 为 3.x 类名 */
@@ -130,7 +130,7 @@
 .slide-left-leave-active,
 .slide-right-enter-active,
 .slide-right-leave-active {
-  transition: all var(--duration-base) var(--ease-emphasized);
+  transition: all var(--duration-slide) var(--ease-slide);
 }
 
 .slide-up-move,
@@ -173,7 +173,7 @@
  */
 .side-content {
   animation-duration: var(--duration-base);
-  animation-timing-function: var(--ease-emphasized);
+  animation-timing-function: var(--ease-out-expo);
 }
 
 .side-content[data-side="top"] {

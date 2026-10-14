@@ -18,9 +18,9 @@
      解析值经 Chromium / WebKit 实测确认）；运行期用户自定义主色由 JS 覆写
      --primary 三元组，色阶交由 ep-bridge 派生。 */
   --primary: 212 100% 45%; /* #006be6 */
-  --success: 100.1 54% 49.4%; /* #67c23a */
-  --warning: 36 77.3% 56.9%; /* #e6a23c */
-  --danger: 0 87.3% 69.2%; /* #f56c6c */
+  --success: 144 57% 58%; /* #57d188（对齐 vue-vben-admin 语义色） */
+  --warning: 42 84% 61%; /* #efbd48（对齐 vue-vben-admin 语义色） */
+  --danger: 348 100% 61%; /* #ff3860（对齐 vue-vben-admin 语义色） */
   --info: 220 4.2% 58.2%; /* #909399（与灰阶 700 同值） */
 
   /* ================ 中性灰阶 ================
@@ -78,10 +78,11 @@
   --nav-item-inset-mix: 8px;
 
   /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用）。
-     取「舒展档」而非 vben 的紧凑档（vben 项高 38~42px、一级缩进 8px、纵距 2px，
-     实机观感偏挤、图标贴左）：项高 48px、纵距 4px（见下方 --nav-item-margin-y）、
-     一级缩进 16px（见 sidebar/_common.scss 的层级缩进段），行步进 52px。 */
-  --nav-item-height: 48px;
+     项高与纵距对齐 vben 的紧凑档（实测项盒 42px、无额外外边距）：项高 42px、
+     纵距 0（见下方 --nav-item-margin-y），行步进 42px 与 vben 一致；
+     一级缩进保留本项目的 16px 起（vben 为 8px，登记为刻意不对齐，
+     见 sidebar/_common.scss 的层级缩进段）。 */
+  --nav-item-height: 42px;
   --nav-item-indent: 16px;
   --nav-item-icon-size: 18px;
   --nav-item-icon-gap: 10px;
@@ -93,8 +94,8 @@
   --nav-item-radius-narrow: 6px;
   --nav-item-icon-size-narrow: 20px;
 
-  /* 菜单项垂直外边距（激活块上下留白，圆角块的呼吸感来源）：4px 拉开项间节奏 */
-  --nav-item-margin-y: 4px;
+  /* 菜单项垂直外边距：对齐 vben（项盒 42px 内部即含 2px 呼吸内距，不再加外边距） */
+  --nav-item-margin-y: 0px;
 
   /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
   --nav-item-height-horizontal: 40px;
@@ -102,9 +103,10 @@
   /* ================ 顶栏动作项（右上角图标按钮）================
      所有顶栏动作共用同一热区 / 圆角 / 图标尺寸 / 间距——此前各组件各写一套
      （40×48 / 40×50 / 裸 16×16 并存），高度与节奏不一致导致顶栏视觉杂乱。
-     热区 = 图标 + 四周留白（36px 热区 / 18px 图标 / 10px 圆角）。 */
-  --navbar-action-size: 36px;
-  --navbar-action-radius: 10px;
+     热区 = 图标 + 四周留白（32px 热区 / 18px 图标 / 圆形）——尺寸与形状对齐
+     vue-vben-admin 的 icon-button（32×32 + 圆角胶囊）。 */
+  --navbar-action-size: 32px;
+  --navbar-action-radius: var(--radius-full);
   --navbar-action-icon: 18px;
   --navbar-action-gap: 4px;
   --navbar-action-pad-right: 12px;
@@ -150,14 +152,20 @@
   /* ================ 动效尺度 ================
      时长分档覆盖项目既有取值（0.1~0.5s）；缓动曲线与 Element Plus 同源：
      standard = 官方 ease-in-out-bezier（匀速段主用），
-     emphasized = 官方 fast-bezier（入场/收尾的减速感）。 */
+     emphasized = 官方 fast-bezier（入场/收尾的减速感）。
+     hover / slide 两档与 slide / out-expo 两条曲线对齐 vue-vben-admin 的实际预设：
+     菜单悬停 0.15s、slide 预设 0.25s / (0.25,0.8,0.5,1)、弹层 (0.16,1,0.3,1)。 */
   --duration-instant: 0.1s;
+  --duration-hover: 0.15s;
   --duration-fast: 0.2s;
+  --duration-slide: 0.25s;
   --duration-base: 0.3s;
   --duration-slow: 0.4s;
   --duration-slower: 0.5s;
   --ease-standard: cubic-bezier(0.645, 0.045, 0.355, 1);
   --ease-emphasized: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-slide: cubic-bezier(0.25, 0.8, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.42, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.58, 1);
   --ease-linear: linear;

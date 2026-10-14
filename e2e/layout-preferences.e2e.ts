@@ -1046,10 +1046,10 @@ test.describe("布局偏好（面板实时生效）", () => {
     const defaultRadius = await radiusOf();
     const defaultFont = await labelFontSize();
 
-    // 圆角「特大」：--radius-scale 2 → 按钮圆角翻倍（基准 --radius-sm = 4px）
+    // 圆角「特大」：--radius-scale 2 → 按钮圆角翻倍（EP 基础圆角基准 --radius-lg = 8px）
     await setScale(page, "圆角", "特大", "Radius", "xlarge");
     await expect(page.locator("html")).toHaveAttribute("data-radius", "xlarge");
-    await expect.poll(radiusOf).toBe("8px");
+    await expect.poll(radiusOf).toBe("16px");
 
     // 字号「大」：文字令牌整体放大，行内标签随之变大
     await setScale(page, "字号", "大", "FontScale", "large");
@@ -2418,7 +2418,7 @@ test.describe("布局偏好（面板实时生效）", () => {
   test("外观：功能色自定义生效并可恢复默认", async ({ page }) => {
     await ensurePanelClosed(page);
     expect(await resolvedColor(page, "hsl(var(--success))")).toBe(
-      "rgb(103, 194, 58)"
+      "rgb(87, 209, 136)"
     );
 
     await openSettingPanel(page);
@@ -2432,7 +2432,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     await resetSemanticColor(page, "成功色", "SuccessColor");
     expect(await inlineVar(page, "--success")).toBe("");
     expect(await resolvedColor(page, "hsl(var(--success))")).toBe(
-      "rgb(103, 194, 58)"
+      "rgb(87, 209, 136)"
     );
     await closePanel(page);
   });

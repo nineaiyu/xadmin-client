@@ -25,7 +25,10 @@
   width: 100%;
   font-size: var(--font-size-base);
   color: var(--el-text-color-primary);
-  background: hsl(var(--fill-muted));
+
+  /* 页签条与内容纸同面（对齐 vue-vben-admin：tabbar 取 background 而非填充灰），
+     未激活页签靠底色差异与分隔线区分 */
+  background: hsl(var(--bg-card));
   box-shadow: 0 0 1px hsl(var(--border-strong));
 
   .scroll-item {

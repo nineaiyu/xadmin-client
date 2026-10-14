@@ -23,19 +23,19 @@ export const SEMANTIC_COLOR_FIELDS = [
     key: "successColor",
     cssVar: "--success",
     labelKey: "layout.semanticColorSuccess",
-    defaultColor: "#67c23a"
+    defaultColor: "#57d188"
   },
   {
     key: "warningColor",
     cssVar: "--warning",
     labelKey: "layout.semanticColorWarning",
-    defaultColor: "#e6a23c"
+    defaultColor: "#efbd48"
   },
   {
     key: "dangerColor",
     cssVar: "--danger",
     labelKey: "layout.semanticColorDanger",
-    defaultColor: "#f56c6c"
+    defaultColor: "#ff3860"
   }
 ] as const;
 

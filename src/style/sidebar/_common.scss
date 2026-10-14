@@ -222,6 +222,11 @@
       color: var(--pure-theme-menu-text);
       background-color: transparent !important;
 
+      /* 悬停/激活反馈节奏对齐 vben（0.15s；EP 缺省为 0.3s） */
+      transition:
+        background-color var(--duration-hover) var(--ease-standard),
+        color var(--duration-hover) var(--ease-standard);
+
       &:hover {
         color: var(--pure-theme-menu-title-hover) !important;
 

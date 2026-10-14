@@ -25,8 +25,8 @@ function trackPointer() {
   );
 }
 
-/** 圆形扩散时长（ms）与最大半径覆盖范围以视口对角线为准 */
-const REVEAL_DURATION = 420;
+/** 圆形扩散时长（ms，对齐 vue-vben-admin 的 450ms）与最大半径覆盖范围以视口对角线为准 */
+const REVEAL_DURATION = 450;
 
 /**
  * 执行一次带圆形揭示的视觉切换。
@@ -80,7 +80,7 @@ export function withCircleReveal(
         },
         {
           duration: REVEAL_DURATION,
-          easing: "ease-in-out",
+          easing: "ease-in",
           pseudoElement: "::view-transition-new(root)"
         }
       );

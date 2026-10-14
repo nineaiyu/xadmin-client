@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, toRaw } from "vue";
+import { computed, toRaw, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import Motion from "./utils/motion";
 import basic from "./components/Basic.vue";
@@ -48,6 +48,22 @@ const { t } = useI18n();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const authPanel = computed(
   () => $storage?.configure?.authPageLayout ?? "panel-left"
+);
+
+/**
+ * 站点配置到达后重新应用明暗：登录页在布局之外，布局层的主题响应链路覆盖不到这里，
+ * 首帧只拿得到本地默认值（platform-config）。
+ *
+ * 边界：站点配置（WEB_SITE_CONFIG）仅在已登录会话中拉取（main.ts 的 getToken 分支），
+ * 因此**未登录首访**时本页拿不到服务端 DarkMode，仍按本地默认渲染；一旦配置已到达
+ * （如登出回到登录页），本监听会让登录页与应用壳保持一致。
+ */
+watch(
+  () => $storage?.layout?.darkMode,
+  dark => {
+    dataTheme.value = Boolean(dark);
+    dataThemeChange(themeMode.value);
+  }
 );
 </script>
 

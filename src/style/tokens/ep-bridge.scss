@@ -42,24 +42,48 @@ html.dark {
   --el-bg-color-page: hsl(var(--bg-page));
   --el-bg-color-overlay: hsl(var(--bg-elevated));
   --el-text-color-primary: hsl(var(--fg));
-  --el-text-color-regular: hsl(var(--fg-muted));
+
+  /* EP 常规文字取主前景：对齐 vue-vben-admin（其 primary 与 regular 同源于 --foreground），
+     表格单元格 / 表单标签等正文深度随之一致；次级与占位档仍走 --fg-subtle / -placeholder。 */
+  --el-text-color-regular: hsl(var(--fg));
   --el-text-color-secondary: hsl(var(--fg-subtle));
   --el-text-color-placeholder: hsl(var(--fg-placeholder));
   --el-text-color-disabled: hsl(var(--fg-disabled));
+
+  /* 按钮禁用文字：EP 深色表自带 #ffffff80，收回禁用文字语义槽 */
+  --el-button-disabled-text-color: hsl(var(--fg-disabled));
   --el-border-color: hsl(var(--border));
   --el-border-color-light: hsl(var(--border-light));
   --el-border-color-lighter: hsl(var(--border-lighter));
   --el-border-color-dark: hsl(var(--border-strong));
+
+  /* 描边两端的补充档（EP 深色变量表自带中性硬编码，消费面 17 个样式文件）：
+     收回语义槽，避免暗色下出现「蓝灰 token + 中性 EP 值」混用。 */
+  --el-border-color-extra-light: hsl(var(--border-lighter));
+  --el-border-color-darker: hsl(var(--border-strong));
   --el-fill-color: hsl(var(--fill));
   --el-fill-color-light: hsl(var(--fill-muted));
   --el-fill-color-lighter: hsl(var(--fill-subtle));
   --el-fill-color-dark: hsl(var(--fill-strong));
+
+  /* 填充两端的补充档（EP 深色变量表自带 #191919 / #424243 硬编码，消费面 13 个样式文件） */
+  --el-fill-color-extra-light: hsl(var(--fill-subtle));
+  --el-fill-color-darker: hsl(var(--fill-strong));
+
+  /* 空白填充（表格行底色 / 输入底 / 空态托底等组件共用）：
+     项目引入了 EP 官方深色变量表（dark.scss），其自带硬编码 #141414，
+     这里显式收回卡面语义（对齐 vue-vben-admin 的 --el-fill-color-blank ← background）。 */
+  --el-fill-color-blank: hsl(var(--bg-card));
 }
 
 /* ================ 圆角与阴影 ================ */
 :root {
   --el-border-radius-small: var(--radius-xs);
-  --el-border-radius-base: var(--radius-sm);
+
+  /* EP 基础圆角取 8px 档：对齐 vue-vben-admin 的 --radius（0.5rem），
+     按钮 / 输入 / 下拉等基础控件的圆角随之外观一致；
+     small（2px）与 round 与 EP 缺省同值，保持像素中性。 */
+  --el-border-radius-base: var(--radius-lg);
   --el-border-radius-round: var(--radius-full);
   --el-box-shadow-lighter: var(--shadow-sm);
   --el-box-shadow-light: var(--shadow-md);
@@ -84,16 +108,18 @@ html.dark {
   --el-color-primary: hsl(var(--primary));
 
   /* 语义色（成功 / 警告 / 危险）：基础令牌 → EP 变量；色阶派生见下方 color-mix 段
-     （可在设置面板「功能色」自定义；令牌缺省即 EP 缺省值，属像素中性桥接） */
+     （可在设置面板「功能色」自定义；令牌缺省即 EP 缺省值，属像素中性桥接）。
+     EP 的 error 与 danger 同源（表单校验错误等 13 个样式文件消费），一并归到 danger。 */
   --el-color-success: hsl(var(--success));
   --el-color-warning: hsl(var(--warning));
   --el-color-danger: hsl(var(--danger));
+  --el-color-error: hsl(var(--danger));
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
-  /* 需要派生色阶的语义色令牌（主色 + 成功 / 警告 / 危险），
+  /* 需要派生色阶的语义色令牌（主色 + 成功 / 警告 / 危险 / error），
      公式与 EP 原生一致（light-i = (100-i*10)% 本色 + 表面底色，dark-2 = 80% 本色 + 黑/白） */
-  $derived-colors: "primary", "success", "warning", "danger";
+  $derived-colors: "primary", "success", "warning", "danger", "error";
 
   :root,
   html.dark {

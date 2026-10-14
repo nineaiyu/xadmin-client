@@ -15,7 +15,9 @@
     box-sizing: border-box;
     width: 100%;
     height: 100%;
-    line-height: 1.5;
+    /* 基准行高对齐 vue-vben-admin（1.15，其 html 口径）：表格行高与文本块疏密
+       随之同源；标题 / 按钮 / 菜单等仍各自声明显式行高，不受影响。 */
+    line-height: 1.15;
     tab-size: 4;
     text-size-adjust: 100%;
   }
