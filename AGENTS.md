@@ -63,6 +63,10 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
 - 组合式函数超过 100 行、单文件超过 500 行会被门禁拦（`check:hook-length` / `check-file-length`），
   拆分而不是登记基线。
 - 模块依赖环由 `pnpm check:module-cycles` 拦截；新增跨模块引用前先想清楚方向。
+- **SFC 必须单根，模板注释写在根元素内部**（`<template>` 后不要直接跟 `<!-- -->`）：
+  根级注释会让组件在 dev 下渲染成「多根」（dev Fragment 根），与布局的
+  `<Transition mode="out-in">` 组合会卡死——离开该页面后内容区永久空白且切页不恢复；
+  由 `pnpm check:template-root` 拦截，守护用例见 `e2e/system-pages.e2e.ts`「关于页」。
 
 ## 六、测试与门禁
 
@@ -71,7 +75,7 @@ pnpm test:run                                  # vitest（含契约 / 词条 / �
 pnpm typecheck && pnpm lint
 for g in bundle-size entry-closure success-code platform-config i18n as-unknown hook-length \
          font-size-literals color-literals module-cycles contract contract-usage menu-permissions \
-         version quarantine; do pnpm check:$g || break; done
+         version quarantine template-root; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（单文件 ≤ 500 行，无基线豁免）
 ```
 

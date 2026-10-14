@@ -23,17 +23,17 @@ const display = computed(() => {
 </script>
 
 <template>
-  <!--
-    根元素用 i 而非 span：菜单标题的文本节点本身以 span 形态渲染，
-    折叠态「标题不渲染」的既有判定按 `.el-sub-menu__title > span` 计数，
-    badge 用 span 会被该断言误计（角标不属于标题文本）。
-  -->
   <i
     v-if="display"
     class="sidebar-menu-badge"
     :class="{ 'is-dot': isDot }"
     aria-hidden="true"
   >
+    <!--
+      根元素用 i 而非 span：菜单标题的文本节点本身以 span 形态渲染，
+      折叠态「标题不渲染」的既有判定按 `.el-sub-menu__title > span` 计数，
+      badge 用 span 会被该断言误计（角标不属于标题文本）。
+    -->
     {{ isDot ? "" : display }}
   </i>
 </template>

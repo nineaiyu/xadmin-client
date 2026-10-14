@@ -57,8 +57,8 @@ const switchPane = (key: string) => {
 </script>
 
 <template>
-  <!-- 桌面：侧栏宽度可拖拽（比例持久化到 WEB_SITE_CONFIG.SplitPanes） -->
   <el-container v-if="!deviceDetection()" class="h-full">
+    <!-- 桌面：侧栏宽度可拖拽（比例持久化到 WEB_SITE_CONFIG.SplitPanes） -->
     <ReSplitPane
       v-model:percent="percent"
       :split-set="{ minPercent: 10, defaultPercent: 15, split: 'vertical' }"

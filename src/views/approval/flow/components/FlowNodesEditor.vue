@@ -93,8 +93,8 @@ function assigneeHint(type: string): string {
 }
 </script>
 <template>
-  <!-- 单根包裹：父组件用 v-show 切换列表/画布，多根组件上运行时指令（v-show）不生效并告警 -->
   <div>
+    <!-- 单根包裹：父组件用 v-show 切换列表/画布，多根组件上运行时指令（v-show）不生效并告警 -->
     <el-alert
       v-if="candidateTruncated"
       type="warning"

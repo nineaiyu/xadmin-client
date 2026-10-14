@@ -10,11 +10,15 @@ describe("normalizeError", () => {
     });
   });
 
-  it("无 detail 的异常回退为异常本身的可读字符串", () => {
+  it("无 detail 的异常回退为异常 message / 入参本身", () => {
     expect(normalizeError(new Error("Network Error")).detail).toBe(
-      "Error: Network Error"
+      "Network Error"
     );
     expect(normalizeError("boom").detail).toBe("boom");
+  });
+
+  it("仅含 code 的对象响应体不做 String（避免渲染成 [object Object]）", () => {
+    expect(normalizeError({ code: 403 }).detail).toBe('{"code":403}');
   });
 
   it("detail 为空串时按缺失处理回退，code 归一为 -1", () => {

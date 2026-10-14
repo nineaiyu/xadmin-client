@@ -110,14 +110,14 @@ defineExpose({ refresh: fetchStats });
 </script>
 
 <template>
-  <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上；
-       w-99/100 与 RePlusPage 的搜索/表格卡同宽，右边缘对齐（两者均为容器 99%） -->
   <el-card
     v-if="allowed"
     v-loading="loading"
     shadow="never"
     class="mb-2 w-99/100"
   >
+    <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上；
+         w-99/100 与 RePlusPage 的搜索/表格卡同宽，右边缘对齐（两者均为容器 99%） -->
     <el-alert
       type="info"
       :closable="false"

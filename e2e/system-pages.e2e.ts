@@ -355,3 +355,31 @@ test("通讯录：按部门/按岗位视角渲染", async ({ page }) => {
     timeout: 15_000
   });
 });
+
+/**
+ * 关于页往返导航守护：页面模板的根级注释会让组件在 dev 下渲染成「多根」
+ * （dev Fragment 根），与布局的 `<Transition mode="out-in">` 组合会卡死——
+ * 离开该页面时 leave 永不完成，`isLeaving` 永不复位，之后内容区只渲染空占位
+ * （整页白屏），且切任何页面都不恢复。断言「离开关于页后目标页正常渲染」即可覆盖。
+ */
+test("关于页：往返导航后内容区正常渲染", async ({ page }) => {
+  await login(page);
+
+  // 「关于」是一级菜单项（不是目录），openMenuPath 的目录展开不适用；
+  // hash 导航同样是 SPA 内切换，足以触发本用例要守护的过渡路径
+  await page.goto("/#/about/index");
+  await expect(page.locator("#main-content .re-page").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  await page.goto("/#/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  // 白屏时 #main-content 只剩占位注释：以文本长度兜底断死该形态
+  const textLen = await page
+    .locator("#main-content")
+    .innerText()
+    .then(text => text.trim().length);
+  expect(textLen, "离开关于页后内容区应正常渲染").toBeGreaterThan(10);
+});

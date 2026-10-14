@@ -13,8 +13,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { McpServerItem, McpToolSnapshot } from "@/api/ai/mcp";
 
-// 权限判定桩（默认有权限）：抽屉入口按 sync / call:AiMcpServers 收敛
-const mocks = vi.hoisted(() => ({ hasAuth: vi.fn(() => true) }));
+// 权限判定桩（默认有权限）：抽屉入口按 sync / call:AiMcpServers 收敛。
+// 形参签名须与真实 hasAuth(code: string) 对齐——零参签名会让下方
+// mockImplementation((code: string) => ...) 类型失配（tsc 报 TS2345）。
+const mocks = vi.hoisted(() => ({ hasAuth: vi.fn((_code: string) => true) }));
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));

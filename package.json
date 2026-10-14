@@ -21,6 +21,7 @@
     "check:platform-config": "node scripts/check-platform-config.mjs",
     "check:i18n": "node scripts/check-i18n-keys.mjs",
     "check:as-unknown": "node scripts/check-as-unknown.mjs",
+    "check:template-root": "node scripts/check-template-root.mjs",
     "check:hook-length": "node scripts/check-hook-length.mjs",
     "check:font-size-literals": "node scripts/check-font-size-literals.mjs",
     "check:color-literals": "node scripts/check-color-literals.mjs",

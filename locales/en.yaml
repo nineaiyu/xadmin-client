@@ -27,6 +27,7 @@ fileAccess:
   ipaddress: IP
   result: Result
   detail: Detail
+  loadFailed: Failed to load access logs. Please try again later.
 
 forcePassword:
   title: Password Change Required

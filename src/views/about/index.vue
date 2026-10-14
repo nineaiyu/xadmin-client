@@ -68,9 +68,12 @@ Object.keys(devDependencies).forEach(key => {
 </script>
 
 <template>
-  <!-- 页面留白由布局 .main-content（--content-gap）统一提供：不加 content-flush，
-       内容区也不再自行加横向内边距——否则页头贴边、卡片多缩一层，两者对不齐 -->
   <RePage>
+    <!-- 根级注释会让模板在 dev 下变成"多根"（组件根变为 dev Fragment），与布局的
+         <Transition mode="out-in"> 组合会卡死：Vue 对 Fragment 根不处理 leave，
+         isLeaving 永不复位 → 内容区永久空白。模板注释一律放在根元素内部。 -->
+    <!-- 页面留白由布局 .main-content（--content-gap）统一提供：不加 content-flush，
+         内容区也不再自行加横向内边距——否则页头贴边、卡片多缩一层，两者不对齐 -->
     <!-- 关于卡：与下方「平台信息 / 依赖」卡同构（同一 el-card + card-header 版式）；
          简介限宽避免整行铺满，下接技术栈徽章行 -->
     <el-card class="mb-4 box-card" shadow="never">

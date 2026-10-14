@@ -46,12 +46,12 @@ const timeLabel = computed(() => formatMessageTime(props.item.created_time));
 </script>
 
 <template>
-  <!-- 系统提示（流内失败降级等）：居中窄条 -->
   <ChatSystemNotice
     v-if="isSystem"
     :content="item.content"
     :error="item.extra?.error"
   />
+  <!-- 系统提示（流内失败降级等）：居中窄条 -->
 
   <!-- 用户消息：主色气泡（与聊天室一致） -->
   <div

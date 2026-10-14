@@ -13,10 +13,22 @@ export type ApiFailureResult = Envelope & { data: null };
  * 缺失时回退异常本身的可读字符串。
  */
 export function normalizeError(error: unknown): ApiFailureResult {
-  const detail = (error as { detail?: unknown } | null | undefined)?.detail;
+  const e = error as { detail?: unknown; message?: unknown } | null | undefined;
+  // 优先级：后端 detail（http 层 reject 的多为响应体对象）→ 异常 message → 入参本身。
+  // 对象形态（既无 detail 也无 message，如仅含 code 的响应体）用 JSON 兜底——
+  // 旧实现 String(对象) 会得到不可读的 "[object Object]"。
+  const raw = e?.detail ?? e?.message ?? error;
+  const detail =
+    typeof raw === "string"
+      ? raw
+      : raw == null
+        ? ""
+        : typeof raw === "object"
+          ? (JSON.stringify(raw) ?? "")
+          : String(raw);
   return {
     code: -1,
     data: null,
-    detail: String(detail ?? error ?? "")
+    detail
   };
 }

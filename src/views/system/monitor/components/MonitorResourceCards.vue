@@ -32,8 +32,8 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <!-- 实时资源卡片：窄屏两列、中屏三列、宽屏一行五张 -->
   <div class="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <!-- 实时资源卡片：窄屏两列、中屏三列、宽屏一行五张 -->
     <el-card v-for="card in cards" :key="card.key" shadow="hover">
       <div class="text-sm text-(--el-text-color-regular)">{{ card.label }}</div>
       <el-progress

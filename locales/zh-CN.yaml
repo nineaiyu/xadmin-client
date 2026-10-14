@@ -27,6 +27,7 @@ fileAccess:
   ipaddress: IP
   result: 结果
   detail: 明细
+  loadFailed: 访问记录加载失败，请稍后重试
 
 forcePassword:
   title: 需要修改密码

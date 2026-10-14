@@ -134,8 +134,8 @@ defineExpose({ getPayload });
 </script>
 
 <template>
-  <!-- 112px：「时间字段（趋势）」8 个全角字符不折行 -->
   <el-form label-width="110px">
+    <!-- 112px：「时间字段（趋势）」8 个全角字符不折行 -->
     <el-form-item :label="t('dataDataset.name')" required>
       <el-input v-model="form.name" />
     </el-form-item>

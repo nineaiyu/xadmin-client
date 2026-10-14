@@ -257,8 +257,8 @@ async function submit() {
 onMounted(loadFlows);
 </script>
 <template>
-  <!-- 单根包裹：ReDialog 会透传 change/close 监听器，fragment 根无法继承会告警 -->
   <div>
+    <!-- 单根包裹：ReDialog 会透传 change/close 监听器，fragment 根无法继承会告警 -->
     <el-form
       ref="formRef"
       v-loading="loading"

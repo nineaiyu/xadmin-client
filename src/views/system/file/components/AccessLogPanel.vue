@@ -16,6 +16,8 @@ const { t } = useI18n();
 
 const loading = ref(false);
 const data = ref<FileAccessLogResult | null>(null);
+/** 加载失败标记（HTTP 层已在拦截器统一提示，抽屉内只做空态收口） */
+const failed = ref(false);
 
 const ACTION_KEYS: Record<string, string> = {
   upload: "fileAccess.actionUpload",
@@ -31,15 +33,21 @@ const actionLabel = (value: unknown) => {
 const load = async () => {
   if (!props.row?.pk) return;
   loading.value = true;
+  failed.value = false;
   try {
     const res = await systemUploadFileApi.accessLogs(props.row.pk);
     if (isSuccess(res)) {
       data.value = res.data;
     } else {
-      message(String(res.detail), { type: "error" });
+      // 200 + 业务码失败：http 拦截器只处理 HTTP 层错误，这里显式提示
+      failed.value = true;
+      message(String(res.detail ?? t("results.failed")), { type: "error" });
     }
-  } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+  } catch {
+    // HTTP 4xx/5xx 与网络异常均已在 http 拦截器统一提示，组件内不再二次弹窗
+    // （重复提示 + http 层 reject 的是响应体对象，旧实现 String(error) 会渲染成
+    // [object Object]）；这里只收口抽屉内的失败态展示。
+    failed.value = true;
   } finally {
     loading.value = false;
   }
@@ -50,6 +58,13 @@ onMounted(load);
 
 <template>
   <div v-loading="loading">
+    <el-alert
+      v-if="failed && !loading"
+      :closable="false"
+      :title="t('fileAccess.loadFailed')"
+      type="warning"
+      class="mb-3"
+    />
     <div class="mb-3 flex flex-wrap gap-2">
       <el-tag
         v-for="(count, action) in data?.counts ?? {}"
