@@ -13,7 +13,11 @@ import { ensureLocale, useI18n } from "@/plugins/i18n";
 import { responsiveStorageNameSpace } from "@/config";
 import { storageLocal } from "@pureadmin/utils";
 import { getPlatformConfig } from "./config";
-import { resolveSiteTitle } from "@/utils/preferences";
+import {
+  capturePlatformDefaults,
+  resolveBootLocale,
+  resolveSiteTitle
+} from "@/utils/preferences";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, defineAsyncComponent, type Directive } from "vue";
@@ -77,17 +81,13 @@ void Promise.all([
 
 getPlatformConfig(app).then(async config => {
   injectResponsiveStorage(app, config);
+  // 平台出厂默认值快照：必须在下面的站点配置同步之前捕获——
+  // getSiteConfig 会把服务端站点配置合并进全局 $config，之后 getConfig() 不再等于
+  // platform-config.json（「恢复站点默认」依赖这份快照）
+  capturePlatformDefaults();
   setupStore(app);
-  // index.html 是静态产物（构建期不知道运行时语言与平台标题），装配后回填：
-  // html.lang 影响无障碍（屏幕阅读器发音/浏览器翻译判定），初始 title 占位
-  // 在首次路由跳转前与 platform-config 的 Title 保持一致
-  const initialLocale =
-    storageLocal().getItem<StorageConfigs>(
-      `${responsiveStorageNameSpace()}locale`
-    )?.locale ?? "zh";
-  document.documentElement.lang =
-    initialLocale === "zh" ? "zh-CN" : initialLocale;
-  // 站点标题：偏好（设置面板 / 站点配置同步）优先，回落 platform-config 的 Title
+  // index.html 是静态产物（构建期不知道运行时标题），装配后回填：初始 title
+  // 占位在首次路由跳转前与 platform-config 的 Title 保持一致
   const siteTitle = resolveSiteTitle();
   if (siteTitle) document.title = siteTitle;
   if (getToken()) {
@@ -97,6 +97,21 @@ getPlatformConfig(app).then(async config => {
       console.warn("Failed to fetch site config, using default config:", error);
     }
   }
+  /**
+   * 实际生效的初始语言（html.lang 也按它回填，影响无障碍：屏幕阅读器发音 /
+   * 浏览器翻译判定）。必须在站点配置同步之后判定——服务端 Locale 会经
+   * `getSiteConfig` 覆写本地语言存储（而 i18n 实例的 locale 仍是创建时的值），
+   * 布局 / 登录页随后按存储值恢复语言。若此处沿用同步前的值，en 语料不会被
+   * 预加载，首帧就会报 "Not found 'xxx' key in 'en' locale messages" 并回退中文。
+   */
+  const appliedLocale = resolveBootLocale(
+    storageLocal().getItem<StorageConfigs>(
+      `${responsiveStorageNameSpace()}locale`
+    )?.locale,
+    config?.Locale
+  );
+  document.documentElement.lang =
+    appliedLocale === "zh" ? "zh-CN" : appliedLocale;
   app.use(router);
   await router.isReady();
   // @pureadmin/table 不在此全局注册：唯一消费方 RePlusPage 内部按需 import
@@ -107,7 +122,8 @@ getPlatformConfig(app).then(async config => {
     .use(useElementPlus)
     .use(usePlusProComponents)
     .use(useEcharts);
-  // 初始语言为 en 时按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）
-  await ensureLocale();
+  // 初始语言按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）：
+  // 传「实际生效语言」，避免首帧出现 locale 已是 en 而语料未就绪的空窗
+  await ensureLocale(appliedLocale);
   app.mount("#app");
 });

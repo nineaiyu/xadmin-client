@@ -14,7 +14,8 @@ import {
  * - 打开项目配置面板（默认 `⌘/Ctrl + ,`）；退出登录（默认未启用，空键位）
  *
  * 键位串从响应式存储实时读取（面板改动即时生效）；`shortcutEnable === false`
- * 总开关关闭时全部断开。历史存储里只有布尔开关（shortcutLock 等）、没有键位串，
+ * 总开关关闭时全部断开。设置入口的总开关与位置**不影响**「打开项目配置」——
+ * 隐藏入口后它是唯一的恢复通道。历史存储里只有布尔开关（shortcutLock 等）、没有键位串，
  * 读取时以布尔开关作兼容输入（false = 该动作未启用）；命令面板（⌘K）由
  * useCommandPalette 消费 shortcutSearchKeys，同一口径。
  *
@@ -81,13 +82,8 @@ export function useLayoutShortcutKeys(handlers: {
     if (isEditableTarget(event)) return;
 
     for (const action of actions) {
-      // 设置入口关闭后：「打开偏好面板」动作同步失效（避免打开无入口可关闭的面板）
-      if (
-        action.keysKey === "shortcutPreferencesKeys" &&
-        $storage?.configure?.enablePreferences === false
-      ) {
-        continue;
-      }
+      // 「打开偏好面板」不随入口设置（总开关 / 位置）失效：它是隐藏入口后
+      // 唯一的可见恢复通道，不能一起断掉（否则只能清本地存储才能找回面板）
       const value = keysOf(action);
       if (!value) continue;
       if (!matchShortcut(event, parseShortcut(value))) continue;

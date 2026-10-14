@@ -18,6 +18,13 @@ import SettingShortcut from "./SettingShortcut.vue";
 const { t } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
+/**
+ * 内容重挂载键（来自面板壳的 slot）：批量回退（撤销本次调整 / 恢复站点默认）
+ * 后递增，用于重挂载持有本地快照的设置组件，使其按回退后的存储重新渲染。
+ * 只作用在这三个组件上——页签本身不重挂载，用户当前所处页签保持不变。
+ */
+const { contentKey } = defineProps<{ contentKey?: number }>();
+
 /** 当前页签：外观（默认）/ 布局 / 通用 / 快捷键 */
 const activeTab = ref("appearance");
 
@@ -44,12 +51,12 @@ const stickyNav = computed(
       <SettingStretch />
       <SettingSidebar />
       <SettingHeader />
-      <SettingTabbar />
-      <SettingFooter />
+      <SettingTabbar :key="contentKey" />
+      <SettingFooter :key="contentKey" />
     </el-tab-pane>
     <!-- 通用：语言与内容区、检查更新、页面切换动画 -->
     <el-tab-pane :label="t('layout.tabGeneral')" name="general">
-      <SettingGeneral />
+      <SettingGeneral :key="contentKey" />
       <SettingAnimation />
     </el-tab-pane>
     <!-- 快捷键：总开关 + 每动作键位录制 -->

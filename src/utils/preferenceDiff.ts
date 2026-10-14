@@ -1,13 +1,16 @@
 import { storageLocal } from "@pureadmin/utils";
-import { responsiveStorageNameSpace } from "@/config";
+import { getConfig, responsiveStorageNameSpace } from "@/config";
 
 /**
  * 界面偏好快照（设置面板 →「复制偏好」）。
  *
  * 复制**当前完整偏好**（locale / layout / configure 三个命名空间的全量值），
- * 而非「与平台默认值的差异项」——只改少量偏好时差异输出会缺项，
- * 反馈问题时无法据此还原完整界面状态。全量镜像天然覆盖新增偏好，
- * 新增字段无需在此登记（改动命名空间时同步 SNAPSHOT_NAMESPACES 与守护测试）。
+ * 而非「与平台默认值的差异项」——只改少量偏好时差异输出会缺项。全量镜像天然
+ * 覆盖新增偏好，新增字段无需在此登记（改动命名空间时同步 SNAPSHOT_NAMESPACES
+ * 与守护测试）。
+ *
+ * 导出给用户的形态见 `buildSiteConfigSnapshot`（摊平为站点配置同形，可粘贴复用）；
+ * 本函数保留三命名空间分组，是导出与差异比对共用的数据源。
  */
 
 /** 快照覆盖的存储命名空间（与 ResponsiveStorage 的键一一对应） */
@@ -39,6 +42,40 @@ export function buildPreferenceSnapshot(): PreferenceSnapshot {
     layout: layout ?? {},
     configure: configure ?? {}
   };
+}
+
+/** 存储键（camelCase）→ 平台配置键（PascalCase）：首字母大写，其余不变 */
+function toConfigKey(key: string): string {
+  return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+/**
+ * 平台配置快照（设置面板 →「复制偏好」的导出格式）。
+ *
+ * 输出**完整的 `public/platform-config.json` 内容**（扁平一层 + PascalCase，
+ * 语言为 `Locale`）：以当前生效的平台配置为底——`Version` / `ResponsiveStorageNameSpace`
+ * 等非偏好键原样带出，整文件覆盖不会丢字段——再用本地最新偏好覆盖对应键。
+ * 复制出来可直接整文件覆盖 `public/platform-config.json`（重新构建后生效），
+ * 或整段粘贴为「系统管理 → 系统配置」的 `WEB_SITE_CONFIG` 值（对全员与登录页生效）。
+ *
+ * 键序与平台配置一致（平台配置缺该键时追加在后），便于与配置文件逐行比对。
+ */
+export function buildPlatformConfigSnapshot(): Record<string, unknown> {
+  const snapshot = buildPreferenceSnapshot();
+  const preferences: Record<string, unknown> = { Locale: snapshot.locale };
+  for (const namespace of ["layout", "configure"] as const) {
+    for (const [key, value] of Object.entries(snapshot[namespace])) {
+      if (value !== undefined) preferences[toConfigKey(key)] = value;
+    }
+  }
+  const merged: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(getConfig())) {
+    merged[key] = key in preferences ? preferences[key] : value;
+  }
+  for (const [key, value] of Object.entries(preferences)) {
+    if (!(key in merged)) merged[key] = value;
+  }
+  return merged;
 }
 
 /* ------------------------------------------------------------------ */

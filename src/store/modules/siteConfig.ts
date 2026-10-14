@@ -21,9 +21,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     config: {},
     nameSpace: responsiveStorageNameSpace(),
     /**
-     * 偏好比对基线（设置面板「重置配置」脏标记）：站点配置同步完成
-     * （或首次打开面板兜底）时对 locale / layout / configure 三命名空间的
-     * 深拷贝快照，与当前值比对得出「是否偏离同步态」。
+     * 偏好比对基线（设置面板「撤销本次调整」脏标记 + 撤销回填值）：
+     * 站点配置同步完成（或首次打开面板兜底）时对 locale / layout / configure
+     * 三命名空间的深拷贝快照，与当前值比对得出「本次会话是否改过偏好」。
      */
     preferenceBaseline: null as PreferenceBaseline | null,
     /**
@@ -42,7 +42,9 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     },
     /**
      * 捕获偏好比对基线（站点配置同步完成后调用；每次调用整体替换）。
-     * 「重置配置 → 重载 → 重新同步」后基线重捕，面板脏标记自动熄灭。
+     * 基线同时是「撤销本次调整」的回填值，因此只在两处重捕：站点配置同步完成，
+     * 以及布局层的**启动静默窗口**（首屏把站点配置回写本地存储的归一动作不算
+     * 用户改动）；面板内继续修改不刷新基线（否则撤销会退化成「退到上一次改动」）。
      */
     capturePreferenceBaseline() {
       const locale = Storage.getData("locale", this.nameSpace);
@@ -72,6 +74,12 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         configure: cloneDeep(Storage.getData("configure", this.nameSpace) ?? {})
       };
     },
+    /**
+     * 恢复默认：清除个人偏好配置行（`DELETE` 用户配置），重载后回落到站点生效值
+     * （多数键 = 管理员统一的站点配置，站点级外观 9 键本就是系统配置）。
+     * 只作用个人作用域，不动站点级配置——超管要把站点级外观一并恢复见面板的
+     * 「恢复站点默认」。
+     */
     async resetSiteConfig() {
       const { configApi } = await import("@/api/config");
       configApi.resetSiteConfig().then(() => {
@@ -80,6 +88,25 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         });
         window.location.reload();
       });
+    },
+    /**
+     * 面板级批量偏好的落库（「撤销本次调整」/「恢复站点默认」）：
+     * 本地存储已就地改好后，走与逐项改动相同的整包 PATCH，差别是「立即保存 +
+     * 成功提示」而非防抖静默。
+     *
+     * 调用约束：必须在写入本地存储**同一个同步块**内调用。此处先捕获已同步快照
+     * （= 即将落库的值），让布局层常驻防抖监听判为无差异，避免同一批值被再 PATCH
+     * 一次；跨 tick 调用时监听已排入队列，快照来不及生效。
+     */
+    async persistPreferences(successMessage: string) {
+      this.captureSyncedSnapshot();
+      try {
+        await this.saveSiteConfig(true);
+        message(successMessage, { type: "success" });
+      } catch (error) {
+        message(transformI18n("layout.saveConfigFailed"), { type: "error" });
+        console.warn("[site-config] persist preferences failed:", error);
+      }
     },
     /**
      * 保存站点配置（整包 PATCH，后端按键 merge）。

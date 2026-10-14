@@ -70,7 +70,9 @@
     }
   }
 
-  .set-icon,
+  /* `:not(.setting-fab)`：右下角悬浮球虽然沿用 `.set-icon` 类做定位契约，
+     但它自带主色底与自己的尺寸（见 lay-setting），不能套用顶栏动作项的字号 */
+  .set-icon:not(.setting-fab),
   .fullscreen-icon,
   .search-container,
   .globalization-icon {
@@ -558,8 +560,8 @@
       .dropdown-badge,
         /* 用户名 */
       .el-dropdown-link,
-        /* 设置 */
-      .set-icon {
+        /* 设置（悬浮球形态自持主色 hover，见 lay-setting） */
+      .set-icon:not(.setting-fab) {
         &:hover {
           background: var(--pure-theme-menu-hover);
         }

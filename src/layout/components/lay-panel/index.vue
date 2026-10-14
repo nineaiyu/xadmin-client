@@ -6,13 +6,19 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import {
+  buildPlatformConfigSnapshot,
   buildPreferenceDiff,
-  buildPreferenceSnapshot,
   hasPreferenceDiff
 } from "@/utils/preferenceDiff";
 import { message } from "@/utils/message";
+import { useConfirm } from "@/hooks/useConfirm";
+import { buildRestorePayload } from "@/utils/preferenceRestore";
+import { ensureLocale } from "@/plugins/i18n";
 import { useConfigureStorage } from "../lay-setting/hooks/useConfigureStorage";
+import { useSiteWideEdit } from "../lay-setting/hooks/useSiteWideEdit";
+import { buildSiteWideAppearanceDefaults } from "@/layout/hooks/siteWideAppearance";
 import CloseIcon from "~icons/ep/close";
+import ArrowDownIcon from "~icons/ri/arrow-down-s-line";
 import PinOffIcon from "~icons/ri/pushpin-2-fill";
 import PinIcon from "~icons/ri/pushpin-2-line";
 import { useI18n } from "vue-i18n";
@@ -20,7 +26,13 @@ import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 
 const target = ref<HTMLElement | null>(null);
 const show = ref<Boolean>(false);
-const { t } = useI18n();
+/**
+ * 内容重挂载键（透传给面板内容）：批量回退（撤销本次调整 / 恢复站点默认）后
+ * 让持有本地快照的设置组件（页签条 / 页脚 / 通用）重新按存储渲染，
+ * 避免「存储已回退、面板控件仍显示旧值」。
+ */
+const contentKey = ref(0);
+const { t, locale: i18nLocale } = useI18n();
 const {
   pkg: { version }
 } = __APP_INFO__;
@@ -29,6 +41,8 @@ const { onReset } = useDataThemeChange();
 
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { storageConfigureChange } = useConfigureStorage();
+const { siteWideEditable } = useSiteWideEdit();
+const confirm = useConfirm();
 const siteConfig = useSiteConfigStoreHook();
 
 /** 面板页签导航吸顶（面板头部 Pin 切换） */
@@ -43,7 +57,7 @@ const copyPreferencesEnabled = computed(
 );
 
 /**
- * 偏好差异（「重置配置」脏标记）：当前值与同步完成基线比对，
+ * 偏好差异（「撤销本次调整」脏标记）：当前值与同步基线比对，
  * 无差异时按钮禁用，有差异时可用并显示标记。
  */
 const preferenceDirty = computed(() =>
@@ -59,16 +73,80 @@ const preferenceDirty = computed(() =>
   )
 );
 
-// 复制偏好：一键导出当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
+// 复制偏好：一键导出完整平台配置（含 Version / 存储命名空间等非偏好键），
+// 可整文件覆盖 public/platform-config.json，或整段粘贴为「系统管理 → 系统配置」的 WEB_SITE_CONFIG 值
 const { copy } = useClipboard({ legacy: true });
 const copyPreferences = async () => {
-  await copy(JSON.stringify(buildPreferenceSnapshot(), null, 2));
+  await copy(JSON.stringify(buildPlatformConfigSnapshot(), null, 2));
   message(t("layout.copyPreferencesSuccess"), { type: "success" });
 };
 
 // 设置项已实时自动保存（layout/index.vue 的 watch + store.autoSaveSiteConfig），
-// 面板不再提供「保存配置」按钮，仅保留重置与清缓存
-const { resetSiteConfig } = useSiteConfigStoreHook();
+// 面板不提供「保存配置」按钮，页脚只保留三类「回退」动作与清缓存
+
+/**
+ * 撤销本次调整：把三命名空间回填到「打开面板时的同步基线」并立即落库。
+ * 本地先即时生效再整包 PATCH（与逐项改动同一链路）；语言不在存储层自动生效，
+ * 需一并切回 i18n（en 语料按需补齐）。
+ *
+ * 回填含站点级外观键（管理员本次会话改过的站点标题 / Logo 等一并撤销，写回系统配置）：
+ * 这与「回到打开面板时的状态」的承诺一致，也保证脏标记能真正熄灭。
+ */
+function revertChanges() {
+  const payload = buildRestorePayload(
+    siteConfig.preferenceBaseline,
+    $storage.layout
+  );
+  if (!payload) return;
+  $storage.locale = payload.locale;
+  $storage.layout = payload.layout;
+  $storage.configure = payload.configure;
+  // 必须与上面的存储写入处于同一同步块：persistPreferences 依赖此刻捕获的
+  // 同步快照抑制布局层的防抖自动保存（见 store 内说明），跨 await 会重复 PATCH
+  void siteConfig.persistPreferences(t("layout.revertChangesSuccess"));
+  // 重挂载本地快照型设置组件，让面板控件同步显示回退后的值
+  contentKey.value += 1;
+  const target = payload.locale.locale ?? "zh";
+  if (i18nLocale.value !== target) {
+    void ensureLocale(target).then(() => {
+      i18nLocale.value = target;
+    });
+  }
+}
+
+/** 恢复默认：清除个人偏好配置行，重载后回落站点生效值（管理员统一配置） */
+async function resetConfig() {
+  if (!(await confirm(t("layout.resetConfigConfirm"), { danger: true })))
+    return;
+  await siteConfig.resetSiteConfig();
+}
+
+/**
+ * 恢复站点默认（仅管理员）：站点级外观键写回平台默认值（platform-config.json）。
+ * 站点级键写系统配置、对全部账号与登录页生效，破坏性明确——二次确认 + 危险色。
+ */
+async function resetSiteWide() {
+  if (!(await confirm(t("layout.resetSiteWideConfirm"), { danger: true }))) {
+    return;
+  }
+  Object.entries(buildSiteWideAppearanceDefaults()).forEach(([key, value]) => {
+    storageConfigureChange(key, value);
+  });
+  void siteConfig.persistPreferences(t("layout.resetSiteWideSuccess"));
+  // 站点标题 / Logo 等由本地快照型组件承载，同样重挂载一次同步显示
+  contentKey.value += 1;
+}
+
+/** 「更多」菜单命令分发：站点默认（管理员）/ 复制偏好 / 清空缓存并返回登录页 */
+function onMoreCommand(command: string) {
+  if (command === "resetSiteWide") {
+    void resetSiteWide();
+  } else if (command === "copyPreferences") {
+    void copyPreferences();
+  } else if (command === "clearCache") {
+    onReset();
+  }
+}
 
 /**
  * 点击遮罩关闭面板：遮罩铺满视口（z-index 低于面板），点击它即「点在面板之外」。
@@ -157,13 +235,34 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <!-- 内容区：面板按需挂载，`show` 透传给内容决定是否渲染 -->
+      <!-- 内容区：面板按需挂载，`show` 透传给内容决定是否渲染；
+           `content-key` 供内容重挂载本地快照型设置组件（批量回退后同步显示） -->
       <el-scrollbar class="lay-panel__body">
-        <slot :show="show" />
+        <slot :show="show" :content-key="contentKey" />
       </el-scrollbar>
 
-      <!-- 底部操作：重置 / 清缓存 / 复制偏好 -->
+      <!-- 底部操作：常用回退动作常显（左对齐紧凑），低频与危险动作收进「更多」——
+           面板宽度 440px，五个按钮在中文/英文下都会换行成参差两排，收进菜单可保持单行 -->
       <footer class="lay-panel__footer">
+        <el-button
+          v-tippy="{
+            content: t('layout.revertChangesTip'),
+            placement: 'top-start',
+            zIndex: Z_INDEX.tippy
+          }"
+          bg
+          text
+          type="primary"
+          :disabled="!preferenceDirty"
+          @click="revertChanges"
+        >
+          <span
+            v-if="preferenceDirty"
+            class="lay-panel__dirty-dot"
+            aria-hidden="true"
+          />
+          {{ t("layout.revertChanges") }}
+        </el-button>
         <el-button
           v-tippy="{
             content: t('layout.resetConfigTip'),
@@ -173,42 +272,54 @@ onBeforeUnmount(() => {
           bg
           text
           type="primary"
-          :disabled="!preferenceDirty"
-          @click="resetSiteConfig"
+          @click="resetConfig"
         >
-          <span
-            v-if="preferenceDirty"
-            class="lay-panel__dirty-dot"
-            aria-hidden="true"
-          />
           {{ t("layout.resetConfig") }}
         </el-button>
-        <el-button
-          v-tippy="{
-            content: t('layout.cleanOut'),
-            placement: 'top-start',
-            zIndex: Z_INDEX.tippy
-          }"
-          bg
-          text
-          type="danger"
-          @click="onReset"
+        <el-dropdown
+          trigger="click"
+          placement="top-end"
+          @command="onMoreCommand"
         >
-          {{ t("layout.clearCache") }}
-        </el-button>
-        <el-button
-          v-if="copyPreferencesEnabled"
-          v-tippy="{
-            content: t('layout.copyPreferencesTip'),
-            placement: 'top-start',
-            zIndex: Z_INDEX.tippy
-          }"
-          bg
-          text
-          @click="copyPreferences"
-        >
-          {{ t("layout.copyPreferences") }}
-        </el-button>
+          <el-button
+            v-tippy="{
+              content: t('layout.panelMoreTip'),
+              placement: 'top-start',
+              zIndex: Z_INDEX.tippy
+            }"
+            bg
+            text
+            class="lay-panel__footer-more"
+            :aria-label="t('layout.panelMoreTip')"
+          >
+            {{ t("layout.more") }}
+            <IconifyIconOffline
+              :icon="ArrowDownIcon"
+              height="12px"
+              width="12px"
+            />
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-if="siteWideEditable" command="resetSiteWide">
+                {{ t("layout.resetSiteWide") }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-if="copyPreferencesEnabled"
+                command="copyPreferences"
+              >
+                {{ t("layout.copyPreferences") }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="clearCache"
+                divided
+                class="lay-panel__more-danger"
+              >
+                {{ t("layout.cleanOut") }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </footer>
     </div>
   </div>
@@ -304,7 +415,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 「重置配置」脏标记：存在未重置的偏好差异时显示 */
+/* 「撤销本次调整」脏标记：本次会话改动过偏好时显示 */
 .lay-panel__dirty-dot {
   display: inline-block;
   width: 6px;
@@ -331,6 +442,17 @@ onBeforeUnmount(() => {
   border-top: 1px solid var(--divider);
 }
 
+/* 「更多」触发按钮：文案与下拉箭头同排居中，箭头降透明度不抢主操作的视线 */
+.lay-panel__footer-more {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+
+  :deep(svg) {
+    opacity: 0.6;
+  }
+}
+
 .show {
   transition: all var(--duration-base) var(--ease-emphasized);
 
@@ -343,6 +465,23 @@ onBeforeUnmount(() => {
 
   .right-panel {
     transform: translate(0);
+  }
+}
+</style>
+
+<!--
+  「更多」菜单项：清空缓存是终态操作（断会话并回登录页），用危险色与其它项区分。
+  下拉菜单 teleport 到 body，scoped 样式命不中，只能写在非 scoped 块里；
+  双类选择器（0-2-0）压过 EP 默认项样式（0-1-0）。
+-->
+<style lang="scss">
+.lay-panel__more-danger.el-dropdown-menu__item {
+  color: var(--el-color-danger);
+
+  &:hover,
+  &:focus {
+    color: var(--el-color-danger);
+    background: var(--el-color-danger-light-9);
   }
 }
 </style>

@@ -185,6 +185,10 @@ watch(
     const siteConfigStore = useSiteConfigStoreHook();
     if (Date.now() < startupQuietUntil || !siteConfigStore.syncedSnapshot) {
       siteConfigStore.captureSyncedSnapshot();
+      // 偏好比对基线（「撤销本次调整」的比对基准与回填值）同步重捕：启动期这些
+      // 回写同样不是用户改动（如站点配置下发 `#006BE6`、运行时归一为 `#006be6`），
+      // 不重捕会让面板一打开就带红点
+      siteConfigStore.capturePreferenceBaseline();
       return;
     }
     if (

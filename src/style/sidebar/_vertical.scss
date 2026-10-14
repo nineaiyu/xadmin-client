@@ -141,8 +141,9 @@ body[layout="vertical"] {
   .dropdown-badge,
     /* 用户名 */
   .el-dropdown-link,
-    /* 设置 */
-  .set-icon {
+    /* 设置（悬浮球形态自持主色 hover：`.app-wrapper.hideSidebar` 也包住右下角
+       悬浮球，套用浅色 hover 底会让白图标「消失」，见 lay-setting） */
+  .set-icon:not(.setting-fab) {
     &:hover {
       background: hsl(var(--fill-muted));
     }

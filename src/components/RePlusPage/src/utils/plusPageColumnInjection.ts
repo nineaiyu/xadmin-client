@@ -2,6 +2,7 @@ import { formatPublicLabels, uniqueArrayObj } from "./index";
 import type { OperationButtonsRow } from "../components/ButtonOperation";
 import { renderSwitch } from "./handle";
 import { OPERATION_COLUMN_KEY, SELECTION_COLUMN_KEY } from "./constants";
+import { DEFAULT_OPERATION_COLUMN_WIDTH } from "./operationColumnWidth";
 import type { Ref } from "vue";
 import type { PageColumn, RePlusPageProps } from "./types";
 import type { useI18n } from "vue-i18n";
@@ -87,7 +88,8 @@ export function injectOperationColumn({
         localeName ?? ""
       ) ?? "",
     fixed: "right",
-    width: operationButtonsProps?.width ?? 200,
+    // 配置宽度即列宽上限；实际宽度由 useTableLayout 按容器与内容收敛
+    width: operationButtonsProps?.width ?? DEFAULT_OPERATION_COLUMN_WIDTH,
     slot: "operation"
   });
 }

@@ -2,11 +2,7 @@
 import { computed, nextTick, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
-import {
-  RePlusPageProps,
-  type PageColumn,
-  type RecycleBinColumn
-} from "./utils/types";
+import { RePlusPageProps, type PageColumn } from "./utils/types";
 import { INJECTED_COLUMN_KEYS } from "./utils/constants";
 import ReRecycleBin from "./components/ReRecycleBin.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
@@ -15,12 +11,14 @@ import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import Delete from "~icons/ep/delete";
 import { PlusSearch, type RecordType } from "plus-pro-components";
 import type { ComponentSize } from "element-plus";
-import type { BaseApi } from "@/api/base";
 import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
 import { useTableA11y } from "./utils/useTableA11y";
 import { resolveTreeProps } from "./utils/treeProps";
 import { createApplySavedView } from "./utils/savedView";
 import { useTableLayout } from "./utils/useTableLayout";
+import { DEFAULT_OPERATION_COLUMN_WIDTH } from "./utils/operationColumnWidth";
+import { useOperationContentWidth } from "./utils/useOperationContentWidth";
+import { useRecycleBin } from "./utils/useRecycleBin";
 import { useTableMeasure } from "./utils/useTableMeasure";
 import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
 import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
@@ -210,11 +208,22 @@ useTableA11y({
   ]
 });
 
+// 操作列内容实测宽度（按钮随权限/行数据显隐）：收敛「一个按钮占一大片列宽」
+const { operationContentWidth } = useOperationContentWidth(
+  rootRef,
+  dataList,
+  loadingStatus
+);
+
 const { tableLayoutPending } = useTableLayout({
   tableElWidth,
   dynamicColumns: computed(() => tableBarData.value.dynamicColumns),
   listColumnsLength: computed(() => listColumns.value.length),
-  operationMinWidth: () => Number(props.operationButtonsProps?.width ?? 200)
+  operationConfiguredWidth: () =>
+    Number(
+      props.operationButtonsProps?.width ?? DEFAULT_OPERATION_COLUMN_WIDTH
+    ),
+  operationContentWidth: () => operationContentWidth.value
 });
 
 /** 搜索区展开/收起的过渡（实现见 utils/useSearchCardCollapse，含口径说明） */
@@ -226,37 +235,11 @@ function getTableRef() {
   return tableRef.value;
 }
 
-/**
- * 内建回收站入口。recycleBin prop 开启且具备 recycleList 权限时
- * 渲染通用回收站抽屉，数据变动直接联动本组件的 handleGetData，
- * 调用方无需再经 barButtons 插槽自行接线。
- */
-const recycleBinEnabled = computed(
-  () => !!props.recycleBin && !!props.auth?.recycleList
+// 内建回收站入口（计算属性见 utils/useRecycleBin）
+const { recycleBinEnabled, recycleBinColumns, recycleBinApi } = useRecycleBin(
+  props,
+  listColumns
 );
-/**
- * recycleBin 传数组 = 自定义列；传 true = 与主列表同字段展示
- * （回收站接口与 list 同口径序列化，剔除多选/操作列、透传 cellRenderer）
- */
-const recycleBinColumns = computed<RecycleBinColumn[]>(() => {
-  if (Array.isArray(props.recycleBin)) return props.recycleBin;
-  if (props.recycleBin !== true) return [];
-  return listColumns.value
-    .filter(
-      column =>
-        column.prop &&
-        !["selection", "operation"].includes(column._column?.key ?? "")
-    )
-    .map(column => ({
-      prop: column.prop,
-      label: column.label,
-      cellRenderer: column.cellRenderer as
-        RecycleBinColumn["cellRenderer"] | undefined
-    }));
-});
-// recycleBin 仅应配置在完整 BaseApi（含 recycle 三方法）的页面；
-// api prop 声明为 Partial<BaseApi> 以宽容各类页面，在此边界收窄
-const recycleBinApi = computed(() => props.api as BaseApi);
 
 defineExpose({
   dataList,

@@ -4,6 +4,8 @@ import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
 import { NAVBAR_FIXED_ORDER, resolveNavbarLayout } from "./widgets/catalog";
+import { isFullContent } from "@/layout/hooks/layoutModes";
+import { resolvePreferencesEntry } from "@/layout/hooks/preferencesEntry";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
@@ -47,30 +49,21 @@ watch(
   { deep: true }
 );
 
-/** 设置入口位置（五态）：none 不显示；user-dropdown 移入头像菜单；
- *  auto 档在水平布局走悬浮球（见 lay-setting），其余顶栏显示齿轮 */
-const preferencesPosition = computed(() => {
-  const position = $storage?.configure?.preferencesPosition ?? "header";
-  if (
-    position === "auto" &&
-    String($storage?.layout?.layout ?? "vertical") === "horizontal"
-  ) {
-    return "fixed";
-  }
-  return position;
-});
-const preferencesInHeader = computed(
-  () =>
-    ($storage?.configure?.enablePreferences ?? true) &&
-    preferencesPosition.value !== "none" &&
-    preferencesPosition.value !== "user-dropdown" &&
-    preferencesPosition.value !== "fixed"
+/**
+ * 设置入口形态：位置五态 + 总开关的判定收敛在 `resolvePreferencesEntry`
+ * （与右下角悬浮球同一份判定）。头像菜单项是兜底通道——「不显示」档与总开关
+ * 关闭时仍保留，保证任何时候都能重新打开面板。
+ */
+const preferencesEntry = computed(() =>
+  resolvePreferencesEntry({
+    enablePreferences: $storage?.configure?.enablePreferences,
+    preferencesPosition: $storage?.configure?.preferencesPosition,
+    horizontal: String($storage?.layout?.layout ?? "vertical") === "horizontal",
+    fullContent: isFullContent($storage?.layout?.layout)
+  })
 );
-const preferencesInDropdown = computed(
-  () =>
-    ($storage?.configure?.enablePreferences ?? true) &&
-    preferencesPosition.value === "user-dropdown"
-);
+const preferencesInHeader = computed(() => preferencesEntry.value.header);
+const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
 </script>
 
 <template>
@@ -212,13 +205,14 @@ const preferencesInDropdown = computed(
   }
 }
 
+/* 菜单宽度按最长项自适应（固定宽度会把「打开项目配置」挤成图标一行、文字一行） */
 .logout {
-  width: 120px;
+  min-width: 120px;
 
   :deep(.el-dropdown-menu__item) {
-    display: inline-flex;
-    flex-wrap: wrap;
-    min-width: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
   }
 }
 </style>

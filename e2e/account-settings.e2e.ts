@@ -9,6 +9,9 @@ import { login } from "./helpers";
  *    写入 `?tab=`，不触发路由导航，面板首屏请求不被 afterEach 取消链路中止）；
  * 2. 安全日志搜索区——filterset 缺失时页面只有「搜索」按钮没有字段（search-fields
  *    为空），修复后搜索区渲染登录状态 / 方式 / 来源等筛选控件。
+ * 3. 布局插件注册幂等——账户设置是无布局页面（`showLink: false`），往返会重建布局
+ *    组件，布局 setup 里重复 `app.use` 会命中 Vue 的「Plugin has already been
+ *    applied to target app」告警。
  */
 
 const paneMenuItem = (page: import("@playwright/test").Page, text: string) =>
@@ -65,4 +68,31 @@ test("安全日志：?tab= 直达渲染搜索区字段与本人登录记录", as
   await expect(page.locator(".el-table__row").first()).toBeVisible({
     timeout: 15_000
   });
+});
+
+test("账户设置往返：布局重建不重复注册 vue-tippy（无重复插件告警）", async ({
+  page
+}) => {
+  const dupeWarnings: string[] = [];
+  page.on("console", message => {
+    if (message.text().includes("Plugin has already been applied")) {
+      dupeWarnings.push(message.text());
+    }
+  });
+
+  await login(page);
+
+  // 无布局页 → 布局页 → 无布局页：每轮往返都会重建布局组件（修复前每轮告警一次）
+  for (let round = 0; round < 2; round++) {
+    await page.goto("/#/account-settings");
+    await expect(page.locator("h3").first()).toContainText("个人信息", {
+      timeout: 15_000
+    });
+    await page.goto("/#/welcome");
+    await expect(page.locator(".sidebar-container").first()).toBeVisible({
+      timeout: 15_000
+    });
+  }
+
+  expect(dupeWarnings).toEqual([]);
 });

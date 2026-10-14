@@ -360,6 +360,40 @@ const rootVar = (page: Page, name: string) =>
     name
   );
 
+/**
+ * 命中悬浮球的 `.set-icon:hover` 规则选择器（判定 = 去掉 `:hover` 后仍匹配该元素）。
+ *
+ * 悬浮球自带主色底 + 白色图标，一旦被顶栏动作项的浅色 hover 规则命中，
+ * 悬停时就会出现「白球消失」——返回空数组才是正确形态。
+ */
+const fabHoverRuleSelectors = (page: Page) =>
+  page.evaluate(() => {
+    const fab = document.querySelector(".setting-fab");
+    if (!fab) return ["missing-fab"];
+    const hits: string[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRule[];
+      try {
+        rules = Array.from(sheet.cssRules) as CSSRule[];
+      } catch {
+        // 跨域样式表读不到规则，跳过
+        continue;
+      }
+      for (const rule of rules) {
+        const selector = (rule as CSSStyleRule).selectorText;
+        if (!selector?.includes(".set-icon") || !selector.includes(":hover")) {
+          continue;
+        }
+        const matched = selector
+          .split(",")
+          .map(part => part.replace(/:hover/g, "").trim())
+          .some(part => part.length > 0 && fab.matches(part));
+        if (matched) hits.push(selector);
+      }
+    }
+    return hits;
+  });
+
 /** 主题预设色卡（title 为预设名称，key 为偏好取值） */
 async function pickThemePreset(page: Page, label: string, key: string) {
   const item = page.locator(
@@ -2154,7 +2188,7 @@ test.describe("布局偏好（面板实时生效）", () => {
       .toBe(true);
   });
 
-  test("偏好入口：位置切悬浮球；总开关关闭后入口与快捷键同步失效", async ({
+  test("偏好入口：位置切悬浮球；总开关关闭后仍可从头像菜单与快捷键找回", async ({
     page
   }) => {
     const headerGear = page.locator(".navbar .set-icon");
@@ -2194,7 +2228,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(headerGear).toBeVisible({ timeout: 10_000 });
     await expect(floating).toHaveCount(0);
 
-    // 总开关关闭：二次确认（恢复路径见提示文案）
+    // 总开关关闭：二次确认（提示文案给出兜底入口）
     await openSettingPanel(page);
     await switchSettingTab(page, "通用");
     const toggle = row(page, /设置入口|Settings entry/).locator(".el-switch");
@@ -2208,33 +2242,158 @@ test.describe("布局偏好（面板实时生效）", () => {
     });
     await expect(toggle.locator("input[type=checkbox]")).not.toBeChecked();
 
-    // 关闭后：两个入口都不渲染、快捷键不再唤起面板
+    // 关闭后：显眼入口（顶栏齿轮 / 悬浮球）都不渲染
     await closePanel(page);
     await expect(headerGear).toHaveCount(0);
     await expect(floating).toHaveCount(0);
+
+    // 兜底通道一：快捷键仍能唤出面板——入口全关不能把用户锁在门外
+    // （「打开项目配置」是恢复入口的唯一可见通道，不随入口设置失效）
     await page.keyboard.press("Control+,");
-    await page.waitForTimeout(300);
+    await expect(page.locator(".right-panel").first()).toBeVisible({
+      timeout: 10_000
+    });
+
+    // 面板内就地恢复总开关（无需清本地存储）
+    await switchSettingTab(page, "通用");
+    await setSwitch(page, /设置入口|Settings entry/, true, "EnablePreferences");
+    await closePanel(page);
+    await expect(headerGear).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("偏好入口：不显示档仍可从头像菜单找回面板", async ({ page }) => {
+    const headerGear = page.locator(".navbar .set-icon");
+    const floating = page.locator(".setting-fab");
+
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(
+      page,
+      "none",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
+    await closePanel(page);
+    await expect(headerGear).toHaveCount(0);
+    await expect(floating).toHaveCount(0);
+
+    // 兜底通道二：头像菜单保留「打开项目配置」项
+    await page
+      .locator(
+        ".navbar .el-dropdown-link, .horizontal-header-right .el-dropdown-link"
+      )
+      .first()
+      .click();
+    const entryItem = page
+      .locator(".el-dropdown-menu:visible")
+      .getByText(/打开项目配置|Open ProjectConfig/)
+      .first();
+    await expect(entryItem).toBeVisible({ timeout: 10_000 });
+    await entryItem.click();
+    await expect(page.locator(".right-panel").first()).toBeVisible({
+      timeout: 10_000
+    });
+
+    // 复位：位置回顶栏
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(
+      page,
+      "header",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
+    await closePanel(page);
+    await expect(headerGear).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("悬浮球：可拖到任意位置、记忆位置且不误触面板", async ({ page }) => {
+    const floating = page.locator(".setting-fab");
+
+    await openMenuPath(page, ["系统管理"], "/system/user/index");
+    await openSettingPanel(page);
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(
+      page,
+      "fixed",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
+    await closePanel(page);
+    await expect(floating).toBeVisible({ timeout: 10_000 });
+
+    // 悬停不落浅底（回归守卫）：悬浮球沿用 `.set-icon` 类做定位契约，
+    // 侧栏折叠时 `.app-wrapper.hideSidebar` 里的顶栏动作项浅色 hover 规则
+    // 会经后代选择器命中它——白图标压在浅底上等于「球消失」。
+    // 判据不采样 hover 态（dev 下样式注入顺序会让采样抖动），改为断言
+    // 「没有任何 `.set-icon:hover` 规则能匹配这颗球」，即该缺陷形态本身。
+    const collapsed = page.locator(".app-wrapper.hideSidebar");
+    // 先归一为展开态（残留状态不定），再折叠复现触发条件
+    if ((await collapsed.count()) === 1) await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+    await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+    const fabHoverRules = await fabHoverRuleSelectors(page);
+    expect(fabHoverRules).toEqual([]);
+    // 展开恢复（侧栏收起会影响到后续用例的菜单定位）
+    await page.keyboard.press("Alt+s");
+    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+    await page.mouse.move(600, 400);
+
+    const before = await floating.boundingBox();
+    if (!before) throw new Error("悬浮球不可见");
+    const from = {
+      x: before.x + before.width / 2,
+      y: before.y + before.height / 2
+    };
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x - 320, from.y - 220, { steps: 10 });
+    await page.mouse.up();
+
+    // 拖动生效：球左上角跟着指针移动，位置写入本地偏好
+    const after = await floating.boundingBox();
+    if (!after) throw new Error("拖动后悬浮球消失");
+    expect(after.x).toBeLessThan(before.x - 200);
+    expect(after.y).toBeLessThan(before.y - 100);
+    const saved = await page.evaluate(() =>
+      JSON.parse(
+        localStorage.getItem("responsive-preferences-fab-position") ?? "null"
+      )
+    );
+    expect(saved?.x).toBeCloseTo(after.x, 0);
+
+    // 拖拽松手不触发点击：设置面板保持关闭（面板收起 = 移出视口右侧）
     const width = page.viewportSize()?.width ?? 1280;
     expect(
       (await page.locator(".right-panel").first().boundingBox())?.x ?? 0
     ).toBeGreaterThanOrEqual(width - 20);
 
-    // 恢复路径：直写站点配置 + 本地存储后重载即可找回入口。
-    // 先等关闭动作的自动保存（600ms 防抖）落地，避免恢复被在途保存覆盖
-    await page.waitForTimeout(800);
-    await patchSiteConfig(page, {
-      EnablePreferences: true,
-      PreferencesPosition: "header"
-    });
-    await page.evaluate(() => {
-      const raw = localStorage.getItem("responsive-configure");
-      if (!raw) return;
-      const cfg = JSON.parse(raw);
-      cfg.enablePreferences = true;
-      localStorage.setItem("responsive-configure", JSON.stringify(cfg));
-    });
+    // 位置记忆：重载后仍落在拖动后的位置
     await page.reload();
-    await expect(headerGear).toBeVisible({ timeout: 15_000 });
+    await expect(floating).toBeVisible({ timeout: 15_000 });
+    const afterReload = await floating.boundingBox();
+    expect(Math.abs((afterReload?.x ?? 0) - after.x)).toBeLessThanOrEqual(1);
+
+    // 复位：位置回顶栏 + 清掉位置记录（避免污染后续批次）
+    await floating.click();
+    await expect(page.locator(".right-panel").first()).toBeVisible({
+      timeout: 10_000
+    });
+    await switchSettingTab(page, "通用");
+    await setPrefChoice(
+      page,
+      "header",
+      "PreferencesPosition",
+      /入口位置|Entry position/
+    );
+    await closePanel(page);
+    await page.evaluate(() =>
+      localStorage.removeItem("responsive-preferences-fab-position")
+    );
+    await expect(page.locator(".navbar .set-icon")).toBeVisible({
+      timeout: 10_000
+    });
   });
 
   test("侧栏：折叠态默认只显示图标，悬停临时展开恢复标题", async ({ page }) => {
@@ -3097,19 +3256,38 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(tabsRoot).not.toHaveClass(/setting-tabs--sticky/);
     await expect(pin).toHaveAttribute("aria-pressed", "false");
 
-    // 关闭「显示复制偏好按钮」：页脚复制按钮消失
+    // 关闭「显示复制偏好按钮」：页脚「更多」菜单里的复制项消失
     await switchSettingTab(page, "通用");
-    const copyButton = panel
-      .locator(".lay-panel__footer .el-button")
-      .filter({ hasText: /复制偏好|Copy preferences/ });
-    await expect(copyButton).toHaveCount(1);
+    const moreTrigger = panel.locator(".lay-panel__footer-more");
+    const moreMenu = page.locator(".el-dropdown-menu:visible");
+    const copyItem = () =>
+      moreMenu
+        .locator(".el-dropdown-menu__item")
+        .filter({ hasText: /复制偏好|Copy preferences/ });
+    // 开合收敛为确定性步骤：菜单不残留开启态，后续断言才不会被「点一下反而关掉」干扰
+    const openMore = async () => {
+      await moreTrigger.click();
+      await expect(moreMenu).toHaveCount(1, { timeout: 10_000 });
+    };
+    // 收起菜单：点面板头部（面板内、弹层外）——Escape 在 EP 下拉上不生效；
+    // 不能点遮罩（会连带关掉整个面板），头部标题区为纯展示元素，最稳
+    const closeMore = async () => {
+      await panel.locator(".lay-panel__title").click();
+      await expect(moreMenu).toHaveCount(0, { timeout: 10_000 });
+    };
+
+    await openMore();
+    await expect(copyItem()).toHaveCount(1);
+    await closeMore();
     await setSwitch(
       page,
       /显示复制偏好按钮|Show copy-preferences button/,
       false,
       "EnableCopyPreferences"
     );
-    await expect(copyButton).toHaveCount(0);
+    await openMore();
+    await expect(copyItem()).toHaveCount(0);
+    await closeMore();
 
     // 复位：复制按钮开关恢复，吸顶重新开启
     await setSwitch(
@@ -3118,7 +3296,9 @@ test.describe("布局偏好（面板实时生效）", () => {
       true,
       "EnableCopyPreferences"
     );
-    await expect(copyButton).toHaveCount(1);
+    await openMore();
+    await expect(copyItem()).toHaveCount(1);
+    await closeMore();
     await waitForSiteConfigPatch(
       page,
       "PreferencesStickyNav",
@@ -3130,30 +3310,58 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(tabsRoot).toHaveClass(/setting-tabs--sticky/);
   });
 
-  test("偏好：重置配置按钮脏标记随偏好差异联动", async ({ page }) => {
+  test("偏好：撤销本次调整按钮脏标记随偏好差异联动", async ({ page }) => {
     await openSettingPanel(page);
-    const resetButton = page
-      .locator(".right-panel .lay-panel__footer .el-button")
+    const footer = page.locator(".right-panel .lay-panel__footer");
+    const undoButton = footer
+      .locator(".el-button")
+      .filter({ hasText: /撤销本次调整|Undo session changes/ })
+      .first();
+    const defaultsButton = footer
+      .locator(".el-button")
+      .filter({ hasText: /恢复默认|Restore defaults/ })
       .first();
     const dirtyDot = page.locator(".right-panel .lay-panel__dirty-dot");
 
     // 以初始态为基准（跑批环境可能有其它未复位差异，不做绝对「干净」假设）
-    const initiallyDisabled = await resetButton.isDisabled();
+    const initiallyDisabled = await undoButton.isDisabled();
     const initialDotCount = await dirtyDot.count();
+    // 「恢复默认」与本次会话改动无关：任何时刻都可用（确认框后清除个人偏好）
+    await expect(defaultsButton).toBeEnabled();
 
-    // 产生差异：打开紧凑模式 → 标记出现、按钮可用
+    // 产生差异：切换紧凑模式 → 标记出现、撤销按钮可用
     await switchSettingTab(page, "通用");
-    await setSwitch(page, /紧凑模式|Compact mode/, true, "CompactMode");
+    const baseline = await storedPreferenceValue(page, "CompactMode");
+    await setSwitch(
+      page,
+      /紧凑模式|Compact mode/,
+      baseline !== true,
+      "CompactMode"
+    );
     await expect(dirtyDot).toBeVisible({ timeout: 10_000 });
-    await expect(resetButton).toBeEnabled();
+    await expect(undoButton).toBeEnabled();
 
-    // 消除差异：切回基线值 → 回到初始态
-    await setSwitch(page, /紧凑模式|Compact mode/, false, "CompactMode");
+    // 撤销本次调整：回填到打开面板时的基线（本地即时生效 + 立即整包落库）
+    await waitForSiteConfigPatch(
+      page,
+      "CompactMode",
+      baseline as boolean,
+      async () => {
+        await undoButton.click();
+      }
+    );
+    expect(await storedPreferenceValue(page, "CompactMode")).toBe(baseline);
+    // 面板控件（本地快照型组件已重挂载）同步显示回退后的值
+    await expect(
+      row(page, /紧凑模式|Compact mode/)
+        .locator("input[type=checkbox]")
+        .first()
+    ).toBeChecked({ checked: baseline === true });
     if (initialDotCount === 0) {
       await expect(dirtyDot).toHaveCount(0, { timeout: 10_000 });
     }
     if (initiallyDisabled) {
-      await expect(resetButton).toBeDisabled({ timeout: 10_000 });
+      await expect(undoButton).toBeDisabled({ timeout: 10_000 });
     }
   });
 

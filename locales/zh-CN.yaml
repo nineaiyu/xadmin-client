@@ -366,7 +366,7 @@ layout:
   impersonating: 正在模拟用户「{ user }」，所有操作将以该用户身份执行并留痕，点击退出模拟
   impersonateExit: 退出模拟
   impersonateExitFailed: 退出模拟失败，请重试
-  resetConfigSuccess: 项目配置重置成功
+  resetConfigSuccess: 个人偏好已恢复默认
   saveConfigFailed: 项目配置自动保存失败，请检查网络后重试
   notice: 消息通知
   announcement: 系统公告
@@ -666,22 +666,24 @@ layout:
   shortcutReserved: 该组合为浏览器保留键，请换一组
   shortcutConflict: 该组合已被其它动作占用，请换一组
   copyPreferences: 复制偏好
-  copyPreferencesTip: 复制当前完整界面偏好（语言 / 布局 / 主题 / 界面开关），反馈问题时一并贴出
-  copyPreferencesSuccess: 界面偏好已复制到剪贴板
+  copyPreferencesTip: 复制完整的平台配置（含全部字段），可整文件覆盖 platform-config.json，或整段粘贴为「系统配置」站点配置项的值
+  copyPreferencesSuccess: 平台配置已复制（可整文件覆盖 platform-config.json）
   enableCopyPreferences: 显示复制偏好按钮
-  enableCopyPreferencesTip: 面板底部提供一键复制当前界面偏好的按钮
+  enableCopyPreferencesTip: 面板底部「更多」菜单提供一键复制完整平台配置的入口
   cleanOut: 清空缓存并返回登录页
   preferencesEntry: 偏好入口
   enablePreferences: 设置入口
-  enablePreferencesTip: 显示顶栏齿轮或右下角悬浮球入口
-  enablePreferencesOffConfirm: 关闭后设置入口与「打开项目配置」快捷键将隐藏。重新打开：清除浏览器本地存储中的 responsive-configure 键后刷新页面。确认关闭？
+  enablePreferencesTip: 显示顶栏齿轮或右下角悬浮球入口（关闭后仍可从头像菜单与快捷键打开面板）
+  enablePreferencesOffConfirm: 关闭后顶栏齿轮 / 悬浮球入口隐藏，头像菜单里保留「系统设置」一项，快捷键（默认 ⌘/Ctrl + ,）仍可打开面板。确认关闭？
   preferencesPosition: 入口位置
-  preferencesPositionTip: 顶栏齿轮 / 悬浮球 / 头像菜单 / 自动（水平布局走悬浮球）/ 不显示
+  preferencesPositionTip: 顶栏齿轮 / 悬浮球（可拖动）/ 头像菜单 / 自动（水平布局走悬浮球）/ 不显示（隐藏后仍可从头像菜单与快捷键打开）
   preferencesPositionHeader: 顶栏
   preferencesPositionFixed: 悬浮球
   preferencesPositionUserDropdown: 头像菜单
   preferencesPositionAuto: 自动
   preferencesPositionNone: 不显示
+  preferencesFabTip: 点击打开设置面板，按住可拖到任意位置
+  preferencesHiddenNotice: 设置入口已隐藏：可用快捷键 Ctrl / ⌘ + , 或头像菜单里的「系统设置」重新打开
   preferencesStickyNavEnable: 吸顶页签导航
   preferencesStickyNavDisable: 取消吸顶
   noticeTime: YYYY年MM月DD日 HH:mm:ss
@@ -692,7 +694,6 @@ layout:
   skipToContent: 跳到主内容
   updateCheck: 检测到新版本
   updateNow: 立即更新
-  clearCache: 清空缓存
   light: 浅色
   dark: 深色
   auto: 自动
@@ -734,8 +735,16 @@ layout:
   lockScreenBack: 返回登录页
   saveConfig: 保存
   saveConfigTip: 将当前项目配置保存到服务器
-  resetConfig: 重置
-  resetConfigTip: 重置为默认项目配置并刷新页面
+  revertChanges: 撤销本次调整
+  revertChangesTip: 放弃本次设置面板中的全部改动，回到打开面板时的状态
+  revertChangesSuccess: 已撤销本次调整
+  resetConfig: 恢复默认
+  resetConfigTip: 清除你的个人偏好，回到站点默认（管理员统一配置）
+  resetConfigConfirm: 将清除你的个人偏好并回到站点默认配置，是否继续？
+  resetSiteWide: 恢复站点默认
+  resetSiteWideConfirm: 将站点标题 / Logo 品牌位 / 登录页布局恢复为平台默认值，并对全部用户与登录页立即生效，是否继续？
+  resetSiteWideSuccess: 站点级外观已恢复默认
+  panelMoreTip: 更多操作：恢复站点默认 / 复制偏好 / 清空缓存并返回登录页
 
 error:
   error403: 抱歉，你无权访问该页面

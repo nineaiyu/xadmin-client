@@ -44,17 +44,35 @@ const setup = () => {
     { _column: { key: "operation" }, width: 260 }
   ]);
   const listColumnsLength = ref(2);
+  /** 操作列内容实测宽度（0 = 未测到） */
+  const contentWidth = ref(0);
   const scope = effectScope();
   const api = scope.run(() =>
     useTableLayout({
       tableElWidth,
       dynamicColumns: columns,
       listColumnsLength,
-      operationMinWidth: () => 260
+      operationConfiguredWidth: () => 260,
+      operationContentWidth: () => contentWidth.value
     })
   )!;
-  return { api, columns, listColumnsLength, scope };
+  return {
+    api,
+    columns,
+    tableElWidth,
+    listColumnsLength,
+    contentWidth,
+    scope
+  };
 };
+
+const operationWidth = (columns: { value: Array<Record<string, unknown>> }) =>
+  (
+    columns.value.find(
+      column =>
+        (column._column as { key?: string } | undefined)?.key === "operation"
+    ) as { width?: number } | undefined
+  )?.width;
 
 describe("useTableLayout（列首帧隐藏窗口）", () => {
   it(`列集合变化立即隐藏，并在第 ${LAYOUT_HOLD_FRAMES} 帧后恢复显示`, async () => {
@@ -101,11 +119,33 @@ describe("useTableLayout（列首帧隐藏窗口）", () => {
     const { api, columns, scope } = setup();
     await nextTick();
 
-    const operation = columns.value.find(
-      column =>
-        (column._column as { key?: string } | undefined)?.key === "operation"
-    ) as { width?: number } | undefined;
-    expect(operation?.width).toBe(260);
+    expect(operationWidth(columns)).toBe(260);
+    expect(api.alignedOperationWidth.value).toBe(260);
+    scope.stop();
+  });
+
+  it("内容实测宽度到达后就地收敛操作列宽度（按钮随权限显隐）", async () => {
+    const { api, columns, contentWidth, scope } = setup();
+    await nextTick();
+    expect(operationWidth(columns)).toBe(260);
+
+    // 数据渲染后实测：只剩一个按钮（含内边距 90px），列宽随之收敛
+    contentWidth.value = 90;
+    await nextTick();
+    expect(api.alignedOperationWidth.value).toBe(90);
+    expect(operationWidth(columns)).toBe(90);
+    scope.stop();
+  });
+
+  it("内容宽度超过配置宽度时不反向撑宽（所见即配置）", async () => {
+    const { api, tableElWidth, contentWidth, scope } = setup();
+    await nextTick();
+
+    // 容器变窄触发横向滚动 + 内容（300）比配置（260）宽：
+    // 下限取配置宽度，结果与既有「按配置渲染」一致，不反向撑宽
+    tableElWidth.value = 300;
+    contentWidth.value = 300;
+    await nextTick();
     expect(api.alignedOperationWidth.value).toBe(260);
     scope.stop();
   });

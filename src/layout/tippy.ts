@@ -14,7 +14,16 @@ import type { App } from "vue";
  *
  * 保留全局注册：模块级 directives 覆盖不到 JSX 里的 `v-tippy`
  * （如表格栏 `RePureTableBar/src/bar.tsx` 走 `resolveDirective` 解析）。
+ *
+ * 幂等：布局是可重复挂载的路由组件——账号设置 / 登录 / 邀请激活等
+ * `showLink: false` 的页面不套布局，从这些页面返回时布局会重建，本函数随 setup
+ * 再次执行；对同一应用重复 `app.use(TippyPlugin)` 会命中 Vue 的
+ * "Plugin has already been applied to target app" 告警（指令/组件被重复注册）。
  */
+const installedApps = new WeakSet<App>();
+
 export function setupTippy(app: App) {
+  if (installedApps.has(app)) return;
+  installedApps.add(app);
   app.use(TippyPlugin);
 }

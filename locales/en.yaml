@@ -366,7 +366,7 @@ layout:
   impersonating: Impersonating "{ user }" — all actions run as this user and are audited. Click to exit
   impersonateExit: Exit impersonation
   impersonateExitFailed: Failed to exit impersonation, please retry
-  resetConfigSuccess: Site configuration reset
+  resetConfigSuccess: Personal preferences restored to defaults
   saveConfigFailed: Auto-saving the site configuration failed, please check the network and retry
   notice: Notice
   announcement: Announcement
@@ -667,22 +667,24 @@ layout:
   shortcutReserved: Reserved by the browser, please pick another combination
   shortcutConflict: Already used by another action, please pick another combination
   copyPreferences: Copy preferences
-  copyPreferencesTip: Copy the full current UI preferences (locale, layout, theme, switches) to attach to bug reports
-  copyPreferencesSuccess: UI preferences copied to the clipboard
+  copyPreferencesTip: Copy the complete platform config (all fields) to overwrite platform-config.json as a whole, or paste it as the site config item value in System Config
+  copyPreferencesSuccess: Platform config copied (ready to overwrite platform-config.json)
   enableCopyPreferences: Show copy-preferences button
-  enableCopyPreferencesTip: Show a button at the panel footer to copy the full current UI preferences
+  enableCopyPreferencesTip: Show a copy entry in the panel footer "More" menu for the complete platform config
   cleanOut: Clear the cache and return the login page
   preferencesEntry: Preferences entry
   enablePreferences: Settings entry
-  enablePreferencesTip: Show the header gear or the floating ball at the bottom-right
-  enablePreferencesOffConfirm: "Turning this off hides the settings entry and the open-preferences shortcut. To reopen it: clear the responsive-configure key in browser local storage and refresh the page. Turn it off?"
+  enablePreferencesTip: Show the header gear or the floating ball at the bottom-right (the user menu and the shortcut still open the panel when off)
+  enablePreferencesOffConfirm: "Turning this off hides the header gear and the floating ball. The settings item stays in the user menu and the shortcut (⌘/Ctrl + , by default) still opens the panel. Turn it off?"
   preferencesPosition: Entry position
-  preferencesPositionTip: Header gear, floating ball, user menu, auto (floating ball in horizontal layout) or hidden
+  preferencesPositionTip: "Header gear, floating ball (draggable), user menu, auto (floating ball in horizontal layout) or hidden (still reachable from the user menu and the shortcut)"
   preferencesPositionHeader: Header
   preferencesPositionFixed: Floating ball
   preferencesPositionUserDropdown: User menu
   preferencesPositionAuto: Auto
   preferencesPositionNone: Hidden
+  preferencesFabTip: Click to open the settings panel, drag to move it anywhere
+  preferencesHiddenNotice: Settings entry hidden. Reopen it with the shortcut Ctrl / ⌘ + , or the settings item in the user menu
   preferencesStickyNavEnable: Sticky tab navigation
   preferencesStickyNavDisable: Unpin tab navigation
   noticeTime: YYYY-MM-DD HH:mm:ss
@@ -692,7 +694,6 @@ layout:
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now
-  clearCache: Clear Cache
   light: Light
   dark: Dark
   auto: Auto
@@ -734,8 +735,16 @@ layout:
   customTip: Minimum 1280, maximum 1600
   saveConfig: Save
   saveConfigTip: Save the current site configuration to the server
-  resetConfig: Reset
-  resetConfigTip: Reset to the default project configuration and reload
+  revertChanges: Undo session changes
+  revertChangesTip: Discard all changes made in this panel and return to the state when it was opened
+  revertChangesSuccess: Session changes undone
+  resetConfig: Restore defaults
+  resetConfigTip: Clear your personal preferences and fall back to the site defaults (managed by administrators)
+  resetConfigConfirm: This clears your personal preferences and falls back to the site default configuration. Continue?
+  resetSiteWide: Restore site defaults
+  resetSiteWideConfirm: This restores the site title / logo / login page layout to the platform defaults and takes effect immediately for all users and the login page. Continue?
+  resetSiteWideSuccess: Site appearance restored to defaults
+  panelMoreTip: "More actions: restore site defaults / copy preferences / clear cache and return to login page"
 
 error:
   error403: Sorry, you are not authorized to access this page

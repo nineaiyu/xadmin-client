@@ -16,6 +16,11 @@ import {
  * 无横向滚动时同样保持配置宽度。计算只依赖容器宽与数据列宽
  * （不含操作列自身），重算幂等、无循环。
  *
+ * **按内容收敛（操作列宽而空）**：列内按钮随权限点与行数据显隐，实测内容宽度
+ * （useOperationContentWidth）作为列宽下限，避免「一个按钮占一大片列宽」。
+ * 收敛只在无横向滚动（无覆盖）或能落在列边界上（无跨界列）时发生，不会引入
+ * 新的「半个字」。
+ *
  * **列首帧隐藏（列表页 CLS 主因）**：el-table 在列挂载后用 rAF 才计算
  * 列宽（EP `requestAnimationFrame(doLayout)`），列挂载后的第一帧仍是浏览器对未定宽列
  * 的均分宽度——长表头换行（实测表头 155px → 41px）、单元格变高（86px → 53px），下一帧
@@ -41,15 +46,23 @@ export function useTableLayout(options: {
   dynamicColumns: Ref<Array<Record<string, unknown>> | undefined>;
   /** 主列表列数（列可能被就地 splice/push，长度变化也要重算） */
   listColumnsLength: Ref<number>;
-  /** 操作列配置的最小宽度 */
-  operationMinWidth: () => number;
+  /** 页面为操作列配置的宽度（列宽上限基准） */
+  operationConfiguredWidth: () => number;
+  /** 操作列内容实测所需宽度（0 = 未测到，按配置宽度渲染） */
+  operationContentWidth: () => number;
 }) {
-  /** 对齐后的操作列宽度（无横向滚动时等于页面配置宽度） */
+  /**
+   * 对齐 + 按内容收敛后的操作列宽度。
+   *
+   * 内容（按钮随权限/行数据显隐）来自 useOperationContentWidth 的实测值：它随
+   * 数据渲染后写入，watch 随之重算并就地改写列宽（同一帧内完成，不产生跳变）。
+   */
   const alignedOperationWidth = computed(() =>
     resolveOperationColumnWidth(
       options.tableElWidth.value,
       collectDataColumnWidths(options.dynamicColumns.value ?? []),
-      options.operationMinWidth()
+      options.operationContentWidth(),
+      options.operationConfiguredWidth()
     )
   );
 

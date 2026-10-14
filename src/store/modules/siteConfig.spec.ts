@@ -114,3 +114,29 @@ describe("siteConfig 实时自动保存", () => {
     expect(mocks.message).not.toHaveBeenCalled();
   });
 });
+
+describe("siteConfig 面板级批量偏好落库（撤销 / 恢复站点默认共用）", () => {
+  it("立即整包 PATCH 并弹自定义成功提示，同时捕获已同步快照", async () => {
+    const store = useSiteConfigStoreHook();
+    await store.persistPreferences("已撤销本次调整");
+    expect(mocks.setSiteConfig).toHaveBeenCalledTimes(1);
+    expect(mocks.message).toHaveBeenCalledWith("已撤销本次调整", {
+      type: "success"
+    });
+    // 快照已同步：布局层常驻防抖监听据此判为无差异，不再重复 PATCH
+    expect(store.syncedSnapshot).not.toBeNull();
+    expect(store.syncedSnapshot?.configure).toMatchObject({
+      tagsStyle: "chrome"
+    });
+  });
+
+  it("落库失败弹失败提示，不抛错（调用方无需 catch）", async () => {
+    mocks.setSiteConfig.mockRejectedValueOnce(new Error("network"));
+    const store = useSiteConfigStoreHook();
+    await expect(
+      store.persistPreferences("已撤销本次调整")
+    ).resolves.toBeUndefined();
+    expect(mocks.message).toHaveBeenCalledTimes(1);
+    expect(mocks.message.mock.calls[0][0]).toContain("自动保存失败");
+  });
+});

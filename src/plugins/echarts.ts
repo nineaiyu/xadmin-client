@@ -26,7 +26,9 @@ export function loadEcharts(app?: App) {
       components.TitleComponent,
       components.TooltipComponent,
       components.DataZoomComponent,
-      components.LegendComponent
+      components.LegendComponent,
+      // 极坐标系：工作台「趋势数据不足」的环形占位图（ChartRound）用 polar + bar 绘制
+      components.PolarComponent
     ]);
     // 图表文字字体栈：zrender 把 font-family 写为行内样式，外部 CSS 覆盖不到，
     // 随主题名（页面统一传 theme: "light" | "dark"）在 init 层注入应用字体栈。

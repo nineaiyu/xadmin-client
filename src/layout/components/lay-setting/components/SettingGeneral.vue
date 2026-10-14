@@ -130,6 +130,14 @@ const prefsEnabled = computed(
   () => $storage?.configure?.enablePreferences ?? true
 );
 
+/** 隐藏入口后的提示：显眼入口消失，但头像菜单与快捷键仍能找回面板 */
+function notifyEntryHidden() {
+  message(t("layout.preferencesHiddenNotice"), {
+    type: "info",
+    duration: 5000
+  });
+}
+
 async function onPrefsEnabledChange(value: string | number | boolean) {
   if (Boolean(value)) {
     storageConfigureChange("enablePreferences", true);
@@ -138,13 +146,17 @@ async function onPrefsEnabledChange(value: string | number | boolean) {
   const ok = await confirm(t("layout.enablePreferencesOffConfirm"));
   if (!ok) return;
   storageConfigureChange("enablePreferences", false);
+  notifyEntryHidden();
 }
 
 /** 入口位置（五态）：
- *  auto = 水平布局走悬浮球、其余走顶栏齿轮；none = 不显示；user-dropdown = 收进头像菜单 */
+ *  auto = 水平布局走悬浮球、其余走顶栏齿轮；none = 不显示显眼入口；user-dropdown = 收进头像菜单 */
 const preferencesPosition = computed<string>({
   get: () => $storage?.configure?.preferencesPosition ?? "header",
-  set: value => storageConfigureChange("preferencesPosition", value)
+  set: value => {
+    storageConfigureChange("preferencesPosition", value);
+    if (value === "none") notifyEntryHidden();
+  }
 });
 const preferencesPositionOptions = computed<PrefChoiceOption[]>(() => [
   { value: "auto", label: t("layout.preferencesPositionAuto") },

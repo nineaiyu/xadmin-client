@@ -11,12 +11,25 @@ import { ALIGN_TOLERANCE } from "../src/components/RePlusPage/src/utils/operatio
  * 裁切位置必然移动），因此只保留小幅修正（加宽 ≤ ALIGN_TOLERANCE），超出时
  * 严格按页面配置宽度渲染——见 operationColumnWidth.ts 的取舍注释。
  *
+ * 追加口径（按内容收敛）：操作列按钮随权限点与行数据显隐，列宽以内容实测宽度
+ * 为下限收敛（例如访问日志页只有图标按钮时 140 → 90）。
+ *
  * 断言口径：
  * 1. 所见即配置：操作列渲染宽度不得比页面配置宽度加宽超过容差（1px 舍入）；
- * 2. 对齐生效（确有加宽）时，初始位置不得存在跨过覆盖区左边界的列头。
+ * 2. 对齐生效（确有加宽）时，初始位置不得存在跨过覆盖区左边界的列头；
+ * 3. 内容不被裁切：渲染宽度不小于「内容实测宽度与配置宽度的较小者」；
+ * 4. 收敛（渲染宽度小于配置宽度）时同样不得存在跨界列头；
+ * 5. 内容远小于配置的页面（PAGES 的 maxWidth）确实收敛，守住实测链路的静默失效。
  */
 
-const PAGES = [
+/** 页面清单：opWidth = 页面配置宽度；maxWidth = 收敛后的宽度上限（可选，见列表项注释） */
+const PAGES: Array<{
+  name: string;
+  dirs: string[];
+  path: string;
+  opWidth: number;
+  maxWidth?: number;
+}> = [
   {
     name: "celery-task（列最多）",
     dirs: ["系统管理", "任务管理"],
@@ -33,7 +46,10 @@ const PAGES = [
     name: "logs-operation",
     dirs: ["系统管理", "日志管理"],
     path: "/system/logs/operation/index",
-    opWidth: 140
+    opWidth: 140,
+    // 该页操作列只有一个图标按钮（内容约 52px，远小于配置 140）：
+    // 断言确实发生了收敛（实测 62~90），守住「内容实测链路失效即回退配置宽度」的静默回归
+    maxWidth: 120
   },
   {
     name: "config-system",
@@ -99,10 +115,11 @@ for (const viewport of VIEWPORTS) {
           .toBe(true);
 
         const result = await page.evaluate(() => {
-          const table = document.querySelector(
-            ".re-plus-page .el-table"
-          ) as HTMLElement | null;
-          if (!table) return { missing: true, opWidth: null, crossing: [] };
+          const root = document.querySelector(".re-plus-page") as HTMLElement;
+          const table = root?.querySelector(".el-table") as HTMLElement | null;
+          if (!table) {
+            return { missing: true, opWidth: null, crossing: [], content: 0 };
+          }
           const tableRect = table.getBoundingClientRect();
           const ths = Array.from(
             table.querySelectorAll(".el-table__header th")
@@ -119,13 +136,40 @@ for (const viewport of VIEWPORTS) {
           const fixedTh = table.querySelector(
             ".el-table__header th.el-table-fixed-column--right"
           ) as HTMLElement | null;
-          if (!fixedTh) return { missing: false, opWidth: null, crossing: [] };
+          if (!fixedTh)
+            return { missing: false, opWidth: null, crossing: [], content: 0 };
           const fixedLeft =
             fixedTh.getBoundingClientRect().left - tableRect.left;
+
+          /** 单元格内容的自然宽度（强制 nowrap 后取内容盒跨度，含文本节点） */
+          const naturalWidth = (cell: HTMLElement) => {
+            const previous = cell.style.whiteSpace;
+            cell.style.whiteSpace = "nowrap";
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            const rect = range.getBoundingClientRect();
+            cell.style.whiteSpace = previous;
+            const style = getComputedStyle(cell);
+            const padding =
+              (parseFloat(style.paddingLeft) || 0) +
+              (parseFloat(style.paddingRight) || 0);
+            return rect.width + padding;
+          };
+          const opCells = [
+            fixedTh.querySelector(".cell"),
+            ...Array.from(
+              root.querySelectorAll(".el-table__body-wrapper .el-table__row")
+            ).map(row => row.lastElementChild?.firstElementChild)
+          ].filter((cell): cell is HTMLElement => cell instanceof HTMLElement);
+          const content = Math.ceil(
+            opCells.reduce((max, cell) => Math.max(max, naturalWidth(cell)), 0)
+          );
+
           // 1px 容差：列边界即覆盖区左边界（舍入误差不应触发误报）
           return {
             missing: false,
             opWidth: Math.round(fixedTh.getBoundingClientRect().width),
+            content,
             crossing: ths
               .filter(
                 t => !t.fixed && t.x < fixedLeft - 1 && t.right > fixedLeft + 1
@@ -147,6 +191,25 @@ for (const viewport of VIEWPORTS) {
             result.crossing,
             `对齐生效但存在跨过固定操作列左边界的列头: ${result.crossing.join(", ")}`
           ).toEqual([]);
+        }
+        // 3) 内容不被裁切：宽度不小于「内容实测宽度与配置宽度的较小者」
+        expect(
+          result.opWidth!,
+          `操作列被收窄到内容宽度以下（内容 ${result.content} / 实际 ${result.opWidth}）`
+        ).toBeGreaterThanOrEqual(Math.min(result.content, spec.opWidth) - 1);
+        // 4) 收敛（宽度小于配置）时同样不得有跨界列头
+        if (result.opWidth! < spec.opWidth - 1) {
+          expect(
+            result.crossing,
+            `收敛后存在跨过固定操作列左边界的列头: ${result.crossing.join(", ")}`
+          ).toEqual([]);
+        }
+        // 5) 内容远小于配置的页面确实发生收敛（守住实测链路的静默失效）
+        if (spec.maxWidth) {
+          expect(
+            result.opWidth!,
+            `操作列未按内容收敛：实际 ${result.opWidth} / 上限 ${spec.maxWidth}`
+          ).toBeLessThanOrEqual(spec.maxWidth);
         }
       });
     }
