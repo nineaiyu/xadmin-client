@@ -119,6 +119,11 @@ type BtnClickButton = {
 type ButtonProps = {
   /** 按钮文字 */
   label: string;
+  /**
+   * 稳定标识：框架默认按钮组携带（`cancel` / `sure`），footer loading 等
+   * 按此判定（替代数组下标）。自定义按钮可自带 `code` 参与同一机制。
+   */
+  code?: string;
   /** 按钮尺寸 */
   size?: "large" | "default" | "small";
   /** 按钮类型 */

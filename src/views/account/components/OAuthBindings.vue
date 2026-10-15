@@ -80,7 +80,10 @@ const unbind = (row: BindingRow) => {
   void ElMessageBox.prompt(t("oauth.unbindPasswordTip"), t("oauth.unbind"), {
     inputType: "password",
     inputPlaceholder: t("oauth.password"),
-    inputValidator: value => Boolean(value)
+    inputValidator: value => Boolean(value),
+    // 解绑是破坏性操作：确认钮着危险色（useConfirm 同口径；
+    // prompt 模式焦点本就在输入框，不存在回车误确认问题）
+    confirmButtonClass: "el-button--danger"
   })
     .then(({ value }) => oauthApi.unbind(row.pk, String(value)))
     .then(res => {

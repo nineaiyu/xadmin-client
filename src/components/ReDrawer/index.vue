@@ -52,7 +52,11 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
-            popConfirm: options?.popConfirm,
+            // 稳定标识：footer loading 按 code 判定（替代数组下标魔法数，
+            // 自定义 footerButtons 时不会把转圈落到错误按钮上）
+            code: "sure",
+            // 统一口径：popconfirm 为准，popConfirm 为 deprecated 别名
+            popconfirm: options?.popconfirm ?? options?.popConfirm,
             btnClick: ({ drawer: { options, index } }) => {
               // 以抽屉唯一标识（回退下标）作为状态键，避免多抽屉并存时下标漂移串状态
               const uid = getDrawerUid(options) ?? index;
@@ -66,7 +70,10 @@ const footerButtons = computed(() => {
                 );
               }
               const closeLoading = () => {
-                if (options?.sureBtnLoading) {
+                // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用，
+                // 如表单助手 finally 里补关 loading）：判空兜底，避免
+                // "Cannot set properties of undefined" 把 finally 变成未捕获拒绝
+                if (options?.sureBtnLoading && sureBtnMap.value[uid]) {
                   sureBtnMap.value[uid].loading = false;
                 }
               };
@@ -100,9 +107,8 @@ function handleCloseDrawer(
   args?: ArgsType
 ) {
   const uid = getDrawerUid(options) ?? index;
-  if (options?.sureBtnLoading && sureBtnMap.value[uid]?.loading) {
-    sureBtnMap.value[uid].loading = false;
-  }
+  // 关闭即清理该抽屉的运行时状态，避免无界累积与重开残留
+  delete sureBtnMap.value[uid];
   closeDrawer(options, index, args);
 }
 
@@ -172,8 +178,8 @@ function contentProps(options: DrawerOptions) {
       <span v-else>
         <template v-for="(btn, key) in footerButtons(options)" :key="key">
           <el-popconfirm
-            v-if="btn.popConfirm"
-            v-bind="btn.popConfirm"
+            v-if="btn.popconfirm ?? btn.popConfirm"
+            v-bind="btn.popconfirm ?? btn.popConfirm"
             @confirm="
               btn.btnClick?.({
                 drawer: { options, index },
@@ -188,7 +194,8 @@ function contentProps(options: DrawerOptions) {
           <el-button
             v-else
             :loading="
-              key === 1 && sureBtnMap[getDrawerUid(options) ?? index]?.loading
+              btn.code === 'sure' &&
+              sureBtnMap[getDrawerUid(options) ?? index]?.loading
             "
             v-bind="btn"
             @click="

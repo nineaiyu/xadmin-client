@@ -119,6 +119,46 @@ describe("ReDialog 弹层容器", () => {
     expect(dialogStore.value[0]?.visible).toBe(false);
   });
 
+  it("多弹层并存：全屏状态按弹层隔离，互不串扰且可独立退出", async () => {
+    mountContainer();
+    addDialog({
+      title: "甲",
+      fullscreenIcon: true,
+      contentRenderer: () => h("div", "甲")
+    });
+    addDialog({
+      title: "乙",
+      fullscreenIcon: true,
+      contentRenderer: () => h("div", "乙")
+    });
+    await nextTick();
+    await flushPromises();
+
+    const dialogs = () => Array.from(document.querySelectorAll(".el-dialog"));
+    const fullscreenIcons = () =>
+      Array.from(
+        document.querySelectorAll('[data-testid="dialog-fullscreen-toggle"]')
+      );
+
+    // 只点甲的全屏按钮：仅甲进入全屏（历史缺陷：共享 ref 会让乙同步全屏）
+    (fullscreenIcons()[0] as HTMLElement).click();
+    await nextTick();
+    expect(dialogs()[0].classList.contains("is-fullscreen")).toBe(true);
+    expect(dialogs()[1].classList.contains("is-fullscreen")).toBe(false);
+
+    // 乙也全屏：两者各自独立持有状态
+    (fullscreenIcons()[1] as HTMLElement).click();
+    await nextTick();
+    expect(dialogs()[0].classList.contains("is-fullscreen")).toBe(true);
+    expect(dialogs()[1].classList.contains("is-fullscreen")).toBe(true);
+
+    // 再点甲退出：乙不受影响（历史缺陷：乙的 open 事件会重置共享标志把甲带出全屏）
+    (fullscreenIcons()[0] as HTMLElement).click();
+    await nextTick();
+    expect(dialogs()[0].classList.contains("is-fullscreen")).toBe(false);
+    expect(dialogs()[1].classList.contains("is-fullscreen")).toBe(true);
+  });
+
   it("容器：自定义 footerButtons 覆盖默认页脚；hideFooter 时不渲染页脚", async () => {
     const custom = vi.fn();
     mountContainer();

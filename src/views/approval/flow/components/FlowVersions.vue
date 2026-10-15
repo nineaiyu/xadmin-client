@@ -49,7 +49,10 @@ const handleRollback = (version: number) => {
     {
       confirmButtonText: t("buttons.confirm"),
       cancelButtonText: t("buttons.cancel"),
-      inputPlaceholder: t("systemApprovalFlow.rollbackRemark")
+      inputPlaceholder: t("systemApprovalFlow.rollbackRemark"),
+      // 回滚是破坏性操作：确认钮着危险色（useConfirm 同口径；
+      // prompt 模式焦点本就在输入框，不存在回车误确认问题）
+      confirmButtonClass: "el-button--danger"
     }
   )
     .then(({ value }) => {

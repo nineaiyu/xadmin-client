@@ -106,6 +106,11 @@ type BtnClickButton = {
 type ButtonProps = {
   /** 按钮文字 */
   label: string;
+  /**
+   * 稳定标识：框架默认按钮组携带（`cancel` / `sure`），footer loading 等
+   * 按此判定（替代数组下标）。自定义按钮可自带 `code` 参与同一机制。
+   */
+  code?: string;
   /** 按钮尺寸 */
   size?: "large" | "default" | "small";
   /** 按钮类型 */
@@ -122,7 +127,12 @@ type ButtonProps = {
   round?: boolean;
   /** 是否为圆形按钮，默认 `false` */
   circle?: boolean;
-  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置 */
+  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置（与 ReDialog 同名同义） */
+  popconfirm?: PopConfirm;
+  /**
+   * @deprecated 拼写不统一的历史名（EP 官方为 popconfirm），保留兼容；
+   * 新代码一律用 `popconfirm`，读取时 `popconfirm ?? popConfirm`
+   */
   popConfirm?: PopConfirm;
   /** 是否为加载中状态，默认 `false` */
   loading?: boolean;
@@ -196,7 +206,12 @@ interface DrawerOptions<T = Record<string, unknown>> extends DrawerProps {
   props?: Record<string, unknown>;
   /** 是否隐藏 `Drawer` 按钮操作区的内容 */
   hideFooter?: boolean;
-  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置 */
+  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置（与 ReDialog 同名同义） */
+  popconfirm?: PopConfirm;
+  /**
+   * @deprecated 拼写不统一的历史名（EP 官方为 popconfirm），保留兼容；
+   * 新代码一律用 `popconfirm`，读取时 `popconfirm ?? popConfirm`
+   */
   popConfirm?: PopConfirm;
   /** 点击确定按钮后是否开启 `loading` 加载动画 */
   sureBtnLoading?: boolean;

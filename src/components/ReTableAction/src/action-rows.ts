@@ -64,18 +64,25 @@ export function toOperationRow(
     props: rowProps,
     show: () => checkActionVisible(item, hasPermission),
     tooltip: tooltip ? { content: tooltip } : undefined,
-    confirm: item.popConfirm
-      ? toConfirm(item.popConfirm, confirmTitle)
+    // 统一口径：popconfirm 为准，popConfirm 为 deprecated 别名
+    confirm: popconfirmOf(item)
+      ? toConfirm(popconfirmOf(item)!, confirmTitle)
       : undefined,
     onClick: params => {
-      // 确认型操作优先走 popConfirm.confirm，否则回退 onClick
-      if (item.popConfirm?.confirm) {
-        item.popConfirm.confirm();
+      // 确认型操作优先走确认回调，否则回退 onClick
+      const pc = popconfirmOf(item);
+      if (pc?.confirm) {
+        pc.confirm();
         return;
       }
       item.onClick?.({ row: params.row, item, loading: params.loading });
     }
   };
+}
+
+/** 读取操作项的气泡确认配置（popconfirm 为准，兼容 deprecated 的 popConfirm） */
+function popconfirmOf(item: ActionItem) {
+  return item.popconfirm ?? item.popConfirm;
 }
 
 /** 气泡确认框配置 → 操作按钮行模型的 confirm 字段 */

@@ -51,7 +51,12 @@ export interface ActionItem {
   loading?: boolean;
   /** 点击回调（确认型操作在确认后触发） */
   onClick?: (params: TableActionClickParams) => void;
-  /** 气泡确认框 */
+  /** 气泡确认框（与 ReDialog/ReDrawer 同名同义） */
+  popconfirm?: TableActionPopConfirm;
+  /**
+   * @deprecated 拼写不统一的历史名（EP 官方为 popconfirm），保留兼容；
+   * 新代码一律用 `popconfirm`
+   */
   popConfirm?: TableActionPopConfirm;
   /** 尺寸 */
   size?: "" | "default" | "small" | "large";

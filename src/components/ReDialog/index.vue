@@ -14,8 +14,27 @@ defineOptions({
 });
 
 const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
-const fullscreen = ref(false);
+/**
+ * 每个弹层的全屏运行时状态（按 uid 隔离，多弹层并存互不串扰）。
+ * 未命中时回退 `options.fullscreen` 初始值；每次 `addDialog` 分配新 uid，
+ * 因此重开弹层自然回到初始态。关闭时清理，避免无界累积。
+ */
+const fullscreenMap = ref<Record<string | number, boolean>>({});
 const { t } = useI18n();
+
+/** 当前弹层是否全屏（运行时状态优先，回退打开时的初始配置） */
+const isFullscreen = (options: DialogOptions, index: number) =>
+  fullscreenMap.value[getDialogUid(options) ?? index] ??
+  options?.fullscreen ??
+  false;
+
+/** 全屏切换：只改当前弹层的运行时状态，不影响其它并存弹层 */
+function toggleFullscreen(options: DialogOptions, index: number) {
+  const uid = getDialogUid(options) ?? index;
+  const next = !isFullscreen(options, index);
+  fullscreenMap.value[uid] = next;
+  eventsCallBack("fullscreenCallBack", { ...options, fullscreen: next }, index);
+}
 
 /**
  * 弹层打开期间锁定布局滚动容器：防止背景滚动穿透，并以滚动条槽位预留
@@ -54,6 +73,9 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
+            // 稳定标识：footer loading 按 code 判定（替代数组下标魔法数，
+            // 自定义 footerButtons 时不会把转圈落到错误按钮上）
+            code: "sure",
             popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
               // 以弹层唯一标识（回退下标）作为状态键，避免多弹层并存时下标漂移串状态
@@ -68,7 +90,10 @@ const footerButtons = computed(() => {
                 );
               }
               const closeLoading = () => {
-                if (options?.sureBtnLoading) {
+                // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用，
+                // 如表单助手 finally 里补关 loading）：判空兜底，避免
+                // "Cannot set properties of undefined" 把 finally 变成未捕获拒绝
+                if (options?.sureBtnLoading && sureBtnMap.value[uid]) {
                   sureBtnMap.value[uid].loading = false;
                 }
               };
@@ -99,10 +124,8 @@ const fullscreenClass = computed(() => {
 function eventsCallBack(
   event: EventType,
   options: DialogOptions,
-  index: number,
-  isClickFullScreen = false
+  index: number
 ) {
-  if (!isClickFullScreen) fullscreen.value = options?.fullscreen ?? false;
   if (options?.[event] && isFunction(options?.[event])) {
     return options?.[event]({ options, index });
   }
@@ -114,9 +137,9 @@ function handleCloseDialog(
   args?: ArgsType
 ) {
   const uid = getDialogUid(options) ?? index;
-  if (options?.sureBtnLoading && sureBtnMap.value[uid]?.loading) {
-    sureBtnMap.value[uid].loading = false;
-  }
+  // 关闭即清理该弹层的运行时状态（loading / 全屏），避免无界累积与重开残留
+  delete sureBtnMap.value[uid];
+  delete fullscreenMap.value[uid];
   closeDialog(options, index, args);
 }
 
@@ -155,7 +178,7 @@ function contentProps(options: DialogOptions) {
     v-bind="options"
     v-model="options.visible"
     class="pure-dialog"
-    :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
+    :fullscreen="isFullscreen(options, index)"
     :close-on-press-escape="options.closeOnPressEscape ?? true"
     @closed="handleClose(options, index)"
     @opened="eventsCallBack('open', options, index)"
@@ -169,30 +192,17 @@ function contentProps(options: DialogOptions) {
     >
       <div v-if="options?.fullscreenIcon" class="flex-bc">
         <span :id="titleId" :class="titleClass">{{ options?.title }}</span>
+        <!-- 静态 fullscreen 选项 = 常驻全屏（无可切换按钮）；
+             运行时全屏（点击切换）保留按钮，允许再点退出 -->
         <i
           v-if="!options?.fullscreen"
           :class="fullscreenClass"
-          @click="
-            () => {
-              fullscreen = !fullscreen;
-              eventsCallBack(
-                'fullscreenCallBack',
-                { ...options, fullscreen },
-                index,
-                true
-              );
-            }
-          "
+          data-testid="dialog-fullscreen-toggle"
+          @click="() => toggleFullscreen(options, index)"
         >
           <IconifyIconOffline
             class="pure-dialog-svg"
-            :icon="
-              options?.fullscreen
-                ? ExitFullscreen
-                : fullscreen
-                  ? ExitFullscreen
-                  : Fullscreen
-            "
+            :icon="isFullscreen(options, index) ? ExitFullscreen : Fullscreen"
           />
         </i>
       </div>
@@ -232,7 +242,8 @@ function contentProps(options: DialogOptions) {
             v-else
             v-bind="btn"
             :loading="
-              key === 1 && sureBtnMap[getDialogUid(options) ?? index]?.loading
+              btn.code === 'sure' &&
+              sureBtnMap[getDialogUid(options) ?? index]?.loading
             "
             @click="
               btn.btnClick?.({

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
 import { fetchTemplateVersions } from "../utils/serverTemplates";
 
@@ -26,6 +26,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const versions = ref<ScreenTemplateVersionItem[]>([]);
 const loading = ref(false);
@@ -45,12 +46,16 @@ watch(
 );
 
 async function onRollback(version: number) {
-  const confirmed = await ElMessageBox.confirm(
-    t("dataScreen.templateRollbackConfirm", { n: version }),
-    t("dataScreen.templateVersions"),
-    { confirmButtonText: t("dataScreen.templateRollback") }
-  ).catch(() => null);
-  if (!confirmed) return;
+  // 回滚会覆盖当前模板内容：危险色确认 + 焦点不落确认钮（防回车误触）
+  if (
+    !(await confirm(t("dataScreen.templateRollbackConfirm", { n: version }), {
+      title: t("dataScreen.templateVersions"),
+      confirmButtonText: t("dataScreen.templateRollback"),
+      danger: true
+    }))
+  ) {
+    return;
+  }
   emit("rollback", version);
   // 回滚成功与否由组合层提示；这里等一拍再重拉，历史里会多出「回滚那一版」
   setTimeout(() => void reload(), 400);

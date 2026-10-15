@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import { groupTemplates, type FreeTemplate } from "../utils/freeTemplates";
 import {
   FREE_GRID_DEFAULT_STEP,
@@ -65,6 +66,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const zoomLabel = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -176,12 +178,16 @@ async function onCommand(command: string) {
     return;
   }
   if (action === "replace") {
-    const confirmed = await ElMessageBox.confirm(
-      t("dataScreen.templateReplaceConfirm"),
-      t("dataScreen.templateMenu"),
-      { confirmButtonText: t("dataScreen.templateApplyReplace") }
-    ).catch(() => null);
-    if (confirmed) emit("applyTemplate", { id, mode: "replace" });
+    // 替换会覆盖当前画布内容：危险色确认 + 焦点不落确认钮（防回车误触）
+    if (
+      await confirm(t("dataScreen.templateReplaceConfirm"), {
+        title: t("dataScreen.templateMenu"),
+        confirmButtonText: t("dataScreen.templateApplyReplace"),
+        danger: true
+      })
+    ) {
+      emit("applyTemplate", { id, mode: "replace" });
+    }
     return;
   }
   if (action === "rename") {
@@ -190,11 +196,14 @@ async function onCommand(command: string) {
     return;
   }
   if (action === "remove") {
-    const confirmed = await ElMessageBox.confirm(
-      t("dataScreen.templateDeleteConfirm"),
-      t("dataScreen.templateDelete")
-    ).catch(() => null);
-    if (confirmed) emit("removeTemplate", id);
+    if (
+      await confirm(t("dataScreen.templateDeleteConfirm"), {
+        title: t("dataScreen.templateDelete"),
+        danger: true
+      })
+    ) {
+      emit("removeTemplate", id);
+    }
     return;
   }
   if (action === "server-rename") {
@@ -203,11 +212,14 @@ async function onCommand(command: string) {
     return;
   }
   if (action === "server-remove") {
-    const confirmed = await ElMessageBox.confirm(
-      t("dataScreen.templateDeleteConfirm"),
-      t("dataScreen.templateDelete")
-    ).catch(() => null);
-    if (confirmed) emit("removeServerTemplate", id);
+    if (
+      await confirm(t("dataScreen.templateDeleteConfirm"), {
+        title: t("dataScreen.templateDelete"),
+        danger: true
+      })
+    ) {
+      emit("removeServerTemplate", id);
+    }
     return;
   }
   if (action === "versions") {
