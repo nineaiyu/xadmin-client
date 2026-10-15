@@ -40,10 +40,14 @@ const opOptions = [
 ];
 
 // 编辑回显：`in` 过滤的 value 在载荷里是数组，输入框按逗号串展示（提交再拆回）
+// `_id` 为行稳定标识（动态增删时作 v-for key，避免 index key 导致的控件内部状态错位；
+// 仅本地使用，getPayload 按字段显式重建，不会提交给后端）
 const initialFilters = (
   props.row ? JSON.parse(JSON.stringify(props.row.filters ?? [])) : []
 ) as DatasetFilter[];
+let filterRowSeq = 0;
 initialFilters.forEach(item => {
+  item._id = ++filterRowSeq;
   if (item.op === "in" && Array.isArray(item.value)) {
     item.value = item.value.join(",");
   }
@@ -88,6 +92,7 @@ const onModelChanged = () => {
 
 const addFilter = () => {
   form.filters.push({
+    _id: ++filterRowSeq,
     field: fieldOptions.value[0] ?? "",
     op: "exact",
     value: ""
@@ -172,7 +177,7 @@ defineExpose({ getPayload });
       <div class="w-full">
         <div
           v-for="(item, index) in form.filters"
-          :key="index"
+          :key="item._id"
           class="mb-2 flex gap-2"
         >
           <!-- EP .el-select 根元素默认 width:var(--el-select-width)=100%，

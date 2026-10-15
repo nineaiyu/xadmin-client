@@ -28,8 +28,8 @@ import {
   isSiteWatermarkVisible,
   renderWatermarkText
 } from "@/utils/watermark";
-import { ReDialog, closeAllDialog } from "@/components/ReDialog";
-import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
+import { ReDialog } from "@/components/ReDialog";
+import { ReDrawer } from "@/components/ReDrawer";
 import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
@@ -90,10 +90,7 @@ export default defineComponent({
         ? { ...zhCn, ...plusZhCn }
         : { ...en, ...plusEn };
     });
-    router.beforeEach(() => {
-      closeAllDialog();
-      closeAllDrawer();
-    });
+    // 路由切换关弹层已迁至 router/index.ts 的 beforeEach（与其它导航守卫集中管理）
 
     // 巡检处置联动：管理员要求改密时引导到个人配置页（每会话提示一次，改密即清除标记）
     let forcePasswordNotified = false;

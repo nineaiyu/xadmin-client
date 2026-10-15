@@ -1,4 +1,3 @@
-import "@/utils/sso";
 import Cookies from "js-cookie";
 import { resolveSiteTitle } from "@/utils/preferences";
 import NProgress from "@/utils/progress";
@@ -17,6 +16,8 @@ import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import { readConfigurePreferences } from "@/utils/preferences";
 import { useRouteLoading } from "@/utils/routeLoading";
 import { pushVisitHistory } from "@/utils/visitHistory";
+import { closeAllDialog } from "@/components/ReDialog";
+import { closeAllDrawer } from "@/components/ReDrawer";
 import {
   getTopMenu,
   initRouter,
@@ -102,6 +103,10 @@ const { startRouteLoading, doneRouteLoading } = useRouteLoading();
 router.beforeEach((to: ToRouteType, _from) => {
   // 上一次导航被取消（守卫返回 false）时不会触发 afterEach：本次开始时先复位 loading
   doneRouteLoading();
+  // 路由切换即关弹层：从 App.vue 迁入（根组件 setup 内注册全局守卫属隐式全局
+  // 副作用，集中到路由守卫同处管理，避免根组件被复用时叠加注册）
+  closeAllDialog();
+  closeAllDrawer();
   to.meta.loaded = loadedPaths.has(to.path);
 
   if (!to.meta.loaded) {

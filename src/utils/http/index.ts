@@ -410,7 +410,13 @@ class PureHttp {
           return response.data;
         }
         // 下载文件
-        if (response.headers["content-type"] === "application/json") {
+        // content-type 可能带 charset（application/json; charset=utf-8），
+        // 严格相等会把全部 JSON 响应误判为文件下载（静默破坏消费方）
+        if (
+          String(response.headers["content-type"] ?? "").includes(
+            "application/json"
+          )
+        ) {
           return response.data;
         } else {
           return response;

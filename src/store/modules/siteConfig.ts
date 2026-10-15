@@ -50,13 +50,13 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       const locale = Storage.getData("locale", this.nameSpace);
       const layout = Storage.getData("layout", this.nameSpace);
       const configure = Storage.getData("configure", this.nameSpace);
-      this.preferenceBaseline = JSON.parse(
-        JSON.stringify({
-          locale: locale ?? {},
-          layout: layout ?? {},
-          configure: configure ?? {}
-        })
-      );
+      // 与 captureSyncedSnapshot 同口径用 cloneDeep（JSON 往返会丢失
+      // undefined / Date 等形态，两套深拷贝口径在同一模块会埋不一致地雷）
+      this.preferenceBaseline = cloneDeep({
+        locale: locale ?? {},
+        layout: layout ?? {},
+        configure: configure ?? {}
+      });
     },
     /**
      * 基线缺失时兜底捕获（设置面板打开路径）。

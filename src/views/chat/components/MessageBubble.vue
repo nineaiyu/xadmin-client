@@ -134,11 +134,14 @@ const actionResult = computed(() => props.item.extra?.action_result ?? null);
 /**
  * 动作执行端点归属助手页权限点（actionExecute:AiAssistant）：聊天室来源同样受其
  * 约束，无权限时卡片只读展示草稿并提示，避免点击确认后 403。
+ *
+ * computed 包裹：hasAuth 读的是异步落库的权限快照，setup 期一次性求值会在
+ * 权限晚于组件挂载就绪时（权限刷新 / 身份切换）永久丢失入口。
  */
-const canExecuteActions = hasAuth("actionExecute:AiAssistant");
+const canExecuteActions = computed(() => hasAuth("actionExecute:AiAssistant"));
 
 /** 撤回入口同样按权限点收敛（服务端 fail-closed；无权限时不渲染必失败的操作） */
-const canRecall = hasAuth("recall:ChatMessage");
+const canRecall = computed(() => hasAuth("recall:ChatMessage"));
 
 const chatActionExecutor = async (draft: AiActionDraft) => {
   try {

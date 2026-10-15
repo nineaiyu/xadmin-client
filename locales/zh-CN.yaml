@@ -1058,6 +1058,7 @@ results:
   operateConfirmTitle: 确定操作？
   success: 执行成功
   failed: 执行失败
+  loadFailedRetry: 数据加载失败，请关闭后重试
   batchDestroy: 批量删除 { count } 条数据
   batchRead: 批量已读 { count } 条数据
   noSelectedData: 数据未选择
@@ -3860,6 +3861,7 @@ dform:
   formUnavailable: 表单已停用或不存在
   requiredFieldMissing: "「{name}」为必填项，请填写后提交"
   requiredItemTip: 此项为必填
+  unsupportedFieldType: "不支持的字段类型「{type}」，请联系表单设计者"
   saveOk: 保存成功
   typeInput: 单行文本
   typeTextarea: 多行文本

@@ -11,7 +11,7 @@ import {
   normalizeRowValue,
   parseLookupConditions,
   stripLookupConditions,
-  type LookupRow
+  type LookupRowInput
 } from "../src/utils/advancedFilter";
 import type { PageColumn } from "../src/utils/types";
 
@@ -173,7 +173,7 @@ describe("normalizeLookupForField（字段切换后条件修正）", () => {
   const fields = buildLookupFields([textColumn, genderColumn, activeColumn]);
 
   it("不兼容的条件回到字段默认项", () => {
-    const row: LookupRow = {
+    const row: LookupRowInput = {
       field: "is_active",
       lookup: "icontains",
       value: "",
@@ -183,7 +183,7 @@ describe("normalizeLookupForField（字段切换后条件修正）", () => {
   });
 
   it("兼容的条件保持不变", () => {
-    const row: LookupRow = {
+    const row: LookupRowInput = {
       field: "gender",
       lookup: "ne",
       value: "1",
@@ -353,10 +353,30 @@ describe("parseLookupConditions（条件快照 → 回显行）", () => {
       is_active__isnull: false
     });
     expect(rows).toEqual([
-      { field: "username", lookup: "icontains", value: "admin", values: [] },
-      { field: "roles", lookup: "in", value: "", values: ["r1", "r2"] },
-      { field: "is_active", lookup: "isnull", value: "false", values: [] }
+      {
+        _id: expect.any(Number),
+        field: "username",
+        lookup: "icontains",
+        value: "admin",
+        values: []
+      },
+      {
+        _id: expect.any(Number),
+        field: "roles",
+        lookup: "in",
+        value: "",
+        values: ["r1", "r2"]
+      },
+      {
+        _id: expect.any(Number),
+        field: "is_active",
+        lookup: "isnull",
+        value: "false",
+        values: []
+      }
     ]);
+    // 行标识唯一（动态增删时作 v-for key，防 index key 控件状态错位）
+    expect(new Set(rows.map(row => row._id)).size).toBe(rows.length);
   });
 
   it("逗号串多值同样还原为多值形态", () => {

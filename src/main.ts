@@ -41,6 +41,19 @@ initPlatform();
 
 const app = createApp(App);
 
+// 全局异常兜底（渲染期异常 + 未接管 Promise rejection）：
+// HTTP 层 reject 依赖每个调用点 catch，一旦遗漏即成无人接管的 unhandled
+// rejection（无任何提示、控制台外不可见）；渲染期异常同样无全局网。
+// 此处只做「上报 + 开发期提示」，不重复弹错（业务提示由调用方负责）。
+app.config.errorHandler = (err, _instance, info) => {
+  console.error("[app] render error:", err, info);
+};
+if (typeof window !== "undefined") {
+  window.addEventListener("unhandledrejection", event => {
+    console.error("[app] unhandled rejection:", event.reason);
+  });
+}
+
 // 自定义指令
 import * as directives from "@/directives";
 Object.keys(directives).forEach(key => {

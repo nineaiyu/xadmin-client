@@ -8,6 +8,7 @@ import {
 } from "@/utils/websocket/protocol";
 import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
+import { sanitizeHtml } from "@/utils/sanitize";
 import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
 import type { NotificationOptions, NotificationType } from "element-plus";
@@ -112,6 +113,11 @@ export const useNoticeStore = defineStore("pure-notice", {
                   );
                 if (!isHtml) {
                   message = h("i", { style: "color: teal" }, data?.message);
+                } else {
+                  // HTML 分支走 dangerouslyUseHTMLString：先过 DOMPurify 白名单
+                  // 净化（与 NoticeShow/TemplatePreview 等 v-html 消费路径同口径）。
+                  // 服务端入库已 bleach，这里是展示层兜底，防历史脏数据/绕过。
+                  message = sanitizeHtml(String(data?.message ?? ""));
                 }
               }
               const options: Partial<NotificationOptions> = {

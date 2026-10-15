@@ -29,10 +29,15 @@ const getConfig = (key?: string): PlatformConfigs => {
   return config as PlatformConfigs;
 };
 
+/** 平台配置拉取的最大尝试次数（含重试）：防畸形配置把 boot 挂成无限请求循环 */
+const PLATFORM_CONFIG_MAX_ATTEMPTS = 3;
+
 /** 获取项目动态全局配置 */
 export const getPlatformConfig = async (
   app: App,
-  url: string | null = null
+  url: string | null = null,
+  /** 内部重试计数（调用方无需传） */
+  attempt = 0
 ): Promise<PlatformConfigs> => {
   app.config.globalProperties.$config = getConfig();
   return axios({
@@ -42,7 +47,13 @@ export const getPlatformConfig = async (
     .then(async ({ data: config }) => {
       config = config?.config ?? config;
       if (!config.Locale) {
-        return await getPlatformConfig(app, defaultConfigUrl);
+        // 畸形配置（缺 Locale）：有界重试后抛出可读错误。
+        // 历史实现此处无界递归——配置文件缺字段时无限自调，
+        // boot promise 永不 resolve（白屏且请求打满）。
+        if (attempt + 1 >= PLATFORM_CONFIG_MAX_ATTEMPTS) {
+          throw "platform-config.json 配置缺少 Locale 字段，请检查配置文件";
+        }
+        return await getPlatformConfig(app, defaultConfigUrl, attempt + 1);
       }
       let $config = app.config.globalProperties.$config;
       // 自动注入项目配置
@@ -55,8 +66,8 @@ export const getPlatformConfig = async (
       return $config;
     })
     .catch(async () => {
-      if (url === null) {
-        return await getPlatformConfig(app, defaultConfigUrl);
+      if (url === null && attempt + 1 < PLATFORM_CONFIG_MAX_ATTEMPTS) {
+        return await getPlatformConfig(app, defaultConfigUrl, attempt + 1);
       } else {
         throw "请在public文件夹下添加platform-config.json配置文件";
       }

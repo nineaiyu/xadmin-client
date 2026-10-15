@@ -1058,6 +1058,7 @@ results:
   operateConfirmTitle: Confirm the operation?
   success: Executed successfully
   failed: Execution failure
+  loadFailedRetry: Failed to load data. Please close and try again
   batchDestroy: Batch deletes the { count } items
   batchRead: Batch read the { count } items
   noSelectedData: Data not selected
@@ -3861,6 +3862,7 @@ dform:
   formUnavailable: This form is disabled or does not exist
   requiredFieldMissing: '"{name}" is required, please fill it in before submitting'
   requiredItemTip: This field is required
+  unsupportedFieldType: "Unsupported field type \"{type}\". Please contact the form designer"
   saveOk: Saved
   typeInput: Input
   typeTextarea: Textarea

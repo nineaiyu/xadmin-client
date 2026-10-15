@@ -18,6 +18,8 @@ export type DatasetFilter = {
     | "startswith"
     | "isnull";
   value: unknown;
+  /** 仅前端表单行稳定标识（v-for key，防动态增删时控件状态错位；不提交后端） */
+  _id?: number;
 };
 
 export type DatasetItem = {

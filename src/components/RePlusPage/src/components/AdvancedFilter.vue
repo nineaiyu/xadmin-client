@@ -7,10 +7,10 @@ import type { PageColumn } from "../utils/types";
 import LookupValueInput from "./LookupValueInput.vue";
 import {
   DEFAULT_LOOKUP,
-  EMPTY_LOOKUP_ROW,
   buildLookupFields,
   buildLookupParams,
   collectLookupValues,
+  createLookupRow,
   findLookupField,
   isBooleanLookup,
   isEmptyLookupRow,
@@ -46,7 +46,7 @@ const parsed = parseLookupConditions(props.conditions, declaredFields.value);
 const extraFields = ref<LookupFieldFacet[]>(parsed.extraFields);
 const fields = computed(() => [...extraFields.value, ...declaredFields.value]);
 const rows = ref<LookupRow[]>(
-  parsed.rows.length ? parsed.rows : [{ ...EMPTY_LOOKUP_ROW, values: [] }]
+  parsed.rows.length ? parsed.rows : [createLookupRow()]
 );
 const errors = ref<LookupError[]>([]);
 
@@ -73,16 +73,16 @@ const lastErrorText = computed(() =>
   errors.value.length ? errors.value.map(errorText).join("；") : ""
 );
 
-const addRow = () => rows.value.push({ ...EMPTY_LOOKUP_ROW, values: [] });
+const addRow = () => rows.value.push(createLookupRow());
 
 const removeRow = (index: number) => {
   rows.value.splice(index, 1);
-  if (!rows.value.length) rows.value.push({ ...EMPTY_LOOKUP_ROW, values: [] });
+  if (!rows.value.length) rows.value.push(createLookupRow());
   errors.value = [];
 };
 
 const clearAll = () => {
-  rows.value = [{ ...EMPTY_LOOKUP_ROW, values: [] }];
+  rows.value = [createLookupRow()];
   errors.value = [];
 };
 
@@ -146,7 +146,7 @@ defineExpose({ getConditions });
     <template v-else>
       <div
         v-for="(row, index) in rows"
-        :key="index"
+        :key="row._id"
         class="mb-2 flex items-center gap-2 rounded-lg bg-(--el-fill-color-lighter) px-3 py-2.5"
         :class="
           errorOf(index)

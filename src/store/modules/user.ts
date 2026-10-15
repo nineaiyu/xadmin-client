@@ -191,7 +191,10 @@ export const useUserStore = defineStore("pure-user", {
           useWatermarkStoreHook().reset();
           window.location.reload();
           // router.push("/login");
-        });
+        })
+        // token 已失效时 logoutApi 会 reject（拦截器已 redirectToLogin）：
+        // 补终端 catch 防 unhandled rejection（finally 的清理与 reload 照常执行）
+        .catch(() => undefined);
     },
     /**
      * 用户模拟：身份切换的统一收口（进入模拟 / 退出模拟共用）。

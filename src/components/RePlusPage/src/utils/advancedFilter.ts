@@ -53,6 +53,8 @@ export type LookupFieldFacet = {
 
 /** 一条高级筛选条件行（value 承载标量、values 承载多值） */
 export type LookupRow = {
+  /** 行稳定标识：动态增删时作 v-for key，避免 index key 导致的控件内部状态错位 */
+  _id: number;
   field: string;
   lookup: LookupName;
   value: string;
@@ -64,11 +66,21 @@ export type LookupErrorCode = "field" | "value" | "duplicate";
 export type LookupError = { index: number; code: LookupErrorCode };
 
 export const EMPTY_LOOKUP_ROW: LookupRow = {
+  _id: 0,
   field: "",
   lookup: DEFAULT_LOOKUP,
   value: "",
   values: []
 };
+
+/** 行标识自增（模块级：同一会话内不重复，重开弹窗也不与旧行冲突） */
+let lookupRowSeq = 0;
+
+/** 新建一条空条件行（携带全新稳定标识） */
+export function createLookupRow(): LookupRow {
+  lookupRowSeq += 1;
+  return { ...EMPTY_LOOKUP_ROW, _id: lookupRowSeq, values: [] };
+}
 
 /** 值形态 → 可用条件（与后端 available_lookups 的同类型白名单求交） */
 const LOOKUPS_BY_KIND: Record<LookupFieldKind, LookupName[]> = {
@@ -189,9 +201,9 @@ export function defaultLookupForField(
 /** 切换字段后修正不兼容的条件（如文本的「包含」在布尔字段上不存在） */
 export function normalizeLookupForField(
   fields: LookupFieldFacet[],
-  row: LookupRow,
+  row: LookupRowInput,
   fallback?: LookupName
-): LookupRow {
+): LookupRowInput {
   const allowed = lookupsForField(fields, row.field);
   if (allowed.includes(row.lookup)) return row;
   const preferred = fallback ?? defaultLookupForField(fields, row.field);
@@ -205,7 +217,7 @@ export function normalizeLookupForField(
 export const isBooleanLookup = (lookup: LookupName) => lookup === "isnull";
 
 /** 收集条件行的多值（优先 values 数组，回显/手输形态回落到逗号拆分） */
-export function collectLookupValues(row: LookupRow): string[] {
+export function collectLookupValues(row: LookupRowInput): string[] {
   const fromValues = (row.values ?? [])
     .map(item => String(item ?? "").trim())
     .filter(Boolean);
@@ -226,7 +238,7 @@ export function collectLookupValues(row: LookupRow): string[] {
  * 多值统一拼为英文逗号分隔的**单参数**：后端 `query_params.get()` 取单值后 split，
  * 数组序列化出的重复参数只会命中第一个（历史缺陷）。
  */
-export function normalizeRowValue(row: LookupRow): unknown | null {
+export function normalizeRowValue(row: LookupRowInput): unknown | null {
   if (row.lookup === "isnull") {
     if (row.value === "true") return true;
     if (row.value === "false") return false;
@@ -241,7 +253,7 @@ export function normalizeRowValue(row: LookupRow): unknown | null {
 }
 
 /** 空行判定：字段、取值、非默认条件任意一项填写即为有效行 */
-export function isEmptyLookupRow(row: LookupRow): boolean {
+export function isEmptyLookupRow(row: LookupRowInput): boolean {
   return (
     !String(row.field ?? "").trim() &&
     !String(row.value ?? "").trim() &&
@@ -255,7 +267,18 @@ export function isEmptyLookupRow(row: LookupRow): boolean {
  *
  * @returns params 为 `{ "field__lookup": value }`；errors 为逐行错误（不阻断其它行）
  */
-export function buildLookupParams(rows: LookupRow[]): {
+/**
+ * 条件行输入（纯函数不依赖 UI 行标识：`_id` 仅服务于 v-for key，
+ * 由调用方在创建行时分配，此处不要求传入）
+ */
+export type LookupRowInput = Omit<LookupRow, "_id">;
+
+/**
+ * 条件行 → 查询参数与逐行校验错误。
+ *
+ * @returns params 为 `{ "field__lookup": value }`；errors 为逐行错误（不阻断其它行）
+ */
+export function buildLookupParams(rows: LookupRowInput[]): {
   params: Record<string, unknown>;
   errors: LookupError[];
 } {
@@ -311,6 +334,7 @@ export function parseLookupConditions(
     if (value === null || value === undefined || value === "") return;
     if (Array.isArray(value) && !value.length) return;
     const row: LookupRow = {
+      _id: ++lookupRowSeq,
       field,
       lookup,
       value: "",

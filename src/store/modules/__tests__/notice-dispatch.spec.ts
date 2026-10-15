@@ -139,4 +139,27 @@ describe("notice store 推送分派", () => {
     });
     expect(mocks.openNoticeDetailDialog).not.toHaveBeenCalled();
   });
+
+  it("公告类 HTML 推送：经 DOMPurify 净化后才允许 dangerouslyUseHTMLString", () => {
+    // notice_type.value === 0 走 HTML 分支；服务端已 bleach，这里是展示层兜底
+    deliver({
+      message_type: "notify_message",
+      pk: 8,
+      title: "公告",
+      message:
+        '<p>正常内容</p><img src="x" onerror="alert(1)"><script>alert(2)</script>',
+      level: { value: "primary" },
+      notice_type: { value: 0, label: "公告" }
+    });
+
+    const options = mocks.notify.mock.calls.at(-1)?.[0] as {
+      message?: string;
+      dangerouslyUseHTMLString?: boolean;
+    };
+    expect(options.dangerouslyUseHTMLString).toBe(true);
+    expect(options.message).toContain("正常内容");
+    // 事件属性与脚本标签必须被剥掉（存储型 XSS 纵深缺口守护）
+    expect(options.message).not.toContain("onerror");
+    expect(options.message).not.toContain("<script");
+  });
 });

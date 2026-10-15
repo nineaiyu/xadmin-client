@@ -79,9 +79,12 @@ export function setToken(data: TokenInfo) {
     "true",
     isRemembered
       ? {
-          expires: loginDay
+          expires: loginDay,
+          // 与另两个认证 Cookie 同口径（布尔标记非敏感，但 SameSite/Secure
+          // 属认证 Cookie 组的统一面，避免单点漂移）
+          ...cookieSecureOptions()
         }
-      : {}
+      : { ...cookieSecureOptions() }
   );
 }
 

@@ -1,5 +1,6 @@
 import { getRefreshToken, getToken, setToken } from "@/utils/auth";
 import { refreshTokenApi } from "@/api/auth";
+import { isSuccess } from "@/api/types";
 
 /**
  * 取当前可用 accessToken：本地有则直接返回，否则用 refreshToken 换新后回读。
@@ -15,8 +16,13 @@ export async function getUsedAccessToken() {
   } else {
     const RefreshToken = getRefreshToken();
     if (RefreshToken) {
+      // 刷新接口自身异常（网络/5xx）继续向上抛：调用方（WS 重连）按失败处理；
+      // 业务码失败（refresh 过期等）不抛，但也不写 token——res.data 可能为空，
+      // 写入会让 WS 以无效凭证反复重连
       const res = await refreshTokenApi({ refresh: RefreshToken });
-      setToken(res.data);
+      if (isSuccess(res)) {
+        setToken(res.data);
+      }
       return getToken();
     }
   }

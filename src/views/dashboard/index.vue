@@ -184,27 +184,36 @@ const { init: setupSortable, destroy: destroySortable } = useSortable(
   }
 );
 
+const saving = ref(false);
+
 const saveLayout = async () => {
   if (!current.value) return;
-  const res = await dashboardApi.partialUpdate<DashboardItem>(
-    current.value.pk,
-    { layout: draftLayout.value }
-  );
-  if (isSuccess(res)) {
-    message(t("dashboard.saveOk"), { type: "success" });
-    const index = dashboards.value.findIndex(
-      item => item.pk === current.value?.pk
+  // 防重：连点只发一次 PATCH（partialUpdate 异步，竞态会并发写同一 layout）
+  if (saving.value) return;
+  saving.value = true;
+  try {
+    const res = await dashboardApi.partialUpdate<DashboardItem>(
+      current.value.pk,
+      { layout: draftLayout.value }
     );
-    if (index >= 0 && res.data) {
-      dashboards.value[index] = res.data;
-      current.value = dashboards.value[index];
+    if (isSuccess(res)) {
+      message(t("dashboard.saveOk"), { type: "success" });
+      const index = dashboards.value.findIndex(
+        item => item.pk === current.value?.pk
+      );
+      if (index >= 0 && res.data) {
+        dashboards.value[index] = res.data;
+        current.value = dashboards.value[index];
+      }
+      editing.value = false;
+      destroySortable();
+      return;
     }
-    editing.value = false;
-    destroySortable();
-    return;
+    // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
+    if (res.detail) message(String(res.detail), { type: "error" });
+  } finally {
+    saving.value = false;
   }
-  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-  if (res.detail) message(String(res.detail), { type: "error" });
 };
 
 const removeCard = (id: string) => {
@@ -304,7 +313,12 @@ onMounted(async () => {
         >
           {{ editing ? t("dashboard.cancelEdit") : t("dashboard.edit") }}
         </el-button>
-        <el-button v-if="editing" type="success" @click="saveLayout">
+        <el-button
+          v-if="editing"
+          type="success"
+          :loading="saving"
+          @click="saveLayout"
+        >
           {{ t("dashboard.saveLayout") }}
         </el-button>
         <el-button v-if="editing" type="danger" plain @click="removeDashboard">

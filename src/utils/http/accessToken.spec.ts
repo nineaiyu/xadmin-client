@@ -46,6 +46,7 @@ describe("getUsedAccessToken", () => {
     getTokenMock.mockReturnValueOnce("").mockReturnValueOnce("new-token");
     getRefreshTokenMock.mockReturnValue("refresh-1");
     refreshTokenApiMock.mockResolvedValue({
+      code: 1000,
       data: { access: "new", refresh: "r" }
     });
     await expect(getUsedAccessToken()).resolves.toBe("new-token");
@@ -54,6 +55,14 @@ describe("getUsedAccessToken", () => {
       access: "new",
       refresh: "r"
     });
+  });
+
+  it("刷新返回业务失败码时不写 token（防坏凭证反复重连）", async () => {
+    getTokenMock.mockReturnValue("");
+    getRefreshTokenMock.mockReturnValue("refresh-1");
+    refreshTokenApiMock.mockResolvedValue({ code: 1001, data: null });
+    await expect(getUsedAccessToken()).resolves.toBe("");
+    expect(setTokenMock).not.toHaveBeenCalled();
   });
 
   it("refreshTokenApi 失败时向上抛错", async () => {
