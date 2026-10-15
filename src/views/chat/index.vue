@@ -189,7 +189,7 @@ async function recall(item: ChatMessageItem) {
       @load-more="chat.loadMore"
       @scroll="chat.onScroll"
       @scroll-to-bottom="chat.scrollToBottom"
-      @scroller="chat.scroller.value = $event"
+      @scroller="chat.setScroller"
       @toggle-sidebar="drawerVisible = true"
       @room-changed="groupChanged"
       @left="groupLeft"

@@ -100,6 +100,16 @@ async function bindWrap(): Promise<void> {
 }
 
 watch(() => props.label, applyWrapA11y);
+// native 切换（或 el-scrollbar 内部 DOM 重建）后重新绑定：仅 onMounted 绑一次时，
+// 重建后的新 wrap 节点没有监听器，scroll-at 与阴影会静默停在上次状态。
+// 当前 EP 版本两种模式都渲染 .el-scrollbar__wrap，此处兜底的是节点重建场景。
+watch(
+  () => props.native,
+  async () => {
+    unbindWrap();
+    await bindWrap();
+  }
+);
 
 function unbindWrap(): void {
   wrapRef.value?.removeEventListener("scroll", updateArrival);

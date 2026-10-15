@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { LAYOUT_SCROLL_SELECTOR } from "@/utils/dom";
 
@@ -42,14 +49,33 @@ function onScroll(): void {
   visible.value = (scrollEl?.scrollTop ?? 0) >= props.visibilityHeight;
 }
 
-onMounted(() => {
+/** 解绑当前容器监听（target 切换 / 卸载时调用，避免残留监听旧节点） */
+function detachScroll(): void {
+  scrollEl?.removeEventListener("scroll", onScroll);
+  scrollEl = null;
+}
+
+/** 绑定当前 target 对应容器；布局首帧容器未就绪时调用方负责重试 */
+function attachScroll(): void {
   scrollEl = document.querySelector<HTMLElement>(finalTarget.value);
   scrollEl?.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
+}
+
+onMounted(() => {
+  // 同步绑定（与渲染刷新同帧，显隐判定不等微任务）；布局容器尚未渲染时
+  // （重挂 / keep-alive 恢复首帧查不到）下一帧补偿一次
+  attachScroll();
+  if (!scrollEl) void nextTick(attachScroll);
 });
 
-onBeforeUnmount(() => {
-  scrollEl?.removeEventListener("scroll", onScroll);
+onBeforeUnmount(detachScroll);
+
+// target 变化（页面切换滚动容器）后重新绑定：仅挂载时绑一次时，新容器没有
+// 监听器，按钮显隐与点击滚动都会静默失效
+watch(finalTarget, () => {
+  detachScroll();
+  attachScroll();
 });
 
 function scrollToTop(): void {

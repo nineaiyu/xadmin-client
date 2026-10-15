@@ -49,7 +49,10 @@ test.describe("锁屏与解锁", () => {
     await page.locator("#header-lock").click();
     await expect(page.locator(".lock-screen")).toBeVisible({ timeout: 10_000 });
 
+    // 精确匹配锁屏卡片自己的按钮：设置面板页脚「更多操作」的 aria-label 也含
+    // 「返回登录页」（清空缓存并返回登录页），宽松正则会 strict mode violation
     await page
+      .locator(".lock-screen")
       .getByRole("button", { name: /返回登录页|Back to login/ })
       .click();
     // 退出登录后回到登录页（账号输入框出现，登录页输入以 placeholder 定位）

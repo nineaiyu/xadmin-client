@@ -48,6 +48,10 @@ export function useChat() {
     uploading: actions.uploading,
     scroller: core.scroller,
     me: core.me,
+    /** 滚动容器就绪回调（ChatWindow ready 事件）：经动作域写入，页面不直戳内部 ref */
+    setScroller: (el: HTMLElement | null) => {
+      core.scroller.value = el;
+    },
     // 操作
     connect: core.connect,
     disconnect: core.disconnect,

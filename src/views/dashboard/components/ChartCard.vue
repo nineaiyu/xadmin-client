@@ -37,6 +37,8 @@ const theme = computed(() => (isDark.value ? "dark" : "light"));
 const chartRef = ref();
 const { loading, runWithLoading } = usePageLoading();
 const total = ref(0);
+/** 数据加载请求序号：竞态防护（自动刷新 / 手动刷新 / 草稿变动并发时丢弃过期响应） */
+let loadSeq = 0;
 /** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
 const errorMsg = ref("");
 /** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
@@ -134,6 +136,11 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
 const loadData = () =>
   runWithLoading(async () => {
     const card = props.card;
+    // 请求序号：自动刷新（10s 档）与手动刷新 / 编辑草稿变动竞态时，
+    // 丢弃过期响应，防旧数据后到覆盖新数据或把已恢复的错误态又打成错误
+    const seq = ++loadSeq;
+    /** 本次请求是否仍是最新（过期响应直接丢弃，不触碰共享状态） */
+    const fresh = () => seq === loadSeq;
     errorMsg.value = "";
     try {
       if (card.chart_type === "number") {
@@ -141,6 +148,7 @@ const loadData = () =>
         const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
           count_only: true
         });
+        if (!fresh()) return;
         if (isSuccess(res)) {
           total.value = Number(res.data?.total ?? 0);
           return;
@@ -154,6 +162,7 @@ const loadData = () =>
           const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
             count_only: true
           });
+          if (!fresh()) return;
           if (isSuccess(res)) {
             total.value = Number(res.data?.total ?? 0);
             return;
@@ -166,6 +175,7 @@ const loadData = () =>
           metric: card.metric ?? "count",
           value_field: card.value_field
         });
+        if (!fresh()) return;
         if (isSuccess(res)) {
           total.value = Number(res.data?.series?.[0]?.value ?? 0);
           return;
@@ -180,6 +190,7 @@ const loadData = () =>
           card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
         value_field: card.value_field
       });
+      if (!fresh()) return;
       if (isSuccess(res)) {
         await renderAggregate(res.data);
         return;
@@ -187,6 +198,7 @@ const loadData = () =>
       // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
     } catch (error) {
+      if (!fresh()) return;
       errorMsg.value = String(
         (error as { detail?: string })?.detail ??
           error ??

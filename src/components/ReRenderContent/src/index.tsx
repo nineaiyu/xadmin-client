@@ -30,6 +30,8 @@ export default defineComponent({
       }
 
       if (props.renderBr && typeof raw === "string") {
+        // 多根渲染（多个 <p>）：attrs 在多根场景无处落点，Vue 会告警并丢弃，
+        // 因此 renderBr 分支不接收透传属性（文本分段渲染本也不需要）
         return raw
           .split("\n")
           .map((line, index) => h("p", { key: index }, line));
@@ -39,11 +41,11 @@ export default defineComponent({
         return raw;
       }
 
-      return h(
-        raw as Component,
-        { ...attrs, props: { ...props, ...attrs } },
-        slots
-      );
+      // 组件分支只透传调用方给的 attrs（不含本组件自身的 content/renderBr——
+      // 它们是被渲染组件的未知属性，会被 Vue 落到 DOM 上）；props 键显式排除，
+      // 与 attrs 合并由被渲染组件自行声明接收
+      const { content: _content, renderBr: _renderBr, ...restProps } = props;
+      return h(raw as Component, { ...attrs, props: restProps }, slots);
     };
   }
 });

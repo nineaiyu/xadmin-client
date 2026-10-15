@@ -164,20 +164,41 @@ const typeLabel = computed(
     ""
 );
 
+// provide 的 context 用 getter 暴露会晚于 props/异步计算到达的字段（树数据、
+// 字典、模型清单等）：reactive 快照会把「传 ref 也停止更新」的隐式契约留给
+// 复用方，非销毁式抽屉（或树晚于弹窗渲染）下会静默拿到过期值。
 const context = reactive({
   model: form,
-  isAdd: props.isAdd,
-  disabled: disabled.value,
-  auth: props.auth,
-  treeData: treeRows.value,
+  get isAdd() {
+    return props.isAdd;
+  },
+  get disabled() {
+    return disabled.value;
+  },
+  get auth() {
+    return props.auth;
+  },
+  get treeData() {
+    return treeRows.value;
+  },
   parentChain,
   descendantCount,
   cascadeInactive,
-  menuTypeChoices: menuTypeChoices.value,
-  methodChoices: props.choicesDict?.["method"] ?? [],
-  menuUrlList: props.menuUrlList ?? [],
-  modelList: props.modelList ?? [],
-  viewList: props.viewList ?? {}
+  get menuTypeChoices() {
+    return menuTypeChoices.value;
+  },
+  get methodChoices() {
+    return props.choicesDict?.["method"] ?? [];
+  },
+  get menuUrlList() {
+    return props.menuUrlList ?? [];
+  },
+  get modelList() {
+    return props.modelList ?? [];
+  },
+  get viewList() {
+    return props.viewList ?? {};
+  }
 }) as MenuFormContext;
 provide(MENU_FORM_KEY, context);
 

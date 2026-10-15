@@ -488,6 +488,11 @@ defineExpose({ getPayload, validateRequired });
           v-else-if="field.type === 'switch'"
           v-model="formData[field.key] as boolean"
         />
+        <!-- 未知字段类型兜底：schema 演进出新 type 时显式提示，不静默渲染空白
+             （空白既让填报人漏填，也让运维无从感知表单定义问题） -->
+        <span v-else class="text-(--el-color-danger)">
+          {{ t("dform.unsupportedFieldType", { type: field.type }) }}
+        </span>
       </el-form-item>
     </el-form>
   </div>

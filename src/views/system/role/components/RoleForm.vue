@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import type { Ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
+import { useI18n } from "vue-i18n";
+import { message } from "@/utils/message";
 import MenuPermissionTree from "./MenuPermissionTree.vue";
 import { menuFieldKey } from "../utils/treeKeys";
 import type {
@@ -41,6 +43,8 @@ const props = withDefaults(defineProps<FormProps>(), {
 const menu = defineModel<Array<string | number>>({ default: () => [] });
 
 const loading = ref(false);
+/** 回显失败标记：为 true 时遮罩授权树并禁止交互（空树上勾选 = 提交不完整授权） */
+const loadFailed = ref(false);
 const permissionTreeRef = ref<PermissionTreeExpose>();
 
 const formData = ref<{
@@ -63,6 +67,8 @@ const emit = defineEmits<{
   ];
 }>();
 
+const { t } = useI18n();
+
 /** 把「菜单 pk + 字段合成键」回显到授权树（树数据未就绪时由组件缓冲） */
 function applyInitialChecked() {
   permissionTreeRef.value?.setCheckedKeys([
@@ -80,8 +86,20 @@ function onTreeChange(payload: PermissionSubmitPayload) {
 }
 
 /**
+ * 回显失败统一处置：标记失败 + 用列表行原值回填树（表单提交值同样取自行，
+ * 树与提交值保持一致，避免「树空但提交原值」的观感误导），并遮罩禁止交互。
+ */
+function handleLoadFailed() {
+  loadFailed.value = true;
+  applyInitialChecked();
+}
+
+/**
  * 编辑态回显：列表行的 field 为空数组（ListRoleSerializer 口径），
  * 需按 pk 取详情原文（`{menuPk: [fieldPk]}`）后重建合成键。
+ *
+ * 失败必须显式提示并遮罩树：静默 catch 会让授权树呈空，用户误以为
+ * 「该角色没有权限」并在空树上勾选后提交不完整授权。
  */
 function getCheckedMenu(pk?: string) {
   if (pk && props.auth.retrieve) {
@@ -101,10 +119,23 @@ function getCheckedMenu(pk?: string) {
             );
           });
           formData.value.field = field;
+          loadFailed.value = false;
           applyInitialChecked();
+        } else {
+          // 业务码失败（如 403 无 retrieve 权限）：同样按回显失败处理
+          handleLoadFailed();
+          message(String(res.detail || t("results.failed")), { type: "error" });
         }
       })
-      .catch(() => undefined)
+      .catch(error => {
+        handleLoadFailed();
+        message(
+          String(error?.detail || error?.message || t("results.failed")),
+          {
+            type: "error"
+          }
+        );
+      })
       .finally(() => {
         loading.value = false;
       });
@@ -124,11 +155,27 @@ onMounted(() => getCheckedMenu(props.pk));
       :loading="loading"
       @change="onTreeChange"
     />
+    <!-- 回显失败遮罩：阻止在空树上勾选后提交不完整授权（关闭弹层重试） -->
+    <div v-if="loadFailed" class="role-form__failed-mask">
+      <span>{{ t("results.loadFailedRetry") }}</span>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .role-form {
+  position: relative;
   width: 100%;
+
+  &__failed-mask {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--el-font-size-small);
+    color: var(--el-color-danger);
+    background: var(--el-mask-color-extra-light);
+  }
 }
 </style>
