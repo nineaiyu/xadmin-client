@@ -151,7 +151,7 @@
     "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vitest/coverage-v8": "^5.0.1",
     "@vue/test-utils": "^2.5.1",
-    "boxen": "^8.0.1",
+    "boxen": "^9.0.0",
     "code-inspector-plugin": "^2.0.9",
     "cssnano": "^9.0.4",
     "eslint": "^10.10.0",
