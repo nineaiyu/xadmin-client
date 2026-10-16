@@ -71,8 +71,13 @@ jobs:
       # 该步骤发现 high/critical 即非零退出，阻断后续 build-and-push。
       # 显式指定官方源：镜像源（如 npmmirror）不实现 security/advisories 端点，
       # 会让 audit 以 ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS 报错退出（假红）
+      # --ignore GHSA-vfj7-8cjw-p6xm（braces stack-exhaustion）：上游无修复版本
+      # （3.0.3 即 latest，advisory 覆盖 <=3.0.3 且 patched=None），且仅经
+      # fast-glob>micromatch>braces 进入构建期 devDependencies（unplugin-vue-i18n /
+      # stylelint），调用方传字面 glob pattern，不存在「深度嵌套 pattern」利用前提，
+      # 亦不进生产 bundle。上游发布修复后删除本豁免与 pnpm-workspace 注释。
       - name: Dependency audit (blocking)
-        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org --ignore GHSA-vfj7-8cjw-p6xm
 
       - name: Generate SBOM (CycloneDX)
         # mkdir -p：cyclonedx 不创建输出父目录，缺 sbom/ 时写文件直接 FileNotFound
