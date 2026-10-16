@@ -78,7 +78,7 @@ jobs:
 
       - name: Renovate (PAT)
         if: steps.token.outputs.mode == 'token'
-        uses: renovatebot/github-action@v41
+        uses: renovatebot/github-action@v46.3.8
         with:
           configurationFile: renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
@@ -88,7 +88,7 @@ jobs:
 
       - name: Renovate (GitHub App)
         if: steps.token.outputs.mode == 'app'
-        uses: renovatebot/github-action@v41
+        uses: renovatebot/github-action@v46.3.8
         with:
           configurationFile: renovate.json
           token: ${{ steps.app-token.outputs.token }}
