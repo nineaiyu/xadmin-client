@@ -75,7 +75,10 @@ jobs:
         run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
 
       - name: Generate SBOM (CycloneDX)
-        run: pnpm sbom --sbom-format cyclonedx --out sbom/sbom-client.cdx.json
+        # mkdir -p：cyclonedx 不创建输出父目录，缺 sbom/ 时写文件直接 FileNotFound
+        run: |
+          mkdir -p sbom
+          pnpm sbom --sbom-format cyclonedx --out sbom/sbom-client.cdx.json
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
