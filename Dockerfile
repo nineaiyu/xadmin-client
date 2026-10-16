@@ -1,4 +1,4 @@
-FROM nineaiyu/xadmin-client-base:20261016_055400 AS stage-build
+FROM nineaiyu/xadmin-client-base:20261016_055405 AS stage-build
 
 ARG VERSION
 
@@ -6,6 +6,11 @@ COPY . .
 
 RUN sed -i "s@\"Version\": .*@\"Version\": \"${VERSION}\",@" public/platform-config.json  \
     && sed -i "s@\"version\": .*@\"version\": \"${VERSION}\",@" package.json
+
+# 依赖按仓库 lock 精确安装：base 镜像的 node_modules 为构建期快照，lock 更新
+# （overrides/传递依赖修复线）不重装则不生效，曾出现压缩插件扫描产物目录的
+# 版本差异行为（ENOENT scandir dist）
+RUN pnpm install --frozen-lockfile
 
 RUN pnpm build
 
