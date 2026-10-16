@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-import { computed, type PropType, ref } from "vue";
+import { computed, type PropType, ref, watch } from "vue";
 import { useDark, useECharts } from "@pureadmin/utils";
+import { epColor } from "@/utils/chartTheme";
 
 const props = defineProps({
   data: {
     type: Array as PropType<Array<number>>,
     default: () => []
   },
+  /** 趋势线颜色；留空取主题主色（跟随自定义主题色/暗色模式） */
   color: {
     type: String,
-    default: "#41b6ff"
+    default: ""
   }
 });
 
@@ -23,38 +25,45 @@ const { setOptions } = useECharts(chartRef, {
   renderer: "svg"
 });
 
-setOptions({
-  container: ".line-card",
-  xAxis: {
-    type: "category",
-    show: false,
-    data: props.data
-  },
-  grid: {
-    top: "15px",
-    bottom: 0,
-    left: 0,
-    right: 0
-  },
-  yAxis: {
-    show: false,
-    type: "value"
-  },
-  series: [
-    {
-      data: props.data,
-      type: "line",
-      symbol: "none",
-      smooth: true,
-      color: props.color,
-      lineStyle: {
-        shadowOffsetY: 3,
-        shadowBlur: 7,
-        shadowColor: props.color
+/** 折线：颜色在调用时解析（主题切换后重设即跟随） */
+const applyOptions = () => {
+  const color = props.color || epColor("primary");
+  setOptions({
+    container: ".line-card",
+    xAxis: {
+      type: "category",
+      show: false,
+      data: props.data
+    },
+    grid: {
+      top: "15px",
+      bottom: 0,
+      left: 0,
+      right: 0
+    },
+    yAxis: {
+      show: false,
+      type: "value"
+    },
+    series: [
+      {
+        data: props.data,
+        type: "line",
+        symbol: "none",
+        smooth: true,
+        color: color,
+        lineStyle: {
+          shadowOffsetY: 3,
+          shadowBlur: 7,
+          shadowColor: color
+        }
       }
-    }
-  ]
-});
+    ]
+  });
+};
+
+applyOptions();
+watch(isDark, applyOptions);
 </script>
 
 <template>

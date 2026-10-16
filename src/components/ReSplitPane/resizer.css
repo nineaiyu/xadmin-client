@@ -1,47 +1,97 @@
-@import "./iconfont/iconfont.css";
-
 .splitter-pane-resizer {
   box-sizing: border-box;
-  background: #000;
-  position: absolute;
-  opacity: 0.2;
+  position: relative;
   z-index: 1;
-  background-clip: padding;
+  flex: 0 0 6px;
+  background: var(--divider);
+  border-radius: 3px;
   background-clip: padding-box;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
 }
 
-.splitter-pane-resizer.horizontal {
-  height: 6px;
-  width: 100%;
-  background: #e5e6eb;
-  cursor: row-resize;
-}
-
-.splitter-pane-resizer.horizontal:before {
-  content: "\eda3";
-  font-family: "iconfont";
-  font-size: 13px;
-  color: #000;
+/* 常态可见的拖拽纹理：中央竖向三点（横向分栏为横向三点），提示可拖拽 */
+.splitter-pane-resizer::after {
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 14px;
+  height: 4px;
+  background-image: radial-gradient(
+    circle,
+    var(--el-text-color-secondary) 1.5px,
+    transparent 2px
+  );
+  background-size: 6px 4px;
+  background-position: center;
+  background-repeat: repeat-x;
+  pointer-events: none;
+  transition: background-image var(--duration-fast) var(--ease-standard);
+}
+
+.splitter-pane-resizer.vertical::after {
+  width: 4px;
+  height: 26px;
+  background-size: 4px 6px;
+  background-repeat: repeat-y;
+}
+
+.splitter-pane-resizer:hover {
+  background: var(--el-color-primary);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 15%);
+}
+
+.splitter-pane-resizer:hover::after {
+  background-image: radial-gradient(
+    circle,
+    var(--el-color-white) 1.5px,
+    transparent 2px
+  );
 }
 
 .splitter-pane-resizer.vertical {
   width: 6px;
-  height: 100%;
-  background: #e5e6eb;
+  height: auto;
+  align-self: stretch;
   cursor: col-resize;
 }
 
-.splitter-pane-resizer.vertical:before {
-  content: "\e647";
-  font-family: "iconfont";
-  font-size: 13px;
-  color: #000;
+.splitter-pane-resizer.horizontal {
+  width: auto;
+  height: 6px;
+  align-self: stretch;
+  cursor: row-resize;
+}
+
+/* 分隔条中央的悬浮重置按钮：hover 分隔条时出现，点击恢复默认比例 */
+.splitter-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--el-text-color-secondary);
+  background: var(--el-bg-color);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+  z-index: 2;
+}
+
+.splitter-pane-resizer:hover .splitter-reset-btn,
+.splitter-reset-btn:focus-visible {
+  opacity: 1;
+}
+
+.splitter-reset-btn:hover {
+  color: var(--el-color-primary);
 }

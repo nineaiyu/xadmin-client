@@ -1,4 +1,4 @@
-FROM nineaiyu/xadmin-client-base:20260117_072340 AS stage-build
+FROM nineaiyu/xadmin-client-base:20261014_221009 AS stage-build
 
 ARG VERSION
 
@@ -9,6 +9,6 @@ RUN sed -i "s@\"Version\": .*@\"Version\": \"${VERSION}\",@" public/platform-con
 
 RUN pnpm build
 
-FROM nginx:1.24-bullseye
+FROM nginx:1.31.5-alpine
 COPY --from=stage-build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf

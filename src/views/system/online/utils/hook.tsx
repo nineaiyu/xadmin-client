@@ -1,66 +1,60 @@
 import { useI18n } from "vue-i18n";
-import { userOnlineApi } from "@/api/system/online";
+import { userOnlineApi } from "@/api/identity/online";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { getCurrentInstance, reactive, shallowRef } from "vue";
-import type { PageTableColumn, OperationProps } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Logout from "~icons/ri/logout-circle-r-line";
+import { usePageAuth } from "@/router/utils";
+import { goUserDetail } from "@/views/system/hooks";
+import { reactive, type Ref } from "vue";
+import {
+  formatPageColumns,
+  type PageTableColumn
+} from "@/components/RePlusPage";
+import { createOnlineButtons } from "./onlineButtons";
 
-export function useUserOnline() {
+/** 在线会话行（按钮/列渲染使用的字段） */
+type OnlineRow = {
+  pk?: string | number;
+  creator?: { username?: string; pk?: number | string };
+};
+
+/**
+ * 在线会话页装配：行内/批量强制下线按钮见 onlineButtons.ts，
+ * 本文件负责数据源、列渲染与行内跳转。
+ */
+export function useUserOnline(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(userOnlineApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
-  });
+  const auth = usePageAuth(["forceLogout", "batchForceLogout"]);
 
   const router = useRouter();
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 180,
-    buttons: [
-      {
-        text: t("systemUser.logout"),
-        code: "delete",
-        props: (row, button) => {
-          return {
-            ...button?._?.props,
-            icon: useRenderIcon(Logout)
-          };
-        },
-        update: true,
-        show: auth.destroy
-      }
-    ]
+  const { operationButtonsProps, tableBarButtonsProps } = createOnlineButtons({
+    t,
+    api,
+    tableRef,
+    auth
   });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "creator":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row as any)}>
-              {row.creator?.username ? row.creator?.username : "/"}
-            </el-link>
-          );
-          break;
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      creator: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoDetail(row)}>
+            {row.creator?.username ? row.creator?.username : "/"}
+          </el-link>
+        );
       }
     });
-    return columns;
-  };
 
-  function onGoDetail(row: any) {
-    if (hasAuth("list:SystemUser") && row?.creator && row?.creator?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.creator.pk }
-      });
-    }
+  /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
+  function onGoDetail(row: OnlineRow) {
+    goUserDetail(router, row?.creator?.pk);
   }
 
   return {
     api,
     auth,
     listColumnsFormat,
+    tableBarButtonsProps,
     operationButtonsProps
   };
 }

@@ -1,0 +1,25 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  pnpm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          # 与 engines（pnpm>=11）及 Dockerfile-base corepack 钉版对齐；钉 patch 防 CI 与
+          # 本地/容器口径漂移
+          version: 11.25.0
+
+      - name: Run pnpm audit
+        # 显式官方源：镜像源不实现 security/advisories 端点，会让 audit 报
+        # ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS（与真实漏洞无关的假红）
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org

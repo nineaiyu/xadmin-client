@@ -7,6 +7,8 @@ import {
   PlusForm
 } from "plus-pro-components";
 import { deviceDetection } from "@pureadmin/utils";
+import { useI18n } from "vue-i18n";
+import type { ExposedFormInstance } from "../utils/types";
 
 defineOptions({ name: "DetailData" });
 
@@ -24,11 +26,24 @@ const props = withDefaults(defineProps<DetailFormProps>(), {
   columns: () => []
 });
 
+const { t } = useI18n();
 const formRef = ref();
 const activeName = ref(0);
 const newFormInline = ref<FieldValues>(props.formInline);
 const column = computed(() => (deviceDetection() ? 1 : 2));
 const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
+
+/**
+ * 详情数据是否「整行皆空」：字段权限启用且未给当前菜单配白名单时，
+ * 序列化器会把字段裁空（未配置 = 裁空，运行时不可见），用户看到的是一块空白。
+ * 这里给出可读解释，避免误判为数据丢失（白名单是部署前提，见 docs/architecture/field-permission.md）。
+ */
+const isBlankDetail = computed(() => {
+  const values = Object.values(newFormInline.value ?? {});
+  return (
+    values.length > 0 && values.every(value => value === null || value === "")
+  );
+});
 
 const isTabs = computed(() => {
   return (
@@ -38,8 +53,8 @@ const isTabs = computed(() => {
 });
 
 const tabsColumns = computed(() => {
-  const _tabsColumns = {};
-  const _tabsLabels = {};
+  const _tabsColumns: Record<string | number, typeof props.columns> = {};
+  const _tabsLabels: Record<string | number, string> = {};
   props.columns.forEach(column => {
     const index = column._column.tabs_index;
     _tabsLabels[index] = column._column.tabs_label;
@@ -49,7 +64,11 @@ const tabsColumns = computed(() => {
       _tabsColumns[index] = [column];
     }
   });
-  const result = [];
+  const result: Array<{
+    label: string;
+    index: number;
+    columns: typeof props.columns;
+  }> = [];
   for (let i = 0; i < Object.keys(_tabsLabels).length; i++) {
     result.push({
       label: _tabsLabels[i],
@@ -60,9 +79,9 @@ const tabsColumns = computed(() => {
   return result;
 });
 
-const setFormRef = (el: any, index: number) => {
+const setFormRef = (el: unknown, index: number) => {
   if (el) {
-    formRefs.value[index] = el;
+    formRefs.value[index] = el as InstanceType<typeof PlusForm>;
   }
 };
 const setActiveName = (index: number) => {
@@ -71,12 +90,15 @@ const setActiveName = (index: number) => {
 
 function getRef() {
   if (isTabs.value) {
-    const instance = formRefs.value[activeName.value]?.formInstance;
+    const instance = formRefs.value[activeName.value]?.formInstance as
+      ExposedFormInstance | undefined;
 
-    (instance as any)._allInstances = Object.keys(formRefs.value)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map(key => formRefs.value[key]?.formInstance);
+    if (instance) {
+      instance._allInstances = Object.keys(formRefs.value)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(key => formRefs.value[key]?.formInstance as ExposedFormInstance);
+    }
     return instance;
   }
 
@@ -88,6 +110,14 @@ defineExpose({ getRef, setActiveName });
 
 <template>
   <div>
+    <el-alert
+      v-if="isBlankDetail"
+      class="mb-3"
+      :closable="false"
+      :title="t('plus.detailBlankTitle')"
+      :description="t('plus.detailBlankTip')"
+      type="warning"
+    />
     <el-tabs v-if="isTabs" v-model="activeName" v-bind="tabsProps">
       <el-tab-pane
         v-for="tabs in tabsColumns"

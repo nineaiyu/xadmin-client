@@ -1,0 +1,262 @@
+/**
+ * 设计令牌 · 原始尺度层（层 1/3）
+ *
+ * 与主题无关的原始值：中性灰阶、品牌语义色、圆角 / 间距 / 动效 / 字号尺度。
+ * 由 semantic 层（明暗成对语义槽）、ep-bridge 层（Element Plus 变量映射）与
+ * 组件样式消费。
+ *
+ * 颜色约定：本层与 semantic 层存「hsl() 的参数列表」（如 `210.5 100% 62.5%`，
+ * 带透明度写作 `0 0% 0% / 50%`），消费方以 `hsl(var(--x))` 包装成完整色值——
+ * 这样可以参与变量链式引用与 color-mix 派生。所有三元组保证浏览器解析后与
+ * 来源 hex 逐通道一致（对齐 Element Plus 变量取值，迁移期像素中性）。
+ * 阴影是明暗成对的完整值（不是颜色），定义在 semantic 层。
+ */
+
+:root {
+  /* ================ 品牌语义色 ================
+     主色缺省为 hsl(212 100% 45%)（= #006be6，
+     解析值经 Chromium / WebKit 实测确认）；运行期用户自定义主色由 JS 覆写
+     --primary 三元组，色阶交由 ep-bridge 派生。 */
+  --primary: 212 100% 45%; /* #006be6 */
+  --success: 144 57% 58%; /* #57d188 */
+  --warning: 42 84% 61%; /* #efbd48 */
+  --danger: 348 100% 61%; /* #ff3860 */
+  --info: 220 4.2% 58.2%; /* #909399（与灰阶 700 同值） */
+
+  /* ================ 中性灰阶 ================
+     锚定 Element Plus 中性色族（偏蓝的 220 系灰，深端收敛为纯中性），
+     明度从 50（最浅）到 950（最深）单调递降。 */
+  --gray-50: 0 0% 98%; /* #fafafa */
+  --gray-100: 216 33.3% 97.1%; /* #f5f7fa */
+  --gray-200: 216 20% 95.1%; /* #f0f2f5 */
+  --gray-300: 222 33.3% 94.1%; /* #ebeef5 */
+  --gray-400: 220 20% 91.2%; /* #e4e7ed */
+  --gray-500: 222 16.7% 88.2%; /* #dcdfe6 */
+  --gray-600: 220 10.5% 77.6%; /* #c0c4cc */
+  --gray-700: 220 4.2% 58.2%; /* #909399 */
+  --gray-800: 220 3% 38.8%; /* #606266 */
+  --gray-900: 220 3% 19.4%; /* #303133 */
+  --gray-950: 0 0% 3.9%; /* #0a0a0a */
+
+  /* ================ 圆角尺度 ================
+     档位倍率由设置面板写入 html[data-radius]（见文件末尾），这里只放基准值；
+     --radius-full 为胶囊/圆形，不参与缩放。 */
+  --radius-scale: 1;
+  --radius-xs: calc(2px * var(--radius-scale));
+  --radius-sm: calc(4px * var(--radius-scale));
+  --radius-md: calc(6px * var(--radius-scale));
+  --radius-lg: calc(8px * var(--radius-scale));
+  --radius-xl: calc(12px * var(--radius-scale));
+  --radius-full: 9999px;
+
+  /* ================ 间距尺度（4px 基准） ================ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ================ 布局尺度 ================
+     固定头部由顶栏（--layout-header-h）与页签条组成，两种页签风格的总高不同；
+     内容区按「当前固定头部总高」让位，避免各处 calc 里写裸数字。 */
+  --layout-header-h: 50px; /* 顶栏高度（隐藏页签时的固定头部总高） */
+  --layout-tags-item-h: 38px; /* 页签项高度（设置面板 →「页签高度」覆写） */
+  --layout-tags-chrome-h: calc(
+    var(--layout-header-h) + var(--layout-tags-item-h) + 3px
+  ); /* 顶栏 + 谷歌风格页签的固定头部总高 */
+
+  --layout-tags-compact-h: calc(
+    var(--layout-header-h) + var(--layout-tags-item-h) - 1px
+  ); /* 顶栏 + 灵动/卡片风格页签的固定头部总高 */
+
+  /* 导航风格（圆角 / 朴素）：菜单激活块的圆角与左右内缩，`data-nav-style="plain"` 收平 */
+  --nav-item-radius: 8px;
+  --nav-item-inset: 8px;
+  --nav-item-inset-mix: 8px;
+
+  /* 菜单项尺度：项高、层级缩进步长、图标尺寸与图标-文字间距（侧栏与弹层共用）。
+     项高与纵距取紧凑档（实测项盒 42px、无额外外边距）：项高 42px、
+     纵距 0（见下方 --nav-item-margin-y），行步进 42px；
+     一级缩进保留 16px 起（刻意不对齐 8px 贴边形态，
+     见 sidebar/_common.scss 的层级缩进段）。 */
+  --nav-item-height: 42px;
+  --nav-item-indent: 16px;
+  --nav-item-icon-size: 18px;
+  --nav-item-icon-gap: 10px;
+
+  /* 双列侧栏一级窄列：竖排菜单项的尺度——
+     项高由内容决定（9px 内边距 ×2 + 20px 图标 + 8px 间距 + 12px 标题 ≈ 64px） */
+  --nav-item-padding-narrow: 9px;
+  --nav-item-margin-narrow: 4px;
+  --nav-item-radius-narrow: 6px;
+  --nav-item-icon-size-narrow: 20px;
+
+  /* 菜单项垂直外边距（项盒 42px 内部即含 2px 呼吸内距，不再加外边距） */
+  --nav-item-margin-y: 0px;
+
+  /* 顶栏（水平 / 混合）菜单项高度：矮于顶栏本身，形成圆角块 */
+  --nav-item-height-horizontal: 40px;
+
+  /* ================ 顶栏动作项（右上角图标按钮）================
+     所有顶栏动作共用同一热区 / 圆角 / 图标尺寸 / 间距——此前各组件各写一套
+     （40×48 / 40×50 / 裸 16×16 并存），高度与节奏不一致导致顶栏视觉杂乱。
+     热区 = 图标 + 四周留白（32px 热区 / 18px 图标 / 圆形）。 */
+  --navbar-action-size: 32px;
+  --navbar-action-radius: var(--radius-full);
+  --navbar-action-icon: 18px;
+  --navbar-action-gap: 4px;
+  --navbar-action-pad-right: 12px;
+
+  /* 侧栏结构高度：品牌区与顶栏等高，底部折叠条固定高 */
+  --sidebar-logo-h: var(--layout-header-h);
+  --sidebar-collapse-bar-h: 44px;
+
+  /* 水平 / 混合布局的顶栏菜单对齐（设置面板 →「顶栏菜单对齐」） */
+  --menu-align: start;
+
+  /* 侧栏宽度（纵向 / 混合布局的内容区左偏移）：基准值，设置面板 →「侧栏宽度」
+     会以内联 --sidebar-width 覆写；折叠宽度（60px）不参与缩放 */
+  --sidebar-width: 224px;
+
+  /* 侧栏折叠态宽度（设置面板 →「折叠宽度」运行期以内联变量覆写） */
+  --sidebar-collapse-width: 60px;
+
+  /* 双列侧栏（导航模式 → 双列 / 混合双列）的一级窄列宽度：设计令牌基准值，
+     设置面板 →「混合宽度」会以内联同名变量覆写 */
+  --sidebar-mixed-narrow-width: 80px;
+
+  /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
+     窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
+  --content-gap: 24px;
+
+  /* 内容面板留白（系统设置 / 账户设置两模块共用）：面板 = 承载表单或列表的「内容纸」 */
+  --panel-pad-y: var(--space-5);
+  --panel-pad-x: var(--space-6);
+
+  /* ================ 栈层级（z-index 阶梯） ================
+     集中定义避免魔法数字互斗；JS 侧同值常量见 src/utils/zIndex.ts。
+     - layout 1000：侧栏/头部等布局固定层（sidebar/common 内 998/1001/1002 属该层内部细分）
+     - settingMask 1005 / settingPanel 1010：设置面板——必须低于 Element Plus
+       弹层起点 2000，否则打开的面板会遮挡 dialog/confirm
+     - Element Plus 弹层：2000 起动态递增（dialog/message-box/popper，不干预）
+     - tippy 9999：v-tippy 是独立于 EP 的 popper 引擎，必须高于 EP 弹层 */
+  --z-index-layout: 1000;
+  --z-index-setting-mask: 1005;
+  --z-index-setting-panel: 1010;
+  --z-index-tippy: 9999;
+
+  /* ================ 动效尺度 ================
+     时长分档覆盖项目既有取值（0.1~0.5s）；缓动曲线与 Element Plus 同源：
+     standard = 官方 ease-in-out-bezier（匀速段主用），
+     emphasized = 官方 fast-bezier（入场/收尾的减速感）。
+     hover / slide 两档与 slide / out-expo 两条曲线：
+     菜单悬停 0.15s、slide 预设 0.25s / (0.25,0.8,0.5,1)、弹层 (0.16,1,0.3,1)。 */
+  --duration-instant: 0.1s;
+  --duration-hover: 0.15s;
+  --duration-fast: 0.2s;
+  --duration-slide: 0.25s;
+  --duration-base: 0.3s;
+  --duration-slow: 0.4s;
+  --duration-slower: 0.5s;
+  --ease-standard: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ease-emphasized: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-slide: cubic-bezier(0.25, 0.8, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.42, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.58, 1);
+  --ease-linear: linear;
+
+  /* ================ 字号阶梯 ================
+     步进与 Element Plus 文本令牌对齐（xs/sm/base 对应 extra-small/small/base，
+     md/lg 对应 medium/large）；档位倍率由设置面板写入 html[data-font]（见文件末尾）。
+     html 根字号保持 16px 不动——Tailwind 的 --spacing 由根字号推导，
+     改根字号会连带缩放全站间距与控件高度。 */
+  --font-scale: 1;
+  --font-size-2xs: calc(11px * var(--font-scale));
+  --font-size-xs: calc(12px * var(--font-scale));
+  --font-size-sm: calc(13px * var(--font-scale));
+  --font-size-base: calc(14px * var(--font-scale));
+  --font-size-md: calc(16px * var(--font-scale));
+  --font-size-lg: calc(18px * var(--font-scale));
+  --font-size-xl: calc(20px * var(--font-scale));
+  --font-size-2xl: calc(24px * var(--font-scale));
+
+  /* ================ 展示型尺寸 ================
+     图标字符 / 表情 / 插画 / 大数字等「图形元素」的字形尺寸：这些位置用
+     font-size 控制图形大小（Iconify 图标、emoji、插画字符），不属正文排版，
+     但同随字号缩放设置同比放大。正文/标签/标题一律用上方 --font-size-* 阶梯。 */
+  --display-size-sm: calc(21px * var(--font-scale));
+  --display-size-md: calc(26px * var(--font-scale));
+  --display-size-lg: calc(32px * var(--font-scale));
+  --display-size-xl: calc(34px * var(--font-scale));
+  --display-size-2xl: calc(48px * var(--font-scale));
+
+  /* ================ 字重 ================ */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ================ 行高 ================ */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ================ 字体族 ================
+     完整值（含逗号，非三元组）：西文系统字体优先、其后是 CJK 回退栈，
+     保证中英文混排时西文走系统字体、中文走苹方/微软雅黑一档。 */
+  --font-family-base:
+    -apple-system, "Segoe UI", roboto, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-family-mono:
+    ui-monospace, sfmono-regular, menlo, monaco, consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+/* ================ 偏好档位（设置面板 →「圆角」/「字号」） ================
+   档位写在 `<html>` 的 data 属性上（与 data-theme 同层，由 usePreferences 同步），
+   只改倍率、不改基准值：默认档不写属性，取值与迁移前逐像素一致。 */
+
+html[data-radius="none"] {
+  --radius-scale: 0;
+}
+
+html[data-radius="small"] {
+  --radius-scale: 0.5;
+}
+
+html[data-radius="large"] {
+  --radius-scale: 1.5;
+}
+
+html[data-radius="xlarge"] {
+  --radius-scale: 2;
+}
+
+html[data-font="small"] {
+  --font-scale: 0.92;
+}
+
+html[data-font="large"] {
+  --font-scale: 1.12;
+}
+
+/* 导航风格：朴素（plain）去掉菜单激活块的圆角与左右内缩，回到整行铺满 */
+html[data-nav-style="plain"] {
+  --nav-item-radius: 0px;
+  --nav-item-inset: 0px;
+  --nav-item-inset-mix: 0px;
+  --nav-item-radius-narrow: 0px;
+}
+
+/* 顶栏菜单对齐：仅水平 / 混合布局的顶栏菜单消费（侧栏菜单不受影响） */
+html[data-menu-align="center"] {
+  --menu-align: center;
+}
+
+html[data-menu-align="end"] {
+  --menu-align: end;
+}

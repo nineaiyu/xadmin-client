@@ -1,0 +1,27 @@
+@use "common" as *;
+
+body[layout="horizontal"] {
+  $sideBarWidth: 0;
+
+  @include merge-style($sideBarWidth, 0);
+
+  .el-menu {
+    /* 悬停背景走主题令牌（顶栏菜单项另有显式 !important 规则兜底） */
+    --el-menu-hover-bg-color: var(--pure-theme-menu-hover) !important;
+    --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
+  }
+
+  .fixed-header,
+  .main-container {
+    transition: none !important;
+  }
+
+  .fixed-header {
+    width: 100%;
+  }
+
+  /* 通栏顶栏下沿 1px 分隔线（与顶栏容器同口径，替代投影） */
+  .horizontal-header {
+    border-bottom: 1px solid hsl(var(--border-light));
+  }
+}

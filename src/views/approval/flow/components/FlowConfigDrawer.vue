@@ -1,0 +1,210 @@
+<script lang="ts" setup>
+import { isSuccess } from "@/api/types";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { ElRadioButton, ElRadioGroup } from "element-plus";
+import { approvalFlowApi } from "@/api/approval/approvalFlow";
+import { message } from "@/utils/message";
+import {
+  buildFlowPayload,
+  createEmptyNode,
+  formatConditionValue,
+  pickValue,
+  validateFlowConfig,
+  type FieldRow,
+  type FlowRow,
+  type NodeRow
+} from "./flowConfig";
+import FlowFieldsEditor from "./FlowFieldsEditor.vue";
+import FlowNodesEditor from "./FlowNodesEditor.vue";
+import FlowCanvas from "./FlowCanvas.vue";
+
+/**
+ * 流程定义配置抽屉（一期：列表式节点编辑，不做拖拽画布）。
+ *
+ * 三段式：基本信息 / 表单字段（发起申请时的动态表单）/ 审批节点（顺序 + 或签会签 +
+ * 审批人解析 + 节点条件 + 超时小时）；保存时整体提交（节点列表替换式更新）。
+ * 拆分：纯逻辑见 flowConfig.ts，字段/节点编辑表格见 FlowFieldsEditor/FlowNodesEditor。
+ */
+
+defineOptions({ name: "ApprovalFlowConfig" });
+
+const props = defineProps<{
+  flow?: FlowRow | null;
+  onSaved?: () => void;
+}>();
+
+// 关闭统一走 ReDrawer 约定的 close 事件（不要声明 onClose prop：ReDrawer 会把
+// v-bind 的 props 与模板 @close 监听器合并成数组，prop 类型检查会报 Expected Function）
+const emit = defineEmits<{ close: [] }>();
+
+const { t } = useI18n();
+const saving = ref(false);
+
+// 编辑锁：流程被 dform 绑定后字段由表单侧单向投影（服务端同步落库），流程侧只读
+const formSchemaLocked = computed(() => !!props.flow?.form_schema_locked);
+
+const basic = reactive({ name: "", code: "", is_active: true });
+const nodes = ref<NodeRow[]>([]);
+const fields = ref<FieldRow[]>([]);
+const canvasRef = ref<{ syncLayout: () => void } | null>(null);
+// 节点编辑模式：列表（顺序编辑） / 画布（分支可视化 + 布局拖拽），二者共享同一 nodes
+const editMode = ref<"list" | "canvas">("list");
+// 画布懒挂载：首次切到画布时才渲染 FlowCanvas。抽屉打开时画布容器 display:none（v-show），
+// 尺寸为 0，若此时挂载会触发 "[Vue Flow]: Viewport not initialized yet" 且 fit-view 失效
+const canvasMounted = ref(false);
+
+watch(editMode, mode => {
+  if (mode === "canvas") canvasMounted.value = true;
+});
+
+function initFromFlow() {
+  const flow = props.flow;
+  basic.name = flow?.name ?? "";
+  basic.code = flow?.code ?? "";
+  basic.is_active = flow?.is_active ?? true;
+  fields.value = (flow?.form_schema ?? []).map(item => ({
+    label: item.label ?? "",
+    key: item.key,
+    type: item.type ?? "text",
+    required: !!item.required,
+    options: (item.options ?? []).join(",")
+  }));
+  nodes.value = (flow?.nodes ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map(node => ({
+      name: node.name ?? "",
+      approve_type: pickValue(node.approve_type, "OR"),
+      approve_ratio: node.approve_ratio ?? 100,
+      assignee_type: pickValue(node.assignee_type, "role"),
+      assignee_value: node.assignee_value ?? "",
+      condition_field: node.condition?.field ?? "",
+      condition_op: node.condition?.op ?? "eq",
+      condition_value: formatConditionValue(node.condition?.value),
+      routes: (node.routes ?? []).map(route => ({
+        condition: {
+          field: route.condition?.field ?? "",
+          op: route.condition?.op ?? "eq",
+          value: route.condition?.value ?? ""
+        },
+        target: Number(route.target)
+      })),
+      layout: { ...(node.layout ?? {}) },
+      timeout_hours: node.timeout_hours ?? 0,
+      timeout_action: node.timeout_action ?? "none"
+    }));
+  if (!nodes.value.length) nodes.value.push(createEmptyNode());
+}
+
+async function save() {
+  // 画布模式下先回写拖拽后的节点坐标，再走统一校验与载荷装配
+  canvasRef.value?.syncLayout();
+  const errorKey = validateFlowConfig(basic, nodes.value);
+  if (errorKey) {
+    message(t(errorKey), { type: "error" });
+    return;
+  }
+  const payload = buildFlowPayload(
+    basic,
+    fields.value,
+    nodes.value,
+    // 乐观锁基线：以打开抽屉时取到的行版本为准，服务端与当前行比对，拦截并发编辑的后写覆盖
+    props.flow?.pk ? props.flow?.updated_time : undefined
+  );
+  saving.value = true;
+  try {
+    const res = props.flow?.pk
+      ? await approvalFlowApi.partialUpdate(props.flow.pk, payload)
+      : await approvalFlowApi.create(payload);
+    if (isSuccess(res)) {
+      message(t("systemApprovalFlow.saveSuccess"), { type: "success" });
+      props.onSaved?.();
+      emit("close");
+      return;
+    }
+    // 200 + 业务码非 1000（表单/节点校验失败等）：全局拦截器只处理 HTTP 层错误，
+    // 业务失败必须显式提示
+    message(String(res.detail || t("results.failed")), { type: "error" });
+  } catch {
+    // HTTP 层错误提示由拦截器统一处理
+  } finally {
+    saving.value = false;
+  }
+}
+
+onMounted(initFromFlow);
+</script>
+<template>
+  <div class="flow-config">
+    <el-form :model="basic" label-width="90px">
+      <el-form-item :label="t('systemApprovalFlow.formName')" required>
+        <el-input v-model="basic.name" maxlength="64" />
+      </el-form-item>
+      <el-form-item :label="t('systemApprovalFlow.formCode')" required>
+        <el-input v-model="basic.code" maxlength="64" :disabled="!!flow?.pk" />
+      </el-form-item>
+      <el-form-item :label="t('systemApprovalFlow.formActive')">
+        <el-switch v-model="basic.is_active" />
+      </el-form-item>
+    </el-form>
+
+    <el-divider content-position="left">
+      {{ t("systemApprovalFlow.formSchemaTitle") }}
+    </el-divider>
+    <el-alert
+      v-if="formSchemaLocked"
+      :closable="false"
+      type="warning"
+      :title="t('systemApprovalFlow.formSchemaLocked')"
+      class="mb-2"
+      data-testid="flow-form-schema-locked"
+    />
+    <el-alert
+      v-else
+      :closable="false"
+      type="info"
+      :title="t('systemApprovalFlow.formSchemaTip')"
+      class="mb-2"
+    />
+    <FlowFieldsEditor :fields="fields" :disabled="formSchemaLocked" />
+
+    <el-divider content-position="left">
+      {{ t("systemApprovalFlow.nodesTitle") }}
+    </el-divider>
+    <div class="mb-2 flex-bc">
+      <el-alert
+        :closable="false"
+        type="info"
+        :title="t('systemApprovalFlow.nodesTip')"
+        class="flex-1"
+      />
+      <el-radio-group v-model="editMode" size="small" class="ml-3">
+        <el-radio-button value="list">{{
+          t("systemApprovalFlow.modeList")
+        }}</el-radio-button>
+        <el-radio-button value="canvas">{{
+          t("systemApprovalFlow.modeCanvas")
+        }}</el-radio-button>
+      </el-radio-group>
+    </div>
+    <FlowCanvas
+      v-if="canvasMounted"
+      v-show="editMode === 'canvas'"
+      ref="canvasRef"
+      :nodes="nodes"
+    />
+    <FlowNodesEditor
+      v-show="editMode === 'list'"
+      :nodes="nodes"
+      :fields="fields"
+    />
+
+    <div class="flex justify-end mt-4">
+      <el-button @click="emit('close')">{{ t("buttons.cancel") }}</el-button>
+      <el-button type="primary" :loading="saving" @click="save">
+        {{ t("buttons.save") }}
+      </el-button>
+    </div>
+  </div>
+</template>

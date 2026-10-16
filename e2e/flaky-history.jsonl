@@ -1,0 +1,1 @@
+{"run":"local-full-20261009","at":"2026-10-09T12:51:11.347Z","totals":{"passed":497,"flaky":1,"failed":20,"skipped":28,"retried":21,"effective":518,"executions":546,"distinct":534,"oneShotPassRate":0.9594594594594594},"top_flaky":[{"file":"dform-linkage.e2e.ts","title":"表单联动：设计器配置 → 填报页隐藏/动态必填 → 服务端同源校验","project":"webkit","flaky":1}]}

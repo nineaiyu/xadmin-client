@@ -70,12 +70,26 @@ declare global {
     VITE_CDN: boolean;
     VITE_HIDE_HOME: string;
     VITE_COMPRESSION: ViteCompression;
+    /** 生产构建认证 Cookie 的 Secure 开关：默认开启；内网 HTTP 测试服构建时置 false */
+    VITE_COOKIE_SECURE: string;
   }
 
   /**
    *  继承 `@pureadmin/table` 的 `TableColumns` ，方便全局直接调用
    */
   type TableColumnList = Array<TableColumns>;
+  /** 圆角档位（设置面板 →「圆角」）：除 default 外均按比例缩放 --radius-* 令牌 */
+  type RadiusScaleType = "none" | "small" | "default" | "large" | "xlarge";
+  /** 字号档位（设置面板 →「字号」）：只缩放文字令牌，根字号保持 16px；custom 档读 fontScaleCustom */
+  type FontScaleType = "small" | "default" | "large" | "custom";
+  /** 页面切换动画预设（none 为直接切换）；与 style/transition.scss 的类名前缀一致 */
+  type PageTransitionType =
+    | "none"
+    | "fade-transform"
+    | "fade-slide"
+    | "fade-up"
+    | "fade-down"
+    | "fade-scale";
   /**
    * 对应 `public/platform-config.json` 文件的类型声明
    * @see {@link https://pure-admin.github.io/pure-admin-doc/pages/config/#platform-config-json}
@@ -90,23 +104,177 @@ declare global {
     KeepAlive?: boolean;
     Locale?: string;
     Layout?: string;
+    /** 认证页（登录）外壳形态：panel-left | panel-center | panel-right */
+    AuthPageLayout?: "panel-left" | "panel-center" | "panel-right";
+    /** 展示时区（IANA 名称，如 Asia/Shanghai；空 = 跟随浏览器本地时区） */
+    Timezone?: string;
     Theme?: string;
+    /** 手点主题色（预设名或 custom）；缺省回落到 Theme（皮肤名），两者可分离 */
+    ThemeColor?: string;
     DarkMode?: boolean;
     ThemeMode?: string;
     Grey?: boolean;
     Weak?: boolean;
     HideTabs?: boolean;
     HideFooter?: boolean;
+    /** 固定页脚（吸附内容区底部） */
+    FooterFixed?: boolean;
+    /** 页脚高度（px，0 = 自动） */
+    FooterHeight?: number;
     Stretch?: boolean | number;
     SidebarStatus?: boolean;
     EpThemeColor?: string;
     ShowLogo?: boolean;
-    ShowModel?: string;
+    /** 自定义 Logo 图片地址（空 = 内置资源） */
+    LogoSource?: string;
+    /** 是否显示 Logo 右侧的平台标题文字 */
+    LogoShowText?: boolean;
+    /** Logo 图片填充方式（object-fit） */
+    LogoFit?: string;
+    /** Logo 形态：icon（图标，随侧栏折叠）| full（整图，固定高度不折叠） */
+    LogoMode?: "icon" | "full";
+    /** 整图 Logo 的高度（px）：仅 LogoMode=full 生效 */
+    FullLogoHeight?: number;
+    /** 暗色外观下的 Logo 图片地址（空 = 与浅色共用 LogoSource） */
+    LogoSourceDark?: string;
+    TagsStyle?: string;
+    /** 顶栏滚动自动隐藏（下滑隐藏 / 上滑显示） */
+    HeaderAutoHide?: boolean;
+    /** 内容区紧凑模式（收紧留白并居中限宽） */
+    CompactMode?: boolean;
+    /** 圆角档位（none / small / default / large / xlarge）：缩放 --radius-* 令牌 */
+    Radius?: RadiusScaleType;
+    /** 字号档位（small / default / large / custom）：缩放 --font-size-* 令牌，根字号不随之变化 */
+    FontScale?: FontScaleType;
+    /** 自定义字号的基准字号（px，12~20）：仅 FontScale=custom 时生效 */
+    FontScaleCustom?: number;
+    /** 主题预设（内置色系名 / default / custom）：控制背景 / 卡片 / 描边 / 填充的表面色系与配套主色 */
+    ThemePreset?: string;
+    /** 导航风格（rounded / plain）：菜单激活块的圆角与左右内缩 */
+    NavigationStyle?: string;
+    /** 侧栏手风琴：同级菜单只展开一项 */
+    SidebarAccordion?: boolean;
+    /** 导航切割（混合系布局）：顶栏与侧栏的菜单切割方式（true = 顶栏一级 + 侧栏子菜单） */
+    NavigationSplit?: boolean;
+    /** 侧栏底部折叠按钮显隐 */
+    SidebarCollapseButton?: boolean;
+    /** 半暗侧栏：浅色外观下侧栏保持深色调色板 */
+    SemiDarkSidebar?: boolean;
+    /** 浅色外观下顶栏用深色调色板 */
+    SemiDarkHeader?: boolean;
+    SemiDarkSidebarSub?: boolean;
+    /** 功能色（成功 / 警告 / 危险）：空串 = 跟随内置默认 */
+    SuccessColor?: string;
+    WarningColor?: string;
+    DangerColor?: string;
+    /** 侧栏宽度（px，160~320）；折叠宽度与 hover 弹出菜单不随此值变化 */
+    SidebarWidth?: number;
+    /** 折叠态悬停临时展开（仅视觉层，不写回存储） */
+    SidebarExpandOnHover?: boolean;
+    /** 侧栏右缘拖拽调宽把手 */
+    SidebarDraggable?: boolean;
+    /** 折叠态侧栏显示菜单标题（图标在上、标题在下，仅垂直布局） */
+    SidebarCollapsedShowTitle?: boolean;
+    /** 点击顶层父级菜单展开时自动激活并跳转第一个子菜单 */
+    SidebarAutoActivateChild?: boolean;
+    /** 固定顶栏：关闭后顶栏随页面一起滚动 */
+    HeaderFixed?: boolean;
+    /** 顶栏模式四态（static / fixed / auto / auto-scroll）：归一 HeaderFixed/HeaderAutoHide */
+    HeaderMode?: "static" | "fixed" | "auto" | "auto-scroll" | "";
+    /** CSS 级隐藏顶栏（区别于「非固定」：隐藏后顶栏整块不渲染） */
+    HeaderHidden?: boolean;
+    /** 显示面包屑（顶栏左侧路径导航） */
+    BreadcrumbVisible?: boolean;
+    /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式（normal|background） */
+    BreadcrumbShowIcon?: boolean;
+    BreadcrumbShowHome?: boolean;
+    BreadcrumbHideOnlyOne?: boolean;
+    BreadcrumbStyle?: "normal" | "background";
+    /** 页签最大数量（0 = 不限制，超出后自动关闭最旧的非固定页签） */
+    MaxTagsCount?: number;
+    /** 顶栏组件显隐：菜单搜索 / 语言切换 / 全屏 / 锁屏 / 消息通知 */
+    NavbarSearch?: boolean;
+    NavbarLanguage?: boolean;
+    NavbarFullscreen?: boolean;
+    NavbarLock?: boolean;
+    NavbarNotice?: boolean;
+    /** 顶栏补充按钮：刷新当前页 / 折叠侧栏 / 明暗切换 */
+    NavbarRefresh?: boolean;
+    NavbarSidebarToggle?: boolean;
+    NavbarThemeToggle?: boolean;
+    /** 时区切换（顶栏世界时钟 + 展示时区选择，默认关） */
+    NavbarTimezone?: boolean;
+    /** 顶栏组件顺序（键见 lay-navbar/widgets/catalog.ts，缺省用内置顺序） */
+    NavbarOrder?: string[];
+    /** 收进「更多」下拉的顶栏组件键（仅动作类组件可收） */
+    NavbarMoreWidgets?: string[];
+    /** 各顶栏组件落位：{组件键: header | more | user-dropdown | none}，未登记走各组件默认 */
+    WidgetPositions?: Record<
+      string,
+      "header" | "more" | "user-dropdown" | "none"
+    >;
+    /** 水平布局顶栏菜单对齐（start / center / end） */
+    HeaderMenuAlign?: string;
+    /** 侧栏折叠态宽度（px） */
+    SidebarCollapseWidth?: number;
+    /** 混合布局侧栏宽度（px，0 = 跟随侧栏宽度） */
+    SidebarMixedWidth?: number;
+    /** 隐藏侧栏（内容区最大化） */
+    SidebarHidden?: boolean;
+    /** 侧栏「钉住展开」按钮（切换悬停展开） */
+    SidebarFixedButton?: boolean;
+    /** 混合布局下额外收起侧栏（第二列） */
+    SidebarExtraCollapse?: boolean;
+    /** 页签中键关闭 */
+    TagsMiddleClickClose?: boolean;
+    /** 滚轮横向滚动页签条 */
+    TagsWheelSwitch?: boolean;
+    /** 页签条：显示页签图标 / 刷新按钮 / 更多按钮 */
+    TagsShowIcon?: boolean;
+    TagsShowRefresh?: boolean;
+    TagsShowMore?: boolean;
+    /** 页签栏内「内容最大化」按钮（等同右键「内容全屏」的内存态切换） */
+    TagsShowMaximize?: boolean;
+    /** 页签项高度（px） */
+    TagsHeight?: number;
+    /** 页签缓存总开关（关闭后所有页面不缓存） */
+    TagsKeepAlive?: boolean;
+    /** 页签访问历史（关闭当前页签回到上一个访问过的页面） */
+    TagsVisitHistory?: boolean;
+    /** 动态标题：document.title 随路由变化 */
+    DynamicTitle?: boolean;
+    /** 设置入口总开关；入口位置：auto（跟随布局）| header（顶栏齿轮）| fixed（右下角悬浮球）| none | user-dropdown */
+    EnablePreferences?: boolean;
+    PreferencesPosition?:
+      "auto" | "header" | "fixed" | "none" | "user-dropdown";
+    /** 偏好面板页签导航吸顶：面板内容滚动时页签头保持可见 */
+    PreferencesStickyNav?: boolean;
+    /** 显示面板底部「复制偏好」按钮 */
+    EnableCopyPreferences?: boolean;
+    /** 全局页面切换动画预设（none 表示不做过渡） */
+    PageTransition?: PageTransitionType;
+    /** 路由切换：顶部进度条 / 内容区 loading 遮罩 */
+    TransitionProgress?: boolean;
+    TransitionLoading?: boolean;
+    /** ⌘/Ctrl + K 唤起命令面板 */
+    ShortcutSearch?: boolean;
+    ShortcutLock?: boolean;
+    ShortcutSidebar?: boolean;
+    /** 快捷键总开关：关闭后键位自定义全部失效（顶栏按钮不受影响） */
+    ShortcutEnable?: boolean;
+    /** 键位串：小写 `mod+alt+shift+<key>`，空串 = 不启用该动作 */
+    ShortcutLockKeys?: string;
+    ShortcutSidebarKeys?: string;
+    ShortcutSearchKeys?: string;
+    ShortcutPreferencesKeys?: string;
+    ShortcutLogoutKeys?: string;
     MenuArrowIconNoTransition?: boolean;
     CachingAsyncRoutes?: boolean;
     TooltipEffect?: Effect;
     ResponsiveStorageNameSpace?: string;
     MenuSearchHistory?: number;
+    /** 可拖拽分栏页面的左栏宽度百分比：{页面标识: percent}，前端整包读写 */
+    SplitPanes?: Record<string, number>;
   }
 
   /**
@@ -133,7 +301,7 @@ declare global {
     themeColor?: string;
     themeMode?: string;
     showLogo?: boolean;
-    showModel?: string;
+    tagsStyle?: string;
     menuSearchHistory?: number;
     username?: string;
   }
@@ -159,12 +327,126 @@ declare global {
       weak?: boolean;
       hideTabs?: boolean;
       hideFooter?: boolean;
+      footerFixed?: boolean;
+      /** 页脚高度（px，0 = 自动） */
+      footerHeight?: number;
+      /** 站点标题（侧栏 / 顶栏品牌区与动态标签页；空则回落 platform-config 的 Title） */
+      title?: string;
       showLogo?: boolean;
-      showModel?: string;
+      logoSource?: string;
+      logoShowText?: boolean;
+      logoFit?: string;
+      /** 认证页（登录）外壳形态：插画左 / 居中 / 右 */
+      authPageLayout?: "panel-left" | "panel-center" | "panel-right";
+      /** Logo 形态（icon | full）/ 整图高度（px）/ 暗色专用图地址 */
+      logoMode?: "icon" | "full";
+      fullLogoHeight?: number;
+      logoSourceDark?: string;
+      /** 展示时区（IANA 名称；空 = 跟随浏览器本地时区） */
+      timezone?: string;
+      tagsStyle?: string;
       multiTagsCache?: boolean;
       stretch?: boolean | number;
+      headerAutoHide?: boolean;
+      compactMode?: boolean;
+      radius?: RadiusScaleType;
+      fontScale?: FontScaleType;
+      /** 自定义字号基准（px）：fontScale=custom 时写入 --font-scale 倍率 */
+      fontScaleCustom?: number;
+      /** 主题预设（内置色系名 / default / custom）：写 `html[data-theme-preset]` 表面色系 */
+      themePreset?: string;
+      /** 导航风格（rounded / plain）：写 `html[data-nav-style]` */
+      navigationStyle?: string;
+      /** 导航切割：混合系布局顶栏一级 / 侧栏子菜单的切割开关 */
+      navigationSplit?: boolean;
+      sidebarAccordion?: boolean;
+      sidebarCollapseButton?: boolean;
+      /** 半暗侧栏（`html.semi-dark-sidebar`，暗色外观下自动失效） */
+      semiDarkSidebar?: boolean;
+      semiDarkHeader?: boolean;
+      semiDarkSidebarSub?: boolean;
+      successColor?: string;
+      warningColor?: string;
+      dangerColor?: string;
+      /** 侧栏宽度（px）：由 JS 写入 `--sidebar-width`，默认档撤除内联覆写 */
+      sidebarWidth?: number;
+      /** 折叠态悬停临时展开 / 侧栏拖拽调宽 */
+      sidebarExpandOnHover?: boolean;
+      sidebarDraggable?: boolean;
+      /** 折叠态侧栏显示菜单标题 / 点击顶层父级展开时自动激活第一个子菜单 */
+      sidebarCollapsedShowTitle?: boolean;
+      sidebarAutoActivateChild?: boolean;
+      /** 固定顶栏：关闭后走非固定头布局（顶栏随内容滚动） */
+      headerFixed?: boolean;
+      /** 顶栏模式四态（static / fixed / auto / auto-scroll）：归一 HeaderFixed/HeaderAutoHide */
+      headerMode?: "static" | "fixed" | "auto" | "auto-scroll" | "";
+      /** CSS 级隐藏顶栏（整块不渲染，区别于「非固定」） */
+      headerHidden?: boolean;
+      /** 显示面包屑 */
+      breadcrumbVisible?: boolean;
+      /** 面包屑细分：显示图标 / 显示首页项 / 仅一项时隐藏 / 样式 */
+      breadcrumbShowIcon?: boolean;
+      breadcrumbShowHome?: boolean;
+      breadcrumbHideOnlyOne?: boolean;
+      breadcrumbStyle?: "normal" | "background";
+      /** 页签最大数量（0 = 不限制） */
+      maxTagsCount?: number;
+      /** 顶栏组件显隐 */
+      navbarSearch?: boolean;
+      navbarLanguage?: boolean;
+      navbarFullscreen?: boolean;
+      navbarLock?: boolean;
+      navbarNotice?: boolean;
+      navbarRefresh?: boolean;
+      navbarSidebarToggle?: boolean;
+      navbarThemeToggle?: boolean;
+      /** 时区切换按钮（顶栏世界时钟 + 展示时区选择） */
+      navbarTimezone?: boolean;
+      navbarOrder?: string[];
+      navbarMoreWidgets?: string[];
+      /** 各顶栏组件落位：{组件键: header | more | user-dropdown | none} */
+      widgetPositions?: Record<
+        string,
+        "header" | "more" | "user-dropdown" | "none"
+      >;
+      headerMenuAlign?: string;
+      sidebarCollapseWidth?: number;
+      sidebarMixedWidth?: number;
+      sidebarHidden?: boolean;
+      sidebarFixedButton?: boolean;
+      sidebarExtraCollapse?: boolean;
+      tagsMiddleClickClose?: boolean;
+      tagsWheelSwitch?: boolean;
+      tagsShowIcon?: boolean;
+      tagsShowRefresh?: boolean;
+      tagsShowMore?: boolean;
+      /** 页签栏内「内容最大化」按钮 */
+      tagsShowMaximize?: boolean;
+      tagsHeight?: number;
+      tagsKeepAlive?: boolean;
+      tagsVisitHistory?: boolean;
+      dynamicTitle?: boolean;
+      enablePreferences?: boolean;
+      preferencesPosition?:
+        "auto" | "header" | "fixed" | "none" | "user-dropdown";
+      preferencesStickyNav?: boolean;
+      enableCopyPreferences?: boolean;
+      pageTransition?: PageTransitionType;
+      transitionProgress?: boolean;
+      transitionLoading?: boolean;
+      shortcutSearch?: boolean;
+      shortcutLock?: boolean;
+      shortcutSidebar?: boolean;
+      shortcutEnable?: boolean;
+      shortcutLockKeys?: string;
+      shortcutSidebarKeys?: string;
+      shortcutSearchKeys?: string;
+      shortcutPreferencesKeys?: string;
+      shortcutLogoutKeys?: string;
     };
-    tags?: Array<any>;
+    tags?: Array<Recordable>;
+    /** 右键「固定」的标签（fullPath 列表） */
+    pinnedTags?: string[];
   }
 
   /**

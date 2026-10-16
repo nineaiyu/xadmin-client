@@ -1,106 +1,61 @@
+import { useI18n } from "vue-i18n";
 import type { PlusColumn } from "plus-pro-components";
 
+/**
+ * 「平台信息」卡的版本行（descriptions）列定义：
+ * 只放「键值对」形态的版本信息；仓库 / 文档 / 演示等外链由页面的链接行承载
+ * （放在 descriptions 里会让 label 与链接文案重复，如「前端代码地址 | 前端代码地址」）。
+ */
 export function useColumns() {
+  const { t } = useI18n();
   const { pkg, lastBuildTime } = __APP_INFO__;
   const { version, engines } = pkg;
   const columns: PlusColumn[] = [
     {
-      label: "当前版本",
+      label: t("about.version"),
       prop: "version",
       minWidth: 100,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="text-base!">
+          <el-tag size="large" class="font-mono!">
             {version}
           </el-tag>
         );
       }
     },
     {
-      label: "最后编译时间",
+      label: t("about.buildTime"),
       prop: "buildTime",
       minWidth: 120,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="text-base!">
+          <el-tag size="large" class="font-mono!">
             {lastBuildTime}
           </el-tag>
         );
       }
     },
     {
-      label: "推荐 node 版本",
+      label: t("about.nodeVersion"),
       prop: "node",
-      minWidth: 140,
+      minWidth: 120,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="text-base!">
+          <el-tag size="large" class="font-mono!">
             {engines.node}
           </el-tag>
         );
       }
     },
     {
-      label: "推荐 pnpm 版本",
+      label: t("about.pnpmVersion"),
       prop: "pnpm",
-      minWidth: 140,
+      minWidth: 120,
       renderDescriptionsItem: () => {
         return (
-          <el-tag size="large" class="text-base!">
+          <el-tag size="large" class="font-mono!">
             {engines.pnpm}
           </el-tag>
-        );
-      }
-    },
-    {
-      label: "前端代码地址",
-      prop: "webUrl",
-      minWidth: 140,
-      className: "pure-version",
-      renderDescriptionsItem: () => {
-        return (
-          <a href="https://github.com/nineaiyu/xadmin-client" target="_blank">
-            <span style="color: var(--el-color-primary)">前端代码地址</span>
-          </a>
-        );
-      }
-    },
-    {
-      label: "后端代码地址",
-      prop: "apiUrl",
-      minWidth: 140,
-      className: "pure-version",
-      renderDescriptionsItem: () => {
-        return (
-          <a href="https://github.com/nineaiyu/xadmin-server" target="_blank">
-            <span style="color: var(--el-color-primary)">后端代码地址</span>
-          </a>
-        );
-      }
-    },
-    {
-      label: "文档地址",
-      prop: "docUrl",
-      minWidth: 100,
-      className: "pure-version",
-      renderDescriptionsItem: () => {
-        return (
-          <a href="https://docs.dvcloud.xin" target="_blank">
-            <span style="color: var(--el-color-primary)">文档链接</span>
-          </a>
-        );
-      }
-    },
-    {
-      label: "预览地址",
-      prop: "demoUrl",
-      minWidth: 100,
-      className: "pure-version",
-      renderDescriptionsItem: () => {
-        return (
-          <a href="https://xadmin.dvcloud.xin/" target="_blank">
-            <span style="color: var(--el-color-primary)">预览链接</span>
-          </a>
         );
       }
     }

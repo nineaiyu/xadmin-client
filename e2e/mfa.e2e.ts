@@ -1,0 +1,102 @@
+import { expect, test } from "@playwright/test";
+
+import { login, openUserPanel } from "./helpers";
+
+/**
+ * MFA 功能入口回归：
+ * 1. 系统设置→安全设置：MFA tab 正常渲染（menu.json 缺失对应权限码时空白页的
+ *    回归），且 MFA「验证方式」渲染为带候选值的多选下拉（ListField
+ *    child.choices，而非 TagInput 手动输入）
+ * 2. 系统设置→基本设置：资源告警 tab 渲染阈值字段（资源告警已从安全设置迁移）
+ * 3. 右上角账户设置页（/account-settings）包含「MFA 安全」面板（复用个人中心
+ *    OTP 绑定组件）
+ * 4. 个人中心包含「MFA 安全」tab，可进入 OTP 绑定
+ * 5. 用户管理行操作「管理」抽屉包含「重置MFA」（缺失 resetMfa:SystemUser 权限码
+ *    时动作不渲染的回归）
+ *
+ * 注意：安全设置页的面板导航在设置页骨架内（.setting-page），以此与右上角
+ * lay-notice 内的 tabs 区分，避免 tabpanel 断言命中两套 DOM 导致 strict violation。
+ */
+
+test.describe("MFA 功能入口", () => {
+  test("安全设置：MFA 面板渲染且验证方式为多选下拉", async ({ page }) => {
+    await login(page);
+    await page.goto("/#/settings/security/index");
+
+    const tabs = page.locator(".setting-page").first();
+    const mfaTab = tabs.getByRole("tab", { name: "MFA 二次验证配置" });
+    await expect(mfaTab).toBeVisible({ timeout: 15_000 });
+    await mfaTab.click();
+
+    const mfaPane = tabs.getByRole("tabpanel", {
+      name: "MFA 二次验证配置"
+    });
+    await expect(mfaPane.getByRole("button", { name: "保存" })).toBeVisible();
+
+    // 验证方式：带候选值的多选下拉（otp/sms/email/password）
+    const methodSelect = mfaPane.locator(".el-select").first();
+    await expect(methodSelect).toBeVisible();
+    await methodSelect.click();
+    const visibleDropdown = page.locator(".el-select-dropdown:visible");
+    await expect(
+      visibleDropdown.getByText("OTP 动态验证码", { exact: true })
+    ).toBeVisible();
+    await expect(
+      visibleDropdown.getByText("登录密码", { exact: true })
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+  });
+
+  test("基本设置：资源告警面板渲染阈值字段", async ({ page }) => {
+    await login(page);
+    // 基本设置菜单路径为 /settings/basic（无 /index 后缀，见 loadjson menu.json）
+    await page.goto("/#/settings/basic");
+
+    const monitorTab = page.getByRole("tab", { name: "资源告警" });
+    await expect(monitorTab).toBeVisible({ timeout: 15_000 });
+    await monitorTab.click();
+    const monitorPane = page.getByRole("tabpanel", { name: "资源告警" });
+    await expect(monitorPane.getByText("磁盘使用率阈值（%）")).toBeVisible();
+    await expect(monitorPane.getByText("CPU 负载阈值（单核）")).toBeVisible();
+    await expect(
+      monitorPane.getByRole("button", { name: "保存" })
+    ).toBeVisible();
+  });
+
+  test("账户设置：包含 MFA 安全面板", async ({ page }) => {
+    await login(page);
+    await page.goto("/#/account-settings");
+
+    const mfaItem = page.getByRole("menuitem", { name: "MFA 安全" });
+    await expect(mfaItem).toBeVisible({ timeout: 15_000 });
+    await mfaItem.click();
+    await expect(page.getByRole("button", { name: "绑定 OTP" })).toBeVisible();
+  });
+
+  test("个人中心入口收敛：渲染账户设置（功能超集）且 MFA 面板可达", async ({
+    page
+  }) => {
+    await login(page);
+    // 个人中心已收敛到「账户设置」：菜单 path 不变（旧书签可用），component 指向同一实现
+    await page.goto("/#/user/info/index");
+
+    const mfaItem = page.getByRole("menuitem", { name: "MFA 安全" });
+    await expect(mfaItem).toBeVisible({ timeout: 15_000 });
+    await expect(page).toHaveURL(/#\/user\/info\/index/, { timeout: 15_000 });
+    await mfaItem.click();
+    await expect(page.getByRole("button", { name: "绑定 OTP" })).toBeVisible();
+  });
+
+  test("用户管理：管理抽屉包含重置MFA", async ({ page }) => {
+    await login(page);
+    await page.goto("/#/system/user/index");
+    const table = page.locator(".el-table").first();
+    await expect(table).toBeVisible({ timeout: 15_000 });
+
+    // 行操作收敛进用户抽屉：操作列「管理」→ 抽屉内「重置MFA」
+    // （缺失 resetMfa:SystemUser 权限码时该动作不渲染的回归）
+    const row = page.locator(".el-table__body-wrapper tr").first();
+    const panel = await openUserPanel(page, row);
+    await expect(panel.locator('[data-action-code="resetMfa"]')).toBeVisible();
+  });
+});

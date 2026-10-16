@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { Delete, Plus, ZoomIn } from "@element-plus/icons-vue";
 import type {
@@ -9,53 +10,69 @@ import type {
   UploadRequestOptions,
   UploadUserFile as ElEUploadUserFile
 } from "element-plus";
+import type { AxiosProgressEvent } from "axios";
 import defaultFile from "../assets/defaultFile.png";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { systemUploadFileApi } from "@/api/system/file";
+import { systemUploadFileApi } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { formatBytes } from "@pureadmin/utils";
 
 defineOptions({ name: "UploadFiles" });
-const value = defineModel<string | object | any>();
+/** 模型文件条目：与上传接口返回字段及 change 事件回传的 { pk } 对象对齐 */
+interface FileItem {
+  pk?: number | string;
+  filename?: string;
+  label?: string;
+  filesize?: number;
+  filepath?: string;
+}
+/** 上传接口响应（systemUploadFileApi.upload 的 UploadFileResult 未导出，按需收窄） */
+interface UploadResponse {
+  code: number;
+  data?: Array<{ pk: number | string }>;
+  detail?: string;
+}
+const value = defineModel<unknown>();
 const props = defineProps({
   disabled: Boolean,
   multiple: Boolean,
   isImageFile: Boolean
 });
 const emit = defineEmits<{
-  change: [...args: any];
+  change: [pks: FileItem[] | FileItem | null];
 }>();
 
 interface UploadUserFile extends ElEUploadUserFile {
-  pk?: number;
+  pk?: number | string;
 }
 
 const fileList = ref<UploadUserFile[]>([]);
 const colors = [
-  { color: "#f56c6c", percentage: 20 },
-  { color: "#e6a23c", percentage: 40 },
-  { color: "#5cb87a", percentage: 60 },
-  { color: "#1989fa", percentage: 80 },
-  { color: "#6f7ad3", percentage: 100 }
+  { color: "var(--el-color-danger)", percentage: 20 },
+  { color: "var(--el-color-warning)", percentage: 40 },
+  { color: "var(--el-color-success)", percentage: 60 },
+  { color: "var(--el-color-primary)", percentage: 80 },
+  { color: "var(--el-color-primary)", percentage: 100 }
 ];
 if (value.value) {
   if (props.multiple) {
-    fileList.value = value.value.map(item => {
+    fileList.value = (value.value as FileItem[]).map(item => {
       return {
-        name: item.filename ?? item.label,
+        name: item.filename ?? item.label ?? "",
         size: item.filesize,
         pk: item.pk,
         url: props.isImageFile ? item.filepath : defaultFile
-      };
+      } as UploadUserFile;
     });
   } else {
+    const file = value.value as FileItem;
     fileList.value = [
       {
-        name: value.value.filename ?? value.value.label,
-        size: value.value.filesize,
-        pk: value.value.pk,
-        url: props.isImageFile ? value.value.filepath : defaultFile
+        name: file.filename ?? file.label ?? "",
+        size: file.filesize,
+        pk: file.pk,
+        url: props.isImageFile ? file.filepath : defaultFile
       }
     ];
   }
@@ -90,8 +107,9 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === 1000) {
-        uploadConfig.value = res.data;
+      if (isSuccess(res)) {
+        // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
+        uploadConfig.value = res.data as { file_upload_size: number };
       }
     });
   }
@@ -101,10 +119,11 @@ const uploadRequest = (option: UploadRequestOptions) => {
   const data = new FormData();
   data.append("file", option.file);
   return systemUploadFileApi.upload(data, {
-    onUploadProgress: (event: any) => {
-      const progressEvt = event as UploadProgressEvent;
+    onUploadProgress: (event: AxiosProgressEvent) => {
+      // axios 进度事件与 element-plus UploadProgressEvent 运行时同形，percent 由本处回填
+      const progressEvt = event as AxiosProgressEvent & UploadProgressEvent;
       progressEvt.percent =
-        event.total > 0 ? (event.loaded / event.total) * 100 : 0;
+        (event.total ?? 0) > 0 ? (event.loaded / (event.total ?? 1)) * 100 : 0;
       option.onProgress(progressEvt);
     }
   });
@@ -127,8 +146,11 @@ watch(
   }
 );
 
-const uploadSuccess = (response: any, uploadFile: UploadUserFile) => {
-  if (response.code === 1000 && response?.data.length == 1) {
+const uploadSuccess = (
+  response: UploadResponse,
+  uploadFile: UploadUserFile
+) => {
+  if (isSuccess(response) && response?.data?.length === 1) {
     const data = response.data[0];
     uploadFile.pk = data.pk;
     message(`${uploadFile.name} ${t("results.success")}`, { type: "success" });
@@ -183,8 +205,8 @@ const disableShowAdd = computed(() => {
         </div>
       </template>
       <template #file="{ file }">
-        <div class="w-[100%] flex flex-col items-center justify-center">
-          <div class="h-[50%] w-[50%]">
+        <div class="w-full flex-c flex-col">
+          <div class="size-[50%]">
             <div v-if="file.status === 'uploading'">
               <el-progress
                 :color="colors"
@@ -216,7 +238,7 @@ const disableShowAdd = computed(() => {
     </el-upload>
 
     <el-dialog v-model="dialogVisible">
-      <div class="flex flex-col items-center justify-center">
+      <div class="flex-c flex-col">
         <img :src="dialogFile.url" alt="Preview Image" class="max-w-full" />
         <div v-if="dialogFile?.size">{{ formatBytes(dialogFile.size) }}</div>
         <div v-if="dialogFile?.name" class="truncate">

@@ -12,7 +12,7 @@ withDefaults(defineProps<{ isActive?: boolean }>(), {
 const { tooltipEffect, t } = useNav();
 
 const iconClass = computed(() => {
-  return ["w-[16px]", "h-[16px]"];
+  return ["size-4"];
 });
 
 const { $storage } = useGlobal<GlobalPropertiesApi>();
@@ -59,7 +59,7 @@ const toggleClick = () => {
   height: 34px;
   cursor: pointer;
   background: var(--el-bg-color);
-  border: 1px solid var(--pure-border-color);
+  border: 1px solid var(--divider);
   border-radius: 4px;
   transform: translate(12px, -50%);
 }

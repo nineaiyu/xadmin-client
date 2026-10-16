@@ -37,11 +37,16 @@ function hideLoading() {
   clearFallbackTimer();
 }
 
+/** 兼容旧版 IE 的 iframe 事件挂载边界（现代浏览器走 onload 赋值分支） */
+type FrameHostElement = HTMLElement & {
+  attachEvent?: (_type: string, _listener: () => void) => boolean;
+};
+
 function init() {
   nextTick(() => {
     const iframe = unref(frameRef);
     if (!iframe) return;
-    const _frame = iframe as any;
+    const _frame = iframe as FrameHostElement;
     if (_frame.attachEvent) {
       _frame.attachEvent("onload", hideLoading);
     } else {
@@ -67,7 +72,10 @@ watch(
     if (props.frameInfo?.fullPath === path && isRedirect) {
       loading.value = true;
       clearFallbackTimer();
-      const url = new URL(props.frameInfo.frameSrc, window.location.origin);
+      const url = new URL(
+        props.frameInfo.frameSrc ?? "",
+        window.location.origin
+      );
       const joinChar = url.search ? "&" : "?";
       frameSrc.value = `${props.frameInfo.frameSrc}${joinChar}t=${Date.now()}`;
       fallbackTimer.value = window.setTimeout(() => {
@@ -90,7 +98,7 @@ onMounted(() => {
   <div
     v-loading="loading"
     :element-loading-text="t('status.hsLoad')"
-    class="frame"
+    class="frame content-flush"
   >
     <iframe ref="frameRef" :src="frameSrc" class="frame-iframe" />
   </div>
@@ -108,9 +116,5 @@ onMounted(() => {
     overflow: hidden;
     border: 0;
   }
-}
-
-.main-content {
-  margin: 2px 0 0 !important;
 }
 </style>

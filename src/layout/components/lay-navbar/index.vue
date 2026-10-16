@@ -1,38 +1,53 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
-import LaySearch from "../lay-search/index.vue";
-import LayNotice from "../lay-notice/index.vue";
+import { hasNavbarLogo, hasNavbarMenu } from "@/layout/hooks/layoutModes";
 import LayNavMix from "../lay-sidebar/NavMix.vue";
-import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
-import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
+import NavbarLogo from "./NavbarLogo.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
-import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
-import AccountSettingsIcon from "~icons/ri/user-settings-line";
-import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
-import Setting from "~icons/ri/settings-3-line";
-import Check from "~icons/ep/check";
+import NavbarActions from "./NavbarActions.vue";
 
-const {
-  layout,
-  device,
-  logout,
-  onPanel,
-  pureApp,
-  username,
-  userAvatar,
-  avatarsStyle,
-  toggleSideBar,
-  toAccountSettings,
-  getDropdownItemStyle,
-  getDropdownItemClass
-} = useNav();
+const { layout, device, pureApp, toggleSideBar } = useNav();
 
-const { t, locale, translationCh, translationEn } = useTranslationLang();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+
+/** 面包屑显隐（设置面板 →「布局」→「顶栏」） */
+const breadcrumbVisible = computed(
+  () => $storage?.configure?.breadcrumbVisible ?? true
+);
+
+/** 顶栏一级菜单条：混合系布局（混合 / 混合双列） */
+const headerMenuVisible = computed(() => hasNavbarMenu(layout.value));
+
+/**
+ * 顶栏品牌区：Logo 归顶栏的布局（混合 / 侧边导航）——这两种布局的侧栏排在
+ * 顶栏下方，没有侧栏顶部品牌位，Logo 随顶栏展示。
+ */
+const headerLogoVisible = computed(
+  () => device.value !== "mobile" && hasNavbarLogo(layout.value)
+);
+
+/** 面包屑：仅在无顶栏菜单的模式显示（纵向 / 双列侧栏 / 侧边导航） */
+const breadcrumbMode = computed(
+  () => !headerMenuVisible.value && device.value !== "mobile"
+);
+
+/**
+ * 顶栏侧栏折叠按钮：
+ * 仅「垂直」与「混合双列」两种布局在顶栏展示——双列菜单 / 混合菜单 / 侧边导航
+ * 的折叠入口在侧栏自身，水平布局与全屏内容无侧栏。
+ */
+const headerToggleVisible = computed(
+  () =>
+    device.value !== "mobile" &&
+    (layout.value === "vertical" || layout.value === "header-mixed-nav")
+);
 </script>
 
 <template>
-  <div class="navbar bg-[#fff] shadow-xs shadow-[rgba(0,21,41,0.08)]">
+  <div class="navbar bg-bg-card">
     <LaySidebarTopCollapse
       v-if="device === 'mobile'"
       class="hamburger-container"
@@ -40,161 +55,49 @@ const { t, locale, translationCh, translationEn } = useTranslationLang();
       @toggleClick="toggleSideBar"
     />
 
-    <LaySidebarBreadCrumb
-      v-if="layout !== 'mix' && device !== 'mobile'"
-      class="breadcrumb-container"
+    <NavbarLogo v-if="headerLogoVisible" />
+
+    <LaySidebarTopCollapse
+      v-if="headerToggleVisible"
+      class="hamburger-container"
+      :is-active="pureApp.sidebar.opened"
+      @toggleClick="toggleSideBar"
     />
 
-    <LayNavMix v-if="layout === 'mix'" />
-
-    <div v-if="layout === 'vertical'" class="vertical-header-right">
-      <!-- 菜单搜索 -->
-      <LaySearch id="header-search" />
-      <!-- 国际化 -->
-      <el-dropdown id="header-translation" trigger="click">
-        <div
-          class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
-        >
-          <IconifyIconOffline :icon="GlobalizationIcon" />
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu class="translation">
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
-              @click="translationCh"
-            >
-              <IconifyIconOffline
-                v-show="locale === 'zh'"
-                class="check-zh"
-                :icon="Check"
-              />
-              简体中文
-            </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
-              @click="translationEn"
-            >
-              <span v-show="locale === 'en'" class="check-en">
-                <IconifyIconOffline :icon="Check" />
-              </span>
-              English
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <!-- 全屏 -->
-      <LaySidebarFullScreen id="full-screen" />
-      <!-- 消息通知 -->
-      <LayNotice id="header-notice" />
-      <!-- 退出登录 -->
-      <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
-        </span>
-        <template #dropdown>
-          <el-dropdown-menu class="logout">
-            <el-dropdown-item @click="toAccountSettings">
-              <IconifyIconOffline
-                :icon="AccountSettingsIcon"
-                style="margin: 5px"
-              />
-              {{ t("menus.accountSettings") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click="logout">
-              <IconifyIconOffline
-                :icon="LogoutCircleRLine"
-                style="margin: 5px"
-              />
-              {{ t("buttons.loginOut") }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <span
-        class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
-        :title="t('buttons.systemSet')"
-        @click="onPanel"
-      >
-        <IconifyIconOffline :icon="Setting" />
-      </span>
-    </div>
+    <template v-if="headerMenuVisible">
+      <LayNavMix />
+    </template>
+    <template v-else>
+      <LaySidebarBreadCrumb
+        v-if="breadcrumbMode && breadcrumbVisible"
+        class="breadcrumb-container"
+      />
+      <NavbarActions class="vertical-header-right" />
+    </template>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .navbar {
   width: 100%;
-  height: 48px;
+  height: var(--layout-header-h);
   overflow: hidden;
+  border-bottom: 1px solid hsl(var(--border-light));
 
   .hamburger-container {
     float: left;
     height: 100%;
-    line-height: 48px;
+    line-height: var(--layout-header-h);
     cursor: pointer;
   }
 
   .vertical-header-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
     min-width: 280px;
-    height: 48px;
-    color: #000000d9;
-
-    .el-dropdown-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      height: 48px;
-      padding: 10px;
-      color: #000000d9;
-      cursor: pointer;
-
-      p {
-        font-size: 14px;
-      }
-
-      img {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-      }
-    }
   }
 
   .breadcrumb-container {
     float: left;
     margin-left: 16px;
-  }
-}
-
-.translation {
-  :deep(.el-dropdown-menu__item) {
-    padding: 5px 40px;
-  }
-
-  .check-zh {
-    position: absolute;
-    left: 20px;
-  }
-
-  .check-en {
-    position: absolute;
-    left: 20px;
-  }
-}
-
-.logout {
-  width: 120px;
-
-  :deep(.el-dropdown-menu__item) {
-    display: inline-flex;
-    flex-wrap: wrap;
-    min-width: 100%;
   }
 }
 </style>

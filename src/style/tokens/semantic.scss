@@ -1,0 +1,386 @@
+/**
+ * 设计令牌 · 语义层（层 2/3）
+ *
+ * `:root`（亮色）与 `html.dark`（暗色）成对声明的语义槽：背景 / 前景 / 描边 /
+ * 填充 / 遮罩 / 导航 / 阴影。颜色值为 hsl() 参数列表（消费方 `hsl(var(--x))`），
+ * 当前取值与 Element Plus 对应变量逐通道一致（迁移期像素中性）。
+ *
+ * 另吸收原 style/theme.scss 的菜单调色板（8 套 `html[data-theme=...]`）与
+ * --pure-theme-* 缺省值：这些是完整色值（非三元组），由 ts/sidebar 样式直接消费。
+ */
+
+:root {
+  /* ================ 背景 ================ */
+  --bg-page: 216 20.11% 95.47%; /* #eef2f7 */
+  --bg-card: 0 0% 100%; /* #ffffff */
+  --bg-elevated: 0 0% 100%; /* #ffffff（弹层/浮层） */
+
+  /* ================ 前景（文本 / 图标） ================ */
+  --fg: 220 3% 19.4%; /* #303133 */
+  --fg-muted: 220 3% 38.8%; /* #606266 */
+  --fg-subtle: 220 4.2% 58.2%; /* #909399 */
+  --fg-placeholder: 222 6.1% 67.8%; /* #a8abb2 */
+  --fg-disabled: 220 10.5% 77.6%; /* #c0c4cc */
+
+  /* ================ 描边 ================ */
+  --border: 222 16.7% 88.2%; /* #dcdfe6 */
+  --border-light: 220 20% 91.2%; /* #e4e7ed */
+  --border-lighter: 222 33.3% 94.1%; /* #ebeef5 */
+  --border-strong: 222 13.2% 85.1%; /* #d4d7de */
+
+  /* ================ 组合值 ================ */
+
+  /* 卡片/面板描边（1px 实线 + 边框色）：随 --border-light 明暗自动反转 */
+  --card-border: 1px solid hsl(var(--border-light));
+
+  /* ================ 填充（区块底色 / hover 态） ================ */
+  --fill: 216 20% 95.1%; /* #f0f2f5 */
+  --fill-muted: 216 33.3% 97.1%; /* #f5f7fa */
+  --fill-subtle: 0 0% 98%; /* #fafafa */
+  --fill-strong: 216 14.3% 93.1%; /* #ebedf0 */
+
+  /* ================ 强调 ================ */
+  --ring: var(--primary); /* 键盘焦点环：跟随主色 */
+  --overlay: 0 0% 0% / 50%; /* 遮罩（带透明度） */
+
+  /* ================ 导航 ================ */
+  --header: hsl(var(--bg-card)); /* 顶栏背景（完整色值） */
+  --sidebar: var(
+    --pure-theme-menu-bg
+  ); /* 侧栏背景（完整色值，由菜单调色板驱动） */
+
+  /* 双列侧栏一级窄列底色：浅色皮肤与侧栏同色
+     （双列靠分隔线分界），深色模式更深一档形成层次（见下方 html.dark） */
+  --sidebar-deep: var(--sidebar);
+
+  /* ================ 阴影（明暗成对的完整值） ================ */
+  --shadow-sm: 0 0 6px #0000001f;
+  --shadow-md: 0 0 12px #0000001f;
+  --shadow-lg: 0 12px 32px 4px #0000000a, 0 8px 20px #00000014;
+  --shadow-float:
+    0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
+
+  /* 组件级投影：导航区（顶栏 / 页签条）下沿的分隔投影；
+     设置面板等右侧浮层的向左投影 */
+  --shadow-navbar: 0 1px 2px 0 rgb(0 21 41 / 8%);
+  --shadow-panel: -6px 0 16px rgb(0 0 0 / 8%);
+
+  /* 轻遮罩：设置面板 / 移动端侧栏这类「抽屉型」浮层，比对话框遮罩更轻 */
+  --overlay-soft: 0 0% 0% / 30%;
+
+  /* ================ 组件槽（完整色值，直接作为颜色/描边消费） ================ */
+
+  /* 分隔线：前景色的低透明度表达，随明暗自动反转。面板、侧栏的 1px 细分隔用它，
+     与 --border / --border-light 那组实色描边不同源，两者不可互换。 */
+  --divider: hsl(var(--fg) / 6%);
+
+  /* 开关关闭态底色（设置面板紧凑开关的局部覆盖）：比实色描边深一档，提升辨识度 */
+  --switch-off: hsl(var(--fg-placeholder));
+
+  color-scheme: light;
+}
+
+html.dark {
+  /* ================ 背景 ================
+     暗色底系：表面为蓝灰（background 12.27% / background-deep 9%），
+     与"中性近黑"相比整体提亮一档并带色相；三级表面仍保持 page < card = sidebar/header
+     < elevated 的既有层级。 */
+  --bg-page: 220 13.06% 9%; /* #14161a */
+  --bg-card: 222.34 10.43% 12.27%; /* #1c1e23 */
+  --bg-elevated: 0 0% 14.2%; /* #242424 */
+
+  /* ================ 前景 ================
+     主前景取中性 95%（--foreground）；次级/占位档继续沿用灰阶语义（两侧差异极小，
+     保持既有对比度层级）。 */
+  --fg: 0 0% 95%; /* #f2f2f2 */
+  --fg-muted: 221.5 15.7% 83.7%; /* #cfd3dc */
+  --fg-subtle: 222 5.7% 65.9%; /* #a3a6ad */
+  --fg-placeholder: 217.5 3.6% 56.9%; /* #8d9095 */
+  --fg-disabled: 220 2.7% 43.5%; /* #6c6e72 */
+
+  /* ================ 描边 ================
+     EP 描边变量同源于单值 --border(240 3.7% 22%)；这里保留 strong 一档略亮，
+     避免输入框聚焦/分隔线在主色之外缺少层级。 */
+  --border: 240 3.7% 22%; /* #36363a */
+  --border-light: 240 3.7% 22%; /* #36363a */
+  --border-lighter: 240 3.7% 22%; /* #36363a */
+  --border-strong: 240 3.7% 26%; /* #3d3d42（保留一档，登记） */
+
+  /* ================ 填充 ================
+     accent 族：accent 19% / accent-lighter 12% / accent-dark 22%；
+     其 EP fill-color 与 fill-color-light 同源（19%），故 fill 与 fill-muted 同值。 */
+  --fill: 216 5% 19%; /* #2e3033 */
+  --fill-muted: 216 5% 19%; /* #2e3033 */
+  --fill-subtle: 216 5% 12%; /* #1c1f21 */
+  --fill-strong: 240 0% 22%; /* #383838 */
+
+  /* ================ 强调 ================ */
+  --overlay: 0 0% 0% / 40%;
+
+  /* 双列侧栏一级窄列底色：深色模式深于侧栏一档（页底语义） */
+  --sidebar-deep: hsl(var(--bg-page));
+
+  /* ================ 组件槽（暗色取值） ================ */
+  --divider: hsl(var(--fg) / 12%);
+  --switch-off: hsl(var(--fg) / 25%);
+  --overlay-soft: 0 0% 0% / 45%;
+  --shadow-navbar: 0 1px 2px 0 rgb(0 0 0 / 45%);
+  --shadow-panel: -6px 0 16px rgb(0 0 0 / 45%);
+
+  /* ================ 阴影 ================
+     暗色与亮色同值：EP 未覆盖阴影变量、EP 缺省（12% 黑）在暗色下同样生效，
+     卡片/浮层靠表面色差而非重投影分层。 */
+  --shadow-sm: 0 0 6px #0000001f;
+  --shadow-md: 0 0 12px #0000001f;
+  --shadow-lg: 0 12px 32px 4px #0000000a, 0 8px 20px #00000014;
+  --shadow-float:
+    0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
+}
+
+/* ================ 数据大屏画布（恒深色，不随站点主题） ================
+   大屏设计器与投屏页刻意保持深色（设计所见即投屏所得），其工具条 / 侧栏 /
+   卡片的「玻璃表面」自成一套层级；与明暗主题无关，故不进 html.dark 成对块。
+   消费方：views/analysis/screen 的 designer / display 与三个子组件。 */
+
+:root {
+  --screen-canvas: #070b14; /* 画布底色 */
+  --screen-canvas-top: #0b1220; /* 环境光渐变顶部 */
+  --screen-glow-primary: rgb(64 158 255 / 16%); /* 环境光·主色 */
+  --screen-glow-accent: rgb(154 102 228 / 14%); /* 环境光·辅色 */
+  --screen-surface: rgb(255 255 255 / 3%); /* 工具条 / 侧栏表面 */
+  --screen-surface-raised: rgb(255 255 255 / 4%); /* 卡片表面 */
+  --screen-surface-strong: rgb(255 255 255 / 8%); /* 交互底 / 胶囊底 */
+  --screen-border: rgb(255 255 255 / 8%); /* 常规描边 */
+  --screen-border-subtle: rgb(255 255 255 / 6%); /* 顶栏下沿细分隔线 */
+  --screen-border-strong: rgb(255 255 255 / 12%); /* 表单控件描边 */
+  --screen-grid-line: rgb(255 255 255 / 5%); /* 画布栅格线 */
+  --screen-shadow: 0 8px 28px rgb(0 0 0 / 26%); /* 卡片投影 */
+  --screen-fg-bold: rgb(255 255 255 / 92%); /* 文本窗格 / 时钟 */
+  --screen-fg: rgb(255 255 255 / 85%); /* 时钟 / 强调文本 */
+  --screen-fg-strong: rgb(255 255 255 / 82%); /* 卡片标题 */
+  --screen-fg-dense: rgb(255 255 255 / 78%); /* 次级标题 / 空态图形 */
+  --screen-fg-muted: rgb(255 255 255 / 70%); /* 侧栏标签 / 胶囊文字 */
+  --screen-fg-subtle: rgb(255 255 255 / 62%); /* 副标题 / 空态说明 */
+  --screen-fg-dim: rgb(255 255 255 / 55%); /* 提示文本 */
+  --screen-fg-faint: rgb(255 255 255 / 45%); /* 画布空态 */
+}
+
+/* ================ 菜单调色板（自 style/theme.scss 迁入） ================
+   侧栏 / 顶栏菜单的导航配色：--sidebar 语义槽的来源。值为完整色值。
+   说明：--pure-theme-* 系列命名属有意保留（历史命名，与 theme.scss 时代的
+   TS 消费方/皮肤数据链保持同名），不是遗留残留——勿按「去 pure- 前缀」清理。 */
+
+:root {
+  /** 主题色 */
+  --pure-theme-sub-menu-active-text: initial;
+  --pure-theme-menu-bg: none;
+  --pure-theme-menu-hover: none;
+  --pure-theme-sub-menu-bg: transparent;
+  --pure-theme-menu-text: initial;
+  --pure-theme-sidebar-logo: none;
+  --pure-theme-menu-title-hover: initial;
+  --pure-theme-menu-active-before: transparent;
+
+  /* 菜单激活态：底色与文字色成对声明（浅色皮肤 = 主色浅底 + 主色文字；
+     深色皮肤 = 主色半透明底 + 白字），消费方见 style/sidebar/_common.scss */
+  --pure-theme-menu-active-bg: transparent;
+  --pure-theme-menu-active-text: inherit;
+
+  /* 侧栏右缘分隔线：浅色皮肤与内容区自然分界、不画线；深色皮肤保留细线 */
+  --pure-theme-sidebar-border: transparent;
+}
+
+/* 亮白色（白底 + 主色浅底激活块的侧栏形态） */
+html[data-theme="light"] {
+  --pure-theme-sub-menu-active-text: hsl(var(--primary));
+  --pure-theme-menu-bg: #fff;
+  --pure-theme-menu-hover: #f4f4f5;
+  --pure-theme-sub-menu-bg: #fff;
+  --pure-theme-menu-text: hsl(var(--fg));
+  --pure-theme-sidebar-logo: #fff;
+  --pure-theme-menu-title-hover: hsl(var(--fg));
+  --pure-theme-menu-active-before: hsl(var(--primary));
+  --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
+  --pure-theme-menu-active-text: hsl(var(--primary));
+}
+
+/* 道奇蓝（默认皮肤：白底浅色侧栏） */
+html[data-theme="default"] {
+  --pure-theme-sub-menu-active-text: hsl(var(--primary));
+  --pure-theme-menu-bg: #fff;
+  --pure-theme-menu-hover: #f4f4f5;
+  --pure-theme-sub-menu-bg: #fff;
+  --pure-theme-menu-text: hsl(var(--fg));
+  --pure-theme-sidebar-logo: #fff;
+  --pure-theme-menu-title-hover: hsl(var(--fg));
+  --pure-theme-menu-active-before: hsl(var(--primary));
+  --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
+  --pure-theme-menu-active-text: hsl(var(--primary));
+}
+
+/* 深色模式下的浅色皮肤（default / light）：侧栏与顶栏此时是深色面板，
+   导航调色切换为「深色菜单」口径——悬停 / 激活用提亮块、
+   文字用前景色派生；若不覆写，浅色皮肤的白色底与浅灰悬停会在深色面板上留下白块。
+   深色皮肤（紫罗兰 / 极客蓝等）自带深色调色板，不受此块影响。 */
+html.dark[data-theme="light"],
+html.dark[data-theme="default"] {
+  --pure-theme-menu-bg: hsl(var(--bg-card));
+  --pure-theme-sub-menu-bg: hsl(var(--bg-card));
+  --pure-theme-menu-hover: hsl(var(--fg) / 10%);
+  --pure-theme-menu-text: hsl(var(--fg) / 80%);
+  --pure-theme-menu-title-hover: hsl(var(--fg));
+  --pure-theme-sub-menu-active-text: hsl(var(--fg));
+  --pure-theme-menu-active-bg: hsl(var(--fg) / 12%);
+  --pure-theme-menu-active-text: hsl(var(--fg));
+  --pure-theme-sidebar-logo: hsl(var(--bg-card));
+}
+
+/* 深紫罗兰色 */
+html[data-theme="saucePurple"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #130824;
+  --pure-theme-menu-hover: rgb(105 58 201 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #1f0c38;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #693ac9;
+  --pure-theme-menu-active-bg: rgb(105 58 201 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 深粉色 */
+html[data-theme="pink"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #28081a;
+  --pure-theme-menu-hover: rgb(216 68 147 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #3f0d29;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #d84493;
+  --pure-theme-menu-active-bg: rgb(216 68 147 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 猩红色 */
+html[data-theme="dusk"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #2a0608;
+  --pure-theme-menu-hover: rgb(225 60 57 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: rgb(254 254 254 / 65.1%);
+  --pure-theme-sidebar-logo: #42090c;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #e13c39;
+  --pure-theme-menu-active-bg: rgb(225 60 57 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 橙红色 */
+html[data-theme="volcano"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #2b0e05;
+  --pure-theme-menu-hover: rgb(232 95 51 / 15%);
+  --pure-theme-sub-menu-bg: #0f0603;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #441708;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #e85f33;
+  --pure-theme-menu-active-bg: rgb(232 95 51 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 绿宝石 */
+html[data-theme="mingQing"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #032121;
+  --pure-theme-menu-hover: rgb(89 191 193 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #053434;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #59bfc1;
+  --pure-theme-menu-active-bg: rgb(89 191 193 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 极客蓝 */
+html[data-theme="geekblue"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #1a2b6b;
+  --pure-theme-menu-hover: rgb(47 84 235 / 18%);
+  --pure-theme-sub-menu-bg: #16255e;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #16255e;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #2f54eb;
+  --pure-theme-menu-active-bg: rgb(47 84 235 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 金盏黄 */
+html[data-theme="gold"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #43340a;
+  --pure-theme-menu-hover: rgb(250 173 20 / 18%);
+  --pure-theme-sub-menu-bg: #3a2d08;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #3a2d08;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #faad14;
+  --pure-theme-menu-active-bg: rgb(250 173 20 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 青柠 */
+html[data-theme="lime"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #2f3d0a;
+  --pure-theme-menu-hover: rgb(160 217 17 / 18%);
+  --pure-theme-sub-menu-bg: #293508;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #293508;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #a0d911;
+  --pure-theme-menu-active-bg: rgb(160 217 17 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 咖褐 */
+html[data-theme="brown"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #3b2416;
+  --pure-theme-menu-hover: rgb(160 82 45 / 22%);
+  --pure-theme-sub-menu-bg: #332013;
+  --pure-theme-menu-text: rgb(254 254 254 / 65%);
+  --pure-theme-sidebar-logo: #332013;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #a0522d;
+  --pure-theme-menu-active-bg: rgb(160 82 45 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 酸橙绿 */
+html[data-theme="auroraGreen"] {
+  --pure-theme-sub-menu-active-text: #fff;
+  --pure-theme-menu-bg: #0b1e15;
+  --pure-theme-menu-hover: rgb(96 172 128 / 15%);
+  --pure-theme-sub-menu-bg: #000;
+  --pure-theme-menu-text: #7a80b4;
+  --pure-theme-sidebar-logo: #112f21;
+  --pure-theme-menu-title-hover: #fff;
+  --pure-theme-menu-active-before: #60ac80;
+  --pure-theme-menu-active-bg: rgb(96 172 128 / 22%);
+  --pure-theme-menu-active-text: #fff;
+  --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}

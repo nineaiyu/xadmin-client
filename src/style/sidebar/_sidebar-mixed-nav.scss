@@ -1,0 +1,57 @@
+@use "common" as *;
+
+/* 双列侧栏：一级窄列 + 二级展开列并排，顶栏在侧栏右侧 */
+body[layout="sidebar-mixed-nav"] {
+  $narrow: var(--sidebar-mixed-narrow-width);
+  $sideBarWidth: calc(#{$narrow} + var(--sidebar-width));
+  $sideBarCollapsed: calc(#{$narrow} + var(--sidebar-collapse-width));
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 主列（二级展开列）无内容：当前一级是叶子菜单（如「关于」）时没有子菜单可展示，
+     侧栏收为窄列宽度、内容区随之占满（extra 隐藏） */
+  .sidebar-container.is-narrow-only {
+    width: $narrow !important;
+  }
+
+  .is-narrow-only ~ .main-container {
+    margin-left: $narrow !important;
+
+    .fixed-header {
+      width: calc(100% - #{$narrow}) !important;
+    }
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: calc(100% - #{$sideBarCollapsed});
+      transition: width var(--duration-base);
+    }
+
+    .sidebar-container {
+      width: $sideBarCollapsed !important;
+      transition: width var(--duration-base);
+    }
+
+    /* 窄列独显（主列无内容）时折叠不生效：没有次级列可折叠，侧栏保持窄列宽度 */
+    .sidebar-container.is-narrow-only {
+      width: $narrow !important;
+    }
+
+    /* 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」）：侧栏浮层式回到展开宽度，
+       主列菜单随 menuCollapse 解除折叠，内容区不动（折叠态悬停展开同口径）；
+       窄列独显时无次级列可展开，不参与 */
+    .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
+      width: $sideBarWidth !important;
+      box-shadow: var(--shadow-md);
+    }
+
+    .main-container {
+      margin-left: $sideBarCollapsed;
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

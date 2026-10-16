@@ -1,0 +1,129 @@
+import { defineConfig } from "@playwright/test";
+
+/**
+ * xadmin E2E 配置（环境固化后支持单命令 `pnpm test:e2e` 从零拉起）。
+ *
+ * 架构：
+ * - 后端：xadmin-server 以 tests.settings_e2e 运行（PG 独立库 E2E_DB_NAME +
+ *   进程内 FakeRedis + 关验证码/加密），不触碰本机 config.yml（见规划风险措施 4）
+ * - 前端：vite dev server（代理 /api /media /ws → 后端端口，见 vite.config.ts）
+ * - 种子：scripts/e2e_seed.py 一键重置（migrate + init_data + E2E 用户）
+ *
+ * 环境变量：
+ * - E2E_SERVER_DIR      xadmin-server 仓库路径（默认 ../xadmin-server；CI 中检出为 ./xadmin-server）
+ * - E2E_API_PORT        后端端口（默认 8896 为无注入直跑兜底，与 vite proxy 默认一致；
+ *                       pnpm test:e2e 会注入 18896 避开本机 compose nginx 8896）
+ * - E2E_FRONT_PORT      前端 dev server 端口（默认 8848）
+ * - E2E_BASE_URL        覆盖前端地址（默认 http://localhost:${E2E_FRONT_PORT}）
+ * - E2E_PYTHON          后端解释器（默认 ${E2E_SERVER_DIR}/.venv/bin/python）
+ * - E2E_ADMIN_PASSWORD  超管密码（默认 E2E-Admin-2026!）
+ * - E2E_SEED=0          跳过种子重置（复用既有库）
+ * - E2E_SMOKE=1         只跑 @smoke 且只用 chromium（快速反馈，见 pnpm test:e2e:smoke）
+ * - CI=1                失败重试 2 次 + reuseExistingServer 关闭
+ */
+const serverDir = process.env.E2E_SERVER_DIR ?? "../xadmin-server";
+// 默认 8896 仅是无注入直跑（npx playwright test）时的兜底，与 vite proxy 默认一致；
+// 正式入口 pnpm test:e2e 注入 E2E_API_PORT=18896：8896 与本机 docker-compose 的
+// nginx（8896:8896）冲突，reuseExistingServer 会把 compose 服务误当 E2E 后端复用
+// （健康检查恰好命中），导致跳过种子、用例全挂、retries 翻倍——曾把全量 E2E
+// 拖到 20 分钟以上。dev 态（pnpm dev）不带该变量时 proxy 指向 8896 容器后端，不受影响
+const apiPort = process.env.E2E_API_PORT ?? "8896";
+const frontPort = process.env.E2E_FRONT_PORT ?? "8848";
+const stubLlmPort = process.env.E2E_STUB_LLM_PORT ?? "18897";
+// 页面层 CSP 隔离验证（e2e/csp-page.e2e.ts）：构建产物 + 强制 CSP 头的独立服务。
+// E2E_CSP_TLS=1 时服务以 HTTPS 提供（openssl 自签证书）——复现 HTTPS 部署形态，
+// 让 webkit 接收 Secure 认证 Cookie（src/utils/auth.ts 的 PROD 分支），纳入双浏览器验证
+const cspPort = process.env.E2E_CSP_PORT ?? "18899";
+const cspTls = process.env.E2E_CSP_TLS === "1";
+const apiURL = `http://127.0.0.1:${apiPort}`;
+const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
+const cspPageURL = `${cspTls ? "https" : "http"}://127.0.0.1:${cspPort}`;
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
+
+// smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
+// 全量档（PR / main / 夜间 / 手动）保持全部用例 × 双浏览器（当前双浏览器合计约 300 例：
+// 本地串行成本高，日常用 smoke 档反馈、CI 走并行分片）
+const smokeOnly = process.env.E2E_SMOKE === "1";
+
+export default defineConfig({
+  testDir: "./e2e",
+  testMatch: /.*\.e2e\.ts/,
+  fullyParallel: false,
+  workers: 1,
+  grep: smokeOnly ? /@smoke/ : undefined,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  retries: process.env.CI ? 2 : 1,
+  reporter: process.env.CI
+    ? [["list"], ["html", { open: "never" }]]
+    : [["list"]],
+  outputDir: "./test-results",
+  use: {
+    baseURL,
+    locale: "zh-CN",
+    screenshot: "only-on-failure",
+    actionTimeout: 10_000,
+    // 兜底 CI 全新检出的冷启动首屏（无 vite 预打包缓存时模块按需冷转换），
+    // 首次页面加载可能超过默认 30s 导航超时
+    navigationTimeout: 120_000,
+    // CSP 隔离验证（E2E_CSP=1）：验证服务可为 HTTPS（E2E_CSP_TLS=1，openssl 自签证书，
+    // 非 CA 签发）——仅在该跑批下放行证书校验，其余 spec 保持默认严格校验
+    ignoreHTTPSErrors: process.env.E2E_CSP === "1"
+  },
+  projects: smokeOnly
+    ? [{ name: "chromium", use: { browserName: "chromium" } }]
+    : [
+        { name: "chromium", use: { browserName: "chromium" } },
+        // 验收：双浏览器。本机未安装 webkit 时可用 --project=chromium 运行
+        { name: "webkit", use: { browserName: "webkit" } }
+      ],
+  webServer: [
+    {
+      // 种子先行：重置 PG 独立库（DROP/CREATE WITH FORCE）并写入基础数据（E2E_SEED=0 可跳过），随后拉起后端。
+      // 必须用 daphne 以 ASGI 承载：manage.py runserver（channels 未入 INSTALLED_APPS）
+      // 是纯 WSGI，/ws/message/* 升级请求一律 404，站内信实时推送用例无法工作
+      command:
+        `PYTHON=${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`}; ` +
+        `ADMIN='${process.env.E2E_ADMIN_PASSWORD ?? "E2E-Admin-2026!"}'; ` +
+        `export DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD="$ADMIN"; ` +
+        `${process.env.E2E_SEED !== "0" ? `$PYTHON scripts/e2e_seed.py && ` : ""}` +
+        `$PYTHON -m daphne -b 127.0.0.1 -p ${apiPort} server.asgi:application`,
+      cwd: serverDir,
+      url: `${apiURL}/api/common/api/health`,
+      // 默认不复用已存在服务：历史上复用旧后端进程会造成「改了后端却跑旧行为」的假失败。
+      // 确需复用（本地反复跑、后端无改动）时显式设置 E2E_REUSE_SERVER=1。
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
+      timeout: 120_000
+    },
+    {
+      // 桩 LLM（scripts/stub_llm.py）：E2E 无真实模型，AI 动作草稿等链路
+      // 需要确定性的 chat/completions 回答；AI 配置指向 http://127.0.0.1:<port>/v1
+      command: `${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`} scripts/stub_llm.py`,
+      cwd: serverDir,
+      url: `${stubLlmURL}/health`,
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
+      timeout: 30_000
+    },
+    {
+      command: `pnpm dev --port ${frontPort} --strictPort`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,
+      timeout: 120_000
+    },
+    // 页面层 CSP 隔离验证（E2E_CSP=1）：构建产物 + 强制 CSP 头模拟 xadmin-web 形态；
+    // 需先 `pnpm build`（服务启动时校验 dist/index.html，缺失即失败并提示）。
+    // TLS 形态下自签证书：webServer 的健康检查独立于 context 的 ignoreHTTPSErrors，
+    // 必须在此处同样放行，否则等待探针 30s 超时
+    ...(process.env.E2E_CSP === "1"
+      ? [
+          {
+            command: "node scripts/csp-page-server.mjs",
+            url: `${cspPageURL}/__csp_probe`,
+            reuseExistingServer: false,
+            ignoreHTTPSErrors: true,
+            timeout: 30_000
+          }
+        ]
+      : [])
+  ]
+});

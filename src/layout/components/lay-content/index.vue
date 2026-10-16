@@ -2,45 +2,95 @@
 import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
-import { useTags } from "@/layout/hooks/useTag";
+import { isFullContent, isHeaderNav } from "@/layout/hooks/layoutModes";
+import { useRouteLoading } from "@/utils/routeLoading";
 import { isNumber, useGlobal } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
-import { computed, defineComponent, h, Transition } from "vue";
+import ReBackTop from "@/components/ReBackTop";
+import { computed, defineComponent, h, Transition, type PropType } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { useUserStoreHook } from "@/store/modules/user";
 
 const props = defineProps({
-  fixedHeader: Boolean
+  fixedHeader: Boolean,
+  /** 顶栏滚动自动隐藏（useHeaderAutoHide）：隐藏时内容区不再让位固定头部 */
+  headerHidden: Boolean,
+  /** 固定头部总高（顶栏 + 页签条，含隐藏页签 / 隐藏顶栏 / 全屏内容三态）：由外壳统一计算 */
+  chromeHeight: { type: String, default: "0px" }
 });
 
 const { t } = useI18n();
-const { showModel } = useTags();
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
-const isKeepAlive = computed(() => {
-  return $config?.KeepAlive;
-});
+/** 页面缓存总开关：平台级 KeepAlive × 偏好「页签缓存」（关闭后所有页面都不缓存） */
+const isKeepAlive = computed(
+  () =>
+    Boolean($config?.KeepAlive) && ($storage?.configure?.tagsKeepAlive ?? true)
+);
+
+/** keep-alive 缓存名单：总开关关闭时给空数组（模板两个分支共用） */
+const keepAliveList = computed(() =>
+  isKeepAlive.value ? usePermissionStoreHook().cachePageList : []
+);
+
+/** 内容区紧凑模式（项目设置 →「通用」）：留白收紧一档并居中限宽 */
+const compactMode = computed(() => Boolean($storage?.configure?.compactMode));
+
+/** 页面切换动画预设（项目设置 →「通用」→「切换动画」） */
+const globalTransition = computed(
+  () => $storage?.configure?.pageTransition ?? "fade-transform"
+);
+
+/** 路由切换期间的内容区 loading（同区块「内容区 loading」，默认关） */
+const { routeLoading } = useRouteLoading();
+const contentLoading = computed(
+  () => Boolean($storage?.configure?.transitionLoading) && routeLoading.value
+);
+
+/** 路由过渡配置：pure-admin 的 meta.transition 为对象（name/enterTransition/leaveTransition） */
+interface RouteTransition {
+  name?: string;
+  enterTransition?: string;
+  leaveTransition?: string;
+}
 
 const transitions = computed(() => {
-  return route => {
+  return (route: { meta: { transition?: RouteTransition } }) => {
     return route.meta.transition;
   };
 });
 
-const hideTabs = computed(() => {
-  return $storage?.configure.hideTabs;
-});
-
-const hideFooter = computed(() => {
-  return $storage?.configure.hideFooter;
-});
+/** 页脚显隐：配置关闭或全屏内容（不渲染外壳，只显示内容主体）时隐藏 */
+const fullContent = computed(() => isFullContent($storage?.layout.layout));
+const hideFooter = computed(
+  () => $storage?.configure.hideFooter || fullContent.value
+);
 
 const stretch = computed(() => {
   return $storage?.configure.stretch;
 });
 
-const layout = computed(() => {
-  return $storage?.layout.layout === "vertical";
+/** 用户模拟横幅高度（fixed-header 时内容区 padding 需同步让位，与横幅 CSS 保持一致） */
+const IMPERSONATION_BANNER_HEIGHT = 32;
+const impersonationExtra = computed(() => {
+  return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
 });
+
+/** 布局语义模式（全屏内容不渲染固定头部） */
+const layoutMode = computed(() => $storage?.layout.layout);
+/**
+ * 是否需要为固定头部预留内边距。
+ *
+ * 「水平布局的顶栏自带高度」只在**非固定顶栏**时成立：那时顶栏在文档流内占位，
+ * 内容区无需让位。一旦开启固定顶栏（设置面板 →「顶栏」→ 固定），顶栏转为
+ * `position: fixed` 覆盖层、脱离文档流，内容区不让位就会被压住顶端——表现为
+ * 页面顶部一整行内容显示不全（如首页顶部统计卡只见数字、不见标题）。
+ */
+const reserveHeader = computed(
+  () =>
+    !isFullContent(layoutMode.value) &&
+    (!isHeaderNav(layoutMode.value) || props.fixedHeader)
+);
 
 const getMainWidth = computed(() => {
   return isNumber(stretch.value)
@@ -51,45 +101,58 @@ const getMainWidth = computed(() => {
 });
 
 const getSectionStyle = computed(() => {
+  // 顶栏自动隐藏态：固定头部整体移出视口，内容区不再让位（剩余算式同口径取 0px）
+  const chrome = props.headerHidden ? "0px" : props.chromeHeight;
+  // impersonationExtra > 0 时各项 padding-top 同步让位横幅高度（非 fixed-header
+  // 模式由末项整体重置 padding，不受影响）
+  const pad = (base: string) =>
+    `padding-top: calc(${base} + ${impersonationExtra.value}px);`;
   return [
-    hideTabs.value && layout ? "padding-top: 48px;" : "",
-    !hideTabs.value && layout
-      ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
+    reserveHeader.value
+      ? props.headerHidden
+        ? "padding-top: 0;"
+        : pad(chrome)
       : "",
-    hideTabs.value && !layout.value ? "padding-top: 48px;" : "",
-    !hideTabs.value && !layout.value
-      ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
-      : "",
+    // 非 fixed-header：不预留 padding，改为最小高度兜底。先写 vh 再写 dvh——
+    // 不支持 dvh 的浏览器保留 vh 声明（整条声明不会因解析失败被丢弃），支持者
+    // 用 dvh 兼顾移动端浏览器工具栏收放
     props.fixedHeader
       ? ""
-      : `padding-top: 0;${
-          hideTabs.value
-            ? "min-height: calc(100vh - 48px);"
-            : "min-height: calc(100vh - 86px);"
-        }`
+      : `padding-top: 0;min-height: calc(100vh - ${chrome});min-height: calc(100dvh - ${chrome});`
   ];
 });
+
+/** 跳转主内容：编程聚焦 + tabindex=-1（非交互容器可聚焦）；
+ *  不用锚点默认跳转——hash 路由下会把 location.hash 改写成 #main-content 造成路由错乱 */
+const focusMainContent = () => {
+  const main = document.getElementById("main-content");
+  if (!main) return;
+  if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
+  main.focus();
+  main.scrollIntoView({ block: "start" });
+};
 
 const transitionMain = defineComponent({
   props: {
     route: {
-      type: undefined,
+      // 声明为过渡配置消费面：render 内可直接读取 meta.transition（无需断言）
+      type: Object as PropType<{ meta: { transition?: RouteTransition } }>,
       required: true
     }
   },
   render() {
-    const transitionName =
-      transitions.value(this.route)?.name || "fade-transform";
-    const enterTransition = transitions.value(this.route)?.enterTransition;
-    const leaveTransition = transitions.value(this.route)?.leaveTransition;
+    const transition = transitions.value(this.route);
+    // 预设优先级：路由 meta.transition > 设置面板「切换动画」> 缺省 fade-transform；
+    // none = 关闭全局过渡（css:false 直接切换，不生成过渡类）
+    const preset = transition?.name || globalTransition.value;
+    const enableTransition = preset !== "none";
+    const enterTransition = transition?.enterTransition;
+    const leaveTransition = transition?.leaveTransition;
     return h(
       Transition,
       {
-        name: enterTransition ? "pure-classes-transition" : transitionName,
+        css: enableTransition,
+        name: enterTransition ? "pure-classes-transition" : preset,
         enterActiveClass: enterTransition
           ? `animate__animated animate__${enterTransition}`
           : undefined,
@@ -100,7 +163,7 @@ const transitionMain = defineComponent({
         appear: true
       },
       {
-        default: () => [this.$slots.default()]
+        default: () => [this.$slots.default?.()]
       }
     );
   }
@@ -109,15 +172,25 @@ const transitionMain = defineComponent({
 
 <template>
   <section
-    :class="[fixedHeader ? 'app-main' : 'app-main-nofixed-header']"
+    v-loading="contentLoading"
+    element-loading-background="var(--el-mask-color-extra-light)"
+    :class="[
+      fixedHeader ? 'app-main' : 'app-main-nofixed-header',
+      { compact: compactMode }
+    ]"
     :style="getSectionStyle"
   >
+    <!-- 跳转主内容：仅键盘聚焦时可见；@click.prevent 避免 hash 路由被锚点改写 -->
+    <a class="skip-link" href="#main-content" @click.prevent="focusMainContent">
+      {{ t("layout.skipToContent") }}
+    </a>
     <router-view>
       <template #default="{ Component, route }">
         <LayFrame :currComp="Component" :currRoute="route">
           <template #default="{ Comp, fullPath, frameInfo }">
             <el-scrollbar
               v-if="fixedHeader"
+              :always="false"
               :view-style="{
                 display: 'flex',
                 flex: 'auto',
@@ -129,21 +202,15 @@ const transitionMain = defineComponent({
                 'flex-wrap': 'wrap',
                 'max-width': getMainWidth,
                 margin: '0 auto',
-                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'all var(--duration-base) var(--ease-standard)'
               }"
             >
-              <el-backtop
-                :title="t('layout.backTop')"
-                target=".app-main .el-scrollbar__wrap"
-              >
+              <ReBackTop :title="t('layout.backTop')">
                 <BackTopIcon />
-              </el-backtop>
-              <div class="grow">
+              </ReBackTop>
+              <div id="main-content" class="grow" role="main">
                 <transitionMain :route="route">
-                  <keep-alive
-                    v-if="isKeepAlive"
-                    :include="usePermissionStoreHook().cachePageList"
-                  >
+                  <keep-alive v-if="isKeepAlive" :include="keepAliveList">
                     <component
                       :is="Comp"
                       :key="fullPath"
@@ -162,12 +229,9 @@ const transitionMain = defineComponent({
               </div>
               <LayFooter v-if="!hideFooter" />
             </el-scrollbar>
-            <div v-else class="grow">
+            <div v-else id="main-content" class="grow" role="main">
               <transitionMain :route="route">
-                <keep-alive
-                  v-if="isKeepAlive"
-                  :include="usePermissionStoreHook().cachePageList"
-                >
+                <keep-alive v-if="isKeepAlive" :include="keepAliveList">
                   <component
                     :is="Comp"
                     :key="fullPath"
@@ -191,6 +255,15 @@ const transitionMain = defineComponent({
 
     <!-- 页脚 -->
     <LayFooter v-if="!hideFooter && !fixedHeader" />
+
+    <!-- 读屏播报区：异步操作结果经 utils/announcer 写入此处 -->
+    <div
+      id="a11y-live"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    />
   </section>
 </template>
 
@@ -199,7 +272,27 @@ const transitionMain = defineComponent({
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow-x: hidden;
+}
+
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: var(--z-index-layout);
+  padding: 8px 14px;
+  font-size: var(--font-size-base);
+  color: var(--el-color-white);
+  background-color: var(--el-color-primary);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  transition: top var(--duration-fast) var(--ease-standard);
+}
+
+/* 仅键盘聚焦时滑入可视区（display/visibility 隐藏会导致不可聚焦） */
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 0;
 }
 
 .app-main-nofixed-header {
@@ -210,6 +303,31 @@ const transitionMain = defineComponent({
 }
 
 .main-content {
-  margin: 24px;
+  /* 页面外边距单点提供（密度令牌 --content-gap）：底边不留白，内容区与页脚贴合；
+     窄屏收紧值见 style/index.scss 的媒体查询；贴边页面（iframe / 满幅页）在自身
+     根节点加 content-flush 类显式声明，不再逐页覆写外边距变量 */
+  margin: var(--content-gap) var(--content-gap) 0;
+}
+
+.main-content.content-flush {
+  margin: 0;
+}
+
+/* 紧凑模式：留白收紧一档（24 → 16；窄屏同样以此为准），内容居中限宽避免超宽屏铺满 */
+.app-main.compact,
+.app-main-nofixed-header.compact {
+  --content-gap: var(--space-4);
+}
+
+.compact .main-content {
+  width: calc(100% - var(--content-gap) * 2);
+  max-width: 1600px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.compact .main-content.content-flush {
+  width: 100%;
+  max-width: none;
 }
 </style>

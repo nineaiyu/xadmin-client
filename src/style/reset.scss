@@ -1,250 +1,322 @@
-#app {
-  width: 100%;
-  height: 100%;
-}
+/**
+ * 元素级重置统一入 `base` 层（层顺序声明见 tailwind.css 与 build/cssLayer.ts）：
+ * 无层样式在级联中压过任何 `@layer`——含 Element Plus 组件样式所在的 `el` 层——
+ * `button { color: inherit }` 这类兜底规则会盖掉组件库声明的按钮文字色（曾致
+ * primary 按钮黑字蓝底、对比度不足）。入层后组件库样式优先于重置，项目「有意
+ * 覆写」的无层样式（element-plus / appearance / dark 等）仍优先于两者。
+ */
+@layer base {
+  #app {
+    width: 100%;
+    height: 100%;
+  }
 
-html {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  line-height: 1.5;
-  tab-size: 4;
-  text-size-adjust: 100%;
-}
+  html {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    /* 基准行高（1.15）：表格行高与文本块疏密
+       随之同源；标题 / 按钮 / 菜单等仍各自声明显式行高，不受影响。 */
+    line-height: 1.15;
+    tab-size: 4;
+    text-size-adjust: 100%;
+  }
 
-body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  font-family:
-    "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
-  line-height: inherit;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizelegibility;
-}
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    font-family: var(--font-family-base);
+    line-height: inherit;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizelegibility;
+  }
 
-hr {
-  height: 0;
-  color: inherit;
-  border-top-width: 1px;
-}
-
-abbr:where([title]) {
-  text-decoration: underline dotted;
-}
-
-a {
-  color: inherit;
-  text-decoration: inherit;
-}
-
-b,
-strong {
-  font-weight: bolder;
-}
-
-code,
-kbd,
-samp,
-pre {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 1em;
-}
-
-small {
-  font-size: 80%;
-}
-
-sub,
-sup {
-  position: relative;
-  font-size: 75%;
-  line-height: 0;
-  vertical-align: baseline;
-}
-
-sub {
-  bottom: -0.25em;
-}
-
-sup {
-  top: -0.5em;
-}
-
-table {
-  text-indent: 0;
-  border-collapse: collapse;
-  border-color: inherit;
-}
-
-button,
-input,
-optgroup,
-select,
-textarea {
-  padding: 0;
-  margin: 0;
-  font-family: inherit;
-  font-size: 100%;
-  line-height: inherit;
-  color: inherit;
-}
-
-button,
-select {
-  text-transform: none;
-}
-
-button,
-[type="button"],
-[type="reset"],
-[type="submit"] {
-  background-image: none;
-}
-
-:-moz-focusring {
-  outline: auto;
-}
-
-:-moz-ui-invalid {
-  box-shadow: none;
-}
-
-progress {
-  vertical-align: baseline;
-}
-
-::-webkit-inner-spin-button,
-::-webkit-outer-spin-button {
-  height: auto;
-}
-
-[type="search"] {
-  outline-offset: -2px;
-}
-
-::-webkit-file-upload-button {
-  font: inherit;
-}
-
-summary {
-  display: list-item;
-}
-
-blockquote,
-dl,
-dd,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-hr,
-figure,
-p,
-pre {
-  margin: 0;
-}
-
-fieldset {
-  padding: 0;
-  margin: 0;
-}
-
-legend {
-  padding: 0;
-}
-
-ol,
-ul,
-menu {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-textarea {
-  resize: vertical;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #9ca3af;
-  opacity: 1;
-}
-
-button,
-[role="button"] {
-  cursor: pointer;
-}
-
-:disabled {
-  cursor: default;
-}
-
-svg,
-video,
-canvas,
-audio,
-iframe,
-embed,
-object {
-  display: block;
-}
-
-img,
-video {
-  max-width: 100%;
-  height: auto;
-}
-
-[hidden] {
-  display: none;
-}
-
-.dark {
-  color-scheme: dark;
-}
-
-label {
-  font-weight: 700;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
-}
-
-a:focus,
-a:active {
-  outline: none;
-}
-
-a,
-a:focus,
-a:hover {
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-div:focus {
-  outline: none;
-}
-
-.clearfix {
-  &::after {
-    display: block;
+  hr {
     height: 0;
-    clear: both;
-    font-size: 0;
-    visibility: hidden;
-    content: " ";
+    color: inherit;
+    border-top-width: 1px;
+  }
+
+  abbr:where([title]) {
+    text-decoration: underline dotted;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  b,
+  strong {
+    font-weight: bolder;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-family-mono);
+    font-size: 1em;
+  }
+
+  small {
+    font-size: 80%;
+  }
+
+  sub,
+  sup {
+    position: relative;
+    font-size: 75%;
+    line-height: 0;
+    vertical-align: baseline;
+  }
+
+  sub {
+    bottom: -0.25em;
+  }
+
+  sup {
+    top: -0.5em;
+  }
+
+  table {
+    text-indent: 0;
+    border-collapse: collapse;
+    border-color: inherit;
+  }
+
+  button,
+  input,
+  optgroup,
+  select,
+  textarea {
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: 100%;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  button,
+  select {
+    text-transform: none;
+  }
+
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"] {
+    background-image: none;
+  }
+
+  :-moz-focusring {
+    outline: auto;
+  }
+
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+
+  progress {
+    vertical-align: baseline;
+  }
+
+  ::-webkit-inner-spin-button,
+  ::-webkit-outer-spin-button {
+    height: auto;
+  }
+
+  [type="search"] {
+    outline-offset: -2px;
+  }
+
+  ::-webkit-file-upload-button {
+    font: inherit;
+  }
+
+  summary {
+    display: list-item;
+  }
+
+  blockquote,
+  dl,
+  dd,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  hr,
+  figure,
+  p,
+  pre {
+    margin: 0;
+  }
+
+  /* 标题层级：由字号 / 字重 / 行高令牌驱动，替代此前的「浏览器默认字号 + 一刀切
+   margin: 0」。外边距保持 0——后台界面的间距由容器布局决定，标题不携带默认
+   外边距，避免页面局部出现不可控的纵向位移（需要留白时用布局容器的间距类）。 */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+  }
+
+  h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  h4 {
+    font-size: var(--font-size-md);
+  }
+
+  h5 {
+    font-size: var(--font-size-base);
+  }
+
+  h6 {
+    font-size: var(--font-size-sm);
+  }
+
+  fieldset {
+    padding: 0;
+    margin: 0;
+  }
+
+  legend {
+    padding: 0;
+  }
+
+  ol,
+  ul,
+  menu {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    /* 语义变量自适应明暗主题（原硬编码 #9ca3af 在暗色下不可辨，且对比度约 2.6:1） */
+    color: var(--el-text-color-secondary);
+    opacity: 1;
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  :disabled {
+    cursor: default;
+  }
+
+  svg,
+  video,
+  canvas,
+  audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  [hidden] {
+    display: none;
+  }
+
+  label {
+    font-weight: var(--font-weight-bold);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
+  a,
+  a:focus,
+  a:hover {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  /* 键盘焦点可见（a11y）：历史全局 outline:none 会让键盘用户无法定位焦点，
+   这里仅对键盘导航（:focus-visible）提供主题化焦点环；:where() 将特异性降为 0，
+   组件/页面仍可用更高特异性覆盖自己的焦点样式 */
+  :where(
+    a,
+    button,
+    [role="button"],
+    input,
+    select,
+    textarea,
+    [tabindex]
+  ):focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 2px;
+  }
+
+  .clearfix {
+    &::after {
+      display: block;
+      height: 0;
+      clear: both;
+      font-size: 0;
+      visibility: hidden;
+      content: " ";
+    }
+  }
+
+  /* ============ 统一滚动条 ============
+   仅非 macOS 生效：macOS 系统是覆盖式滚动条（滚动时才出现），强加自定义
+   webkit 滚动条会使其常驻显示、破坏原生观感——故以 data-platform 守卫
+   （值由 utils/platform.ts 写入）。滑块与轨道消费语义槽，明暗主题自动跟随。 */
+  html:not([data-platform="macOs"]) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--border));
+      border-radius: var(--radius-sm);
+
+      &:hover {
+        background: hsl(var(--fg-subtle));
+      }
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
 }

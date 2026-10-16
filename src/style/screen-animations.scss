@@ -1,0 +1,101 @@
+// 大屏窗格入场动画（ADR-088）：由 `ScreenPane` 以 `@use` 引入（随该组件的 scoped 样式一起
+// 编译，keyframes 与类名的重命名口径一致），设计器预览与投屏共用同一份定义。
+// 关键帧一律用独立变换属性 `translate` / `scale`：窗格自身可能带 `transform: rotate()`
+// （视觉旋转），用 transform 做动画会把旋转顶掉、动画结束再跳回去。
+// 播放条件（编辑态不播、只播一次）由组件用类名控制，见 `utils/paneEffects.ts`。
+
+.screen-pane {
+  &.pane-animation--fade {
+    animation: pane-fade 320ms ease-out both;
+  }
+
+  &.pane-animation--slide-up {
+    animation: pane-slide-up 320ms ease-out both;
+  }
+
+  &.pane-animation--slide-down {
+    animation: pane-slide-down 320ms ease-out both;
+  }
+
+  &.pane-animation--slide-left {
+    animation: pane-slide-left 320ms ease-out both;
+  }
+
+  &.pane-animation--slide-right {
+    animation: pane-slide-right 320ms ease-out both;
+  }
+
+  &.pane-animation--zoom-in {
+    animation: pane-zoom-in 320ms ease-out both;
+  }
+}
+
+@keyframes pane-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pane-slide-up {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes pane-slide-down {
+  from {
+    opacity: 0;
+    translate: 0 -24px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes pane-slide-left {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes pane-slide-right {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes pane-zoom-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}

@@ -1,206 +1,87 @@
-import { computed, h, ref } from "vue";
-import { cloneDeep, get } from "lodash-es";
-import dayjs from "dayjs";
+import { computed, ref } from "vue";
+import type { Ref } from "vue";
+// 注意：这里的列对象在挂载 renderer/computed 之后就地深拷贝，含循环引用——
+// 必须用 lodash-es 的 cloneDeep（带环检测）；@pureadmin/utils 的同名实现会爆栈
+import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import type { BaseApi } from "@/api/base";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import {
-  formatAddOrEditOptions,
-  renderBooleanSegmentedOption
-} from "./renders";
-import { selectBooleanOptions } from "./constants";
-import type { PageColumn } from "./types";
+  getDetailRenderer,
+  getFormRenderer,
+  getSearchRenderer
+} from "./registry";
+import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "./types";
 
 import {
-  formatPublicLabels,
-  getColourTypeByIndex,
-  getPickerShortcuts
-} from "./index";
+  applyChoicesTruncated,
+  buildColumnRule,
+  columnDefaultValue,
+  detailInputType,
+  resolveColumnLabel
+} from "./columnRules";
+import { formatAddOrEditOptions } from "./renders";
+import { getApiSearchComponents } from "./apiSearch";
 
-import { ElIcon, ElImage, ElLink } from "element-plus";
-import { Link } from "@element-plus/icons-vue";
 import Info from "~icons/ri/question-line";
-import "vue-json-pretty/lib/styles.css";
-import VueJsonPretty from "vue-json-pretty";
-import { isEmail, isEmpty, isNumber, isString } from "@pureadmin/utils";
-
-import SearchUser from "@/views/system/components/SearchUser.vue";
-import SearchDept from "@/views/system/components/SearchDept.vue";
-import SearchRole from "@/views/system/components/SearchRole.vue";
-import TagInput from "../components/TagInput.vue";
-import JsonInput from "../components/JsonInput.vue";
-import UploadFile from "../components/UploadFile.vue";
-import UploadFiles from "../components/UploadFiles.vue";
-import PhoneInput from "../components/PhoneInput.vue";
 
 /**
- * @description 用与通过api接口，获取对应的column, 进行前端渲染
+ * @description 用与通过api接口，获取对应的column, 进行前端渲染。
+ * 纯函数段（展示名兜底 / choices 截断降级 / 校验规则 / 默认值形态 / 详情类型映射）
+ * 见同目录 columnRules.ts；本 hook 只负责装配流程与回调时序。
  */
 export function useBaseColumns(localeName: string) {
   /**
-   * @description 定义自定义搜索模板
+   * @description 自定义搜索模板（`api-search-*`）
+   *
+   * 组件由业务侧在应用启动时注册（见 `@/views/system/apiSearch`），
+   * 框架层不再反向 import 业务页面组件。
    */
-  const apiSearchComponents = {
-    "api-search-dept": SearchDept,
-    "api-search-role": SearchRole,
-    "api-search-user": SearchUser
-  };
+  const apiSearchComponents = getApiSearchComponents();
 
-  const addOrEditRules = ref({});
-  const addOrEditColumns = ref([]);
-  const addOrEditDefaultValue = ref({});
-  const searchColumns = ref([]);
-  const searchDefaultValue = ref({});
-  const listColumns = ref([]);
-  const detailColumns = ref([]);
+  const addOrEditRules = ref<Record<string, unknown>>({});
+  const addOrEditColumns = ref<PageColumn[]>([]);
+  const addOrEditDefaultValue = ref<Record<string, unknown>>({});
+  const searchColumns = ref<PageColumn[]>([]);
+  const searchDefaultValue = ref<Record<string, unknown>>({});
+  const listColumns = ref<PageColumn[]>([]);
+  const detailColumns = ref<PageColumn[]>([]);
   const { t, te } = useI18n();
+
+  /** 组装列渲染器上下文 */
+  const buildContext = (column: PlusColumnMeta): PlusColumnContext => ({
+    column,
+    t,
+    te,
+    localeName,
+    apiSearchComponents
+  });
 
   const formatSearchColumns = (columns: SearchFieldsResult["data"]) => {
     columns.forEach(column => {
       const item: PageColumn = {
         _column: column,
-        label:
-          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
+        label: resolveColumnLabel({ t, te, localeName }, column),
         prop: column.key,
         tooltip: column?.help_text,
-        options: computed(() => formatAddOrEditOptions(column.choices)),
+        options: computed(() => formatAddOrEditOptions(column.choices ?? [])),
         valueType: "input",
         fieldProps: {},
         hideInForm: true,
         hideInTable: true
       };
-      switch (column.input_type) {
-        case "text":
-          item.valueType = "input";
-          break;
-        case "datetime":
-          item.valueType = "date-picker";
-          item.fieldProps = {
-            valueFormat: "YYYY-MM-DD HH:mm:ss"
-          };
-          break;
-        case "datetimerange":
-          item.valueType = "date-picker";
-          item.fieldProps = {
-            shortcuts: getPickerShortcuts(),
-            valueFormat: "YYYY-MM-DD HH:mm:ss",
-            type: "datetimerange"
-          };
-          item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-          break;
-        case "number":
-          item.valueType = "input";
-          item.fieldProps = {
-            type: "number"
-          };
-          // item.rules = [
-          //   {
-          //     validator: (rule, value, callback) => {
-          //       if (value && !/^\d+$/.test(value)) {
-          //         callback(new Error("field must be a number"));
-          //       } else {
-          //         callback();
-          //       }
-          //     }
-          //   }
-          // ];
-          break;
-        case "select":
-          item.valueType = column.input_type;
-          item.fieldProps = {
-            teleported: false,
-            filterable: true
-          };
-          break;
-        case "select-multiple":
-          item.valueType = "select";
-          item.fieldProps = {
-            multiple: true,
-            teleported: false,
-            filterable: true
-          };
-          break;
-        case "select-ordering":
-          item.valueType = "select";
-          item.fieldProps = {
-            teleported: false,
-            filterable: true
-          };
-          item.options = computed(() => {
-            const options = formatAddOrEditOptions(column.choices);
-            options?.forEach(option => {
-              const labels = option.label.split(" ");
-              option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName) ?? labels[0]} ${formatPublicLabels(t, te, labels[1] as string, localeName) ?? labels[1]}`;
-            });
-            return options;
-          });
-          break;
-        default:
-          if (column.input_type.startsWith("api-")) {
-            item.renderField = (value, onChange) => {
-              return h(apiSearchComponents[column.input_type], {
-                modelValue: value,
-                onChange
-              });
-            };
-            item.colProps = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-            // 搜索的时候，如果是api接口返回，则默认值为[]
-            if (column?.default === "") {
-              column.default = [];
-            }
-          }
-          item.valueType = column.input_type;
-      }
+      getSearchRenderer(column.input_type)(item, buildContext(column));
+      applyChoicesTruncated(column, item);
       searchDefaultValue.value[column.key] = column?.default;
       searchColumns.value.push(item);
     });
   };
 
   const formatAddOrEditRules = (column: SearchColumnsResult["data"][0]) => {
-    const message =
-      formatPublicLabels(t, te, column.key, localeName) ?? column.label;
-    switch (column.input_type) {
-      case "email":
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            validator: (rule, value, callback) => {
-              if (value === "" || !value) {
-                callback();
-              } else if (!isEmail(value)) {
-                callback(new Error(message));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ];
-        break;
-      case "integer":
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            validator: (rule, value, callback) => {
-              if (value && !isNumber(value)) {
-                callback(new Error("field must be a number"));
-              } else {
-                callback();
-              }
-            },
-            trigger: "blur"
-          }
-        ];
-        break;
-      default:
-        addOrEditRules.value[column.key] = [
-          {
-            required: column.required,
-            message: message,
-            trigger: "blur"
-          }
-        ];
-    }
+    addOrEditRules.value[column.key] = buildColumnRule(
+      column,
+      resolveColumnLabel({ t, te, localeName }, column)
+    );
   };
 
   const formatAddOrEditColumns = (columns: SearchColumnsResult["data"]) => {
@@ -209,8 +90,7 @@ export function useBaseColumns(localeName: string) {
       const item: PageColumn = {
         _column: column,
         prop: column.key,
-        label:
-          formatPublicLabels(t, te, column.key, localeName) ?? column.label,
+        label: resolveColumnLabel({ t, te, localeName }, column),
         tooltip: column?.help_text,
         minWidth: 120,
         fieldProps: {
@@ -243,183 +123,8 @@ export function useBaseColumns(localeName: string) {
         );
       }
       // pure-table ****** end
-      switch (column.input_type) {
-        case "integer":
-        case "float":
-          item["valueType"] = "input-number";
-          item["fieldProps"]["controlsPosition"] = "right";
-          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-          if (column.key === "pk") {
-            item["minWidth"] = 80;
-          }
-          // item["fieldProps"]["controls"] = false;
-          // pure-table ******
-          // delete item["cellRenderer"];
-          break;
-        case "string":
-        case "field":
-          item["valueType"] = "input";
-          break;
-        case "color":
-          item["valueType"] = "color-picker";
-          item["fieldProps"]["showAlpha"] = true;
-          item["fieldProps"]["predefine"] = [
-            "#001100",
-            "#ffffff",
-            "#ff4500",
-            "#ff8c00",
-            "#ffd700",
-            "#90ee90",
-            "#00ced1",
-            "#1e90ff",
-            "#c71585"
-          ];
-          break;
-        case "datetime":
-          item["valueType"] = "date-picker";
-          item["fieldProps"]["type"] = column.input_type;
-          item["fieldProps"]["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
-          item["width"] = 160;
-          // pure-table ****** start
-          item["cellRenderer"] = ({ row }) => (
-            <span v-copy={row[column.key]}>
-              {dayjs(row[column.key]).format("YYYY-MM-DD HH:mm:ss")}
-            </span>
-          );
-          // pure-table ****** end
-          break;
-        case "date":
-          item["valueType"] = "date-picker";
-          item["fieldProps"]["type"] = column.input_type;
-          item["fieldProps"]["valueFormat"] = "YYYY-MM-DD";
-          item["width"] = 140;
-          // pure-table ****** start
-          item["cellRenderer"] = ({ row }) => (
-            <span v-copy={row[column.key]}>
-              {dayjs(row[column.key]).format("YYYY-MM-DD")}
-            </span>
-          );
-          // pure-table ****** end
-          break;
-        case "boolean":
-          item["valueType"] = "radio";
-          item["renderField"] = renderBooleanSegmentedOption();
-          item["width"] = 120;
-          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-          break;
-        case "textarea":
-          item["valueType"] = "textarea";
-          item["fieldProps"] = { autosize: { minRows: 8 } };
-          break;
-        case "choice":
-        case "multiple choice":
-          item["valueType"] = "select";
-          item["fieldProps"]["filterable"] = true;
-          item["options"] = computed(() =>
-            formatAddOrEditOptions(column?.choices, false)
-          );
-          if (column.input_type === "multiple choice") {
-            item["fieldProps"]["multiple"] = true;
-          }
-          break;
-        case "labeled_choice":
-        case "labeled_multiple_choice":
-        case "object_related_field":
-        case "m2m_related_field":
-          item["valueType"] = "select";
-          item["fieldProps"]["filterable"] = true;
-          item["options"] = computed(() =>
-            formatAddOrEditOptions(column?.choices, true)
-          );
-          if (
-            ["labeled_choice", "labeled_multiple_choice"].indexOf(
-              column.input_type
-            ) === -1
-          ) {
-            item["fieldProps"]["valueKey"] = "pk";
-          }
-          if (column.input_type === "labeled_multiple_choice") {
-            item["fieldProps"]["multiple"] = true;
-          }
-          break;
-        case "m2m_related_field_file":
-        case "m2m_related_field_image":
-        case "object_related_field_file":
-        case "object_related_field_image":
-          if (column.input_type.startsWith("object_related_field_")) {
-            item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-          }
-          item["renderField"] = (value, onChange) => {
-            return h(UploadFiles, {
-              modelValue: value,
-              isImageFile: column.input_type.endsWith("_related_field_image"),
-              multiple: column.multiple,
-              onChange: x => {
-                onChange(x);
-              }
-            });
-          };
-          break;
-        case "image upload":
-        case "file upload":
-          delete item["fieldProps"];
-          item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
-          item["renderField"] = (value, onChange) => {
-            return h(UploadFile, {
-              modelValue: value,
-              isImageFile: column.input_type === "image upload",
-              onChange: x => {
-                onChange(x);
-              }
-            });
-          };
-          break;
-        case "list":
-          item["valueType"] = "select";
-          item["renderField"] = (value: Array<any>, onChange) => {
-            return h(TagInput, {
-              modelValue: value,
-              onChange: x => {
-                onChange(x);
-              }
-            });
-          };
-          break;
-        case "phone":
-          column.default = { name: "China", code: "+86" };
-          item["renderField"] = (value: any, onChange) => {
-            return h(PhoneInput, {
-              modelValue: value,
-              onChange: x => {
-                onChange(x);
-              }
-            });
-          };
-          break;
-        case "json":
-          item["renderField"] = (value: any, onChange) => {
-            return h(JsonInput, {
-              modelValue: value,
-              onChange: x => {
-                onChange(x);
-              }
-            });
-          };
-          break;
-        default:
-          if (column.input_type.startsWith("api-")) {
-            if (!column.hasOwnProperty("default")) {
-              column.default = column?.multiple ? [] : undefined;
-            }
-            item["renderField"] = (value, onChange) => {
-              return h(apiSearchComponents[column.input_type], {
-                modelValue: value,
-                multiple: column?.multiple ?? false,
-                onChange
-              });
-            };
-          }
-      }
+      getFormRenderer(column.input_type)(item, buildContext(column));
+      applyChoicesTruncated(column, item);
 
       if (column.key === "description") {
         item.valueType = "textarea";
@@ -430,380 +135,27 @@ export function useBaseColumns(localeName: string) {
       }
 
       if (column.hasOwnProperty("default")) {
-        addOrEditDefaultValue.value[column.key] = column?.default;
-        if (column.input_type === "labeled_choice") {
-          addOrEditDefaultValue.value[column.key] = { value: column?.default };
-        }
-        if (column.input_type === "labeled_multiple_choice") {
-          addOrEditDefaultValue.value[column.key] = [
-            { value: column?.default }
-          ];
-        }
-        if (column.input_type === "multiple choice") {
-          addOrEditDefaultValue.value[column.key] = [column?.default];
-        }
+        addOrEditDefaultValue.value[column.key] = columnDefaultValue(column);
       }
       if (!column.write_only) {
-        let input_type = column.input_type;
-        if (input_type.startsWith("api-search-")) {
-          // 详情渲染自定义api-search
-          input_type = "object_related_field";
-          if (column.multiple) {
-            input_type = "m2m_related_field";
-          }
-        }
-        switch (input_type) {
-          case "labeled_choice":
-            item["prop"] = `${column.key}.value`;
-            item["options"] = computed(() =>
-              formatAddOrEditOptions(column?.choices)
-            );
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <span v-copy={get(row, `${column.key}.label`)}>
-                {get(row, `${column.key}.label`)}
-              </span>
-            );
-            // pure-table ****** end
-            break;
-          case "object_related_field":
-            if (!isEmpty(column?.choices)) {
-              item["prop"] = `${column.key}.pk`;
-              item["options"] = computed(() =>
-                formatAddOrEditOptions(column?.choices)
-              );
-            } else {
-              item["valueType"] = "text";
-              item["prop"] = `${column.key}.label`;
-            }
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <span
-                v-copy={
-                  get(row, `${column.key}.label`) ?? get(row, `${column.key}`)
-                }
-              >
-                {get(row, `${column.key}.label`) ?? get(row, `${column.key}`)}
-              </span>
-            );
-            // pure-table ****** end
-            break;
-          case "m2m_related_field":
-          case "labeled_multiple_choice":
-            item["render"] = (value: Array<any>) => {
-              if (value instanceof Array) {
-                return (
-                  <>
-                    <el-scrollbar>
-                      <el-space>
-                        {value?.map((item, index) => {
-                          return (
-                            <el-text
-                              key={item.pk ?? item.value}
-                              type={getColourTypeByIndex(index + 1)}
-                            >
-                              {item.label}
-                            </el-text>
-                          );
-                        })}
-                      </el-space>
-                    </el-scrollbar>
-                  </>
-                );
-              } else return <></>;
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <>
-                <el-scrollbar>
-                  <el-space>
-                    {row[column.key]?.map((item, index) => {
-                      return (
-                        <el-text
-                          key={item.pk}
-                          type={getColourTypeByIndex(index + 1)}
-                        >
-                          {item.label}
-                        </el-text>
-                      );
-                    })}
-                  </el-space>
-                </el-scrollbar>
-              </>
-            );
-            // pure-table ****** end
-            break;
-          case "json":
-            item["descriptionsItemProps"] = {
-              span: 2
-            };
-            item["render"] = value => {
-              let jsonValue = value;
-              let stringValue = "";
-              if (isString(value)) {
-                stringValue = value;
-                try {
-                  jsonValue = JSON.parse(value);
-                } catch {
-                  try {
-                    stringValue = JSON.stringify(value);
-                  } catch {
-                    console.error("Cannot convert value to JSON string", value);
-                    stringValue = String(value);
-                  }
-                }
-              } else {
-                try {
-                  stringValue = JSON.stringify(value);
-                  if (typeof jsonValue !== "object") {
-                    jsonValue = value;
-                  }
-                } catch (error) {
-                  console.error("JSON.stringify error", error);
-                  stringValue = String(value);
-                }
-              }
-              return (
-                <el-scrollbar max-height="calc(100vh - 240px)">
-                  <VueJsonPretty data={jsonValue} v-copy={stringValue} />
-                </el-scrollbar>
-              );
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <span>{JSON.stringify(row[column.key])}</span>
-            );
-            // pure-table ****** end
-            break;
-          case "object_related_field_image":
-            item["valueType"] = "img";
-            item["formatter"] = ({ filepath }) => {
-              return filepath;
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) =>
-              h(ElImage, {
-                lazy: true,
-                class: "plus-display-item__image",
-                src: row[column.key]?.filepath,
-                alt: row[column.key]?.filename,
-                previewSrcList: [row[column.key]?.filepath],
-                previewTeleported: true
-              });
-            // pure-table ****** end
-            break;
-          case "object_related_field_file":
-            item["render"] = ({ filepath, filename }) => {
-              return h(
-                ElLink,
-                {
-                  type: "success",
-                  href: filepath,
-                  target: "_blank"
-                },
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => filename ?? "文件连接"
-                }
-              );
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) =>
-              h(
-                ElLink,
-                {
-                  type: "success",
-                  href: row[column.key]?.filepath,
-                  target: "_blank"
-                },
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => row[column.key]?.filename ?? "文件连接"
-                }
-              );
-            // pure-table ****** end
-            break;
-          case "m2m_related_field_file":
-            item["render"] = (
-              value: Array<{ pk: number; filepath: string; filename: string }>
-            ) => {
-              if (value instanceof Array) {
-                return (
-                  <>
-                    <el-scrollbar>
-                      <el-space>
-                        {value?.map(item => {
-                          return h(
-                            ElLink,
-                            {
-                              type: "success",
-                              href: item.filepath,
-                              target: "_blank"
-                            },
-                            {
-                              icon: () => h(ElIcon, null, () => h(Link)),
-                              default: () => item.filename ?? "文件连接"
-                            }
-                          );
-                        })}
-                      </el-space>
-                    </el-scrollbar>
-                  </>
-                );
-              } else return <></>;
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <>
-                <el-scrollbar>
-                  <el-space>
-                    {row[column.key]?.map(item => {
-                      return h(
-                        ElLink,
-                        {
-                          type: "success",
-                          href: item.filepath,
-                          target: "_blank"
-                        },
-                        {
-                          icon: () => h(ElIcon, null, () => h(Link)),
-                          default: () => item.filename ?? "文件连接"
-                        }
-                      );
-                    })}
-                  </el-space>
-                </el-scrollbar>
-              </>
-            );
-            // pure-table ****** end
-            break;
-
-          case "m2m_related_field_image":
-            item["render"] = (
-              value: Array<{ pk: number; filepath: string; filename: string }>
-            ) => {
-              if (value instanceof Array) {
-                return (
-                  <>
-                    <el-scrollbar>
-                      <el-space>
-                        {value?.map(item => {
-                          return h(ElImage, {
-                            lazy: true,
-                            class: "plus-display-item__image",
-                            src: item.filepath,
-                            alt: item.filename,
-                            previewSrcList: [item.filepath],
-                            previewTeleported: true
-                          });
-                        })}
-                      </el-space>
-                    </el-scrollbar>
-                  </>
-                );
-              } else return <></>;
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => (
-              <>
-                <el-scrollbar>
-                  <el-space>
-                    {row[column.key]?.map(item => {
-                      return h(ElImage, {
-                        lazy: true,
-                        class: "plus-display-item__image",
-                        src: item.filepath,
-                        alt: item.filename,
-                        previewSrcList: [item.filepath],
-                        previewTeleported: true
-                      });
-                    })}
-                  </el-space>
-                </el-scrollbar>
-              </>
-            );
-            // pure-table ****** end
-            break;
-          case "image upload":
-            item["valueType"] = "img";
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) =>
-              h(ElImage, {
-                lazy: true,
-                class: "plus-display-item__image",
-                src: row[column.key],
-                alt: row[column.key],
-                previewSrcList: [row[column.key]],
-                previewTeleported: true
-              });
-            // pure-table ****** end
-            break;
-          case "file upload":
-            // item["valueType"] = "copy";
-            item["render"] = (value: string) => {
-              return h(
-                ElLink,
-                {
-                  type: "success",
-                  href: value,
-                  target: "_blank"
-                },
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => "文件连接"
-                }
-              );
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) =>
-              h(
-                ElLink,
-                {
-                  type: "success",
-                  href: row[column.key],
-                  target: "_blank"
-                },
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => "文件连接"
-                }
-              );
-            // pure-table ****** end
-            break;
-          case "boolean":
-            item["options"] = computed(() => selectBooleanOptions);
-            // item["valueType"] = "switch";
-            delete item["renderField"];
-            // item["editable"] = true;
-            break;
-          case "list":
-            item["render"] = (value: any) => {
-              try {
-                value = JSON.stringify(value);
-              } catch (e) {
-                console.warn(e);
-              }
-              return value;
-            };
-            // pure-table ****** start
-            item["cellRenderer"] = ({ row }) => {
-              let value = row[column.key];
-              try {
-                value = JSON.stringify(value);
-              } catch (e) {
-                console.warn(e);
-              }
-              return value;
-            };
-        }
+        getDetailRenderer(detailInputType(column))?.(
+          item,
+          buildContext(column)
+        );
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
-          listColumns.value.push(cloneDeep(item));
+          const tableItem = cloneDeep(item);
+          // 表头排序：仅元数据声明 sortable 的列开启，排序走服务端 ordering 参数
+          if (column.sortable) tableItem.sortable = "custom";
+          // 受控高级筛选：透传字段级可用 lookup（未下发的字段不进入候选）
+          if (column.lookups?.length) tableItem.lookups = column.lookups;
+          listColumns.value.push(tableItem);
         }
       }
     });
+    // table_show 可能缺失：兜底 0，避免 NaN 参与相减导致排序结果不稳定
     listColumns.value = listColumns.value.sort(
-      (a, b) => a._column.table_show - b._column.table_show
+      (a, b) => (a._column.table_show ?? 0) - (b._column.table_show ?? 0)
     );
   };
 
@@ -811,14 +163,38 @@ export function useBaseColumns(localeName: string) {
    * 该方法用于页面onMount内调用，用于第一次渲染页面
    */
   const getColumnData = async (
-    apiColumns: BaseApi["columns"],
-    apiFields: BaseApi["fields"],
-    columnsCallback = null,
-    fieldsCallback = null,
-    columnsParams = {},
-    fieldsParams = {}
+    apiColumns: BaseApi["columns"] | null | undefined,
+    apiFields: BaseApi["fields"] | null | undefined,
+    columnsCallback:
+      | ((payload: {
+          listColumns: Ref<PageColumn[]>;
+          detailColumns: Ref<PageColumn[]>;
+          addOrEditRules: Ref<Record<string, unknown>>;
+          addOrEditColumns: Ref<PageColumn[]>;
+          addOrEditDefaultValue: Ref<Record<string, unknown>>;
+        }) => void)
+      | null = null,
+    fieldsCallback:
+      | ((payload: {
+          searchDefaultValue: Ref<Record<string, unknown>>;
+          searchColumns: Ref<PageColumn[]>;
+        }) => void)
+      | null = null,
+    columnsParams: object = {},
+    fieldsParams: object = {},
+    /** with_meta=1 内联载荷，存在时跳过对应分离请求 */
+    inlineMeta?: {
+      search_columns?: SearchColumnsResult["data"];
+      search_fields?: SearchFieldsResult["data"];
+    }
   ) => {
-    if (apiFields) {
+    if (inlineMeta?.search_fields) {
+      searchColumns.value.splice(0, searchColumns.value.length);
+      formatSearchColumns(inlineMeta.search_fields);
+      if (fieldsCallback) {
+        fieldsCallback({ searchDefaultValue, searchColumns });
+      }
+    } else if (apiFields) {
       const res = await apiFields(fieldsParams);
       searchColumns.value.splice(0, searchColumns.value.length);
       formatSearchColumns(res.data);
@@ -826,7 +202,21 @@ export function useBaseColumns(localeName: string) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }
     }
-    if (apiColumns) {
+    if (inlineMeta?.search_columns) {
+      detailColumns.value.splice(0, detailColumns.value.length);
+      addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
+      listColumns.value.splice(0, listColumns.value.length);
+      formatAddOrEditColumns(inlineMeta.search_columns);
+      if (columnsCallback) {
+        columnsCallback({
+          listColumns,
+          detailColumns,
+          addOrEditRules,
+          addOrEditColumns,
+          addOrEditDefaultValue
+        });
+      }
+    } else if (apiColumns) {
       apiColumns(columnsParams).then(res => {
         detailColumns.value.splice(0, detailColumns.value.length);
         addOrEditColumns.value.splice(0, addOrEditColumns.value.length);

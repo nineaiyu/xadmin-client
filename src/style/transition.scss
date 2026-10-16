@@ -1,18 +1,31 @@
+/**
+ * 全局过渡与动效：状态过渡预设（页面切换 / 面包屑 / 折叠）、通用过渡类与
+ * 「减弱动效」无障碍降级。时长与缓动统一消费 tokens/primitives.scss 的
+ * --duration-* / --ease-*，不在本文件内联数值。
+ *
+ * 预设命名为本地命名（不引第三方依赖），
+ * 路由侧缺省过渡名仍为 fade-transform（见 layout/components/lay-content）。
+ */
+
+/* ============ 页面 / 内容过渡 ============ */
+
 /* fade */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.28s;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
+/* Vue 2 / Vue 3 兼容：-enter 为 2.x 类名，-enter-from 为 3.x 类名 */
 .fade-enter,
+.fade-enter-from,
 .fade-leave-active {
   opacity: 0;
 }
 
-/* fade-transform */
+/* fade-transform：路由缺省过渡 */
 .fade-transform-leave-active,
 .fade-transform-enter-active {
-  transition: all 0.5s;
+  transition: all var(--duration-slower) var(--ease-standard);
 }
 
 .fade-transform-enter-from {
@@ -27,12 +40,12 @@
 
 /* breadcrumb transition */
 .breadcrumb-enter-active {
-  transition: all 0.4s;
+  transition: all var(--duration-slow) var(--ease-standard);
 }
 
 .breadcrumb-leave-active {
   position: absolute;
-  transition: all 0.3s;
+  transition: all var(--duration-base) var(--ease-standard);
 }
 
 .breadcrumb-enter-from,
@@ -41,14 +54,440 @@
   transform: translateX(20px);
 }
 
+/* ============ 过渡预设（供业务按需引用） ============ */
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition:
+    opacity var(--duration-fast) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-up-enter-from {
+  opacity: 0;
+  transform: translateY(10%);
+}
+
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(-10%);
+}
+
+.fade-down-enter-active,
+.fade-down-leave-active {
+  transition:
+    opacity var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.fade-down-enter-from {
+  opacity: 0;
+  transform: translateY(-10%);
+}
+
+.fade-down-leave-to {
+  opacity: 0;
+  transform: translateY(10%);
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all var(--duration-base) var(--ease-standard);
+}
+
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active,
+.slide-down-enter-active,
+.slide-down-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all var(--duration-slide) var(--ease-slide);
+}
+
+.slide-up-move,
+.slide-down-move,
+.slide-left-move,
+.slide-right-move {
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-15px);
+}
+
+.slide-right-enter-from,
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(15px);
+}
+
+/* ============ 补充预设（本地命名） ============ */
+
 /**
- * @description 重置el-menu的展开收起动画时长
+ * 侧栏 / 面板按方向入场：容器固定时长与缓动，方向由 `data-side` 决定，
+ * 位移 50px。
+ * 用法：<div class="side-content" :data-side="side">…</div>
+ */
+.side-content {
+  animation-duration: var(--duration-base);
+  animation-timing-function: var(--ease-out-expo);
+}
+
+.side-content[data-side="top"] {
+  animation-name: side-slide-up;
+}
+
+.side-content[data-side="bottom"] {
+  animation-name: side-slide-down;
+}
+
+.side-content[data-side="left"] {
+  animation-name: side-slide-left;
+}
+
+.side-content[data-side="right"] {
+  animation-name: side-slide-right;
+}
+
+@keyframes side-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes side-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes side-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes side-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * 列表项进入（消息流 / 页签等「尾部追加」场景）：宿主判定出新增项后为其加
+ * `.list-item-enter`，播放一次轻微上浮淡入。与 TransitionGroup 过渡类不同——
+ * 节点立即进出 DOM（不延迟移除），滚动定位与页签宽度计量不受影响；首次填充 /
+ * 整批替换（切会话）/ 前插（加载更早）由 `utils/listAppend` 判定后不加此类。
+ */
+@keyframes list-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-item-enter {
+  animation: list-item-enter var(--duration-base) var(--ease-standard);
+}
+
+/* 面包屑切换：错切滑动（skewX），离场即时让位 */
+.breadcrumb-transition-enter-active {
+  transition:
+    transform var(--duration-slow) var(--ease-standard),
+    opacity var(--duration-slow) var(--ease-standard);
+}
+
+.breadcrumb-transition-leave-active {
+  display: none;
+}
+
+.breadcrumb-transition-enter-from {
+  opacity: 0;
+  transform: translateX(30px) skewX(-30deg);
+}
+
+/* 循环呼吸类（3s infinite）：供加载 / 占位等循环提示按需引用 */
+@keyframes fade-loop {
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-slide-loop {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+
+@keyframes fade-up-loop {
+  0% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+}
+
+@keyframes fade-down-loop {
+  0% {
+    opacity: 0;
+    transform: translateY(-10%);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(10%);
+  }
+}
+
+.fade-slow {
+  animation: fade-loop 3s infinite;
+}
+
+.fade-slide-slow {
+  animation: fade-slide-loop 3s infinite;
+}
+
+.fade-up-slow {
+  animation: fade-up-loop 3s infinite;
+}
+
+.fade-down-slow {
+  animation: fade-down-loop 3s infinite;
+}
+
+/**
+ * 入场阶梯：按 `:nth-child(1..5)` 递增延迟逐个入场（
+ * `.enter-x` / `.enter-y` / `.-enter-x` / `.-enter-y` 四个方向预设）。
+ * 供登录页等「整块内容阶梯入场」的页面复用；`-` 前缀为反向（自左 / 自上）。
+ *
+ * 实现取向：起始态写在 keyframes 的 `from`（而非基础声明），配
+ * `animation-fill-mode: backwards`——动画结束后元素回到自然态（无残留
+ * transform），不会给容器平白加上包含块 / 层叠上下文。
+ */
+@keyframes enter-x-animation {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enter-x-reverse-animation {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enter-y-animation {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-y-reverse-animation {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+$enter-staircase-delays: (
+  1: var(--duration-instant),
+  2: var(--duration-fast),
+  3: var(--duration-base),
+  4: var(--duration-slow),
+  5: var(--duration-slower)
+);
+
+@mixin enter-staircase($className, $keyframes) {
+  @each $nth, $delay in $enter-staircase-delays {
+    .#{$className}:nth-child(#{$nth}) {
+      animation-name: #{$keyframes};
+      animation-duration: var(--duration-base);
+      animation-timing-function: var(--ease-standard);
+      animation-delay: #{$delay};
+      animation-fill-mode: backwards;
+    }
+  }
+}
+
+@include enter-staircase("enter-x", "enter-x-animation");
+@include enter-staircase("enter-y", "enter-y-animation");
+@include enter-staircase("-enter-x", "enter-x-reverse-animation");
+@include enter-staircase("-enter-y", "enter-y-reverse-animation");
+
+/* ============ Element Plus 折叠过渡覆写 ============ */
+
+/**
+ * @description 重置 el-menu 的展开收起动画时长
  */
 .outer-most .el-collapse-transition-leave-active,
 .outer-most .el-collapse-transition-enter-active {
-  transition: 0.2s all ease-in-out !important;
+  transition: var(--duration-fast) all var(--ease-standard) !important;
 }
 
 .horizontal-collapse-transition {
-  transition: var(--pure-transition-duration) all !important;
+  transition: var(--duration-base) all !important;
+}
+
+/* ============ 视图过渡（主题切换圆形揭示） ============ */
+
+/**
+ * View Transitions 基础规则：关闭默认的交叉淡入，让新快照按下层动效
+ * （utils/viewTransition.ts 注入的 clip-path 圆形扩散）呈现；旧快照静止垫底。
+ */
+@layer base {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    mix-blend-mode: normal;
+    animation: none;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+}
+
+/* ============ 减弱动效（无障碍） ============ */
+
+/**
+ * 唯一能同时压住 Element Plus 自带过渡与 animate.css 的写法：通配选择器 + !important。
+ * 用户系统开启「减弱动态效果」时，所有动画/过渡退化为瞬时，仅保留状态终值。
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

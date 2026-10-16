@@ -17,7 +17,7 @@ export default defineComponent({
         "div",
         {},
         {
-          default: () => [this.$slots.default()]
+          default: () => [this.$slots.default?.()]
         }
       ),
       [

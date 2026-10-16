@@ -11,12 +11,28 @@ import type {
   TableColumns
 } from "@pureadmin/table";
 import type { BaseApi } from "@/api/base";
+import type { UseViewedRowOptions } from "@/hooks/useViewedRow";
+import type {
+  ApiResult,
+  SearchColumnsResult,
+  SearchFieldsResult
+} from "@/api/types";
+import type { Ref } from "vue";
+import type { FormInstance } from "element-plus";
 import type { formDialogDrawerOptions } from "./handle";
-import type { OperationProps } from "@/components/RePlusPage";
+import type { OperationProps } from "../components/ButtonOperation";
 import type { PureTableBarProps } from "@/components/RePureTableBar";
-import type { VNode } from "vue";
+import type { VNode, Component } from "vue";
 import type { Mutable } from "@vueuse/core";
-import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
+
+/**
+ * 弹层表单实例契约：仅依赖 `validate`；分页签场景会在当前页实例上挂载
+ * `_allInstances`，供 openDialogDrawer 统一校验全部表单（AddOrEdit 等组件实现）
+ */
+export type ExposedFormInstance = {
+  validate: FormInstance["validate"];
+  _allInstances?: ExposedFormInstance[];
+};
 
 interface TableColumn {
   /** 是否隐藏 */
@@ -31,15 +47,88 @@ interface TableColumn {
   cellRenderer?: (data: TableColumnRenderer) => VNode | string;
   /** 自定义头部渲染器（`jsx`语法） */
   headerRenderer?: (data: TableColumnRenderer) => VNode | string;
+  /**
+   * 表头排序；`"custom"` 表示由服务端 ordering 参数排序。
+   * 仅元数据下发了 sortable 的列会开启，其余列保持不可排序
+   */
+  sortable?: boolean | "custom";
+  /**
+   * 受控高级筛选：后端为该字段下发的可用 lookup 表达式（与
+   * `ControlledLookupFilterBackend` 的字段/lookup 白名单同源）。
+   * 未下发的字段不进入高级筛选候选，避免「选到即 400」。
+   */
+  lookups?: string[];
 }
 
-interface PageColumn extends PlusColumn, TableColumn {
+interface PageColumn extends Omit<PlusColumn, "fieldProps">, TableColumn {
+  /**
+   * 自定义表单字段渲染器（对 plus-pro-components 的 any 签名做强类型收窄）。
+   * value 的具体形态由列的 valueType / input_type 决定
+   */
+  renderField?: PlusRenderField;
+  /**
+   * 组件透传 props：plus-pro-components 原类型为「对象 | 工厂函数」联合，
+   * 无法按键索引。渲染器需要逐项改写（showAlpha / type / valueFormat / multiple…），
+   * 故在此收窄为可索引对象。
+   */
+  fieldProps?: Record<string, unknown>;
   // columns: Partial<Mutable<TableColumn> & { _column: object }>[]
   _column: Partial<
     Mutable<SearchFieldsResult["data"][0]> &
       Mutable<SearchColumnsResult["data"][0]>
   >;
 }
+
+/** 手机号输入组件的模型（区号 + 号码），PhoneInput.vue 与渲染器共用 */
+export interface PhoneInputProps {
+  code: string;
+  phone: string;
+}
+
+/**
+ * 自定义表单字段渲染器（与 plus-pro-components 的 `renderField` 调用契约一致：
+ * `value` 为动态表单字段值、`props` 为当前列，形态由列的 valueType / input_type 决定，
+ * 组件侧在各自边界收窄为具体类型。
+ */
+export type PlusRenderField = (
+  value: unknown,
+  onChange: (value: unknown) => void,
+  props: PlusColumn
+) => VNode | Component;
+
+/** 列元数据，同时兼容 search-fields 与 search-columns 接口返回 */
+type PlusColumnMeta = SearchFieldsResult["data"][0] &
+  Partial<SearchColumnsResult["data"][0]>;
+
+/**
+ * 选择型字段渲染值中的选项条目（m2m_related_field / labeled_multiple_choice 等）：
+ * `label` 用于展示，`pk` / `value` 用作列表 key
+ */
+type ChoiceOptionItem = {
+  pk?: number | string;
+  value?: number | string;
+  label?: string;
+  [key: string]: unknown;
+};
+
+/** 列渲染器上下文：提供当前列元数据与 i18n / 自定义搜索组件依赖 */
+interface PlusColumnContext {
+  column: PlusColumnMeta;
+  t: (arg0: string, arg1?: object) => string;
+  te: (arg0: string, arg1?: string) => boolean;
+  localeName: string;
+  /** `api-search-*` 自定义搜索组件映射 */
+  apiSearchComponents: Record<string, Component>;
+}
+
+/**
+ * 列渲染处理器：对 PageColumn 就地配置（valueType / fieldProps / renderField /
+ * cellRenderer 等），与原 switch-case 的 mutation 行为保持一致
+ */
+type PlusColumnHandler = (item: PageColumn, ctx: PlusColumnContext) => void;
+
+/** input_type -> 处理器 的渲染器注册表 */
+type PlusColumnRegistry = Record<string, PlusColumnHandler>;
 
 interface PageTableColumn extends TableColumns {
   prop?: string;
@@ -60,6 +149,31 @@ interface ApiAuthProps {
   partialUpdate?: string | boolean | null | BaseApi["partialUpdate"];
   fields?: string | boolean | null | BaseApi["fields"];
   batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
+  recycleList?: string | boolean | null | BaseApi["recycleList"];
+  /** 行级「变更历史」：页面在 getDefaultAuths 声明 + 菜单授权后显示 */
+  changeHistory?: string | boolean | null;
+}
+
+/** 回收站抽屉的附加业务列（删除时间列内建，无需声明） */
+interface RecycleBinColumn {
+  /** 业务标识字段（如 username / name / filename / title） */
+  prop: string;
+  /** 表头文案；缺省时按 `${localeName}.${prop}` 自动翻译 */
+  label?: string;
+  /** 单元格格式化（row 为动态接口数据行） */
+  formatter?: (row: RecordType) => string;
+  /**
+   * 自定义单元格渲染（与主列表 cellRenderer 同形，返回 VNode 或文本）。
+   * 回收站为只读场景，`readonly` 恒为 true：交互单元格（开关/链接/预览按钮）
+   * 须置灰或降级为纯展示，可用 `isReadonlyCell(scope)` 判定
+   */
+  cellRenderer?: (data: {
+    row: RecordType;
+    index: number;
+    size?: string;
+    props?: { size?: string };
+    readonly?: boolean;
+  }) => unknown;
 }
 
 interface RePlusPageProps {
@@ -122,18 +236,28 @@ interface RePlusPageProps {
    */
   detailColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   /**
+   * 详情抽屉打开前的行数据兜底拉取：页面在列表行大字段为有界预览时，
+   * 借详情端点回填全量（返回与行数据合并的补充对象，null/undefined 表示沿用行数据）。
+   * 拉取期间详情按钮进入 loading，失败由页面自行兜底后返回 null，抽屉照常打开；
+   * 未提供时保持旧行为（直接渲染列表行）。
+   */
+  detailRowFetch?: (
+    row: Record<string, unknown>
+  ) => Promise<Record<string, unknown> | null | undefined>;
+  /**
    * plus pro search 的 columns, 并返回
    * @param columns
    */
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
-  baseColumnsFormat?: ({
-    listColumns,
-    detailColumns,
-    searchColumns,
-    addOrEditRules,
-    addOrEditColumns,
-    searchDefaultValue,
-    addOrEditDefaultValue
+  baseColumnsFormat?: (payload: {
+    /** 表格列（响应式 ref，就地修改生效） */
+    listColumns: Ref<PageColumn[]>;
+    detailColumns: Ref<PageColumn[]>;
+    searchColumns: Ref<PageColumn[]>;
+    addOrEditRules: Ref<Record<string, unknown>>;
+    addOrEditColumns: Ref<PageColumn[]>;
+    searchDefaultValue: Ref<Record<string, unknown>>;
+    addOrEditDefaultValue: Ref<Record<string, unknown>>;
   }) => void;
   /**
    * 搜索之前进行一些修改
@@ -151,9 +275,10 @@ interface RePlusPageProps {
     title?: "";
     props?: Partial<formDialogDrawerOptions>;
     form?: undefined;
+    // 页面可按场景返回 undefined 表示「不覆盖默认保存请求」（框架回退 create/partialUpdate）
     apiReq?: (
       formOptions: Partial<formDialogDrawerOptions> & { formData: RecordType }
-    ) => BaseApi | any;
+    ) => Promise<ApiResult> | undefined;
   };
   /**
    * 操作栏 按钮组方法
@@ -163,6 +288,54 @@ interface RePlusPageProps {
    * 工具栏 按钮组方法
    */
   tableBarButtonsProps?: Partial<OperationProps>;
+  /**
+   * 回收站入口（软删除模型专用，按钮按 auth.recycleList 显隐）：
+   * - true：仅展示主键与删除时间
+   * - 数组：附加业务标识列（label 缺省按 localeName 自动翻译）
+   */
+  recycleBin?: boolean | RecycleBinColumn[];
+  /**
+   * 导出弹层是否提供「异步导出」开关（大数据量导出）。
+   * 未设置（undefined）时按页面导出权限 auth.exportData 自动显示，false 显式关闭。
+   */
+  allowAsyncExport?: boolean;
+  /**
+   * 我的视图：开启后工具栏出现「视图」下拉（个人筛选条件命名保存 / 一键套用 /
+   * 默认视图 / 共享只读）。视图存条件，应用时仍按当前用户权限裁剪。
+   */
+  savedViews?: boolean;
+  /**
+   * 高级筛选：开启后工具栏出现「高级筛选」按钮（受控 lookup 条件行：
+   * `field__lookup=value`，与后端 ControlledLookupFilterBackend 同口径）。
+   * 仅在视图集 opt-in（`controlled_lookup = True`）的页面开启，未开启页面零变化。
+   */
+  advancedFilter?: boolean;
+  /**
+   * 分离式 search-fields 元数据请求开关（缺省 true）。无该端点或仅消费
+   * 内联 with_meta 元数据的页面显式传 false，代替对 api 实例的就地改写——
+   * api 的方法挂在共享原型上，运行时遮蔽会影响所有复用该实例的消费方。
+   */
+  fetchSearchFields?: boolean;
+  /**
+   * 表格已读行：开启后「详情 / 编辑」操作自动标记该行为已读（行类 `is-viewed`
+   * 弱化显示）；记录按接口路径隔离，默认 local 存储跨刷新保持。默认关（零回归）。
+   * 传对象可覆盖 TTL / 容量上限 / 存储后端 / 行键字段（见 useViewedRow）。
+   */
+  viewedRow?: boolean | ViewedRowPageOptions;
 }
 
-export type { ApiAuthProps, RePlusPageProps, PageColumn, PageTableColumn };
+/** 表格已读行的页面级配置（scope 由框架按接口路径注入） */
+export type ViewedRowPageOptions = Omit<UseViewedRowOptions, "scope">;
+
+export type {
+  ApiAuthProps,
+  RePlusPageProps,
+  RecycleBinColumn,
+  PageColumn,
+  PageTableColumn,
+  PlusColumnMeta,
+  PlusColumnContext,
+  PlusColumnHandler,
+  PlusColumnRegistry,
+  ChoiceOptionItem
+};

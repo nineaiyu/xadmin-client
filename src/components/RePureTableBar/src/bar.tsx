@@ -1,12 +1,11 @@
-import Sortable from "sortablejs";
-import { transformI18n } from "@/plugins/i18n";
-import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import { $t, transformI18n } from "@/plugins/i18n";
+import type { CheckboxValueType } from "element-plus";
+import { useSortable } from "@/hooks/useSortable";
 import {
   computed,
   defineComponent,
   getCurrentInstance,
   nextTick,
-  type PropType,
   ref,
   unref,
   watch
@@ -19,7 +18,9 @@ import {
   isFunction
 } from "@pureadmin/utils";
 
+import PinAngle from "~icons/bi/pin-angle";
 import Fullscreen from "~icons/ri/fullscreen-fill";
+import PinAngleFill from "~icons/bi/pin-angle-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import DragIcon from "@/assets/table-bar/drag.svg?component";
 import ExpandIcon from "@/assets/table-bar/expand.svg?component";
@@ -28,37 +29,27 @@ import SettingIcon from "@/assets/table-bar/settings.svg?component";
 import CollapseIcon from "@/assets/table-bar/collapse.svg?component";
 import { useI18n } from "vue-i18n";
 
-const props = {
-  /** 头部最左边的标题 */
-  title: {
-    type: String,
-    default: "列表"
-  },
-  /** 对于树形表格，如果想启用展开和折叠功能，传入当前表格的ref即可 */
-  tableRef: {
-    type: Object as PropType<any>
-  },
-  /** 需要展示的列 */
-  columns: {
-    type: Array as PropType<TableColumnList>,
-    default: () => []
-  },
-  isExpandAll: {
-    type: Boolean,
-    default: true
-  },
-  tableKey: {
-    type: [String, Number] as PropType<string | number>,
-    default: "0"
-  }
-};
+import {
+  ICON_CLASS,
+  TOP_CLASS,
+  buildRenderClass,
+  rendTippyProps,
+  resolveFixedState,
+  tableBarProps,
+  toggleRowExpansionAll,
+  type TableColumnLike
+} from "./utils";
+import { useTablePrefs } from "./useTablePrefs";
+import { createSizeDropdown } from "./dropdown";
 
 export default defineComponent({
   name: "PureTableBar",
-  props,
+  props: tableBarProps,
   emits: ["refresh", "fullscreen", "change"],
   setup(props, { emit, slots, attrs }) {
-    const size = ref("default");
+    // 表格偏好：列显隐/顺序/密度跨刷新保持（本地 + 可选跨设备同步）
+    const tablePrefs = useTablePrefs();
+    const size = ref(tablePrefs.size.value);
     const loading = ref(false);
     const checkAll = ref(true);
     const isFullscreen = ref(false);
@@ -66,7 +57,7 @@ export default defineComponent({
     const instance = getCurrentInstance()!;
     const isExpandAll = ref(props.isExpandAll);
     const filterColumns = computed(() => {
-      return cloneDeep(props?.columns).filter(column =>
+      return cloneDeep(props?.columns).filter((column: TableColumnLike) =>
         isBoolean(column?.hide)
           ? !column.hide
           : !(isFunction(column?.hide) && column?.hide())
@@ -81,51 +72,21 @@ export default defineComponent({
     const dynamicColumns = ref(cloneDeep(props?.columns));
     const { t } = useI18n();
 
-    const getDropdownItemStyle = computed(() => {
-      return s => {
-        return {
-          background:
-            s === size.value ? useEpThemeStoreHook().epThemeColor : "",
-          color: s === size.value ? "#fff" : "var(--el-text-color-primary)"
-        };
-      };
-    });
+    const iconClass = computed(() => ICON_CLASS);
 
-    const iconClass = computed(() => {
-      return [
-        "text-black",
-        "dark:text-white",
-        "duration-100",
-        "hover:text-primary!",
-        "cursor-pointer",
-        "outline-hidden"
-      ];
-    });
+    const topClass = computed(() => TOP_CLASS);
 
-    const topClass = computed(() => {
-      return [
-        "flex",
-        "justify-between",
-        "pt-[3px]",
-        "px-[11px]",
-        "border-b-[1px]",
-        "border-b-solid",
-        "border-[#dcdfe6]",
-        "dark:border-[#303030]"
-      ];
-    });
+    const renderClass = computed(() => buildRenderClass(isFullscreen.value));
 
-    const renderClass = computed(() => {
-      return [
-        "w-99/100",
-        "px-2",
-        "pb-2",
-        "bg-bg_color",
-        isFullscreen.value
-          ? ["w-full!", "h-full!", "z-2002", "fixed", "inset-0"]
-          : "mt-2"
-      ];
-    });
+    /**
+     * 持久化当前列状态（本地即写 + 远端防抖）：只在用户交互路径调用
+     * （列勾选/全选、密度切换、列拖拽排序、重置列）。
+     * 元数据装配与首帧同步同样会改列并走 handleChange（emit 给父组件），
+     * 但绝不落远端——否则每打开一个列表页都会 PATCH 一次站点配置。
+     */
+    const persistPrefs = () => {
+      tablePrefs.save(dynamicColumns.value, size.value);
+    };
 
     function onReFresh() {
       loading.value = true;
@@ -135,7 +96,8 @@ export default defineComponent({
 
     function onExpand() {
       isExpandAll.value = !isExpandAll.value;
-      toggleRowExpansionAll(props.tableRef.data, isExpandAll.value);
+      const rows = props.tableRef?.data;
+      if (rows) toggleRowExpansionAll(props.tableRef, rows, isExpandAll.value);
     }
 
     function onFullscreen() {
@@ -143,24 +105,16 @@ export default defineComponent({
       emit("fullscreen", isFullscreen.value);
     }
 
-    function toggleRowExpansionAll(data, isExpansion) {
-      data.forEach(item => {
-        props.tableRef.toggleRowExpansion(item, isExpansion);
-        if (item.children !== undefined && item.children !== null) {
-          toggleRowExpansionAll(item.children, isExpansion);
-        }
-      });
-    }
-
-    function handleCheckAllChange(val: boolean) {
+    function handleCheckAllChange(val: CheckboxValueType) {
       checkedColumns.value = val ? checkColumnList.value : [];
       isIndeterminate.value = false;
-      dynamicColumns.value.map(column =>
+      dynamicColumns.value.map((column: TableColumnLike) =>
         val ? (column.hide = false) : (column.hide = true)
       );
+      persistPrefs();
     }
 
-    function handleCheckedColumnsChange(value: string[]) {
+    function handleCheckedColumnsChange(value: CheckboxValueType[]) {
       checkedColumns.value = value;
       const checkedCount = value.length;
       checkAll.value = checkedCount === checkColumnList.value.length;
@@ -168,16 +122,35 @@ export default defineComponent({
         checkedCount > 0 && checkedCount < checkColumnList.value.length;
     }
 
-    function handleCheckColumnListChange(val: boolean, label: string) {
+    function handleCheckColumnListChange(
+      val: CheckboxValueType,
+      label: string
+    ) {
       dynamicColumns.value.filter(
-        item => transformI18n(item.label) === transformI18n(label)
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
       )[0].hide = !val;
+      persistPrefs();
     }
 
-    async function onReset() {
+    function handleToggleColumnFixed(
+      fixed: boolean | "left" | "right",
+      label: string
+    ) {
+      const column = dynamicColumns.value.find(
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
+      );
+      if (column) {
+        column.fixed = fixed;
+      }
+    }
+
+    async function onReset(persist = false) {
       checkAll.value = true;
       isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
+      tablePrefs.apply(dynamicColumns.value);
       checkColumnList.value = getKeyList(
         cloneDeep(props?.columns ?? []),
         "label"
@@ -186,6 +159,7 @@ export default defineComponent({
         cloneDeep(filterColumns.value),
         "label"
       );
+      if (persist) persistPrefs();
     }
 
     const handleChange = () => {
@@ -200,6 +174,9 @@ export default defineComponent({
       onReset();
     });
 
+    // 首帧即应用偏好（放在 change watcher 之前，父组件先拿到带偏好的列）
+    onReset();
+
     watch(
       () => [dynamicColumns.value, renderClass.value],
       () => {
@@ -208,93 +185,80 @@ export default defineComponent({
       { deep: true, immediate: true }
     );
 
-    const sizeChange = (event, val) => {
-      event.stopPropagation();
-      size.value = val;
-      handleChange();
-    };
-    const dropdown = {
-      dropdown: () => (
-        <el-dropdown-menu class="translation" teleported={false}>
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("large")}
-            onClick={event => sizeChange(event, "large")}
-          >
-            {t("tableBar.loose")}
-          </el-dropdown-item>
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("default")}
-            onClick={event => sizeChange(event, "default")}
-          >
-            {t("tableBar.default")}
-          </el-dropdown-item>
-          <el-dropdown-item
-            style={getDropdownItemStyle.value("small")}
-            onClick={event => sizeChange(event, "small")}
-          >
-            {t("tableBar.compact")}
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      )
-    };
+    // 密度下拉（渲染见 src/dropdown.tsx）：选中后写 size、同步父组件并持久化
+    const { dropdown } = createSizeDropdown({
+      size,
+      onSizeChange: (_event, val) => {
+        size.value = val;
+        handleChange();
+        persistPrefs();
+      }
+    });
 
-    /** 列展示拖拽排序 */
+    /** 列展示拖拽排序（手势由 useSortable 承载，sortablejs 按需加载） */
+    // 复用同一实例：rowDrop 会在每次触发拖拽按钮时重整（先销毁再挂载），
+    // 重复 create 会在同一 wrapper 上叠加监听。触屏降级：原先仅 mouseenter
+    // 触发（触屏无 hover，列排序不可用），现由 mousedown / touchstart 同样触发
+    // （Sortable 自身支持 touch 拖拽）
+    const { init: initColumnSort, destroy: destroyColumnSort } = useSortable(
+      () =>
+        (
+          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as
+            { $el: HTMLElement } | undefined
+        )?.$el?.firstElementChild as HTMLElement | undefined,
+      {
+        animation: 300,
+        handle: ".drag-btn",
+        onEnd: ({ newIndex, oldIndex, evt }) => {
+          if (newIndex === undefined || oldIndex === undefined) return;
+          const targetThElem = evt.item;
+          const wrapperElem = targetThElem.parentNode as HTMLElement;
+          const oldColumn = dynamicColumns.value[oldIndex];
+          const newColumn = dynamicColumns.value[newIndex];
+          if (oldColumn?.fixed || newColumn?.fixed) {
+            // 当前列存在 fixed 属性则不可拖拽：撤销 DOM 位移
+            const oldThElem = wrapperElem.children[oldIndex] as HTMLElement;
+            if (newIndex > oldIndex) {
+              wrapperElem.insertBefore(targetThElem, oldThElem);
+            } else {
+              wrapperElem.insertBefore(
+                targetThElem,
+                oldThElem ? oldThElem.nextElementSibling : oldThElem
+              );
+            }
+            return;
+          }
+          const currentRow = dynamicColumns.value.splice(oldIndex, 1)[0];
+          dynamicColumns.value.splice(newIndex, 0, currentRow);
+          persistPrefs();
+        }
+      }
+    );
+
     const rowDrop = (event: { preventDefault: () => void }) => {
       event.preventDefault();
-      nextTick(() => {
-        const wrapper: HTMLElement = (
-          instance?.proxy?.$refs[`GroupRef${unref(props.tableKey)}`] as any
-        ).$el.firstElementChild;
-        Sortable.create(wrapper, {
-          animation: 300,
-          handle: ".drag-btn",
-          onEnd: ({ newIndex, oldIndex, item }) => {
-            const targetThElem = item;
-            const wrapperElem = targetThElem.parentNode as HTMLElement;
-            const oldColumn = dynamicColumns.value[oldIndex];
-            const newColumn = dynamicColumns.value[newIndex];
-            if (oldColumn?.fixed || newColumn?.fixed) {
-              // 当前列存在fixed属性 则不可拖拽
-              const oldThElem = wrapperElem.children[oldIndex] as HTMLElement;
-              if (newIndex > oldIndex) {
-                wrapperElem.insertBefore(targetThElem, oldThElem);
-              } else {
-                wrapperElem.insertBefore(
-                  targetThElem,
-                  oldThElem ? oldThElem.nextElementSibling : oldThElem
-                );
-              }
-              return;
-            }
-            const currentRow = dynamicColumns.value.splice(oldIndex, 1)[0];
-            dynamicColumns.value.splice(newIndex, 0, currentRow);
-          }
-        });
+      nextTick(async () => {
+        destroyColumnSort();
+        await initColumnSort();
       });
     };
 
     const isFixedColumn = (label: string) => {
-      return dynamicColumns.value.filter(
-        item => transformI18n(item.label) === transformI18n(label)
-      )[0].fixed;
-    };
-
-    const rendTippyProps = (content: string) => {
-      // https://vue-tippy.netlify.app/props
-      return {
-        content,
-        offset: [0, 18],
-        duration: [300, 0],
-        followCursor: true,
-        hideOnClick: "toggle"
-      };
+      const column = dynamicColumns.value.find(
+        (item: TableColumnLike) =>
+          transformI18n(item.label) === transformI18n(label)
+      );
+      return resolveFixedState(column);
     };
 
     const reference = {
       reference: () => (
         <SettingIcon
-          class={["w-[16px]", iconClass.value]}
+          class={["w-4", iconClass.value]}
           v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
+          // a11y：图标按钮需可访问名；显式 aria-hidden=false 保证名称生效
+          aria-label={t("tableBar.columnSettings")}
+          aria-hidden={false}
         />
       )
     };
@@ -302,20 +266,20 @@ export default defineComponent({
     return () => (
       <>
         <div {...attrs} class={[slots?.default ? renderClass.value : ""]}>
-          <div class="flex justify-between w-full h-[60px] p-4">
+          <div class="flex justify-between w-full h-15 p-4">
             {slots?.title ? (
               slots.title()
             ) : (
               <p class="font-bold truncate">{props.title}</p>
             )}
-            <div class="flex items-center justify-around">
+            <div class="flex-ac">
               {slots?.buttons ? (
                 <div class="flex mr-4">{slots.buttons()}</div>
               ) : null}
               {props.tableRef?.size ? (
                 <>
                   <ExpandIcon
-                    class={["w-[16px]", iconClass.value]}
+                    class={["w-4", iconClass.value]}
                     style={{
                       transform: isExpandAll.value ? "none" : "rotate(-90deg)"
                     }}
@@ -324,6 +288,12 @@ export default defineComponent({
                         ? t("tableBar.fold")
                         : t("tableBar.unfold")
                     )}
+                    aria-label={
+                      isExpandAll.value
+                        ? t("tableBar.fold")
+                        : t("tableBar.unfold")
+                    }
+                    aria-hidden={false}
                     onClick={() => onExpand()}
                   />
                   <el-divider direction="vertical" />
@@ -331,11 +301,13 @@ export default defineComponent({
               ) : null}
               <RefreshIcon
                 class={[
-                  "w-[16px]",
+                  "w-4",
                   iconClass.value,
                   loading.value ? "animate-spin" : ""
                 ]}
                 v-tippy={rendTippyProps(t("tableBar.refresh"))}
+                aria-label={t("tableBar.refresh")}
+                aria-hidden={false}
                 onClick={() => onReFresh()}
               />
               <el-divider direction="vertical" />
@@ -344,7 +316,11 @@ export default defineComponent({
                 trigger="click"
                 v-tippy={rendTippyProps(t("tableBar.density"))}
               >
-                <CollapseIcon class={["w-[16px]", iconClass.value]} />
+                <CollapseIcon
+                  class={["w-4", iconClass.value]}
+                  aria-label={t("tableBar.density")}
+                  aria-hidden={false}
+                />
               </el-dropdown>
               <el-divider direction="vertical" />
 
@@ -352,7 +328,7 @@ export default defineComponent({
                 v-slots={reference}
                 placement="bottom-start"
                 popper-style={{ padding: 0 }}
-                width="200"
+                width="245"
                 trigger="click"
               >
                 <div class={[topClass.value]}>
@@ -363,12 +339,12 @@ export default defineComponent({
                     indeterminate={isIndeterminate.value}
                     onChange={value => handleCheckAllChange(value)}
                   />
-                  <el-button type="primary" link onClick={() => onReset()}>
+                  <el-button type="primary" link onClick={() => onReset(true)}>
                     {t("buttons.reset")}
                   </el-button>
                 </div>
 
-                <div class="pt-[6px] pl-[11px]">
+                <div class="pt-1.5 pl-2.75">
                   <el-scrollbar max-height="36vh">
                     <el-checkbox-group
                       ref={`GroupRef${unref(props.tableKey)}`}
@@ -381,16 +357,21 @@ export default defineComponent({
                         size={0}
                       >
                         {checkColumnList.value.map((item, index) => {
+                          const { fixed, left, right } = isFixedColumn(item);
                           return (
                             <div class="flex items-center">
                               <DragIcon
                                 class={[
-                                  "drag-btn w-[16px] mr-2",
-                                  isFixedColumn(item)
-                                    ? "cursor-no-drop!"
-                                    : "cursor-grab!"
+                                  "drag-btn w-4 mr-2",
+                                  fixed ? "cursor-no-drop!" : "cursor-grab!"
                                 ]}
                                 onMouseenter={(event: {
+                                  preventDefault: () => void;
+                                }) => rowDrop(event)}
+                                onMousedown={(event: {
+                                  preventDefault: () => void;
+                                }) => rowDrop(event)}
+                                onTouchstart={(event: {
                                   preventDefault: () => void;
                                 }) => rowDrop(event)}
                               />
@@ -404,11 +385,66 @@ export default defineComponent({
                               >
                                 <span
                                   title={transformI18n(item)}
-                                  class="inline-block w-[120px] truncate hover:text-text_color_primary"
+                                  class="inline-block w-30 truncate hover:text-fg"
                                 >
                                   {transformI18n(item)}
                                 </span>
                               </el-checkbox>
+                              <iconify-icon-offline
+                                class={[
+                                  "ml-2",
+                                  "size-4",
+                                  "hover:text-primary",
+                                  "cursor-pointer",
+                                  left ? "text-primary" : ""
+                                ]}
+                                icon={left ? PinAngleFill : PinAngle}
+                                v-tippy={
+                                  left
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinLeft"))
+                                }
+                                aria-label={
+                                  left
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinLeft"))
+                                }
+                                aria-hidden={false}
+                                onClick={() =>
+                                  handleToggleColumnFixed(
+                                    left ? false : "left",
+                                    item
+                                  )
+                                }
+                              />
+                              <iconify-icon-offline
+                                class={[
+                                  "ml-2",
+                                  "size-4",
+                                  "hover:text-primary",
+                                  "scale-x-[-1]",
+                                  "cursor-pointer",
+                                  right ? "text-primary" : ""
+                                ]}
+                                icon={right ? PinAngleFill : PinAngle}
+                                v-tippy={
+                                  right
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinRight"))
+                                }
+                                aria-label={
+                                  right
+                                    ? transformI18n($t("tableBar.unpin"))
+                                    : transformI18n($t("tableBar.pinRight"))
+                                }
+                                aria-hidden={false}
+                                onClick={() =>
+                                  handleToggleColumnFixed(
+                                    right ? false : "right",
+                                    item
+                                  )
+                                }
+                              />
                             </div>
                           );
                         })}
@@ -419,14 +455,20 @@ export default defineComponent({
               </el-popover>
               <el-divider direction="vertical" />
 
-              <iconifyIconOffline
-                class={["w-[16px]", iconClass.value]}
+              <iconify-icon-offline
+                class={["w-4", iconClass.value]}
                 icon={isFullscreen.value ? ExitFullscreen : Fullscreen}
                 v-tippy={
                   isFullscreen.value
                     ? t("tableBar.exitFullscreen")
                     : t("tableBar.fullscreen")
                 }
+                aria-label={
+                  isFullscreen.value
+                    ? t("tableBar.exitFullscreen")
+                    : t("tableBar.fullscreen")
+                }
+                aria-hidden={false}
                 onClick={() => onFullscreen()}
               />
             </div>

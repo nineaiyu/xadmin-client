@@ -1,0 +1,71 @@
+<script lang="ts" setup>
+import { useI18n } from "vue-i18n";
+import { postApi } from "@/api/identity/post";
+import type { PostPreviewResult } from "@/api/types/permission-preview";
+import {
+  PreviewDescriptions,
+  PreviewNotes,
+  PreviewStatusTag,
+  PreviewUsersTable,
+  RePermissionPreviewShell,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
+
+defineOptions({ name: "PostPermissionPreview" });
+
+/**
+ * 岗位维度只读预览（弹层内容组件形态）。
+ *
+ * 岗位是人员维度（不参与权限判定），故无菜单树 / 数据权限 / 字段权限段，
+ * 仅展示岗位信息 + 持有用户采样 + 固定说明（notes 由后端下发）。
+ * 由页面经 `addDrawer` 打开：挂载即按行主键加载，关闭即销毁。
+ */
+const props = defineProps<{ row: { pk?: string | number } }>();
+
+const { t } = useI18n();
+
+const { loading, data: preview } = usePermissionPreview<PostPreviewResult>(
+  async pk => (await postApi.preview(pk)).data,
+  () => props.row.pk
+);
+</script>
+
+<template>
+  <RePermissionPreviewShell
+    v-slot="{ data }"
+    :loading="loading"
+    :data="preview"
+  >
+    <PreviewDescriptions>
+      <el-descriptions-item :label="t('post.name')">
+        {{ data.post.name }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.code')">
+        {{ data.post.code }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.status')">
+        <PreviewStatusTag :active="data.post.is_active" />
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.dept')">
+        {{ data.post.dept?.name || "-" }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.rank')">
+        {{ data.post.rank }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('post.description')">
+        {{ data.post.description || "-" }}
+      </el-descriptions-item>
+    </PreviewDescriptions>
+
+    <PreviewNotes :notes="data.notes" />
+
+    <el-collapse class="mt-3" :model-value="['users']">
+      <el-collapse-item
+        :title="`${t('permissionPreview.postUsers')}（${data.users.total}）`"
+        name="users"
+      >
+        <PreviewUsersTable :data="data.users" show-dept />
+      </el-collapse-item>
+    </el-collapse>
+  </RePermissionPreviewShell>
+</template>

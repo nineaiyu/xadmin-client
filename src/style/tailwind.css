@@ -1,14 +1,143 @@
-@layer theme, base, components, utilities;
+/* 层顺序声明：与 build/cssLayer.ts 的 CSS_LAYER_ORDER 逐字符一致（两处同源）。
+   el 层承载 Element Plus 组件样式（由 css-layer 插件包层），压到 utilities 之下
+   使 Tailwind 工具类可覆盖 EP 组件样式；base 层承载 reset.scss 的元素级重置
+   （入层后组件库样式优先于兜底重置）；其余自身样式保持无层（优先级最高）。 */
+@layer theme, base, el, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-bg_color: var(--el-bg-color);
+  /* ============ 语义颜色（单一入口） ============
+     值来自 src/style/tokens/semantic.scss 的明暗成对语义槽，Tailwind 侧以
+     hsl(var(--x)) 包装为完整色值；明暗主题随语义槽自动切换。 */
+  --color-bg-card: hsl(var(--bg-card));
+  --color-bg-page: hsl(var(--bg-page));
+  --color-bg-elevated: hsl(var(--bg-elevated));
+  --color-fg: hsl(var(--fg));
+  --color-fg-muted: hsl(var(--fg-muted));
+  --color-fg-subtle: hsl(var(--fg-subtle));
+  --color-fg-placeholder: hsl(var(--fg-placeholder));
+  --color-border: hsl(var(--border));
+  --color-border-light: hsl(var(--border-light));
+  --color-fill: hsl(var(--fill));
+  --color-fill-muted: hsl(var(--fill-muted));
+  --color-fill-subtle: hsl(var(--fill-subtle));
+  --color-fill-strong: hsl(var(--fill-strong));
+
+  /* 品牌色：沿用 Element Plus 变量（运行期自定义主题色由 JS 写入
+     --el-color-primary 及其色阶，见 layout/hooks/themeColorScheme.ts） */
   --color-primary: var(--el-color-primary);
-  --color-text_color_primary: var(--el-text-color-primary);
-  --color-text_color_regular: var(--el-text-color-regular);
+  --color-success: var(--el-color-success);
+  --color-warning: var(--el-color-warning);
+  --color-danger: var(--el-color-danger);
+  --color-info: var(--el-color-info);
+
+  /* 过渡工具类（transition-colors 等）的默认时长与缓动：统一到动效令牌，
+     避免 Tailwind 默认的 150ms / 自带曲线与全站节奏脱节；显式 duration-* /
+     ease-* 工具类仍可逐处覆写。 */
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+/* ============ 品牌色阶别名 ============
+   透传 Element Plus 的色阶变量，让 Tailwind 工具类能表达品牌色的深浅与浅底
+   （如 `bg-primary-light-9`、`text-danger-hover`、`border-success-border`）。
+   light-N / dark-2 由 tokens/ep-bridge.scss 用 color-mix 现场派生（随主色与明暗
+   主题自动跟随），本处只做命名映射，不新造色板；`inline` 形态不额外产出 :root
+   变量，仅在用到对应工具类时内联取值。 */
+@theme inline {
+  --color-primary-light-3: var(--el-color-primary-light-3);
+  --color-primary-light-5: var(--el-color-primary-light-5);
+  --color-primary-light-7: var(--el-color-primary-light-7);
+  --color-primary-light-8: var(--el-color-primary-light-8);
+  --color-primary-light-9: var(--el-color-primary-light-9);
+  --color-primary-dark-2: var(--el-color-primary-dark-2);
+  --color-primary-hover: var(--el-color-primary-light-3);
+  --color-primary-active: var(--el-color-primary-dark-2);
+
+  --color-success-light-3: var(--el-color-success-light-3);
+  --color-success-light-5: var(--el-color-success-light-5);
+  --color-success-light-7: var(--el-color-success-light-7);
+  --color-success-light-8: var(--el-color-success-light-8);
+  --color-success-light-9: var(--el-color-success-light-9);
+  --color-success-dark-2: var(--el-color-success-dark-2);
+  --color-success-hover: var(--el-color-success-light-3);
+  --color-success-active: var(--el-color-success-dark-2);
+
+  --color-warning-light-3: var(--el-color-warning-light-3);
+  --color-warning-light-5: var(--el-color-warning-light-5);
+  --color-warning-light-7: var(--el-color-warning-light-7);
+  --color-warning-light-8: var(--el-color-warning-light-8);
+  --color-warning-light-9: var(--el-color-warning-light-9);
+  --color-warning-dark-2: var(--el-color-warning-dark-2);
+  --color-warning-hover: var(--el-color-warning-light-3);
+  --color-warning-active: var(--el-color-warning-dark-2);
+
+  --color-danger-light-3: var(--el-color-danger-light-3);
+  --color-danger-light-5: var(--el-color-danger-light-5);
+  --color-danger-light-7: var(--el-color-danger-light-7);
+  --color-danger-light-8: var(--el-color-danger-light-8);
+  --color-danger-light-9: var(--el-color-danger-light-9);
+  --color-danger-dark-2: var(--el-color-danger-dark-2);
+  --color-danger-hover: var(--el-color-danger-light-3);
+  --color-danger-active: var(--el-color-danger-dark-2);
+
+  --color-info-light-3: var(--el-color-info-light-3);
+  --color-info-light-5: var(--el-color-info-light-5);
+  --color-info-light-7: var(--el-color-info-light-7);
+  --color-info-light-8: var(--el-color-info-light-8);
+  --color-info-light-9: var(--el-color-info-light-9);
+  --color-info-dark-2: var(--el-color-info-dark-2);
+  --color-info-hover: var(--el-color-info-light-3);
+  --color-info-active: var(--el-color-info-dark-2);
+}
+
+/* ============ 设计尺度令牌 → Tailwind 命名空间 ============
+   把 primitives.scss 的半径 / 间距 / 字号 / 阴影 / 动效令牌桥接进 Tailwind，
+   让工具类（rounded-md / text-xs / shadow-float / duration-fast / ease-standard 等）
+   与 CSS 变量同源，消除「令牌 + Tailwind 默认尺度」两套并存。
+   `inline` 形态不产出 :root 变量，工具类直接内联引用——--radius-* 等随设置面板
+   的圆角/字号偏好即时生效。逐档已按「与 Tailwind 默认值一致才映射」核对：
+   值不同的档位保留 Tailwind 默认，避免既有工具类出现像素漂移（差异见段内注释）。 */
+@theme inline {
+  /* 半径：五档与 Tailwind 默认逐档同值（2/4/6/8/12px），映射后随「圆角」偏好缩放 */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  /* 间距基准：--space-1 = 4px 与 Tailwind 默认 --spacing 同值；p-4 / m-2 / gap-3
+     等全部数值间距类由它派生（改 --space-1 即全站间距类同步） */
+  --spacing: var(--space-1);
+
+  /* 字号：xs/lg/xl/2xl 与 Tailwind 默认逐档同值；2xs/md 为项目独有档（新增工具类）。
+     sm/base 两档值不同（项目 13/14px vs Tailwind 14/16px）——保留 Tailwind 默认，
+     不改全站既有 text-sm/text-base 的渲染：页面排版走 Tailwind 梯度、
+     组件排版走 --font-size-* 阶梯，两套语义各有归属 */
+  --text-2xs: var(--font-size-2xs);
+  --text-xs: var(--font-size-xs);
+  --text-md: var(--font-size-md);
+  --text-lg: var(--font-size-lg);
+  --text-xl: var(--font-size-xl);
+  --text-2xl: var(--font-size-2xl);
+
+  /* 阴影：sm/md/lg 三档项目取值（均匀投影）与 Tailwind 默认不同，保留 Tailwind
+     默认不动；仅补项目独有的 float 档（深投影，供浮层/大屏消费） */
+  --shadow-float: var(--shadow-float);
+
+  /* 动效：命名缓动/时长补进 Tailwind 命名空间（ease-in/out/in-out 与项目曲线
+     取值不同，保留 Tailwind 默认） */
+  --ease-standard: var(--ease-standard);
+  --ease-emphasized: var(--ease-emphasized);
+  --duration-instant: var(--duration-instant);
+  --duration-fast: var(--duration-fast);
+  --duration-base: var(--duration-base);
+  --duration-slow: var(--duration-slow);
+  --duration-slower: var(--duration-slower);
 }
 
 /*
@@ -42,9 +171,23 @@
 }
 
 @utility navbar-bg-hover {
-  @apply select-none dark:text-white dark:hover:bg-[#242424]!;
+  @apply select-none dark:text-white dark:hover:bg-fill-muted;
+}
+
+/* 顶栏动作项统一热区（规格见 tokens/primitives.scss 的 --navbar-action-*）：
+   尺寸 / 圆角 / 居中 / 过渡 / hover 底色；图标尺寸在 sidebar/_common.scss 的
+   `navbar-actions svg` 规则。所有顶栏图标按钮必须挂本类；半暗顶栏的 hover
+   叠加色由 _header.scss 的 `.navbar-bg-hover:hover` 覆写。 */
+@utility navbar-action {
+  @apply inline-flex cursor-pointer items-center justify-center select-none hover:bg-fill-muted;
+  width: var(--navbar-action-size);
+  height: var(--navbar-action-size);
+  border-radius: var(--navbar-action-radius);
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 @utility animate-scale-bounce {
-  animation: pure-scale-bounce 0.3s ease-in-out;
+  animation: pure-scale-bounce var(--duration-base) var(--ease-standard);
 }

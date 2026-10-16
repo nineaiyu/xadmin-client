@@ -1,12 +1,10 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import { PlusColumn } from "plus-pro-components";
+import SearchPicker, { entityOfComponentName } from "@/components/SearchPicker";
 
 const formRef = ref();
-import SearchUser from "@/views/system/components/SearchUser.vue";
-import SearchDept from "@/views/system/components/SearchDept.vue";
-import SearchRole from "@/views/system/components/SearchRole.vue";
 defineOptions({ name: "SearchDialog" });
 
 interface FormItemProps {
@@ -30,6 +28,11 @@ const props = withDefaults(defineProps<FormProps>(), {
 
 const newFormInline = ref<FormItemProps>(props.formInline);
 
+/** 通知载荷的 component 字符串（SearchUser 等）映射为搜索实体预设 */
+const targetEntity = computed(() =>
+  entityOfComponentName(newFormInline.value.component ?? "")
+);
+
 function getRef() {
   return formRef.value;
 }
@@ -40,20 +43,11 @@ defineExpose({ getRef });
 <template>
   <el-form ref="formRef" class="m-5" :model="newFormInline">
     <el-form-item>
-      <SearchUser
-        v-if="newFormInline.component === 'SearchUser'"
+      <SearchPicker
+        v-if="targetEntity"
+        :entity="targetEntity"
         :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
-      />
-      <SearchDept
-        v-if="newFormInline.component === 'SearchDept'"
-        :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
-      />
-      <SearchRole
-        v-if="newFormInline.component === 'SearchRole'"
-        :modelValue="newFormInline.data"
-        @change="data => (newFormInline.data = data)"
+        @change="data => (newFormInline.data = data as Array<object>)"
       />
     </el-form-item>
   </el-form>

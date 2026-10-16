@@ -1,13 +1,48 @@
+/**
+ * 模块环约束（历史）：曾存在
+ * api/base → utils/http → utils/auth → store → api/auth → api/base 的环，
+ * 环内 api/auth 等 class extends 依赖本模块先完成初始化，特定入口序下会求值失败。
+ * 破除方式：认证链上的 store 改为在动作内动态引入 api 模块
+ * （见 store/modules/user.ts、store/modules/siteConfig.ts），
+ * store 不再顶层静态引用任何 api/* 模块，该环随之断开。
+ *
+ * 现行约束：
+ * - 本模块（及其静态导入）不得再引入任何 api/* 模块，api 模块之间不得互相
+ *   导入成环；
+ * - 纯函数消费方请走深路径（如 RePlusPage/src/utils），勿经桶出口连带组件图。
+ *
+ * 守护：scripts/check-module-cycles.mjs（pnpm check:module-cycles）。
+ */
 import { http } from "@/utils/http";
+import { dataToFormData } from "@/utils/form";
 import type { PureHttpRequestConfig, RequestMethods } from "@/utils/http/types";
 import type {
   BaseResult,
   ChoicesResult,
   DetailResult,
+  ImportHeadersResult,
+  ImportTemplateItem,
   ListResult,
   SearchColumnsResult,
   SearchFieldsResult
 } from "@/api/types";
+import type { RecordType } from "plus-pro-components";
+
+/**
+ * 导入列映射模板接口地址：全局资源（按目标模型隔离），
+ * 不挂在任何具体资源 baseApi 下，故在通用 API 层集中声明。
+ */
+export const IMPORT_TEMPLATE_API = "/api/task/import-templates";
+
+/**
+ * 从统一列表响应壳中解包行数据（`data.results`）。
+ *
+ * 列表接口的唯一拆包点：此前 analysis/datasets/dform 三处重复实现，
+ * 协议变化需改三处；各业务模块 re-export 保持既有导入路径可用。
+ */
+export function listRows<T>(body: unknown): T[] {
+  return ((body as { data?: { results?: T[] } })?.data?.results ?? []) as T[];
+}
 
 export class BaseRequest {
   baseApi = "";
@@ -17,10 +52,12 @@ export class BaseRequest {
   }
 
   formatParams = (params?: object) => {
-    const notNullParams = {};
-    Object.keys(params ?? {}).forEach(item => {
-      if (params[item] !== "") {
-        notNullParams[item] = params[item];
+    const notNullParams: Record<string, unknown> = {};
+    const source = (params ?? {}) as Record<string, unknown>;
+    Object.keys(source).forEach(item => {
+      // 空串视为「未填写」从查询串中剔除（0/false 等合法值保留）
+      if (source[item] !== "") {
+        notNullParams[item] = source[item];
       }
     });
     return notNullParams;
@@ -29,7 +66,8 @@ export class BaseRequest {
   /*
    *判断是否有文件类型数据，如果 有的话，使用form-data 上传
    */
-  private hasFileObject = (data?: object) => {
+  /** 类型谓词：命中文件字段时把 data 收窄为 object（供 dataToFormData 使用） */
+  private hasFileObject = (data?: object): data is object => {
     for (const item of Object.values(data ?? {})) {
       if (File.prototype.isPrototypeOf(item)) return true;
       if (item instanceof Array) {
@@ -45,18 +83,22 @@ export class BaseRequest {
     method: RequestMethods,
     params?: object,
     data?: object,
-    url: string = null,
+    url?: string,
     axiosConfig: PureHttpRequestConfig = {}
   ) {
     if (this.hasFileObject(data)) {
-      axiosConfig = {
-        ...axiosConfig,
-        ...{
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        }
-      };
+      // 含文件表单显式按 FormData 协议 v1（component utils/form.ts）展开，
+      // 不再依赖 axios formSerializer 隐式序列化；content-type 交由 axios
+      // 对 FormData 自动设置（含 multipart boundary）
+      return http.request<T>(
+        method,
+        url ?? this.baseApi,
+        {
+          params: this.formatParams(params),
+          data: dataToFormData(data)
+        },
+        axiosConfig
+      );
     }
     return http.request<T>(
       method,
@@ -95,25 +137,45 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/search-columns`
     );
   };
-  list = (params?: object) => {
-    return this.request<ListResult>("get", params, {});
+  // 泛型默认与既有 ListResult 一致（RecordType）：调用方按接口契约收窄行类型，
+  // 免去消费侧 `res.data.results as Xxx[]` 断言（类型逃逸门禁）
+  list = <T = RecordType>(params?: object) => {
+    return this.request<ListResult<T>>("get", params, {});
   };
-  create = (data?: object) => {
-    return this.request<DetailResult>("post", {}, data);
+  // 泛型默认与既有 DetailResult 一致（RecordType）；调用方可用具体契约收窄
+  // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。
+  create = <T = RecordType>(data?: object) => {
+    return this.request<DetailResult<T>>("post", {}, data);
   };
-  retrieve = (pk: number | string, params?: object) => {
-    return this.request<DetailResult>(
+  // 泛型默认与 list / create 同口径（RecordType）：调用方可用具体契约收窄
+  // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。
+  retrieve = <T = RecordType>(pk: number | string, params?: object) => {
+    return this.request<DetailResult<T>>(
       "get",
       params,
       {},
       `${this.baseApi}/${pk}`
     );
   };
-  update = (pk: number | string, data?: object) => {
-    return this.request<DetailResult>("put", {}, data, `${this.baseApi}/${pk}`);
+  update = <T = RecordType>(pk: number | string, data?: object) => {
+    return this.request<DetailResult<T>>(
+      "put",
+      {},
+      data,
+      `${this.baseApi}/${pk}`
+    );
   };
-  partialUpdate = (pk: number | string, data?: object) => {
-    return this.request<DetailResult>(
+  /**
+   * 按主键取详情：与 retrieve 同协议，作为「编辑态取原文」的能力入口。
+   *
+   * RePlusPage 据此判断页面是否支持详情拉取（ViewBaseApi 的单对象接口无此方法，
+   * 不会触发多余的详情请求）。
+   */
+  detail = <T = RecordType>(pk: number | string, params?: object) => {
+    return this.retrieve<T>(pk, params);
+  };
+  partialUpdate = <T = RecordType>(pk: number | string, data?: object) => {
+    return this.request<DetailResult<T>>(
       "patch",
       {},
       data,
@@ -128,33 +190,128 @@ export class BaseApi extends BaseRequest {
       `${this.baseApi}/${pk}`
     );
   };
-  batchDestroy = (pks: Array<number | string>) => {
+  batchDestroy = (pks: Array<number | string>, params?: object) => {
     return this.request<BaseResult>(
       "post",
-      {},
+      params,
       [...pks],
       `${this.baseApi}/batch-destroy`
+    );
+  };
+
+  /** 回收站列表（软删除数据，仅混入 RecycleBinAction 的视图集可用） */
+  recycleList = (params?: object) => {
+    return this.request<ListResult>(
+      "get",
+      params,
+      {},
+      `${this.baseApi}/recycle`
+    );
+  };
+  /** 从回收站恢复数据 */
+  recycleRestore = (pks: Array<string | number>) => {
+    return this.request<BaseResult>(
+      "patch",
+      {},
+      { pks },
+      `${this.baseApi}/recycle/restore`
+    );
+  };
+  /** 物理清除回收站数据（不传 pks 时清除全部超过保留期的数据） */
+  recyclePurge = (pks?: Array<string | number>) => {
+    return this.request<BaseResult>(
+      "delete",
+      {},
+      pks?.length ? { pks } : {},
+      `${this.baseApi}/recycle/purge`
     );
   };
   exportData = (params: object) => {
     return http.autoDownload(
       `${this.baseApi}/export-data`,
-      null,
+      undefined,
       this.formatParams(params)
     );
   };
 
+  /** 异步导出（大数据量）：提交后台任务，产物在「下载中心」获取 */
+  exportAsync = (data?: object) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data ?? {},
+      `${this.baseApi}/export-async`
+    );
+  };
+
   importData = (params: object, data: File) => {
-    return http.upload<DetailResult, any>(
+    return http.upload<DetailResult, File>(
       `${this.baseApi}/import-data`,
       params,
-      data as any,
+      data,
       {
         headers: {
           "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
         }
       }
     );
+  };
+
+  /** 导入前校验（逐行校验不落库，返回错误行定位）：协议与 import-data 同源（原始文件 body） */
+  importValidate = (params: object, data: File) => {
+    return http.upload<DetailResult, File>(
+      `${this.baseApi}/import-validate`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
+
+  /** 异步导入（大数据量）：提交后台任务，进度与错误报告在「下载中心」获取 */
+  importAsync = (params: object, data: File) => {
+    return http.upload<DetailResult, File>(
+      `${this.baseApi}/import-async`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
+
+  /** 读取上传文件首行表头与列映射候选（列映射步骤，不落库） */
+  importHeaders = (params: object, data: File) => {
+    return http.upload<ImportHeadersResult, File>(
+      `${this.baseApi}/import-headers`,
+      params,
+      data,
+      {
+        headers: {
+          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
+        }
+      }
+    );
+  };
+
+  /** 列映射模板列表（全局资源；`model` 取 importHeaders 下发的 label_lower） */
+  importTemplates = (params?: object) => {
+    return this.request<ListResult<ImportTemplateItem>>(
+      "get",
+      params,
+      {},
+      IMPORT_TEMPLATE_API
+    );
+  };
+
+  /** 保存列映射模板（个人模板；共享模板仅超管可建） */
+  createImportTemplate = (data?: object) => {
+    return this.request<DetailResult>("post", {}, data, IMPORT_TEMPLATE_API);
   };
 }
 

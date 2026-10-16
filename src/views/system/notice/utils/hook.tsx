@@ -1,42 +1,84 @@
-import {
-  computed,
-  getCurrentInstance,
-  h,
-  reactive,
-  type Ref,
-  shallowRef
-} from "vue";
+import { h, reactive, shallowRef, type Ref } from "vue";
 import { noticeApi } from "@/api/system/notice";
-import { useRouter } from "vue-router";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { NoticeChoices } from "@/views/system/constants";
-import type {
-  PageTableColumn,
-  OperationProps,
-  RePlusPageProps
-} from "@/components/RePlusPage";
+import type { OperationProps } from "@/components/RePlusPage";
 import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
-import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
+import type { RecordType } from "plus-pro-components";
+import { useNoticeFormOptions } from "./useNoticeFormOptions";
+import { useNoticeListColumns } from "./useNoticeListColumns";
+import { parseNoticeUserParam } from "./noticeFormRules";
 
+import { dialogSize } from "@/components/ReDialog/size";
 export function useNotice(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(noticeApi);
 
-  const auth = reactive({
-    publish: false,
-    ...getDefaultAuths(getCurrentInstance(), ["publish"])
-  });
+  const auth = usePageAuth(["publish"]);
 
-  const operationButtonsProps = shallowRef<OperationProps>({
+  const operationButtonsProps = shallowRef<OperationProps>(
+    buildOperationButtons(t)
+  );
+
+  // 列表列渲染（标题/发布开关/已读人数）
+  const { listColumnsFormat } = useNoticeListColumns({ t, api, auth });
+
+  // 新增/编辑弹窗列装配与公告接口分流
+  const { addOrEditOptions } = useNoticeFormOptions({ api });
+
+  const searchComplete = ({
+    routeParams,
+    searchFields
+  }: {
+    routeParams: RecordType;
+    searchFields: Ref<RecordType>;
+  }) => {
+    if (
+      routeParams.notice_user &&
+      searchFields.value.notice_user &&
+      searchFields.value.notice_user !== ""
+    ) {
+      // 参数来自 URL（可被手工篡改或外链传错）：非法 JSON 直接清理并中止，
+      // 避免解析异常中断 searchComplete 导致弹窗不再出现
+      const parsed = parseNoticeUserParam(routeParams.notice_user);
+      if (!parsed.ok) {
+        searchFields.value.notice_user = "";
+        return;
+      }
+      const row = {
+        notice_user: parsed.value,
+        notice_type: { value: NoticeChoices.USER }
+      };
+      searchFields.value.notice_user = "";
+      tableRef.value.handleAddOrEdit(true, row);
+    }
+  };
+
+  return {
+    api,
+    auth,
+    addOrEditOptions,
+    listColumnsFormat,
+    operationButtonsProps,
+    searchComplete
+  };
+}
+
+/** 行操作：编辑按钮按通知类型禁用（通知公告走公告发布接口）+ 「查看公告」弹窗 */
+function buildOperationButtons(
+  t: ReturnType<typeof useI18n>["t"]
+): OperationProps {
+  return {
     width: 200,
     buttons: [
       {
         code: "update",
-        update: true, // update:true 意味着我要更新这个按钮部分信息到默认的按钮信息，只更新props这个信息
+        // update:true 意味着我要更新这个按钮部分信息到默认的按钮信息，只更新props这个信息
+        update: true,
         props: (row, button) => {
           const disabled = row?.notice_type?.value === NoticeChoices.SYSTEM;
           return {
@@ -54,7 +96,7 @@ export function useNotice(tableRef: Ref) {
               formInline: { ...row },
               hasPublish: true
             },
-            width: "60%",
+            width: dialogSize("lg"),
             draggable: true,
             fullscreen: deviceDetection(),
             fullscreenIcon: true,
@@ -66,158 +108,5 @@ export function useNotice(tableRef: Ref) {
         update: true
       }
     ]
-  });
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "title":
-          column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.level?.value}>{row.title}</el-text>
-          );
-          break;
-        case "read_user_count":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link
-              type={row.level?.value}
-              onClick={() => onGoNoticeReadDetail(row as any)}
-            >
-              {row.notice_type?.value === NoticeChoices.NOTICE
-                ? t("systemNotice.allRead")
-                : row.user_count}
-              /{row.read_user_count}
-            </el-link>
-          );
-          column["minWidth"] = 140;
-          break;
-      }
-    });
-    return columns;
-  };
-
-  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
-    props: {
-      columns: {
-        level: ({ column }) => {
-          (column?.options as Array<any>).forEach(option => {
-            option["fieldSlot"] = () => {
-              return (
-                <el-text type={option.value?.value}> {option.label}</el-text>
-              );
-            };
-          });
-          return column;
-        },
-        files: ({ column }) => {
-          column.hideInForm = true;
-          return column;
-        },
-        notice_type: ({ column, isAdd }) => {
-          if (!isAdd) {
-            column["fieldProps"]["disabled"] = true;
-          }
-          (column?.options as Array<any>).forEach(option => {
-            if (option.value?.value == NoticeChoices.SYSTEM) {
-              option.fieldItemProps.disabled = true;
-            }
-            if (option.value?.value == NoticeChoices.NOTICE) {
-              if (!hasAuth("announcement:SystemNotice")) {
-                option.fieldItemProps.disabled = true;
-              }
-            }
-          });
-          return column;
-        },
-        notice_user: ({ column, formValue }) => {
-          column["hideInForm"] = computed(() => {
-            return !(
-              formValue.value?.notice_type?.value === NoticeChoices.USER &&
-              hasAuth("list:SearchUser")
-            );
-          });
-          return column;
-        },
-        notice_dept: ({ column, formValue }) => {
-          column["hideInForm"] = computed(() => {
-            return !(
-              formValue.value?.notice_type?.value === NoticeChoices.DEPT &&
-              hasAuth("list:SearchDept")
-            );
-          });
-          return column;
-        },
-        notice_role: ({ column, formValue }) => {
-          column["hideInForm"] = computed(() => {
-            return !(
-              formValue.value?.notice_type?.value === NoticeChoices.ROLE &&
-              hasAuth("list:SearchRole")
-            );
-          });
-          return column;
-        },
-        message: ({ column, formValue }) => {
-          column["hasLabel"] = false;
-          column["renderField"] = (value, onChange) => {
-            return h(WangEditor, {
-              modelValue: value,
-              onChange: ({ messages, files }) => {
-                onChange(messages);
-                formValue.value.files = files;
-              }
-            });
-          };
-          return column;
-        }
-      },
-      minWidth: "600px",
-      dialogDrawerOptions: {
-        top: "10vh",
-        width: "60vw"
-      }
-    },
-    apiReq: ({ isAdd, formData }) => {
-      if (isAdd) {
-        if (
-          formData?.notice_type?.value === NoticeChoices.NOTICE &&
-          hasAuth("announcement:SystemNotice")
-        ) {
-          return api.announcement(formData);
-        }
-      }
-    }
-  });
-
-  const router = useRouter();
-
-  function onGoNoticeReadDetail(row: any) {
-    if (hasAuth("list:SystemNoticeRead") && row.pk) {
-      router.push({
-        name: "SystemNoticeRead",
-        query: { notice_id: row.pk }
-      });
-    }
-  }
-
-  const searchComplete = ({ routeParams, searchFields }) => {
-    if (
-      routeParams.notice_user &&
-      searchFields.value.notice_user &&
-      searchFields.value.notice_user !== ""
-    ) {
-      const row = {
-        notice_user: JSON.parse(routeParams.notice_user),
-        notice_type: { value: NoticeChoices.USER }
-      };
-      searchFields.value.notice_user = "";
-      tableRef.value.handleAddOrEdit(true, row);
-    }
-  };
-
-  return {
-    api,
-    auth,
-    addOrEditOptions,
-    listColumnsFormat,
-    operationButtonsProps,
-    searchComplete
   };
 }

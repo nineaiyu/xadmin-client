@@ -4,10 +4,11 @@ import type {
   ElMessageBoxOptions,
   ElTooltipProps
 } from "element-plus";
+import type { RecordType } from "plus-pro-components";
 import type { Mutable } from "@vueuse/core";
 
 export type ButtonRowProps = Partial<
-  Mutable<ButtonProps & { [index: string]: any }>
+  Mutable<ButtonProps & { [index: string]: unknown }>
 >;
 
 export interface OperationButtonsRow {
@@ -19,7 +20,7 @@ export interface OperationButtonsRow {
     | Ref<string>
     | ComputedRef<string>
     | ((
-        row: any,
+        row: RecordType,
         button: OperationButtonsRow
       ) => string | Ref<string> | ComputedRef<string>);
   /**
@@ -27,7 +28,8 @@ export interface OperationButtonsRow {
    */
   code: string | number;
   /**
-   * 按钮顺序，从左到右，从小到大， 受show影响
+   * 按钮顺序，从左到右，从小到大。显式声明后与 show 解耦（show 只管显隐）；
+   * 未声明时兼容旧口径：show 为数值时数值即排序位
    */
   index?: number;
   /**
@@ -39,7 +41,7 @@ export interface OperationButtonsRow {
    */
   props?:
     | ButtonRowProps
-    | ((row: any, button: OperationButtonsRow) => ButtonRowProps)
+    | ((row: RecordType, button: OperationButtonsRow) => ButtonRowProps)
     | ComputedRef<ButtonRowProps>;
   /**
    * 用于判断按钮是否显示
@@ -50,7 +52,7 @@ export interface OperationButtonsRow {
     | Ref<number | boolean>
     | ComputedRef<number | boolean>
     | ((
-        row: any,
+        row: RecordType,
         button: OperationButtonsRow
       ) =>
         | number
@@ -68,7 +70,7 @@ export interface OperationButtonsRow {
       | Ref<string>
       | ComputedRef<string>
       | ((
-          row: any,
+          row: RecordType,
           button: OperationButtonsRow
         ) => string | Ref<string> | ComputedRef<string>);
     props?: ElMessageBoxOptions;
@@ -79,7 +81,7 @@ export interface OperationButtonsRow {
       | Ref<string>
       | ComputedRef<string>
       | ((
-          row: any,
+          row: RecordType,
           button: OperationButtonsRow
         ) => string | Ref<string> | ComputedRef<string>);
     props?: ElTooltipProps;
@@ -90,7 +92,7 @@ export interface OperationButtonsRow {
 
 export interface ButtonsCallBackParams {
   e: MouseEvent;
-  row: object | any;
+  row: RecordType;
   loading: { value: boolean };
   buttonRow: OperationButtonsRow;
 }
@@ -112,6 +114,20 @@ export interface OperationProps {
    * 显示出来的按钮个数  默认值为 `3`
    */
   showNumber?: number;
+  /**
+   * 隐藏默认「查看」按钮（icon 按钮）：页面用自有抽屉/面板承载详情时使用
+   */
+  hideDetail?: boolean;
+  /**
+   * 隐藏默认「变更历史」按钮：页面把记录入口收敛到自有面板时使用
+   */
+  hideChangeHistory?: boolean;
+  /**
+   * 隐藏默认「编辑」按钮：页面用自有编辑弹窗时使用。不要用关 auth 位的方式
+   * 替代——auth.partialUpdate/update 同时控制 boolean 列内联开关的可用性
+   * （见 usePlusPageColumns），关掉会把激活状态开关一起置灰
+   */
+  hideEdit?: boolean;
   /**
    * 操作按钮集合   默认值为 `[]`
    */

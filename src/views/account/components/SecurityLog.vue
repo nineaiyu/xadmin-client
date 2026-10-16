@@ -1,19 +1,23 @@
 <script lang="ts" setup>
-import { deviceDetection } from "@pureadmin/utils";
 import { useUserLoginLog } from "@/views/account/utils/hook";
+import AccountPanel from "./AccountPanel.vue";
 
 defineOptions({
   name: "SecurityLog"
 });
 
 const { t, api, auth, pagination, listColumnsFormat } = useUserLoginLog();
+
+/**
+ * 表格自适应高度的底部预留：框架缺省 110px 只按「列表页直铺」口径，
+ * 本页表格外面包了面板卡片（卡片内边距 + 面板底部留白 + 分栏页边距），
+ * 按缺省值算表格会高出视口，把页面顶出滚动条，这里按实测加到 150。
+ */
+const pureTableProps = { adaptiveConfig: { offsetBottom: 150 } };
 </script>
 
 <template>
-  <div
-    :class="['min-w-[180px]', deviceDetection() ? 'max-w-full' : 'max-w-[70%]']"
-  >
-    <h3 class="my-8!">{{ t("account.securityLog") }}</h3>
+  <AccountPanel :title="t('account.securityLog')">
     <RePlusPage
       ref="tableRef"
       :api="api"
@@ -22,8 +26,9 @@ const { t, api, auth, pagination, listColumnsFormat } = useUserLoginLog();
       :selection="false"
       :pagination="pagination"
       :listColumnsFormat="listColumnsFormat"
+      :pure-table-props="pureTableProps"
       title=""
       locale-name="logsLogin"
     />
-  </div>
+  </AccountPanel>
 </template>

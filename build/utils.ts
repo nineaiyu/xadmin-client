@@ -1,15 +1,12 @@
 import dayjs from "dayjs";
+import type { ProxyOptions } from "vite";
 import { readdir, stat } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { formatBytes, sum } from "@pureadmin/utils";
-import {
-  dependencies,
-  devDependencies,
-  engines,
-  name,
-  version
-} from "../package.json";
+import pkg from "../package.json" with { type: "json" };
+
+const { dependencies, devDependencies, engines, name, version } = pkg;
 
 /** 启动`node`进程时所在工作目录的绝对路径 */
 const root: string = process.cwd();
@@ -56,7 +53,9 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     VITE_ROUTER_HISTORY: "",
     VITE_CDN: false,
     VITE_HIDE_HOME: "false",
-    VITE_COMPRESSION: "none"
+    VITE_COMPRESSION: "none",
+    // 空串 = 保持生产默认 Secure（auth.ts 仅认显式 "false" 才关闭）
+    VITE_COOKIE_SECURE: ""
   };
 
   for (const envName of Object.keys(envConf)) {
@@ -67,7 +66,9 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     if (envName === "VITE_PORT") {
       realName = Number(realName);
     }
-    ret[envName] = realName;
+    // envName 为运行时环境变量键（ViteEnv 子集）：经 Object.assign 动态写入，
+    // 避免「无法用单一 as 收窄的动态索引赋值」退化为 as unknown as 双重断言
+    Object.assign(ret, { [envName]: realName });
     if (typeof realName === "string") {
       process.env[envName] = realName;
     } else if (typeof realName === "object") {
@@ -79,8 +80,14 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
 
 const fileListTotal: number[] = [];
 
+type PackageSizeOptions = {
+  folder?: string;
+  callback: (size: string | number) => void;
+  format?: boolean;
+};
+
 /** 获取指定文件夹中所有文件的总大小 */
-const getPackageSize = options => {
+const getPackageSize = (options: PackageSizeOptions) => {
   const { folder = "dist", callback, format = true } = options;
   readdir(folder, (err, files: string[]) => {
     if (err) throw err;
@@ -111,7 +118,7 @@ const getPackageSize = options => {
 };
 
 const createProxyConfig = (configs: { [key: string]: string[] }) => {
-  const proxyConfig = {};
+  const proxyConfig: Record<string, ProxyOptions> = {};
   Object.keys(configs).forEach(target => {
     if (target.startsWith("http")) {
       configs[target].forEach(path => {

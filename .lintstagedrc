@@ -3,8 +3,8 @@
     "prettier --cache --ignore-unknown  --write",
     "eslint --cache --fix"
   ],
-  "{!(package)*.json,*.code-snippets,.!({browserslist,npm,nvm})*rc}": [
-    "prettier --cache --write--parser json"
+  "{!(package,tsconfig)*.json,*.code-snippets,.!({browserslist,npm,nvm})*rc}": [
+    "prettier --cache --write --parser json"
   ],
   "package.json": ["prettier --cache --write"],
   "*.vue": [

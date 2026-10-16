@@ -1,0 +1,72 @@
+@use "common" as *;
+
+/* 混合双列：双列侧栏全高（一级窄列含 Logo + 次级列），
+   顶栏在侧栏右侧、承载一级菜单 */
+body[layout="header-mixed-nav"] {
+  $narrow: var(--sidebar-mixed-narrow-width);
+  $sideBarWidth: calc(#{$narrow} + var(--sidebar-width));
+  $sideBarCollapsed: calc(#{$narrow} + var(--sidebar-collapse-width));
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 侧栏全高（含顶栏行），顶栏从侧栏右缘开始 —— merge-style 默认口径即右对齐 */
+
+  /* 顶栏（折叠按钮 + 一级菜单条 + 动作区）转 flex 行：菜单条自适应剩余宽度 */
+  .navbar {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar > .horizontal-header {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* 主列（次级列）无内容：侧栏收为窄列宽度，顶栏与内容区随之占满
+     （extra 隐藏） */
+  .sidebar-container.is-narrow-only {
+    width: $narrow !important;
+  }
+
+  .is-narrow-only ~ .main-container {
+    margin-left: $narrow !important;
+
+    .fixed-header {
+      width: calc(100% - #{$narrow}) !important;
+    }
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: calc(100% - #{$sideBarCollapsed});
+      transition: width var(--duration-base);
+    }
+
+    .sidebar-container {
+      width: $sideBarCollapsed !important;
+      transition: width var(--duration-base);
+    }
+
+    /* 窄列独显（主列无内容）时折叠不生效：没有次级列可折叠，侧栏保持窄列宽度 */
+    .sidebar-container.is-narrow-only {
+      width: $narrow !important;
+    }
+
+    /* 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」）：侧栏浮层式回到展开宽度，
+       次级列菜单随 menuCollapse 解除折叠，内容区不动（折叠态悬停展开同口径）；
+       窄列独显时无次级列可展开，不参与 */
+    .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
+      width: $sideBarWidth !important;
+      box-shadow: var(--shadow-md);
+    }
+
+    .main-container {
+      margin-left: $sideBarCollapsed;
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

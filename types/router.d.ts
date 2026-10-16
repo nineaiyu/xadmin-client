@@ -1,7 +1,7 @@
 // 全局路由类型声明
 
-import type { RouteComponent, RouteLocationNormalized } from "vue-router";
 import type { FunctionalComponent } from "vue";
+import type { RouteComponent, RouteLocationNormalized } from "vue-router";
 
 declare global {
   interface ToRouteType extends RouteLocationNormalized {
@@ -16,6 +16,8 @@ declare global {
     title: string;
     /** 菜单图标 `可选` */
     icon?: string | FunctionalComponent;
+    /** 菜单升序排序，值越高排的越后（缺省时由 `ascending` 按顺序自动补齐）`可选` */
+    rank?: number;
     /** 菜单名称右侧的额外图标 */
     extraIcon?: string | FunctionalComponent;
     /** 是否在菜单中显示（默认`true`）`可选` */
@@ -51,11 +53,25 @@ declare global {
     fixedTag?: boolean;
     /** 动态路由可打开的最大数量 `可选` */
     dynamicLevel?: number;
+    /** 菜单级水印开关：置顶强制挂载站点水印（与基本设置路径范围是或关系）`可选` */
+    watermark?: boolean;
     /** 将某个菜单激活
      * （主要用于通过`query`或`params`传参的路由，当它们通过配置`showLink: false`后不在菜单中显示，就不会有任何菜单高亮，
      * 而通过设置`activePath`指定激活菜单即可获得高亮，`activePath`为指定激活菜单的`path`）
      */
     activePath?: string;
+    /** 侧栏徽标文本（纯数字大于 99 显示 99+；`badgeType: "dot"` 时只显示红点）`可选` */
+    badge?: string | null;
+    /** 徽标形态：`normal` 文本 / `dot` 红点 `可选` */
+    badgeType?: string | null;
+    /** 点击菜单项时携带的查询参数（后端 `k=v&k2=v2` 解析后的对象）`可选` */
+    query?: Record<string, string> | null;
+    /** 分组标题：同组同级菜单聚合在标题之下 `可选` */
+    groupName?: string | null;
+    /** 分组排序（同层分组升序）`可选` */
+    groupRank?: number | null;
+    /** 分组虚拟节点标记（渲染层插入，非后端下发字段）`可选` */
+    group?: boolean;
     /** 当前页面是否已经加载过 */
     loaded?: boolean;
   }

@@ -1,0 +1,231 @@
+name: E2E Tests
+
+# 拆成两档，把日常提交的反馈时间从 ~9min 压到 ~3min
+#   smoke —— 任何 push/PR 都跑：chromium + 仅 @smoke 用例（e2e/smoke.e2e.ts 等）
+#   full  —— 仅 PR / main / 夜间定时 / 手动触发：全部用例 × chromium+webkit（当前合计约 300 例）
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  smoke:
+    name: Smoke (chromium, @smoke)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # E2E 真库化（全真容器化测试迁移方案阶段 4）：tests.settings_e2e 硬编码
+        # DB_ENGINE=postgresql，连接参数走其缺省（127.0.0.1:55433 / server / pgtest），
+        # 与本地 compose.test.yml 同构；seed 经 postgres 管理库 DROP/CREATE shard 库
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # 后端解释器：CI 直接用系统 python；playwright.config.ts 会以 E2E_PYTHON
+      # 组装 tests.settings_e2e 的启动命令（真实 PG[上方 service] + 进程内 FakeRedis）
+      E2E_PYTHON: python3
+      # server 仓库检出为工作区内的兄弟目录（playwright webServer cwd）
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run smoke E2E
+        # playwright.config.ts 的 webServer 会自动：种子重置（e2e_seed.py）→
+        # 拉起 tests.settings_e2e 后端 → vite dev
+        run: pnpm test:e2e:smoke
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        name: Upload smoke report
+        with:
+          name: playwright-report-smoke
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  visual:
+    name: Visual Regression (chromium)
+    needs: smoke
+    # 与 full 同档：PR / main / 夜间 / 手动；切视觉回归只覆盖主链路核心页
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # 同 smoke：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      # 快照按平台后缀存放（-linux / -darwin），linux 基线只能在 ubuntu 生成：
+      # 未入库前本 job 直接跳过比对（不误报红），提示先跑 Visual Baseline workflow
+      - name: Check baseline availability
+        id: baseline
+        shell: bash
+        run: |
+          if compgen -G "e2e/visual.e2e.ts-snapshots/*-linux.png" > /dev/null; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=视觉基线缺失::未找到 e2e/visual.e2e.ts-snapshots/*-linux.png —— 先手动运行「Visual Baseline」workflow 生成基线并提交，之后本 job 自动启用常态比对。"
+          fi
+
+      - name: Setup E2E environment
+        if: steps.baseline.outputs.available == 'true'
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run visual regression
+        if: steps.baseline.outputs.available == 'true'
+        # 直调 playwright（不走 pnpm script + `--` 透传，避免 “-- --project” 叠写歧义）
+        run: E2E_VISUAL=1 E2E_API_PORT=18896 pnpm exec playwright test e2e/visual.e2e.ts --project=chromium
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.baseline.outputs.available == 'true'
+        name: Upload visual report
+        with:
+          name: playwright-report-visual
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  e2e:
+    name: Full (chromium + webkit)
+    needs: smoke
+    # dev push 只吃 smoke 反馈；全量留给 PR、main、夜间与手动，避免阻塞日常提交
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      # 夜间跑批把抖动历史（e2e/flaky-history.jsonl）由 bot 提交回仓库
+      contents: write
+    services:
+      postgres:
+        # 同 smoke：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）；
+        # 3 个 shard 各自 DROP/CREATE 独立库名（xadmin_e2e_shard<i>），共享同一 PG 实例
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+      # 并行分片：runner 4 vCPU 取 4 路（vite/daphne/浏览器各一份）。
+      # 分片按 e2e/shard-weights.json 的「文件时长权重」做 LPT 均衡装箱
+      # （Playwright 原生 --shard 只按条数均分，实测最重/最轻片相差 ~700s，
+      # 最慢片决定总时长；权重表由 scripts/e2e-weights.mjs 从上次全量报告生成）。
+      # --reporter=list,json 覆盖配置里的 html reporter：多个 shard 进程不能共写
+      # playwright-report/；json 供抖动榜单解析，各 shard 经
+      # PLAYWRIGHT_JSON_OUTPUT_DIR/NAME 输出到独立文件（scripts/e2e-parallel.mjs）
+      E2E_PARALLEL: "4"
+      E2E_JSON_REPORT: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+        with:
+          # 抖动历史轨道由 bot 提交（git pull --rebase 需要完整历史，浅克隆会拒绝 rebase）
+          fetch-depth: 0
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run full E2E (parallel shards)
+        run: pnpm test:e2e:parallel --reporter=list,json
+
+      - name: Flaky ranking (parse JSON → step summary)
+        # 跑批失败也要出榜（失败态同样带抖动信号）；无报告时不阻断
+        if: always()
+        run: |
+          node scripts/e2e-flaky-report.mjs \
+            --input-dir e2e-reports \
+            --run "${{ github.run_id }}-${{ github.run_attempt }}"
+
+      - name: Append flaky history (bot commit)
+        # 仅夜间 main 跑批把历史沉淀进仓库；其余档只上传 artifact（避免 PR 噪声与推送竞态）
+        if: always() && github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          node scripts/e2e-flaky-report.mjs \
+            --input-dir e2e-reports \
+            --run "${{ github.run_id }}-${{ github.run_attempt }}" \
+            --history e2e/flaky-history.jsonl
+          if [ ! -f e2e/flaky-history.jsonl ]; then
+            echo "无历史文件，跳过提交"
+            exit 0
+          fi
+          git add -- e2e/flaky-history.jsonl
+          if git diff --cached --quiet -- e2e/flaky-history.jsonl; then
+            echo "无新增历史数据，跳过提交"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(e2e): append flaky history"
+          for attempt in 1 2 3; do
+            git pull --rebase && git push && break || sleep 5
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        name: Upload full report
+        with:
+          name: playwright-report-full
+          # 分片跑的失败现场写在各自 --output 目录（test-results-shard-N），
+          # 只传 test-results/ 会丢掉截图与 error-context（曾是 CI-only 失败无法
+          # 定位的根因之一：唯一可下载的产物里只有 JSON 报告）
+          path: |
+            playwright-report/
+            test-results/
+            test-results-shard-*/
+            e2e-reports/
+          retention-days: 7

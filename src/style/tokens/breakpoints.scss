@@ -1,0 +1,47 @@
+@use "sass:map";
+
+/**
+ * 设计令牌 · 断点（编译期）
+ *
+ * 断点不能用 CSS 变量表达（@media 无法消费自定义属性），故以 SCSS 编译期
+ * map + mixin 存在；JS 侧镜像见 src/utils/breakpoints.ts，两处同源维护
+ * （守护测试 src/utils/breakpoints.spec.ts 会比对两侧数值）。
+ *
+ * 本文件只产出 mixin，不产出 CSS。
+ *
+ * 用法：
+ *   @use "tokens/breakpoints" as bp;
+ *   @include bp.below("md") { ... }        // 视口 ≤ 768
+ *   @include bp.above("md") { ... }        // 视口 > 768
+ *   @include bp.between("md", "lg") { ... } // 768 < 视口 ≤ 1024
+ */
+
+$bp: (
+  xs: 480px,
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+  2xl: 1600px
+);
+
+/** 视口宽度 ≤ 断点 */
+@mixin below($key) {
+  @media screen and (width <= #{map.get($bp, $key)}) {
+    @content;
+  }
+}
+
+/** 视口宽度 > 断点 */
+@mixin above($key) {
+  @media screen and (width > #{map.get($bp, $key)}) {
+    @content;
+  }
+}
+
+/** 视口宽度在 (from, to] 区间内 */
+@mixin between($from, $to) {
+  @media screen and (width > #{map.get($bp, $from)}) and (width <= #{map.get($bp, $to)}) {
+    @content;
+  }
+}

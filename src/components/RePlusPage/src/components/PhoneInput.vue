@@ -5,7 +5,6 @@
       required
       clearable
       :disabled="disabled"
-      tabindex="100"
       @input="onInputChange"
     >
       <template v-slot:prepend>
@@ -25,7 +24,7 @@
             :value="country"
           >
             <span class="country-name">{{ country.name }}</span>
-            <span style="float: right; font-size: 13px">{{
+            <span style="float: right; font-size: var(--font-size-sm)">{{
               country.value
             }}</span>
           </el-option>
@@ -37,18 +36,14 @@
 </template>
 
 <script lang="ts" setup>
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { countriesApi } from "@/api/common";
-
+import type { PhoneInputProps } from "../utils/types";
 defineOptions({ name: "PhoneInput" });
 
-interface PhoneInputProps {
-  code: string;
-  phone: string;
-}
-
 const value = defineModel<PhoneInputProps>({
-  default: { code: "+86", phone: "" }
+  default: () => ({ code: "+86", phone: "" })
 });
 defineProps({
   disabled: {
@@ -60,12 +55,12 @@ const phoneCode = ref({ name: "China", value: "+86" });
 const countries = ref([phoneCode.value]);
 
 const emit = defineEmits<{
-  change: [values: any];
+  change: [values: PhoneInputProps];
 }>();
 
 onMounted(() => {
   countriesApi().then(res => {
-    if (res.code === 1000) {
+    if (isSuccess(res)) {
       countries.value = res.data.map(item => {
         if (value.value.code === item.phone_code) {
           phoneCode.value.name = `${item.flag} ${item.name}`;
@@ -76,7 +71,7 @@ onMounted(() => {
   });
 });
 
-const onChange = country => {
+const onChange = (country: { value: string }) => {
   value.value.code = country.value;
   onInputChange();
 };

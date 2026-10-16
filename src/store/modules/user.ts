@@ -1,68 +1,75 @@
+import { isSuccess } from "@/api/types";
 import { defineStore } from "pinia";
 import { message } from "@/utils/message";
-import type { TokenResult } from "@/api/auth";
-import {
-  loginBasicApi,
-  logoutApi,
-  refreshTokenApi,
-  registerApi,
-  type UserInfo,
-  type UserInfoResult
+import { transformI18n } from "@/plugins/i18n";
+// 类型导入保持顶层静态（编译期擦除）；认证接口是运行期值，改在动作内动态引入：
+// store → api/auth 的顶层静态边会与 api/auth → utils/http → store 的链路成环，
+// 环内 api 模块的类声明可能在基类就绪前求值。环检测脚本守护此约束。
+import type {
+  LoginResult,
+  TokenInfo,
+  TokenResult,
+  UserInfo,
+  UserInfoResult
 } from "@/api/auth";
-import { userInfoApi } from "@/api/user/userinfo";
-import {
-  getRefreshToken,
-  removeToken,
-  setToken,
-  setUserInfo,
-  userKey
-} from "@/utils/auth";
+import { getRefreshToken, removeToken, setToken, userKey } from "@/utils/auth";
+import { clearPendingApprovals } from "@/utils/http/pendingApproval";
+import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
-import {
-  resetRouter,
-  router,
-  routerArrays,
-  storageLocal,
-  store,
-  type userType
-} from "../utils";
+import { routerArrays, storageLocal, store, type userType } from "../utils";
 
 import { useMultiTagsStoreHook } from "./multiTags";
+import { useNoticeStoreHook } from "./notice";
+import { useWatermarkStoreHook } from "./watermark";
 import { AesEncrypted } from "@/utils/aes";
-import { useWatermark } from "@pureadmin/utils";
-import { h, nextTick } from "vue";
-import { PureWebSocket } from "@/utils/websocket";
-import { ElNotification } from "element-plus";
-
-const { setWatermark, clear } = useWatermark();
 
 export const useUserStore = defineStore("pure-user", {
-  state: (): userType => ({
-    // 头像
-    avatar: storageLocal().getItem<UserInfo>(userKey)?.avatar ?? "",
-    // 用户名
-    username: storageLocal().getItem<UserInfo>(userKey)?.username ?? "",
-    // 昵称
-    nickname: storageLocal().getItem<UserInfo>(userKey)?.nickname ?? "",
-    email: storageLocal().getItem<UserInfo>(userKey)?.email ?? "",
-    phone: storageLocal().getItem<UserInfo>(userKey)?.phone ?? "",
-    // 页面级别权限
-    roles: storageLocal().getItem<UserInfo>(userKey)?.roles ?? [],
-    // 前端生成的验证码（按实际需求替换）
-    verifyCodeLength: 0,
-    // 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码）
-    currentPage: 0,
-    // 是否勾选了登录页的免登录
-    isRemembered: false,
-    // 登录页的免登录存储几天，默认7天
-    loginDay: 7,
-    // 未读消息数量
-    noticeCount: 0,
-    // 消息通知websocket
-    websocket: null,
-    clear: null
-  }),
+  state: (): userType => {
+    // 用户信息唯一持久化副本，仅在下方 updateUserInfo 写入、removeToken 清除；
+    // 其余代码读取用户信息一律走本 store，禁止直接读 storage
+    const userInfo = storageLocal().getItem<UserInfo>(userKey);
+    return {
+      // 头像
+      avatar: userInfo?.avatar ?? "",
+      // 用户名
+      username: userInfo?.username ?? "",
+      // 昵称
+      nickname: userInfo?.nickname ?? "",
+      email: userInfo?.email ?? "",
+      phone: userInfo?.phone ?? "",
+      // 用户唯一标识（水印模板 {pk} 占位符取值）
+      pk: userInfo?.pk,
+      // 页面级别权限
+      roles: userInfo?.roles ?? [],
+      // 平台超管标记（userinfo 下发；旧持久化副本缺该字段时按非超管）
+      is_superuser: userInfo?.is_superuser ?? false,
+      // 巡检处置联动：管理员要求改密（userinfo 下发，App.vue 观察后引导改密）
+      mustChangePassword: userInfo?.must_change_password ?? false,
+      // 用户模拟态（userinfo 下发）：非模拟态为 null
+      impersonator: userInfo?.impersonator ?? null
+    };
+  },
   actions: {
+    /**
+     * 更新用户信息并写穿持久化副本（storage）。
+     * 用户信息以此 action 为唯一写入入口，读取一律走本 store state
+     */
+    updateUserInfo(data: UserInfo) {
+      this.avatar = data.avatar;
+      this.username = data.username;
+      this.nickname = data.nickname;
+      this.email = data.email;
+      this.phone = data.phone;
+      this.pk = data.pk;
+      this.roles = data?.roles;
+      // 平台超管标记随用户信息刷新（「非本人也可管理」入口据此放行）
+      this.is_superuser = Boolean(data?.is_superuser);
+      // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
+      this.mustChangePassword = Boolean(data?.must_change_password);
+      // 用户模拟态随用户信息刷新（顶栏横幅据此渲染；硬刷新后不丢）
+      this.impersonator = data?.impersonator ?? null;
+      storageLocal().setItem(userKey, data);
+    },
     /** 存储用户头像 */
     SET_AVATAR(avatar: string) {
       this.avatar = avatar;
@@ -84,38 +91,34 @@ export const useUserStore = defineStore("pure-user", {
     SET_ROLES(roles: Array<string>) {
       this.roles = roles;
     },
-    /** 存储前端生成的验证码 */
-    SET_VERIFY_CODE_LENGTH(length: number) {
-      this.verifyCodeLength = length;
-    },
-    /** 存储登录页面显示哪个组件 */
-    SET_CURRENT_PAGE(value: number) {
-      this.currentPage = value;
-    },
-    /** 存储是否勾选了登录页的免登录 */
-    SET_ISREMEMBERED(bool: boolean) {
-      this.isRemembered = bool;
-    },
-    /** 设置登录页的免登录存储几天 */
-    SET_LOGINDAY(value: number) {
-      this.loginDay = Number(value);
-    } /** 设置未读消息数量 */,
-    SET_NOTICECOUNT(value: number) {
-      this.noticeCount = Number(value);
-    },
-    INCR_NOTICECOUNT(value: number = 1) {
-      this.noticeCount += Number(value);
+    /**
+     * 建立消息推送通道（WS 连接与通知分发归 notice store）：
+     * 供路由初始化后调用，登录名与登出行为在此注入，保持 user → notice 单向依赖
+     */
+    messageHandler() {
+      useNoticeStoreHook().messageHandler(this.username ?? "", () =>
+        this.logOut()
+      );
     },
     /** 登入 */
-    async loginByUsername(data, encrypted) {
-      return new Promise<TokenResult>((resolve, reject) => {
-        if (encrypted) {
-          data["password"] = AesEncrypted(data["token"], data["password"]);
-          data["username"] = AesEncrypted(data["token"], data["username"]);
-        }
+    async loginByUsername(data: Record<string, unknown>, encrypted?: boolean) {
+      if (encrypted) {
+        // 加密入参先按字符串归一（表单值类型在运行期为 string）
+        data["password"] = await AesEncrypted(
+          String(data["token"] ?? ""),
+          String(data["password"] ?? "")
+        );
+        data["username"] = await AesEncrypted(
+          String(data["token"] ?? ""),
+          String(data["username"] ?? "")
+        );
+      }
+      const { loginBasicApi } = await import("@/api/auth");
+      return new Promise<LoginResult>((resolve, reject) => {
         loginBasicApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            // mfa_required 时后端未签发 token（data 中无 access），不能写入
+            if (isSuccess(res) && "access" in res.data) {
               setToken(res.data);
             }
             resolve(res);
@@ -126,29 +129,16 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     async getUserInfo() {
+      const { userInfoApi } = await import("@/api/user/userinfo");
       return new Promise<UserInfoResult>((resolve, reject) => {
         userInfoApi
           .retrieve()
           .then(res => {
-            if (res.code === 1000) {
-              setUserInfo(res.data);
-              this.clear = clear;
-              if (res.config.FRONT_END_WEB_WATERMARK_ENABLED) {
-                this.clear();
-                nextTick(() => {
-                  setWatermark(
-                    `${this.username}${this.nickname ? "-" + this.nickname : ""}`,
-                    {
-                      globalAlpha: 0.1, // 值越低越透明
-                      gradient: [
-                        { value: 0, color: "magenta" },
-                        { value: 0.5, color: "blue" },
-                        { value: 1.0, color: "red" }
-                      ]
-                    }
-                  );
-                });
-              }
+            if (isSuccess(res)) {
+              this.updateUserInfo(res.data);
+              // 水印配置写入水印 store（user → watermark 单向依赖）：
+              // 由 App.vue 按「当前路由是否命中生效范围」应用/清除
+              useWatermarkStoreHook().applyFromUserInfo(res.config);
               resolve(res);
             } else {
               reject(res);
@@ -160,11 +150,12 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     /** 注册 */
-    async registerByUsername(data) {
+    async registerByUsername(data: Record<string, unknown>) {
+      const { registerApi } = await import("@/api/auth");
       return new Promise<TokenResult>((resolve, reject) => {
         registerApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            if (isSuccess(res)) {
               setToken(res.data);
               resolve(res);
             } else {
@@ -177,31 +168,85 @@ export const useUserStore = defineStore("pure-user", {
       });
     },
     /** 前端登出 **/
-    logOut() {
+    async logOut() {
       this.username = "";
       this.roles = [];
+      // 审批令牌绑定申请人：登出即清空，防跨账号残留（不依赖整页 reload）
+      clearPendingApprovals();
+      const { logoutApi } = await import("@/api/auth");
       logoutApi({ refresh: getRefreshToken() })
         .then(res => {
-          if (res.code === 1000) {
-            message("登出成功", { type: "success" });
+          if (isSuccess(res)) {
+            message(transformI18n("login.logoutSuccess"), { type: "success" });
           }
         })
-        .finally(() => {
-          this.websocket?.close();
+        .finally(async () => {
+          useNoticeStoreHook().disconnect();
           removeToken();
           useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+          // 路由重置动态引入：store ↔ router 顶层静态引用会成环（门禁守护）
+          const { resetRouter } = await import("@/router");
           resetRouter();
-          this.clear();
+          // 水印态复位归水印 store（App.vue 观察水印配置变化后清除已挂载 DOM）
+          useWatermarkStoreHook().reset();
           window.location.reload();
           // router.push("/login");
-        });
+        })
+        // token 已失效时 logoutApi 会 reject（拦截器已 redirectToLogin）：
+        // 补终端 catch 防 unhandled rejection（finally 的清理与 reload 照常执行）
+        .catch(() => undefined);
+    },
+    /**
+     * 用户模拟：身份切换的统一收口（进入模拟 / 退出模拟共用）。
+     *
+     * 服务端已换签目标身份的 token：这里清理旧身份的本地痕迹（审批令牌、
+     * 路由/权限快照、页签、WS 连接），写入新 token 后整页刷新——路由守卫
+     * 会重新拉取 userinfo（含模拟态）与菜单权限，全部状态以新身份重建。
+     */
+    async switchIdentity(data: TokenInfo, successTip?: string) {
+      if (successTip) {
+        message(successTip, { type: "success" });
+      }
+      clearPendingApprovals();
+      // 审批令牌绑定申请人、WS 绑定旧身份：切换前一并清理，防跨身份残留
+      useNoticeStoreHook().disconnect();
+      clearRouteSnapshot();
+      useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+      setToken(data);
+      // 整页跳转重建应用（而非路由内切换）：pinia/内存态/水印/WS 全部以新身份重置
+      window.location.href = "/";
+    },
+    /** 退出用户模拟：服务端失效模拟态凭证并为发起人重签 token */
+    async exitImpersonation() {
+      const { exitImpersonateApi } = await import("@/api/auth");
+      return new Promise<void>((resolve, reject) => {
+        exitImpersonateApi({ refresh: getRefreshToken() })
+          .then(res => {
+            if (isSuccess(res)) {
+              // 本地先行清除模拟态（含持久化副本）：重载到 userinfo 返回前的
+              // 窗口内横幅不再闪现
+              this.impersonator = null;
+              const stored = storageLocal().getItem<UserInfo>(userKey);
+              if (stored) {
+                delete stored.impersonator;
+                storageLocal().setItem(userKey, stored);
+              }
+              return this.switchIdentity(res.data).then(() => resolve());
+            }
+            reject(res);
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
     },
     /** 刷新`token` */
-    async handRefreshToken(data) {
+    async handRefreshToken(data: { refresh: string }) {
+      const { refreshTokenApi } = await import("@/api/auth");
       return new Promise<TokenResult>((resolve, reject) => {
         refreshTokenApi(data)
           .then(res => {
-            if (res.code === 1000) {
+            if (isSuccess(res)) {
               setToken(res.data);
               resolve(res);
             } else {
@@ -211,68 +256,6 @@ export const useUserStore = defineStore("pure-user", {
           .catch(error => {
             reject(error);
           });
-      });
-    },
-    messageHandler() {
-      const onMessage = json_data => {
-        if (json_data.action === "push_message") {
-          const data = json_data?.data;
-          let message = data?.message;
-          switch (data?.message_type) {
-            case "notify_message":
-              if (data?.notice_type?.value === 0) {
-                const isHtml =
-                  /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
-                    message
-                  );
-                if (!isHtml) {
-                  message = h("i", { style: "color: teal" }, data?.message);
-                }
-              }
-              ElNotification({
-                title: `${data?.notice_type?.label}-${data?.title}`,
-                message: message,
-                duration: 5000,
-                dangerouslyUseHTMLString: true,
-                type: data?.level?.value
-                  ?.replace("primary", "")
-                  ?.replace("danger", "warning"),
-                onClick: () => {
-                  router.push({
-                    name: "UserNotice",
-                    query: { pk: data?.pk }
-                  });
-                }
-              });
-              this.INCR_NOTICECOUNT();
-              break;
-            case "chat_message":
-              ElNotification({
-                title: `${data?.notice_type?.label}-${data?.title}`,
-                message: h("i", { style: "color: teal" }, message),
-                duration: 3000,
-                onClick: () => {
-                  router.push({
-                    name: "Chat"
-                  });
-                }
-              });
-              break;
-            case "logout":
-              this.logOut();
-              break;
-            case "error":
-              console.log(json_data);
-              break;
-          }
-        }
-      };
-      this.websocket = new PureWebSocket(this.username, "xadmin", {
-        openCallback: () => {
-          this.websocket.onMessage(data => {
-            onMessage(data);
-          });
-        }
       });
     }
   }

@@ -1,0 +1,42 @@
+<script lang="ts" setup>
+import { ref } from "vue";
+import { useI18n } from "vue-i18n";
+import ApprovalPanel from "./components/ApprovalPanel.vue";
+import ApprovalStats from "./components/ApprovalStats.vue";
+import { useApprovalBadge } from "@/utils/approvalBadge";
+
+defineOptions({
+  name: "SystemApprovalRequest" // 必须定义，用于菜单自动匹配组件
+});
+const { t } = useI18n();
+const activeTab = ref("pending");
+
+/** 页签角标 = 待我审批数（与顶栏铃铛同一数据源：60s 轮询 + 服务端 10s 短缓存） */
+const { pendingCount } = useApprovalBadge();
+</script>
+<template>
+  <div>
+    <!-- 单根包裹：layout 注入的 main-content（24px 外边距）只有单根组件才会继承，
+         多根 Fragment 会让该 class 被丢弃。不加右侧内边距：统计卡与下方列表卡
+         同为容器满宽，右边缘对齐（pr-[1%] 会让统计卡比列表卡窄约 1%） -->
+    <ApprovalStats />
+    <el-tabs v-model="activeTab" class="mt-2">
+      <el-tab-pane name="pending">
+        <template #label>
+          <el-badge
+            :value="pendingCount"
+            :max="99"
+            :hidden="pendingCount === 0"
+            class="mr-1"
+          >
+            {{ t("approval.pendingTab") }}
+          </el-badge>
+        </template>
+        <ApprovalPanel scope="pending" />
+      </el-tab-pane>
+      <el-tab-pane :label="t('approval.mineTab')" name="mine" lazy>
+        <ApprovalPanel scope="mine" />
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>

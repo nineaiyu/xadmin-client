@@ -1,0 +1,331 @@
+<script lang="ts" setup>
+import { isSuccess } from "@/api/types";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import ReSkeleton from "@/components/ReSkeleton";
+import { useDark, useECharts } from "@pureadmin/utils";
+import type { UtilsEChartsOption } from "@pureadmin/utils";
+import { usePageLoading } from "@/hooks/usePageLoading";
+import {
+  datasetApi,
+  type AggregateResult,
+  type DashboardCard,
+  type ExecuteResult
+} from "@/api/dataset/datasets";
+import {
+  CHART_ACCENT,
+  cssVarColor,
+  epColor,
+  withAlpha
+} from "@/utils/chartTheme";
+import { waitChartSized } from "@/utils/chart";
+// 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
+import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
+
+defineOptions({ name: "DashboardChartCard" });
+
+const props = defineProps<{
+  card: DashboardCard;
+  /** 刷新信号：父组件自增令牌触发原位重拉（不销毁重建实例）；首拉仍走 onMounted */
+  refreshToken?: number;
+}>();
+
+const { t } = useI18n();
+const { isDark } = useDark();
+const theme = computed(() => (isDark.value ? "dark" : "light"));
+
+const chartRef = ref();
+const { loading, runWithLoading } = usePageLoading();
+const total = ref(0);
+/** 数据加载请求序号：竞态防护（自动刷新 / 手动刷新 / 草稿变动并发时丢弃过期响应） */
+let loadSeq = 0;
+/** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
+const errorMsg = ref("");
+/** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
+const { setOptions, resize, getInstance } = useECharts(chartRef, {
+  theme,
+  renderer: "svg"
+});
+
+/** 分类色板：EP 语义色跟随主题（第 6 色为图表专用强调色，集中定义于 chartTheme）；调用时读取 */
+const palette = () => [
+  epColor("primary"),
+  epColor("success"),
+  epColor("warning"),
+  epColor("danger"),
+  epColor("info"),
+  CHART_ACCENT
+];
+
+const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
+  const names = result.series.map(item => item.name);
+  const values = result.series.map(item => Number(item.value ?? 0));
+  // tooltip 统一样式：底色/边框/文字取主题变量，暗色卡片上不再出现白底黑字
+  const overlay = cssVarColor("--el-bg-color-overlay", "#ffffff");
+  const tooltipStyle = {
+    backgroundColor: overlay,
+    borderColor: cssVarColor("--el-border-color-lighter", "#ebeef5"),
+    textStyle: { color: cssVarColor("--el-text-color-primary", "#303133") }
+  };
+  if (props.card.chart_type === "pie") {
+    const colors = palette();
+    return {
+      tooltip: { trigger: "item", ...tooltipStyle },
+      legend: { bottom: 0, icon: "circle" },
+      series: [
+        {
+          name: props.card.title,
+          type: "pie",
+          radius: ["38%", "62%"],
+          // 扇区间留白 + 圆角：默认相邻扇区紧贴，深底上层次感不足
+          itemStyle: { borderColor: overlay, borderWidth: 2, borderRadius: 4 },
+          data: result.series.map((item, index) => ({
+            name: item.name || "-",
+            value: Number(item.value ?? 0),
+            itemStyle: { color: colors[index % colors.length] }
+          }))
+        }
+      ]
+    };
+  }
+  const isLine = props.card.chart_type === "line";
+  const primary = epColor("primary");
+  return {
+    tooltip: { trigger: "axis", ...tooltipStyle },
+    grid: { top: "24px", left: "48px", right: "24px", bottom: "36px" },
+    xAxis: { type: "category", boundaryGap: !isLine, data: names },
+    yAxis: { type: "value" },
+    series: [
+      {
+        name: props.card.title,
+        type: isLine ? "line" : "bar",
+        smooth: isLine,
+        showSymbol: isLine,
+        barMaxWidth: 36,
+        data: values,
+        itemStyle: {
+          color: primary,
+          // 柱状圆角（折线不适用，走线宽与面积表达）
+          ...(isLine ? {} : { borderRadius: [6, 6, 0, 0] })
+        },
+        lineStyle: { width: 2, color: primary },
+        // 折线配面积渐变（主色 24% → 透明），大屏与看板上更有层次
+        ...(isLine
+          ? {
+              areaStyle: {
+                color: {
+                  type: "linear",
+                  x: 0,
+                  y: 0,
+                  x2: 0,
+                  y2: 1,
+                  colorStops: [
+                    { offset: 0, color: withAlpha(primary, 0.24) },
+                    { offset: 1, color: withAlpha(primary, 0) }
+                  ]
+                }
+              }
+            }
+          : {})
+      }
+    ]
+  };
+};
+
+/** 卡片加载：失败就地转骨架错误态（errorMsg），不外抛；loading 由 hook 托管 */
+const loadData = () =>
+  runWithLoading(async () => {
+    const card = props.card;
+    // 请求序号：自动刷新（10s 档）与手动刷新 / 编辑草稿变动竞态时，
+    // 丢弃过期响应，防旧数据后到覆盖新数据或把已恢复的错误态又打成错误
+    const seq = ++loadSeq;
+    /** 本次请求是否仍是最新（过期响应直接丢弃，不触碰共享状态） */
+    const fresh = () => seq === loadSeq;
+    errorMsg.value = "";
+    try {
+      if (card.chart_type === "number") {
+        // count_only：数字卡只读 total，服务端跳过全量行物化
+        const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+          count_only: true
+        });
+        if (!fresh()) return;
+        if (isSuccess(res)) {
+          total.value = Number(res.data?.total ?? 0);
+          return;
+        }
+        errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+        return;
+      }
+      if (card.chart_type === "metric") {
+        // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
+        if ((card.metric ?? "count") === "count") {
+          const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+            count_only: true
+          });
+          if (!fresh()) return;
+          if (isSuccess(res)) {
+            total.value = Number(res.data?.total ?? 0);
+            return;
+          }
+          errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+          return;
+        }
+        const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
+          group_by: "",
+          metric: card.metric ?? "count",
+          value_field: card.value_field
+        });
+        if (!fresh()) return;
+        if (isSuccess(res)) {
+          total.value = Number(res.data?.series?.[0]?.value ?? 0);
+          return;
+        }
+        errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+        return;
+      }
+      const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
+        group_by: card.group_by,
+        metric: card.metric ?? "count",
+        date_trunc:
+          card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
+        value_field: card.value_field
+      });
+      if (!fresh()) return;
+      if (isSuccess(res)) {
+        await renderAggregate(res.data);
+        return;
+      }
+      // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
+      errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+    } catch (error) {
+      if (!fresh()) return;
+      errorMsg.value = String(
+        (error as { detail?: string })?.detail ??
+          error ??
+          t("dashboard.loadFailed")
+      );
+    }
+  });
+
+/** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
+const renderAggregate = async (result: AggregateResult) => {
+  if (await waitChartSized(() => chartRef.value as HTMLElement | undefined)) {
+    // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
+    resize();
+    setOptions(buildSeriesOptions(result));
+  }
+};
+
+/**
+ * 注入服务端聚合帧数据（screen_data），免拉直渲——投屏页 WS 推送通道用。
+ * kind=execute 渲染指标数字；kind=aggregate 渲染图表；带 detail（服务端
+ * 单卡失败进 errors，与 HTTP 业务码非 1000 同语义）时显示可读错误。
+ * 数据非本卡时由调用方过滤，此处不做归属校验。
+ */
+const applyData = async (entry: {
+  kind?: string;
+  data?: unknown;
+  detail?: string;
+}) => {
+  if (typeof entry?.detail === "string" && entry.detail) {
+    errorMsg.value = entry.detail;
+    return;
+  }
+  errorMsg.value = "";
+  if (props.card.chart_type === "metric" && entry.kind === "aggregate") {
+    // 服务端对 metric 卡统一走聚合（count 也是单桶 Total 帧），取首值渲染大数字
+    total.value = Number(
+      (entry.data as AggregateResult)?.series?.[0]?.value ?? 0
+    );
+    return;
+  }
+  if (entry.kind === "execute") {
+    total.value = Number((entry.data as ExecuteResult)?.total ?? 0);
+    return;
+  }
+  await renderAggregate(entry.data as AggregateResult);
+};
+
+onMounted(async () => {
+  await nextTick();
+  await loadData();
+});
+
+watch(
+  () => props.card,
+  () => loadData(),
+  { deep: true }
+);
+
+/** 刷新信号：令牌变化即在原实例上重拉数据（手动刷新与自动刷新共用同一入口） */
+watch(
+  () => props.refreshToken,
+  () => loadData()
+);
+
+/**
+ * 图片导出：返回可下载图片（PNG 优先，转换失败回退 SVG）；
+ * number 卡（无 ECharts 实例）返回 null，由调用方跳过并提示。
+ */
+async function renderImage(): Promise<ExportedImage | null> {
+  const { renderEchartsImage } = await import("@/utils/imageExport");
+  return renderEchartsImage(getInstance() as EChartsLike | null, {
+    pixelRatio: 2,
+    // 透明底在深色面板/暗色主题下不可读，取当前主题底色（EP 变量已按暗色重定义）
+    backgroundColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
+  });
+}
+
+defineExpose({ loadData, applyData, renderImage });
+</script>
+
+<template>
+  <div class="relative size-full">
+    <div
+      v-if="errorMsg"
+      class="flex-c size-full flex-col gap-2 text-center"
+      data-testid="chart-card-error"
+    >
+      <span class="text-xs text-(--el-color-danger)">{{ errorMsg }}</span>
+      <el-button link type="primary" size="small" @click="loadData">
+        {{ t("dashboard.retry") }}
+      </el-button>
+    </div>
+    <template v-else>
+      <div
+        v-show="card.chart_type === 'number' || card.chart_type === 'metric'"
+        class="flex-c size-full"
+      >
+        <span class="text-3xl font-semibold">{{ total }}</span>
+      </div>
+      <div
+        v-show="card.chart_type !== 'number' && card.chart_type !== 'metric'"
+        ref="chartRef"
+        class="size-full"
+      />
+      <!-- 加载骨架：以覆盖层呈现（内容保留在 DOM，保证 waitSized 能测到容器尺寸） -->
+      <div
+        v-if="loading"
+        class="chart-card-skeleton absolute inset-0"
+        data-testid="chart-card-skeleton"
+      >
+        <ReSkeleton
+          :rows="2"
+          :variant="
+            card.chart_type === 'number' || card.chart_type === 'metric'
+              ? 'text'
+              : 'fill'
+          "
+        />
+      </div>
+    </template>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+/* 覆盖层需不透明底色（挡住加载中的旧数据/零值），取 EP 卡片底色变量 */
+.chart-card-skeleton {
+  padding: var(--space-4);
+  background: var(--el-card-bg-color, var(--el-bg-color-overlay));
+}
+</style>

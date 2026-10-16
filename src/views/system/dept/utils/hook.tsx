@@ -1,177 +1,92 @@
-import { deptApi } from "@/api/system/dept";
-import { getCurrentInstance, reactive, ref, type Ref, shallowRef } from "vue";
-import { cloneDeep } from "@pureadmin/utils";
-import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
+import { deptApi } from "@/api/identity/dept";
+import { reactive, shallowRef, type Ref } from "vue";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
-import { customRolePermissionOptions } from "@/views/system/hooks";
-import { handleTree } from "@/utils/tree";
-import {
-  type PageTableColumn,
-  handleOperation,
-  openDialogDrawer,
-  type OperationProps,
-  type RePlusPageProps
-} from "@/components/RePlusPage";
+import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Role from "~icons/ri/admin-line";
+import Setting from "~icons/ri/settings-3-line";
+import { useDeptRoleRules } from "./useDeptRoleRules";
+import { useDeptManagers } from "./useDeptManagers";
+import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
+import { useDeptColumns } from "./deptColumns";
+import { useDeptFormOptions } from "./deptFormOptions";
+import { useDeptPanel } from "./useDeptPanel";
 
+/**
+ * 部门管理页面装配。
+ *
+ * 子模块：deptColumns（列渲染与人数跳转）/ deptFormOptions（新增编辑表单选项）/
+ * useDeptPanel（行内「管理」抽屉）；角色授权与管理员任命见 useDeptRoleRules /
+ * useDeptManagers，批量更新见 useBatchUpdate（自 utils/hook 拆出，行为不变）。
+ */
 export function useDept(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(deptApi);
 
-  const auth = reactive({
-    empower: false,
-    ...getDefaultAuths(getCurrentInstance(), ["empower"])
+  const auth = usePageAuth([
+    "empower",
+    "preview",
+    "assignManagers",
+    "changeHistory"
+  ]);
+
+  const { listColumnsFormat, onGoDetail } = useDeptColumns();
+  const addOrEditOptions = useDeptFormOptions(tableRef);
+
+  // 角色授权与管理员任命弹层（列裁剪状态 + 弹窗动作）
+  const { baseColumnsFormat, handleRoleRules } = useDeptRoleRules({
+    t,
+    api,
+    tableRef
+  });
+  const { openManagers } = useDeptManagers({ t, api, tableRef });
+
+  // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
+  const { batchUpdateButton } = useBatchUpdate({
+    t,
+    api,
+    tableRef,
+    fields: [
+      {
+        key: "is_active",
+        label: t("commonLabels.is_active"),
+        input_type: "boolean"
+      }
+    ]
+  });
+  const tableBarButtonsProps = shallowRef<OperationProps>({
+    buttons: [batchUpdateButton]
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "user_count":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoDetail(row as any)}>
-              {row.user_count}
-            </el-link>
-          );
-          break;
-        case "name":
-          column["minWidth"] = 200;
-          column["align"] = "left";
-          break;
-      }
-    });
-    return columns;
-  };
-
-  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
-    props: {
-      row: {
-        parent: ({ rawRow }) => {
-          return rawRow?.parent?.pk ?? "";
-        }
-      },
-      columns: {
-        parent: ({ column }) => {
-          column["valueType"] = "cascader";
-          column["fieldProps"] = {
-            ...column["fieldProps"],
-            ...{
-              props: {
-                value: "pk",
-                label: "name",
-                emitPath: false,
-                checkStrictly: true
-              }
-            }
-          };
-          column["options"] = handleTree(
-            column._column.choices,
-            "pk",
-            "parent_id"
-          );
-          return column;
-        }
-      },
-      dialogDrawerOptions: {
-        closeCallBack: ({ options, args }) => {
-          if (!options?.props?.formInline?.pk && args?.command === "sure") {
-            tableRef.value?.getPageColumn(false);
-          }
-        }
-      }
-    }
+  const { openDeptPanel } = useDeptPanel({
+    api,
+    auth,
+    handleRoleRules,
+    openManagers,
+    onGoDetail
   });
-
-  const router = useRouter();
-
-  function onGoDetail(row: any) {
-    if (hasAuth("list:SystemUser") && row.user_count && row.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { dept: row.pk }
-      });
-    }
-  }
-
-  const roleRulesColumns = ref([]);
-  const roleRules = ref({});
-  const baseColumnsFormat = ({ addOrEditColumns, addOrEditRules }) => {
-    roleRules.value = addOrEditRules.value;
-    roleRulesColumns.value = cloneDeep(addOrEditColumns.value);
-    roleRulesColumns.value.forEach(column => {
-      if (
-        ["name", "code", "roles", "rules", "mode_type"].indexOf(
-          column._column.key
-        ) === -1
-      ) {
-        column.hideInForm = true;
-      }
-      if (["name", "code"].indexOf(column._column.key) > -1) {
-        column["fieldProps"]["disabled"] = true;
-      }
-      if (["roles", "rules"].indexOf(column._column.key) > -1) {
-        column.options = customRolePermissionOptions(
-          column._column.choices ?? []
-        );
-      }
-    });
-    /* "pk", "roles", "rules", "mode_type" 这些字段在编辑和新增隐藏 */
-    addOrEditColumns.value.forEach(column => {
-      if (
-        ["pk", "roles", "rules", "mode_type"].indexOf(column._column.key) > -1
-      ) {
-        column.hideInForm = true;
-      }
-    });
-  };
-
-  function handleRoleRules(row: any) {
-    openDialogDrawer({
-      t,
-      isAdd: false,
-      title: t("systemDept.assignRole", { dept: row.name }),
-      rawRow: { ...row },
-      rawColumns: roleRulesColumns.value,
-      rawFormProps: {
-        rules: roleRules.value
-      },
-      saveCallback: ({ formData, done, closeLoading }) => {
-        handleOperation({
-          t,
-          apiReq: api.empower(row.pk, {
-            roles: formData.roles,
-            rules: formData.rules,
-            mode_type: formData.mode_type
-          }),
-          success() {
-            done();
-            tableRef.value.handleGetData();
-          },
-          requestEnd() {
-            closeLoading();
-          }
-        });
-      }
-    });
-  }
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 210,
+    // 列宽与「编辑/删除/管理」三个按钮的实际占用一致（表格固定列对齐按此收敛）
+    width: 260,
+    // 默认「查看 / 变更历史」入口收敛进抽屉，操作列保持三个动作
+    hideDetail: true,
+    hideChangeHistory: true,
     buttons: [
       {
-        text: t("systemDept.assignRoles"),
-        code: "empower",
+        text: t("systemDept.manage"),
+        code: "manage",
         props: {
           type: "primary",
-          icon: useRenderIcon(Role),
+          icon: useRenderIcon(Setting),
           link: true
         },
         onClick: ({ row }) => {
-          handleRoleRules(row);
+          openDeptPanel(row);
         },
-        show: auth.empower
+        // 面板内容受各自权限点控制；无任何可看内容时不渲染入口（避免点开空抽屉）
+        show: hasAuth("preview:SystemDept") || hasAuth("list:SystemUser")
       }
     ]
   });
@@ -183,6 +98,8 @@ export function useDept(tableRef: Ref) {
     listColumnsFormat,
     baseColumnsFormat,
     addOrEditOptions,
-    operationButtonsProps
+    tableBarButtonsProps,
+    operationButtonsProps,
+    openDeptPanel
   };
 }

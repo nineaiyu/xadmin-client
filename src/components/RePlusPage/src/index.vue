@@ -1,16 +1,35 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, nextTick, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
-import { RePlusPageProps } from "./utils/types";
+import { RePlusPageProps, type PageColumn } from "./utils/types";
+import { INJECTED_COLUMN_KEYS } from "./utils/constants";
+import ReRecycleBin from "./components/ReRecycleBin.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
 import Delete from "~icons/ep/delete";
-import { PlusSearch } from "plus-pro-components";
+import { PlusSearch, type RecordType } from "plus-pro-components";
+import type { ComponentSize } from "element-plus";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
+import { useTableA11y } from "./utils/useTableA11y";
+import { resolveTreeProps } from "./utils/treeProps";
+import { createApplySavedView } from "./utils/savedView";
+import { useTableLayout } from "./utils/useTableLayout";
+import { DEFAULT_OPERATION_COLUMN_WIDTH } from "./utils/operationColumnWidth";
+import { useOperationContentWidth } from "./utils/useOperationContentWidth";
+import { useRecycleBin } from "./utils/useRecycleBin";
+import { useTableMeasure } from "./utils/useTableMeasure";
+import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
+import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
+import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
+import { useListMetaWarning } from "./utils/useListMetaWarning";
+
 import ButtonOperation, {
   ButtonsCallBackParams
 } from "./components/ButtonOperation";
+import SavedViews from "./components/SavedViews.vue";
+import AdvancedFilterEntry from "./components/AdvancedFilterEntry.vue";
 
 defineOptions({ name: "RePlusPage" });
 
@@ -37,17 +56,61 @@ const props = withDefaults(defineProps<RePlusPageProps>(), {
   plusSearchProps: () => ({}),
   plusDescriptionsProps: () => ({}),
   operationButtonsProps: () => ({}),
-  tableBarButtonsProps: () => ({})
+  tableBarButtonsProps: () => ({}),
+  // undefined 时由 hook 按页面导出权限（auth.exportData）自动显示异步开关，false 可显式关闭
+  allowAsyncExport: undefined,
+  // 我的视图：开启后工具栏出现「视图」下拉（筛选条件命名保存 / 一键套用 / 默认视图）
+  savedViews: false,
+  // 缺省 true：该语义靠「显式传 false 才关闭」区分，而 boolean 类型 prop 的缺省值会被
+  // Vue 归一为 false（未声明默认值时 isAbsent → false），必须在此显式给出默认值
+  fetchSearchFields: true
 });
 const emit = defineEmits<{
-  rowClick: [row: any];
-  searchComplete: [...args: any[]];
-  selectionChange: [...args: any[]];
+  /** 行点击：row 为动态接口数据行 */
+  rowClick: [row: RecordType];
+  /** 搜索完成：usePlusPage 内 handleGetData 发出的载荷 */
+  searchComplete: [
+    payload: {
+      /** 路由参数（route.params / route.query） */
+      routeParams: RecordType;
+      /** 搜索字段响应式引用 */
+      searchFields: Ref<RecordType>;
+      /** 列表数据响应式引用 */
+      dataList: Ref<RecordType[]>;
+      /** 列表接口响应 */
+      res: RecordType;
+    }
+  ];
+  /** 多选变化：选中的数据行集合 */
+  selectionChange: [rows: RecordType[]];
   tableBarClickAction: [data: ButtonsCallBackParams];
   operationClickAction: [data: ButtonsCallBackParams];
 }>();
 
 const tableRef = ref();
+const rootRef = ref<HTMLElement>();
+
+/**
+ * 自适应高度底部预留：以页面传入的 pureTableProps.adaptiveConfig.offsetBottom
+ * 为准（缺省 110 = 列表页直铺口径）。库内 setAdaptive 与本文件 ResizeObserver
+ * 的重算必须共用同一取值，否则页面覆写了库内配置、重算仍按缺省值执行，
+ * 表格会被顶出视口（页面出现滚动条）。
+ */
+const adaptiveOffsetBottom = () =>
+  (
+    props.pureTableProps as {
+      adaptiveConfig?: { offsetBottom?: number };
+    }
+  )?.adaptiveConfig?.offsetBottom ?? DEFAULT_ADAPTIVE_OFFSET_BOTTOM;
+
+const { tableElWidth, measureTableWidth, ensureRootObserver } = useTableMeasure(
+  rootRef,
+  { offsetBottom: adaptiveOffsetBottom }
+);
+
+/** 操作列行兜底（第三方 slot 的 row 会退化为空对象，按行号取真实行，见 utils） */
+const resolveOperationRow = (row: RecordType | undefined, index: unknown) =>
+  resolveOperationRowUtil(row, index, dataList.value);
 
 const {
   t,
@@ -64,6 +127,7 @@ const {
   tablePagination,
   tableBarButtons,
   operationButtons,
+  viewedRowClassName,
   handleReset,
   handleSearch,
   getSelectPks,
@@ -76,12 +140,106 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleTableBarChange,
-  handleSelectionChange
+  handleSelectionChange,
+  handleSortChange
 } = usePlusPage(emit, tableRef, props);
+
+// 我的视图：把保存的筛选条件写回搜索区并刷新列表（实现见 utils/savedView）
+const applySavedView = createApplySavedView({
+  searchFields,
+  reload: handleGetData
+});
+
+/** 搜索列类型变化（select/date-picker 等）后自动触发查询（模板内联类型注解会触发 eslint 解析错误，改 script 函数） */
+const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
+  const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
+  if (canChangeType.indexOf(column.valueType ?? "") > -1) handleSearch();
+};
+
+/** 行点击透传（同上：模板内联类型注解不可用） */
+const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
+
+/**
+ * 搜索卡片高度占位是否生效（CLS 主因修复）：
+ * 搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），
+ * 到达后叠加一行字段（+50px），中间帧会被真实绘制产生位移。
+ * 这里在「元数据到达前」按「按钮行 + 一行字段」预留高度；到达后必须撤掉占位
+ * 改由内容自适应——字段与按钮同行的页面实际只有约 74px，固定 106px 会在卡片
+ * 底部留出可见空白（2026-09-18 用户反馈「搜索框变高」回归修复）。
+ * 到达信号与表格列首帧规避共用同一组列装配来源（dynamicColumns / listColumns）。
+ */
+/** 是否为框架注入列（选择列 / 操作列）——它们无条件存在，不来自后端元数据 */
+const isInjectedColumn = (column?: PageColumn) =>
+  INJECTED_COLUMN_KEYS.includes(
+    (column?._column?.key ?? "") as (typeof INJECTED_COLUMN_KEYS)[number]
+  );
+
+const searchMetaReady = computed(
+  () =>
+    // 搜索区字段元数据到达（只有 search-fields、无表格列的页面）
+    searchColumns.value.length > 0 ||
+    // 表格列元数据到达：**必须排除框架注入的选择列 / 操作列**。
+    // 不能看 listColumns.length（恒 ≥1）也不能看 tableBarData.dynamicColumns
+    // （初值就是 listColumns 同一数组），否则本判定恒为真——
+    // 元数据缺失警示条与搜索卡片高度占位会双双失效（实测踩过）。
+    listColumns.value.some(column => !isInjectedColumn(column))
+);
+
+// 元数据到达前根节点可能尚未渲染（auth 依赖异步数据时）：到达后补偿测量与观察
+watch(searchMetaReady, ready => {
+  if (!ready) return;
+  nextTick(() => {
+    ensureRootObserver();
+    measureTableWidth();
+  });
+});
+
+// 元数据缺失检测（DEV 控制台排查清单 + PROD 降级提示条，实现见 useListMetaWarning）
+const { metaMissing } = useListMetaWarning(searchMetaReady, loadingStatus);
+
+// 表格可访问名同步（实现见 utils/useTableA11y）
+useTableA11y({
+  rootRef,
+  pageTitle,
+  sources: () => [
+    tableBarData.value.dynamicColumns,
+    dataList.value,
+    loadingStatus.value
+  ]
+});
+
+// 操作列内容实测宽度（按钮随权限/行数据显隐）：收敛「一个按钮占一大片列宽」
+const { operationContentWidth } = useOperationContentWidth(
+  rootRef,
+  dataList,
+  loadingStatus
+);
+
+const { tableLayoutPending } = useTableLayout({
+  tableElWidth,
+  dynamicColumns: computed(() => tableBarData.value.dynamicColumns),
+  listColumnsLength: computed(() => listColumns.value.length),
+  operationConfiguredWidth: () =>
+    Number(
+      props.operationButtonsProps?.width ?? DEFAULT_OPERATION_COLUMN_WIDTH
+    ),
+  operationContentWidth: () => operationContentWidth.value
+});
+
+/** 搜索区展开/收起的过渡（实现见 utils/useSearchCardCollapse，含口径说明） */
+const { searchCardRef, onSearchCollapse } = useSearchCardCollapse();
+
+const getTreeProps = () => resolveTreeProps(treeProps);
 
 function getTableRef() {
   return tableRef.value;
 }
+
+// 内建回收站入口（计算属性见 utils/useRecycleBin）
+const { recycleBinEnabled, recycleBinColumns, recycleBinApi } = useRecycleBin(
+  props,
+  listColumns
+);
 
 defineExpose({
   dataList,
@@ -95,8 +253,25 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="auth?.list" class="main">
-    <div v-if="api?.fields" class="bg-bg_color w-99/100 pl-6 pr-6 pt-3 pb-3">
+  <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
+    <el-alert
+      v-if="metaMissing"
+      class="mb-2"
+      data-table-a11y-desc
+      type="error"
+      :closable="false"
+      show-icon
+      :title="t('plus.metaMissingTitle')"
+      :description="t('plus.metaMissingDetail')"
+    />
+    <div
+      v-if="api?.fields"
+      ref="searchCardRef"
+      :class="[
+        're-plus-search-card bg-bg-card w-99/100 px-6 py-3',
+        { 're-plus-search-card--pending': !searchMetaReady }
+      ]"
+    >
       <PlusSearch
         v-model="searchFields"
         :col-props="{
@@ -106,7 +281,7 @@ defineExpose({
           lg: 6,
           xl: 6
         }"
-        :columns="searchColumns"
+        :columns="searchColumns as never"
         :default-values="cloneDeep(defaultValue)"
         :row-props="{
           gutter: 24
@@ -116,24 +291,15 @@ defineExpose({
         :needValidate="true"
         label-width="100px"
         v-bind="plusSearchProps"
-        @change="
-          (_, column) => {
-            const canChangeType = [
-              'select',
-              'date-picker',
-              'time-picker',
-              'time-select'
-            ];
-            canChangeType.indexOf(column.valueType) > -1 && handleSearch();
-          }
-        "
+        @change="onSearchColumnChange"
         @reset="handleReset"
         @search="handleSearch"
+        @collapse="onSearchCollapse"
         @keyup.enter="handleSearch"
       />
     </div>
-    <div :class="tableBarData.renderClass">
-      <el-scrollbar class="max-h-[60px]!">
+    <div class="re-plus-table-card" :class="tableBarData.renderClass">
+      <el-scrollbar class="max-h-15!">
         <PureTableBar
           v-if="tableBar"
           :columns="listColumns"
@@ -150,11 +316,11 @@ defineExpose({
               <div
                 v-if="selectedNum > 0"
                 v-motion-fade
-                class="bg-[var(--el-fill-color-light)] w-[160px] h-[40px] m-2 pl-4 flex items-center rounded-md"
+                class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
               >
                 <span
-                  class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
-                  style="font-size: 14px"
+                  class="text-fg-subtle"
+                  style="font-size: var(--font-size-base)"
                 >
                   {{ t("buttons.selected", { count: selectedNum }) }}
                 </span>
@@ -185,6 +351,19 @@ defineExpose({
                   </template>
                 </el-popconfirm>
               </div>
+              <advanced-filter-entry
+                v-if="advancedFilter && auth?.list"
+                v-model="searchFields"
+                :columns="tableBarData.dynamicColumns as never"
+                @applied="handleGetData"
+              />
+              <saved-views
+                v-if="savedViews && auth?.list"
+                :conditions="searchFields"
+                :ready="searchMetaReady"
+                :columns="tableBarData.dynamicColumns as never"
+                @apply="applySavedView"
+              />
               <button-operation
                 :show-number="99"
                 v-bind="tableBarButtonsProps"
@@ -195,6 +374,13 @@ defineExpose({
                   }
                 "
               />
+              <re-recycle-bin
+                v-if="recycleBinEnabled"
+                :api="recycleBinApi"
+                :locale-name="localeName"
+                :columns="recycleBinColumns"
+                @changed="handleGetData"
+              />
               <slot name="barButtons" />
             </div>
           </template>
@@ -202,32 +388,32 @@ defineExpose({
       </el-scrollbar>
       <pure-table
         ref="tableRef"
+        :class="{ 're-plus-table-layout-pending': tableLayoutPending }"
+        :row-class-name="viewedRowClassName"
         :adaptiveConfig="{ offsetBottom: 110 }"
-        :columns="tableBarData.dynamicColumns"
+        :columns="tableBarData.dynamicColumns as never"
         :data="dataList"
-        :header-cell-style="{
-          background: 'var(--el-table-row-hover-bg-color)',
-          color: 'var(--el-text-color-primary)'
-        }"
+        :header-cell-style="TABLE_HEADER_CELL_STYLE"
         :loading="loadingStatus"
         :pagination="tablePagination"
-        :size="tableBarData.size as any"
-        :tree-props="treeProps as any"
+        :size="tableBarData.size as ComponentSize"
         adaptive
         align-whole="center"
         default-expand-all
         row-key="pk"
         table-layout="fixed"
-        v-bind="pureTableProps"
+        v-bind="pureTableProps as object"
+        :tree-props="getTreeProps()"
         @selection-change="handleSelectionChange"
-        @row-click="row => emit('rowClick', row)"
+        @row-click="onRowClick"
         @page-size-change="handleSizeChange"
         @page-current-change="handleCurrentChange"
+        @sort-change="handleSortChange"
       >
-        <template #operation="{ row }">
+        <template #operation="{ row, index }">
           <button-operation
-            :row="row"
-            :size="tableBarData.size as any"
+            :row="resolveOperationRow(row, index)"
+            :size="tableBarData.size as ComponentSize"
             v-bind="operationButtonsProps"
             :buttons="operationButtons"
             @clickAction="
@@ -236,7 +422,13 @@ defineExpose({
               }
             "
           />
-          <slot name="extOperation" v-bind="{ row, size: tableBarData.size }" />
+          <slot
+            name="extOperation"
+            v-bind="{
+              row: resolveOperationRow(row, index),
+              size: tableBarData.size
+            }"
+          />
         </template>
         <template
           v-for="item in getKeyList(listColumns, 'slot').filter(x => {
@@ -252,8 +444,39 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss" scoped>
-.main-content {
-  margin: 24px 24px 0 !important;
+<style scoped lang="scss">
+/* 搜索卡片高度占位（CLS 主因修复）：**仅在列元数据到达前生效**。
+   搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），到达后
+   叠加一行字段（+50px），同帧还伴随 el-table 列宽首绘与自适应高度重算，中间帧会被
+   真实绘制（表头换行 155px → 41px 的瞬态位移）。数值 = py-3(24) + 按钮行(32) + 行间距
+   与字段行(50) = 106px，作为下限；元数据到达后必须撤掉占位改由内容自适应——字段与按钮
+   同行的页面实际约 74px，固定 106px 会在卡片底部留出可见空白（2026-09-18 回归修复）。 */
+.re-plus-search-card--pending {
+  min-height: 106px;
+}
+
+/* 列表页卡片化：搜索卡与表格区统一应用外观层卡片体系（圆角 / 描边 / 静态阴影，
+   取值同源设计令牌）；全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
+.re-plus-search-card,
+.re-plus-table-card {
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.re-plus-table-card {
+  overflow: hidden;
+}
+
+.re-plus-table-card--fullscreen {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可消除
+   「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
+.re-plus-table-layout-pending {
+  visibility: hidden;
 }
 </style>

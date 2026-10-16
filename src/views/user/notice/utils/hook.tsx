@@ -1,17 +1,20 @@
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { addDialog } from "@/components/ReDialog";
 import { userNoticeReadApi } from "@/api/user/notice";
-import { useUserStoreHook } from "@/store/modules/user";
-import { h, reactive, ref, type Ref, shallowRef } from "vue";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { deviceDetection, getKeyList } from "@pureadmin/utils";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
-import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
+import { useNoticeStoreHook } from "@/store/modules/notice";
+import { reactive, ref, type Ref } from "vue";
+import { getKeyList } from "@pureadmin/utils";
+import { handleOperation } from "@/components/RePlusPage";
+import { useUserNoticeColumns } from "./userNoticeColumns";
+import { createUserNoticeDialog } from "./userNoticeDialog";
+import { useUserNoticeButtons } from "./useUserNoticeButtons";
+import type { RecordType } from "plus-pro-components";
 
-import Success from "~icons/ep/success-filled";
-
+/**
+ * 我的通知装配：列渲染见 userNoticeColumns.tsx，详情弹窗（含深链 pk 消费）
+ * 见 userNoticeDialog.ts，按钮见 useUserNoticeButtons.ts。
+ */
 export function useUserNotice(tableRef: Ref) {
   const { t } = useI18n();
 
@@ -25,11 +28,14 @@ export function useUserNotice(tableRef: Ref) {
 
   const selectedNum = ref(0);
   const unreadCount = ref(0);
-  const manySelectData = ref([]);
+  const manySelectData = ref<RecordType[]>([]);
 
+  /** 统一走 handleOperation：成功/失败提示与业务码分支收口，失败不再静默 */
   function handleReadAll() {
-    api.allRead().then(() => {
-      tableRef.value.handleGetData();
+    handleOperation({
+      t,
+      apiReq: api.allRead(),
+      success: () => tableRef.value.handleGetData()
     });
   }
 
@@ -38,54 +44,28 @@ export function useUserNotice(tableRef: Ref) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
-    api
-      .batchRead({ pks: getKeyList(manySelectData.value, "pk") })
-      .then(async res => {
-        if (res.code === 1000) {
-          message(t("results.batchRead", { count: selectedNum.value }), {
-            type: "success"
-          });
-          tableRef.value.handleGetData();
-        } else {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-        }
-      });
+    handleOperation({
+      t,
+      apiReq: api.batchRead({ pks: getKeyList(manySelectData.value, "pk") }),
+      success: () => tableRef.value.handleGetData()
+    });
   }
 
-  const showDialog = (row, routeParams = null, searchFields = null) => {
-    if (row.unread) {
-      api.batchRead({ pks: [row.pk] });
-    }
-    addDialog({
-      title: t("userNotice.showSystemNotice"),
-      props: {
-        formInline: { ...row },
-        hasPublish: false
-      },
-      width: "70%",
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
-      hideFooter: true,
-      contentRenderer: () => h(NoticeShowForm),
-      closeCallBack: () => {
-        if (routeParams?.pk) {
-          searchFields.value.pk = "";
-        }
-        if (row.unread) {
-          if (searchFields) {
-            searchFields.value.pk = "";
-          }
-          tableRef.value.handleGetData();
-        }
-      }
-    });
-  };
+  const showDialog = createUserNoticeDialog({ t, api, tableRef });
 
-  const searchComplete = ({ routeParams, searchFields, dataList, res }) => {
+  const searchComplete = ({
+    routeParams,
+    searchFields,
+    dataList,
+    res
+  }: {
+    routeParams: RecordType;
+    searchFields: Ref<RecordType>;
+    dataList: Ref<RecordType[]>;
+    res: RecordType;
+  }) => {
     unreadCount.value = res.unread_count;
-    useUserStoreHook().SET_NOTICECOUNT(res.unread_count);
+    useNoticeStoreHook().SET_NOTICECOUNT(res.unread_count);
     if (
       routeParams.pk &&
       routeParams.pk === searchFields.value.pk &&
@@ -96,83 +76,23 @@ export function useUserNotice(tableRef: Ref) {
     }
   };
 
-  const selectionChange = data => {
+  const selectionChange = (data: RecordType[]) => {
     manySelectData.value = data;
     selectedNum.value = manySelectData.value.length ?? 0;
   };
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "title":
-          column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.level?.value}>{row.title}</el-text>
-          );
-          break;
-        case "unread":
-          column["cellRenderer"] = ({ row }) => (
-            <el-text type={row.unread ? "success" : "info"}>
-              {row.unread ? t("labels.unread") : t("labels.read")}
-            </el-text>
-          );
-          break;
-      }
-    });
-    return columns;
-  };
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("userNotice.batchRead"),
-        code: "batchRead",
-        props: {
-          type: "success",
-          icon: useRenderIcon(Success),
-          plain: true
-        },
-        onClick: () => {
-          handleManyRead();
-        },
-        confirm: {
-          title: () => {
-            return t("buttons.batchDeleteConfirm", {
-              count: selectedNum.value
-            });
-          }
-        },
-        show: () => {
-          return Boolean(auth.batchRead && selectedNum.value);
-        }
-      },
-      {
-        text: t("userNotice.allRead"),
-        code: "allRead",
-        props: {
-          type: "primary"
-        },
-        onClick: () => {
-          handleReadAll();
-        },
-        show: () => {
-          return Boolean(auth.allRead && unreadCount.value > 0);
-        }
-      }
-    ]
+  const { listColumnsFormat } = useUserNoticeColumns({ t });
+
+  const { tableBarButtonsProps, operationButtonsProps } = useUserNoticeButtons({
+    t,
+    auth,
+    selectedNum,
+    unreadCount,
+    onManyRead: handleManyRead,
+    onReadAll: handleReadAll,
+    openDetail: row => showDialog(row)
   });
 
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 100,
-    buttons: [
-      {
-        code: "detail",
-        text: t("buttons.detail"),
-        onClick({ row }) {
-          showDialog(row);
-        },
-        update: true
-      }
-    ]
-  });
   return {
     api,
     auth,

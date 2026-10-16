@@ -17,6 +17,41 @@
   padding: 0 2rem;
 }
 
+/* ================ 认证页外壳形态（设置面板 →「通用」→「登录页」） ================
+   panel-left：插画在左、表单在右（默认）；panel-right：左右对调；
+   panel-center：不显示插画，表单居中。窄屏（≤968px）一律隐藏插画、表单居中。
+   （本文件为原生 CSS，不使用嵌套语法） */
+
+[data-auth-panel="panel-right"] .login-container {
+  direction: rtl;
+}
+
+[data-auth-panel="panel-right"] .login-container > * {
+  direction: ltr;
+}
+
+[data-auth-panel="panel-right"] .img {
+  justify-content: flex-start;
+}
+
+[data-auth-panel="panel-right"] .wave {
+  right: 0;
+  left: auto;
+  transform: scaleX(-1);
+}
+
+[data-auth-panel="panel-center"] .login-container {
+  grid-template-columns: 1fr;
+}
+
+[data-auth-panel="panel-center"] .img {
+  display: none;
+}
+
+[data-auth-panel="panel-center"] .login-box {
+  justify-content: center;
+}
+
 .img {
   display: flex;
   justify-content: flex-end;
@@ -46,7 +81,7 @@
 .login-form h2 {
   text-transform: uppercase;
   margin: 15px 0;
-  color: #999;
+  color: hsl(var(--fg-subtle));
   font:
     bold 200% Consolas,
     Monaco,

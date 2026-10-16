@@ -1,12 +1,8 @@
 import "./index.css";
 import type { OptionsType } from "./type";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import {
-  isFunction,
-  isNumber,
-  useDark,
-  useResizeObserver
-} from "@pureadmin/utils";
+import { Z_INDEX } from "@/utils/zIndex";
+import { isFunction, isNumber, useResizeObserver } from "@pureadmin/utils";
 import {
   computed,
   defineComponent,
@@ -24,14 +20,19 @@ const props = {
     type: Array<OptionsType>,
     default: () => []
   },
-  /** 默认选中，按照第一个索引为 `0` 的模式，可选（`modelValue`只有传`number`类型时才为响应式） */
+  /**
+   * 默认选中，按照第一个索引为 `0` 的模式，可选（`modelValue`只有传`number`类型时才为响应式）。
+   * `Boolean` 是为 RePlusPage 表单布尔字段预留的兼容值：plus-pro-components 的
+   * PlusRender 会把表单字段原始布尔值强制注入为 `modelValue`（调用侧无法覆盖），
+   * 布尔值在本组件内不参与响应式，选中态回落到 `defaultValue` 驱动。
+   */
   modelValue: {
-    type: undefined,
+    type: [String, Number, Boolean] as PropType<string | number | boolean>,
     require: false,
     default: "0"
   },
   defaultValue: {
-    type: undefined,
+    type: [String, Number, Boolean] as PropType<string | number | boolean>,
     require: false,
     default: "0"
   },
@@ -63,20 +64,28 @@ export default defineComponent({
   setup(props, { emit }) {
     const width = ref(0);
     const translateX = ref(0);
-    const { isDark } = useDark();
     const initStatus = ref(false);
     const curMouseActive = ref(-1);
     const segmentedItembg = ref("");
     const instance = getCurrentInstance()!;
+    // 每个实例独立的 radio 组名：避免页面多个 ReSegmented 的选项互相串组
+    const radioName = `pure-segmented-${instance.uid}`;
     const curIndex = isNumber(props.modelValue)
       ? toRef(props, "modelValue")
       : isNumber(props.defaultValue)
         ? ref(computed(() => props.defaultValue))
         : ref(0);
 
-    function handleChange({ option, index }, event: Event) {
+    function handleChange({
+      option,
+      index
+    }: {
+      option: { disabled?: boolean };
+      index: number;
+    }) {
       if (props.disabled || option.disabled) return;
-      event.preventDefault();
+      // 不再阻止默认行为：选中语义交由原生 radio 维护（键盘方向键/读屏可用），
+      // 组件视觉选中态仍由 curIndex 驱动
       if (isNumber(props.modelValue)) {
         emit("update:modelValue", index);
       }
@@ -84,20 +93,21 @@ export default defineComponent({
       emit("change", { index, option });
     }
 
-    function handleMouseenter({ option, index }, event: Event) {
+    function handleMouseenter(
+      { option, index }: { option: { disabled?: boolean }; index: number },
+      event: Event
+    ) {
       if (props.disabled) return;
       event.preventDefault();
       curMouseActive.value = index;
       if (option.disabled || curIndex.value === index) {
         segmentedItembg.value = "";
       } else {
-        segmentedItembg.value = isDark.value
-          ? "#1f1f1f"
-          : "rgba(0, 0, 0, 0.06)";
+        segmentedItembg.value = "hsl(var(--fg) / 6%)";
       }
     }
 
-    function handleMouseleave(_, event: Event) {
+    function handleMouseleave(_: unknown, event: Event) {
       if (props.disabled) return;
       event.preventDefault();
       curMouseActive.value = -1;
@@ -155,24 +165,33 @@ export default defineComponent({
               background:
                 curMouseActive.value === index ? segmentedItembg.value : "",
               color: props.disabled
-                ? null
+                ? undefined
                 : !option.disabled &&
                     (curIndex.value === index || curMouseActive.value === index)
-                  ? isDark.value
-                    ? "rgba(255, 255, 255, 0.85)"
-                    : "rgba(0,0,0,.88)"
+                  ? "hsl(var(--fg) / 88%)"
                   : ""
             }}
             onMouseenter={event => handleMouseenter({ option, index }, event)}
             onMouseleave={event => handleMouseleave({ option, index }, event)}
-            onClick={event => handleChange({ option, index }, event)}
           >
-            <input type="radio" name="segmented" />
+            {/* 键盘/读屏可用：native radio 携带组名、选中态与禁用态，
+                由 change 事件统一处理（点击 label 会由浏览器转发到本 input） */}
+            <input
+              type="radio"
+              name={radioName}
+              value={String(index)}
+              checked={curIndex.value === index}
+              disabled={props.disabled || !!option?.disabled}
+              aria-label={
+                typeof option.label === "string" ? option.label : undefined
+              }
+              onChange={() => handleChange({ option, index })}
+            />
             <div
               class="pure-segmented-item-label"
               v-tippy={{
                 content: option?.tip,
-                zIndex: 41000
+                zIndex: Z_INDEX.tippy
               }}
             >
               {option.icon && !isFunction(option.label) ? (

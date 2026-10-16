@@ -4,7 +4,7 @@ import type { RequestMethods } from "@/utils/http/types";
 type ConfigResult = {
   detail: string;
   code: number;
-  config: object | number | boolean | string | any;
+  config: Partial<PlatformConfigs> & Record<string, unknown>;
   auth: string;
 };
 

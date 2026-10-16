@@ -12,8 +12,8 @@ import { isNumber } from "@pureadmin/utils";
 export default defineComponent({
   name: "ReNormalCountTo",
   props: countToProps,
-  emits: ["mounted", "callback"],
-  setup(props, { emit }) {
+  emits: ["mounted", "callback", "started", "finished"],
+  setup(props, { emit, slots }) {
     const state = reactive<{
       localStartVal: number;
       printVal: number | null;
@@ -22,7 +22,7 @@ export default defineComponent({
       localDuration: number | null;
       startTime: number | null;
       timestamp: number | null;
-      rAF: any;
+      rAF: number | null;
       remaining: number | null;
       color: string;
       fontSize: string;
@@ -36,8 +36,8 @@ export default defineComponent({
       timestamp: null,
       remaining: null,
       rAF: null,
-      color: null,
-      fontSize: "16px"
+      color: "",
+      fontSize: "var(--font-size-md)"
     });
 
     const getCountDown = computed(() => {
@@ -50,6 +50,15 @@ export default defineComponent({
       }
     });
 
+    // 缓动求值：显式传入 `transition`（TransitionPresets 形态，入参为 0→1 进度）
+    // 时优先于 easingFn，使调用方可直接复用 vueuse 预设
+    function ease(t: number, b: number, c: number, d: number) {
+      if (props.transition) {
+        return b + c * props.transition(t / d);
+      }
+      return props.easingFn(t, b, c, d);
+    }
+
     function start() {
       const { startVal, duration, color, fontSize } = props;
       state.localStartVal = startVal;
@@ -59,6 +68,7 @@ export default defineComponent({
       state.color = color;
       state.fontSize = fontSize;
       state.rAF = requestAnimationFrame(count);
+      emit("started");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -73,7 +83,7 @@ export default defineComponent({
     }
 
     function pause() {
-      cancelAnimationFrame(state.rAF);
+      if (state.rAF) cancelAnimationFrame(state.rAF);
     }
 
     function resume() {
@@ -86,28 +96,28 @@ export default defineComponent({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function reset() {
       state.startTime = null;
-      cancelAnimationFrame(state.rAF);
+      if (state.rAF) cancelAnimationFrame(state.rAF);
       state.displayValue = formatNumber(props.startVal);
     }
 
     function count(timestamp: number) {
-      const { useEasing, easingFn, endVal } = props;
+      const { useEasing, endVal } = props;
       if (!state.startTime) state.startTime = timestamp;
       state.timestamp = timestamp;
       const progress = timestamp - state.startTime;
       state.remaining = (state.localDuration as number) - progress;
-      if (useEasing) {
+      if (useEasing || props.transition) {
         if (unref(getCountDown)) {
           state.printVal =
             state.localStartVal -
-            easingFn(
+            ease(
               progress,
               0,
               state.localStartVal - endVal,
               state.localDuration as number
             );
         } else {
-          state.printVal = easingFn(
+          state.printVal = ease(
             progress,
             state.localStartVal,
             endVal - state.localStartVal,
@@ -137,6 +147,7 @@ export default defineComponent({
         state.rAF = requestAnimationFrame(count);
       } else {
         emit("callback");
+        emit("finished");
       }
     }
 
@@ -164,16 +175,16 @@ export default defineComponent({
     });
 
     return () => (
-      <>
-        <span
-          style={{
-            color: props.color,
-            fontSize: props.fontSize
-          }}
-        >
-          {state.displayValue}
-        </span>
-      </>
+      <span
+        style={{
+          color: props.color,
+          fontSize: props.fontSize
+        }}
+      >
+        {slots.prefix?.()}
+        {state.displayValue}
+        {slots.suffix?.()}
+      </span>
     );
   }
 });

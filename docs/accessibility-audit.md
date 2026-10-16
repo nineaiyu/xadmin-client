@@ -1,0 +1,151 @@
+# 可访问性（a11y）审计：菜单与表单
+
+> 审计日期：2026-09-08。范围：登录链路 + 全局导航（顶栏/侧栏）+ 表单输入的可访问性。
+> 方法：键盘走查（Tab/Enter/Space）+ 屏幕阅读器语义核对（role/aria-label/label 关联）+ 源码静态排查。
+
+## 一、已修复
+
+| #   | 位置                                  | 问题                                                           | 修复                                                                                  |
+| --- | ------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | `SidebarTopCollapse.vue` 折叠按钮     | `div` 纯点击目标：无 role/tabindex，键盘完全不可达，读屏无名称 | `role="button"` + `tabindex="0"` + `aria-label`（随展开态切换文案）+ Enter/Space 触发 |
+| 2   | `SidebarFullScreen.vue` 全屏切换      | `span` 无任何可访问名称（连 title 都没有）                     | 补 `title` + `role="button"` + `tabindex="0"` + `aria-label` + 键盘触发               |
+| 3   | 顶栏「项目配置」齿轮（`lay-navbar`）  | 有 title 但无 role/tabindex，读屏读不出用途                    | `role="button"` + `tabindex="0"` + `aria-label` + 键盘触发                            |
+| 4   | 顶栏语言切换触发器                    | `div` 无名称                                                   | `role="button"` + `tabindex="0"` + `aria-label`（EP dropdown 自带键盘导航）           |
+| 5   | 顶栏用户菜单触发器与头像              | 触发器无名称；`img` 无 alt，读屏读出图片地址                   | `aria-label`（用户菜单）+ `:alt="username"`                                           |
+| 6   | 顶栏消息通知触发器（`lay-notice`）    | 无名称                                                         | `role="button"` + `aria-label`                                                        |
+| 7   | 登录页账号/密码输入框                 | 仅有 placeholder（读屏不视作标签）                             | `el-input` 透传 `aria-label`                                                          |
+| 8   | 登录页「记住天数」原生 select         | 无关联标签（axe label，critical）                              | `aria-label`                                                                          |
+| 9   | 第三方登录图标（微信/支付宝/QQ/微博） | svg `role="img"` 无替代文本（axe svg-img-alt，serious）        | `aria-hidden="true"`（父级 span 已有 title，属装饰图标）                              |
+| 10  | 用户列表头像列 `el-image`             | 无头像用户 alt 属性缺失（axe image-alt，critical）             | alt 兜底「用户头像」                                                                  |
+
+> 备注：曾一并实现「适老模式主题（大字号/高对比）」，因观感不佳已于 2026-09-08 整体回滚（产品决策不做）。
+
+## 二、核对后无需修改
+
+- `el-menu` / `el-dropdown` / `el-dialog` / `el-tabs` 等 Element Plus 组件自带完整 role/aria 语义；
+- 面包屑使用 `el-breadcrumb`（nav + ol/li 语义）；
+- `RePlusPage` 动态表单经 `el-form-item` 关联 label，无需额外 aria；
+- 图标按钮若为 `el-button` + 文案（如表格操作列）有可访问名称。
+
+## 三、待办（滚动，不阻塞 N2 收口）
+
+| #   | 项                | 说明                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 表格数据语义      | ✅ **2026-10-11 完成**：`utils/tableA11y.ts::syncTableA11y` 单源收口——渲染后给「表头 / 表体」两张原生 `<table>` 写与 caption 等价的 `aria-label`（取页面标题，路由 `meta.title` 同源），并对带 `data-table-a11y-desc` 的说明节点建立 `aria-describedby`；`RePlusPage` 挂载后与列/数据变化后幂等同步；E2E 守护 = 数据表可访问名断言                            |
+| 2   | tabindex 显式编排 | ✅ **2026-10-11 结案**：核对确认 100/300/800/1000 的显式 Tab 编排已不存在（一期设计体系整改随 Motion/el-tabs 重构移除，全仓无残留）；键盘走查实测登录页 Tab 序列与视觉/DOM 顺序一致，无需恢复也无需移除（详见文末「键盘走查结案」）                                                                                                                           |
+| 3   | 焦点管理          | ✅ 2026-10-11 完成：EP `el-focus-trap` 内置「归还 `lastFocusBeforeTrapped`」，ReDialog/ReDrawer 零改码 + E2E 守护（键盘唤起 → Esc → 焦点回触发元素）                                                                                                                                                                                                          |
+| 4   | 自动化门禁        | **✅ 2026-09-08 完成**：`e2e/a11y.e2e.ts`（axe-core，登录页 + 用户管理页，wcag2a/2aa 的 critical/serious 阻断）。豁免登记见该文件 `ALLOWED_VIOLATIONS`（**2026-10-11 起为空表**），扩大白名单须同步登记本表                                                                                                                                                   |
+| 5   | 豁免项消化        | ✅ **2026-10-11 全量收尾（豁免表清零）**：历史豁免全部「修复 + 摘除」（逐项见文末「收尾」小节）：页签「更多」触发器、开关渲染器与登录页主题开关、菜单工具栏下拉、分页器下拉、节点编辑表格行内控件补可访问名；多值标签滚动区补 `tabindex`；`svg-img-alt` / `aria-roles .bar` / `color-contrast` 复扫无命中即摘除；**侧栏菜单 ARIA 结构两项由本地收口（见下）** |
+
+### 豁免登记明细（`ALLOWED_VIOLATIONS`）
+
+> **2026-10-11 起豁免表为空**：最后保留的侧栏菜单 ARIA 结构两项已本地收口（见下），其余历史条目均已「修复 + 摘除」，逐项见文末「收尾」小节。
+
+**侧栏菜单 ARIA 结构收口（2026-10-11，原框架级豁免 → 本地修复）**
+
+- 原问题：EP `el-menu` 根渲染 `ul[role="menubar"]`，叶子项渲染 `li[role="menuitem"]`；本项目为保留真实 `href`（中键新开 / 外链 / `a[href$=...]` 契约）用 `<a>` 包裹叶子项，形成 `menubar > a > li[role=menuitem]` → axe 判 `aria-required-children`（menubar 子级出现链接）与 `aria-required-parent`（menuitem 的父级是链接）。
+- 修复（`layout/components/lay-sidebar/components/SidebarItem.vue`）：`menuitem` 语义上移到链接（`a[role=menuitem]`，menubar 的合法子级），内层 `li` 置 `role="presentation"` 退出无障碍树；EP 菜单无键盘焦点导航、也无样式依赖 `[role=menuitem]`，行为与观感不变。
+- 验证：axe 探针全量复扫（`wcag2a/2aa`）该页零 `aria-required-*` 命中、无新增 `listitem` / `presentation-role-conflict` 命中；`e2e/a11y.e2e.ts` 双浏览器复绿。
+
+> 2026-09-08：`color-contrast` 曾增补 `el-link`（与 `el-button` 同取主题色）；该形态 2026-10-11 随主色切换（`#006be6`）达标后摘除。
+
+### 2026-09-24 补充登记（用户管理页行操作抽屉改造）
+
+| 规则                   | 命中形态                                                     | 原因                                                                                                                                                                                                                                                    | 移出条件                                                       |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `aria-required-parent` | `.is-active.el-menu-item[role="menuitem"]`（当前激活菜单项） | 同一 EP 菜单垂直模式 ARIA 结构问题的又一节点形态：axe 对「当前激活项」取最短唯一选择器（不带 `a[href$=...] >` / `.nest-menu` 前缀），既有豁免模式未覆盖。已用 axe 探针复核：命中节点全部位于侧栏菜单（`NavVertical` / `SidebarItem`），页面内容区零违规 | ✅ 2026-10-11 本地收口（`SidebarItem.vue` 语义上移），豁免摘除 |
+
+### 2026-09-24 补充登记（菜单管理页重构：树 + 抽屉扩面）
+
+菜单页纳入 axe 扫描（`a11y.e2e.ts` 新增用例，含编辑抽屉），过程中修掉的**本地可自治**项：
+
+| 修复项             | 位置                                      | 处理                                                                                   |
+| ------------------ | ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| 工具栏小字号文字   | `MenuTreeToolbar`（统计行、⌘K 提示）      | `--el-text-color-secondary`（白底 3:1）→ `--el-text-color-regular`（5.4:1）            |
+| 树行路径/计数/标签 | `MenuTreeRow`（路径、后代计数、类型标签） | 同上改用 regular；`el-tag` 的 light 效果文字色本地覆写 `--el-tag-text-color`           |
+| 停用行             | `MenuTreeRow`                             | 取消整行 `opacity`（会把正文压到 AA 以下），改为图标降饱和 + 行首状态点（非文本）      |
+| 抽屉类型选择       | `MenuDrawerForm`                          | `el-radio-button`（选中态白字主题底 2.9:1）→ 项目 `ReSegmented`（深色文字 + 主色描边） |
+| 抽屉状态开关       | `MenuDrawerForm`                          | 移除 `active-text`（EP 以主题色渲染文案，2.6:1），改 `aria-label` 承载可访问名         |
+
+| 规则             | 命中形态                                        | 原因                                                                                                                                                                                                  | 移出条件                           |
+| ---------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `color-contrast` | `button[label=...] > span`（抽屉/弹窗页脚按钮） | `ReDrawer`/`ReDialog` 默认页脚按钮为 `text + bg` 形态：主题色文字 + 浅底（2.9:1）。axe 取最短唯一选择器时不带 `el-button` 字面，故单列一条豁免；属框架级主题色问题，与既有 `el-button`/`el-link` 同源 | 框架页脚按钮改用可满足 AA 的配色后 |
+
+## 2026-09-12 扩面登记（流程配置抽屉场景，a11y 门禁扩面 W3）
+
+| 规则           | 命中形态                            | 原因                                                                                                                                                                               | 移出条件                            |
+| -------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| color-contrast | `.el-table__empty-text`             | EP 空表格占位文字对比度不足（主题级）                                                                                                                                              | 全局主题色/空态样式修复后           |
+| color-contrast | `.el-alert__title`                  | info alert 标题对比度不足（主题级）                                                                                                                                                | 同上                                |
+| color-contrast | `.el-badge__content--danger`        | 未读消息角标（danger 红底白字，EP Badge 默认配色 ≈3.9:1）；审批提醒/催办等通知类功能在跑批中随时产生未读，命中与否取决于采样窗口（2026-09-18 表单/审批深度功能交付后首次成批暴露） | EP Badge 配色调整或角标改深色底后   |
+| svg-img-alt    | `.iconify--*`（无 role="img" 形态） | Iconify 图标族无 alt（`--ri` 等变体无 role 属性）                                                                                                                                  | 图标渲染层统一补 aria-hidden/alt 后 |
+
+## 2026-09-14 治理批次（a11y 三件套 R1/R2/R4/R6 + 登录页对比度复核）
+
+| 项                      | 变更                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 状态                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| R1 ReSegmented          | 渲染原生 radio（实例唯一组名 / `checked` 同步 / change 统一处理 / 选项文案作可访问名），补 `:focus-visible` 焦点环；守护测试 `segmented.spec.ts`                                                                                                                                                                                                                                                                                                                    | ✅ 已修复                                                                     |
+| R2 工具栏可访问名       | `RePureTableBar` 刷新/密度/列设置/全屏/展开折叠/左右固定列图标补 `aria-label`（i18n）；部门树/菜单树/角色表单「更多」下拉、`ButtonOperation`「更多」按钮补 `aria-label`；**收窄豁免时补记**：`ButtonOperation` 对「无 text」按钮按 `tooltip.content` 自动补 `aria-label`（导出/导入等图标按钮），摘除 `el-tooltip__trigger` 豁免；并补齐菜单树/权限页 5 处 icon-only 按钮                                                                                           | ✅ 已修复                                                                     |
+| R4 焦点环恢复           | 删除 `reset.scss` 全局 `outline:none`（a/div）、EP 关闭按钮/消息关闭、侧栏图标、登录页 select 的 outline 抹除；新增全局 `:focus-visible` 主题环（`:where()` 降特异性，组件样式可覆盖）                                                                                                                                                                                                                                                                              | ✅ 已修复                                                                     |
+| R6 Iconify 渲染层       | 装饰性图标默认 `aria-hidden="true"`；图标承担交互语义时（EP dropdown 注入 role/tabindex/aria-*）自动恢复可访问，规避 `aria-hidden-focus`                                                                                                                                                                                                                                                                                                                            | ✅ 已修复                                                                     |
+| T4 z-index 阶梯         | 设置面板 40000/20000 → `--pure-z-index-setting-panel/mask`（1010/1005，低于 EP 弹层）；v-tippy 统一 9999（`utils/zIndex.ts` 与 `style/index.scss` 同源）                                                                                                                                                                                                                                                                                                            | ✅ 已修复                                                                     |
+| color-contrast 形态补充 | 登录页「忘记密码」（`.is-link > span`）/「登录」按钮（`.el-button--primary…`）/`el-divider__text`：**稳定采样（异步渲染 + 入场动画终态后）必现**的主题级对比度项；2026-09-14 以干净基线（HEAD + 相同等待）复核确认与本次改动无关（原用例采样窗口恰好躲开）                                                                                                                                                                                                          | ✅ 已解决：主色切换（`#006be6`）后对比度达标，2026-10-11 复扫无命中、豁免摘除 |
+| 豁免收窄（R2 延伸）     | 摘除 `button-name` 的 `el-tooltip__trigger` 豁免后门禁红：暴露 RePlusPage 导出/导入图标按钮无名（仅 tooltip，无可访问名）。修复：`ButtonOperation` 渲染层在「无 text 且无显式 aria-label」时按 `tooltip.content` 自动补 `aria-label`（框架级，覆盖所有页面操作按钮与表格工具栏）；同批全仓扫描「自我闭合的 icon-only 按钮」，补齐菜单树导出/导入、权限页编辑/复制/删除（`MenuTree.vue` / `permission/components/index.vue`），仓库内 icon-only 按钮已无可访问名缺口 | ✅ 已修复，双浏览器 a11y 全绿                                                 |
+
+> 豁免消化进度（待办 #5）：`button-name` 的 `el-tooltip__trigger` 形态已摘除（2026-09-14，
+> 收窄过程暴露并修复了导出/导入按钮无名的真实缺陷）；仍保留 `#el-id-*`（EP 动态 id）与
+> `svg-img-alt` 的 `[role="img"]` 形态豁免，属框架级问题，待上游/后续批次；
+> `color-contrast` 新增形态属同一主题级问题（换全局主题色时一并摘除）。
+
+## 2026-10-11 批次（三期 · 响应式与暗色深化 / a11y 深化）
+
+| 项                         | 变更                                                                                                                                                                                                                                                                                              | 状态                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| 表格数据语义               | 新增 `src/utils/tableA11y.ts`（幂等同步原生 `<table>` 的 `aria-label` + `aria-describedby`），接入 `RePlusPage`（可访问名取路由 `meta.title`，元数据缺失提示条作为说明节点）与 `ReReadonlyTable`（新增 `label` prop，缺省通用词条 `tableA11y.dataTable`）                                         | ✅ 已修复（E2E 断言表体可访问名）       |
+| 弹窗焦点归还               | 核对结论：EP `el-focus-trap` 的 `stopTrap` 已内置「归还 `lastFocusBeforeTrapped`」（键盘触发/焦点仍在陷阱内时必归还）；`ReDialog`/`ReDrawer` 无需改码，补 E2E 守护（键盘唤起 → Esc 关闭 → 焦点回到触发按钮，覆盖弹窗与抽屉）                                                                      | ✅ 已核对 + 守护                        |
+| 隐藏侧栏 Tab 焦点          | 移动端关闭态侧栏是 `transform` 移出画布（元素仍可聚焦）→ `layout/index.vue` 对 `NavVertical` 绑定 `:inert`（隐藏侧栏 / 移动端抽屉关闭时移除整棵子树的 Tab 键序与无障碍树）                                                                                                                        | ✅ 已修复（mobile 用例断言 inert 开合） |
+| 滑块验证码键盘操作         | `ReSliderCaptcha` 补 `role="slider"` + `tabindex="0"` + `aria-label`/`aria-valuenow`，方向键步进（10% 轨道、最少 8px）、`Home`/`End` 直达两端；`move` 事件载荷放宽为指针/键盘事件联合；触屏 `touch-action: none` 防拖拽滚页                                                                       | ✅ 已修复                               |
+| 四态容器语义               | `ReStateContainer` 加载态补 `aria-busy`（容器）与 `role="status"`（转圈 + 文案），读屏可播报「加载中」                                                                                                                                                                                            | ✅ 已修复                               |
+| 对比度收口                 | `element-plus.scss` 追加：`.el-table .el-table__empty-text` 与 `.el-alert--info .el-alert__title` 取 `--el-text-color-regular`（原 secondary/info 白底约 3.5:1）                                                                                                                                  | ✅ 已修复                               |
+| 豁免消化（color-contrast） | 主色切换（`#006be6`，白底 4.9:1）后，`el-button` / `el-link` / `.is-(link\|plain) > span` / ReDialog 页脚 `button[label=]` / `plus-form-item__label` 与上述两项收口的形态**全部摘除**；空态描述 `p` / `el-divider__text` / `el-badge__content--danger` 于同日「全量消化」批次进一步摘除（见文末） | ✅ 已收窄                               |
+| aria-required-parent 扩面  | 垂直菜单叶子项第三种取选择器形态（`a[href$=...] > .el-menu-item[role=menuitem]`，菜单数据新增后成批暴露）纳入豁免，与既有 `.submenu-title-noDropdown` / `.nest-menu` / `.is-active` 三形态同源                                                                                                    | ✅ 已扩面                               |
+| 扫描稳定化                 | `scanBlockingViolations` 命中违规时**等 500ms 复扫一次**并以稳定结果判定：登录页第三方登录区是 JS 驱动的异步入场，动画冻结样式不足以防半透明混色造成的瞬态假违规（此前靠 `color-contrast` 宽豁免掩盖）                                                                                            | ✅ 已修复                               |
+
+> 保留豁免的跟踪项见上表末行与 §「豁免登记明细」；`color-contrast` 最终仅剩 `#el-id-*`（EP 动态 id，框架级），其余形态均已在同日收口（见文末「全量消化」）。
+
+## 2026-10-11 收口（color-contrast 豁免全量消化）
+
+对照色豁免做了一轮「摘除 → 复扫 → 定性」的收口（`e2e/a11y.e2e.ts` 的 `ALLOWED_VIOLATIONS`）：
+
+| 动作            | 形态                                                                                                            | 结果                                                                                            |
+| --------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 摘除            | `el-button` / `el-link` / `.is-(link\|plain) > span` / ReDialog 页脚 `button[label=]` / `plus-form-item__label` | 主题色切换（`#006be6`，白底 4.9:1）后全部满足 AA，复扫无命中                                    |
+| 摘除 + 样式收口 | `el-table__empty-text` / `el-alert__title`                                                                      | 在 `element-plus.scss` 把两类文字收口到 `--el-text-color-regular`（原 secondary/info 约 3.5:1） |
+| 摘除            | 空态描述文字（`p`）/ `el-divider__text` / `el-badge__content--danger`                                           | 复扫实测无命中（前两者随主题色与文案色收敛达标；角标按当前扫描面未出现）                        |
+| 保留            | `#el-id-*`                                                                                                      | EP 动态 id 的关联缺失（框架级，非配色问题），仍在豁免表内                                       |
+
+> 口径：豁免表**只减不增**；本次摘除后若在其他扫描面命中，由门禁重新暴露并按上述路径定性（先看是否可本地收口，再决定是否登记）。
+
+## 2026-10-11 收尾（豁免全量消化 + 键盘走查结案）
+
+对照 `ALLOWED_VIOLATIONS` 做最后一轮「探针定性 → 修复 → 摘除 → 双浏览器复扫」，豁免表此后只剩 EP 菜单 ARIA 结构两项（该两项于同日「侧栏菜单 ARIA 结构收口」后清零）：
+
+| 动作        | 形态                                                                | 处理                                                                                                                    |
+| ----------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 修复 + 摘除 | `aria-command-name`：页签「更多」下拉触发器（仓库代码）无名         | `lay-tag/index.vue` 补 `aria-label`（`layout.more`）                                                                    |
+| 修复 + 摘除 | `label`：表格布尔列 `el-switch` 无名（RePlusPage 开关渲染器）       | 渲染器补列名 `aria-label`；登录页主题开关补 `layout.theme`                                                              |
+| 修复 + 摘除 | `label`：菜单工具栏三个筛选下拉无名                                 | `MenuTreeToolbar` 三个 `el-select` 补 `aria-label`（新增 `systemMenu.filter.{typeLabel,statusLabel,levelLabel}` 词条）  |
+| 修复 + 摘除 | `label`：分页器「每页条数」下拉无名（EP 无 props 入口）             | `utils/tableA11y.ts` 新增 `syncPaginationA11y`（EP 渲染后补 `aria-label`），接入 `RePlusPage`（`tableA11y.pageSize`）   |
+| 修复 + 摘除 | `label`：审批「节点」编辑表格行内控件无名（16 处）                  | `FlowNodesEditor.vue` 行内 select / input / input-number 补列名 `aria-label`                                            |
+| 修复 + 摘除 | `scrollable-region-focusable`：多值标签单元格横向滚动区不可键盘聚焦 | `renderers-detail.tsx` 的 `el-scrollbar` 补 `tabindex=0`（列 + 详情两处）                                               |
+| 摘除        | `svg-img-alt`（`[role="img"]` / `iconify--` 两形态）                | R6 渲染层统一后复扫无命中                                                                                               |
+| 摘除        | `aria-roles .bar`、`color-contrast` / `button-name` 的 `#el-id-*`   | 复扫无命中；保留项由门禁重新暴露                                                                                        |
+| 修复 + 摘除 | `aria-required-children` / `aria-required-parent`（侧栏菜单）       | `SidebarItem.vue` 把 `menuitem` 语义上移到链接、内层 `li` 置 `presentation`，结构合法化（见 §「豁免登记明细」收口小节） |
+
+**键盘走查结案（原待办 #2：登录/注册/重置页 tabindex 显式编排）**：
+
+- 核对：100/300/800/1000 的显式 Tab 编排**已不存在**（一期设计体系整改随 Motion/el-tabs 重构移除，全仓无残留）——待办的事实基础消失。
+- 实测（chromium，登录页 14 步 Tab 序列）：主题开关 → 语言切换 → 账号 → 密码 → 记住我 → 免登录天数 → 提示图标 → 忘记密码 → 登录 → 第三方登录 → 验证码登录 → 注册 → 页脚链接，**与视觉 / DOM 顺序一致，无错序**。
+- 走查顺带修复两处「可聚焦但无名称」元素：登录页语言切换触发器补 `aria-label`（`buttons.language`）；「天内免登录」提示图标以说明文案作可访问名（R6 机制自动解除其 `aria-hidden`）。
+
+> 复扫口径：`e2e/zz-*` 探针打印 axe 全部 critical/serious 节点（含豁免命中），逐项定性后收窄豁免表并跑 `e2e/a11y.e2e.ts` 双浏览器（10 用例）复验全绿。

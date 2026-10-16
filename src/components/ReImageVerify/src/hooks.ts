@@ -1,9 +1,11 @@
+import { isSuccess } from "@/api/types";
 import { onMounted, ref } from "vue";
 import { getCaptchaApi } from "@/api/auth";
-import { useUserStoreHook } from "@/store/modules/user";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import type { Ref } from "vue";
 import { delay } from "@pureadmin/utils";
 
-export const useImageVerify = imgCode => {
+export const useImageVerify = (imgCode: Ref<string | undefined>) => {
   // const imgCode = ref("");
   const imgUrl = ref("");
   const loading = ref(false);
@@ -12,10 +14,10 @@ export const useImageVerify = imgCode => {
     loading.value = true;
     getCaptchaApi()
       .then(res => {
-        if (res.code === 1000) {
+        if (isSuccess(res)) {
           imgUrl.value = res.captcha_image;
           imgCode.value = res.captcha_key;
-          useUserStoreHook().SET_VERIFY_CODE_LENGTH(res.length);
+          useLoginPageStoreHook().SET_VERIFY_CODE_LENGTH(res.length);
         }
       })
       .finally(() => {

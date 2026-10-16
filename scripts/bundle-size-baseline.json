@@ -1,0 +1,511 @@
+{
+  "updated": "2026-10-10",
+  "budget_kb": 15,
+  "i18n_budget_kb": 15,
+  "closure_gzip9_kb": 452.8,
+  "code_gzip9_kb": 374.2,
+  "i18n_gzip9_kb": 78.6,
+  "main_chunk_gzip9_kb": 79.7,
+  "chunks": [
+    {
+      "name": "index.js",
+      "file": "index-BKnwYMNF.js",
+      "kb": 79.7
+    },
+    {
+      "name": "rolldown.js",
+      "file": "rolldown-runtime-B0Z9INg1.js",
+      "kb": 0.5
+    },
+    {
+      "name": "vue.js",
+      "file": "vue-core-D3jIvNLe.js",
+      "kb": 88.8
+    },
+    {
+      "name": "use.js",
+      "file": "use-namespace-DW3AWyQq.js",
+      "kb": 1.7
+    },
+    {
+      "name": "isSymbol.js",
+      "file": "isSymbol-D8PdFrv9.js",
+      "kb": 0.1
+    },
+    {
+      "name": "toNumber.js",
+      "file": "toNumber-CnhgGqrr.js",
+      "kb": 0.4
+    },
+    {
+      "name": "_baseFindIndex.js",
+      "file": "_baseFindIndex-DJTbU7Iu.js",
+      "kb": 0.1
+    },
+    {
+      "name": "isArray.js",
+      "file": "isArray-CeA54qlt.js",
+      "kb": 0
+    },
+    {
+      "name": "_baseGet.js",
+      "file": "_baseGet-BMDGkfW5.js",
+      "kb": 1.5
+    },
+    {
+      "name": "get.js",
+      "file": "get-DPXhtZC5.js",
+      "kb": 0.1
+    },
+    {
+      "name": "castArray.js",
+      "file": "castArray-DpSPKhq1.js",
+      "kb": 0.1
+    },
+    {
+      "name": "clamp.js",
+      "file": "clamp-DkMX2xxX.js",
+      "kb": 0.2
+    },
+    {
+      "name": "_assignValue.js",
+      "file": "_assignValue-Cf0Xrh_g.js",
+      "kb": 0.3
+    },
+    {
+      "name": "_arrayPush.js",
+      "file": "_arrayPush-zI2N0AJn.js",
+      "kb": 0.3
+    },
+    {
+      "name": "_Uint8Array.js",
+      "file": "_Uint8Array-C8Rqrbr5.js",
+      "kb": 1.7
+    },
+    {
+      "name": "isEqual.js",
+      "file": "isEqual-BaFi_kyN.js",
+      "kb": 1.5
+    },
+    {
+      "name": "flatten.js",
+      "file": "flatten-B0RiiXht.js",
+      "kb": 0.3
+    },
+    {
+      "name": "_flatRest.js",
+      "file": "_flatRest-Ck8v1ZaK.js",
+      "kb": 0.5
+    },
+    {
+      "name": "_baseSet.js",
+      "file": "_baseSet-D9pdikQ7.js",
+      "kb": 0.3
+    },
+    {
+      "name": "runtime.js",
+      "file": "runtime-DOhWdvmj.js",
+      "kb": 0.5
+    },
+    {
+      "name": "use.js",
+      "file": "use-aria-DBfOqeSX.js",
+      "kb": 0.5
+    },
+    {
+      "name": "_baseIteratee.js",
+      "file": "_baseIteratee-YVaieoJC.js",
+      "kb": 0.7
+    },
+    {
+      "name": "types.js",
+      "file": "types-DHfUJNKF.js",
+      "kb": 0.3
+    },
+    {
+      "name": "error.js",
+      "file": "error-DMMVDOWd.js",
+      "kb": 0.2
+    },
+    {
+      "name": "en.js",
+      "file": "en-CCQmScpP.js",
+      "kb": 1.5
+    },
+    {
+      "name": "use.js",
+      "file": "use-locale-ZpsUsRje.js",
+      "kb": 0.3
+    },
+    {
+      "name": "use.js",
+      "file": "use-size-vtytBCMZ.js",
+      "kb": 0.2
+    },
+    {
+      "name": "use.js",
+      "file": "use-empty-values-BdPFYQ5j.js",
+      "kb": 0.5
+    },
+    {
+      "name": "dist.js",
+      "file": "dist-CeBhbL84.js",
+      "kb": 6
+    },
+    {
+      "name": "icon.js",
+      "file": "icon-1JMrW6dS.js",
+      "kb": 0.3
+    },
+    {
+      "name": "browser.js",
+      "file": "browser-B9yUyg3b.js",
+      "kb": 0.1
+    },
+    {
+      "name": "event.js",
+      "file": "event-B734543A.js",
+      "kb": 0.5
+    },
+    {
+      "name": "icon.js",
+      "file": "icon-DdgfbA5S.js",
+      "kb": 1.4
+    },
+    {
+      "name": "strings.js",
+      "file": "strings-C6tZECVo.js",
+      "kb": 0.1
+    },
+    {
+      "name": "_plugin.js",
+      "file": "_plugin-vue_export-helper-BDNMzG2s.js",
+      "kb": 0.1
+    },
+    {
+      "name": "scroll.js",
+      "file": "scroll-D7s4YxlG.js",
+      "kb": 0.6
+    },
+    {
+      "name": "use.js",
+      "file": "use-id-CIc_OgLv.js",
+      "kb": 0.4
+    },
+    {
+      "name": "event.js",
+      "file": "event-BGnHezxC.js",
+      "kb": 0.1
+    },
+    {
+      "name": "use.js",
+      "file": "use-composition-NEVszxox.js",
+      "kb": 0.6
+    },
+    {
+      "name": "constants.js",
+      "file": "constants-BKCOR4Du.js",
+      "kb": 0.1
+    },
+    {
+      "name": "use.js",
+      "file": "use-form-common-props-BCz1QH4F.js",
+      "kb": 0.4
+    },
+    {
+      "name": "use.js",
+      "file": "use-form-item-D5JxsgA1.js",
+      "kb": 0.5
+    },
+    {
+      "name": "vnode.js",
+      "file": "vnode-BlzLDjhY.js",
+      "kb": 0.5
+    },
+    {
+      "name": "isUndefined.js",
+      "file": "isUndefined-BB8dIdo-.js",
+      "kb": 0.1
+    },
+    {
+      "name": "use.js",
+      "file": "use-z-index-CHMKjo6-.js",
+      "kb": 0.4
+    },
+    {
+      "name": "focus.js",
+      "file": "focus-trap-Cpn4cvw5.js",
+      "kb": 2.2
+    },
+    {
+      "name": "tooltip.js",
+      "file": "tooltip-Da9RACCB.js",
+      "kb": 14
+    },
+    {
+      "name": "util.js",
+      "file": "util-BpfF8615.js",
+      "kb": 0.2
+    },
+    {
+      "name": "numbers.js",
+      "file": "numbers-DxlMDwH2.js",
+      "kb": 0.1
+    },
+    {
+      "name": "scrollbar.js",
+      "file": "scrollbar-BMq77DZl.js",
+      "kb": 2.9
+    },
+    {
+      "name": "tag.js",
+      "file": "tag-D84XCgIf.js",
+      "kb": 0.9
+    },
+    {
+      "name": "click.js",
+      "file": "click-outside-NydGEBxb.js",
+      "kb": 0.5
+    },
+    {
+      "name": "select.js",
+      "file": "select-CLmKskXt.js",
+      "kb": 10.7
+    },
+    {
+      "name": "_baseClone.js",
+      "file": "_baseClone-Dh2_RXti.js",
+      "kb": 1.9
+    },
+    {
+      "name": "omit.js",
+      "file": "omit-DS6MGmvQ.js",
+      "kb": 0.6
+    },
+    {
+      "name": "cloneDeep.js",
+      "file": "cloneDeep-DToL6QQo.js",
+      "kb": 0.1
+    },
+    {
+      "name": "objects.js",
+      "file": "objects-Bd_3mmr8.js",
+      "kb": 0.2
+    },
+    {
+      "name": "debounce.js",
+      "file": "debounce-J-dtrU7n.js",
+      "kb": 0.6
+    },
+    {
+      "name": "throttle.js",
+      "file": "throttle-BX4bPX0W.js",
+      "kb": 0.2
+    },
+    {
+      "name": "use.js",
+      "file": "use-global-config-D4PEKPK-.js",
+      "kb": 0.8
+    },
+    {
+      "name": "typescript.js",
+      "file": "typescript-DOc6skV4.js",
+      "kb": 0
+    },
+    {
+      "name": "message.js",
+      "file": "message-5WhMmM2Z.js",
+      "kb": 3.6
+    },
+    {
+      "name": "raf.js",
+      "file": "raf-C0VrdK-x.js",
+      "kb": 0.2
+    },
+    {
+      "name": "use.js",
+      "file": "use-attrs-BSLY4-cY.js",
+      "kb": 0.4
+    },
+    {
+      "name": "input.js",
+      "file": "input-B-xwA9KC.js",
+      "kb": 5.4
+    },
+    {
+      "name": "use.js",
+      "file": "use-deprecated-CAdNx6cC.js",
+      "kb": 0.3
+    },
+    {
+      "name": "module.js",
+      "file": "module-CIMi3Sih.js",
+      "kb": 4.8
+    },
+    {
+      "name": "button.js",
+      "file": "button-C1Sf9VMv.js",
+      "kb": 2.3
+    },
+    {
+      "name": "directive.js",
+      "file": "directive-AHXU6iTM.js",
+      "kb": 11.4
+    },
+    {
+      "name": "dist.js",
+      "file": "dist-qZb2wMUp.js",
+      "kb": 6.9
+    },
+    {
+      "name": "message.js",
+      "file": "message-CEezxaTL.js",
+      "kb": 0.3
+    },
+    {
+      "name": "preload.js",
+      "file": "preload-helper-CU6kWphI.js",
+      "kb": 0.7
+    },
+    {
+      "name": "i18n.js",
+      "file": "i18n-ceoGRqPw.js",
+      "kb": 78.6
+    },
+    {
+      "name": "types.js",
+      "file": "types-Dr3d1fKO.js",
+      "kb": 0
+    },
+    {
+      "name": "websocket.js",
+      "file": "websocket-Bx-dyweH.js",
+      "kb": 13.7
+    },
+    {
+      "name": "progress.js",
+      "file": "progress-cA_cBVh8.js",
+      "kb": 1.8
+    },
+    {
+      "name": "aes.js",
+      "file": "aes-6iTp4pTD.js",
+      "kb": 5.7
+    },
+    {
+      "name": "user.js",
+      "file": "user-6JdN6ZIl.js",
+      "kb": 16.6
+    },
+    {
+      "name": "validator.js",
+      "file": "validator-Dw3Nk5pk.js",
+      "kb": 0.1
+    },
+    {
+      "name": "use.js",
+      "file": "use-lockscreen-CnWO6cu5.js",
+      "kb": 0.5
+    },
+    {
+      "name": "message.js",
+      "file": "message-box-BkR5dHIa.js",
+      "kb": 5.2
+    },
+    {
+      "name": "_plugin.js",
+      "file": "_plugin-vue_export-helper-B8BmMbpX.js",
+      "kb": 0.1
+    },
+    {
+      "name": "http.js",
+      "file": "http-Vvq-XbR4.js",
+      "kb": 5.7
+    },
+    {
+      "name": "utils.js",
+      "file": "utils-BxS9Kgzg.js",
+      "kb": 29.4
+    },
+    {
+      "name": "router.js",
+      "file": "router-DOoJpHbZ.js",
+      "kb": 1.8
+    },
+    {
+      "name": "alert.js",
+      "file": "alert-BhP-HCI5.js",
+      "kb": 1
+    },
+    {
+      "name": "container.js",
+      "file": "container-BJEIi6p_.js",
+      "kb": 0.7
+    },
+    {
+      "name": "descriptions.js",
+      "file": "descriptions-BViHBwtH.js",
+      "kb": 1.9
+    },
+    {
+      "name": "collapse.js",
+      "file": "collapse-transition-08TBfYAI.js",
+      "kb": 0.5
+    },
+    {
+      "name": "checkbox.js",
+      "file": "checkbox-DeMFESsQ.js",
+      "kb": 3.6
+    },
+    {
+      "name": "col.js",
+      "file": "col-BOjLjuPI.js",
+      "kb": 0.7
+    },
+    {
+      "name": "repeat.js",
+      "file": "repeat-click-BmwU17Jm.js",
+      "kb": 0.4
+    },
+    {
+      "name": "menu.js",
+      "file": "menu-DfFi8t8I.js",
+      "kb": 5.4
+    },
+    {
+      "name": "use.js",
+      "file": "use-wheel-DMbtghF9.js",
+      "kb": 0.3
+    },
+    {
+      "name": "position.js",
+      "file": "position-Dp-Yfcsh.js",
+      "kb": 0.2
+    },
+    {
+      "name": "use.js",
+      "file": "use-ordered-children-Atgb3Xjy.js",
+      "kb": 0.5
+    },
+    {
+      "name": "tabs.js",
+      "file": "tabs-BAFgkQgW.js",
+      "kb": 4.9
+    },
+    {
+      "name": "ReEmpty.js",
+      "file": "ReEmpty-6713BUsR.js",
+      "kb": 4.2
+    },
+    {
+      "name": "base.js",
+      "file": "base-CntIZrxQ.js",
+      "kb": 1
+    },
+    {
+      "name": "auth.js",
+      "file": "auth-DdKuRmRs.js",
+      "kb": 0.7
+    }
+  ]
+}

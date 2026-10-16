@@ -4,7 +4,7 @@ import type { ExpiresData, LocalForage, ProxyStorage } from "./types.d";
 class StorageProxy implements ProxyStorage {
   protected storage: LocalForage;
 
-  constructor(storageModel) {
+  constructor(storageModel: LocalForage) {
     this.storage = storageModel;
     this.storage.config({
       // 首选IndexedDB作为第一驱动，不支持IndexedDB会自动降级到localStorage（WebSQL被弃用，详情看https://developer.chrome.com/blog/deprecating-web-sql）
@@ -36,20 +36,21 @@ class StorageProxy implements ProxyStorage {
   }
 
   /**
-   * @description 从离线仓库中获取对应键名的值
+   * @description 从离线仓库中获取对应键名的值（过期 / 不存在时为 null）
    * @param k 键名
    */
-  public async getItem<T>(k: string): Promise<T> {
+  public async getItem<T>(k: string): Promise<T | null> {
     return new Promise((resolve, reject) => {
       this.storage
-        .getItem(k)
-        .then((value: ExpiresData<T>) => {
+        .getItem<ExpiresData<T>>(k)
+        .then(value => {
           if (
             value &&
             (value.expires > new Date().getTime() || value.expires === 0)
           ) {
             resolve(value.data);
           } else {
+            // 过期/不存在：如实返回 null（签名已声明 T | null）
             resolve(null);
           }
         })

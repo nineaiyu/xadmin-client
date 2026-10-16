@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
+
+env:
+  # 契约/文档门禁依赖的服务端检出源（仓库与分支收口在此，切换上游只改这里）
+  XADMIN_SERVER_REPO: nineaiyu/xadmin-server
+  XADMIN_SERVER_REF: dev
 
 jobs:
   build:
@@ -19,13 +26,13 @@ jobs:
       - name: Install Nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 24
 
       - uses: pnpm/action-setup@v3
         name: Install pnpm
         id: pnpm-install
         with:
-          version: 10
+          version: 11.25.0
           run_install: false
 
       - name: Get pnpm store directory
@@ -42,12 +49,132 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Prettier format check
+        run: pnpm lint:prettier:check
+
       - name: Start Lint Code
         run: |
-          pnpm install --no-frozen-lockfile
+          # frozen：CI 必须按 pnpm-lock.yaml 精确安装，lockfile 漂移应显式失败而非被静默消化
+          pnpm install --frozen-lockfile
           pnpm lint
+          # strict 全仓单轨（src / build / mock / types / e2e，含 e2e）：任何 strict 回归即失败。
+          # 2026-09-26 双轨收敛：tsconfig.strict.json 已删除，typecheck 本身即 strict 门禁
           pnpm typecheck
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: File length gate (anti-regression)
+        # 防巨型文件回潮：>500 行新增即失败；存量基线只减不增（scripts/check-file-length.mjs）
+        run: node scripts/check-file-length.mjs
+
+      - name: Quarantine manifest gate
+        # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
+        # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）
+        run: node scripts/check-quarantine.mjs
+
+      - name: as-unknown-as baseline gate
+        # 类型逃逸防回潮：`as unknown as` 新文件即失败、存量按文件基线只减不增
+        # （scripts/check-as-unknown.mjs，初始 109 处 / 70 文件）
+        run: pnpm check:as-unknown
+
+      - name: Module cycle gate
+        # 顶层静态导入图成环会让环内模块的求值顺序依赖加载入口，class extends 等
+        # 「基类先初始化」的引用在特定入口序下求值失败（典型：api/base → utils/http
+        # → utils/auth → store → api/auth → api/base）。store 层调用依赖 http 链路的
+        # api 一律在动作内动态 import()，本门禁对结构性静态边与初等环清单双重校验
+        # （scripts/check-module-cycles.mjs；豁免项在脚本顶部登记并附原因）
+        run: pnpm check:module-cycles
+
+      - name: Hook length gate (anti-regression)
+        # 超长 hook 形态文件防回潮：useXxx / hook 文件 ≥120 行新增即失败（scripts/check-hook-length.mjs）
+        run: pnpm check:hook-length
+
+      - name: First-screen entry closure gate
+        # 首屏入口白名单：main.ts / App.vue 的顶层静态导入逐条登记（新增即失败）。
+        # bundle-size 的 15KB 预算是总账，拦不住数 KB 级块悄然进闭包；
+        # 本门禁把「谁能进首屏根」显式化（scripts/check-entry-closure.mjs）
+        run: pnpm check:entry-closure
+
+      - name: Success-code literal baseline gate
+        # 业务码判定散点防回潮：`code === SUCCESS_CODE` 式比较按文件基线只减不增，
+        # 统一入口是 isSuccess()（scripts/check-success-code.mjs）
+        run: pnpm check:success-code
+
+      - name: Platform-config params gate
+        # 项目参数生效门禁：platform-config.json 每个键必须有消费点（无死参数），
+        # 注入偏好存储的键必须登记在站点配置 PATCH 清单（scripts/check-platform-config.mjs）
+        run: pnpm check:platform-config
+
+      - name: i18n keys gate
+        # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
+        # 两侧 key 集合必须完全对称；词条值含 <tag> 会让 unplugin-vue-i18n 转换期
+        # 直接抛错（locale 模块整块失败），门禁一并拦截（scripts/check-i18n-keys.mjs）
+        run: pnpm check:i18n
+
+      - name: Bundle size snapshot gate
+        # 首屏 KPI 为「增长预算制」：闭包 gzip9 拆「代码」与「i18n 语料」两账本，
+        # 各自相比基线增长超过 15 KB 即失败（语料增长是产品资产，不与代码增量互相挤占），
+        # 确属必要增量时在 PR 说明后执行 pnpm check:bundle-size -- --update 刷新基线
+        # （基线登记与口径见 xadmin-server/docs/metrics.md）
+        run: |
+          pnpm build
+          pnpm check:bundle-size
+
+      - name: Run Unit Tests (coverage gate)
+        # vitest 覆盖率阈值（statements/branches/functions/lines）在 CI 强制生效
+        run: pnpm test:coverage
+
+      - name: Metadata contract types are up to date
+        run: |
+          pnpm gen:metadata-types
+          git diff --exit-code -- src/api/types
+
+      - name: Contract generated types have consumers
+        # 生成物必须有 import 方：search-columns / search-fields / ws-frame 三份曾长期
+        # 零引用（"生成即完成"假象，载荷类型仍手写）。新增 schema 无消费方时先接入再生成
+        run: pnpm check:contract-usage
+
+      - name: Checkout contract source (xadmin-server)
+        # 服务端是契约唯一真源：检出其开发分支用于校验镜像是否漂移
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.XADMIN_SERVER_REPO }}
+          ref: ${{ env.XADMIN_SERVER_REF }}
+          path: xadmin-server
+
+      - name: Set up Python (docs gates)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Docs gates (client side)
+        # 复用服务端脚本就地守护客户端文档：事实（Node/pnpm 版本）+ 索引登记 + 文档路径可达性
+        env:
+          XADMIN_CLIENT_DIR: ${{ github.workspace }}
+        run: |
+          python xadmin-server/scripts/check_doc_facts.py
+          python xadmin-server/scripts/check_doc_index.py
+          python xadmin-server/scripts/check_doc_paths.py
+
+      - name: Metadata contract mirror is in sync
+        # 客户端 contract/schema 为服务端 docs/schema 的镜像；
+        # 服务端改契约而镜像未同步时在此失败（此前两侧无任何一致性校验）
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:contract
+
+      - name: Menu permission points reconcile with seed
+        # 前端消费点 ↔ menu.json 种子双向对账（方向 A 种子无消费 / 方向 B 前端无种子 /
+        # 页面 URL=目录例外登记），白名单登记于服务端 docs/guide/menu-maintenance.md §5
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:menu-permissions
+
+      - name: Version is in sync with xadmin-server
+        # 前后端版本号必须同步提升：发布侧另有 tag 门禁（server build-image.yml），
+        # 这里把校验前移到提交/PR 阶段，避免发版时才暴露
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:version

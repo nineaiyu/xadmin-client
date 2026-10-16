@@ -1,13 +1,12 @@
 import "./circled.css";
 import Cropper from "cropperjs";
 import { ElUpload } from "element-plus";
-import type { CSSProperties } from "vue";
+import type { CSSProperties, Ref } from "vue";
 import {
   computed,
   defineComponent,
   onMounted,
   onUnmounted,
-  type PropType,
   ref,
   unref
 } from "vue";
@@ -18,7 +17,6 @@ import {
   debounce,
   delay,
   downloadByBase64,
-  isArray,
   useResizeObserver
 } from "@pureadmin/utils";
 import {
@@ -38,63 +36,26 @@ import {
   Upload
 } from "./svg";
 import { useI18n } from "vue-i18n";
-import GetCroppedCanvasOptions = Cropper.GetCroppedCanvasOptions;
 
-type Options = Cropper.Options;
+import {
+  buildImageStyle,
+  buildWrapperStyle,
+  cropperProps,
+  defaultOptions,
+  getRoundedCanvas,
+  resolveImageQuality
+} from "./utils";
 
-const defaultOptions: Options = {
-  aspectRatio: 1,
-  viewMode: 1,
-  zoomable: true,
-  zoomOnTouch: true,
-  zoomOnWheel: true,
-  cropBoxMovable: true,
-  cropBoxResizable: true,
-  toggleDragModeOnDblclick: true,
-  autoCrop: true,
-  background: true,
-  highlight: true,
-  center: true,
-  responsive: true,
-  restore: true,
-  checkCrossOrigin: true,
-  checkOrientation: true,
-  scalable: true,
-  autoCropArea: 1,
-  modal: true,
-  guides: true,
-  movable: true,
-  rotatable: true
-};
-
-const props = {
-  src: { type: String, required: true },
-  errSrc: { type: String, required: true },
-  quality: { type: Number, required: false, default: 0.98 },
-  type: { type: String, required: false, default: "image/png" },
-  alt: { type: String },
-  circled: { type: Boolean, default: false },
-  /** 是否可以通过点击裁剪区域关闭右键弹出的功能菜单，默认 `true` */
-  isClose: { type: Boolean, default: true },
-  realTimePreview: { type: Boolean, default: true },
-  height: { type: [String, Number], default: "360px" },
-  crossorigin: {
-    type: String as PropType<"" | "anonymous" | "use-credentials" | undefined>,
-    default: "anonymous"
-  },
-  imageStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
-  options: { type: Object as PropType<Options>, default: () => ({}) },
-  canvasOption: {
-    type: Object as PropType<GetCroppedCanvasOptions> | any,
-    default: () => ({ maxHeight: 1280, maxWidth: 960 })
-  }
-};
+/** 裁剪器命令：模板按钮 / 长按手势触发的动作集合（对应 Cropper 实例方法） */
+type CropperCommand =
+  "reset" | "move" | "scaleX" | "scaleY" | "rotate" | "zoom";
 
 export default defineComponent({
   name: "ReCropper",
-  props,
+  props: cropperProps,
   setup(props, { attrs, emit }) {
-    const tippyElRef = ref<ElRef<HTMLImageElement>>();
+    // tippy 挂载容器（模板最外层 div），非 img
+    const tippyElRef = ref<ElRef<HTMLDivElement>>();
     const imgElRef = ref<ElRef<HTMLImageElement>>();
     const cropper = ref<Nullable<Cropper>>();
     const inCircled = ref(props.circled);
@@ -114,13 +75,9 @@ export default defineComponent({
     };
     const debounceRealTimeCroppered = debounce(realTimeCroppered, 80);
     const { t } = useI18n();
-    const getImageStyle = computed((): CSSProperties => {
-      return {
-        height: props.height,
-        maxWidth: "100%",
-        ...props.imageStyle
-      };
-    });
+    const getImageStyle = computed((): CSSProperties =>
+      buildImageStyle(props.height, props.imageStyle)
+    );
 
     const getClass = computed(() => {
       return [
@@ -133,19 +90,18 @@ export default defineComponent({
 
     const iconClass = computed(() => {
       return [
-        "p-[6px]",
-        "h-[30px]",
-        "w-[30px]",
+        "p-1.5",
+        "size-7.5",
+        "rounded-sm",
         "outline-hidden",
-        "rounded-[4px]",
         "cursor-pointer",
-        "hover:bg-[rgba(0,0,0,0.06)]"
+        "hover:bg-fill"
       ];
     });
 
-    const getWrapperStyle = computed((): CSSProperties => {
-      return { height: `${props.height}`.replace(/px/, "") + "px" };
-    });
+    const getWrapperStyle = computed((): CSSProperties =>
+      buildWrapperStyle(props.height)
+    );
 
     onMounted(init);
 
@@ -158,7 +114,10 @@ export default defineComponent({
       scaleY = 1;
     });
 
-    useResizeObserver(tippyElRef, () => handCropper("reset"));
+    // useResizeObserver 的 ElementRef 声明为非空 value：容器 ref 的可空性在此收窄
+    useResizeObserver(tippyElRef as Ref<HTMLDivElement>, () =>
+      handCropper("reset")
+    );
 
     async function init() {
       const imgEl = unref(imgElRef);
@@ -195,30 +154,11 @@ export default defineComponent({
       const canvas = inCircled.value
         ? getRoundedCanvas(sourceCanvas)
         : sourceCanvas;
-      let quality = props.quality;
-      let type = props.type;
-      if (quality == 0) {
-        const rules = [
-          { value: 0, type: "image/png", quality: 1 },
-          { value: 0.1, type: "image/jpeg", quality: 0.98 },
-          { value: 0.2, type: "image/jpeg", quality: 0.7 },
-          { value: 1, type: "image/jpeg", quality: 0.6 },
-          { value: 5, type: "image/jpeg", quality: 0.5 },
-          { value: 10, type: "image/jpeg", quality: 0.2 }
-        ];
-        rules.sort((a, b) => {
-          return b.value - a.value;
-        });
-        const size = canvas.width * canvas.height;
-        for (let i = 0; i < rules.length; i++) {
-          if (size > 1024 * 1024 * rules[i].value) {
-            quality = rules[i].quality;
-            type = rules[i].type;
-            console.log("get quality", size / 1024, rules[i]);
-            break;
-          }
-        }
-      }
+      const { quality, type } = resolveImageQuality(
+        canvas,
+        props.quality,
+        props.type
+      );
       // https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLCanvasElement/toBlob
       canvas.toBlob(
         blob => {
@@ -248,30 +188,7 @@ export default defineComponent({
       );
     }
 
-    function getRoundedCanvas(sourceCanvas) {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d")!;
-      const width = sourceCanvas.width;
-      const height = sourceCanvas.height;
-      canvas.width = width;
-      canvas.height = height;
-      context.imageSmoothingEnabled = true;
-      context.drawImage(sourceCanvas, 0, 0, width, height);
-      context.globalCompositeOperation = "destination-in";
-      context.beginPath();
-      context.arc(
-        width / 2,
-        height / 2,
-        Math.min(width, height) / 2,
-        0,
-        2 * Math.PI,
-        true
-      );
-      context.fill();
-      return canvas;
-    }
-
-    function handCropper(event: string, arg?: number | Array<number>) {
+    function handCropper(event: CropperCommand, arg?: number | Array<number>) {
       if (event === "scaleX") {
         scaleX = arg = scaleX === -1 ? 1 : -1;
       }
@@ -279,18 +196,35 @@ export default defineComponent({
       if (event === "scaleY") {
         scaleY = arg = scaleY === -1 ? 1 : -1;
       }
-      if (arg && isArray(arg)) {
-        cropper.value?.[event]?.(...arg);
-      } else {
-        cropper.value?.[event]?.(arg);
+      const instance = cropper.value;
+      if (!instance) return;
+      switch (event) {
+        case "reset":
+          instance.reset();
+          break;
+        case "move":
+          if (Array.isArray(arg)) instance.move(arg[0], arg[1]);
+          break;
+        case "scaleX":
+          instance.scaleX(arg as number);
+          break;
+        case "scaleY":
+          instance.scaleY(arg as number);
+          break;
+        case "rotate":
+          instance.rotate(arg as number);
+          break;
+        case "zoom":
+          instance.zoom(arg as number);
+          break;
       }
     }
 
-    function beforeUpload(file) {
+    function beforeUpload(file: File) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       inSrc.value = "";
-      reader.onload = e => {
+      reader.onload = (e: ProgressEvent<FileReader>) => {
         inSrc.value = e.target?.result as string;
       };
       reader.onloadend = () => {
@@ -306,7 +240,7 @@ export default defineComponent({
       },
       setup() {
         return () => (
-          <div class="flex flex-wrap w-[60px] justify-between">
+          <div class="flex flex-wrap w-15 justify-between">
             <ElUpload
               accept="image/*"
               show-file-list={false}
@@ -432,7 +366,7 @@ export default defineComponent({
       }
     });
 
-    function onContextmenu(event) {
+    function onContextmenu(event: MouseEvent) {
       event.preventDefault();
 
       const { show, setProps, destroy, state } = useTippy(tippyElRef, {

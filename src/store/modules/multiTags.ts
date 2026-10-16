@@ -1,44 +1,83 @@
 import { defineStore } from "pinia";
+import type { RouteConfigs } from "@/layout/types";
 import {
-  type multiType,
   type positionType,
   store,
-  isUrl,
+  isExternalRoute,
   isEqual,
-  isNumber,
   isBoolean,
   getConfig,
   routerArrays,
   storageLocal,
   responsiveStorageNameSpace
 } from "../utils";
-import { usePermissionStoreHook } from "./permission";
+import { fixedTagRoutes } from "@/router/constants";
+
+/** 标签页持久化防抖句柄：标签增删频繁，合并写盘避免逐次同步序列化阻塞主线程 */
+let tagsCacheTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleTagsCache(multiTags: RouteConfigs[]) {
+  if (tagsCacheTimer) clearTimeout(tagsCacheTimer);
+  tagsCacheTimer = setTimeout(() => {
+    storageLocal().setItem(`${responsiveStorageNameSpace()}tags`, multiTags);
+    tagsCacheTimer = null;
+  }, 150);
+}
+
+/**
+ * 页签上限（设置面板 →「布局」→「页签」→「最大数量」）：
+ * 0 / 未设置表示不限制，回落站点配置的 `MaxTagsLevel`（平台级默认）。
+ * 每次 push 时从响应式存储现取，面板改动即时生效、无需重载。
+ */
+function resolveMaxTagsCount(): number {
+  const configure = storageLocal().getItem<ResponsiveStorage["configure"]>(
+    `${responsiveStorageNameSpace()}configure`
+  );
+  const preferred = Number(configure?.maxTagsCount ?? 0);
+  if (preferred > 0) return preferred;
+  const fallback = getConfig()?.MaxTagsLevel;
+  return typeof fallback === "number" ? fallback : 0;
+}
 
 export const useMultiTagsStore = defineStore("pure-multiTags", {
   state: () => ({
     // 存储标签页信息（路由信息）
-    multiTags: storageLocal().getItem<StorageConfigs>(
+    multiTags: (storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.multiTagsCache
-      ? (storageLocal().getItem<StorageConfigs>(
+      ? (storageLocal().getItem<RouteConfigs[]>(
           `${responsiveStorageNameSpace()}tags`
         ) ?? [])
-      : ([
-          ...routerArrays,
-          ...usePermissionStoreHook().flatteningRoutes.filter(
-            v => v?.meta?.fixedTag
-          )
-        ] as any),
+      : [...routerArrays, ...fixedTagRoutes]) as RouteConfigs[],
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
-    )?.multiTagsCache
+    )?.multiTagsCache,
+    /** 右键「固定」的标签（fullPath 列表，本地持久化）：固定标签不参与按侧/全部关闭 */
+    pinnedTags: (storageLocal().getItem<string[]>(
+      `${responsiveStorageNameSpace()}pinnedTags`
+    ) ?? []) as string[]
   }),
   getters: {
     getMultiTagsCache(state) {
       return state.multiTagsCache;
-    }
+    },
+    isPinnedTag:
+      state =>
+      (path: string): boolean =>
+        state.pinnedTags.includes(path)
   },
   actions: {
+    /** 固定 / 取消固定标签（右键菜单项），并落本地存储 */
+    togglePinnedTag(path: string) {
+      if (!path) return;
+      const index = this.pinnedTags.indexOf(path);
+      if (index === -1) this.pinnedTags.push(path);
+      else this.pinnedTags.splice(index, 1);
+      storageLocal().setItem(
+        `${responsiveStorageNameSpace()}pinnedTags`,
+        this.pinnedTags
+      );
+    },
     multiTagsCacheChange(multiTagsCache: boolean) {
       this.multiTagsCache = multiTagsCache;
       if (multiTagsCache) {
@@ -50,33 +89,35 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
         storageLocal().removeItem(`${responsiveStorageNameSpace()}tags`);
       }
     },
-    tagsCache(multiTags) {
+    tagsCache(multiTags: RouteConfigs[]) {
       if (this.getMultiTagsCache) {
-        storageLocal().setItem(
-          `${responsiveStorageNameSpace()}tags`,
-          multiTags
-        );
+        // 防抖写盘：标签增删很频繁，逐次同步序列化整个标签数组会阻塞主线程
+        scheduleTagsCache(multiTags);
       }
     },
-    handleTags<T>(
+    handleTags(
       mode: string,
-      value?: T | multiType,
+      value?: RouteConfigs | RouteConfigs[] | string,
       position?: positionType
-    ): T {
+    ): RouteConfigs[] | undefined {
       switch (mode) {
         case "equal":
-          this.multiTags = value;
+          if (Array.isArray(value)) {
+            this.multiTags = value;
+          } else if (value) {
+            this.multiTags = [value as RouteConfigs];
+          }
           this.tagsCache(this.multiTags);
           break;
         case "push":
           {
-            const tagVal = value as multiType;
+            const tagVal = value as RouteConfigs;
             // 不添加到标签页
             if (tagVal?.meta?.hiddenTag) return;
             // 如果是外链无需添加信息到标签页
-            if (isUrl(tagVal?.name)) return;
+            if (isExternalRoute(tagVal?.name ?? "")) return;
             // 如果title为空拒绝添加空信息到标签页
-            if (tagVal?.meta?.title.length === 0) return;
+            if (tagVal?.meta?.title?.length === 0) return;
             // showLink:false 不添加到标签页
             if (isBoolean(tagVal?.meta?.showLink) && !tagVal?.meta?.showLink)
               return;
@@ -107,16 +148,17 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
                 }
               }
             }
-            this.multiTags.push(value);
-            this.tagsCache(this.multiTags);
-            if (
-              getConfig()?.MaxTagsLevel &&
-              isNumber(getConfig().MaxTagsLevel)
-            ) {
-              if (this.multiTags.length > getConfig().MaxTagsLevel) {
-                this.multiTags.splice(1, 1);
-              }
+            this.multiTags.push(tagVal);
+            const maxTagsCount = resolveMaxTagsCount();
+            if (maxTagsCount > 0 && this.multiTags.length > maxTagsCount) {
+              // 关闭最早打开的可关闭页签：跳过首页固定页签（索引 0）与右键固定的页签
+              const removableIndex = this.multiTags.findIndex(
+                (tag, index) =>
+                  index > 0 && !(tag.path && this.pinnedTags.includes(tag.path))
+              );
+              if (removableIndex > 0) this.multiTags.splice(removableIndex, 1);
             }
+            this.tagsCache(this.multiTags);
           }
           break;
         case "splice":
@@ -125,12 +167,15 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             if (index === -1) return;
             this.multiTags.splice(index, 1);
           } else {
-            this.multiTags.splice(position?.startIndex, position?.length);
+            this.multiTags.splice(position.startIndex ?? 0, position.length);
           }
           this.tagsCache(this.multiTags);
           return this.multiTags;
         case "slice":
           return this.multiTags.slice(-1);
+        default:
+          // 未知 mode 返回当前标签列表，避免调用方拿到 undefined
+          return this.multiTags;
       }
     }
   }

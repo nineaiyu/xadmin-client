@@ -1,24 +1,42 @@
-import { computed, onMounted, reactive, useSlots } from "vue";
+import { isSuccess } from "@/api/types";
+import { computed, onMounted, reactive, useSlots, type Ref } from "vue";
+import type { FormInstance } from "element-plus";
 import {
   getTempTokenApi,
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
-import { useUserStoreHook } from "@/store/modules/user";
-import { isEmail, isEmpty } from "@pureadmin/utils";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import { isEmpty } from "@pureadmin/utils";
+import { buildEmailRule } from "@/utils/rules/email";
+import { buildPhoneRule } from "@/utils/rules/phone";
 import { useVerifyCode } from "./verifyCode";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { AesEncrypted } from "@/utils/aes";
-import { handleOperation } from "@/components/RePlusPage";
+import { handleOperation } from "@/components/RePlusPage/src/utils/handle";
 import { useI18n } from "vue-i18n";
 
+/** 验证码表单数据（发送流程读写；索引签名兼容按 form_type 动态取 target） */
+export interface SendVerifyFormData {
+  form_type: string;
+  token: string;
+  phone?: string;
+  email?: string;
+  captcha_key?: string;
+  captcha_code?: string;
+  verify_code?: string;
+  verify_token?: string;
+  [key: string]: unknown;
+}
+
 export const useSendVerifyCode = (
-  formDataRef,
-  captchaRef,
-  formData,
-  props,
-  emit
+  formDataRef: Ref<FormInstance | undefined>,
+  captchaRef: Ref<{ getImgCode?: () => void } | undefined>,
+  formData: Ref<SendVerifyFormData>,
+  props: { category?: string },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
+  emit: (...args: any[]) => void
 ) => {
   const { isDisabled, text } = useVerifyCode();
   const { t } = useI18n();
@@ -28,7 +46,7 @@ export const useSendVerifyCode = (
       verifyCodeConfig.access &&
       (verifyCodeConfig.sms || verifyCodeConfig.email || $slots.default)
   );
-  const defaultValue = {
+  const defaultValue: SendVerifyFormData = {
     form_type: "",
     token: "",
     phone: "",
@@ -55,7 +73,7 @@ export const useSendVerifyCode = (
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
       getTempTokenApi().then(res => {
-        if (res.code === 1000) {
+        if (isSuccess(res)) {
           formData.value.token = res.token;
         }
       });
@@ -63,36 +81,24 @@ export const useSendVerifyCode = (
   };
 
   const formRules = reactive<FormRules>({
+    // 手机号 / 邮箱规则统一走 @/utils/rules（判定与文案装配同源）；手机号在
+    // 登录 / 注册 / 重置密码页只校验非空（格式由发送接口与后端兜底），用户管理
+    // 表单启用格式校验——差异以显式开关表达，不再散落两份实现（原实现里格式
+    // 校验被注释掉的漂移即在此收敛）。
     phone: [
-      {
+      buildPhoneRule({
         required: true,
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.phoneReg"))));
-            // } else if (!isPhone(value)) {
-            //   callback(new Error(transformI18n($t("login.phoneCorrectReg"))));
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
+        requiredMessage: transformI18n($t("login.phoneReg")),
+        formatMessage: transformI18n($t("login.phoneCorrectReg")),
+        formatCheck: false
+      })
     ],
     email: [
-      {
+      buildEmailRule({
         required: true,
-
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.emailReg"))));
-          } else if (!isEmail(value)) {
-            callback(new Error(transformI18n($t("login.emailCorrectReg"))));
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
+        requiredMessage: transformI18n($t("login.emailReg")),
+        formatMessage: transformI18n($t("login.emailCorrectReg"))
+      })
     ],
     captcha_code: [
       {
@@ -101,7 +107,9 @@ export const useSendVerifyCode = (
         validator: (rule, value, callback) => {
           if (value === "") {
             callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-          } else if (useUserStoreHook().verifyCodeLength !== value?.length) {
+          } else if (
+            useLoginPageStoreHook().verifyCodeLength !== value?.length
+          ) {
             callback(
               new Error(transformI18n($t("login.verifyCodeCorrectReg")))
             );
@@ -128,7 +136,10 @@ export const useSendVerifyCode = (
     ]
   });
 
-  const fetchSuggestions = (queryString: string, callback: any) => {
+  const fetchSuggestions = (
+    queryString: string,
+    callback: (data: Array<{ value: string }>) => void
+  ) => {
     const emailList = [
       { value: "@qq.com" },
       { value: "@126.com" },
@@ -141,7 +152,7 @@ export const useSendVerifyCode = (
       { value: "@ask.com" },
       { value: "@live.com" }
     ];
-    const queryList = [];
+    const queryList: Array<{ value: string }> = [];
     emailList.map(item =>
       queryList.push({ value: queryString.split("@")[0] + item.value })
     );
@@ -164,21 +175,27 @@ export const useSendVerifyCode = (
     };
   };
 
-  const handleSendCode = callback => {
-    formData.verify_token = undefined;
+  const handleSendCode = (
+    callback?: ((data: { [key: string]: unknown }) => void) | null
+  ) => {
+    formData.value.verify_token = undefined;
     useVerifyCode().start(
       formDataRef.value,
       [formData.value.form_type, "captcha_code"],
       verifyCodeConfig.rate,
-      interval => {
+      async interval => {
         const data = formatSendData();
         if (verifyCodeConfig.encrypted) {
-          data["target"] = AesEncrypted(data["token"], data.target);
+          data["target"] = await AesEncrypted(
+            data["token"] as string,
+            data.target as string
+          );
         }
         handleOperation({
           t,
           apiReq: verifyCodeSendApi({ category: props.category }, data),
           success(res) {
+            if (!res?.data) return;
             formData.value.verify_token = res.data.verify_token;
             emit("sendCodeReqSuccess", res.data);
             interval(verifyCodeConfig.rate);
@@ -189,11 +206,11 @@ export const useSendVerifyCode = (
           showSuccessMsg: ["email", "phone"].includes(formData.value.form_type),
           exception() {
             initToken();
-            captchaRef.value?.getImgCode();
+            captchaRef.value?.getImgCode?.();
           },
           failed() {
             initToken();
-            captchaRef.value?.getImgCode();
+            captchaRef.value?.getImgCode?.();
           }
         });
       }
@@ -203,9 +220,11 @@ export const useSendVerifyCode = (
   onMounted(() => {
     verifyCodeConfigApi({ category: props.category })
       .then(res => {
-        if (res.code === 1000) {
+        if (isSuccess(res)) {
           Object.keys(res.data).forEach(key => {
-            verifyCodeConfig[key] = res.data[key];
+            (verifyCodeConfig as Record<string, unknown>)[key] = (
+              res.data as Record<string, unknown>
+            )[key];
           });
           emit("configReqSuccess", verifyCodeConfig);
           if (isEmpty(formData.value.form_type)) {

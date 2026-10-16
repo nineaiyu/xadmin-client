@@ -1,0 +1,89 @@
+@use "common" as *;
+
+/* 混合导航：顶栏通栏（Logo + 一级菜单）+ 侧栏排在顶栏下方
+   （显示所属一级的子菜单；导航切割关时回到完整菜单树） */
+body[layout="mix"] {
+  /* 侧栏宽度跟随「侧栏宽度」令牌 */
+  $sideBarWidth: var(--sidebar-width);
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 顶栏通栏：跨越侧栏宽度 */
+  .fixed-header {
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+
+  /* 侧栏排在固定头部（顶栏 + 页签条）下方：偏移由外壳写入的 --layout-chrome-h 给出，
+     隐藏页签 / 隐藏顶栏 / 全屏内容三态在该变量里已归一（缺省回落到顶栏高度） */
+  .sidebar-container {
+    top: var(--layout-chrome-h, var(--layout-header-h));
+    height: calc(100% - var(--layout-chrome-h, var(--layout-header-h)));
+  }
+
+  .el-menu--collapse {
+    width: var(--sidebar-collapse-width);
+  }
+
+  .el-menu {
+    /* 悬停背景走主题令牌（侧栏与顶栏同口径；菜单项显式 hover 规则带 !important 兜底） */
+    --el-menu-hover-bg-color: var(--pure-theme-menu-hover) !important;
+    --el-menu-hover-text-color: var(--pure-theme-menu-text) !important;
+  }
+
+  /* 品牌区在顶栏左端（Logo + 一级菜单条）：顶栏转 flex 行，
+     菜单条自适应剩余宽度（避免块级堆叠把菜单条挤出顶栏） */
+  .navbar {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar .horizontal-header {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      /* 顶栏通栏不随侧栏折叠变窄（侧栏收起后仍占满整宽） */
+      width: 100%;
+    }
+
+    .sidebar-container {
+      width: var(--sidebar-collapse-width) !important;
+      transition: width var(--duration-base);
+
+      .is-active.submenu-title-noDropdown.outer-most {
+        background: transparent !important;
+      }
+    }
+
+    .main-container {
+      margin-left: var(--sidebar-collapse-width);
+    }
+
+    /* 菜单折叠 */
+    .el-menu--collapse {
+      /* 折叠态不做层级缩进（与竖排布局同口径）：显式压过展开态的层级缩进规则，
+         否则项内左 padding 与右侧 0 不对称，图标整体偏右（见 _vertical.scss 同款注释） */
+      .el-menu-item {
+        padding: 0 !important;
+      }
+
+      .el-sub-menu {
+        & > .el-sub-menu__title {
+          padding: 0 !important;
+
+          & > span {
+            visibility: visible;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}

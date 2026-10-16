@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260" width="260" height="260" aria-hidden="true">
+  <defs>
+    <linearGradient id="puzzle-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d4ed8"/>
+      <stop offset="0.55" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="260" height="260" fill="url(#puzzle-bg)"/>
+  <circle cx="52" cy="54" r="36" fill="#f59e0b" fill-opacity="0.92"/>
+  <circle cx="52" cy="54" r="18" fill="#fde68a"/>
+  <circle cx="205" cy="70" r="26" fill="#34d399" fill-opacity="0.92"/>
+  <rect x="118" y="102" width="96" height="72" rx="14" fill="#f43f5e" fill-opacity="0.9"/>
+  <rect x="150" y="126" width="34" height="26" rx="6" fill="#fff1f2"/>
+  <path d="M18 236 L86 142 L154 236 Z" fill="#22d3ee" fill-opacity="0.85"/>
+  <path d="M104 236 L166 158 L232 236 Z" fill="#a3e635" fill-opacity="0.85"/>
+  <circle cx="216" cy="196" r="30" fill="#ffffff" fill-opacity="0.55"/>
+  <circle cx="216" cy="196" r="14" fill="#1e293b" fill-opacity="0.75"/>
+</svg>

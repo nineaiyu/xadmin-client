@@ -1,0 +1,56 @@
+/* 侧栏与导航布局样式：公共段（merge-style mixin）在 common，各布局模式的
+   body[layout] 专属覆盖各居其文件；@use 顺序即输出顺序，与原单文件保持一致 */
+@use "vertical";
+@use "horizontal";
+@use "mix";
+@use "sidebar-mixed-nav";
+@use "header-sidebar-nav";
+@use "header-mixed-nav";
+@use "full-content";
+@use "sidebar-narrow";
+@use "../nav-palette" as nav;
+
+/* ================ 半暗侧栏（设置面板 →「布局」→「半暗侧栏」/「半暗子侧栏」） ================
+   浅色外观下让侧栏保持深色调色板（顶栏与内容区维持浅色）。
+   覆盖的是菜单调色板令牌（tokens/semantic.scss 的 --pure-theme-*）：
+   - 深色外观（html.dark）本身即深色，`:not(.dark)` 让该类自动失效；
+   - 水平布局与全屏内容没有侧栏容器，选择器天然不命中；
+   - 折叠态 hover 弹出的子菜单挂在 body 上，需同步覆盖（否则弹层仍是浅色）；
+   - 「半暗子侧栏」（semi-dark-sidebar-sub）只作用于双列布局的次级侧栏
+     （双列菜单 / 混合双列），与主开关可独立启用。 */
+
+/* 深色调色板 mixin 与半暗顶栏共用（含 `--sidebar` / `--sidebar-deep` 派生变量
+   的重绑说明），定义见 style/_nav-palette.scss */
+
+html.semi-dark-sidebar:not(.dark) {
+  .sidebar-container {
+    --pure-theme-sidebar-logo: #17253f;
+
+    @include nav.nav-dark-palette;
+  }
+
+  /* 折叠态 hover 弹出的子菜单 teleport 到 body（popper-class="pure-scrollbar"），
+     不在 .sidebar-container 内，需单独覆盖同一组令牌 */
+  .el-popper.pure-scrollbar {
+    @include nav.nav-dark-palette;
+  }
+}
+
+html.semi-dark-sidebar-sub:not(.dark) body[layout="sidebar-mixed-nav"],
+html.semi-dark-sidebar-sub:not(.dark) body[layout="header-mixed-nav"] {
+  /* 只作用于次级列（`.sidebar-main`）：一级窄列维持浅色——与「半暗子侧栏」
+     的语义（深色只给第二列）一致；此前覆盖整个 .sidebar-container，连窄列
+     一起变深，与设置面板 tip 不符。 */
+  .sidebar-container .sidebar-main {
+    --pure-theme-sidebar-logo: #17253f;
+
+    @include nav.nav-dark-palette;
+
+    /* 次级列自身铺底色：容器底色由 --sidebar 提供，此处只让第二列变深 */
+    background: var(--pure-theme-menu-bg);
+  }
+
+  .el-popper.pure-scrollbar {
+    @include nav.nav-dark-palette;
+  }
+}

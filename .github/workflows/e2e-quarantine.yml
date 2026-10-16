@@ -1,0 +1,89 @@
+name: E2E Quarantine
+
+# 隔离用例单跑流水线：主线跑批（e2e.yml）用 --grep-invert 把清单内用例排除，
+# 本流水线专门把它们单独再跑一遍，用来回答「还能复现吗」——是所有隔离条目的复核通道。
+#
+# - 手动触发（workflow_dispatch）：排查某个抖动时随时单跑；
+# - 夜间定时：与全量错开（全量 18:00 UTC，本档 20:00 UTC），持续跟踪隔离项。
+# - 不阻断：单跑失败不会让 CI 红（隔离项本就可能是已知问题），结果写进 step summary
+#   与 artifact，并提示哪些条目已恢复稳定可移出清单。
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+jobs:
+  quarantine:
+    name: Quarantine re-run (chromium + webkit)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # 与 e2e.yml 同构：settings_e2e 真库化缺省连接参数（127.0.0.1:55433 / server / pgtest）
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: server
+          POSTGRES_PASSWORD: pgtest
+          POSTGRES_DB: postgres
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_PYTHON: python3
+      E2E_SERVER_DIR: xadmin-server
+      CI: "1"
+    steps:
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+
+      - name: Validate quarantine manifest
+        # 过期 / 缺 owner / 缺 issue 在此失败（lint-code.yml 亦有一道，双保险）
+        run: node scripts/check-quarantine.mjs
+
+      - name: Detect quarantined tests
+        id: detect
+        run: echo "count=$(node scripts/check-quarantine.mjs --count)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup E2E environment
+        if: steps.detect.outputs.count != '0'
+        uses: ./.github/actions/e2e-setup
+
+      - name: Run quarantined tests
+        # 单跑只跑清单内用例（--grep）；失败不阻断（隔离项可能仍不稳定）
+        if: steps.detect.outputs.count != '0'
+        continue-on-error: true
+        env:
+          # json reporter 输出到固定文件，供下一步的榜单解析与移出提示复用
+          PLAYWRIGHT_JSON_OUTPUT_DIR: e2e-reports
+          PLAYWRIGHT_JSON_OUTPUT_NAME: quarantine.json
+        run: node scripts/e2e-run.mjs quarantine --reporter=list,json
+
+      - name: Quarantine ranking (step summary)
+        if: always() && steps.detect.outputs.count != '0'
+        run: |
+          node scripts/e2e-flaky-report.mjs \
+            --input-dir e2e-reports \
+            --run "quarantine-${{ github.run_id }}-${{ github.run_attempt }}" \
+            --out e2e-reports/quarantine-result.json
+
+      - name: Removal hint (all green → removable)
+        if: always() && steps.detect.outputs.count != '0'
+        run: node scripts/check-quarantine.mjs --hint e2e-reports/quarantine-result.json
+
+      - name: Note when manifest is empty
+        if: steps.detect.outputs.count == '0'
+        run: echo "::notice title=隔离清单为空::e2e/quarantine.json 无隔离条目，本次单跑跳过。"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        name: Upload quarantine report
+        with:
+          name: playwright-report-quarantine
+          path: |
+            playwright-report/
+            test-results/
+            e2e-reports/
+          retention-days: 7

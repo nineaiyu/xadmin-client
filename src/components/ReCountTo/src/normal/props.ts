@@ -21,6 +21,12 @@ export const countToProps = {
   prefix: propTypes.string.def(""),
   suffix: propTypes.string.def(""),
   useEasing: propTypes.bool.def(true),
+  // 缓动预设：`@vueuse/core` 的 TransitionPresets 形态（入参为 0→1 的进度）。
+  // 显式传入时优先于 easingFn，且无需再开 useEasing
+  transition: {
+    type: Function as PropType<(t: number) => number>,
+    default: undefined
+  },
   easingFn: {
     type: Function as PropType<
       (t: number, b: number, c: number, d: number) => number

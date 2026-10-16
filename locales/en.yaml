@@ -12,7 +12,281 @@ commonLabels:
   descending: Descending
   ascending: Ascending
 
+fileAccess:
+  download: Download
+  accessLogs: Access Logs
+  accessLogsTitle: Access Logs - {name}
+  total: Total
+  time: Time
+  user: User
+  action: Action
+  actionUpload: Upload
+  actionDownload: Download
+  actionPreview: Preview
+  actionDelete: Delete
+  ipaddress: IP
+  result: Result
+  detail: Detail
+  loadFailed: Failed to load access logs. Please try again later.
+
+forcePassword:
+  title: Password Change Required
+  tip: The administrator requires you to change your password. Please set a new password to continue.
+  submit: Change Password
+  success: Password updated
+  later: Later
+
+savedView:
+  button: Views
+  title: My Views
+  save: Save Current Filter
+  saveCurrent: Save Current Filter
+  saveTitle: Save as My View
+  editTitle: Edit View
+  duplicateTitle: Save as Copy
+  nameLabel: View name
+  namePlaceholder: e.g. Active developers
+  nameRequired: Please enter a view name
+  remarkLabel: Description
+  remarkPlaceholder: Optional, helps the team know its purpose
+  conditionsLabel: Filters
+  noConditions: No filters
+  defaultLabel: Set as default view
+  defaultHint: Applied automatically when the page opens without filters
+  sharedLabel: Share with others on this page
+  sharedHint: Visible and applicable to others (read-only)
+  searchPlaceholder: Search views
+  emptyHint: No saved views yet, set filters first and save
+  noMatch: No matching views
+  footerHint: Click a view to apply its filters
+  current: Current
+  saveSuccess: View saved
+  empty: No saved views
+  default: Default view
+  setDefault: Set as default
+  cancelDefault: Unset default
+  defaultSet: Default view updated
+  defaultCleared: Default view cleared
+  updateCurrent: Update with current filter
+  rename: Rename
+  duplicate: Save as copy
+  copySuffix: " copy"
+  updated: View "{name}" updated
+  deleteConfirm: Delete view "{name}"?
+  applied: Applied view "{name}"
+  sharedShort: Shared
+  emptyConditions: No filters to save, please set filters first
+
+advancedFilter:
+  button: Advanced Filter
+  title: Advanced Filter
+  fieldPlaceholder: Select a field
+  valuePlaceholder: Enter a value
+  numberPlaceholder: Enter a number
+  datePlaceholder: Pick a date
+  timePlaceholder: Pick a time
+  choicePlaceholder: Select a value
+  multiPlaceholder: Separate multiple values with commas
+  tagPlaceholder: Type and press Enter
+  addCondition: Add Condition
+  clearAll: Clear
+  noFields: No filterable fields on this page
+  true: "Yes"
+  false: "No"
+  hint: Conditions are combined with AND; fields and values still follow the field permissions of the current account
+  kinds:
+    text: Text
+    number: Number
+    boolean: "Yes/No"
+    date: Date
+    datetime: Date time
+    time: Time
+    choice: Option
+    multiple: Multi
+  errors:
+    field: "Row {no}: please select a field"
+    value: "Row {no}: please enter a value"
+    duplicate: "Row {no}: duplicated condition"
+  lookups:
+    icontains: Contains
+    exact: Equals
+    startswith: Starts with
+    in: In (multi-value)
+    gte: Greater or equal
+    lte: Less or equal
+    isnull: Is empty
+    ne: Not equal
+
+passkey:
+  title: Passkey Credentials
+  add: Add Passkey
+  name: Credential Name
+  namePlaceholder: e.g. MacBook fingerprint
+  lastUsed: Last Used
+  created: Bound At
+  empty: No passkey credentials
+  removeConfirm: Delete this passkey credential?
+  removeSuccess: Credential deleted
+  registerSuccess: Passkey bound successfully
+  unsupported: Passkey is not supported here (HTTPS and WebAuthn-capable browser required)
+  failed: Passkey operation failed
+  loginTip: Complete fingerprint / face / security key verification in the system dialog
+  login: Verify with Passkey
+
+messageTemplate:
+  title: Message Templates
+  messageType: Message Type
+  category: Category
+  override: Override
+  overridden: Customized
+  defaultState: Code Default
+  defaultSubject: Default Subject
+  variables: Variables
+  subject: Subject Template
+  body: Body Template
+  subjectPlaceholder: Leave empty to use the default subject
+  edit: Edit
+  editTitle: Edit Template - {name}
+  preview: Preview
+  previewTip: Preview renders with sample data and will not send anything
+  reset: Reset to Default
+  resetConfirm: Reset "{name}" to the code default template?
+  saveSuccess: Template saved
+  resetSuccess: Reset to default template
+  syntaxHint: "Insert variables as {'{{'}name{'}}'}; leave empty to keep the code default"
+  previewUnsupported: This message type has no sample data, preview is unavailable
+  defaultContent: Code default content
+  panelHint: Templates without an override use the system default text; saving an override takes effect immediately and can be reset at any time
+  searchPlaceholder: Search message type
+  filterCategory: Filter by category
+  updatedAt: Updated At
+  inactiveMark: Disabled
+  variableCopied: Copied {name}
+  previewTitle: Preview - {name}
+  prefilledHint: Prefilled with the code default text; edit on top of it — parts identical to the default will not create an override
+
+approvalDiscussion:
+  title: Discussion
+  placeholder: Write a comment, use {'@'}username to notify
+  submit: Post Comment
+  empty: No comments yet
+  deleteConfirm: Delete this comment?
+  submitted: Comment posted
+  cc: CC Users
+  ccPlaceholder: Select CC users (multiple)
+
+accountRisk:
+  scan: Scan Now
+  batchHandle: Batch Handle
+  handle: Handle
+  detail: Detail
+  detailTitle: Risk Detail - {name}
+  handleTitle: Handle Risks ({count} selected)
+  action: Action
+  remark: Remark
+  suggestion: Suggestion
+  metricDays: Days
+  metricCount: Count
+  metricThreshold: Threshold
+  metricPasswordUpdatedAt: Password Updated At
+  actionNotify: Send Notification
+  actionForcePassword: Force Password Change
+  actionForceLogout: Force Logout
+  actionDisable: Disable Account
+  actionIgnore: Ignore (no more reminders)
+  actionResolve: Mark as Resolved
+  typePasswordExpired: Password expired
+  typePasswordStale: Password not changed for a long time
+  typeLoginStale: No login for a long time
+  typeNeverLoggedIn: Never logged in
+  typeSuperuserNoMfa: Admin without MFA
+  typeSuperuserCount: Abnormal superuser count
+  statsOverview: Overview
+  statsTotal: Total
+  statsByLevel: By Level
+  statsByStatus: By Status
+  statsByType: By Type
+  levelHigh: High
+  levelMedium: Medium
+  levelLow: Low
+  statusPending: Pending
+  statusResolved: Resolved
+  statusIgnored: Ignored
+  batchHandlePartial: "{n} more item(s) failed: {detail}"
+
+loginPolicy:
+  add: New Policy
+  addTitle: New Login Policy
+  editTitle: Edit Login Policy
+  name: Policy Name
+  priority: Priority
+  priorityTip: Lower number matches first; the first match takes effect
+  isActive: Active
+  targetType: Target
+  targetAll: All Users
+  targetRole: Roles
+  targetUser: Users
+  targetValue: Target Value
+  rolePlaceholder: Role codes separated by commas
+  userPlaceholder: Usernames separated by commas
+  weekdays: Weekdays
+  weekday1: Monday
+  weekday2: Tuesday
+  weekday3: Wednesday
+  weekday4: Thursday
+  weekday5: Friday
+  weekday6: Saturday
+  weekday7: Sunday
+  timeRange: Time Range
+  startTime: Start Time
+  endTime: End Time
+  ipRanges: IP Ranges
+  ipPlaceholder: One CIDR or range per line, e.g. 192.168.0.0/24
+  action: Action
+  actionAccept: Allow login (exempts later policies)
+  actionReject: Reject login
+  actionRequireMfa: Require MFA
+  actionRecord: Record only
+  remark: Remark
+  preview: Preview
+  previewTitle: Login Policy Preview
+  previewUser: Sample User
+  previewUserTip: Leave empty to use current user
+  previewIp: Sample IP
+  previewIpTip: Leave empty to use client IP
+  previewWhen: Sample Time
+  previewWhenTip: Leave empty to use now
+  previewRun: Preview
+  previewResult: Matched "{policy}" -> {action}
+  previewEcho: Sample actually used — user {username} / IP {ip} / time {when}
+  previewNoMatch: No policy matches this sample
+  previewMatched: Matched
+  previewDims: Dimension Detail
+  dimTarget: Target
+  dimTime: Time
+  dimIp: IP
+  previewEffective: Effective
+  effective: Effective
+  inactive: Inactive
+  previewMfaDegraded: This user has no available MFA method; a real login would fall back to allow
+  invalidIp: Invalid IP format
+  nameRequired: Policy name is required
+  timePairInvalid: Start and end time must be set together, or left empty together
+  targetValueRequired: Target value is required
+
+batchUpdate:
+  button: Batch Update
+  title: Batch Update ({count} Selected)
+  field: Field to Update
+  fieldPlaceholder: Select a field to update
+  value: Target Value
+  valuePlaceholder: Enter the target value
+  tip: The selected records will be set to this value. This cannot be undone.
+  selectFirst: Please select records to update first
+  fieldRequired: Please select a field and enter a value
+
 tableBar:
+  list: List
   loose: Loose
   default: Default
   compact: Compact
@@ -24,9 +298,12 @@ tableBar:
   unfold: Unfold
   fullscreen: Fullscreen
   exitFullscreen: Exit Fullscreen
+  pinLeft: Pin Left
+  pinRight: Pin Right
+  unpin: Unpin
 
 avatarUpload:
-  tips: 'Tips: Right-click the cropping area can open the function menu'
+  tips: "Tips: Right-click the cropping area can open the function menu"
   imageSize: "Image size: { x } x { y } pixels"
   fileSize: "File size: { x } ({ y } bytes)"
 
@@ -49,7 +326,48 @@ cropper:
   anticlockwise: Anticlockwise Rotation
   clockwise: Clockwise Rotation
 
+jsonViewer:
+  copy: Copy
+  copied: Copied
+
+sliderCaptcha:
+  text: Slide right to verify
+  successText: Verified
+
+sliderRotateCaptcha:
+  text: Drag to rotate the image upright
+
+sliderTranslateCaptcha:
+  text: Drag to fit the puzzle piece
+
+backTop:
+  text: Back to top
+
+collapseParams:
+  name: Name
+  value: Value
+  description: Description
+  unfold: Unfold
+  fold: Fold
+
+reState:
+  empty: No data
+  error: Failed to load
+
+tableAction:
+  confirmTitle: Are you sure you want to proceed?
+
+tableA11y:
+  dataTable: Data table
+  pageSize: Items per page
+
 layout:
+  saveConfigSuccess: Site configuration saved
+  impersonating: Impersonating "{ user }" — all actions run as this user and are audited. Click to exit
+  impersonateExit: Exit impersonation
+  impersonateExitFailed: Failed to exit impersonation, please retry
+  resetConfigSuccess: Personal preferences restored to defaults
+  saveConfigFailed: Auto-saving the site configuration failed, please check the network and retry
   notice: Notice
   announcement: Announcement
   settings: Settings
@@ -58,42 +376,358 @@ layout:
   more: More
   fold: Fold
   unfold: Unfold
+  skipToContent: Skip to main content
   searchPlaceholder: Search menu (Pinyin search is supported)
   theme: Theme Mode
+  themeDesc: Light and dark appearance, with system following
   menuLayout: Menu Layout
   leftMode: Left mode
   topMode: Top mode
   mixedMode: Mixed mode
+  menuLayoutVertical: Vertical
+  menuLayoutVerticalTip: Sidebar vertical menu mode
+  menuLayoutHorizontal: Horizontal
+  menuLayoutHorizontalTip: Horizontal menu mode, all menus on the top
+  menuLayoutMix: Mixed Menu
+  menuLayoutMixTip: Vertical and horizontal menus combined
+  menuLayoutSidebarMixed: Two columns
+  menuLayoutSidebarMixedTip: Vertical two-column menu
+  menuLayoutHeaderSidebar: Header sidebar
+  menuLayoutHeaderSidebarTip: Full-width header with side navigation
+  menuLayoutHeaderMixed: Header two columns
+  menuLayoutHeaderMixedTip: Two columns with a horizontal top menu
+  menuLayoutFullContent: Full content
+  menuLayoutFullContentTip: Hide all menus and show the content only
   themeColor: ThemeColor
+  themeColorDesc: Preset palette or a custom pick, applied instantly
+  themeColorCustom: Custom color
+  themeColorCustomTip: Pick any colour as the primary colour (navigation skin stays unchanged)
+  themeColorNames:
+    light: Light
+    default: Default
+    saucePurple: Violet
+    pink: Pink
+    dusk: Crimson
+    volcano: Orange
+    mingQing: Teal
+    auroraGreen: Green
+    geekblue: Geekblue
+    gold: Gold
+    lime: Lime
+    brown: Brown
+    custom: Custom
+  themePreset: Theme preset
+  themePresetDesc: A preset tints background, card, border and fill hues and applies its matching primary color
+  themePresetNames:
+    default: Default
+    violet: Violet
+    pink: Pink
+    yellow: Yellow
+    skyBlue: Sky blue
+    green: Green
+    zinc: Zinc
+    deepGreen: Deep green
+    deepBlue: Deep blue
+    orange: Orange
+    rose: Rose
+    neutral: Neutral
+    slate: Slate
+    gray: Gray
+    custom: Custom
+  tabAppearance: Appearance
+  tabLayout: Layout
+  tabGeneral: General
+  tabShortcut: Shortcuts
+  general: General settings
+  siteTitle: Site title
+  siteTitleTip: Site name in the brand area and browser tab (falls back to the platform-config Title when empty)
+  siteTitlePlaceholder: e.g. xAdmin Console
+  siteWideAdminOnly: Site-wide appearance settings apply globally (all accounts and the sign-in page); only administrators can change them
+  language: Language
+  languageTip: Interface language, the same switch as the one in the header
+  headerAutoHide: Auto-hide header
+  headerAutoHideTip: Hide the header when scrolling down, restore on scroll up
+  compactMode: Compact mode
+  compactModeTip: Tighter content padding with a centered max width
   display: Display
   greyMode: Grey mode
   colorWeakMode: Color weak mode
   hideTabs: Hide tabs
   hideFooter: Hide Footer
   sidebarLogo: Sidebar Logo
+  sidebarLogoTip: Show the logo image in the brand area; the title text is controlled by "Logo text" separately, and the brand area collapses when both are off
   labelPersistence: Label persistence
   labelStyle: Label style
+  tagsStylePlain: Plain
+  tagsStylePlainTip: Flat tabs; the active one is marked with a subtle primary-tinted block
   tagsStyleCard: Card
   tagsStyleSmart: Smart
   tagsStyleChrome: Chrome
+  displayEffect: Display effects
+  semanticColors: Functional colors
+  navigationStyle: Navigation style
+  navigation: Navigation behaviour
+  navigationSplit: Navigation split
+  navigationSplitTip: "Mixed layout only: when on, the sidebar shows the children of the top menu selected in the header; when off, both show the full menu"
+  navStyleRounded: Rounded
+  navStyleRoundedTip: The active menu block keeps rounded corners and side insets
+  navStylePlain: Plain
+  navStylePlainTip: Drop the corner radius and insets; the active block fills the row
+  tagsHeight: Tab height
+  tagsHeightTip: Height of a tab item (28~48px); the header plus tab bar height follows
+  tagsKeepAlive: Page cache
+  tagsKeepAliveTip: When off, no page is cached (the per-route cache setting is ignored)
+  tagsVisitHistory: Tab visit history
+  tagsVisitHistoryTip: Record the visit order; closing the active tab returns to the previously visited one
+  footerFixed: Fixed footer
+  footerFixedTip: Stick the footer to the content bottom so it stays visible while scrolling
+  footerHeight: Footer height
+  footerHeightTip: Footer height in px; 0 means auto (built-in spacing)
+  logoSource: Logo image
+  logoSourceTip: Custom logo image URL or site path; leave empty for the built-in asset
+  logoSourcePlaceholder: Empty for the built-in logo
+  logoShowText: Logo text
+  logoShowTextTip: Show the platform title next to the logo
+  logoFit: Image fit
+  logoFitTip: How the logo image fills its box (object-fit)
+  logoFitContain: Contain
+  logoFitCover: Cover
+  logoFitFill: Fill
+  logoFitNone: Original size
+  logoFitScaleDown: Scale down
+  logoMode: Logo mode
+  logoModeTip: Icon = image plus the platform title; Full = the image already contains the title and none is rendered
+  logoModeIcon: Icon
+  logoModeFull: Full image
+  fullLogoHeight: Full logo height
+  fullLogoHeightTip: Height of the logo image in full mode (px)
+  logoSourceDark: Dark logo
+  logoSourceDarkTip: Image used in dark appearance (empty = reuse the light one)
+  moreWidgets: More
+  navbarWidgets: Header widgets
+  navbarWidgetsDesc: Drag to reorder and pick where each widget lives (header / More menu / hidden)
+  navbarWidgetsTip: Search, language, fullscreen and notifications open popovers, so they stay in the header
+  navbarPositionHeader: Header
+  navbarPositionMore: More menu
+  navbarPositionHidden: Hidden
+  navbarPositionUserDropdown: User menu
+  headerMenuAlign: Header menu align
+  headerMenuAlignTip: Alignment of the top menu in horizontal and mixed layouts (sidebar menus are unaffected)
+  menuAlignStart: Start
+  menuAlignCenter: Center
+  menuAlignEnd: End
+  sidebarCollapseWidth: Collapsed width
+  sidebarCollapseWidthTip: Width of the collapsed sidebar (48~96px)
+  sidebarMixedWidth: Mixed width
+  sidebarMixedWidthTip: First-column width of the two-column layouts (0 uses the 80px design token)
+  sidebarHidden: Hide sidebar
+  sidebarHiddenTip: "Hide the sidebar and let the content fill the screen (same as the tab content fullscreen action)"
+  sidebarFixedButton: Pin button
+  sidebarFixedButtonTip: "Show a pin button in the sidebar; pinned keeps it expanded, unpinned restores expand-on-hover"
+  sidebarExtraCollapse: Extra collapse
+  sidebarExtraCollapseTip: "Mixed layout only; collapse the second column without touching other layouts"
+  semanticColorsDesc: Success / warning / danger colors drive the Element Plus ladders (buttons, tags, messages)
+  semanticColorsTip: Leave empty to follow the built-in default; use the button on the right to reset
+  semanticColorsPick: Pick a color
+  semanticColorsReset: Reset to default
+  semanticColorSuccess: Success
+  semanticColorWarning: Warning
+  semanticColorDanger: Danger
+  greyModeTip: Render the site in grayscale for contrast or print checks
+  colorWeakModeTip: Invert colours to help users with colour weakness
+  radius: Radius
+  radiusTip: Scale the corner radius of cards, buttons and inputs (token preset)
+  radiusNone: None
+  radiusSmall: Small
+  radiusDefault: Default
+  radiusLarge: Large
+  radiusXlarge: XL
+  fontSize: Font size
+  fontSizeTip: Scale all text; the root font size, control heights and spacing stay unchanged
+  fontSmall: Small
+  fontDefault: Default
+  fontLarge: Large
+  fontCustom: Custom
+  fontSizeScale: Font scale
+  fontCustomSize: Base font size
+  sidebar: Sidebar
+  sidebarAccordion: Accordion
+  sidebarAccordionTip: Keep only one menu group expanded at a time
+  sidebarCollapseButton: Collapse button
+  sidebarCollapseButtonTip: Show the collapse and expand button at the sidebar bottom
+  semiDarkSidebar: Semi-dark sidebar
+  semiDarkHeader: Semi-dark header
+  semiDarkHeaderTip: Keep the header dark in light appearance (dark appearance needs no such option)
+  semiDarkSidebarTip: Keep the sidebar dark in light appearance (dark appearance needs no such option)
+  semiDarkSidebarSub: Semi-dark sub sidebar
+  semiDarkSidebarSubTip: Keep the mixed-layout sidebar (second column) dark in light appearance (mixed layout only)
+  sidebarWidth: Sidebar width
+  sidebarWidthTip: Width of the expanded sidebar (160~320px); the collapsed width stays fixed
+  sidebarExpandOnHover: Expand on hover
+  sidebarExpandOnHoverTip: Temporarily expand the collapsed sidebar while hovering; resets on leave (the saved state is untouched)
+  sidebarDraggable: Drag to resize
+  sidebarDraggableTip: Show a drag handle on the sidebar edge; the width is saved on release
+  sidebarCollapsedShowTitle: Show titles when collapsed
+  sidebarCollapsedShowTitleTip: Show first-level menu titles under the icons while the sidebar is collapsed (vertical layout only)
+  sidebarAutoActivateChild: Auto activate child menu
+  sidebarAutoActivateChildTip: Expanding a top-level menu with children navigates to its first child menu automatically
+  header: Header
+  headerFixed: Fixed header
+  headerFixedTip: When off, the header (and the tab strip) scrolls with the page
+  headerVisible: Show header
+  headerVisibleTip: When off the header is not rendered at all (the tab strip stays); it takes no space, unlike "static"
+  headerMode: Header mode
+  headerModeTip: Static scrolls with the page; fixed sticks to the top; auto hides on scroll down and shows on scroll up
+  headerModeStatic: Static
+  headerModeFixed: Fixed
+  headerModeAuto: Auto hide and show
+  headerModeAutoScroll: Scroll hide and show
+  breadcrumbVisible: Breadcrumb
+  breadcrumbVisibleTip: Show the current page path at the left of the header
+  breadcrumbShowIcon: Breadcrumb icons
+  breadcrumbShowIconTip: Show menu icons before breadcrumb items
+  breadcrumbShowHome: Show home
+  breadcrumbShowHomeTip: Prepend a Home item to the breadcrumb
+  breadcrumbHideOnlyOne: Hide when single
+  breadcrumbHideOnlyOneTip: Hide the whole breadcrumb when it only has one item (e.g. home)
+  breadcrumbStyle: Breadcrumb style
+  breadcrumbStyleTip: Plain text or a light background card
+  breadcrumbStyleNormal: Plain
+  breadcrumbStyleBackground: Light
+  breadcrumbHome: Home
+  navbarSearch: Menu search
+  navbarLanguage: Language switch
+  navbarFullscreen: Fullscreen button
+  navbarLock: Lock screen button
+  navbarLockTip: Show a lock button in the header; unlocking requires the login password
+  navbarNotice: Notifications
+  navbarTimezone: Timezone
+  navbarRefresh: Header refresh
+  navbarSidebarToggle: Header sidebar toggle
+  navbarSidebarToggleTip: Same as the sidebar bottom toggle (hidden by default to avoid duplication)
+  navbarThemeToggle: Header theme toggle
+  navbarThemeToggleTip: Switch between light and dark appearance from the header
+  refreshPage: Refresh page
+  sidebarToggle: Toggle sidebar
+  tabbar: Tabs
+  persistenceTip: Keep opened tabs after a reload (stored locally)
+  tagsMiddleClickClose: Middle-click close
+  tagsMiddleClickCloseTip: Close a tab with the middle mouse button; pinned tabs are excluded
+  tagsWheelSwitch: Wheel scrolling
+  tagsWheelSwitchTip: Scroll the tab strip horizontally with the wheel
+  tagsShowIcon: Tab icons
+  tagsShowIconTip: Show menu icons before tab titles
+  tagsShowRefresh: Refresh button
+  tagsShowRefreshTip: Show the refresh-current-page button on the right of the tab bar
+  tagsShowMore: More button
+  tagsShowMoreTip: Show the bulk actions dropdown (close, pin, ...) on the right of the tab bar
+  tagsShowMaximize: Maximize button
+  tagsShowMaximizeTip: Show a maximize/restore button in the tab bar (same as the context menu, hides the header and sidebar)
+  maxTagsCount: Max count
+  maxTagsCountTip: Close the earliest closable tab beyond this limit (home and pinned tabs are excluded); 0 means unlimited
+  footer: Footer
+  authPage: Login page
+  authPageLayout: Login page layout
+  authPageLayoutTip: Where the illustration sits relative to the form on auth pages; narrow screens always centre the form without the illustration
+  authPanelLeft: Illustration left
+  authPanelCenter: Form only
+  authPanelRight: Illustration right
+  dynamicTitle: Dynamic title
+  dynamicTitleTip: Update the browser title with the current page
+  pageTransition: Page transition
+  pageTransitionTip: Transition effect between pages; a route may override it
+  transitionNone: Off
+  transitionFadeTransform: Slide
+  transitionFadeSlide: Fade slide
+  transitionFadeUp: Fade up
+  transitionFadeDown: Fade down
+  transitionFadeScale: Fade scale
+  transitionProgress: Top progress bar
+  transitionProgressTip: Show the top loading bar during route changes
+  transitionLoading: Content loading
+  transitionLoadingTip: Show a loading mask in the content area on first page load (already-loaded pages switch instantly)
+  transitionEffect: Transition effect
+  shortcut: Shortcut keys
+  shortcutEnable: Enable shortcuts
+  shortcutEnableTip: Turning this off disables all shortcuts (header buttons keep working)
+  shortcutSearch: Global search
+  shortcutSearchTip: Opens the command palette; the header icon keeps working when disabled
+  shortcutLock: Lock screen
+  shortcutLockTip: Ignored while typing in a form field
+  shortcutSidebar: Toggle sidebar
+  shortcutSidebarTip: Same as the header toggle button; works on mobile too
+  shortcutPreferences: Open preferences
+  shortcutPreferencesTip: Open the project preferences panel with one keystroke
+  shortcutLogout: Sign out
+  shortcutLogoutTip: Unset by default to avoid accidental sign-out
+  shortcutUnset: Not set
+  shortcutRecording: Press keys
+  shortcutRecord: Record shortcut
+  shortcutClear: Clear
+  shortcutReserved: Reserved by the browser, please pick another combination
+  shortcutConflict: Already used by another action, please pick another combination
+  copyPreferences: Copy preferences
+  copyPreferencesTip: Copy the complete platform config (all fields) to overwrite platform-config.json as a whole, or paste it as the site config item value in System Config
+  copyPreferencesSuccess: Platform config copied (ready to overwrite platform-config.json)
+  enableCopyPreferences: Show copy-preferences button
+  enableCopyPreferencesTip: Show a copy entry in the panel footer "More" menu for the complete platform config
   cleanOut: Clear the cache and return the login page
+  preferencesEntry: Preferences entry
+  enablePreferences: Settings entry
+  enablePreferencesTip: Show the header gear or the floating ball at the bottom-right (the user menu and the shortcut still open the panel when off)
+  enablePreferencesOffConfirm: "Turning this off hides the header gear and the floating ball. The settings item stays in the user menu and the shortcut (⌘/Ctrl + , by default) still opens the panel. Turn it off?"
+  preferencesPosition: Entry position
+  preferencesPositionTip: "Header gear, floating ball (draggable), user menu, auto (floating ball in horizontal layout) or hidden (still reachable from the user menu and the shortcut)"
+  preferencesPositionHeader: Header
+  preferencesPositionFixed: Floating ball
+  preferencesPositionUserDropdown: User menu
+  preferencesPositionAuto: Auto
+  preferencesPositionNone: Hidden
+  preferencesFabTip: Click to open the settings panel, drag to move it anywhere
+  preferencesHiddenNotice: Settings entry hidden. Reopen it with the shortcut Ctrl / ⌘ + , or the settings item in the user menu
+  preferencesStickyNavEnable: Sticky tab navigation
+  preferencesStickyNavDisable: Unpin tab navigation
   noticeTime: YYYY-MM-DD HH:mm:ss
+  timezone: Timezone
+  timezoneFollowBrowser: Follow browser timezone
+  timezoneTip: Timezone used by the header clock widget; leave empty to follow the browser
   backTop: Back Top
   updateCheck: New version detected
   updateNow: Update now
-  clearCache: Clear Cache
   light: Light
   dark: Dark
   auto: Auto
   lightTip: Fresh start, light up the comfortable working interface
   darkTip: Moonlight overture, drunk in the quiet and elegant night
   autoTip: Synchronous time, interface with the morning and dusk natural echo
+  fluid: Fluid
+  fluidTip: Content fills the available width — handy for wide tables
+  fixedWidth: Fixed width
+  fixedWidthTip: Center the content with a max width for focused reading
+  pageWidthMode: Page width mode
+  pageWidthSize: Content width
   tagsStyleSmartTip: Smart tags add fun and brilliance
   tagsStyleCardTip: Card tags for efficient browsing
   tagsStyleChromeTip: Chrome style is classic and elegant
   favorite: Favorite
   dragSort: (Drag the sorting)
   searchHistory: Search History
+  about: About
+  currentVersion: Current version
+  checkUpdate: Check for updates
+  checkUpdateTip: Compare the deployed version file with the local version
+  autoCheckUpdates: Auto check for updates
+  autoCheckUpdatesTip: Poll the deployed version in the background and prompt to refresh when a new version is found; turn it off to check manually below
+  checkUpdateLatest: You are on the latest version
+  checkUpdateFound: New version {version} available
+  checkUpdateFailed: Failed to check for updates, please retry later
+  lockScreen: Lock screen
+  lockScreenTip: The screen is covered until the login password is entered
+  lockScreenPlaceholder: Enter your login password to unlock
+  lockScreenUnlock: Unlock
+  lockScreenLocked: Locked
+  lockScreenPasswordError: Incorrect password
+  lockScreenBack: Back to login
   pageWidth: Page Width
   fixed: Fixed
   fixedTip: Compact page to easily find the information you need
@@ -101,14 +735,25 @@ layout:
   customTip: Minimum 1280, maximum 1600
   saveConfig: Save
   saveConfigTip: Save the current site configuration to the server
-  resetConfig: Reset
-  resetConfigTip: Reset to the default project configuration and reload
+  revertChanges: Undo session changes
+  revertChangesTip: Discard all changes made in this panel and return to the state when it was opened
+  revertChangesSuccess: Session changes undone
+  resetConfig: Restore defaults
+  resetConfigTip: Clear your personal preferences and fall back to the site defaults (managed by administrators)
+  resetConfigConfirm: This clears your personal preferences and falls back to the site default configuration. Continue?
+  resetSiteWide: Restore site defaults
+  resetSiteWideConfirm: This restores the site title / logo / login page layout to the platform defaults and takes effect immediately for all users and the login page. Continue?
+  resetSiteWideSuccess: Site appearance restored to defaults
+  panelMoreTip: "More actions: restore site defaults / copy preferences / clear cache and return to login page"
 
 error:
   error403: Sorry, you are not authorized to access this page
   error404: Sorry, the page you are looking for does not exist
   error500: Sorry, server error
   goBack: Back to home page
+  moduleDisabled: Feature module is disabled
+  moduleDisabledTip: The module behind this feature has been disabled. Contact an administrator to enable it.
+  back: Go back
 
 password:
   veryWeak: Very weak
@@ -145,6 +790,7 @@ labels:
   offline: Offline
   yes: Yes
   no: No
+  noData: No data
 
 exportImport:
   import: Import
@@ -159,18 +805,260 @@ exportImport:
   upload: Upload
   uploadRuleTip: upload file not exist
   uploadTip: Drag file here or click here to upload
+  pleaseSelectFile: Please select a file first
   downloadTip: Download { action } template
+  downloadTemplate: Download template
   ignoreError: Ignore error
+  ignoreErrorAsyncTip: Not needed for async imports — failed rows are isolated per-row and captured in the error report
+  asyncExport: Async export
+  asyncTip: 'Enable for large datasets: submit a background task and download it later in "System - Download Center"'
+  asyncSubmitted: Export task submitted, check the download center later
+  mode: Execution mode
+  modeImport: Import
+  modeValidate: Validate only
+  async: Async import
+  asyncImportTip: 'Enable for large datasets: submit a background task; track progress and error reports in "Download Center - Import Records"'
+  validateResult: Import validation result
+  validateDone: Validation finished
+  validateSummary: "{total} rows in total, {valid} valid, {invalid} invalid"
+  validateTruncated: Error details truncated
+  validateRow: Row
+  validateField: Field
+  validateError: Error message
+  importSubmitted: Import task submitted, track progress and error report in the download center
+  mappingStep: Column mapping
+  mappingTip: Map file columns to fields when headers do not match field names; unmapped columns are ignored by default
+  mappingSource: File column
+  mappingTarget: Target field
+  mappingIgnore: Ignore this column
+  mappingMatched: "Name match: { field }"
+  mappingUnmatched: No field matched
+  mappingParseFailed: Failed to parse headers, please check the file format
+  templatePlaceholder: Select a mapping template (optional)
+  templateShared: shared
+  templateSavePlaceholder: Template name
+  saveAsTemplate: Save as template
+  templateSaved: Mapping template saved
+  templateNameRequired: Please enter a template name
+  ignoreUnknown: Keep unmapped columns
+  ignoreUnknownTip: When checked, unmapped columns keep their original headers and are matched by name again; otherwise they are ignored
+  unmatchedColumns: "Columns not matched to any field (ignored): { columns }"
 
 messageNotifications:
   messageType: Message type
   receivers: Receivers
   editRecipient: Edit recipient
   editRecipientTitle: Edit { title } recipient
+  sendTestMessage: Send test message
+
+taskCenter:
+  title: Task center
+  pendingApproval: Pending approvals
+  runningTasks: Running tasks
+  recentExports: Recent exports
+  recentImports: Recent imports
+  viewAll: View all
+  download: Download
+  log: Log
+  handle: Handle
+  logTitle: execution log
+  empty: No async task records
+  noData: No records
+  type: Record type
+  status: Status
+  keyword: Name keyword
+  total: "Total {total}"
+  colType: Type
+  colName: Name
+  colModule: Source
+  colStatus: Status
+  colProgress: Progress
+  colCreator: Creator
+  colCreated: Created at
+  colError: Error
+  colActions: Actions
+  typeTask: Task
+  typeExport: Export
+  typeImport: Import
+  type_task: Task
+  type_export: Export
+  type_import: Import
+  statusPending: Waiting
+  statusRunning: Running
+  statusSuccess: Success
+  statusFailure: Failure
+  statusRevoked: Cancelled
+  status_PENDING: Waiting
+  status_RUNNING: Running
+  status_SUCCESS: Success
+  status_FAILURE: Failure
+  status_REVOKED: Cancelled
+  cancel: Cancel
+  cancelTitle: Cancel task
+  cancelConfirm: The task will stop at the next safe point (running exports/imports finish the current checkpoint). Continue?
+  cancelDone: Cancelled
+  rerun: Rerun
+  rerunDone: Rerun submitted
+  colTimeCost: Time cost
+  deleteConfirm: Delete this execution record?
+  deleteDone: Deleted
+  deleteProductHint: Delete export/import records in the download center
+  batchDelete: Batch delete
+  batchDeleteConfirm: Delete {count} selected execution records?
+  batchDeleteEmpty: No deletable execution records selected
+  selected: "{count} selected"
+
+post:
+  title: Post
+  create: New Post
+  edit: Edit Post
+  saveOk: Post saved
+  name: Post name
+  nameRequired: Post name is required
+  code: Post code
+  codeRequired: Post code is required
+  dept: Department
+  deptPlaceholder: Leave empty for an organization-wide post
+  rank: Rank
+  isActive: Active
+  description: Remark
+  memberCount: Members
+  enabled: Enabled
+  disabled: Disabled
+  members: Members
+  memberHint: Remove existing members or search to add new ones (applies on save)
+  memberEmpty: No members yet
+  memberPlaceholder: Search username or nickname
+  memberNoChange: No member changes detected
+  memberReadonlyHint: Read-only member list (assignment permission is required to manage members)
+  memberSaveOk: Post members updated
+  memberSkipped: Post members updated, {count} invalid or inactive user(s) skipped
+  preview: Preview
+
+directory:
+  membersLoadFailed: Failed to load members, please retry later
+  title: Directory
+  viewByDept: By Department
+  viewByPost: By Post
+  allMembers: All members
+  allPosts: All posts
+  searchDept: Search department
+  searchPost: Search post
+  refresh: Refresh
+  searchPlaceholder: Username/nickname/email/phone
+  search: Search
+  total: "{n} members"
+  viewCard: Card view
+  viewList: List view
+  empty: No members
+  emptyDept: No department available
+  emptyPosts: No active posts
+  deptTreeTruncated: Department count exceeds the single-load cap; the dept tree was truncated and may be incomplete
+  postListTruncated: Post count exceeds the single-load cap; the post list was truncated and may be incomplete
+  noPost: No post
+  noContact: No contact info
+  memberDetail: Member details
+  copy: Copy
+  name: Name
+  username: Username
+  dept: Department
+  posts: Posts
+  gender: Gender
+  email: Email
+  phone: Phone
+  lastLogin: Last Login
+  dateJoined: Joined At
+
+tag:
+  title: Tag
+  create: New tag
+  edit: Edit tag
+  saveOk: Tag saved
+  name: Tag name
+  nameRequired: Tag name is required
+  color: Color
+  remark: Remark
+  usage: Usage
+  builtin: Builtin
+  assignTitle: Tag objects
+  assignPlaceholder: Select tags (multiple)
+  assignHint: "Saving replaces all tags: unselected tags will be unbound"
+  assignDone: Tags updated
+  selectPlaceholder: Select tags
+  selectRequired: Select at least one tag
+  batchAssignTitle: Tag objects in bulk
+  batchHint: "Bulk: the selected mode is applied to every chosen object"
+  batchDone: Tagged {success} object(s)
+  batchDonePartial: "{success} succeeded, {failures} failed"
+  newPlaceholder: Type a name to create a tag
+  createDone: Tag created
+  modeLabel: Apply mode
+  modeAdd: Add
+  modeRemove: Remove
+  modeReplace: Replace (overwrite existing tags)
+
+commandPalette:
+  title: Quick actions
+  openAi: Open AI assistant
+  openTaskLog: Open task log
+  openTags: Open tag management
+  openModules: Open module management
+  toggleTheme: Toggle light / dark
+  backHome: Back to home
+
+invite:
+  title: Account activation
+  subtitle: Set your password to activate the account
+  password: Password
+  confirm: Confirm password
+  submit: Activate
+  passwordRequired: Please enter your password
+  mismatch: The two passwords do not match
+  success: Activated successfully, please sign in
+  invalid: The invitation link is invalid or has expired. Please contact the administrator to resend it.
+  accepted: The account is already activated, please sign in directly
+  toLogin: Go to sign in
+  captchaRequired: Please complete the puzzle verification first
+
+oauth:
+  title: Third-party login
+  tabTitle: Third-party accounts
+  bindTip: Bind a third-party account to sign in with it directly. Unbinding requires your login password and never removes your last available login method.
+  bound: Bound accounts
+  bindable: Available to bind
+  bind: Bind
+  bindSuccess: Bound successfully
+  bindAlready: This third-party account is already bound, no action needed
+  bindFailed: Binding failed
+  backToAccount: Back to account settings
+  providerNotConfigured: The administrator has not configured any third-party login yet, binding is unavailable
+  allBound: All enabled third-party accounts are already bound
+  noBindings: No third-party account bound
+  unbind: Unbind
+  unbindPasswordTip: Enter your password to confirm unbinding
+  unbindSuccess: Unbound
+  password: Password
+  invalidCallback: Incomplete callback parameters, please login again
+  loginFailed: Third-party login failed
+  mfaRequired: This account requires a second factor, please login with password and bind it
+  idpError: Third-party authorization was not completed. It was cancelled or the provider failed, please retry or use another method to sign in
+  idpErrorDetail: "Third-party authorization was not completed: {detail}"
+
+plus:
+  fileLink: File link
+  metaMissingTitle: Failed to load column configuration
+  metaMissingDetail: "The search and table columns of this page are generated from backend metadata, which is currently unavailable. Please refresh and retry; if it persists, contact the administrator (common causes: page not registered, serializer fields not declared, or missing page permission)."
+  detailBlankTitle: Detail data is empty
+  detailBlankTip: If field permission is enabled, configure the field whitelist for this menu (fields without whitelist entries are trimmed to empty)
 
 results:
+  copySuccess: Copied
+  copyFailed: Copy failed
+  operateSuccess: Operation successful
+  operateConfirmTitle: Confirm the operation?
   success: Executed successfully
   failed: Execution failure
+  loadFailedRetry: Failed to load data. Please close and try again
   batchDestroy: Batch deletes the { count } items
   batchRead: Batch read the { count } items
   noSelectedData: Data not selected
@@ -184,6 +1072,7 @@ sorts:
   rank: Rank
 
 buttons:
+  tips: Tips
   loginOut: LoginOut
   add: Add
   save: Save
@@ -193,6 +1082,7 @@ buttons:
   collapseAll: Collapse All
   selectAll: Select All
   unSelectAll: Cancel Select
+  selectIcon: Select icon
   systemSet: Open ProjectConfig
   delete: Delete
   reload: Reload
@@ -203,9 +1093,17 @@ buttons:
   closeRightTabs: Close RightTabs
   closeOtherTabs: Close OtherTabs
   closeAllTabs: Close AllTabs
-  contentFullScreen: Content FullScreen
-  contentExitFullScreen: Content ExitFullScreen
+  maximize: Maximize
+  restoreMaximize: Restore
+  pinTab: Pin Tab
+  unpinTab: Unpin Tab
+  openInNewWindow: Open in new window
+  fullScreenToggle: Toggle full screen
+  language: Switch language
+  splitPaneReset: Reset pane width
+  userMenu: User menu
   cancel: Cancel
+  confirm: Confirm
   close: Close
   switch: Switch
   sure: Ok
@@ -219,8 +1117,12 @@ buttons:
   confirmUpdate: Are you sure to update this?
   checkStrictly: Hierarchical association
   checkUnStrictly: Hierarchical independence
+  changeHistory: Change history
 
 menus:
+  searchData: Data search
+  userOnline: Online users
+  apiApp: API applications
   home: Home
   login: Login
   sysManagement: System Manage
@@ -228,9 +1130,29 @@ menus:
   basicSettings: Basic Settings
   messageSettings: Message Settings
   smsSettings: SMS Settings
+  ldapSettings: LDAP Directory
+  dataAnalysis: Data Analysis
+  dataDashboard: Dashboards
+  dataDataset: Datasets
+  dataReport: Scheduled Reports
+  dataScreen: Display Screens
+  integration: Integrations
+  webhookSubscription: Webhook Subscriptions
+  webhookDelivery: Delivery Audit
+  aiAssistant: AI Assistant
+  aiAssistantConfig: AI Configuration
+  aiKnowledge: Knowledge base
+  aiMcpServers: External tools
+  formCollection: Form Collection
+  formDesigner: Form Design
+  formMySubmission: My Submissions
+  formData: Form Data
   securitySettings: Security Settings
   userManagement: User Manage
+  directory: Directory
   deptManagement: Department Manage
+  myScope: My Scope
+  postManagement: Post Manage
   menuManagement: Menu Manage
   permissionManagement: Permission Manage
   configManagement: Config Manage
@@ -239,6 +1161,8 @@ menus:
   roleManagement: Role Permission
   dataPermissionManagement: Data Permission
   logManagement: Log Manage
+  systemTaskCrontab: Crontab Schedule
+  systemTaskInterval: Interval Schedule
   modelFieldManagement: Model Field Manage
   operationLogManagement: Operation Log Manage
   loginLogManagement: Login Log Manage
@@ -252,13 +1176,362 @@ menus:
   empty: Empty Page
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
-  readNotice: Read Notice
+  readNotice: Read Notices
+  codeGenerator: Code Generator
   timingTask: Timing Task
+  taskManage: Task Management
+  taskMonitor: Task Monitor
+  taskExecution: Execution History
   personalCenter: UserInfo
   accountSettings: Account
   messageCenter: Notice
   chat: Chat
   apiDocs: Api Docs
+  exportCenter: Download Center
+  exportRecord: Export Records
+  importCenter: Import Records
+  systemMonitor: System Monitor
+  dataDict: Data Dictionary
+  tag: Tag management
+  taskCenter: Task center
+  accountRisk: Account Security
+  loginPolicy: Login Policy
+  dataMaskRule: Data Mask Rule
+  approval: Approval Management
+  approvalCenter: Approval Center
+  approvalFlow: Flow Definition
+  approvalInstance: Flow Approval
+  approvalDelegation: Approval Delegation
+  approvalRule: Approval Rules
+  leaveApply: Leave Request
+  moduleManager: Module Manager
+  credential: Credentials
+
+impact:
+  title: Impact preview
+  affected: This operation affects the following related data
+  confirmDelete: Confirm delete
+
+credential:
+  title: Credentials
+  systemConfigs: Sensitive system configs
+  settings: Setting credentials
+  modelFields: Model field credentials
+  name: Name
+  field: Field
+  fields: Encrypted fields
+  category: Category
+  status: Encryption
+  action: Actions
+  updatedTime: Updated at
+  configuredCount: Configured
+  empty: Not configured
+  encrypted: Encrypted
+  plaintext: Plaintext
+  plaintextWarn: "{count} sensitive configs are still plaintext, rotate them as soon as possible"
+  rotate: Rotate
+  rotateConfirm: "Re-encrypt credential {name}? The old ciphertext stops working immediately and consumers read the new one"
+  rotateOk: Credential re-encrypted
+  rotateFailed: Credential rotation failed
+  description: Description
+  masked: Masked value
+  goChange: Change
+  rotateModelConfirm: 'Rotate "{name}"? A new random secret overwrites the current one; external integrations (e.g. webhook signature verification) must be updated or verification fails.'
+  usedBy: Used By
+  lastRotated: Last Rotated
+  rotateOverdue: Rotation Suggested
+  neverRotated: Never Rotated
+  modelFieldsHint: Model field credentials are encrypted per row (AESCipherV3); only the configured count is shown here, never the secret itself
+  noPermission: No permission to view credentials
+  noPermissionHint: Ask an administrator to grant the credential overview permission
+
+approval:
+  pendingTab: Pending My Approval
+  mineTab: Submitted By Me
+  candidateTruncated: The approver candidate list was truncated (too many users); local search may be incomplete, please refine by keyword
+  commentPlaceholder: Comment (optional)
+  approve: Approve
+  reject: Reject
+  cancel: Cancel
+  batchApprove: Batch Approve
+  batchReject: Batch Reject
+  batchRejectTitle: Reject {n} approval requests
+  batchPartial: "{n} not processed: {detail}"
+  statsTip: "Stats window: last {n} days"
+  statsSubmitted: Submitted
+  statsApproved: Approved
+  statsRejected: Rejected
+  statsPending: Pending my approval
+  statsAvgDuration: Avg approval time
+  relatedLogs: Related logs
+  relatedLogsTip: Traces the operation logs matching the same path, object and applicant (approximate; the approval action itself is excluded)
+  approveConfirm: Approve request {no}?
+  cancelConfirm: Cancel request {no}?
+  batchApproveConfirm: Batch approve the selected requests?
+  rejectTitle: Reject request {no}
+  rejectReasonRequired: Rejection reason is required
+  reasonPlaceholder: Please enter the rejection reason (required)
+  module: Module
+  method: Method
+  path: Request Path
+  object_pk: Object PK
+  status: Status
+  approver: Approver
+  reason: Reason
+  creator: Applicant
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusEXPIRED: Expired
+  statusCANCELLED: Cancelled
+  statusFAILED: Failed
+  levelNo: Level {n}
+  pendingApprover: Pending
+  progressTitle: Approval progress - {no}
+  progressTip: "Level by level: the next approver is notified after each level passes; approved only when all levels pass"
+  target: Target object
+  targetChanges: Change comparison (before → after)
+  targetNoChanges: No field changes recorded (deletion shows the target identity only)
+  handler: Handler
+  stepComment: Comment
+  modeOR: Any one approves
+  modeAND: All must approve
+  andProgress: "Approved {done}/{total}"
+  actedUsers: Action records
+  progressLoadFailed: Failed to load approval progress, please try again later
+
+approvalRule:
+  createTitle: New Approval Rule
+  editTitle: Edit Approval Rule
+  name: Rule Name
+  nameRequired: Rule name is required
+  path_patterns: Path Patterns
+  methods: Methods
+  level_count: Levels
+  priority: Priority
+  is_active: Active
+  remark: Remark
+  formName: Rule Name
+  formNameTip: e.g. Book deletion approval
+  formPaths: Path Patterns
+  # angle brackets wrapped in literal interpolation {'<'} - raw <pk> is detected as HTML by message-compiler
+  formPathsTip: "One regex per line; matching requests are approved level by level (e.g. api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$)"
+  formMethods: Limited Methods
+  methodsPlaceholder: Empty = all methods
+  methodsTip: When set, the rule matches only requests using these methods (HEAD matches GET)
+  methodsAll: All methods
+  pathRequired: At least one path pattern is required
+  pathsPlaceholder: Select the endpoints that require approval
+  pathsTip: Selected endpoints are matched by path; only operations registered for approval (delete / batch delete etc.) are actually intercepted
+  pathsRequired: At least one path pattern is required
+  pathsCustomTip: "Custom path regex, one per line (advanced, e.g. api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$)"
+  approveType: Approve Mode
+  approveTypeOR: Any one approves
+  approveTypeAND: All must approve
+  formPriority: Priority
+  formPriorityTip: When several rules match, the highest priority wins
+  formActive: Active
+  formRemark: Remark
+  levels: Approval Levels
+  levelsTip: "Approvals are handled in order: the next approver is notified after each level passes; all levels must pass"
+  levelOrder: Order
+  levelName: Level Name
+  levelType: Assignee Type
+  levelTypeUser: User
+  levelTypeRole: Role
+  levelTypePost: Post
+  levelAssignee: Approver
+  levelUserTip: Search username (multi-select, any one approves this level)
+  levelRoleTip: Select roles (any member approves this level)
+  levelPostTip: Select posts (any active member approves this level, active posts only)
+  levelAssigneeFallback: Enter approver identifiers (username/role code/post code, comma separated)
+  levelValueTip: Username or role code, comma separated
+  levelActions: Actions
+  moveUp: Up
+  moveDown: Down
+  addLevel: Add Level
+  levelCount: "{n} levels"
+
+systemApprovalFlow:
+  versionsLoadFailed: Failed to load versions, please retry later
+  createTitle: New Flow
+  editTitle: Edit Configuration
+  formName: Flow Name
+  formCode: Flow Code
+  formActive: Active
+  formSchemaTitle: Form Fields
+  formSchemaTip: The dynamic form rendered when submitting; field keys are referenced by node conditions and the "form field" assignee type
+  formSchemaLocked: "This flow is bound to a dynamic form; form fields are synced from the bound form (edit in the form designer, read-only here)"
+  fieldLabel: Label
+  fieldKey: Field Key
+  fieldType: Type
+  fieldRequired: Required
+  fieldOptions: Options (comma separated)
+  fieldOptionsTip: Required for select type, comma separated
+  addField: Add Field
+  nodesTitle: Approval Nodes
+  nodesTip: Nodes are visited in order (nodes with unmatched conditions are skipped); OR = any approver passes, AND = all approvers pass; no value needed for the "leader" assignee type
+  nodeOrder: Order
+  nodeName: Node Name
+  approveType: Approve Type
+  approveTypeOR: Any (OR)
+  approveTypeAND: All (AND)
+  assigneeType: Assignee Type
+  assigneeType_role: Role
+  assigneeType_user: User
+  assigneeType_leader: Applicant Leader
+  assigneeType_field: Form Field
+  assigneeType_post: Post
+  assigneeValue: Assignee Value
+  assigneeHint_role: Role codes, comma separated
+  assigneeHint_user: Usernames, comma separated
+  assigneeHint_leader: No value needed (uses the applicant's department leader)
+  assigneeHint_field: Form field key (value is a username or username list)
+  assigneeHint_post: Post codes, comma separated (only active members of active posts resolve)
+  assigneeValueRequired: Please fill in the approver for this node (role / user / form field)
+  ratioRangeRequired: The ratio of ratio-based approval must be between 1 and 100
+  ccUsers: CC Users
+  ccUsersHint: Default CC users of this node (optional)
+  conditionField: Condition Field
+  conditionFieldTip: Empty = no condition
+  conditionOp: Operator
+  conditionValue: Condition Value
+  conditionValueNumericRequired: "Values for numeric operators (gt / gte / lt / lte) must be numbers"
+  timeoutHours: Timeout (hours)
+  timeoutAction: Timeout action
+  timeoutAction_none: Remind only
+  timeoutAction_approve: Auto approve
+  timeoutAction_reject: Auto reject
+  timeoutAction_transfer_up: Escalate to leader
+  timeoutActionHint: No timeout set
+  addNode: Add Node
+  moveUp: Move up
+  moveDown: Move down
+  versionsTitle: Version history
+  versionsTip: Each save of node/form definitions creates a version snapshot; rollback writes the historical snapshot back to the current definition. Edits and rollbacks only affect applications submitted afterwards — in-flight ones follow the version they started with
+  versionNo: Version
+  versionRemark: Remark
+  versionCurrent: Current
+  rollbackTitle: Rollback
+  rollbackConfirm: Roll back to v{n}? The current definition will be overwritten and a new version created
+  rollbackRemark: Rollback remark (optional)
+  rollbackSuccess: Rollback succeeded
+  approveTypeRATIO: Ratio
+  approveRatio: Approve ratio %
+  modeList: List
+  modeCanvas: Canvas
+  routes: Branches
+  routesTitle: Outbound routes (conditional branches)
+  routesTip: Evaluated in order; the first matching condition decides the next node after this one passes. Falls back to the linear next node when none matches
+  routeTarget: Target node
+  addRoute: Add branch
+  routeAlways: Always
+  nameAndCodeRequired: Flow name and code are required
+  nodeRequired: At least one approval node is required
+  nodeNameRequired: Some node has no name
+  saveSuccess: Flow saved
+  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target cannot be the current node)
+
+systemApprovalInstance:
+  start: New Application
+  startTitle: New Application
+  pendingTab: Pending My Approval
+  mineTab: My Applications
+  doneTab: Processed
+  ongoingTab: All in progress
+  formTitle: Title
+  formFlow: Flow
+  formStatus: Status
+  formApplicant: Applicant
+  formCurrentNode: Current Node
+  formCreatedTime: Submitted At
+  formReason: Rejection / Result Note
+  formData: Application Content
+  formDataEmpty: No form data
+  relatedObject: Related business object
+  relatedType: Type
+  relatedTitle: Object
+  relatedStatus: Business status
+  relatedMissing: Object is no longer reachable (deleted or module disabled)
+  detailRich: Application Detail
+  tasks: Approval Trail
+  taskNode: Node
+  taskAssignee: Approver
+  taskAdded: Added
+  taskComment: Comment
+  taskActedAt: Acted At
+  approve: Approve
+  reject: Reject
+  addSign: Add Approver
+  cancel: Cancel
+  approveConfirm: Approve the current node of "{title}"?
+  rejectTitle: Reject application "{title}"
+  rejectReasonRequired: Rejection reason is required
+  reasonPlaceholder: Please enter the rejection reason (required)
+  addSignTitle: Add approvers for "{title}"
+  addSignRequired: Please enter the usernames to add
+  addSignPlaceholder: Usernames, comma separated
+  commentPlaceholder: Comment (optional)
+  batchApprove: Batch Approve
+  batchReject: Batch Reject
+  batchApproveConfirm: Batch approve the selected applications?
+  batchRejectTitle: Reject {n} applications
+  batchRejectPartial: "{n} not processed: {detail}"
+  batchApprovePartial: "{n} not approved: {detail}"
+  cancelConfirm: Cancel application "{title}"?
+  submit: Submit
+  submitSuccess: Application submitted
+  flowRequired: Please select an approval flow
+  flowPlaceholder: Please select an approval flow
+  titleRequired: Title is required
+  titlePlaceholder: Please enter the application title
+  fieldRequired: Please fill in {label}
+  numberInvalid: "{label} must be a number"
+  fieldPlaceholder: Please enter
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusCANCELLED: Cancelled
+  approveTitle: Approve "{title}"
+  batchApproveTitle: Approve {n} applications
+  urge: Urge
+  urgeTitle: Urge "{title}"
+  urgeMessagePlaceholder: Urge message (optional)
+  urgeOk: The approval reminder has been sent
+  resubmit: Resubmit
+  resubmitConfirm: Resubmit "{title}" with the same content?
+  resubmitSuccess: Resubmitted, pending approval
+  transfer: Transfer
+  transferTitle: Transfer application "{title}"
+  transferTarget: Transfer to
+  transferPlaceholder: Enter the username to transfer to
+  transferRequired: Please select the user to transfer to
+  transferOk: Transferred, waiting for the assignee
+  batchTransfer: Batch transfer
+  batchTransferTitle: Batch transfer {n} tasks
+  batchTransferPartial: "{n} tasks failed to transfer: {detail}"
+  nodeProgress: Node progress
+  progressCount: "{approved} approved / {required} required ({total} candidates)"
+  progressRatioHint: "Ratio sign-off: passes when approvals reach {ratio}% (counter-signing raises the threshold)"
+  progressOrHint: "OR sign: any approver can pass it"
+  progressAndHint: "AND sign: all approvers must pass"
+  addSignThreshold: "After counter-sign: {approved} approved / {required} required ({total} candidates)"
+  removeSign: Remove sign
+  removeSignTitle: Remove added approver for "{title}"
+  removeSignPlaceholder: Select the added approver to remove
+  removeSignRequired: Please select the added approver to remove
+  removeSignEmpty: No added approver to remove at the current node
+  return: Return
+  returnTitle: Return application "{title}"
+  returnTarget: Return to node
+  returnTargetPlaceholder: Select the target node
+  returnReasonRequired: Return reason is required
+  returnReasonPlaceholder: Enter the return reason (required)
+  returnNoTarget: No earlier node to return to
+  returnOk: Returned, waiting for the target node to re-approve
+  delegatedFrom: Delegated by {name}
+  tasksEmpty: No approval records
+  flowUnavailable: The original flow is disabled or unavailable, please choose another one
 
 userinfo:
   userinfo: UserInfo
@@ -269,6 +1542,7 @@ userinfo:
   updateUserInfo: Update UserInfo
   oldPassword: Old Password
   newPassword: New Password
+  verifyPassword: Please enter the password
   verifyOldPassword: Please enter old password
   verifyNewPassword: Please enter new password
   surePassword: Sure Password
@@ -279,6 +1553,7 @@ userinfo:
   gender: Gender
   dept: Department
   roles: Roles
+  posts: Posts
   date_joined: Registration Date
   last_login: Last Login Date
   avatar: Avatar
@@ -289,9 +1564,58 @@ userinfo:
   continueBind: Continuing the binding will be automatic
   bindInfo: binding information
 
+# MFA / Sensitive operation re-verification
+mfa:
+  tabTitle: MFA Security
+  confirmTitle: Sensitive Operation Confirmation
+  confirmTip: This operation requires identity re-verification, please select a verification method
+  method: Method
+  code: Verification code
+  codePlaceholder: Please enter the verification code
+  codeRequired: Please enter the verification code
+  sendCode: Send code
+  resendAfter: "Resend in {seconds}s"
+  codeSent: The verification code has been sent
+  noAvailableMethod: No available verification method, please contact the administrator
+  cancel: Cancel
+  verify: Confirm
+  verifySuccess: Verification successful
+  loginVerifyTip: Login MFA is enabled for your account, please verify before entering the system
+  loginVerify: Verify and Login
+  backToLogin: Back to Login
+  otpStatus: Login MFA
+  otpEnabled: Enabled
+  otpClosed: Closed
+  otpDisabled: Not Bound
+  otpEnabledTip: A dynamic verification code is required at login
+  otpClosedTip: Login MFA is closed and your key is kept. Enter a dynamic code to re-enable it (no re-scan needed)
+  otpDisabledTip: After binding OTP, a dynamic verification code is required at login, which effectively prevents account theft caused by password leakage
+  startBind: Bind OTP
+  scanTip: Scan to bind
+  manualEntry: If you cannot scan, enter the key manually
+  confirmBind: Confirm Binding
+  cancelBind: Cancel Binding
+  bindSuccess: OTP binding successful
+  closeMfa: Close
+  closeConfirmTip: Login will no longer require a dynamic code. The key is kept and can be re-enabled without re-scanning. Close it?
+  openMfa: Re-enable
+  testKey: Verify Key
+  testSuccess: Code verified, the key is usable
+  disableBind: Unbind OTP
+  disableConfirmTip: Unbinding clears the key and requires re-scanning to enable again. Are you sure?
+  recoveryRemaining: Recovery codes left
+  recoveryTitle: Save your recovery codes
+  recoveryTip: Store these recovery codes somewhere safe. Use them to complete verification if you lose your authenticator device. Each code works only once and will not be shown again.
+  recoveryRegenerate: Regenerate
+  recoveryCopyAll: Copy all
+  recoveryCopied: Recovery codes copied
+  recoverySaved: I have saved them
+
 account:
   profile: Profile
   preference: Preference
+  prefCrossHint: These switches control whether real-time alerts pop up (global). To choose which message types you subscribe to, see "Notifications".
+  subCrossHint: Choose which message types you subscribe to here (per-type). To control whether real-time alerts pop up, see "Preferences".
   securityLog: Security Log
   accountManagement: Account Management
   notifications: Notifications
@@ -300,12 +1624,20 @@ account:
   messagePushTips: The announcement will be a real-time push notification in the upper right corner
   chatPush: "Chat room {'@'} push"
   chatPushTips: "Chat {'@'} messages will be a live push notification in the top right corner"
+  preferenceLoadFailed: Failed to load preferences; editing is disabled
   password: Password
   bind: Bind
   unbound: Unbound
 
 systemUser:
+  invite: Invite to activate
+  inviteConfirm: An invitation email will be sent (the account becomes pending and the current password is invalidated immediately; an activated account must be activated again). Continue?
+  invitePending: Pending acceptance
+  inviteAccepted: Accepted
+  avatarAlt: User avatar
   user: User
+  resetMfa: Reset MFA
+  imBinding: IM Binding
   email: Email
   username: Username
   phone: Mobile
@@ -321,12 +1653,47 @@ systemUser:
   resetPassword: Reset Password
   assignRoles: Assign Roles Permissions
   resetPasswd: Reset the password of user { user }
+  generatePassword: Generate
+  passwordCopied: Random password generated and copied
+  passwordGenerated: Random password generated, please copy it manually
   assignRole: Assign multiple roles and permissions to user { user }
   updateAvatar: Upload and update avatar to { user }
   password: Password
+  passwordRequired: Please input the password
   roles: Roles
   rules: Data Permissions
+  posts: Posts
+  preview: Permission Preview
   logout: Logout
+  impersonate: Impersonate
+  impersonateTip: Use the admin console as this user; all actions are audited under their identity
+  impersonateConfirm: You are about to use the console as user { user }. All actions will run and be audited under their identity until you exit. Start impersonation?
+  manage: Manage
+  manageUser: Manage user { user }
+  enabled: Enabled
+  disabled: Disabled
+  locked: Locked
+  onlineSessions: "{count} online"
+  dateExpired: Account Expiry
+  tags: Tags
+  sendNotice: Send Notice
+  actionGroups:
+    account: Account & Security
+    permission: Permission & Roles
+    lifecycle: Account Lifecycle
+    collaboration: Notice & Collaboration
+    record: Records & Audit
+  resetPasswordTip: "Set a new password for this user; the original password is invalidated immediately"
+  resetMfaTip: "Clear TOTP and Passkey bindings; the user must rebind"
+  editAvatarTip: Upload and crop a new avatar
+  logoutTip: Terminate all online sessions of this user
+  assignRolesTip: Adjust roles and data permission scope
+  previewTip: Read-only view of layered permissions and data scope
+  inviteTip: "Send an invitation email and reset the account to pending activation"
+  sendNoticeTip: Open notices with this user prefilled as the recipient
+  imBindingTip: Bind or unbind the IM account on behalf of the user
+  tagsTip: Maintain tags of this user
+  changeHistoryTip: View field-level change records of this user
 
 systemDept:
   dept: Department
@@ -341,6 +1708,55 @@ systemDept:
   parent: Department
   roles: Roles
   rules: Data Permissions
+  preview: Permission Preview
+  managers: Managers
+  managerHint: Managers can manage users of this department and all its sub-departments (data scope follows)
+  managerEmpty: No managers
+  managerPlaceholder: Search and add managers
+  managerNoChange: No manager changes
+  managerSaveOk: Managers updated
+  manage: Manage
+  manageDept: Manage department { dept }
+  viewMembers: View Members
+  assignRolesTip: Adjust roles and data permission scope of this department
+  assignManagersTip: Appoint or remove department managers (roles and data permissions are provisioned)
+  previewTip: Read-only view of mounted roles, data permissions and member sampling
+  viewMembersTip: Open the user list filtered by this department
+  changeHistoryTip: View field-level change records of this department
+  actionGroups:
+    permission: Permission & Roles
+    member: Members & Management
+    record: Records & Audit
+
+systemMyScope:
+  deptCount: Managed departments
+  userCount: Managed members
+  directCount: Directly managed
+  subCount: Sub-departments
+  hint: Data scope follows the manager assignment in real time; preview members per department or continue in user management
+  empty: No managed departments (assign managers on the department page)
+  direct: Direct
+  members: Members { count }
+  searchPlaceholder: Search by name / code
+  searchEmpty: No matching departments
+  cardView: Cards
+  treeView: Tree
+  refresh: Refresh
+  parentDept: Parent
+  leader: Leader
+  managers: Managers
+  viewMembers: Preview members
+  manageMembers: Manage members
+  viewInUserPage: Open in user management
+  memberDrawerTitle: Member preview · { dept }
+  membersTotal: "{ total } in total"
+  colUser: Username
+  colNickname: Nickname
+  colStatus: Status
+  colLastLogin: Last login
+  active: Active
+  disabled: Disabled
+  loadMore: "Load more ({count} remaining)"
 
 systemPermission:
   permission: Permissions
@@ -362,7 +1778,95 @@ systemPermission:
   notice_user: Users
   notice_dept: Departments
   notice_role: Roles
+  notice_post: Posts
   notice_menu: Menus
+  preview: Permission Preview
+  presets: Presets
+  preset_self: Only myself
+  preset_ownDept: My department
+  preset_ownDeptTree: My department and sub-departments
+  preset_leaderDepts: Departments I lead and sub-departments
+  preset_leaderUsers: Members of departments I lead
+  preset_managerDepts: Departments I manage and sub-departments
+  preset_managerUsers: Members of departments I manage
+  preset_all: All data
+  valueByRuntime: The value is injected by the system for the current user, nothing to fill
+  lookupNoAuth: Missing model-field lookup permission, match options cannot be loaded
+  excludeInclude: Include (only matching data)
+  excludeExclude: Exclude (exclude matching data)
+  copyRule: Copy this rule
+  modeTypeSingleTip: With a single rule the mode is saved as OR (AND/OR are equivalent for one rule)
+  # List statistics columns (server SerializerMethodField names -> header texts)
+  rule_count: Rules
+  menu_count: Scope
+  user_count: Users
+  dept_count: Departments
+  modeOr: OR mode
+  modeAnd: AND mode
+  modeOrShort: OR
+  modeAndShort: AND
+  notes:
+    title: How it works
+    rules: Rules are combined by the mode above - AND requires every rule to match, OR matches when any rule matches.
+    priority: Multiple grants for the same user or department are merged as a union (the widest result wins); grants only widen the scope and never narrow other grants.
+    scope: A grant bound to APIs applies only to those APIs, leaving it empty applies to all APIs. Superusers bypass data permissions.
+  editor:
+    addRule: Add rule
+    emptyRules: No rules yet. Start from a preset or click "Add rule"
+    scope: Filter target
+    scopePlaceholder: Select application / model / field
+    scopeRequired: Please select a filter target (model and field)
+    scopeLockedTip: No filter target is needed for the "All data" value type
+    anyField: All fields
+    multipleField: multiple values
+    nullableField: nullable
+    type: Value type
+    typePlaceholder: Select a value type
+    typeRequired: Value type is required
+    typeGroup:
+      all: All data
+      runtime: Current user
+      explicit: Specific objects
+      time: Time conditions
+      free: Custom value
+    match: Match
+    matchPlaceholder: Select a match
+    matchRequired: Match is required
+    matchFixedTip: The match is fixed by the system for this value type
+    value: Value
+    valueRequired: Value is required
+    jsonPlaceholder: Enter JSON (validated on save)
+    jsonInvalid: Invalid JSON
+    pickerAuthMissing: Directory search permission is required to select objects
+    secondsPast: Past
+    secondsFuture: Future
+    secondsUnit:
+      "60": minutes
+      "3600": hours
+      "86400": days
+    secondsValue: "{count} {unit}"
+    summaryAll: All data (no restriction)
+    summaryInclude: Include
+    summaryExclude: Exclude
+    summaryObjectCount: "{count} selected"
+  scope:
+    label: Scope
+    unlimited: Unlimited (all APIs)
+    selected: "{count} APIs selected"
+    tip: Applies only to the selected APIs; selecting a page selects all its APIs
+    dialogTitle: Select APIs
+    searchPlaceholder: Search page or API name
+    expandAll: Expand all
+    collapseAll: Collapse all
+    selectAll: Select all
+    clear: Clear
+    anyMethod: any
+    apiCount: "{count} APIs"
+    dialogTip: Selecting a page selects all of its APIs; the scope is stored as API permission points.
+  list:
+    modeSingle: Single
+    scopeAll: All APIs
+    scopeApis: "{count} APIs"
 
 systemRole:
   role: Role
@@ -371,6 +1875,152 @@ systemRole:
   permissions: Permissions
   menuTitle: Please enter menu title
   menu: Menus
+  preview: Grant Preview
+
+# Role menu permission tree
+rolePermission:
+  searchPlaceholder: Search by menu title, permission code or route
+  matchedCount: "{count} matched"
+  linked: Parent-child linked
+  independent: Independent
+  selectAll: Select all
+  invert: Invert
+  clear: Clear
+  expandAll: Expand all
+  collapseAll: Collapse all
+  reset: Reset
+  selectedTotal: "{checked} / {total} selected"
+  statDirectory: Directories {checked}/{total}
+  statMenu: Menus {checked}/{total}
+  statPermission: Permissions {checked}/{total}
+  statField: Fields {checked}/{total}
+  empty: No menus available
+  statusChecked: Selected
+  statusPartial: Partially selected
+  statusUnchecked: Not selected
+  typeDirectory: Directory
+  typeMenu: Menu
+  typePermission: Permission
+  typeFieldGroup: Field access
+  typeField: Field
+  labelWithName: "{label} ({name})"
+  fieldProgress: "{checked}/{total} selected"
+  linkedTip: Selecting a parent also selects all of its menus and permissions; deselecting recalculates parent state from the remaining children
+  independentTip: Each node is selected independently; children do not affect parents
+  foldedTip: A page-level check grants all permissions of that page; uncheck the page first to adjust individual permissions
+
+permissionPreview:
+  userTitle: User Permission Preview
+  roleTitle: Role Grant Preview
+  postTitle: Post Preview
+  postUsers: Users holding this post
+  emptyPostUsers: No users hold this post (or outside your data scope)
+  basicInfo: Basic Info
+  menuTree: Visible Menu Tree
+  apiCodes: API Permissions
+  dataPermission: Data Permission
+  fieldPermission: Field Permission
+  trial: Data Permission Trial
+  superuser: Superuser
+  superuserBypass: Superuser bypasses all three permission layers
+  dept: Department
+  roles: Roles
+  status: Status
+  enabled: Enabled
+  disabled: Disabled
+  yes: "Yes"
+  no: "No"
+  personal: Personal Grants
+  deptChain: Department-chain Grants
+  relation_self: This department
+  relation_ancestor: Ancestor department
+  noGrant: No data permission grant at all, invisible by default
+  noGrantAtLevel: No grant at this department level
+  dataDisabled: Data permission disabled, filtering inactive
+  boundMenus: Bound menus
+  generalGrant: General grant (no menu bound)
+  modeOr: OR mode
+  modeAnd: AND mode
+  colTable: Table
+  colField: Field
+  colType: Type
+  colMatch: Match
+  colValue: Value
+  colExclude: Exclude
+  excludeYes: Excluded
+  colCode: Code
+  colMethod: Method
+  colTitle: Description
+  colPath: Path
+  colMenu: Menu
+  colRole: Role
+  colModel: Model
+  colFields: Field whitelist
+  filterPlaceholder: Type to filter
+  emptyMenus: No visible menus
+  emptyApis: No API permissions
+  fieldDisabled: Field permission disabled, cropping inactive
+  fieldBlank: Models without a field whitelist have their fields trimmed to empty (invisible at runtime)
+  codeTag: Code
+  roleMenus: Menus Granted to Role
+  roleFields: Field Grants
+  sql: SQL
+  users: Users with this role
+  emptyUsers: No users hold this role (or they are outside your data scope)
+  sampleTruncated: Showing first { limit } of { total } users
+  model: Trial model
+  menuContext: Menu context
+  hasRules: Has rules
+  run: Run
+  hitCount: Matched rows
+  noModels: Data permission registry is empty, run sync_model_field first
+  menuScopedHint: Takes effect only on the bound menu pages, not in general list APIs
+  inactiveDeptHint: This department is inactive, grants on it do not take effect
+  trialNoAuth: No permission to run the data-permission trial
+  trialFailed: Trial failed
+  deptTitle: Department grant preview
+  deptInfo: Department info
+  deptParent: Parent department
+  deptLeader: Department leader
+  deptChildren: Active / all sub-departments
+  deptMembers: Direct members
+  rolesGranted: Granted roles
+  noRoles: No role granted to this department
+  dataGrant: Department data grants
+  trialDraft: Instant trial (unsaved rules)
+  draftEmpty: Add rules before running the trial
+  draftApplied: Current rule draft applied
+  draftSkipped: Draft skipped (menu context mismatch)
+  trialHint: "Trial-run the unsaved rules in the form; the draft is never persisted and passes the same validation as saving, while the mode and bound menus come from the form."
+  trialDataScope: Data permission
+  trialFieldScope: Field permission
+  modeOverride: Manual mode
+  modeOverrideHint: "Trial mode is set manually (form uses {mode}); saving still follows the form mode"
+  boundMenuHint: "{count} menu(s) bound in the form; the draft applies only in those menu contexts"
+  elapsed: Took {ms} ms
+  staleHint: Rules changed, run the trial again
+  sampleRows: Sample rows
+  sampleNote: "Only the first {limit} row labels are shown (no field content; field permission does not affect the data trial)"
+  grantDiagnosis: Effective grants
+  diagnosisSource: Source
+  diagnosisName: Grant
+  diagnosisKind: Result
+  sourcePersonal: Personal
+  sourceDept: Department
+  sourceDraft: Current draft
+  kindAll: All data
+  kindCondition: Condition filter
+  kindDeny: Empty result
+  kindNone: Unrelated to this model
+  fieldDraftTip: "Field permissions apply per menu: pick a user and a menu, optionally stacking an unsaved field whitelist draft."
+  fieldMenuRequired: Select a menu first (field permissions apply per menu)
+  fieldResultTitle: Effective fields
+  fieldVisible: Visible {visible} / {total}
+  fieldUnconfigured: Not configured = all hidden
+  fieldNone: No visible fields
+  draftModel: Draft model (optional)
+  draftFields: Draft fields (optional)
+  loadFailed: Failed to load permission preview, please retry
 
 systemMenu:
   menus: Menus
@@ -397,6 +2047,7 @@ systemMenu:
   verifyType: Please choice menu type
   verifyTitle: Please enter menu title
   verifyPath: Please enter routing path
+  verifyComponentName: Enter the component name
   verifyComponentPath: Please enter component path
   verifyTransition: Please select animation
   verifyRequestMethod: Please enter request method
@@ -421,11 +2072,139 @@ systemMenu:
   fixedTagTip: Whether the current menu name is fixed to the TAB and cannot be closed
   hiddenTag: Hidden Tag
   hiddenTagTip: The current menu name or custom information is prohibited from being added to the TAB
+  pageWatermark: Page Watermark
+  pageWatermarkTip: When enabled, this page always shows the site watermark (the global watermark switch in Basic Settings still applies; works in addition to the path list)
+  activePath: Active path
+  activePathTip: Menu to highlight when visiting a page outside this menu (e.g. a detail page); fill in that menu's route path
+  activePathPlaceholder: "e.g. /system/user/index"
+  activePathError: Active path must start with "/"
+  badge: Menu badge
+  badgeTip: Badge shown next to the menu title; numbers greater than 99 show as 99+
+  badgePlaceholder: Badge text or number; leave empty to hide
+  badgeTypeNormal: Text
+  badgeTypeDot: Dot
+  query: Query
+  queryTip: Query parameters appended to the route when the menu is clicked, e.g. k=v&k2=v2
+  queryPlaceholder: "e.g. status=pending&page=1"
+  queryError: Invalid query format, expected k=v or k=v&k2=v2
+  groupName: Group title
+  groupNameTip: Sibling menus with the same group title are grouped under it
+  groupNamePlaceholder: Group title; leave empty to disable grouping
+  groupRank: Group rank
   addPermissions: Automatic batch add permissions
   codeSuffix: Permission identity suffix
   codeSuffixTip: It is by default the component name. If it is empty, it will be by default the name of the back-end view, and it can be modified by yourself.
   menuView: Back-end view name
   skipExistingData: Skip existing data
+  searchPlaceholder: Search name / route / permission code
+  rank: Rank
+  verifyPermissionPath: Select the permission route
+  modelSelected: "{ count } related model(s) selected"
+  inactiveDirectoryHint: Disabled menus are hidden from the sidebar; children are not disabled automatically (they are promoted to top level when the parent is missing)
+  cascadeInactive: "Also disable { count } child node(s)"
+  importExport: Import / Export
+  permissionTip: Generate API permission codes from backend views (preview create/overwrite before saving)
+  permissionViewsRequired: Select at least one backend view
+  permissionPreviewTip: Preview and execution share the same builder, so what you see is what you get
+  countDescendants: "{ count } descendant(s), { inactive } disabled"
+  countDescendantsShort: "{ count } items"
+  group:
+    basic: Basic
+    permission: Permission
+    nav: Sidebar and tabs
+    extra: External link and advanced
+  filter:
+    allType: All types
+    allStatus: All statuses
+    active: Enabled
+    inactive: Disabled
+    level1: Expand 1 level
+    level2: Expand 2 levels
+    levelAll: Expand all
+    typeLabel: Menu type
+    statusLabel: Menu status
+    levelLabel: Expand level
+  stats:
+    summary: "{ total } nodes · { directory } directories / { menu } menus / { permission } permissions"
+    inactive: "{ count } disabled"
+    matched: "{ count } matched"
+  action:
+    addChild: Add child
+    clone: Clone node
+    rename: Rename
+    copyPath: Copy route path
+    copyPermissionPath: Copy API path
+    copyCode: Copy permission code
+    moveUp: Move up
+    moveDown: Move down
+    moveTop: Move to top
+    enable: Enable
+    disable: Disable
+    batchEnable: Enable selected
+    batchDisable: Disable selected
+    multiMode: Multi-select mode
+    exitMulti: Exit multi-select
+    saveAndSwitch: Save and switch
+    discard: Discard changes
+  confirm:
+    removeTitle: Delete menu
+    removeCount: "{ count } node(s) will be deleted"
+    cascade: "{ count } child node(s) under { title } will be moved to the recycle bin as well"
+    impactUnavailable: Impact preview is unavailable (deletion is not blocked, please confirm references manually)
+    impactItem: "{ label }: { count }"
+    impactSamples: " ({ samples })"
+    recycleHint: Deleted menus can be restored as a group from the recycle bin.
+    unsavedTitle: Unsaved changes
+    unsaved: This menu has unsaved changes. Discard them?
+    activeTitle: Batch enable
+    inactiveTitle: Batch disable
+    activeCount: "{ count } node(s) will be enabled (including descendants of selected directories)"
+    inactiveCount: "{ count } node(s) will be disabled (including descendants of selected directories)"
+    inactiveDirectoryHint: "Disabling a directory does not cascade: when the parent is hidden its children are promoted to top level"
+  result:
+    enabled: "Enabled { title }"
+    disabled: "Disabled { title }"
+    batchActive: "{ count } menu(s) updated"
+    sorted: Order saved
+  preview:
+    action: Action
+    create: Create
+    update: Overwrite
+    empty: Nothing to generate
+    pickViews: Select backend views to preview
+    summary: "{ create } to create, { update } to overwrite"
+  dialog:
+    add: New menu
+    addChild: "New child under { title }"
+    edit: Edit menu
+    clone: Clone menu
+    cloneSuffix: "{ title } copy"
+  permissionAudit:
+    button: Permission check
+    tip: Detect missing, orphaned, duplicate permission points and roles without field permissions (read-only)
+    title: Menu permission check
+    suggestion: Suggestion
+    missing: Missing permissions
+    orphan: Orphaned permissions
+    duplicate: Duplicate codes
+    fieldUnconfigured: Roles without field permissions
+    role: Role
+    locate: Locate
+    allClear: No permission issues found
+    summary: "Scanned { routes } routes / { permissions } permissions · { total } issues"
+    suggest:
+      generate: Run permission sync or "auto add permissions" to fill
+      verify: Confirm the endpoint is retired, remove the permission if so
+      merge: Merge the duplicate codes or confirm they are intentional
+      configure: Pick the field whitelist for this permission on the role page (empty output otherwise)
+    empty:
+      missing: No missing permissions
+      orphan: No orphaned permissions
+      duplicate: No duplicate codes
+      fieldUnconfigured: No role missing field permissions
+  empty:
+    noMatch: No menu matches the filters, try clearing them
+    noData: No menu data
 
 logsOperation:
   creator_id: Creator Id
@@ -437,7 +2216,19 @@ logsOperation:
   creator: Creator
   body: Response Body
   response_code: Status Code
+  status_code: Business Code
+  created_time: Created time
   response_result: Response Result
+  method: Method
+  exec_time: Cost (s)
+  exec_time_min: Cost from (s)
+  exec_time_max: Cost to (s)
+  has_changes: Has field changes
+  changes: Changed fields
+  changesField: Field
+  changesOld: Old Value
+  changesNew: New Value
+  request_uuid: Request ID
 
 logsLogin:
   creator_id: Creator ID
@@ -459,6 +2250,13 @@ configSystem:
   inheritTip: Allows users to inherit this configuration
   invalidCache: Invalid Cache
   confirmInvalid: Are you sure to invalid this cache?
+  typeBoolean: Boolean
+  typeInteger: Integer
+  typeNumber: Number
+  typeString: String
+  typeArray: JSON Array
+  typeObject: JSON Object
+  registeredTypeTip: "Expected type: {type}"
 
 configUser:
   configUser: User Config
@@ -491,6 +2289,7 @@ systemNotice:
   notice_user: Users
   notice_dept: Departments
   notice_role: Roles
+  notice_post: Posts
   allRead: AllRead
   showSystemNotice: Check the system announcement
 
@@ -508,7 +2307,9 @@ noticeRead:
   showSystemNotice: Check the system announcement
 
 userNotice:
+  readFailed: Failed to mark as read, please retry later
   message: Message
+  batchReadConfirm: Mark the selected {count} notifications as read?
   title: Title
   unread: Have Read
   level: Level
@@ -521,14 +2322,153 @@ userNotice:
 systemUploadFile:
   upload: Upload
   fileLink: File Link
+  filename: File Name
+  category: Category
+  storageUsage: Storage Usage
+  fileCount: File Count
   clickUpload: click to upload
   dropFile: Drop file here or
   uploadTip: Files with a size less than
+  defaultSizeTip: Upload size config is unavailable; using the default limit ({size})
+  quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
+  usageRate: Usage
+  usedSpace: Used
+  remainingSpace: Remaining
+  unlimited: Unlimited
+  avgSize: Average Size
+  totalSize: Total Size
+  size: Size
+  categoryDist: Category Distribution
+  uncategorized: Uncategorized
+  uploadTrend: Uploads (7 Days)
+  trendSummary: "Files uploaded in the last 7 days: {count}, total {size}"
+  largestFiles: Largest Files
+  statsDetail: Statistics Details
+  statsTitle: File Statistics
+  preview: Preview
+  previewPreparing: Document is being converted, please wait... (first preview requires conversion)
+  previewUnsupported: This file type does not support online preview, please download it
+  previewFailed: Failed to load preview, please retry later or download the file
+  previewTruncated: Content too large and truncated, download for the full content
 
 status:
   hsLoad: Loading...
 
+chat:
+  groupNameRequired: Please enter a group name
+  membersRequired: Please select group members
+  inputLabel: "Message:"
+  inputPlaceholder: Type a message and press Enter
+  send: Send
+  sessions: Chats
+  contacts: Recent online
+  refresh: Refresh
+  searchPlaceholder: Search chats or contacts
+  publicRoom: Public chat room
+  publicRoomHint: Visible to all members
+  aiAssistant: AI assistant
+  aiRoomHint: Multi-turn chat; prefix with /kb to ask the knowledge base
+  aiPlaceholder: "Ask the AI assistant, or prefix {command} to query the knowledge base"
+  unknownUser: Unknown user
+  noMessageYet: No messages yet
+  emptyRooms: No chats
+  emptyContacts: No contacts
+  emptyMessages: No messages yet, say hello
+  selectRoom: Select a chat to start
+  online: Online
+  offline: Offline
+  onlineCount: "{count} online"
+  connecting: Connecting...
+  enterHint: Enter to send, Shift + Enter for a new line
+  mentionHint: Type {'@'} to mention an online member
+  loadMore: Load earlier messages
+  noMoreHistory: No more history
+  newMessages: "{count} new messages"
+  thinking: AI is thinking...
+  stopGenerating: Stop generating
+  yes: "Yes"
+  no: "No"
+  isActive: Active
+  targetUser: Target user
+  noticeTitle: Title
+  noticeMessage: Message
+  noticeLevel: Level
+  aiFailed: Failed to get the AI reply, please try again later
+  emoji: Emoji
+  emojiGroups:
+    common: Common
+    gesture: Gestures
+    symbol: Symbols
+    food: Food
+    animal: Animals
+    nature: Nature
+    object: Objects
+  desktopNotify: Desktop notifications
+  desktopNotifyOn: Desktop notifications on, click to turn off
+  desktopNotifyOff: Turn on desktop notifications
+  desktopNotifyDenied: Notification permission denied, allow it in the browser address bar
+  desktopNotifyUnsupported: This browser does not support desktop notifications
+  sources: Sources
+  hideSources: Hide sources
+  recall: Recall
+  react: React
+  reactionCount: "{emoji} {count} people"
+  recallConfirm: Recall this message? It will be hidden for both sides.
+  recalled: The other side recalled a message
+  youRecalled: You recalled a message
+  sending: Sending...
+  sendFailed: Failed to send
+  resend: Retry
+  disconnected: Connection lost, reconnecting
+  attachImage: Send image
+  attachFile: Send file
+  uploadFailed: Attachment upload failed
+  attachmentMissing: Attachment is no longer available
+  download: Download
+  yesterday: Yesterday
+  openPrivate: Send message
+  actionCardTitle: "Confirm AI action: {label}"
+  actionNeedApproval: Approval required
+  actionConfirm: Confirm and run
+  actionRetry: Confirm again
+  actionCancel: Not now
+  actionCancelled: Cancelled, nothing executed
+  actionDone: Executed
+  actionPending: Submitted for approval. Confirm again once it is approved.
+  actionNoPermission: The "AI assistant - action execution" permission is required to run this action
+  leaveType: Leave type
+  startDate: Start date
+  endDate: End date
+  days: Days
+  reason: Reason
+  formName: Form
+  formData: Form data
+  annual: Annual leave
+  sick: Sick leave
+  personal: Personal leave
+  compTime: Compensatory leave
+  marriage: Marriage leave
+  other: Other
+  newGroup: New group chat
+  groupName: Group name
+  groupNamePlaceholder: Enter a group name
+  selectMembers: Select members
+  searchUserHint: Search by username or nickname
+  groupMembers: Group members
+  groupOwner: Owner
+  addMember: Add member
+  removeMember: Remove
+  renameGroup: Rename
+  leaveGroup: Leave group
+  leaveGroupConfirm: Leave this group? You will no longer receive its messages.
+  groupMemberCount: "{count} members"
+  emptyMembers: No members
+
 login:
+  logoutSuccess: Logged out
+  thirdPartyLogin: Third-party login
+  serverForbidden: Login is not allowed on this server
+  serverRegisterForbidden: Registration is not allowed on this server
   username: Username
   password: Password
   verifyCode: VerifyCode
@@ -537,27 +2477,20 @@ login:
   sure: Sure Password
   forget: Forget Password?
   login: Login
-  thirdLogin: Third Login
   basicLogin: Basic Login
   verifyCodeLogin: Verify Code Login
-  qRCodeLogin: QRCode Login
   register: Register
-  weChatLogin: WeChat Login
-  alipayLogin: Alipay Login
-  qqLogin: QQ Login
-  weiboLogin: Weibo Login
   phone: Phone
   email: Email
   smsVerifyCode: SMS VerifyCode
   back: Back
-  test: Mock Test
-  tip: After scanning the code, click "Confirm" to complete the login
   definite: Definite
   loginSuccess: Login Success
   registerSuccess: Registered successfully
   tickPrivacy: Please tick Privacy Policy
   readAccept: I have read it carefully and accept
   privacyPolicy: Privacy Policy
+  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
   getVerifyCode: Get VerifyCode
   info: Seconds
   usernameReg: Please enter username
@@ -575,7 +2508,6 @@ login:
   passwordUpdateReg: Password has been updated
   emailVerify: Email Auth
   smsVerify: SMS Auth
-  basic: Username Auth
 
 welcome:
   operateLog: Log of operations
@@ -588,12 +2520,143 @@ welcome:
   userNum: Number of Users
   loginTimes: Number of Logins
 
+search:
+  globalResult: Global search
+apiApp:
+  title: API applications
+  tip: "Exchange credentials with POST /api/identity/open/token (client_id/client_secret), then call APIs with the Authorization: Pat token header"
+  create: New application
+  edit: Edit application
+  name: Name
+  clientId: Client ID
+  clientSecret: Client Secret
+  callbackSecret: Callback secret
+  scopes: Scopes
+  scopeCount: "Scopes: {n}"
+  ipAllowlist: IP allowlist
+  listPlaceholder: Separate multiple with commas; empty = unlimited
+  rateLimit: Rate limit / minute
+  callbackUrls: Callback urls
+  tokenTtl: Token TTL (seconds)
+  isActive: Active
+  on: Active
+  off: Disabled
+  actions: Actions
+  regenerate: Reset secret
+  testCallback: Test callback
+  manage: Manage
+  panelTitle: "Manage {name}"
+  copyClientId: Copy Client ID
+  copyScopes: Copy scopes
+  scopeDetail: Scope details
+  scopeMore: "{n} more not shown"
+  probeTitle: Callback test results
+  probeSuccess: Delivered
+  probeFailure: Failed
+  usageDesc: View 7-day call volume, failures, top paths and quota usage
+  regenerateDesc: Generate a new client secret and callback secret; old credentials stop working immediately
+  regenerateConfirm: "Resetting the secret invalidates old credentials immediately; third-party integrations must be updated. Reset now?"
+  testCallbackDesc: Send one test event to each callback url; results are shown below
+  editDesc: Edit name, scopes, rate limit, callback urls and resource grants
+  actionGroups:
+    access: Access and credentials
+    verify: Integration check
+    manage: Application settings
+  saveOk: Saved
+  saveFailed: Save failed
+  cancel: Cancel
+  confirm: OK
+  credentialTitle: One-time credentials
+  credentialTip: Copy them now - plaintext is returned only once; resetting the secret invalidates old tokens immediately
+  copy: Copy
+  copied: Copied
+  copyFailed: Copy failed, please select and copy manually
+  callbackOk: Callback delivered
+  callbackFailed: "{count} callback(s) failed"
+  unlimited: Unlimited
+  dailyQuota: "Daily quota (0 = unlimited)"
+  quotaAlertPercent: "Quota alert percent (%)"
+  enforceDailyQuota: "Enforce daily quota"
+  enforceDailyQuotaTip: "When on, requests beyond the daily quota get 429 (off = warn only)"
+  grant:
+    title: Resource grants
+    hint: "Empty = inherit owner permissions and API scopes; any rule enables whitelist mode (model / action / field / row, tighten only)"
+    add: Add rule
+    remove: Remove
+    model: Model
+    allModels: All models
+    actions: Actions
+    allActions: All actions
+    fields: Fields
+    fieldsPlaceholder: "Allowed fields (empty = all fields)"
+    enabled: Enabled
+    rowFilter: "Row rules (optional, empty = unrestricted)"
+    addRow: Add row rule
+    rowField: Field
+    rowMatch: Match
+    rowValue: "Value (comma-separated for in)"
+    removeRow: Remove rule
+    catalogFailed: Failed to load grant catalog, please refresh
+    loadFailed: "Resource grants were not loaded: this save skips grant rules (existing rules are kept)"
+    saveFailed: Failed to save resource grants
+    matchExact: Equals
+    matchContains: Contains
+    matchIn: "In (comma-separated)"
+    matchGt: Greater than
+    matchGte: Greater or equal
+    matchLt: Less than
+    matchLte: Less or equal
+  usage:
+    title: Usage
+    range: Window
+    days: "{n}d"
+    total: Requests
+    failed: Failed
+    avgDuration: Avg duration
+    quota: Daily quota
+    quotaDetail: "Used {used} / quota {quota} today (alert at {percent}%, soft limit)"
+    daily: Daily breakdown
+    date: Date
+    topPaths: Top paths
+    statusCodes: Business code distribution
+    statusCode: Code
+    empty: No request data yet
+apiScope:
+  grantTip: The list shows the APIs you are allowed to call. Once selected, the credential can only call those (out-of-scope requests get 403). Empty = unrestricted, and you can adjust it later
+  selectPlaceholder: Search and select the APIs to allow
+  noOptions: No API available for authorization (ask an administrator to grant menu permissions)
+  selected: "{n} selected"
+  emptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
+  custom: Custom entries (advanced)
+  customTip: Paths or regexes not listed above, one per line, e.g. GET /api/identity/user
+  other: Other
+  placeholder: |-
+    /api/identity/user
+    /api/task/exports
+setting:
+  name: Name
+  value: Value
+  category: Category
+  is_active: Is active
+  encrypted: Encrypted
+
 settingBasic:
   title: Basic Settings
+
+settingWatermark:
+  title: Watermark Settings
+  preview: Live Preview
+  previewTip: Placeholders are resolved with the current logged-in user's real info; the style matches the actual watermark; empty color = default gray
 
 settingMessage:
   mailTitle: Email Server
   messageTitle: Message Notifications
+  dingtalkTitle: DingTalk
+  wecomTitle: WeCom
+  feishuTitle: FeiShu
+
+settingLdap:
+  title: LDAP Directory
 
 settingSecurity:
   code: Verify Code
@@ -603,8 +2666,10 @@ settingSecurity:
   register: Register Safe
   resetPassword: Reset Password
   passwordRule: Password Rules
-  bingEmail: Bind Email
+  bindEmail: Bind Email
   bindPhone: Bind Phone
+  mfa: MFA Verification Settings
+  monitor: Resource Alert
   blockIp: Block Ip
 
 settingPassword:
@@ -617,6 +2682,7 @@ settingPassword:
 
 settingSms:
   title: SMS Setting
+  backendsLoadFailed: Failed to load SMS channel tabs
 
 demoBook:
   book: Book
@@ -627,5 +2693,1657 @@ demoBook:
   publication_date: Publication date
   price: Price
   is_active: Active
+  status: Shelf status
+  submitBook: Submit for approval
+  confirmSubmitBook: Submit {name} for on-shelf approval?
   pushBook: Push book
   confirmPushBook: Are you sure to push {name} book?
+  publisherExample1: People's Publishing House
+  publisherExample2: Zhonghua Book Company
+  publisherExample3: Science Press
+
+systemTask:
+  name: Task Name
+  task: Task Path
+  crontab: Crontab
+  interval: Interval Schedule
+  args: Positional Args
+  kwargs: Keyword Args
+  queue: Queue
+  enabled: Enabled
+  one_off: One-off
+  start_time: Start Time
+  expires: Expires At
+  last_run_at: Last Run At
+  total_run_count: Total Runs
+  date_changed: Changed At
+  description: Description
+  priority: Priority
+  exchange: Exchange
+  routing_key: Routing Key
+  headers: Message Headers
+  expire_seconds: Expire (seconds)
+  solar: Solar Schedule
+  clocked: Clocked Schedule
+  enable: Enable/Disable
+  runNow: Run Now
+  runConfirm: Run the celery task {name} immediately?
+  batchRun: Batch Run
+  batchRunConfirm: Run the selected tasks immediately?
+  batchEnable: Batch Enable
+  batchDisable: Batch Disable
+  batchEnableConfirm: Enable the selected tasks?
+  batchDisableConfirm: Disable the selected tasks?
+  clone: Clone
+  cloneConfirm: Clone the task {name}? The clone starts disabled.
+  latestLog: Live Log
+  noExecution: No execution records for this celery
+  logTitle: Log
+  noLogOutput: No log output yet
+
+systemTaskExecution:
+  name: Task Name
+  product_type: Record type
+  product_progress: Progress
+  product_error: Error
+  periodic_task: Periodic Task
+  status: Status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  statusREVOKED: Revoked
+  creator: Triggered By
+  time_cost: Cost (s)
+  date_start: Start Time
+  date_finished: Finish Time
+  log: Log
+
+systemExportRecord:
+  name: File name
+  module: Source module
+  file_format: File format
+  status: Export status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  rows: Rows
+  filesize: Size
+  file: Export file
+  creator: Triggered by
+  error: Error message
+  created_time: Created time
+  download: Download
+  log: Log
+  logTitle: Export log
+
+systemImportRecord:
+  name: File name
+  module: Target module
+  action: Import action
+  actioncreate: Create
+  actionupdate: Update
+  status: Import status
+  statusPENDING: Pending
+  statusRUNNING: Running
+  statusSUCCESS: Success
+  statusFAILURE: Failure
+  total: Total rows
+  success_rows: Success rows
+  failed_rows: Failed rows
+  report_filesize: Report size
+  error_report: Error report
+  source_file: Source file
+  creator: Triggered by
+  error: Error message
+  created_time: Created time
+  download: Error report
+  log: Log
+  logTitle: Import log
+
+changeHistory:
+  time: Time
+  operator: Operator
+  method: Method
+  statusCode: Status code
+  changes: Changes
+
+accessToken:
+  title: Access Tokens
+  tip: Personal access tokens let third-party systems or scripts call the API with your account's permissions and can be revoked anytime. The token is shown only once at creation — store it safely.
+  name: Token name
+  nameRule: e.g. jenkins-sync
+  prefix: Prefix
+  active: Status
+  expiredAt: Expires at
+  neverExpire: Leave empty for never expiring
+  lastUsed: Last used
+  createdTime: Created time
+  create: Create token
+  createDialogTitle: Create access token
+  createdTitle: Token created
+  onceTip: This is the only time the plain token is shown. It cannot be retrieved after closing.
+  copy: Copy token
+  copied: Copied to clipboard
+  copyFailed: Copy failed, please select and copy manually
+  revoke: Revoke
+  scope: Scopes
+  scopeCount: "Scopes: {n}"
+  scopeUnrestricted: Unrestricted
+  revokeConfirm: Revoking "{name}" takes effect immediately — every call with it returns 401 and this cannot be undone. Continue?
+  ipAllowlist: IP allowlist
+  ipCount: "IP allowlist: {n}"
+  ipAllowlistUnrestricted: Unrestricted
+  ipAllowlistTip: One allowed source IP or CIDR network per line (e.g. 10.0.0.0/8). Leave empty for unrestricted; calls from other IPs are rejected
+  ipAllowlistPlaceholder: |-
+    127.0.0.1
+    10.0.0.0/8
+  callLogs: Call logs
+  callLogsTip: Call logs are attributed per token (operation logs now carry the token identity); records created before the upgrade cannot be attributed and are excluded
+  token_prefix: Prefix
+  scopes: Scopes
+  ip_allowlist: IP allowlist
+  is_active: Status
+  expired_at: Expires at
+  last_used_time: Last used
+  description: Description
+  totalCalls: Calls (last {n}d)
+  failedCalls: Failed calls
+  lastCall: Last call
+
+systemTaskCrontab:
+  minute: Minute
+  hour: Hour
+  day_of_week: Day of Week
+  day_of_month: Day of Month
+  month_of_year: Month
+  timezone: Timezone
+  cronEveryWeek: Every week
+  cronWeekday0: Sunday
+  cronWeekday1: Monday
+  cronWeekday2: Tuesday
+  cronWeekday3: Wednesday
+  cronWeekday4: Thursday
+  cronWeekday5: Friday
+  cronWeekday6: Saturday
+
+systemTaskInterval:
+  every: Number of Periods
+  period: Period Unit
+
+imBinding:
+  title: "IM bindings of {user}"
+  provider: Provider
+  subject: Account identity
+  subjectPlaceholder: "IdP unique identity (unionId for DingTalk)"
+  nickname: Nickname
+  current: Current bindings
+  empty: No IM binding yet
+  unbind: Unbind
+  required: Provider and account identity are required
+  saved: IM binding saved
+  unbound: Unbound
+
+systemApprovalDelegation:
+  allFlows: All flows
+  delegator: Delegator
+  delegator_name: Delegator
+  delegate: Delegate
+  delegate_name: Delegate
+  start_time: Start Time
+  end_time: End Time
+  flow_codes: Flow Scope (empty = all flows)
+  is_active: Active
+  remark: Remark
+
+recycleBin:
+  title: Recycle Bin
+  restore: Restore
+  purge: Purge
+  purgeExpired: Purge Expired
+  deletedAt: Deleted At
+  actions: Actions
+  empty: Recycle bin is empty
+  restoreConfirm: Restore the selected { count } item(s)?
+  restoreOneConfirm: Restore this item?
+  purgeConfirm: Purged data cannot be recovered. Purge the selected { count } item(s)?
+  purgeExpiredConfirm: Purge ALL recycle bin data beyond the retention period (30 days by default)?
+  restoreDone: Restored
+  purgeDone: Purged
+
+systemMonitor:
+  worker: Worker
+  active: Active
+  reserved: Reserved
+  method: Method
+  cpu: CPU usage
+  memory: Memory usage
+  disk: Disk usage
+  load: CPU load
+  trend: Host resource trend (last 60 samples)
+  noTrendData: No monitoring data
+  cores: CPU cores
+  processes: Processes
+  swap: Swap usage
+  netIo: Network I/O (total)
+  db: Database
+  redis: Redis
+  celery: Celery
+  serviceHealth: Service health
+  healthy: Healthy
+  unhealthy: Unhealthy
+  uptime: Uptime
+  version: Version
+  usedMemory: Used memory
+  hitRate: Cache hit rate
+  clients: Connected clients
+  concurrency: Concurrency
+  celerySkipped: Celery probing is disabled in this environment
+  noWorker: No online worker
+  slowRequests: Slow requests Top 20
+  module: Module
+  path: Request path
+  cost: Cost
+  statusCode: Status code
+  creator: Creator
+  time: Time
+  noSlowRequest: No slow request in the window
+  taskHealth: Task health (last {n}d)
+  taskState: State
+  taskSuccessRate: Terminal success rate
+  taskTotal: Total runs
+  taskRunning: In-flight (RUNNING/PENDING)
+  taskAvgCost: Avg cost
+  taskPerTask: Top 10 tasks
+  taskRecentFailures: Recent failures/revoked
+  taskNoFailures: No failed tasks in window
+  taskSuccessRateNone: No terminal samples
+  stateHealthy: Healthy
+  stateDegraded: Degraded
+  stateFailing: Failing
+  autoRefresh: Auto refresh
+  refresh: Refresh
+  wsLive: Live (WebSocket)
+  wsFallback: Polling
+
+  healthOverview: Health overview
+  healthHealthy: Healthy
+  healthWarning: Warning
+  healthCritical: Critical
+  itemWarning: Over threshold
+  itemCritical: Critical
+  itemUnknown: Unknown
+  alertsFiring: Firing alerts
+  checkedAt: Checked at
+  netRate: Network rate
+  netSent: Upload
+  netRecv: Download
+  netTotal: Total ↑{sent}MB ↓{recv}MB
+  historyTrend: History trend
+  range1h: 1 hour
+  range6h: 6 hours
+  range24h: 24 hours
+  range7d: 7 days
+  range30d: 30 days
+  intervalLabel: Aggregation
+  intervalAuto: Auto
+  interval1m: 1 minute
+  interval5m: 5 minutes
+  interval15m: 15 minutes
+  interval1h: 1 hour
+  interval1d: 1 day
+  metricsLabel: Metrics
+  metricCpu: CPU usage
+  metricCpuLoad: CPU load
+  metricMemory: Memory usage
+  metricDisk: Disk usage
+  metricNetSent: Upload rate
+  metricNetRecv: Download rate
+  summaryRange: Range {min} ~ {max}
+  trendEmpty: No monitor data in window
+  exportImage: Export image
+  exportReport: Export report
+  exportHistoryCsv: Trend data (CSV)
+  exportHistoryXlsx: Trend data (Excel)
+  exportAlertsCsv: Alert records (CSV)
+  exportAlertsXlsx: Alert records (Excel)
+  exportDone: Report exported
+  share: Share
+  shareCopied: View link copied
+  thresholdSettings: Alert threshold settings
+  thresholdSaved: Thresholds updated
+  thresholdCheckTip: Checked every {seconds}s; admins are notified when thresholds are exceeded
+  thresholdUnavailable: Threshold settings not loaded; refresh the page and retry
+  alertsTitle: Resource alert records
+  alertFilterAll: All status
+  alertFiring: Firing
+  alertResolved: Resolved
+  alertItem: Metric
+  alertStatus: Status
+  alertValue: Trigger value
+  alertThreshold: Threshold
+  alertCount: Hit count
+  alertFirstTime: First time
+  alertLastTime: Last time
+  alertResolvedTime: Resolved time
+  alertMessage: Message
+  noAlert: No alerts in window
+  events: Event records
+  errorEvents: Failed requests
+  taskEvents: Task failures
+  noErrorEvent: No failed requests in window
+  taskName: Task name
+  taskStart: Started at
+  taskFinished: Finished at
+  bizCode: Business code
+  ip: IP address
+systemOnline:
+  forceLogout: Force offline
+  forceLogoutConfirm: Force { name } offline? All sessions will be revoked immediately
+  forceLogoutNoUser: Missing user info on this row; cannot force offline
+  batchForceLogout: Batch force offline
+  batchForceLogoutConfirm: Force selected users offline? All their sessions will be revoked immediately
+
+dataDict:
+  dictType: Dict type
+  parent: Parent
+  parent_code: Dict code
+  code: Code
+  label: Display name
+  label_en: English name
+  value: Value
+  sort: Sort
+  color: Tag color
+  is_active: Is active
+  is_locked: Built-in
+  children_count: Item count
+  items: Dict items
+  locked: Built-in
+  moveUp: Move up
+  moveDown: Move down
+  batchActive: Batch enable
+  batchActiveConfirm: Enable the selected dict types/items?
+  batchInactive: Batch disable
+  batchInactiveConfirm: Disable the selected dict types/items? Disabled types are excluded from dropdowns and the items API
+  refreshCache: Refresh cache
+  addType: Add dict type
+  addChild: Add child item
+
+mask:
+  model: Model
+  field: Field
+  mask_type: Mask Type
+  keep_head: Keep Head
+  keep_tail: Keep Tail
+  mask_char: Mask Char
+  pattern: Pattern
+  roles: Roles
+  is_active: Is Active
+  sort: Sort
+  description: Description
+  creator: Creator
+  preview: Mask Preview
+  previewValue: Sample Value
+  previewTip: Input a sample value
+  previewMultiTip: One sample per line; paste multiple lines at once
+  previewResult: Result
+  previewTruncated: Too many or too long samples; truncated to the limit
+  previewBtn: Preview
+  previewRoles: Viewer Roles
+  previewRolesTip: Simulates a non-superuser viewer's role set; empty means no roles
+  previewNotApplied: Selected viewer roles do not match this rule; the field is not masked in lists
+  previewRolesLoadFailed: Failed to load role options
+  customOnlyTip: Only used for custom type
+  maskTypePhone: Phone
+  maskTypeIdcard: ID Card
+  maskTypeEmail: Email
+  maskTypeName: Name
+  maskTypeBankcard: Bank Card
+  maskTypeCustom: Custom Pattern
+
+dashboard:
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
+  exportImage: Export image
+  exportNoChart: Metric cards have no chart to export
+  title: Dashboards
+  pickDashboard: Pick a dashboard
+  create: New Dashboard
+  edit: Edit Layout
+  cancelEdit: Exit Edit
+  saveLayout: Save Layout
+  remove: Remove
+  empty: No dashboards yet, click "New Dashboard" to start
+  addCard: Add Card
+  dataset: Dataset
+  cardTitle: Card Title
+  chartType: Chart Type
+  chartNumber: Number Card
+  chartLine: Trend
+  chartBar: Bar
+  chartPie: Pie
+  chartMetric: Metric card
+  metricCardTip: Single value; count = row total, sum/avg need a value field
+  groupBy: Group By
+  dateTrunc: Time Grain
+  byDay: Daily
+  byMonth: Monthly
+  metric: Metric
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  cardSpan: Card Width
+  dashName: Dashboard Name
+  visibility: Visibility
+  personal: Personal
+  shared: Shared
+  cancel: Cancel
+  confirm: Confirm
+  saveOk: Saved
+  cardRequired: Please complete the card configuration
+  manageDatasets: Manage Datasets
+  cardHeight: Card Height
+  cardSettings: Card Settings
+  editCard: Edit Card
+  cardRoles: Visible roles
+  cardRolesPlaceholder: Empty = visible to everyone who can see this dashboard
+  removeConfirm: Delete dashboard "{name}"? Its layout and cards will be removed, and screens referencing it will lose this page
+  valueField: Measure field
+  valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
+  valueFieldRequired: Please select a measure field
+  loadFailed: Failed to load data
+  retry: Retry
+  settings: Settings
+  refresh: Refresh
+  autoRefreshOff: Off
+  autoRefresh10s: Every 10s
+  autoRefresh30s: Every 30s
+  autoRefresh60s: Every minute
+  autoRefresh5m: Every 5 minutes
+  autoRefreshTip: Refresh the current dashboard cards on a timer (for wall displays)
+
+  share: Share
+  shareCopied: Dashboard link copied
+dataDataset:
+  metaLoadFailed: Failed to load dataset metadata; editing and field options are unavailable
+  previewFailed: Preview failed. Check the dataset configuration or retry later
+  title: Datasets
+  create: New Dataset
+  edit: Edit
+  delete: Delete
+  preview: Preview
+  name: Name
+  model: Bound Model
+  columns: Columns
+  filters: Filters
+  addFilter: Add Filter
+  value: Value
+  inHint: Comma-separated values
+  isNullTrue: Field is empty (IS NULL)
+  isNullFalse: Field is not empty (IS NOT NULL)
+  ordering: Ordering
+  rowLimit: Row Limit
+  dateField: Date Field (for trends)
+  visibilityLabel: Visibility
+  personal: Personal
+  shared: Shared
+  description: Description
+  actions: Actions
+  total: Total rows
+  cancel: Cancel
+  confirm: Confirm
+  required: Name, model and columns are required
+  saveOk: Saved
+  deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
+  dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
+  jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
+  exportCsv: Export CSV
+  previewRows: Rows
+  previewAggregate: Aggregate
+  groupByOptional: Group by (optional)
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  valueField: Value field
+  dateTrunc: Time bucket
+  byDay: By day
+  byMonth: By month
+  runAggregate: Aggregate
+  groupName: Name
+  metricValue: Value
+  aggregateEmpty: Set aggregation and click "Aggregate" to preview
+
+dataScreen:
+  dashboardHidden: Invisible dashboard
+  designer: Design
+  designerTitle: Screen canvas designer
+  pickScreenFirst: Open the designer from a screen row
+  loadFailed: Failed to load the screen
+  dashboardsLoadFailed: Failed to load the dashboard list, please refresh and retry
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
+  retry: Retry
+  layoutSaved: Canvas saved
+  unsaved: Unsaved changes
+  readonlyHint: Read-only (only the creator can edit)
+  palette: Components
+  paneDashboard: Dashboard
+  paneText: Text
+  paneClock: Clock
+  paneMetric: Metric card
+  paneImage: Image
+  paneVideo: Video
+  paneHtml: Custom HTML
+  paneUrl: URL
+  panePoster: Poster
+  urlPlaceholder: https://…
+  videoMuted: Muted
+  videoLoop: Loop
+  videoAutoplay: Autoplay
+  videoHint: On the display the video is muted, looping and autoplaying (browsers block autoplay with sound); it does not autoplay while editing.
+  embedHint: Only http(s) iframe URLs are accepted (no raw HTML); the embedded page is interactive on the display.
+  videoMissing: No video URL yet
+  embedMissing: No embed URL yet
+  embedUrlInvalid: Only absolute http(s) URLs are accepted
+  paneTitle: Pane title
+  paneTitlePlaceholder: Empty = dashboard name
+  paneContent: Text content
+  paneFontSize: Font size
+  paneAlign: Align
+  alignLeft: Left
+  alignCenter: Center
+  alignRight: Right
+  panePosition: Position
+  paneSize: Size
+  gridHint: 12 columns x 60 rows; position and size are column/row indexes
+  modeGrid: Grid
+  modeFree: Free canvas
+  layer: Layer
+  layerTop: Front
+  layerUp: Up
+  layerDown: Down
+  layerBottom: Back
+  freeHint: Free canvas places panes in pixels (x/y/w/h in px, overlapping allowed); layer order = array order (later on top)
+  paneRotate: Rotation
+  paneAnimation: Entrance animation
+  paneAnimationDuration: Duration (ms)
+  paneAnimationDelay: Delay (ms)
+  paneAnimationLoop: Loop
+  paneTextFormat: Text format
+  textFormatPlain: Plain
+  textFormatRich: Rich
+  richTextHint: "Markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c] [text](https://…) ![image](https://…); '- ' bullet lists, '1. ' ordered lists, and | a | b | tables with a |---| separator row"
+  richBold: Bold
+  richItalic: Italic
+  richUnderline: Underline
+  richStrike: Strikethrough
+  richColor: Color
+  richLink: Link
+  richImage: Image
+  richList: Bullet list
+  richOrderedList: Numbered list
+  richTable: Table
+  richPreview: Live preview
+  richPlaceholder: text
+  animationNone: None
+  animationFade: Fade in
+  animationSlideUp: Slide up
+  animationSlideDown: Slide down
+  animationSlideLeft: Slide left
+  animationSlideRight: Slide right
+  animationZoomIn: Zoom in
+  gridSnap: Snap to grid
+  zoomKeyboardHint: "Shortcuts: Ctrl/Cmd + = / - to step zoom, Ctrl/Cmd + 0 to fit"
+  zoom: Zoom
+  zoomFit: Fit
+  zoomReset: "100%"
+  multiSelected: "{n} panes selected"
+  multiHint: Drag on empty canvas to marquee-select; drag any selected pane to move the group; arrow keys nudge the group
+  multiBatch: Batch edit
+  multiBatchHint: Changes are applied to every selected pane (panes the field does not apply to are skipped)
+  align: Align
+  alignLeftEdge: Left
+  alignCenterH: Center
+  alignRightEdge: Right
+  alignTopEdge: Top
+  alignCenterV: Middle
+  alignBottomEdge: Bottom
+  distribute: Distribute
+  distributeH: Horizontal
+  alignToGrid: Align to grid
+  distributeV: Vertical
+  copy: Copy
+  paste: Paste
+  copyDone: Copied {n} pane(s)
+  clipboardBlocked: Browser storage unavailable; this copy works in the current page only
+  pasteNothing: Nothing to paste (empty clipboard or all references are invisible)
+  insertSkipped: Skipped {n} pane(s) with invisible references
+  insertTruncated: Pane limit reached, {n} pane(s) truncated
+  templateMenu: Apply template
+  templateApplyReplace: Replace with
+  templateApplyAppend: Append
+  templateSave: Save as template
+  templateManage: Manage my templates
+  templateEmptyMine: No saved template yet
+  templateRename: Rename
+  templateExport: Export
+  templateDelete: Delete
+  templateNamePrompt: Enter a template name (max 40 characters)
+  templateNameRequired: Template name is required
+  templateEmptyCanvas: No pane to save on this canvas
+  templateLimit: Template limit reached (20)
+  templateStorageFailed: Browser storage unavailable, template not saved
+  templateSaved: Template "{name}" saved
+  templateApplied: Template "{name}" applied
+  templateMissing: Template not found (maybe deleted)
+  templateRenamed: Template renamed
+  templateRemoved: Template deleted
+  templateReplaceConfirm: All free canvas panes will be replaced (and the canvas size switched). Continue?
+  templateDeleteConfirm: Delete this template?
+  templateExportDone: Template exported
+  templateExportFailed: Export failed (download not supported)
+  templateGroupBuiltin: Built-in templates
+  templateGroupServer: Team templates
+  templateServerEmpty: No team template yet
+  templateGroup: Group
+  templateGroupPrompt: "Group name (leave empty = ungrouped):"
+  templateName: Template name
+  templateVersions: Version history
+  templateRollback: Roll back
+  templateRollbackConfirm: Roll back to version {n}? Name / group / canvas will be overwritten by that version (history is kept, you can roll forward again)
+  templateRolledBack: Rolled back to version {n}
+  templateRollbackFailed: Rollback failed (only the creator can roll back)
+  templateVersionEmpty: No version history yet
+  templateVersionColumn: Version
+  updatedTime: Updated
+  pasteCloud: Paste from cloud
+  clipboardCloudEmpty: The cloud clipboard is empty (copy something on another device first)
+  clipboardCloudFailed: Failed to write the cloud clipboard (the local clipboard still works)
+  loading: Loading…
+  templateSaveServer: Save as team template
+  templateVisibilityHint: Share with the team? (Cancel = visible only to me)
+  templateVisibilityShared: Share with team
+  templateVisibilityPersonal: Only me
+  templateServerSaved: Saved as a team template
+  templateServerFailed: Failed to save the team template (duplicate name or invisible reference)
+  templateServerWriteDenied: Only the creator can modify this team template
+  templateImport: Import JSON
+  templateImportModeHint: "Import mode: OK = replace the canvas, Cancel = append to it"
+  templateImportFormat: Invalid JSON — nothing was imported
+  templateImportEmpty: No importable pane (missing coordinates or type)
+  templateImportTooLarge: File too large — import cancelled
+  templateImported: Imported {n} panes
+  tplPromo: Promo screen
+  tplPromoTitle: Title
+  tplPromoSubtitle: Subtitle / description
+  tplReport: Report screen
+  tplReportTitle: Report title
+  tplReportBody: Type the body text here
+  tplReportFooter: "Footer: author / date"
+  tplSkeleton: Data skeleton
+  tplSkeletonTitle: Board title
+  tplSkeletonSection: Section title
+  inspector: Pane properties
+  noSelection: Select a pane on the canvas to edit its properties
+  emptyCanvas: Add panes from the left (text / clock / dashboard)
+  canvasFull: Not enough free space for this component; adjust or remove panes first
+  panesFull: Pane limit reached ({max})
+  overlapRejected: This position overlaps another pane
+  removePane: Remove pane
+  dragHint: Drag to move the pane
+  textPlaceholder: Empty text (type in the properties panel)
+  dataset: Dataset
+  imageUrl: Image URL
+  imageFit: Fit
+  fitCover: Cover
+  fitContain: Contain
+  fitFill: Fill
+  imageMissing: No image URL configured
+  imageUrlInvalid: Image URL must start with http(s):// or /
+  undo: Undo
+  redo: Redo
+  undoHint: Undo (Ctrl+Z)
+  redoHint: Redo (Ctrl+Shift+Z / Ctrl+Y)
+  duplicate: Duplicate pane
+  duplicateHint: Duplicate the selected pane (Ctrl+D)
+  leaveConfirm: Unsaved canvas changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay
+  shortcutsHint: Arrows move the pane (Shift+Arrows resize); Ctrl+D duplicate / Delete remove / Ctrl+S save / Ctrl+Z undo
+  paneNoCard: No visible card in this dashboard
+  clearLayout: Clear canvas
+  clearLayoutConfirm: Clearing returns this screen to carousel mode. Continue?
+  freeClearConfirm: Clear the free canvas panes? (The grid layout is kept; if it is empty too, the screen falls back to carousel)
+  preview: Preview
+  editMode: Exit preview
+  refreshData: Refresh data
+  backToList: Back to list
+  save: Save
+  noDashboards: No dashboard to display
+  exportScreen: Export screen
+  exportNoChart: The current screen has no chart to export
+  exportSkipped: "{count} metric cards were not exported"
+  pause: Pause rotation
+  resume: Resume rotation
+  fullscreen: Fullscreen
+  title: Display Screens
+  create: New Screen
+  edit: Edit
+  delete: Delete
+  display: Display
+  name: Name
+  dashboards: Dashboard Sequence
+  interval: Interval (s)
+  refresh: Refresh (s)
+  visibilityLabel: Visibility
+  personal: Personal
+  shared: Shared
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and dashboards are required
+  saveOk: Saved
+  deleteConfirm: Delete screen "{name}"?
+  remoteControl: Remote Control
+  remoteControlling: Remote controlling
+  controlState: Current State
+  controlAuto: Auto carousel
+  controlManual: Remote control
+  controlPageText: Page
+  controlSwitch: Switch dashboard
+  controlSwitchHint: Pick the dashboard to display
+  controlApply: Switch
+  controlPage: Paging & refresh
+  controlPrev: Previous
+  controlNext: Next
+  controlRefresh: Refresh data
+  controlResume: Resume carousel
+  controlSent: Command sent
+  controlHint: The display page must be open and online; switching or paging pauses the carousel, and "Resume carousel" restores auto switching.
+  close: Close
+
+dataReport:
+  datasetUnavailable: The linked dataset is invisible or deleted; data config is read-only
+  designer: Design report
+  pickReportFirst: Open the designer from a report row
+  loadFailed: Failed to load the report
+  datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
+  designSaved: Design saved
+  unsaved: Unsaved changes
+  readonlyHint: Read-only (only the creator can edit)
+  template: Template
+  templateDetail: Detail table
+  templateSummary: Grouped summary
+  templateTrend: Trend board
+  templateMetrics: Metric summary
+  templateApplied: Template "{name}" applied
+  designDetail: Detail table design
+  datasetLabel: Dataset
+  tableLimit: Row limit
+  componentShelf: Components
+  componentNumber: Metric card
+  componentBar: Bar chart
+  componentLine: Line chart
+  componentPie: Pie chart
+  componentProps: Component properties
+  componentTitle: Title
+  componentWidth: Width
+  widthFull: Full row
+  widthHalf: Half row
+  truncNone: No date bucket
+  truncDay: By day
+  truncMonth: By month
+  removeComponent: Remove component
+  componentLimit: Component limit reached ({max})
+  noComponent: No aggregated component yet; add one from the left
+  noComponentSelection: Select a component on the canvas to edit its properties
+  metricOnly: Whole table
+  detailTable: Detail table
+  tableRows: Previewing {shown} of {total} rows
+  tableLoadFailed: Failed to load the detail preview
+  tableTruncated: Detail truncated by the row limit ({shown} / {total})
+  selectAllColumns: Select all
+  clearColumns: Clear
+  columnsResetHint: Selection cleared; detail columns follow all dataset columns again
+  moveUp: Move up
+  moveDown: Move down
+  duplicateComponent: Duplicate component
+  leaveConfirm: Unsaved design changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay
+  runDirty: Save your changes before running
+  cronInvalid: Cron expression must have 5 fields (min hour day month weekday)
+  recipientsRequired: Email recipients are required when the email channel is selected
+  recipientsInvalid: "Invalid email recipient: {value}"
+  monthDayHint: Day of month to deliver (1-28)
+  columnsRequired: Keep at least one detail column
+  groupByRequired: Chart components require a group by field
+  refreshData: Refresh data
+  preview: Preview
+  editMode: Exit preview
+  backToList: Back to list
+  save: Save
+  title: Scheduled Reports
+  weekday0: Monday
+  weekday1: Tuesday
+  weekday2: Wednesday
+  weekday3: Thursday
+  weekday4: Friday
+  weekday5: Saturday
+  weekday6: Sunday
+  create: New Report
+  edit: Edit
+  delete: Delete
+  run: Run Now
+  runOk: Dispatched; the artifact will appear in the download center
+  name: Name
+  dataset: Dataset
+  mode: Content
+  modeRows: Rows
+  modeAggregate: Aggregate
+  groupBy: Group By
+  metric: Metric
+  metricCount: Count
+  metricSum: Sum
+  metricAvg: Average
+  dateTrunc: Time Grain
+  byDay: Daily
+  byMonth: Monthly
+  frequency: Frequency
+  daily: Daily
+  weekly: Weekly
+  monthly: Monthly
+  sendTime: Send Time
+  cronExpression: Cron Expression
+  cronHint: Leave empty to use the fixed frequency above; when set it takes precedence (e.g. 0 9 * * 1-5)
+  recipients: Recipients
+  recipientsHint: Comma-separated emails
+  notifyChannels: Delivery channels
+  channelEmail: Email
+  channelDingtalk: DingTalk
+  channelWecom: WeCom
+  channelFeishu: FeiShu
+  notifyChannelsHint: Pick at least one channel; email needs recipients and IM needs recipients too
+  imRecipients: IM recipients
+  imRecipientsHint: Search by username or nickname (the account must be bound first)
+  channelRequired: Please pick at least one delivery channel
+  isActive: Enabled
+  lastStatus: Last Status
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and dataset are required
+  saveOk: Saved
+  deleteConfirm: Delete report "{name}"?
+  valueField: Measure field
+  valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
+  valueFieldRequired: Please select a measure field
+
+webhook:
+  urlInvalid: Callback URL must start with http:// or https://
+  title: Webhook Subscriptions
+  deliveryTitle: Delivery Audit
+  create: New Subscription
+  edit: Edit
+  delete: Delete
+  test: Test
+  retry: Retry
+  retryOk: Delivery re-dispatched
+  name: Name
+  url: URL
+  secret: Secret
+  secretKeep: Leave empty to keep the current secret
+  secretHint: Used for HMAC-SHA256 signing
+  events: Events
+  isActive: Enabled
+  on: On
+  off: Off
+  lastFailure: Last Failure
+  description: Description
+  actions: Actions
+  cancel: Cancel
+  confirm: Confirm
+  required: Name, URL and events are required
+  secretRequired: A signing secret is required when creating a subscription
+  saveOk: Saved
+  testDispatched: Test event dispatched
+  eventsLoadFailed: Failed to load the event catalog; raw keys will be shown
+  statusFilter: Status
+  stSuccess: Success
+  stFailed: Failed
+  stExhausted: Exhausted
+  stPending: Pending
+  search: Search
+  time: Time
+  subscriptionCol: Subscription
+  event: Event
+  statusCol: Status
+  attempt: Attempts
+  responseCode: Code
+  responseBody: Response
+  duration: Duration(s)
+
+ai:
+  toolsLoadFailed: Failed to load the tool list, some information is unavailable
+  title: AI Assistant
+  features: Features
+  noFeature: No available feature
+  featureDocs: Document Q&A
+  featureDocsDesc: Cited answers from the platform docs
+  featureNl: Data query
+  featureNlDesc: NL to dataset query (confirm before run)
+  featureAction: Action execution
+  featureActionDesc: Whitelisted system operations (confirm before run)
+  actionPlaceholder: e.g. create a role, or look up a user's profile
+  actionFailed: Failed to interpret the request, please retry or switch models
+  actionToolCount: "{count} executable operations (unified tool catalog)"
+  emptyMessages: No conversation with {name} yet, start asking
+  persistHint: Conversations and operation records are stored on the server
+  partialHint: Answer incomplete
+  streamInterrupted: Answer stream interrupted; partial content retained
+  resultRows: "{count} rows in total, showing first {shown}"
+  resultName: Metric
+  resultValue: Value
+  nlModeRows: Detail
+  nlModeAggregate: Aggregate
+  paramKeyword: Keyword
+  paramNickname: Nickname
+  paramPhone: Phone
+  paramEmail: Email
+  paramName: Name
+  paramCode: Code
+  paramDescription: Description
+  paramMenus: Menus to grant
+  paramPassword: Initial password
+  paramValue: Config value
+  paramParent: Parent department
+  paramGroupBy: Group by field
+  paramMetric: Aggregate metric
+  paramStatus: Status
+  docsTab: Docs Q&A
+  nlTab: Data Query
+  nlPlaceholder: e.g. Which enabled users were created recently?
+  nlInterpret: Interpret
+  nlDataset: Dataset
+  nlPreview: Preview rows
+  nlFilters: Filters
+  nlNoFilters: none
+  nlRun: Run Query
+  on: Enabled
+  off: Disabled
+  knowledgeChunks: Knowledge chunks
+  goConfig: Go to configuration
+  disabledHint: The AI assistant is disabled; enable and configure it in "AI Configuration"
+  notConfiguredHint: The AI provider is not fully configured; fill in the base URL, API key and model in "AI Configuration"
+  emptyHint: Ask questions about the platform docs; answers cite their sources
+  sources: Sources
+  askPlaceholder: e.g. How does dataset apply data permission filtering?
+  ask: Ask
+  thinking: Thinking
+  thinkingRunning: Thinking...
+  thinkingDone: Thought for {count} chars
+  stopGenerating: Stop generating
+  askFailed: Docs Q&A failed; please retry or switch models
+  nlFailed: Data query failed; please retry or switch models
+  statusLoadFailed: Failed to load AI console status
+  retry: Retry
+
+aiConfig:
+  title: AI Configuration
+  globalTitle: Global Switches
+  assistantEnabled: Enable AI assistant
+  nlQueryEnabled: Enable NL data query
+  actionEnabled: Enable AI action drafts (run after confirmation, off by default)
+  structuredMaxTokens: Structured max tokens
+  structuredMaxTokensPlaceholder: default 2048
+  structuredMaxTokensHint: >-
+    Token cap for action drafts / NL query when "Max tokens" is not configured.
+    Reasoning models consume many thinking tokens; raise this (or set Max tokens)
+    if you see "no final answer". 0 = built-in default 2048
+  globalSave: Save switches
+  globalSaved: Global switches saved
+  metricsTitle: Usage overview (docs Q&A / NL query / actions)
+  metricsTotal: Total calls
+  metricsSuccess: Succeeded
+  metricsFailed: Failed
+  metricsRate: Success rate
+  metricsModule: By type
+  metricsTopUsers: Active users
+  metricsTokens: Tokens used
+  profileTitle: AI Profiles
+  profileHint: Maintain multiple profiles and activate one for all AI features; falls back to the legacy config when none is active
+  create: New Profile
+  edit: Edit
+  test: Test
+  activate: Set Default
+  deactivate: Unset Default
+  profileOn: Active
+  profileOff: Inactive
+  unset: Default
+  name: Profile Name
+  model: Model
+  baseUrl: Base URL
+  apiKey: API Key
+  apiKeyKeep: Leave blank to keep the current key
+  apiKeyHint: OpenAI-compatible key; encrypted at rest and never echoed
+  apiKeyRequired: An API key is required when creating a profile
+  temperature: Temperature
+  maxTokens: Max Tokens
+  topP: Top P
+  frequencyPenalty: Frequency Penalty
+  presencePenalty: Presence Penalty
+  stop: Stop Sequences
+  stopHint: Comma separated, e.g. END,STOP
+  seed: Seed
+  timeout: Timeout (seconds)
+  maxRetries: Max Retries
+  contextLimit: Context Messages
+  persona: Persona
+  personaHint: System prompt for the chat assistant; blank uses the builtin default
+  isActive: Set as default
+  remark: Remark
+  sectionBasic: Connection
+  sectionSampling: Sampling
+  sectionBehavior: Behavior
+  required: Profile name, base URL and model are required
+  saveOk: Profile saved
+  probe: Probe capabilities
+  probeDone: Probe finished
+  probeHint: Probes structured JSON / native tool calling / reasoning (optionally multimodal) and stores the result on the profile
+  capabilityTitle: Model capabilities
+  capJson: Structured JSON
+  capToolCalls: Native tool calls
+  capReasoning: Reasoning content
+  capVision: Multimodal
+  capUnknown: Not probed
+  capOk: Supported
+  capFail: Unsupported
+  probeAt: Probed at
+  purpose: Purpose
+  purposeChat: Chat / Q&A
+  purposeStructured: Structured output
+  purposeEmbedding: Text embedding
+  purposeHint: Chat serves Q&A; structured serves NL query and action drafts (falls back to the chat profile when unset)
+  purposeEmbeddingTip: Used by knowledge vector retrieval (OpenAI-compatible /embeddings); this purpose has no fallback — activate it and build vectors on the knowledge page
+  nativeTools: Native tool calling (structured flows)
+  probeVision: Probe (with vision)
+  trackTitle: Draft track
+  trackNative: Native
+  trackPrompt: Prompt JSON
+  nativeToolsHint: When enabled and the profile passed the tool_calls probe, action drafts prefer native function calling; otherwise the prompt-JSON track is used
+  quotaTitle: Usage quotas (0 = unlimited)
+  quotaCalls: Daily calls per user
+  quotaTokens: Daily tokens per user
+  quotaStreams: Concurrent streams (global)
+  usageTitle: Usage ledger
+  usageHint: Per-call ledger (profile/flow/tokens/duration); retention follows the monitor retention days
+  usageCalls: Calls
+  usageTokens: Tokens
+  usageFailed: Failed
+  usageByFeature: By flow
+  usageByDay: Daily usage
+  dashboardTitle: Run dashboard
+  dashboardHint: Success rate and latency come from the usage ledger; P95 shows only with enough samples
+  dashboardRate: Success rate
+  dashboardAvg: Avg latency
+  dashboardP95: P95 latency
+  dashboardP95LowSample: Not enough samples
+  dashboardSamples: Latency samples
+  dashboardTrend: Daily calls
+  dashboardByProfile: By profile
+  dashboardByModel: By model
+  dashboardEmpty: No usage data yet
+  manage: Manage
+  panelTitle: "Manage {name}"
+  apiKeySet: Configured
+  apiKeyUnset: Not configured
+  probeVisionDesc: Also probe multimodal support (sends an image); slow on models without vision
+  editDesc: Edit endpoint, model, sampling and behavior parameters
+  deleteDesc: Delete this profile (deactivate it first if in use; irreversible)
+  actionGroups:
+    probe: Capability probe
+    manage: Configuration
+    danger: Danger zone
+  usageTopUsers: Top users
+  deleteConfirm: Delete this profile?
+  deleteDone: Profile deleted
+  activateConfirm: Switch all AI features to this profile?
+  activateDone: Profile activated
+  deactivateConfirm: Deactivate this profile? AI will fall back to the legacy config
+  deactivateDone: Profile deactivated
+  testOk: Connected
+  actions: Actions
+
+dform:
+  detailFallback: Failed to load details, showing list data instead
+  noApprovalNeeded: No approval required
+  designerTitle: Form Design
+  fillTitle: Available Forms
+  mySubmissions: My Submissions
+  exportCsv: Export CSV
+  create: New Form
+  edit: Edit
+  delete: Delete
+  name: Name
+  # List column headers (RePlusPage resolves locales by `dform.<field>`)
+  form_name: Form
+  created_time: Submitted At
+  description: Description
+  fieldCount: Fields
+  isActive: Status
+  active: Active
+  inactive: Inactive
+  actions: Actions
+  fields: Field Definitions
+  addField: Add Field
+  fieldKey: Key
+  fieldLabel: Label
+  fieldType: Widget
+  fieldOptions: Options
+  optionsHint: Comma-separated
+  fieldRequired: Required
+  fieldFilterable: Filterable
+  fieldFilterableTip: Materialize this field on submit so the form data page can filter by it
+  fieldFormula: Formula expression
+  fieldFormulaPlaceholder: "e.g. {'{'}price{'}'} * {'{'}qty{'}'}, SUM({'{'}items.amount{'}'})"
+  fieldFormulaTip: Supports + - * / and parentheses; {'{'}price{'}'} references numeric fields, SUM/AVG/MIN/MAX aggregate detail columns, plus ROUND/ABS; click a tag below to insert
+  noForms: No forms available
+  noDescription: No description
+  approvalRequired: Approval
+  approvalOn: Approval
+  approvalOff: Direct
+  approvalTip: Submissions are stored only after approval (superusers submit directly)
+  approvalHint: This form requires approval; the submission is completed automatically once approved
+  submissionData: Submission
+  submittedAt: Submitted At
+  editSubmission: Edit Submission
+  cancel: Cancel
+  confirm: Confirm
+  required: Name and at least one field are required
+  formUnavailable: This form is disabled or does not exist
+  requiredFieldMissing: '"{name}" is required, please fill it in before submitting'
+  requiredItemTip: This field is required
+  unsupportedFieldType: "Unsupported field type \"{type}\". Please contact the form designer"
+  saveOk: Saved
+  typeInput: Input
+  typeTextarea: Textarea
+  typeNumber: Number
+  typeSelect: Select
+  typeRadio: Radio
+  typeCheckbox: Checkbox
+  typeDate: Date
+  typeSwitch: Switch
+  typeUpload: Attachment
+  typeDaterange: Date range
+  typeTable: Detail table
+  typeAmount: Amount
+  typeUser: User picker
+  typeCascader: Cascader
+  typeFormula: Formula
+  columnsHint: "One per line: key,label,type[,options]"
+  cascaderHint: "One leaf path per line, segments split by /, e.g. East/Shanghai/Pudong"
+  tableColumnsRequired: Detail table fields require column definitions
+  formula:
+    errors:
+      required: Formula expression is required
+      tooLong: Formula expression is too long (max {max} characters)
+      invalid: Formula expression is invalid
+      tooDeep: Formula expression is too deeply nested
+      unknownField: "Formula references an unknown field: {key}"
+      notNumeric: "Formula can only reference numeric fields: {key}"
+      unknownTable: "Formula references an unknown detail table: {key}"
+      invalidColumn: "Formula references an invalid detail column: {table}.{column}"
+      columnUsage: Detail column references can only be used inside SUM/AVG/MIN/MAX
+      columnRequired: SUM/AVG/MIN/MAX require a detail column reference
+      unknownFunction: "Unknown formula function: {name}"
+      argCount: "Formula function {name} expects {range} argument(s)"
+      roundDigits: ROUND digits must be an integer between 0 and {max}
+      selfReference: "A formula cannot reference itself: {key}"
+      circular: "Formula contains a circular reference: {chain}"
+  userSearchPlaceholder: Search by username or nickname
+  approvalFlow: Approval flow
+  noApprovalFlow: Not bound
+  approvalFlowTip: Bound submissions enter this multi-step flow and the result syncs back to the submission status; the approval switch is ignored once bound
+  approvalFlowHint: This form is bound to an approval flow; submitting starts the approval process
+  flowOn: Flow
+  status: Status
+  resubmit: Resubmit
+  resubmitOk: Resubmitted, pending approval
+  addRow: Add row
+  rangeStart: Start date
+  rangeEnd: End date
+  fieldProps: Properties
+  moveUp: Move up
+  moveDown: Move down
+  fieldKeyHint: "Starts with a lowercase letter; letters/digits/underscore"
+  fieldKeyInvalid: "Key must start with a lowercase letter (letters/digits/underscore, max 32)"
+  fieldKeyDuplicated: 'Field key "{key}" is duplicated, please change it'
+  fieldLabelRequired: Field label is required
+  fieldPlaceholder: Placeholder
+  fieldPlaceholderHint: Hint text shown inside the input
+  fieldMaxLength: Max length
+  fieldMin: Min value
+  fieldMax: Max value
+  fieldPrecision: Decimal places
+  fieldMultiple: Allow multiple
+  fieldDict: Data dict
+  fieldDictHint: Pick or type a dict type code
+  fieldDictTip: Options are maintained by the data dict and are exclusive with inline options
+  fieldDictBound: "Dict: {code}"
+  dictEmpty: No dict options available, please contact the administrator
+  selectPlaceholder: Please select
+  yes: "Yes"
+  no: "No"
+  saveDraft: Save draft
+  draftSaved: Draft saved
+  submitDraft: Submit
+  submitDraftOk: Submitted
+  detail: Detail
+  continueEdit: Continue editing
+  updatedAt: Updated at
+  instanceNo: Instance no.
+  noData: No data
+  approvalTrail: Approval trail
+  removeConfirm: Delete this submission of "{name}"?
+  fromTemplate: New from template
+  saveAsTemplate: Save as template
+  templateNameHint: Please enter the template name
+  templateNameDefault: "{name} template"
+  templateNameRequired: Template name is required
+  templateCopyName: "{name} (copy)"
+  templateSaved: Saved as template
+  templateRemoved: Template deleted
+  templateRemoveConfirm: Delete template "{name}"?
+  noTemplates: No form templates
+  useTemplate: Use
+  fieldSort: Sort
+  dragHint: Drag to reorder fields
+  linkage: Field linkage
+  linkageAdd: Add rule
+  linkageEdit: Edit rule
+  linkageNone: No linkage rules
+  linkageTrigger: Trigger field
+  linkageCond: Condition
+  linkageTarget: Target fields
+  linkageTargetPlaceholder: Select one or more target fields
+  linkageEffect: Effect
+  linkageValuePlaceholder: Select or enter a condition value
+  linkageOpEq: Equals
+  linkageOpNe: Not equals
+  linkageOpIn: In
+  linkageOpNotin: Not in
+  linkageOpEmpty: Is empty
+  linkageOpNotempty: Is not empty
+  linkageEffectHide: Hide
+  linkageEffectShow: Show
+  linkageEffectRequire: Required
+  linkageEffectOptional: Optional
+  linkageRequired: Select a trigger field, an effect and at least one target field
+  linkageValueRequired: Select or enter a condition value
+  linkageHint: "Submission validation and the form UI share the same rules: hidden fields skip required checks and are dropped, while required/optional override the field setting"
+  linkageTip: Multiple target fields expand into one rule per target; a rule cannot target its own trigger field
+  linkageDropped: "{count} linkage rule(s) referenced removed fields and were dropped"
+  history: Versions
+  historyTitle: "Version history ({name})"
+  historyCurrent: Current version
+  historyVersion: Version
+  historyFields: Fields
+  historyLinkages: Linkages
+  historyUpdated: Updated at
+  historyBy: Updated by
+  historyEmpty: No history yet (generated after schema changes are saved)
+  historySchema: Version definition
+  historyRollback: Roll back
+  historyRollbackConfirm: Roll back to v{version}? It applies that version's fields and linkages and creates a new version
+  historyRollbackDone: Rolled back to v{version}
+  historyLoadFailed: Failed to load version history
+
+formData:
+  selectTitle: Select Form
+  selectPlaceholder: Please select a form
+  noForms: No form available
+  selectHint: Please select a form first
+  inactive: Inactive
+  tableRows: "{count} rows"
+  filterTitle: Field Filters
+  filterClear: Clear filters
+  filterEmpty: This form has no filterable fields yet (mark fields as filterable in the designer)
+  formsLoadFailed: Failed to load the form list
+  retry: Retry
+leaveApply:
+  leave_type: Leave type
+  start_date: Start date
+  end_date: End date
+  days: Days
+  daysUnit: days
+  reason: Reason
+  status: Status
+  current_node_name: Current node
+  instance_no: Application no.
+  reject_reason: Reject reason
+  finished_at: Finished at
+  creator: Applicant
+  created_time: Submitted at
+  submit: Submit
+  cancel: Cancel
+  confirmTitle: Confirmation
+  submitConfirm: Submit this leave request for approval again?
+  cancelConfirm: Cancel this leave request? It must be resubmitted afterwards.
+  submitSuccess: Leave request submitted
+  cancelSuccess: Leave request cancelled
+  viewInstance: View approval
+  rejectedTip: Rejected
+  statusDRAFT: Draft
+  statusPENDING: Pending
+  statusAPPROVED: Approved
+  statusREJECTED: Rejected
+  statusCANCELLED: Cancelled
+  savedAsDraft: "Saved as draft, not submitted"
+  statsSubmitted: Submitted
+  statsPending: In approval
+  statsApproved: Approved
+  statsRejected: Rejected
+
+mcp:
+  create: New server
+  createTitle: New external MCP server
+  editTitle: Edit external MCP server
+  formName: Name
+  formUrl: Server URL
+  formUrlTip: Streamable HTTP endpoint; http is limited to loopback or OUTBOUND_ALLOWED_HOSTS targets
+  formAuthHeader: Auth header
+  formAuthToken: Auth token
+  formAuthTokenPlaceholder: Enter token
+  formAuthTokenLeave: Leave blank to keep unchanged
+  formTimeout: Timeout (seconds)
+  formAllowedTools: Allowed tools
+  formAllowedToolsTip: Comma separated (e.g. echo, search); empty means no tool can be called
+  formEnabled: Enabled
+  formExposeToAi: Expose to AI actions
+  formExposeToAiTip: When on, whitelisted tools join the AI assistant action catalog (called after user confirmation; off by default)
+  formRemark: Remark
+  nameRequired: Server name is required
+  urlRequired: Server URL is required
+  saveDone: Saved
+  sync: Sync tools
+  syncDone: Synced {count} tool(s)
+  tools: Tools
+  drawerTitle: "External tools - {name}"
+  panelUrl: Server URL
+  panelAuth: Auth token
+  panelAuthSet: Configured
+  panelAuthUnset: Not configured
+  panelTimeout: Timeout (s)
+  panelAllowed: Allowed tools
+  panelAllowedEmpty: Not configured (all calls blocked)
+  panelLastSync: Last synced
+  panelSyncError: Last sync error
+  toolName: Tool
+  toolDescription: Description
+  toolReadOnly: Kind
+  toolParams: Params
+  toolActionSurface: Actions
+  toolCall: Call
+  callTitle: "Call test - {name}"
+  callArguments: Arguments (JSON)
+  callArgumentsTip: Fill a JSON object keyed by tool params (e.g. text=hello)
+  callRun: Run
+  callSuccess: Call succeeded
+  callFailed: Call failed
+  callInvalidJson: Arguments must be a valid JSON object
+  whitelistTip: Only whitelisted tools can be called; every call is audited
+  empty: No tool snapshot yet, sync tools first
+  readOnlyYes: Read-only
+  readOnlyNo: Writable
+  enabled: Enabled
+  disabled: Disabled
+  actionSurfaceIn: Exposed
+  actionSurfaceOut: Not exposed
+aiKnowledge:
+  upload: Upload document
+  uploadTitle: Upload document
+  syncRepo: Sync repository docs
+  syncDone: "Sync done: created {created}, updated {updated}, removed {removed}"
+  syncSubmitted: "Repository sync task submitted, running in the background"
+  syncAlreadyRunning: "A repository sync is already running; try again later"
+  syncPollTimeout: "The sync is taking long; progress tracking stopped. Refresh the list later to check the result"
+  preview: Preview
+  previewTitle: Document preview
+  enable: Enable
+  disable: Disable
+  toggleDone: Status updated
+  deleteConfirm: Delete this uploaded document? Its chunks will be removed from retrieval
+  deleteDone: Document deleted
+  required: Please fill in the document name and content
+  tooLarge: Content exceeds the 200k character limit
+  uploadDone: Document uploaded and effective
+  readFileFailed: Failed to read the file; ensure UTF-8 encoding
+  name: Document name
+  namePlaceholder: Enter a name (same name overwrites the existing document)
+  chooseFile: Choose a local file
+  chooseFileTip: Supports .md/.markdown/.txt/.pdf/.docx; text is editable, pdf/docx are parsed on upload
+  content: Content
+  contentPlaceholder: Paste or edit Markdown text
+  contentTitle: Content
+  chunksTitle: Knowledge chunks (retrieval units)
+  chunkLabel: Chunk {n}
+  chunkSize: "{size} chars"
+  title: Document name
+  source: Source
+  sourceRepo: Repository doc
+  sourceUpload: Uploaded
+  source_type: Source
+  chunkCount: Chunks
+  chunk_count: Chunks
+  is_active: Status
+  creator: Uploader
+  syncedAt: Synced at
+  synced_at: Synced at
+  path: Storage path
+  batchEnable: Batch enable
+  batchDisable: Batch disable
+  batchToggleDone: "Updated {count}"
+  buildEmbeddings: Build vectors
+  buildConfirm: "Build the vector index incrementally: {fresh} / {total} chunks available (model {model}). Only missing or stale chunks are embedded, safe to run repeatedly"
+  buildDone: "Vector build finished: {embedded} chunks embedded, {skipped} skipped"
+  detailLoadFailed: Failed to load document details
+  retry: Retry
+  binarySelected: "{type} file selected; it will be parsed to plain text on the server (not editable)"
+  binaryTooLarge: The file exceeds the 2 MB limit
+  buildSubmitted: "Embedding build task submitted, running in the background"
+  buildAlreadyRunning: "A build is already running; tracking its progress"
+  buildProgress: "Building vectors… {percent}%"
+  buildPollTimeout: "The build is taking long; progress tracking stopped. Check vector status later"
+  vectorDisabled: No active profile with purpose Text embedding; add and activate one on the AI config page first
+  panelTitle: "Manage {title}"
+  enabled: Enabled
+  disabled: Disabled
+  enableDesc: Rebuild chunks and include the document in retrieval again
+  disableDesc: Remove all chunks and exclude the document from retrieval
+  deleteDesc: Delete the document and clean up all its retrieval chunks (irreversible)
+  actionGroups:
+    retrieval: Retrieval
+    danger: Danger zone
+
+oauthAuthorize:
+  title: Authorization request
+  appRequest: "{app} requests access to your xadmin account"
+  user: Current user
+  scopesTitle: Requested scopes
+  scopesEmpty: This application has no API scope restriction (limited by your own authorization)
+  hint: After approval, the application acts on your behalf within the approved scopes (still bounded by app grants and your permissions)
+  approve: Approve
+  deny: Deny
+  invalidRequest: Missing request parameters (client_id / redirect_uri)
+  loadFailed: Failed to load authorization request
+  invalidRedirect: Authorization completed, but the app's registered redirect URI is invalid and the browser cannot be redirected; ask the app provider to fix redirect_uri
+
+systemModule:
+  currentPreset: Current effective preset
+  enabledSummary: "{enabled} / {total} modules enabled"
+  restartTip: Trimming takes effect after a service restart; disabling only hides entry points and APIs, and never deletes data
+  disabledModules: Disabled modules
+  configSnippet: Trimming snippet (effective after restart)
+  copy: Copy
+  copied: Copied to clipboard
+  copyFailed: Copy failed, please select the text manually
+  docsTip: Module list and trimming semantics
+  moduleId: Module ID
+  moduleName: Name
+  level: Level
+  levelCore: Core
+  levelStandard: Standard
+  levelOptional: Optional
+  status: Status
+  enabled: Enabled
+  disabled: Disabled
+  coverage: Coverage
+  coverageValue: "{menus} pages / {routes} routes"
+  depends: Depends
+  note: Notes
+  loadFailed: Failed to load module list
+  desiredPreset: Pending preset
+  overrideActive: Backend override active
+  baseline: Deployment baseline
+  baselineValue: "preset {preset}, extra enabled {enable}, extra disabled {disable}"
+  baselineEmpty: None
+  pendingTitle: Saved, restart required
+  pendingTip: The running process still uses the previous configuration; the new one applies after a service restart
+  restartCommand: Restart command
+  copyCommand: Copy command
+  diffEnable: Will enable
+  diffDisable: Will disable
+  presetChanged: Preset will change
+  editTitle: Module configuration
+  selectPreset: Preset
+  enableSwitch: Enable
+  coreLocked: Core modules cannot be disabled
+  editTip: Adjust module switches against a preset and save; saving only persists to DB and takes effect after a restart
+  save: Save
+  saved: Saved; takes effect after restart
+  saveFailed: Save failed
+  noChange: No changes to save
+  reset: Reset to deployment config
+  resetConfirm: Clear the backend override and fall back to the deployment baseline (config.yml / environment variables)?
+  resetDone: Reset to deployment config; takes effect after restart
+  discardConfirm: You have unsaved changes; switching preset will discard them. Continue?
+
+about:
+  intro: xAdmin is an open-source, free and ready-to-use admin management template. It is written and organized entirely with ECMAScript Modules (ESM) and built with the latest Vue3, Vite, Element-Plus, TypeScript, Pinia, Tailwindcss and other mainstream technologies.
+  platformInfo: Platform info
+  prodDeps: Production dependencies
+  devDeps: Development dependencies
+  version: Current version
+  buildTime: Build time
+  nodeVersion: Node version
+  pnpmVersion: pnpm version
+  webRepo: Frontend repository
+  serverRepo: Backend repository
+  docUrl: Documentation
+  demoUrl: Live demo
+
+pickerShortcuts:
+  today: Today
+  yesterday: Yesterday
+  beforeYesterday: The day before yesterday
+  thisWeek: This week
+  lastWeek: Last week
+  thisMonth: This month
+  lastMonth: Last month
+  thisYear: This year
+
+emptyPage:
+  title: Business content module
+  description: "Use case: embed a single platform page without menu navigation or extra modules"
+  back: Back to previous page
+
+codegen:
+  model: Target Model
+  modelPlaceholder: Search and select a model (app.Model)
+  ordering: Ordering
+  orderingPlaceholder: Empty = engine default (-created_time)
+  menuTitle: Menu Title
+  menuTitlePlaceholder: Empty = model verbose_name
+  component: Component
+  urlPrefix: API Prefix
+  frontendDir: Frontend Dir
+  defaultDerive: Empty = derived from model
+  options: Options
+  withImportExport: Import/Export
+  withTags: Tags
+  withModule: Module Spec
+  withAi: AI Declarations
+  withFrontend: Frontend Artifacts
+  autoPreview: Live Preview
+  fields: Serializer Fields
+  preview: Preview
+  download: Download zip
+  downloadStarted: Download started
+  artifactTip: generated artifacts (field config decides serializer fields)
+  previewEmpty: Select a model and click Preview to see generated files
+  previewEmptyTip: Configure options and click Preview to see generated files
+  modeSingle: Single
+  modeBatch: Batch
+  batchModelPlaceholder: Select multiple models to pack
+  batchTip: Batch mode generates per model with engine defaults, ignoring per-field overrides and model-specific naming; shared options below apply; shared files like urls.py need manual merge when generating multiple models of one app
+  batchDownload: Batch download zip
+  batchPickFirst: Select at least one model first
+  batchPreviewEmpty: Batch mode packs and downloads directly, no preview
+  menuParent: Parent Menu
+  menuParentPlaceholder: Empty = top level
+  menuIcon: Menu Icon
+  planLoading: Loading field plan…
+  withTests: Test skeleton
+  skipMenuSeed: Skip menu seed
+  moduleId: Module ID
+  moduleIdPlaceholder: Empty = app label
+  moduleLevel: Module Level
+  moduleLevel_core: core
+  moduleLevel_standard: standard
+  moduleLevel_optional: optional
+  fieldConfig: Field Config
+  fieldSummary: "{enabled}/{total} fields enabled (drag to reorder)"
+  resetFields: Reset
+  fieldName: Field
+  fieldLabel: Label
+  colTable: Table
+  colSearch: Search
+  colRequired: Required
+  colReadOnly: Read-only
+  colInputType: Input Type
+  colDict: Dict
+  colEnabled: On
+  inputTypeDefault: Default ({type})
+  inputTypeObjectRelated: Related select
+  inputTypeM2m: Multi select
+  inputTypeApiSearchUser: Remote search (user)
+  inputTypeDisabled: Derived from field type
+  dictPlaceholder: Bind dict type
+  planEmpty: Select a model to configure fields
+  groupServer: Backend (xadmin-server)
+  groupClient: Frontend (xadmin-client)
+  groupSeed: Menu Seed
+  groupRoot: Docs
+  copyCode: Copy file content
+  copyOk: Copied to clipboard
+  copyEmpty: Nothing to copy
+  downloadFile: Download current file
+  savedPlans: Saved Plans
+  planPick: Pick a saved plan
+  planPickFirst: Select a plan first
+  planSave: Save
+  planSavePrompt: Enter plan name (saved on the server, export as JSON to migrate)
+  planShared: Shared
+  planShareOnSave: Share with same-page users
+  planNameRequired: Plan name is required
+  planLoad: Load
+  planDelete: Delete
+  planDeleteConfirm: Delete this plan?
+  planExport: Export
+  planImport: Import
+  planSaved: Plan saved
+  planSaveFailed: Save failed
+  planLoaded: Plan loaded
+  planDeleted: Plan deleted
+  planDeleteFailed: Delete failed
+  planImported: Plans imported
+  planImportFailed: Import failed

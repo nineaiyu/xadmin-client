@@ -17,6 +17,12 @@ export const settingsLoginAuthApi = new ViewBaseApi("/api/settings/login/auth");
 
 // 邮箱配置
 export const settingsEmailApi = new ViewBaseApi("/api/settings/email");
+
+// LDAP 目录配置
+export const settingsLdapApi = new ViewBaseApi("/api/settings/ldap");
+
+// 企业 IM 通知渠道配置
+export const settingsNotifyImApi = new ViewBaseApi("/api/settings/notify/im");
 // 注册配置
 export const settingsRegisterAuthApi = new ViewBaseApi(
   "/api/settings/register/auth"
@@ -41,6 +47,12 @@ export const settingsSmsConfigApi = new ViewBaseApi("/api/settings/sms/config");
 
 // 验证码设置
 export const settingsVerifyCodeApi = new ViewBaseApi("/api/settings/verify");
+
+// MFA 二次验证配置
+export const settingsMfaApi = new ViewBaseApi("/api/settings/mfa/auth");
+
+// 资源告警阈值配置
+export const settingsMonitorApi = new ViewBaseApi("/api/settings/monitor/auth");
 
 // 忘记密码设置
 export const settingsResetPasswordCodeApi = new ViewBaseApi(

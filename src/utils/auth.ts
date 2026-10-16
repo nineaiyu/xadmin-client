@@ -1,7 +1,8 @@
 import Cookies from "js-cookie";
+import type { PureHttpRequestConfig } from "@/utils/http/types";
 import { storageLocal } from "@pureadmin/utils";
-import { useUserStoreHook } from "@/store/modules/user";
-import type { TokenInfo, UserInfo } from "@/api/auth";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import type { TokenInfo } from "@/api/auth";
 import { responsiveStorageNameSpace } from "@/config";
 import Storage from "responsive-storage";
 
@@ -19,24 +20,42 @@ export const multipleTabsKey = "multiple-tabs";
 
 /** 获取`token` */
 export function getToken(): string {
-  // 此处与`TokenKey`相同，此写法解决初始化时`Cookies`中不存在`TokenKey`报错
-  return Cookies.get(TokenKey);
+  // 此处与`TokenKey`相同，此写法解决初始化时`Cookies`中不存在`TokenKey`报错；
+  // 未登录时归一为空串（调用方统一按 falsy 判定）
+  return Cookies.get(TokenKey) ?? "";
 }
 
 export function getRefreshToken() {
   return Cookies.get(RefreshTokenKey);
 }
 
+/**
+ * 认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输。
+ * 生产默认 Secure；仅当构建时显式注入 VITE_COOKIE_SECURE=false 才关闭——
+ * 供内网 HTTP 测试服使用（http://<内网IP> 属非安全上下文，Secure Cookie
+ * 会被浏览器静默丢弃，表现为「登录成功后立即未授权」的循环）。
+ */
+function cookieSecureOptions() {
+  return {
+    sameSite: "Lax",
+    ...(import.meta.env.PROD && import.meta.env.VITE_COOKIE_SECURE !== "false"
+      ? { secure: true }
+      : {})
+  } as Cookies.CookieAttributes;
+}
+
 export function setAccessToken(token: string, expires = 864e3) {
   Cookies.remove(TokenKey);
   return Cookies.set(TokenKey, token, {
-    expires: new Date(Date.now() + 1000 * expires)
+    expires: new Date(Date.now() + 1000 * expires),
+    ...cookieSecureOptions()
   });
 }
 
 export function setRefreshToken(token: string, expires = 864e3) {
   return Cookies.set(RefreshTokenKey, token, {
-    expires: new Date(Date.now() + 1000 * expires)
+    expires: new Date(Date.now() + 1000 * expires),
+    ...cookieSecureOptions()
   });
 }
 
@@ -53,26 +72,20 @@ export function setToken(data: TokenInfo) {
   if (data.refresh && data.refresh_token_lifetime) {
     setRefreshToken(data.refresh, data.refresh_token_lifetime - 10);
   }
-  const { isRemembered, loginDay } = useUserStoreHook();
+  // 免登录勾选态归登录页 UI store（auth ↔ store 均为函数体内调用 hook）
+  const { isRemembered, loginDay } = useLoginPageStoreHook();
   Cookies.set(
     multipleTabsKey,
     "true",
     isRemembered
       ? {
-          expires: loginDay
+          expires: loginDay,
+          // 与另两个认证 Cookie 同口径（布尔标记非敏感，但 SameSite/Secure
+          // 属认证 Cookie 组的统一面，避免单点漂移）
+          ...cookieSecureOptions()
         }
-      : {}
+      : { ...cookieSecureOptions() }
   );
-}
-
-export function setUserInfo(data: UserInfo) {
-  useUserStoreHook().SET_AVATAR(data.avatar);
-  useUserStoreHook().SET_USERNAME(data.username);
-  useUserStoreHook().SET_NICKNAME(data.nickname);
-  useUserStoreHook().SET_EMAIL(data.email);
-  useUserStoreHook().SET_PHONE(data.phone);
-  useUserStoreHook().SET_ROLES(data?.roles);
-  storageLocal().setItem(userKey, data);
 }
 
 /** 删除`token`以及key值为`user-info`的session信息 */
@@ -92,8 +105,13 @@ export const formatToken = (token: string): string => {
   return "Bearer " + token;
 };
 
-export const setApiLanguage = config => {
+/** 当前 UI 语言 → 后端 gettext 语言（SSE fetch 等不走 axios 拦截器的链路复用） */
+export const getApiLanguage = (): string => {
   const nameSpace = responsiveStorageNameSpace();
-  config.headers["Accept-Language"] =
-    Storage.getData("locale", nameSpace)?.locale ?? "zh";
+  return Storage.getData("locale", nameSpace)?.locale ?? "zh";
+};
+
+export const setApiLanguage = (config: PureHttpRequestConfig) => {
+  // 请求拦截阶段 axios 必已构造 headers
+  config.headers!["Accept-Language"] = getApiLanguage();
 };

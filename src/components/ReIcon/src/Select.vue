@@ -1,9 +1,14 @@
 <script setup lang="ts">
+import ReEmpty from "@/components/ReEmpty";
 import { IconJson } from "@/components/ReIcon/data";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { ref, computed, CSSProperties, watch } from "vue";
 import Search from "~icons/ri/search-eye-line";
 import { useI18n } from "vue-i18n";
+
+import LocalIcon from "./localIcon";
+import { ensureIconSet, isIconSetLoaded } from "./iconRegistry";
+import { usePagination } from "@/hooks/usePagination";
 
 type ParameterCSSProperties = (_item?: string) => CSSProperties | undefined;
 
@@ -11,17 +16,15 @@ defineOptions({
   name: "IconSelect"
 });
 
-const inputValue = defineModel({ type: String });
+const inputValue = defineModel({ type: String, default: "" });
 
 const iconList = ref(IconJson);
 const icon = ref();
 const currentActiveType = ref("ep:");
 // 深拷贝图标数据，前端做搜索
-const copyIconList = cloneDeep(iconList.value);
-const totalPage = ref(0);
+const copyIconList: Record<string, string[]> = cloneDeep(iconList.value);
 // 每页显示35个图标
-const pageSize = ref(35);
-const currentPage = ref(1);
+const PAGE_SIZE = 35;
 
 // 搜索条件
 const filterValue = ref("");
@@ -41,13 +44,31 @@ const tabsList = [
   }
 ];
 
-const pageList = computed(() =>
-  copyIconList[currentActiveType.value]
-    .filter(i => i.includes(filterValue.value))
-    .slice(
-      (currentPage.value - 1) * pageSize.value,
-      currentPage.value * pageSize.value
-    )
+/** 当前图标集下的搜索结果（前端过滤；翻页与「总数变化回首页」由 usePagination 承担） */
+const filteredIconList = computed(() =>
+  copyIconList[currentActiveType.value].filter(i =>
+    i.includes(filterValue.value)
+  )
+);
+
+const {
+  currentPage,
+  paginationList: pageList,
+  total: totalPage,
+  setCurrentPage
+} = usePagination(filteredIconList, PAGE_SIZE);
+
+// 图标集本地懒加载：切 tab 即加载对应 set（构建期内置的同源 chunk，不访问在线图标 API），
+// 加载完成前网格展示加载态——内网/离线部署下「选择器可用」与「图标可渲染」一致。
+const currentSetLoaded = computed(() =>
+  isIconSetLoaded(currentActiveType.value.replace(":", ""))
+);
+watch(
+  () => currentActiveType.value,
+  value => {
+    void ensureIconSet(value.replace(":", ""));
+  },
+  { immediate: true }
 );
 
 const iconItemStyle = computed((): ParameterCSSProperties => {
@@ -72,29 +93,28 @@ function setVal() {
 function onBeforeEnter() {
   if (isAllEmpty(icon.value) || isAllEmpty(inputValue.value)) return;
   setVal();
-  // 寻找当前图标在第几页
+  // 寻找当前图标在第几页（未命中回落首页）
   const curIconIndex = copyIconList[currentActiveType.value].findIndex(
     i => i === icon.value
   );
-  currentPage.value = Math.ceil((curIconIndex + 1) / pageSize.value);
+  setCurrentPage(
+    curIconIndex < 0 ? 1 : Math.ceil((curIconIndex + 1) / PAGE_SIZE)
+  );
 }
 
 function onAfterLeave() {
   filterValue.value = "";
 }
 
-function handleClick({ props }) {
-  currentPage.value = 1;
+function handleClick(pane: unknown) {
+  const { props } = pane as { props: { name: string } };
+  setCurrentPage(1);
   currentActiveType.value = props.name;
 }
 
-function onChangeIcon(item) {
+function onChangeIcon(item: string) {
   icon.value = item;
   inputValue.value = currentActiveType.value + item;
-}
-
-function onCurrentChange(page) {
-  currentPage.value = page;
 }
 
 function onClear() {
@@ -103,21 +123,14 @@ function onClear() {
 }
 
 watch(
-  () => pageList.value,
-  () =>
-    (totalPage.value = copyIconList[currentActiveType.value].filter(i =>
-      i.includes(filterValue.value)
-    ).length),
-  { immediate: true }
-);
-watch(
   () => inputValue.value,
   val => val && setVal(),
   { immediate: true }
 );
+// 过滤条件变化即回首页（总数恰好不变时 usePagination 的 total 监听不会触发）
 watch(
   () => filterValue.value,
-  () => (currentPage.value = 1)
+  () => setCurrentPage(1)
 );
 </script>
 
@@ -136,12 +149,15 @@ watch(
           @after-leave="onAfterLeave"
         >
           <template #reference>
-            <div
-              class="w-[40px] h-[32px] cursor-pointer flex justify-center items-center"
+            <!-- 原生 button 触发器：可聚焦 + Enter / Space 触发打开（键盘可达） -->
+            <button
+              type="button"
+              class="w-10 h-8 cursor-pointer flex-c border-0 bg-transparent"
+              :aria-label="t('buttons.selectIcon')"
             >
               <IconifyIconOffline v-if="!icon" :icon="Search" />
-              <IconifyIconOnline v-else :icon="inputValue" />
-            </div>
+              <LocalIcon v-else :icon="inputValue" />
+            </button>
           </template>
 
           <el-input
@@ -158,45 +174,52 @@ watch(
               :label="pane.label"
               :name="pane.name"
             >
-              <el-scrollbar height="220px">
+              <el-scrollbar v-loading="!currentSetLoaded" height="220px">
                 <ul class="flex flex-wrap px-2! ml-2!">
                   <li
                     v-for="(item, key) in pageList"
                     :key="key"
-                    :title="item"
-                    class="icon-item p-2 cursor-pointer mr-2 mt-1 flex justify-center items-center border border-[#e5e7eb]"
-                    :style="iconItemStyle(item)"
-                    @click="onChangeIcon(item)"
+                    class="mr-2 mt-1"
                   >
-                    <IconifyIconOnline
-                      :icon="currentActiveType + item"
-                      width="20px"
-                      height="20px"
-                    />
+                    <!-- 图标项用原生 button：保留 ul > li 列表语义，键盘可聚焦与选择 -->
+                    <button
+                      type="button"
+                      :title="item"
+                      :aria-label="item"
+                      class="icon-item p-2 cursor-pointer flex-c border border-border-light bg-transparent"
+                      :style="iconItemStyle(item)"
+                      @click="onChangeIcon(item)"
+                    >
+                      <LocalIcon
+                        :icon="currentActiveType + item"
+                        width="20px"
+                        height="20px"
+                      />
+                    </button>
                   </li>
                 </ul>
-                <el-empty
+                <ReEmpty
                   v-show="pageList.length === 0"
                   :description="`${filterValue} ${t('layout.noData')}`"
-                  :image-size="60"
+                  size="small"
                 />
               </el-scrollbar>
             </el-tab-pane>
           </el-tabs>
 
           <div
-            class="w-full h-9 flex items-center overflow-auto border-t border-[#e5e7eb]"
+            class="w-full h-9 flex items-center overflow-auto border-t border-border-light"
           >
             <el-pagination
               class="flex-auto ml-2"
               :total="totalPage"
               :current-page="currentPage"
-              :page-size="pageSize"
+              :page-size="PAGE_SIZE"
               :pager-count="5"
               layout="pager"
               background
               size="small"
-              @current-change="onCurrentChange"
+              @current-change="setCurrentPage"
             />
             <el-button
               class="justify-end mx-2!"
@@ -221,20 +244,20 @@ watch(
     color: var(--el-color-primary);
     border-color: var(--el-color-primary);
     transform: scaleX(1.05);
-    transition: all 0.4s;
+    transition: all var(--duration-slow) var(--ease-standard);
   }
 }
 
 :deep(.el-tabs__nav-next) {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 32px;
-  box-shadow: -5px 0 5px -6px #ccc;
+  box-shadow: -5px 0 5px -6px hsl(var(--fg) / 20%);
 }
 
 :deep(.el-tabs__nav-prev) {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 32px;
-  box-shadow: 5px 0 5px -6px #ccc;
+  box-shadow: 5px 0 5px -6px hsl(var(--fg) / 20%);
 }
 
 :deep(.el-input-group__append) {
@@ -243,7 +266,7 @@ watch(
 
 :deep(.el-tabs__item) {
   height: 30px;
-  font-size: 12px;
+  font-size: var(--el-font-size-extra-small);
   font-weight: normal;
   line-height: 30px;
 }
@@ -252,7 +275,7 @@ watch(
 :deep(.el-tabs__nav-wrap) {
   position: static;
   margin: 0;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 6%);
+  box-shadow: var(--shadow-sm);
 }
 
 :deep(.el-tabs__nav-wrap::after) {

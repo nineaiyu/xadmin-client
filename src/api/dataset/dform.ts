@@ -1,0 +1,399 @@
+import { BaseApi } from "@/api/base";
+import { http } from "@/utils/http";
+import type {
+  BaseResult,
+  DataListResult,
+  DetailResult,
+  ListResult
+} from "@/api/types";
+import type { RecordType } from "plus-pro-components";
+
+/** 动态表单：收敛控件集 schema + 通用 JSON 提交 */
+export type FormFieldType =
+  | "input"
+  | "textarea"
+  | "number"
+  | "amount"
+  | "select"
+  | "radio"
+  | "checkbox"
+  | "date"
+  | "switch"
+  | "upload"
+  | "daterange"
+  | "table"
+  | "user"
+  | "cascader"
+  | "formula";
+
+/** 级联选项节点（value 同时作为提交值，label 为展示文案） */
+export type FormCascaderOption = {
+  value: string | number;
+  label: string;
+  children?: FormCascaderOption[];
+};
+
+/** 展开的选项：平铺控件为字符串数组，级联为树形节点数组 */
+export type FormFieldOption = string | FormCascaderOption;
+
+/** 明细子表列类型：限基础控件，禁止嵌套 table / upload / daterange */
+export type FormTableColumnType =
+  "input" | "textarea" | "number" | "date" | "select";
+
+export type FormTableColumn = {
+  key: string;
+  label: string;
+  type: FormTableColumnType;
+  options?: string[];
+};
+
+export type FormField = {
+  key: string;
+  label: string;
+  type: FormFieldType;
+  required?: boolean;
+  /** 平铺控件为字符串数组；级联（cascader）为树形节点数组 */
+  options?: FormFieldOption[];
+  /**
+   * 数据字典绑定（select/radio/checkbox）：填类型 code，选项值集合由数据字典维护
+   * （与内联 options 互斥；提交校验读字典项，空字典 fail-closed）
+   */
+  dict?: string;
+  min?: number;
+  max?: number;
+  max_length?: number;
+  /**
+   * 公式表达式（type=formula 时必填）：支持字段引用 `{key}`、表格列聚合
+   * `SUM({table.column})`（AVG/MIN/MAX 同）、四则运算与 ROUND/ABS；
+   * 语法与语义见 src/views/form/my/utils/formula.ts（与后端同口径）
+   */
+  formula?: string;
+  /** 金额（amount）/ 计算（formula）控件展示位保留的小数位（0-6，公式缺省 2） */
+  precision?: number;
+  /** 选人控件（user）是否多选 */
+  multiple?: boolean;
+  placeholder?: string;
+  /** 明细子表列定义（type=table 时必填） */
+  columns?: FormTableColumn[];
+  /**
+   * 可筛选（等值型控件）：提交时把该字段取值物化到筛选列，
+   * 管理端列表可按该字段筛选（物化列 + GIN 索引，见后端 dataset/utils/dform_filter.py）
+   */
+  filterable?: boolean;
+};
+
+/** 联动规则操作符：eq/ne 标量比较；in/notin 集合包含；empty/notempty 空值判定 */
+export type FormLinkageOp = "eq" | "ne" | "in" | "notin" | "empty" | "notempty";
+
+/** 联动效果：隐藏 / 显示 / 必填 / 非必填（同一目标多条命中时按顺序后者覆盖前者） */
+export type FormLinkageEffect = "hide" | "show" | "require" | "optional";
+
+/** 联动规则：触发字段（field）满足条件时对目标字段（target）的效果 */
+export type FormLinkage = {
+  target: string;
+  field: string;
+  op: FormLinkageOp;
+  /** 值型操作符（eq/ne/in/notin）的规则值；empty/notempty 不带该键 */
+  value?: string | number | boolean | Array<string | number | boolean>;
+  effect: FormLinkageEffect;
+};
+
+export type FormSchema = {
+  fields: FormField[];
+  /** 联动规则（可空）：服务端提交校验与前端展示同源 */
+  linkages?: FormLinkage[];
+};
+
+export type DynamicFormItem = {
+  pk: string;
+  name: string;
+  description: string;
+  /** 列表行仅回传字段数（schema 全文经 retrieve 单条取：编辑 / 模板复用） */
+  schema_fields_count?: number;
+  /** schema 全文：详情与写入响应携带，列表行不回传 */
+  schema?: FormSchema;
+  /** schema 版本：每次实质变更 +1；历史版本可查看/回滚 */
+  schema_version?: number;
+  is_active: boolean;
+  /** 提交需审批（走操作审批：审批通过后自动落库） */
+  approval_required: boolean;
+  /** 绑定审批流程：非空时提交进入流程引擎（多级审批，终态回写提交状态） */
+  approval_flow?: { pk: string; label?: string } | null;
+  /** 表单模板：只保存 schema 供「从模板新建」复用，不进入可填报表单列表 */
+  is_template?: boolean;
+  /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
+  is_owner?: boolean;
+};
+
+/** 可填报表单（available-forms 返回结构：流程字段给名称与主键，不回传整个定义） */
+export type FillableFormItem = {
+  pk: string;
+  name: string;
+  description: string;
+  schema: FormSchema;
+  approval_required: boolean;
+  approval_flow?: string | null;
+  approval_flow_pk?: string | null;
+};
+
+/** 历史版本条目（schema-history 返回：新 → 旧） */
+export type SchemaHistoryItem = {
+  version: number;
+  schema: FormSchema;
+  updated_time?: string;
+  updated_by?: string;
+};
+
+export type SchemaHistoryResult = {
+  current: number;
+  updated_time?: string;
+  history: SchemaHistoryItem[];
+};
+
+/** 填报状态：空 = 无需审批已生效；DRAFT = 草稿；绑定流程后随流程实例终态回写 */
+export type SubmissionStatusValue =
+  "" | "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+/** 审批轨迹条目（提交绑定流程时按实例任务下发） */
+export type SubmissionTrailItem = {
+  pk: string;
+  node_name: string;
+  node_order: number;
+  assignee?: { pk?: number | string; label?: string } | null;
+  delegate_from?: { pk?: number | string; label?: string } | null;
+  actor?: { pk?: number | string; label?: string } | null;
+  status?: { value?: string; label?: string; color?: string | null } | null;
+  comment?: string;
+  acted_at?: string;
+  is_added?: boolean;
+  created_time?: string;
+};
+
+export type SubmissionItem = {
+  pk: string;
+  form: string;
+  form_name: string;
+  /** 表单 schema 快照：详情页渲染字段 label 与复杂控件（无需表单设计器权限） */
+  form_schema?: FormField[];
+  /** 保存时的表单 schema 版本（审计口径） */
+  schema_version?: number;
+  data: Record<string, unknown>;
+  status?: { value: SubmissionStatusValue; label: string } | null;
+  instance?: string | null;
+  /** 审批轨迹（仅绑定流程的提交非空） */
+  approval_trail?: SubmissionTrailItem[];
+  creator?: { username: string };
+  created_time: string;
+  updated_time?: string;
+};
+
+/** 选人控件候选（user-options）：仅基本展示字段 */
+export type FormUserOption = {
+  pk: number;
+  username: string;
+  nickname: string;
+};
+
+class SubmissionApi extends BaseApi {
+  /** 选人控件数据源：关键字搜索 / 按主键回显已选用户（≤20 条） */
+  userOptions = (params: { keyword?: string; pks?: number[] }) => {
+    const query: Record<string, unknown> = {};
+    if (params.keyword) query.keyword = params.keyword;
+    if (params.pks?.length) query.pks = params.pks.join(",");
+    return this.request<DataListResult<FormUserOption>>(
+      "get",
+      query,
+      {},
+      `${this.baseApi}/user-options`
+    );
+  };
+
+  /** 重新提交被驳回的填报（仅申请人、仅驳回态） */
+  resubmit = (pk: string) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/${pk}/resubmit`
+    );
+  };
+
+  /** 提交草稿（仅草稿态）：按 schema 严格校验后进入 流程引擎 / 操作审批 / 直接生效 */
+  submit = (pk: string, data?: Record<string, unknown>) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      data ? { data } : {},
+      `${this.baseApi}/${pk}/submit`
+    );
+  };
+
+  /**
+   * 可填报表单（启用中）：填报页数据源。
+   * 定义类资源不走行级数据权限过滤，普通员工无需「表单设计器」权限即可填报。
+   */
+  availableForms = () => {
+    return this.request<DataListResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/available-forms`
+    );
+  };
+}
+
+/** 表单设计器扩展端点：schema 版本历史与回滚（定义类资源，与 dynamicFormApi 同前缀） */
+class DesignerApi extends BaseApi {
+  /**
+   * 按主键取表单定义全文（含 schema）：编辑弹窗 / 存为模板 / 从模板新建的
+   * 「取原文」入口（列表行只回传 schema 字段数，不回传 schema 全文）。
+   */
+  retrieveForm = (pk: string) => {
+    return this.request<DetailResult<DynamicFormItem>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}`
+    );
+  };
+
+  /** schema 版本历史（新 → 旧，含每个版本的 schema 全文） */
+  schemaHistory = (pk: string) => {
+    return this.request<DetailResult<SchemaHistoryResult>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/schema-history`
+    );
+  };
+
+  /** 回滚到指定历史版本（生成新版本，历史保留） */
+  rollback = (pk: string, version: number) => {
+    return this.request<DetailResult<DynamicFormItem>>(
+      "post",
+      {},
+      { version },
+      `${this.baseApi}/${pk}/rollback`
+    );
+  };
+}
+
+export const dynamicFormApi = new BaseApi("/api/dataset/dynamic-forms");
+export const designerApi = new DesignerApi("/api/dataset/dynamic-forms");
+export const submissionApi = new SubmissionApi(
+  "/api/dataset/dynamic-form-submissions"
+);
+
+/** 表单数据（管理端）：表单选项（全部非模板表单，含停用；schema 供动态列渲染） */
+export type FormDataFormOption = {
+  pk: string;
+  name: string;
+  description: string;
+  is_active: boolean;
+  schema: FormSchema;
+  schema_version: number;
+};
+
+/** 表单数据（管理端）列表行：固定列 + data 全量（按表单 schema 渲染动态列） */
+export type FormDataItem = {
+  pk: string;
+  form_name: string;
+  /** 保存时的表单 schema 版本（审计口径） */
+  schema_version?: number;
+  data: Record<string, unknown>;
+  status?: { value: SubmissionStatusValue; label: string } | null;
+  creator?: { username?: string; label?: string } | null;
+  created_time: string;
+  updated_time?: string;
+  /** 详情口径：schema 快照与审批轨迹（retrieve 下发） */
+  form_schema?: FormField[];
+  approval_trail?: SubmissionTrailItem[];
+  instance?: string | null;
+};
+
+/**
+ * 表单数据（管理端）接口：只读浏览 + 按表单筛选 + 导出。
+ *
+ * `form` / `filterData` / `dataFields` 为页面侧写入的请求参数（实例级状态）：
+ * 列表 / 导出请求自动带上，行可见性由后端数据权限编译器收敛
+ * （超管全量、非超管按授权 fail-closed）。
+ * 经 `createFormDataApi` 按页实例化，状态不跨页面共享。
+ */
+export class FormDataApi extends BaseApi {
+  form = "";
+  /**
+   * 物化筛选条件（页面侧写入的 JSON 字符串，形如 `{"level":"P5"}`）：
+   * 列表 / 导出请求自动带上；字段须在所选表单的可筛选面内（后端 fail-closed）。
+   */
+  filterData = "";
+  /**
+   * 动态列 key 集合（页面侧按所选表单 schema 写入，逗号分隔）：
+   * 列表请求以 `data_fields` 收缩行内 data 载荷（后端按 key 白名单过滤，缺省全量）；
+   * 导出列集合由后端按行集合的 schema 展开，不受该参数影响。
+   */
+  dataFields = "";
+
+  /** 列表 / 导出请求自动携带的页面侧参数（表单、物化筛选、动态列收缩） */
+  private pageParams(): Record<string, unknown> {
+    return {
+      ...(this.form ? { form: this.form } : {}),
+      ...(this.filterData ? { filter_data: this.filterData } : {}),
+      ...(this.dataFields ? { data_fields: this.dataFields } : {})
+    };
+  }
+
+  list = <T = RecordType>(params?: object) =>
+    this.request<ListResult<T>>(
+      "get",
+      { ...(params ?? {}), ...this.pageParams() },
+      {}
+    );
+
+  exportData = (params: object) =>
+    http.autoDownload(
+      `${this.baseApi}/export-data`,
+      undefined,
+      this.formatParams({ ...(params ?? {}), ...this.pageParams() })
+    );
+
+  exportAsync = (data?: object) =>
+    this.request<BaseResult>(
+      "post",
+      {},
+      { ...(data ?? {}), ...this.pageParams() },
+      `${this.baseApi}/export-async`
+    );
+
+  /** 表单选项（全部非模板表单，含停用）：页面「选择表单」数据源 */
+  formOptions = () =>
+    this.request<DataListResult<FormDataFormOption>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/form-options`
+    );
+
+  /** 选人字段数据源：关键字搜索 / 按主键回显已选用户（≤20 条，与填报页同源） */
+  userOptions = (params: { keyword?: string; pks?: number[] }) => {
+    const query: Record<string, unknown> = {};
+    if (params.keyword) query.keyword = params.keyword;
+    if (params.pks?.length) query.pks = params.pks.join(",");
+    return this.request<DataListResult<FormUserOption>>(
+      "get",
+      query,
+      {},
+      `${this.baseApi}/user-options`
+    );
+  };
+}
+
+/**
+ * 工厂：每个消费页面创建独立实例。
+ * 页面级请求参数（表单 / 物化筛选 / 动态列收缩）挂在本实例上，
+ * 无模块级共享状态，天然消除跨页参数泄漏。
+ */
+export const createFormDataApi = () =>
+  new FormDataApi("/api/dataset/form-data");
+
+/** 列表结果取行：统一实现在 api/base.ts */
+export { listRows } from "@/api/base";

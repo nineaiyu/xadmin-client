@@ -1,124 +1,107 @@
+import { h, reactive, shallowRef } from "vue";
+import { useI18n } from "vue-i18n";
+import { ElTag } from "element-plus";
+import { usePageAuth } from "@/router/utils";
 import { dataPermissionApi } from "@/api/system/permission";
+import { ModeChoices } from "@/views/system/constants";
 import {
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef
-} from "vue";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { FieldChoices } from "@/views/system/constants";
-import { handleTree } from "@/utils/tree";
-import { modelLabelFieldApi } from "@/api/system/field";
-import { transformI18n } from "@/plugins/i18n";
-import { getKeyList } from "@pureadmin/utils";
-import type { OperationProps, RePlusPageProps } from "@/components/RePlusPage";
-import filterForm from "../components/index.vue";
-import { formatFiledAppParent } from "@/views/system/hooks";
+  formatPageColumns,
+  type OperationProps,
+  type PageTableColumn
+} from "@/components/RePlusPage";
+import { parseFormMode } from "../components/utils/trial";
+import { usePermissionLookups } from "./usePermissionLookups";
+import { usePermissionFormOptions } from "./usePermissionFormOptions";
 
 export function useDataPermission() {
-  const fieldLookupsData = ref([]);
-  const valuesData = ref([]);
+  const { t } = useI18n();
 
   const api = reactive(dataPermissionApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
-  });
+  const auth = usePageAuth();
 
-  onMounted(() => {
-    if (hasAuth("list:SystemModelLabelField")) {
-      modelLabelFieldApi
-        .list({
-          page: 1,
-          size: 1000,
-          field_type: FieldChoices.DATA
-        })
-        .then(res => {
-          if (res.code === 1000) {
-            formatFiledAppParent(res.data.results);
-            fieldLookupsData.value = handleTree(res.data.results);
-          }
-        });
-    }
-    modelLabelFieldApi.choices().then(res => {
-      if (res.code === 1000) {
-        valuesData.value = res.choices_dict?.choices;
-      }
-    });
-  });
+  // 注册表数据源：规则字段/值选项/匹配符文案/菜单行
+  const lookups = usePermissionLookups();
 
-  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
-    props: {
-      row: {
-        menu: ({ rawRow }) => {
-          return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
-        },
-        rules: ({ rawRow }) => {
-          return rawRow?.rules ?? [];
-        }
-      },
-      columns: {
-        pk: ({ column }) => {
-          column["hideInForm"] = true;
-          return column;
-        },
-        menu: ({ column }) => {
-          column._column.choices.forEach(item => {
-            item.title = transformI18n(item?.meta__title);
-          });
-          column["options"] = handleTree(
-            column._column.choices,
-            "pk",
-            "parent_id"
-          );
-          column["valueType"] = "cascader";
-          column["fieldProps"]["props"] = {
-            ...column["fieldProps"]["props"],
-            ...{
-              value: "pk",
-              label: "title",
-              emitPath: false,
-              checkStrictly: false,
-              multiple: true
-            }
-          };
-          column["fieldSlots"] = {
-            default: ({ node, data }) => (
-              <>
-                <span>{data.title}</span>
-                <span v-show={!node.isLeaf}> ({data?.children?.length}) </span>
-              </>
-            )
-          };
-          return column;
-        },
-        rules: ({ column }) => {
-          column["hasLabel"] = false;
-          column["renderField"] = (value, onChange) => {
-            return h(filterForm, {
-              class: ["overflow-auto"],
-              dataList: value as any,
-              valuesData: valuesData.value,
-              ruleList: fieldLookupsData.value,
-              onChange
-            });
-          };
-          return column;
-        }
-      }
-    }
-  });
+  // 新增/编辑弹层：生效范围树 + 模式选择 + 规则编辑器
+  const { addOrEditOptions } = usePermissionFormOptions({ ...lookups });
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 160,
     buttons: [{ code: "detail", show: false }]
   });
+
+  /** 「且/或」模式标签（单条规则时服务端统一按或模式保存，标注避免误读） */
+  const modeTag = (modeType: unknown, ruleCount: number) => {
+    if (ruleCount < 2) {
+      return h(ElTag, { effect: "plain", size: "small", type: "info" }, () =>
+        t("systemPermission.list.modeSingle")
+      );
+    }
+    const mode = parseFormMode(modeType);
+    const isAnd = mode === ModeChoices.AND;
+    return h(
+      ElTag,
+      { effect: "plain", size: "small", type: isAnd ? "warning" : "primary" },
+      () =>
+        isAnd
+          ? t("systemPermission.modeAndShort")
+          : t("systemPermission.modeOrShort")
+    );
+  };
+
+  /** 生效范围标签：未绑定菜单 = 通用（全部接口生效） */
+  const scopeTag = (menuCount: unknown) => {
+    const count = Number(menuCount ?? 0);
+    if (!count) {
+      return h(ElTag, { effect: "plain", size: "small", type: "info" }, () =>
+        t("systemPermission.list.scopeAll")
+      );
+    }
+    return h(ElTag, { effect: "plain", size: "small", type: "success" }, () =>
+      t("systemPermission.list.scopeApis", { count })
+    );
+  };
+
+  // 统计列共用渲染（user_count / dept_count 同口径；取值键随列而定）
+  const formatCountColumn = (column: PageTableColumn) => {
+    column["width"] = 100;
+    column["cellRenderer"] = ({ row }) =>
+      String(row[column._column?.key as string] ?? 0);
+  };
+
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      name: column => {
+        column["minWidth"] = 180;
+      },
+      mode_type: column => {
+        column["width"] = 110;
+        column["cellRenderer"] = ({ row }) =>
+          modeTag(row.mode_type, Number(row.rule_count ?? 0));
+      },
+      // 统计列的表头文案走 `systemPermission.<字段名>` 词条（rule_count / menu_count /
+      // user_count / dept_count），与框架 formatPublicLabels 的口径一致
+      rule_count: column => {
+        column["width"] = 90;
+        column["cellRenderer"] = ({ row }) => String(row.rule_count ?? 0);
+      },
+      menu_count: column => {
+        column["minWidth"] = 150;
+        column["cellRenderer"] = ({ row }) => scopeTag(row.menu_count);
+      },
+      user_count: formatCountColumn,
+      dept_count: formatCountColumn,
+      created_time: column => {
+        column["width"] = 170;
+      }
+    });
+
   return {
     api,
     auth,
     addOrEditOptions,
+    listColumnsFormat,
     operationButtonsProps
   };
 }

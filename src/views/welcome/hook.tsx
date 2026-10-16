@@ -1,22 +1,18 @@
-import {
-  getDashBoardUserTotalApi,
-  getDashBoardUserActiveApi,
-  getDashBoardUserLoginTotalApi,
-  getDashBoardUserLoginTrendApi,
-  getDashBoardUserRegisterTrendApi,
-  getDashBoardTodayOperateTotalApi
-} from "@/api/system/dashboard";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import LoginLine from "~icons/ep/lock";
-import LogLine from "~icons/ep/tickets";
 import { hasAuth } from "@/router/utils";
-import GroupLine from "~icons/ri/group-line";
-import { getKeyList } from "@pureadmin/utils";
-import { computed, onMounted, ref } from "vue";
-import { operationLogApi } from "@/api/system/logs/operation";
+import { createDashboardState } from "./dashboardState";
+import { createDashboardFetchers } from "./dashboardFetchers";
 
+export type { ChartCardItem, UserActiveCardItem } from "./dashboardState";
+
+/**
+ * 首页数据装配：状态容器（三张统计卡的固定槽位）见 dashboardState.ts，
+ * 各卡片取数见 dashboardFetchers.ts。
+ */
 export function useDashboard() {
   const { t } = useI18n();
+
   const optionsBasis = computed(() => {
     return [
       {
@@ -27,133 +23,31 @@ export function useDashboard() {
       }
     ];
   });
-  const dataList = ref([]);
-  const loading = ref(true);
 
-  const chartData = ref([]);
-  const userLoginList = ref([]);
-  const userRegisterList = ref([]);
-  const operateLogList = ref([]);
-  const userActiveList = ref([]);
+  const state = createDashboardState(t);
+  const fetchers = createDashboardFetchers({ t, state });
 
-  const getUserActiveList = () => {
-    getDashBoardUserActiveApi().then(res => {
-      if (res.code === 1000) {
-        res.data.forEach(item => {
-          userActiveList.value.push({
-            name:
-              item[0] === 1
-                ? t("welcome.today")
-                : `${item[0]}${t("welcome.days")}`,
-            value: item,
-            duration: 2200
-          });
-        });
-      }
-    });
-  };
-
-  const getTodayOperateTotal = () => {
-    getDashBoardTodayOperateTotalApi().then(res => {
-      if (hasAuth("list:SystemOperationLog")) {
-        getOperateLogList();
-      }
-      if (res.code === 1000) {
-        chartData.value.push({
-          icon: LogLine,
-          bgColor: "#eff8f4",
-          color: "#7846e5",
-          duration: 2200,
-          name: t("welcome.requestNum"),
-          value: getKeyList(res.results, "count", false)[
-            res.results.length - 1
-          ],
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
-        });
-      }
-    });
-  };
-  const getUserTotal = () => {
-    getDashBoardUserTotalApi().then(res => {
-      if (res.code === 1000) {
-        chartData.value.push({
-          icon: GroupLine,
-          bgColor: "#eff8f4",
-          color: "#26ce83",
-          duration: 2200,
-          name: t("welcome.userNum"),
-          value: res.count,
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
-        });
-      }
-    });
-  };
-  const getUserLoginTotal = () => {
-    getDashBoardUserLoginTotalApi().then(res => {
-      if (res.code === 1000) {
-        chartData.value.push({
-          icon: LoginLine,
-          bgColor: "#effaff",
-          color: "#41b6ff",
-          duration: 2200,
-          name: t("welcome.loginTimes"),
-          value: res.count,
-          percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
-          data: getKeyList(res.results, "count", false)
-        });
-      }
-    });
-  };
-  const getUserLoginList = () => {
-    getDashBoardUserLoginTrendApi().then(res => {
-      if (res.code === 1000) {
-        userLoginList.value = res.data;
-      }
-    });
-  };
-
-  const getUserRegisterList = () => {
-    getDashBoardUserRegisterTrendApi().then(res => {
-      if (res.code === 1000) {
-        userRegisterList.value = res.data;
-      }
-    });
-  };
-
-  const getOperateLogList = () => {
-    operationLogApi
-      .list({
-        page: 1,
-        size: 20,
-        ordering: "-created_time"
-      })
-      .then(res => {
-        if (res.code === 1000) {
-          operateLogList.value = res.data?.results;
-        }
-      });
-  };
-
+  // 首页各卡片独立取数：单个请求失败只缺对应卡片（提示由 http 层统一给出），不阻断其余卡片
   onMounted(() => {
-    getUserTotal();
-    getUserLoginList();
-    getUserLoginTotal();
-    getTodayOperateTotal();
-    getUserActiveList();
-    getUserRegisterList();
+    fetchers.getUserTotal();
+    fetchers.getUserLoginList();
+    fetchers.getUserLoginTotal();
+    fetchers.getTodayOperateTotal();
+    fetchers.getUserActiveList();
+    fetchers.getUserRegisterList();
+    // 操作日志时间线与统计接口互不依赖：独立发起，不随 today-operate-total 的成败与耗时联动
+    if (hasAuth("list:SystemOperationLog")) {
+      fetchers.getOperateLogList();
+    }
   });
 
   return {
     t,
-    loading,
-    dataList,
-    chartData,
+    chartData: state.chartData,
     optionsBasis,
-    userLoginList,
-    userActiveList,
-    operateLogList,
-    userRegisterList
+    userLoginList: state.userLoginList,
+    userActiveList: state.userActiveList,
+    operateLogList: state.operateLogList,
+    userRegisterList: state.userRegisterList
   };
 }

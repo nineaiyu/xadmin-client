@@ -1,0 +1,220 @@
+<script lang="ts" setup>
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import ReEmpty from "@/components/ReEmpty";
+import { userApi } from "@/api/identity/user";
+import type { UserPreviewResult } from "@/api/types/permission-preview";
+import { hasAuth } from "@/router/utils";
+import { filterByKeyword } from "@/utils/keywordFilter";
+import {
+  PreviewDescriptions,
+  PreviewFieldMatrix,
+  PreviewMenuTree,
+  RePermissionPreviewShell,
+  toFieldMatrixEntries,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
+import PreviewDataPermission from "./preview/PreviewDataPermission.vue";
+import PreviewTrial from "./preview/PreviewTrial.vue";
+
+defineOptions({ name: "PermissionPreview" });
+
+/**
+ * 用户三层权限只读预览（弹层内容组件形态）。
+ *
+ * 由页面经 `addDrawer` 打开（抽屉体系收敛，不在模板手挂 el-drawer）：
+ * 挂载即按行主键加载数据，关闭即销毁（destroyOnClose）。
+ */
+const props = defineProps<{ row: { pk?: string | number } }>();
+
+const { t } = useI18n();
+
+/** 试算有独立权限码：缺失时只提示，不发必然 403 的请求 */
+const canTrial = computed(() => hasAuth("previewTrial:SystemUser"));
+
+const { loading, data: preview } = usePermissionPreview<UserPreviewResult>(
+  async pk => (await userApi.preview(pk)).data,
+  () => props.row.pk
+);
+const keyword = ref("");
+
+const METHOD_TAG_TYPES: Record<
+  string,
+  "primary" | "success" | "warning" | "danger" | "info"
+> = {
+  GET: "primary",
+  POST: "success",
+  PUT: "warning",
+  DELETE: "danger",
+  PATCH: "info"
+};
+
+/** API 码按关键字过滤（code/path/title） */
+const filteredApiPermissions = computed(() =>
+  filterByKeyword(preview.value?.api_permissions ?? [], keyword.value, item => [
+    item.code,
+    item.path,
+    item.title
+  ])
+);
+</script>
+
+<template>
+  <RePermissionPreviewShell
+    v-slot="{ data }"
+    :loading="loading"
+    :data="preview"
+  >
+    <!-- 基本信息 -->
+    <PreviewDescriptions :title="t('permissionPreview.basicInfo')">
+      <el-descriptions-item :label="t('systemUser.username')">
+        {{ data.user.username }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('systemUser.nickname')">
+        {{ data.user.nickname || "-" }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.superuser')">
+        <el-tag v-if="data.user.is_superuser" type="danger" size="small">
+          {{ t("permissionPreview.yes") }}
+        </el-tag>
+        <el-tag v-else type="info" size="small">
+          {{ t("permissionPreview.no") }}
+        </el-tag>
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.dept')" :span="3">
+        <template v-if="data.user.dept">
+          <el-tag size="small">{{ data.user.dept.name }}</el-tag>
+        </template>
+        <span v-else>-</span>
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.roles')" :span="3">
+        <el-tag
+          v-for="role in data.user.roles"
+          :key="role.pk"
+          size="small"
+          class="mr-1"
+          :type="role.is_active ? 'primary' : 'info'"
+        >
+          {{ role.name }}
+        </el-tag>
+        <span v-if="!data.user.roles.length">-</span>
+      </el-descriptions-item>
+    </PreviewDescriptions>
+
+    <el-collapse
+      class="mt-3"
+      :model-value="['menu', 'api', 'data', 'field', 'trial']"
+    >
+      <!-- 可见菜单树 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.menuTree')}（${data.summary.menu_count}）`"
+        name="menu"
+      >
+        <PreviewMenuTree :data="data.menu_tree" />
+      </el-collapse-item>
+
+      <!-- API 权限码 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.apiCodes')}（${data.summary.api_code_count}）`"
+        name="api"
+      >
+        <el-input
+          v-model="keyword"
+          :placeholder="t('permissionPreview.filterPlaceholder')"
+          clearable
+          class="mb-2 w-70!"
+        />
+        <el-table
+          :data="filteredApiPermissions"
+          size="small"
+          border
+          max-height="320"
+        >
+          <el-table-column
+            prop="code"
+            :label="t('permissionPreview.colCode')"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="method"
+            :label="t('permissionPreview.colMethod')"
+            width="90"
+          >
+            <template #default="{ row }">
+              <el-tag
+                :type="METHOD_TAG_TYPES[row.method] ?? 'info'"
+                size="small"
+              >
+                {{ row.method || "-" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="title"
+            :label="t('permissionPreview.colTitle')"
+            min-width="150"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="path"
+            :label="t('permissionPreview.colPath')"
+            min-width="220"
+            show-overflow-tooltip
+          />
+          <template #empty>
+            <ReEmpty
+              :description="t('permissionPreview.emptyApis')"
+              :image-size="70"
+            />
+          </template>
+        </el-table>
+      </el-collapse-item>
+
+      <!-- 数据权限 -->
+      <el-collapse-item
+        :title="t('permissionPreview.dataPermission')"
+        name="data"
+      >
+        <PreviewDataPermission :data="data.data_permissions" />
+      </el-collapse-item>
+
+      <!-- 字段权限 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.fieldPermission')}（${data.summary.field_permission_count}）`"
+        name="field"
+      >
+        <el-alert
+          v-if="!data.field_permission_enabled"
+          :title="t('permissionPreview.fieldDisabled')"
+          type="info"
+          :closable="false"
+          show-icon
+          class="mb-2"
+        />
+        <el-alert
+          v-if="data.field_permissions.length"
+          :title="t('permissionPreview.fieldBlank')"
+          type="info"
+          :closable="false"
+          show-icon
+          class="mb-2"
+        />
+        <PreviewFieldMatrix
+          v-if="data.field_permissions.length"
+          :entries="toFieldMatrixEntries(data.field_permissions)"
+        />
+      </el-collapse-item>
+
+      <!-- 试算 -->
+      <el-collapse-item :title="t('permissionPreview.trial')" name="trial">
+        <PreviewTrial
+          :pk="data.user.pk"
+          :candidates="data.trial_candidates"
+          :menu-tree="data.menu_tree"
+          :can-trial="canTrial"
+        />
+      </el-collapse-item>
+    </el-collapse>
+  </RePermissionPreviewShell>
+</template>

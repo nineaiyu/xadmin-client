@@ -3,9 +3,11 @@ import { onMounted, reactive, ref, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import type { FormRules } from "element-plus";
 import { isAllEmpty } from "@pureadmin/utils";
-import { zxcvbn } from "@zxcvbn-ts/core";
+import { ZxcvbnFactory } from "@zxcvbn-ts/core";
 import { useI18n } from "vue-i18n";
 import { passwordRulesCheck } from "@/utils";
+import { buildRepeatPasswordValidator } from "@/utils/rules/confirmPassword";
+import { passwordStrengthLevels } from "@/utils/password";
 import { rulesPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 import { type PlusColumn } from "plus-pro-components";
@@ -20,6 +22,14 @@ function getRef() {
 
 defineExpose({ getRef });
 
+/**
+ * 改密表单字段（口径说明，改动前必读）：`new_password` 仅用于本地强度条与
+ * 「确认密码」一致性比对，**不进提交载荷**；提交层把 `sure_password` 作为
+ * 新密码发送（后端 resetPassword 契约只有 old_password + sure_password，
+ * 服务端以 `set_password(sure_password)` 落库）。命名错位属历史口径，
+ * 改名会波及前后端契约，故保留并以注释消歧（提交点见 account/utils/hook.tsx
+ * 的 handleChangePassword）。
+ */
 interface FormPasswordProps {
   old_password: string;
   new_password: string;
@@ -44,13 +54,7 @@ const props = withDefaults(defineProps<AddOrEditFormProps>(), {
 
 const { t } = useI18n();
 
-const pwdProgress = [
-  { color: "#e74242", text: t("password.veryWeak") },
-  { color: "#EFBD47", text: t("password.weak") },
-  { color: "#ffa500", text: t("password.average") },
-  { color: "#1bbf1b", text: t("password.strong") },
-  { color: "#008000", text: t("password.veryStrong") }
-];
+const pwdProgress = passwordStrengthLevels(t);
 
 const password = ref(props.formInline);
 
@@ -58,6 +62,7 @@ const passwordRules = ref([]);
 
 const ruleFormRef = ref();
 const curScore = ref();
+const zxcvbnFactory = new ZxcvbnFactory();
 const formPasswordRules = reactive<FormRules>({
   old_password: [
     {
@@ -85,14 +90,13 @@ const formPasswordRules = reactive<FormRules>({
     }
   ],
   sure_password: [
+    // 一致性校验与登录/注册/重置密码页同源（@/utils/rules/confirmPassword）；
+    // 本页非必填（仅比对），空值放行
     {
-      validator: (rule, value, callback) => {
-        if (value !== password.value.new_password) {
-          callback(new Error(t("login.passwordDifferentReg")));
-        } else {
-          callback();
-        }
-      },
+      validator: buildRepeatPasswordValidator({
+        getPassword: () => password.value.new_password,
+        mismatchMessage: t("login.passwordDifferentReg")
+      }),
       trigger: "blur"
     }
   ]
@@ -103,14 +107,14 @@ watch(
   ({ new_password }) =>
     (curScore.value = isAllEmpty(new_password)
       ? -1
-      : zxcvbn(new_password).score)
+      : zxcvbnFactory.check(new_password).score)
 );
 onMounted(() => {
   handleOperation({
     t,
     apiReq: rulesPasswordApi(),
-    success({ data: { password_rules } }) {
-      passwordRules.value = password_rules;
+    success(res) {
+      passwordRules.value = res?.data?.password_rules;
     },
     showSuccessMsg: false
   });
@@ -122,8 +126,10 @@ onMounted(() => {
     ref="ruleFormRef"
     :model="password"
     :rules="formPasswordRules"
-    label-width="130px"
+    label-width="100px"
   >
+    <!-- 弹窗内表单统一左置标签 100px（与登录策略 / 消息模板 / 新建令牌弹窗同口径）：
+         弹窗宽度有限，左置标签比上置标签省一屏高度；页面级表单（个人信息等）用上置标签 -->
     <el-row :gutter="30">
       <re-col :sm="24" :value="24" :xs="24">
         <el-form-item :label="t('userinfo.oldPassword')" prop="old_password">

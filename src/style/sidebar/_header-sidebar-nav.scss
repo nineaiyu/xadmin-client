@@ -1,0 +1,61 @@
+@use "common" as *;
+
+/* 侧边导航：顶栏通栏（Logo + 面包屑，无水平菜单）
+   + 侧栏排在顶栏下方并显示完整菜单树 */
+body[layout="header-sidebar-nav"] {
+  $sideBarWidth: var(--sidebar-width);
+
+  @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
+
+  /* 顶栏通栏：跨越侧栏宽度 */
+  .fixed-header {
+    right: auto;
+    left: 0;
+    width: 100%;
+  }
+
+  /* 侧栏排在固定头部（顶栏 + 页签条）下方：偏移由外壳写入的 --layout-chrome-h 给出，
+     隐藏页签 / 隐藏顶栏 / 全屏内容三态在该变量里已归一（缺省回落到顶栏高度） */
+  .sidebar-container {
+    top: var(--layout-chrome-h, var(--layout-header-h));
+    height: calc(100% - var(--layout-chrome-h, var(--layout-header-h)));
+
+    /* Logo 归顶栏时侧栏品牌区不渲染（顶栏隐藏兜底场景保留，按整高计算滚动区） */
+    &.has-logo .el-scrollbar.pc {
+      height: calc(
+        100% - var(--sidebar-logo-h) - var(--sidebar-collapse-bar-h)
+      );
+    }
+  }
+
+  /* 品牌区在顶栏左端（Logo + 面包屑 + 动作区）：顶栏转 flex 行，
+     面包屑自适应剩余宽度（避免块级堆叠把面包屑挤出顶栏） */
+  .navbar {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar .breadcrumb-container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hideSidebar {
+    .fixed-header {
+      width: 100%;
+    }
+
+    .sidebar-container {
+      width: var(--sidebar-collapse-width) !important;
+      transition: width var(--duration-base);
+    }
+
+    .main-container {
+      margin-left: var(--sidebar-collapse-width);
+    }
+
+    .el-menu--collapse {
+      width: var(--sidebar-collapse-width);
+    }
+  }
+}

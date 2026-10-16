@@ -1,29 +1,20 @@
-@use "theme";
+@use "tokens/breakpoints" as bp;
+@use "tokens/primitives";
+@use "tokens/semantic";
+@use "tokens/presets";
 @use "transition";
 @use "element-plus";
 @use "sidebar";
+@use "header";
 @use "dark";
 
-/* 自定义全局 CssVar */
-:root {
-  /* 左侧菜单展开、收起动画时长 */
-  --pure-transition-duration: 0.3s;
-
-  /* 常用border-color 需要时可取用 */
-  --pure-border-color: rgb(5 5 5 / 6%);
-
-  /* switch关闭状态下的color 需要时可取用 */
-  --pure-switch-off-color: #a6a6a6;
-
-  /** 主题色 */
-  --pure-theme-sub-menu-active-text: initial;
-  --pure-theme-menu-bg: none;
-  --pure-theme-menu-hover: none;
-  --pure-theme-sub-menu-bg: transparent;
-  --pure-theme-menu-text: initial;
-  --pure-theme-sidebar-logo: none;
-  --pure-theme-menu-title-hover: initial;
-  --pure-theme-menu-active-before: transparent;
+/* 窄屏收紧内容留白：移动端视口小，24px 留白会把内容压成窄条 */
+@include bp.below("md") {
+  :root {
+    --content-gap: var(--space-3);
+    --panel-pad-y: var(--space-4);
+    --panel-pad-x: var(--space-3);
+  }
 }
 
 /* 灰色模式 */

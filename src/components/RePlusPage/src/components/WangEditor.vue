@@ -1,15 +1,43 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
+import { isSuccess } from "@/api/types";
+import {
+  defineAsyncComponent,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  type Ref
+} from "vue";
 import "@wangeditor/editor/dist/css/style.css";
-import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import { systemUploadFileApi } from "@/api/system/file";
+import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
+import { systemUploadFileApi } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
-import { IEditorConfig } from "@wangeditor/editor";
+import type {
+  IDomEditor,
+  IEditorConfig,
+  IToolbarConfig
+} from "@wangeditor/editor";
 import { hasAuth } from "@/router/utils";
 
-const messages = defineModel<string | object | any>();
+// wangeditor 全量约 1MB，编辑器仅在弹窗打开时出现：这里以「先注册附件插件、再加载
+// 编辑器组件」的异步组件接入，使编辑器栈整体留在懒加载 chunk（入口 App.vue 原先的
+// 静态注册已移除，见 src/utils/wangEditorBoot.ts）。
+const Editor = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Editor;
+});
+const Toolbar = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Toolbar;
+});
+
+const messages = defineModel<string>();
+/** 编辑区最小高度（px）：弹窗内瘦身场景传小值（如 280），默认维持 400 全形态 */
+const props = withDefaults(defineProps<{ minHeight?: number }>(), {
+  minHeight: 400
+});
 const editorRef = shallowRef();
 const mode = "default";
 const { t } = useI18n();
@@ -18,14 +46,22 @@ const uploadConfig = ref({ file_upload_size: 1048576 });
 type InsertFnType = (_url: string, _alt?: string, _href?: string) => void;
 
 const emit = defineEmits<{
-  change: [values: any];
+  change: [
+    payload: {
+      /** 编辑器内容模型引用（消费侧原样取用） */
+      messages: Ref<string | undefined>;
+      /** 编辑器内已上传的附件/图片/视频链接 */
+      files: string[];
+    }
+  ];
 }>();
 
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
     systemUploadFileApi.config().then(res => {
-      if (res.code === 1000) {
-        uploadConfig.value = res.data;
+      if (isSuccess(res)) {
+        // 文件上传配置详情数据，消费侧仅依赖 file_upload_size
+        uploadConfig.value = res.data as { file_upload_size: number };
       }
     });
   }
@@ -45,12 +81,19 @@ function getUploadFiles() {
 
 defineExpose({ getUploadFiles });
 
-// 注册。要在创建编辑器之前注册，且只能注册一次，不可重复注册。
-// created(() => {
-//   Boot.registerModule(attachmentModule);
-// });
+// 附件菜单（uploadAttachment / downloadAttachment）由 @wangeditor/plugin-upload-attachment
+// 插件提供，经上面的异步组件在挂载前统一注册（Boot.registerModule 需在创建编辑器之前、
+// 全局只注册一次，见 src/utils/wangEditorBoot.ts）——此处不要再重复注册，否则会抛 Duplicated key。
 
-const toolbarConfig: any = {
+/**
+ * 工具栏配置。官方 IToolbarConfig 将 excludeKeys 声明为 string[]，但运行时仅以
+ * `includes` 消费、同样兼容 string（此处传 "fullScreen"），故单独放宽该字段，
+ * 并在模板绑定时以窄断言 `as IToolbarConfig` 对齐组件 prop 类型。
+ */
+type ToolbarConfig = Partial<Omit<IToolbarConfig, "excludeKeys">> & {
+  excludeKeys: string | string[];
+};
+const toolbarConfig: ToolbarConfig = {
   excludeKeys: "fullScreen",
   insertKeys: {
     index: -1, // 自定义插入的位置
@@ -65,7 +108,10 @@ const editorConfig: Partial<IEditorConfig> = {
   }
 };
 if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
-  toolbarConfig.insertKeys.keys = ["uploadAttachment"]; // “上传附件”菜单
+  // Partial 配置的嵌套键可能缺省：先兜底再写，避免运行期改写可选链误判
+  editorConfig.hoverbarKeys ??= { attachment: { menuKeys: [] } };
+  editorConfig.MENU_CONF ??= {};
+  toolbarConfig.insertKeys!.keys = ["uploadAttachment"]; // “上传附件”菜单
   editorConfig.hoverbarKeys.attachment = {
     menuKeys: ["downloadAttachment"] // “下载附件”菜单
   };
@@ -77,11 +123,11 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === 1000) {
+        if (isSuccess(res)) {
           insertFn(
-            res.data[0]?.access_url,
-            res.data[0]?.filename,
-            res.data[0]?.access_url
+            res.data?.[0]?.access_url ?? "",
+            res.data?.[0]?.filename ?? "",
+            res.data?.[0]?.access_url ?? ""
           );
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -99,8 +145,8 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === 1000) {
-          insertFn(res.data[0]?.access_url, "");
+        if (isSuccess(res)) {
+          insertFn(res.data?.[0]?.access_url ?? "", "");
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -117,8 +163,11 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
       const data = new FormData();
       data.append("file", file);
       systemUploadFileApi.upload(data).then(res => {
-        if (res.code === 1000) {
-          insertFn(res.data[0]?.filename, res.data[0]?.access_url);
+        if (isSuccess(res)) {
+          insertFn(
+            res.data?.[0]?.filename ?? "",
+            res.data?.[0]?.access_url ?? ""
+          );
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
@@ -128,7 +177,7 @@ if (hasAuth("config:SystemUploadFile") && hasAuth("upload:SystemUploadFile")) {
   };
 }
 
-const handleCreated = editor => {
+const handleCreated = (editor: IDomEditor) => {
   // 记录 editor 实例，重要！
   editorRef.value = editor;
 };
@@ -154,22 +203,45 @@ const beforeUpload = (rawFile: File) => {
 
 <template>
   <el-card shadow="never" class="w-full">
-    <div class="wangeditor">
+    <div
+      class="wangeditor"
+      :style="{ '--wang-editor-min-height': `${props.minHeight}px` }"
+    >
       <Toolbar
-        :defaultConfig="toolbarConfig"
+        :defaultConfig="toolbarConfig as IToolbarConfig"
         :editor="editorRef"
         :mode="mode"
-        style="border-bottom: 1px solid #ccc"
+        style="border-bottom: 1px solid hsl(var(--border))"
       />
       <Editor
         v-model="messages"
         v-loading="loading"
         :defaultConfig="editorConfig"
         :mode="mode"
-        style="min-height: 400px; overflow-y: hidden"
+        :style="{ minHeight: `${props.minHeight}px`, overflowY: 'hidden' }"
         @onChange="handleChange"
         @onCreated="handleCreated"
       />
     </div>
   </el-card>
 </template>
+
+<style lang="scss" scoped>
+/**
+ * 编辑区高度修正。
+ *
+ * wangEditor 官方样式给 `.w-e-text-container`、`.w-e-scroll` 只设了 `height: 100%`，
+ * 依赖祖先链上存在确定高度；而 Editor 组件会把 style（模板里的 `min-height: 400px`）
+ * 落在组件外层的 wrapper 上，容器自身高度实际解析为 auto → `.w-e-scroll` 退化为内容
+ * 高度（空内容仅约 52px），于是创建/编辑时抛出告警「编辑区域高度 < 300px 这可能会
+ * 导致 modal hoverbar 定位异常」，hoverbar/modal 定位也会偏移。
+ * 这里给容器与滚动区补 min-height：既满足 ≥300px 的下限，又保留正文变多时自适应增高
+ * （不用固定 height，避免长正文在编辑区内出现滚动条）。最小值由 props.minHeight 驱动
+ * （CSS 变量下发）；官方对 modal hoverbar 的告警阈值同样是 300px，弹窗瘦身档传值时
+ * 以不依赖 hoverbar 定位的场景为限（如模板富文本编辑）。
+ */
+:deep(.w-e-text-container),
+:deep(.w-e-text-container .w-e-scroll) {
+  min-height: var(--wang-editor-min-height, 400px);
+}
+</style>

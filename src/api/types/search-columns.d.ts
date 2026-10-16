@@ -1,0 +1,128 @@
+// 接口契约类型：由 contract/schema/*.schema.json 生成。
+// 该目录镜像自 xadmin-server/docs/schema（服务端为契约源）；禁止手改。
+// 重新生成：pnpm gen:metadata-types；Schema 变更属破坏性契约变更，需与后端一同评审。
+
+/**
+ * GET /api/<resource>/search-columns 响应中 data 字段的载荷（展示字段元数据）。契约固化；服务端由 tests/unit/common/test_metadata_schema.py 持续校验。
+ */
+export type SearchColumnsData = {
+  /**
+   * 序列化器字段名
+   */
+  key: string;
+  /**
+   * 展示名（优先取模型 verbose_name）
+   */
+  label: string | null;
+  /**
+   * 字段说明；无 help_text 时缺省
+   */
+  help_text?: string | null;
+  required: boolean;
+  read_only: boolean;
+  write_only: boolean;
+  /**
+   * 前端渲染器类型。封闭核心词表（单一事实源 packages/xadmin-common/common/core/modelset/input_types.py DECLARED_INPUT_TYPES，与本枚举锁步对账）+ 开放 api-* 前缀族；x-fallback-rendered 为无内置渲染器、依赖注册表回退语义呈现的登记类型。
+   */
+  input_type: (
+    | (
+        | "boolean"
+        | "choice"
+        | "color"
+        | "date"
+        | "datetime"
+        | "datetimerange"
+        | "email"
+        | "field"
+        | "file upload"
+        | "float"
+        | "image upload"
+        | "input"
+        | "integer"
+        | "json"
+        | "labeled_choice"
+        | "labeled_multiple_choice"
+        | "list"
+        | "m2m_related_field"
+        | "m2m_related_field_file"
+        | "m2m_related_field_image"
+        | "multiple choice"
+        | "number"
+        | "object_related_field"
+        | "object_related_field_file"
+        | "object_related_field_image"
+        | "phone"
+        | "select"
+        | "select-multiple"
+        | "select-ordering"
+        | "string"
+        | "text"
+        | "textarea"
+      )
+    | string
+  ) &
+    string;
+  /**
+   * 字符长度上限（CharField 及路径类字段）
+   */
+  max_length?: number;
+  /**
+   * 数值下限（DRF min_value，字段声明时下发；前端 input-number 消费）
+   */
+  min_value?: number;
+  /**
+   * 数值上限（DRF max_value，字段声明时下发；前端 input-number 消费）
+   */
+  max_value?: number;
+  /**
+   * 数值步进（StepFloatField 显式声明时下发；前端 input-number 消费）
+   */
+  step?: number;
+  /**
+   * 字段默认值（类型随字段而定；仅非 required 且有默认值时出现）
+   */
+  default?: {
+    [k: string]: unknown;
+  };
+  /**
+   * 关联字段的候选项，条目含 attrs 声明的展示键（如 pk/username）与 label/value
+   */
+  choices?: {
+    value: unknown;
+    label: unknown;
+    pk?: unknown;
+    [k: string]: unknown;
+  }[];
+  /**
+   * choices 超过 SEARCH_CHOICES_MAX_COUNT 被截断时为 true
+   */
+  choices_truncated?: boolean;
+  /**
+   * 该列是否支持表头排序：服务端 ViewSet 声明过 ordering_fields 的字段为 true；未声明排序的视图集不下发
+   */
+  sortable?: boolean;
+  /**
+   * 受控高级筛选：该列可用的 lookup 表达式（视图开启 controlled_lookup 且字段命中 filterset 声明面时下发；未下发即不可作为高级筛选条件）
+   */
+  lookups?: string[];
+  /**
+   * 远程联想端点：仅当资源混入 SuggestionsAction 且字段 input_type 为 api-search-* 时下发；候选集与写入校验同源
+   */
+  suggest_url?: string;
+  /**
+   * 多值关联（M2M）字段为 true
+   */
+  multiple?: boolean;
+  /**
+   * 表格列顺序（serializer Meta.table_fields 中的位置+1；不在 table_fields 中则缺省）
+   */
+  table_show?: number;
+  /**
+   * 表单分组 tabs 下标
+   */
+  tabs_index?: number;
+  /**
+   * 表单分组 tabs 名称
+   */
+  tabs_label?: string;
+}[];

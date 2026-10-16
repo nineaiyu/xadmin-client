@@ -1,4 +1,5 @@
 import type { FunctionalComponent } from "vue";
+import type { LocationQueryRaw, RouteParamsRaw } from "vue-router";
 const { VITE_HIDE_HOME } = import.meta.env;
 
 export const routerArrays: Array<RouteConfigs> =
@@ -21,12 +22,42 @@ export type routeMetaType = {
   showLink?: boolean;
   savedPosition?: boolean;
   auths?: Array<string>;
+  /** 不参与标签页（多标签场景下隐藏） */
+  hiddenTag?: boolean;
+  /** 动态路由可打开的最大数量 */
+  dynamicLevel?: number;
+  /** 固定标签页：不可关闭（标签操作按此禁用） */
+  fixedTag?: boolean;
+  /** iframe 内嵌页面地址（lay-frame 多标签缓存按此识别） */
+  frameSrc?: string;
+  /** 菜单排序（后端菜单 rank 透传） */
+  rank?: number;
+  /** 菜单树展开时是否显示父级（SidebarItem 折叠判定） */
+  showParent?: boolean;
+  /** 菜单右侧附加图标（与路由 meta 同口径：字符串图标名或组件） */
+  extraIcon?: string | FunctionalComponent;
+  /** 当前激活的父级菜单路径 */
+  activePath?: string;
+  /** 菜单级水印开关（后端菜单 meta 透传，置顶强制挂载） */
+  watermark?: boolean;
+  /** 侧栏徽标文本（纯数字大于 99 显示 99+） */
+  badge?: string | null;
+  /** 徽标形态：normal 文本 / dot 红点 */
+  badgeType?: string | null;
+  /** 点击菜单时携带的查询参数（后端 k=v&k2=v2 解析后的对象） */
+  query?: Record<string, string> | null;
+  /** 分组标题：同组同级菜单聚合在标题之下 */
+  groupName?: string | null;
+  /** 分组排序（同层分组升序） */
+  groupRank?: number | null;
+  /** 分组虚拟节点标记（SidebarItem 据此渲染 el-menu-item-group） */
+  group?: boolean;
 };
 
 export type RouteConfigs = {
   path?: string;
-  query?: object;
-  params?: object;
+  query?: LocationQueryRaw;
+  params?: RouteParamsRaw;
   meta?: routeMetaType;
   children?: RouteConfigs[];
   name?: string;
@@ -68,22 +99,23 @@ export type menuType = {
   noShowingChildren?: boolean;
   children?: menuType[];
   value: unknown;
-  meta?: {
-    icon?: string;
-    title?: string;
-    rank?: number;
-    showParent?: boolean;
-    extraIcon?: string;
-  };
+  meta?: routeMetaType;
   showTooltip?: boolean;
+  /** 右键菜单项禁用态（标签页右键菜单透传） */
+  disabled?: boolean;
   parentId?: number;
   pathList?: number[];
   redirect?: string;
+  /** 路由查询/路径参数（标签页等场景透传） */
+  query?: LocationQueryRaw;
+  params?: RouteParamsRaw;
 };
 
 export type themeColorsType = {
   color: string;
   themeColor: string;
+  /** 色卡名称的 i18n key（设置面板色卡下方的标签） */
+  labelKey: string;
 };
 
 export interface scrollbarDomType extends HTMLElement {

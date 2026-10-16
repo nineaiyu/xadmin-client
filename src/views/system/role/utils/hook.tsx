@@ -1,148 +1,51 @@
-import menuFieldForm from "../components/form.vue";
+import { reactive, ref, type Ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { roleApi } from "@/api/identity/role";
+import { usePageAuth } from "@/router/utils";
+import { useRoleButtons } from "./useRoleButtons";
+import { useRoleColumns } from "./useRoleColumns";
+import { useRoleFormOptions } from "./useRoleFormOptions";
+import { useRoleMenuTree } from "./useRoleMenuTree";
+import { openRolePreview } from "./rolePreview";
 
-import {
-  getCurrentInstance,
-  h,
-  onMounted,
-  reactive,
-  ref,
-  shallowRef
-} from "vue";
-import { roleApi } from "@/api/system/role";
-import { handleTree } from "@/utils/tree";
-import { menuApi } from "@/api/system/menu";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { FieldChoices } from "@/views/system/constants";
-import { cloneDeep, getKeyList } from "@pureadmin/utils";
-import { modelLabelFieldApi } from "@/api/system/field";
-import type {
-  PageTableColumn,
-  OperationProps,
-  RePlusPageProps
-} from "@/components/RePlusPage";
-
-export function useRole() {
+/**
+ * 角色列表页装配：
+ * - useRoleMenuTree     菜单全量缓存 + 模型字段合成节点（授权树数据源）；
+ * - useRoleFormOptions  新增/编辑弹层（授权树，值归一化见 roleFormValues.ts）；
+ * - useRoleColumns      「用户数」关联计数列（跳转用户列表）；
+ * - useRoleButtons      工具栏批量更新与行操作权限预览。
+ */
+export function useRole(pageRef?: Ref) {
+  const { t } = useI18n();
   const api = reactive(roleApi);
+  // 批量更新需要读取勾选行：页面传入 RePlusPage ref（缺省自带一个，供独立使用）
+  const tableRef = pageRef ?? ref();
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance())
+  const auth = usePageAuth(["preview"]);
+
+  // 授权树数据源：菜单全量缓存 + 模型字段合成节点注入
+  const { menuTreeData } = useRoleMenuTree();
+
+  // 新增/编辑弹层：授权树（field/menu/fields 归一化见 roleFormValues.ts，纯函数可单测直测）
+  const { addOrEditOptions } = useRoleFormOptions({ api, auth, menuTreeData });
+
+  const { listColumnsFormat } = useRoleColumns();
+
+  const { tableBarButtonsProps, operationButtonsProps } = useRoleButtons({
+    t,
+    api,
+    tableRef,
+    canPreview: auth.preview,
+    openPreview: row => openRolePreview({ t, row })
   });
 
-  const menuTreeData = ref([]);
-  const fieldLookupsData = ref({});
-
-  function autoFieldTree(arr) {
-    function deep(arr) {
-      arr.forEach(item => {
-        if (item.model && item.model.length > 0 && !item.children) {
-          item.children = [];
-          item.model.forEach(m => {
-            const data = cloneDeep(fieldLookupsData.value[m?.pk ?? m]);
-            data.pk = `+${data.pk}`;
-            data.children.forEach(x => {
-              x.pk = `${item.pk}+${x.pk}`;
-              x.parent = data.pk;
-            });
-            item.children.push(data);
-          });
-        }
-        if (item.children) {
-          deep(item.children);
-        }
-      });
-    }
-
-    if (Object.keys(fieldLookupsData.value).length) deep(arr);
-  }
-
-  /** 菜单权限 */
-
-  const getMenuData = () => {
-    menuApi.list({ page: 1, size: 1000 }).then(res => {
-      setTimeout(() => {
-        if (res.code === 1000) {
-          if (hasAuth("list:SystemModelLabelField")) {
-            modelLabelFieldApi
-              .list({
-                page: 1,
-                size: 1000,
-                field_type: FieldChoices.ROLE
-              })
-              .then(result => {
-                if (result.code === 1000) {
-                  handleTree(result.data.results).forEach(item => {
-                    fieldLookupsData.value[item.pk] = item;
-                  });
-                  menuTreeData.value = handleTree(res.data.results);
-                  autoFieldTree(menuTreeData.value);
-                }
-              });
-          }
-        }
-      }, 300);
-    });
-  };
-
-  onMounted(() => {
-    if (hasAuth("list:SystemMenu")) {
-      getMenuData();
-    }
-  });
-
-  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
-    props: {
-      row: {
-        field: ({ rawRow }) => {
-          return rawRow?.field ?? [];
-        },
-        menu: ({ rawRow }) => {
-          return getKeyList(rawRow?.menu ?? [], "pk") ?? [];
-        }
-      },
-      columns: {
-        fields: ({ column }) => {
-          column["hideInForm"] = true;
-          return column;
-        },
-        menu: ({ column, formValue }) => {
-          column["fieldProps"] = {};
-          column["renderField"] = (value: any, onChange) => {
-            return h(menuFieldForm, {
-              api,
-              auth,
-              pk: formValue.value?.pk,
-              modelValue: value,
-              field: formValue.value?.field,
-              menuTreeData: menuTreeData.value,
-              onChange: ({ fields, menu }) => {
-                formValue.value.fields = fields;
-                onChange(menu);
-              }
-            });
-          };
-          return column;
-        }
-      },
-      minWidth: "700px",
-      dialogDrawerOptions: {
-        width: "60vw"
-      }
-    }
-  });
-
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    return columns;
-  };
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 160,
-    buttons: [{ code: "detail", show: false }]
-  });
   return {
     api,
     auth,
+    tableRef,
     addOrEditOptions,
     listColumnsFormat,
+    tableBarButtonsProps,
     operationButtonsProps
   };
 }

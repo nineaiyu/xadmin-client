@@ -1,0 +1,442 @@
+import { computed, defineAsyncComponent, h } from "vue";
+import { get } from "lodash-es";
+import { isEmpty, isString } from "@pureadmin/utils";
+import { ElIcon, ElImage, ElLink } from "element-plus";
+import { Link } from "@element-plus/icons-vue";
+import { selectBooleanOptions } from "./constants";
+import { formatAddOrEditOptions } from "./renders";
+import type { TableColumnRenderer } from "@pureadmin/table";
+import { getColourTypeByIndex } from "./index";
+import { SOLID_TAG_STYLE } from "@/utils/tagTone";
+import { colorBlockStyle } from "@/utils/cellRender";
+import { transformI18n } from "@/plugins/i18n";
+import type {
+  ChoiceOptionItem,
+  PageColumn,
+  PlusColumnContext,
+  PlusColumnRegistry
+} from "./types";
+
+/**
+ * vue-json-pretty 异步组件（含样式）：仅服务 detail 的「JSON 展开」渲染。
+ * 静态引入会把 JS + CSS 双双拖入首屏闭包（约 9.6 KB gzip），改为首次渲染时加载；
+ * Vite 会为动态 import 的 CSS 产出独立 chunk 并在加载时注入。
+ */
+const VueJsonPretty = defineAsyncComponent(async () => {
+  await import("vue-json-pretty/lib/styles.css");
+  return (await import("vue-json-pretty")).default;
+});
+
+/**
+ * 字典色 tag 的 props（与 @/utils/dict 的 dictTagProps 同款样式常量）。
+ * 样式取 @/utils/tagTone（纯样式模块，不牵连 @/api/system/dict 的循环依赖）。
+ */
+const dictTagStyle = (color: string) => ({
+  color,
+  style: SOLID_TAG_STYLE
+});
+
+/**
+ * 详情/表格列内置渲染器：input_type -> 对 PageColumn 就地配置
+ * 迁移自 columns.tsx formatAddOrEditColumns 的第二个 switch-case
+ * 注意：无匹配 input_type 时不做任何配置（与原 switch 无 default 分支一致）
+ */
+export const builtinDetailRenderers: PlusColumnRegistry = {
+  labeled_choice: (item, { column }) => {
+    item["prop"] = `${column.key}.value`;
+    item["options"] = computed(() =>
+      formatAddOrEditOptions(column?.choices ?? [])
+    );
+    // 详情（PlusDescriptions）只认 render/valueType，不看 cellRenderer：
+    // prop 已改为 status.value，valueType=select 只会输出纯文本 label，字典项的
+    // color 不会生效。这里补 render，按元数据 choices 的 color 渲染彩色 tag。
+    item["render"] = (value: unknown) => {
+      const option = (
+        column?.choices as
+          | { value?: unknown; label?: string; color?: string | null }[]
+          | undefined
+      )?.find?.(option => option?.value === value);
+      const label = option?.label ?? value;
+      if (!option?.color) return <span v-copy={label}>{label}</span>;
+      return (
+        <el-tag {...dictTagStyle(option.color)} v-copy={label}>
+          {label}
+        </el-tag>
+      );
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      const label = get(row, `${column.key}.label`);
+      // 数据字典驱动选项（DictChoiceField）携带 color：渲染彩色 tag（列表数据
+      // 与元数据 choices 均可能带 color，行内优先）；无 color 保持纯文本
+      const color =
+        get(row, `${column.key}.color`) ??
+        (
+          column?.choices as { value?: unknown; color?: string }[] | undefined
+        )?.find?.(option => option?.value === get(row, `${column.key}.value`))
+          ?.color;
+      if (color) {
+        return (
+          <el-tag {...dictTagStyle(color)} v-copy={label}>
+            {label}
+          </el-tag>
+        );
+      }
+      return <span v-copy={label}>{label}</span>;
+    };
+  },
+  color: (item, { column }) => {
+    // 详情（PlusDescriptions）对 valueType=color-picker 没有展示组件，只会退化成
+    // 纯文本色值；这里补成与列表一致的「色块 + 色值」（表单侧仍是颜色选择器）
+    item["render"] = (value: string) =>
+      value ? (
+        <span class="flex items-center" v-copy={value}>
+          <span style={colorBlockStyle(value)} />
+          <span>{value}</span>
+        </span>
+      ) : (
+        <span>—</span>
+      );
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      const value = get(row, column.key);
+      return value ? (
+        <span class="flex items-center">
+          <span style={colorBlockStyle(value)} />
+          <span>{value}</span>
+        </span>
+      ) : (
+        <span>—</span>
+      );
+    };
+  },
+  object_related_field: (item, { column }) => {
+    if (!isEmpty(column?.choices ?? [])) {
+      item["prop"] = `${column.key}.pk`;
+      item["options"] = computed(() =>
+        formatAddOrEditOptions(column?.choices ?? [])
+      );
+    } else {
+      item["valueType"] = "text";
+      item["prop"] = `${column.key}.label`;
+    }
+    // pure-table ******
+    item["cellRenderer"] = ({ row }: TableColumnRenderer) => (
+      <span
+        v-copy={get(row, `${column.key}.label`) ?? get(row, `${column.key}`)}
+      >
+        {get(row, `${column.key}.label`) ?? get(row, `${column.key}`)}
+      </span>
+    );
+  },
+  m2m_related_field: multipleListDetailRenderer,
+  labeled_multiple_choice: multipleListDetailRenderer,
+  json: (item, { column }) => {
+    item["descriptionsItemProps"] = {
+      span: 2
+    };
+    item["render"] = (value: unknown) => {
+      let jsonValue = value;
+      let stringValue = "";
+      if (isString(value)) {
+        stringValue = value;
+        try {
+          jsonValue = JSON.parse(value);
+        } catch {
+          try {
+            stringValue = JSON.stringify(value);
+          } catch {
+            console.error("Cannot convert value to JSON string", value);
+            stringValue = String(value);
+          }
+        }
+      } else {
+        try {
+          stringValue = JSON.stringify(value);
+          if (typeof jsonValue !== "object") {
+            jsonValue = value;
+          }
+        } catch (error) {
+          console.error("JSON.stringify error", error);
+          stringValue = String(value);
+        }
+      }
+      return (
+        <el-scrollbar max-height="calc(100vh - 240px)">
+          <VueJsonPretty data={jsonValue as never} v-copy={stringValue} />
+        </el-scrollbar>
+      );
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => (
+      <span>{JSON.stringify(row[column.key])}</span>
+    );
+  },
+  object_related_field_image: (item, { column }) => {
+    item["valueType"] = "img";
+    item["formatter"] = ({ filepath }: { filepath?: string }) => {
+      return filepath;
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) =>
+      h(ElImage, {
+        lazy: true,
+        class: "plus-display-item__image",
+        src: row[column.key]?.filepath,
+        alt: row[column.key]?.filename,
+        previewSrcList: [row[column.key]?.filepath],
+        previewTeleported: true
+      });
+  },
+  object_related_field_file: (item, { column }) => {
+    item["render"] = ({
+      filepath,
+      filename
+    }: {
+      filepath?: string;
+      filename?: string;
+    }) => {
+      return h(
+        ElLink,
+        {
+          type: "success",
+          href: filepath,
+          target: "_blank"
+        },
+        {
+          icon: () => h(ElIcon, null, () => h(Link)),
+          default: () => filename ?? transformI18n("plus.fileLink")
+        }
+      );
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) =>
+      h(
+        ElLink,
+        {
+          type: "success",
+          href: row[column.key]?.filepath,
+          target: "_blank"
+        },
+        {
+          icon: () => h(ElIcon, null, () => h(Link)),
+          default: () =>
+            row[column.key]?.filename ?? transformI18n("plus.fileLink")
+        }
+      );
+  },
+  m2m_related_field_file: (item, { column }) => {
+    item["render"] = (
+      value: Array<{ pk: number; filepath: string; filename: string }>
+    ) => {
+      if (value instanceof Array) {
+        return (
+          <>
+            <el-scrollbar>
+              <el-space>
+                {value?.map(item => {
+                  return h(
+                    ElLink,
+                    {
+                      type: "success",
+                      href: item.filepath,
+                      target: "_blank"
+                    },
+                    {
+                      icon: () => h(ElIcon, null, () => h(Link)),
+                      default: () =>
+                        item.filename ?? transformI18n("plus.fileLink")
+                    }
+                  );
+                })}
+              </el-space>
+            </el-scrollbar>
+          </>
+        );
+      } else return <></>;
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => (
+      <>
+        <el-scrollbar>
+          <el-space>
+            {row[column.key]?.map((item: ChoiceOptionItem) => {
+              return h(
+                ElLink,
+                {
+                  type: "success",
+                  href: item.filepath,
+                  target: "_blank"
+                } as Record<string, unknown>,
+                {
+                  icon: () => h(ElIcon, null, () => h(Link)),
+                  default: () => item.filename ?? transformI18n("plus.fileLink")
+                }
+              );
+            })}
+          </el-space>
+        </el-scrollbar>
+      </>
+    );
+  },
+  m2m_related_field_image: (item, { column }) => {
+    item["render"] = (
+      value: Array<{ pk: number; filepath: string; filename: string }>
+    ) => {
+      if (value instanceof Array) {
+        return (
+          <>
+            <el-scrollbar>
+              <el-space>
+                {value?.map(item => {
+                  return h(ElImage, {
+                    lazy: true,
+                    class: "plus-display-item__image",
+                    src: item.filepath,
+                    alt: item.filename,
+                    previewSrcList: [item.filepath],
+                    previewTeleported: true
+                  });
+                })}
+              </el-space>
+            </el-scrollbar>
+          </>
+        );
+      } else return <></>;
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => (
+      <>
+        <el-scrollbar>
+          <el-space>
+            {row[column.key]?.map((item: ChoiceOptionItem) => {
+              return h(ElImage, {
+                lazy: true,
+                class: "plus-display-item__image",
+                src: item.filepath,
+                alt: item.filename,
+                previewSrcList: [item.filepath],
+                previewTeleported: true
+              } as Record<string, unknown>);
+            })}
+          </el-space>
+        </el-scrollbar>
+      </>
+    );
+  },
+  "image upload": (item, { column }) => {
+    item["valueType"] = "img";
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) =>
+      h(ElImage, {
+        lazy: true,
+        class: "plus-display-item__image",
+        src: row[column.key],
+        alt: row[column.key],
+        previewSrcList: [row[column.key]],
+        previewTeleported: true
+      });
+  },
+  "file upload": (item, { column }) => {
+    item["render"] = (value: string) => {
+      return h(
+        ElLink,
+        {
+          type: "success",
+          href: value,
+          target: "_blank"
+        },
+        {
+          icon: () => h(ElIcon, null, () => h(Link)),
+          default: () => transformI18n("plus.fileLink")
+        }
+      );
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) =>
+      h(
+        ElLink,
+        {
+          type: "success",
+          href: row[column.key],
+          target: "_blank"
+        },
+        {
+          icon: () => h(ElIcon, null, () => h(Link)),
+          default: () => transformI18n("plus.fileLink")
+        }
+      );
+  },
+  boolean: item => {
+    item["options"] = computed(() => selectBooleanOptions);
+    delete item["renderField"];
+  },
+  list: (item, { column }) => {
+    item["render"] = (value: unknown) => {
+      try {
+        return JSON.stringify(value);
+      } catch (e) {
+        // 循环引用等无法序列化的值退化为字符串展示（与文本插值效果一致）
+        console.warn(e);
+        return String(value);
+      }
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      let value = row[column.key];
+      try {
+        value = JSON.stringify(value);
+      } catch (e) {
+        console.warn(e);
+      }
+      return value;
+    };
+  }
+};
+
+/** m2m_related_field / labeled_multiple_choice 共用 */
+function multipleListDetailRenderer(
+  item: PageColumn,
+  { column }: PlusColumnContext
+) {
+  item["render"] = (value: ChoiceOptionItem[]) => {
+    if (value instanceof Array) {
+      return (
+        <>
+          {/* tabindex：多值标签区横向溢出时键盘可聚焦滚动（axe scrollable-region-focusable） */}
+          <el-scrollbar tabindex={0}>
+            <el-space>
+              {value?.map((item, index) => {
+                return (
+                  <el-text
+                    key={item.pk ?? item.value}
+                    type={getColourTypeByIndex(index + 1)}
+                  >
+                    {item.label}
+                  </el-text>
+                );
+              })}
+            </el-space>
+          </el-scrollbar>
+        </>
+      );
+    } else return <></>;
+  };
+  // pure-table ******
+  item["cellRenderer"] = ({ row }) => (
+    <>
+      {/* tabindex：多值标签区横向溢出时键盘可聚焦滚动（axe scrollable-region-focusable） */}
+      <el-scrollbar tabindex={0}>
+        <el-space>
+          {row[column.key]?.map((item: ChoiceOptionItem, index: number) => {
+            return (
+              <el-text key={item.pk} type={getColourTypeByIndex(index + 1)}>
+                {item.label}
+              </el-text>
+            );
+          })}
+        </el-space>
+      </el-scrollbar>
+    </>
+  );
+}

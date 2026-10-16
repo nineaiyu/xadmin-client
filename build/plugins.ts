@@ -1,26 +1,29 @@
-import { cdn } from "./cdn";
 import vue from "@vitejs/plugin-vue";
-import { pathResolve } from "./utils";
-import { viteBuildInfo } from "./info";
 import svgLoader from "vite-svg-loader";
 import Icons from "unplugin-icons/vite";
 import type { PluginOption } from "vite";
+import { pathResolve } from "./utils.ts";
+import { viteBuildInfo } from "./info.ts";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import tailwindcss from "@tailwindcss/vite";
-import { configCompressPlugin } from "./compress";
 import removeNoMatch from "vite-plugin-router-warn";
+import { configCompressPlugin } from "./compress.ts";
+import { viteCssLayerPlugin } from "./cssLayer.ts";
 import { visualizer } from "rollup-plugin-visualizer";
-import removeConsole from "vite-plugin-remove-console";
+import viteRemove from "unplugin-remove/vite";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { codeInspectorPlugin } from "code-inspector-plugin";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
 
-export function getPluginsList(
+export async function getPluginsList(
   VITE_CDN: boolean,
   VITE_COMPRESSION: ViteCompression
-): PluginOption[] {
+): Promise<PluginOption[]> {
   const lifecycle = process.env.npm_lifecycle_event;
   return [
+    // 把 Element Plus 的 CSS 包进 `@layer el`（层顺序见 src/style/tailwind.css 首行），
+    // 使 Tailwind 工具类可覆盖其组件样式；自身样式无层，覆写行为不受影响。
+    viteCssLayerPlugin({ packageName: "element-plus", layerName: "el" }),
     tailwindcss(),
     vue(),
     // jsx、tsx语法支持
@@ -45,12 +48,13 @@ export function getPluginsList(
      * vite-plugin-router-warn只在开发环境下启用，只处理vue-router文件并且只在服务启动或重启时运行一次，性能消耗可忽略不计
      */
     removeNoMatch(),
-    // mock支持
+    // mock支持：仅剩 version.json 的开发环境兜底（App.vue 的更新检查只在生产运行，
+    // 生产由 `generate-version-file` 生成真实 dist/version.json，故不打包假服务）
     vitePluginFakeServer({
       logger: false,
       include: "mock",
       infixName: false,
-      enableProd: true
+      enableProd: false
     }),
     // svg组件化支持
     svgLoader(),
@@ -59,13 +63,16 @@ export function getPluginsList(
       compiler: "vue3",
       scale: 1
     }),
-    VITE_CDN ? cdn : null,
+    VITE_CDN ? (await import("./cdn.ts")).cdn : null,
     configCompressPlugin(VITE_COMPRESSION),
-    // 线上环境删除console
-    removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),
+    // 线上环境删除 console（unplugin-remove 自带 apply:'build'，仅打包时生效；dev 不受影响）
+    viteRemove({
+      external: ["src/assets/iconfont/iconfont.js"],
+      consoleType: ["log", "warn", "error", "info", "debug"]
+    }),
     // 打包分析
-    lifecycle === "report"
-      ? visualizer({ open: true, brotliSize: true, filename: "report.html" })
-      : (null as any)
+    ...(lifecycle === "report"
+      ? [visualizer({ open: true, brotliSize: true, filename: "report.html" })]
+      : [])
   ];
 }

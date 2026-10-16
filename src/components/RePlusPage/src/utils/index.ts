@@ -1,20 +1,13 @@
+import { transformI18n } from "@/plugins/i18n";
+
 /**
- * 是否是链接
- * @param url
- * @returns
+ * 链接判定（严格口径：协议限 http(s)，域名或 IPv4 主机）。
+ *
+ * 实现已下沉 `@/utils/rules/url`——该判定此前只住在列表页框架里，但消费方
+ * 包含 store / router / 侧栏外链 / 文件表单规则，通用工具反向依赖组件目录。
+ * 此处保留再导出以维持既有 API 与深路径导入。
  */
-export function isUrl(url: string) {
-  const regex = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$",
-    "i"
-  );
-  return regex.test(url);
-}
+export { isUrl } from "@/utils/rules/url";
 
 /**
  * 日期、时间选择器快捷选项，常搭配 [DatePicker](https://element-plus.org/zh-CN/component/date-picker.html)
@@ -26,7 +19,7 @@ export const getPickerShortcuts = (): Array<{
 }> => {
   return [
     {
-      text: "今天",
+      text: transformI18n("pickerShortcuts.today"),
       value: () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -36,7 +29,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "昨天",
+      text: transformI18n("pickerShortcuts.yesterday"),
       value: () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -48,7 +41,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "前天",
+      text: transformI18n("pickerShortcuts.beforeYesterday"),
       value: () => {
         const beforeYesterday = new Date();
         beforeYesterday.setDate(beforeYesterday.getDate() - 2);
@@ -60,7 +53,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本周",
+      text: transformI18n("pickerShortcuts.thisWeek"),
       value: () => {
         const today = new Date();
         const startOfWeek = new Date(
@@ -81,7 +74,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上周",
+      text: transformI18n("pickerShortcuts.lastWeek"),
       value: () => {
         const today = new Date();
         const startOfLastWeek = new Date(
@@ -102,7 +95,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本月",
+      text: transformI18n("pickerShortcuts.thisMonth"),
       value: () => {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -117,7 +110,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "上个月",
+      text: transformI18n("pickerShortcuts.lastMonth"),
       value: () => {
         const today = new Date();
         const startOfLastMonth = new Date(
@@ -136,7 +129,7 @@ export const getPickerShortcuts = (): Array<{
       }
     },
     {
-      text: "本年",
+      text: transformI18n("pickerShortcuts.thisYear"),
       value: () => {
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -148,6 +141,101 @@ export const getPickerShortcuts = (): Array<{
     }
   ];
 };
+/**
+ * 日期时间选择器快捷选项（单值 `Date`），常搭配 [DateTimePicker](https://element-plus.org/zh-CN/component/datetime-picker.html)
+ * 的`shortcuts`属性使用
+ */
+export const getDateTimePickerShortcuts = (): Array<{
+  text: string;
+  value: Date | (() => Date);
+}> => {
+  return [
+    {
+      text: transformI18n("pickerShortcuts.today"),
+      value: () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.yesterday"),
+      value: () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        return yesterday;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.beforeYesterday"),
+      value: () => {
+        const beforeYesterday = new Date();
+        beforeYesterday.setDate(beforeYesterday.getDate() - 2);
+        beforeYesterday.setHours(0, 0, 0, 0);
+        return beforeYesterday;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.thisWeek"),
+      value: () => {
+        const today = new Date();
+        const startOfWeek = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1)
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        return startOfWeek;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.lastWeek"),
+      value: () => {
+        const today = new Date();
+        const startOfLastWeek = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - today.getDay() - 7 + (today.getDay() === 0 ? -6 : 1)
+        );
+        startOfLastWeek.setHours(0, 0, 0, 0);
+        return startOfLastWeek;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.thisMonth"),
+      value: () => {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        return startOfMonth;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.lastMonth"),
+      value: () => {
+        const today = new Date();
+        const startOfLastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1
+        );
+        startOfLastMonth.setHours(0, 0, 0, 0);
+        return startOfLastMonth;
+      }
+    },
+    {
+      text: transformI18n("pickerShortcuts.thisYear"),
+      value: () => {
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        startOfYear.setHours(0, 0, 0, 0);
+        return startOfYear;
+      }
+    }
+  ];
+};
+
 /**
  * 获取类型
  */
@@ -170,7 +258,7 @@ export const formatPublicLabels = (
   te: (arg0: string, arg1?: string) => boolean,
   label: string,
   localeName: string
-): string => {
+): string | undefined => {
   const formatLabel = `${localeName}.${label}`;
   if (te(formatLabel)) {
     return t(formatLabel);
@@ -190,17 +278,26 @@ export const formatPublicLabels = (
   ) {
     return t(`commonLabels.${label}`);
   }
-  return;
+  return undefined;
 };
 
-export const uniqueArrayObj = (array, key, update = false) => {
-  const b = {};
+export const uniqueArrayObj = <T extends object>(
+  array: T[],
+  key: string,
+  update = false
+) => {
+  const b: Record<string, T> = {};
   array.forEach(item => {
     if (typeof item === "object") {
-      if (item?.update ?? update) {
-        b[item[key]] = { ...(b[item[key]] ?? {}), ...item, _: b[item[key]] };
+      const itemKey = String((item as Record<string, unknown>)[key]);
+      if ((item as { update?: boolean }).update ?? update) {
+        b[itemKey] = {
+          ...(b[itemKey] ?? {}),
+          ...item,
+          _: b[itemKey]
+        } as T;
       } else {
-        b[item[key]] = item;
+        b[itemKey] = item;
       }
     }
   });

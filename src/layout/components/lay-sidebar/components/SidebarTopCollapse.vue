@@ -22,7 +22,12 @@ const toggleClick = () => {
   <div
     :title="isActive ? t('layout.fold') : t('layout.unfold')"
     class="px-3 mr-1 navbar-bg-hover"
+    role="button"
+    tabindex="0"
+    :aria-label="isActive ? t('layout.fold') : t('layout.unfold')"
     @click="toggleClick"
+    @keydown.enter.prevent="toggleClick"
+    @keydown.space.prevent="toggleClick"
   >
     <IconifyIconOffline
       :icon="isActive ? MenuFold : MenuUnfold"

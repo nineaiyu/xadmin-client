@@ -6,9 +6,11 @@ type Events = {
   openPanel: string;
   tagOnClick: string;
   logoChange: boolean;
-  tagViewsChange: string;
+  tagViewsChange: boolean;
   changLayoutRoute: string;
-  tagViewsShowModel: string;
+  tagViewsTagsStyle: string;
+  /** 「自动检查更新」开关切换（设置面板 →「关于」），驱动后台轮询启停 */
+  checkUpdatesChange: boolean;
   imageInfo: {
     img: HTMLImageElement;
     height: number;

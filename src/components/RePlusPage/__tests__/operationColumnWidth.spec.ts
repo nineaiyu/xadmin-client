@@ -1,0 +1,137 @@
+import { describe, expect, it } from "vitest";
+import {
+  collectDataColumnWidths,
+  resolveOperationColumnWidth,
+  SELECTION_COLUMN_WIDTH,
+  DEFAULT_COLUMN_WIDTH
+} from "../src/utils/operationColumnWidth";
+
+/** 取自 celery 定时任务页实测列宽（含多选列，不含操作列），累计边界见下方断言注释 */
+const TASK_COLUMNS = [48, 80, 120, 120, 120, 120, 120, 120, 160, 120, 160, 120];
+
+/** 页面配置宽度 = 内容宽度 = 未测到内容宽度时，行为与「按配置宽度渲染」完全一致 */
+const configuredOnly = (container: number, configured: number) =>
+  resolveOperationColumnWidth(container, TASK_COLUMNS, configured, configured);
+
+describe("resolveOperationColumnWidth（按页面配置宽度渲染）", () => {
+  it("无横向滚动（列宽合计 + 操作列宽度 ≤ 容器）时保持页面配置宽度", () => {
+    expect(configuredOnly(2000, 300)).toBe(300);
+    // 恰好放得下（≥ 判定为不滚动）
+    expect(configuredOnly(1708, 300)).toBe(300);
+  });
+
+  it("对齐加宽幅度在容差内时应用对齐（覆盖区左边界落到列边界）", () => {
+    // 累计边界 48/128/248/368/488/608/728…；容器 800 - 300 = 500 → 对齐 488 → 312（+12）
+    expect(configuredOnly(800, 300)).toBe(312);
+    // 恰好 +30（含容差边界）：818 - 488 = 330
+    expect(configuredOnly(818, 300)).toBe(330);
+  });
+
+  it("对齐加宽幅度超过容差时保持页面配置宽度（所见即配置）", () => {
+    // 996 - 608 = 388（+88）；836 - 488 = 348（+48）；1200 - 848 = 352（+52）
+    expect(configuredOnly(996, 300)).toBe(300);
+    expect(configuredOnly(836, 300)).toBe(300);
+    expect(configuredOnly(1200, 300)).toBe(300);
+    // +31（超容差 1px）：819 - 488 = 331 → 保持 300
+    expect(configuredOnly(819, 300)).toBe(300);
+  });
+
+  it("操作列配置较宽（>35% 容器）时按同一口径判定", () => {
+    // 定时任务页：996 - 420 = 576 → 对齐边界 488 → 508（+88，超容差）→ 保持 420；
+    // 可对齐边界占容器 49%，不得触发窄容器兜底
+    expect(configuredOnly(996, 420)).toBe(420);
+  });
+
+  it("极端窄容器（可对齐边界落在容器前 35% 以左）放弃对齐", () => {
+    expect(configuredOnly(400, 200)).toBe(200);
+    expect(configuredOnly(300, 200)).toBe(200);
+  });
+
+  it("容器未测量到或列未就绪时返回配置宽度", () => {
+    expect(resolveOperationColumnWidth(0, TASK_COLUMNS, 90, 200)).toBe(200);
+    expect(resolveOperationColumnWidth(996, [], 90, 200)).toBe(200);
+  });
+});
+
+describe("resolveOperationColumnWidth（按钮随权限显隐 → 按内容收敛）", () => {
+  it("只有内容宽度作为下限：对齐值不小于内容宽度（不会裁切按钮）", () => {
+    // 容器 800：边界 488 → 对齐值 192；内容仅 90（只剩一个按钮）→ 取对齐值 192
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 90, 300)).toBe(192);
+  });
+
+  it("无横向滚动时直接按内容宽度渲染（固定列不覆盖任何内容）", () => {
+    expect(resolveOperationColumnWidth(2000, TASK_COLUMNS, 90, 300)).toBe(90);
+    // 恰好放得下同样按内容渲染，不与配置宽度比较
+    expect(resolveOperationColumnWidth(1498, TASK_COLUMNS, 90, 300)).toBe(90);
+  });
+
+  it("对齐值超过「配置宽度 + 容差」时保持配置宽度（不因内容小而无限对齐）", () => {
+    // 容器 800：对齐值 192，配置 140 → 192 - 140 = 52 > 30 → 保持 140
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 90, 140)).toBe(140);
+  });
+
+  it("内容比配置宽时不反向撑宽（页面配置放不下内容属页面级配置问题）", () => {
+    // 内容 320 > 配置 300：floor 取配置 300 → 对齐 312（仍与「按配置渲染」同档）
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 320, 300)).toBe(312);
+  });
+
+  it("未测到内容宽度（0）时退化为按配置宽度渲染", () => {
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 0, 300)).toBe(312);
+    expect(resolveOperationColumnWidth(2000, TASK_COLUMNS, 0, 300)).toBe(300);
+  });
+
+  it("内容宽度不小于配置时与「按配置渲染」结果一致（零回归）", () => {
+    const samples = [
+      { container: 800, configured: 300, content: 260 },
+      { container: 996, configured: 420, content: 430 },
+      { container: 818, configured: 300, content: 300 }
+    ];
+    samples.forEach(({ container, configured, content }) => {
+      expect(
+        resolveOperationColumnWidth(
+          container,
+          TASK_COLUMNS,
+          content,
+          configured
+        )
+      ).toBe(
+        resolveOperationColumnWidth(
+          container,
+          TASK_COLUMNS,
+          configured,
+          configured
+        )
+      );
+    });
+  });
+});
+
+describe("collectDataColumnWidths", () => {
+  it("过滤隐藏列与操作列，多选列取固定宽度", () => {
+    const widths = collectDataColumnWidths([
+      { type: "selection" },
+      { width: 80 },
+      { minWidth: 140 },
+      { hide: true, width: 999 },
+      { width: 200, _column: { key: "operation" } },
+      { _column: { key: "name" } }
+    ]);
+    expect(widths).toEqual([
+      SELECTION_COLUMN_WIDTH,
+      80,
+      140,
+      DEFAULT_COLUMN_WIDTH
+    ]);
+  });
+
+  it("容忍空列与非法宽度", () => {
+    expect(
+      collectDataColumnWidths([
+        undefined,
+        null,
+        { width: "abc" },
+        { minWidth: 0 }
+      ])
+    ).toEqual([DEFAULT_COLUMN_WIDTH, DEFAULT_COLUMN_WIDTH]);
+  });
+});

@@ -3,14 +3,15 @@ import { getConfig } from "@/config";
 import { useMultiFrame } from "@/layout/hooks/useMultiFrame";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { type Component, computed, shallowRef, watch } from "vue";
-import { RouteLocationNormalizedLoaded, type RouteRecordRaw } from "vue-router";
+import { RouteLocationNormalizedLoaded } from "vue-router";
+import type { RouteConfigs } from "@/layout/types";
 
 const props = defineProps<{
   currRoute: RouteLocationNormalizedLoaded;
   currComp: Component;
 }>();
 
-const compList = shallowRef([]);
+const compList = shallowRef<[string, unknown][]>([]);
 const { setMap, getMap, MAP, delMap } = useMultiFrame();
 
 const keep = computed(() => {
@@ -23,7 +24,7 @@ const keep = computed(() => {
 // 避免重新渲染 LayFrame
 const normalComp = computed(() => !keep.value && props.currComp);
 
-watch(useMultiTagsStoreHook().multiTags, (tags: any) => {
+watch(useMultiTagsStoreHook().multiTags, (tags: RouteConfigs[]) => {
   if (!Array.isArray(tags) || !keep.value) {
     return;
   }
@@ -33,7 +34,7 @@ watch(useMultiTagsStoreHook().multiTags, (tags: any) => {
     for (const i of MAP.keys()) {
       if (!tags.some(s => s.path === i)) {
         delMap(i);
-        compList.value = getMap();
+        compList.value = getMap() as [string, unknown][];
       }
     }
   }
@@ -42,7 +43,7 @@ watch(useMultiTagsStoreHook().multiTags, (tags: any) => {
 watch(
   () => props.currRoute.fullPath,
   path => {
-    const multiTags = useMultiTagsStoreHook().multiTags as RouteRecordRaw[];
+    const multiTags = useMultiTagsStoreHook().multiTags as RouteConfigs[];
     const iframeTags = multiTags.filter(i => i.meta?.frameSrc);
     if (keep.value) {
       if (iframeTags.length !== MAP.size) {
@@ -55,7 +56,7 @@ watch(
     }
 
     if (MAP.size > 0) {
-      compList.value = getMap();
+      compList.value = getMap() as [string, unknown][];
     }
   },
   {
@@ -65,7 +66,7 @@ watch(
 </script>
 <template>
   <template v-for="[fullPath, Comp] in compList" :key="fullPath">
-    <div v-show="fullPath === currRoute.fullPath" class="w-full h-full">
+    <div v-show="fullPath === currRoute.fullPath" class="size-full">
       <slot
         :Comp="Comp"
         :frameInfo="{ frameSrc: currRoute.meta?.frameSrc, fullPath }"
@@ -73,7 +74,7 @@ watch(
       />
     </div>
   </template>
-  <div v-show="!keep" class="w-full h-full">
+  <div v-show="!keep" class="size-full">
     <slot :Comp="normalComp" :fullPath="currRoute.fullPath" frameInfo />
   </div>
 </template>

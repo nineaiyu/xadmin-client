@@ -1,43 +1,53 @@
 import { defineStore } from "pinia";
+import type { menuType } from "@/layout/types";
 import {
   ascending,
-  type cacheType,
-  constantMenus,
   filterNoPermissionTree,
   filterTree,
   formatFlatteningRoutes,
-  getKeyList,
-  store
-} from "../utils";
+  toMenuTree
+} from "@/router/utils/route-tree";
+import { constantMenus } from "@/router/constants";
+import { getKeyList } from "@pureadmin/utils";
+import { store } from "@/store";
+import type { cacheType } from "../types";
+import type { RouteRecordRaw } from "vue-router";
 import { useMultiTagsStoreHook } from "./multiTags";
+import { useUserStoreHook } from "./user";
 
 export const usePermissionStore = defineStore("pure-permission", {
   state: () => ({
     // 静态路由生成的菜单
     constantMenus,
     // 整体路由生成的菜单（静态、动态）
-    wholeMenus: [],
+    wholeMenus: [] as menuType[],
     // 整体路由（一维数组格式）
-    flatteningRoutes: [],
-    // 缓存页面keepAlive
-    cachePageList: [],
+    flatteningRoutes: [] as RouteRecordRaw[],
+    // 缓存页面keepAlive（路由 name 归一为字符串，keep-alive include 按名称匹配）
+    cachePageList: [] as string[],
     // 全局的授权
-    permissionAuths: {}
+    permissionAuths: {} as Record<string, boolean>
   }),
   actions: {
-    handleWholeAuths(auths: any[]) {
+    handleWholeAuths(auths: string[]) {
       this.permissionAuths = {};
       auths.forEach(auth => {
         this.permissionAuths[auth] = true;
       });
     },
     /** 组装整体路由生成的菜单 */
-    handleWholeMenus(routes: any[]) {
-      this.wholeMenus = filterNoPermissionTree(
-        filterTree(ascending(this.constantMenus.concat(routes)))
+    handleWholeMenus(routes: RouteRecordRaw[]) {
+      // 路由联合类型与菜单消费类型不重叠：经 toMenuTree 显式转换（path/name/meta/children）
+      this.wholeMenus = toMenuTree(
+        filterNoPermissionTree(
+          filterTree(
+            ascending(this.constantMenus.concat(routes) as RouteRecordRaw[])
+          ),
+          useUserStoreHook().roles ?? []
+        )
       );
       this.flatteningRoutes = formatFlatteningRoutes(
-        this.constantMenus.concat(routes) as any
+        this.constantMenus.concat(routes) as RouteRecordRaw[]
       );
     },
     /** 监听缓存页面是否存在于标签页，不存在则删除 */
@@ -64,7 +74,7 @@ export const usePermissionStore = defineStore("pure-permission", {
           this.clearCache();
           break;
         case "add":
-          this.cachePageList.push(name);
+          this.cachePageList.push(String(name));
           break;
         case "delete":
           if (delIndex !== -1) {

@@ -1,11 +1,13 @@
 <script lang="ts" setup>
-import { settingsEmailApi } from "@/api/system/settings";
+import { settingsEmailApi, settingsNotifyImApi } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingsPane } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
+import MessageTemplatePanel from "./components/MessageTemplatePanel.vue";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 import { useI18n } from "vue-i18n";
 
 defineOptions({
@@ -13,39 +15,95 @@ defineOptions({
 });
 const { t } = useI18n();
 
-const settingData = computed<Array<settingItemProps>>(() => [
+// 企业 IM 通知渠道：钉钉/企微/飞书各一个独立面板。channel 既是后端字段
+// 作用域（retrieve/search-columns/partialUpdate 只读写本渠道），也是测试按钮的定位
+// 参数（?channel= 只测本渠道），避免"一个测试按钮测三家"的歧义；fields 白名单为前端
+// 兜底，确保字段不跨面板渲染
+const imChannelTabs: Array<{
+  title: string;
+  channel: string;
+  fields: string[];
+}> = [
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:EmailServerSetting"),
-      retrieve: hasAuth("retrieve:EmailServerSetting"),
-      test: hasAuth("create:EmailServerSetting")
-    },
-    api: settingsEmailApi,
-    localeName: "settingMessage",
-    title: "mailTitle"
+    title: "dingtalkTitle",
+    channel: "dingtalk",
+    fields: [
+      "DINGTALK_ENABLED",
+      "DINGTALK_APP_KEY",
+      "DINGTALK_APP_SECRET",
+      "DINGTALK_AGENT_ID"
+    ]
+  },
+  {
+    title: "wecomTitle",
+    channel: "wecom",
+    fields: [
+      "WECOM_ENABLED",
+      "WECOM_CORP_ID",
+      "WECOM_CORP_SECRET",
+      "WECOM_AGENT_ID"
+    ]
+  },
+  {
+    title: "feishuTitle",
+    channel: "feishu",
+    fields: ["FEISHU_ENABLED", "FEISHU_APP_ID", "FEISHU_APP_SECRET"]
   }
-]);
+];
 
 const auth = ref({
   partialUpdate: hasAuth("partialUpdate:SystemMsgSubscription"),
   list: hasAuth("list:SystemMsgSubscription"),
-  backends: hasAuth("backends:SystemMsgSubscription")
+  backends: hasAuth("backends:SystemMsgSubscription"),
+  // 消息模板注册表端点（/api/notifications/message-templates）的权限点挂在
+  // 本页面（SettingMessage）名下，与订阅面板的模型级权限码来源不同
+  templateList: hasAuth("list:SettingMessage")
 });
+
+const panes = computed<Array<settingsPane>>(() => [
+  {
+    key: "email",
+    item: {
+      auth: settingAuth("EmailServerSetting", true),
+      api: settingsEmailApi,
+      localeName: "settingMessage",
+      title: "mailTitle"
+    }
+  },
+  ...imChannelTabs.map(item => ({
+    key: item.channel,
+    item: {
+      auth: settingAuth("ImNotifySetting", true),
+      api: settingsNotifyImApi,
+      localeName: "settingMessage",
+      title: item.title,
+      fields: item.fields,
+      queryParams: { channel: item.channel }
+    }
+  })),
+  // 消息通知订阅（列表型自定义面板）与消息模板：无对应权限时不并入导航
+  ...(auth.value.list
+    ? [{ key: "notifications", label: t("settingMessage.messageTitle") }]
+    : []),
+  ...(auth.value.templateList
+    ? [{ key: "templates", label: t("messageTemplate.title") }]
+    : [])
+]);
 </script>
 
 <template>
-  <setting :model-value="settingData">
-    <el-tab-pane
-      v-if="auth.list"
-      :label="t('settingMessage.messageTitle')"
-      :lazy="true"
-    >
+  <setting :panes="panes">
+    <template #notifications>
       <MessageNotifications
         :api="systemMsgSubscriptionApi"
         :auth="auth"
         :has-operations="true"
         :has-receivers="true"
       />
-    </el-tab-pane>
+    </template>
+    <!-- 消息模板：通知文本可配置（代码默认 → DB 覆盖层） -->
+    <template #templates>
+      <MessageTemplatePanel />
+    </template>
   </setting>
 </template>

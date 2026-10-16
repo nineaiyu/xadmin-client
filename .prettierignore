@@ -1,0 +1,3 @@
+# 构建期生成物（由 scripts/*.mjs 产出，格式由生成器保证，不参与手工格式化检查）
+src/style/animate-subset.css
+src/components/ReIcon/data/subsets/

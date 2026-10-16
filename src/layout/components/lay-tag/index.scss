@@ -23,19 +23,22 @@
   display: flex;
   align-items: center;
   width: 100%;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--el-text-color-primary);
-  background: #fff;
-  box-shadow: 0 0 1px #888;
+
+  /* 页签条与内容纸同面（tabbar 取 background 而非填充灰），
+     未激活页签靠底色差异与分隔线区分 */
+  background: hsl(var(--bg-card));
+  box-shadow: 0 0 1px hsl(var(--border-strong));
 
   .scroll-item {
     position: relative;
     display: inline-block;
-    height: 34px;
+    height: var(--layout-tags-item-h);
     padding-left: 6px;
-    line-height: 34px;
+    line-height: var(--layout-tags-item-h);
     cursor: pointer;
-    transition: all 0.4s;
+    transition: all var(--duration-slow) var(--ease-standard);
 
     &:not(:first-child) {
       padding-right: 24px;
@@ -44,7 +47,8 @@
     &.chrome-item {
       padding-right: 0;
       padding-left: 0;
-      margin-right: -18px;
+      margin-right: 6px;
+      border-radius: var(--radius-md);
       box-shadow: none;
     }
 
@@ -61,12 +65,12 @@
       border-radius: 4px;
       transform: translate(0, -50%);
       transition:
-        background-color 0.12s,
-        color 0.12s;
+        background-color var(--duration-instant),
+        color var(--duration-instant);
 
       &:hover {
-        color: rgb(0 0 0 / 88%) !important;
-        background-color: rgb(0 0 0 / 6%);
+        color: hsl(var(--fg)) !important;
+        background-color: var(--divider);
       }
     }
   }
@@ -75,6 +79,19 @@
     padding: 0 4px;
     color: var(--el-text-color-primary);
     text-decoration: none;
+  }
+
+  /* 页签图标（设置面板「顶栏」→「页签图标」开关控制显隐） */
+  .tag-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 2px;
+    vertical-align: middle;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   .scroll-container {
@@ -99,7 +116,7 @@
       list-style: none;
 
       .scroll-item {
-        transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+        transition: all var(--duration-fast) var(--ease-standard);
 
         &:nth-child(1) {
           padding: 0 12px;
@@ -123,15 +140,15 @@
     position: absolute;
     padding: 5px 0;
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     font-weight: normal;
     color: var(--el-text-color-primary);
     white-space: nowrap;
     outline: 0;
     list-style-type: none;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+    background: hsl(var(--bg-elevated));
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
 
     li {
       display: flex;
@@ -169,8 +186,8 @@
 }
 
 .el-dropdown-menu__item:not(.is-disabled):hover {
-  color: #606266;
-  background: #f0f0f0;
+  color: hsl(var(--fg-muted));
+  background: hsl(var(--fill));
 }
 
 :deep(.el-dropdown-menu__item) i {
@@ -191,15 +208,14 @@
 
 .scroll-item.is-active {
   position: relative;
-  color: #fff;
-  box-shadow: 0 0 0.7px #888;
-
-  .chrome-tab {
-    z-index: 10;
-  }
+  z-index: 4;
+  color: var(--el-color-primary);
+  background: hsl(var(--bg-card));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 
   .chrome-tab__bg {
-    color: var(--el-color-primary-light-9) !important;
+    display: none;
   }
 
   .tag-title {
@@ -219,15 +235,27 @@
   }
 }
 
+.chrome-item:hover:not(.is-active) {
+  z-index: 3;
+  background: hsl(var(--fill));
+  border-radius: var(--radius-md);
+}
+
+.scroll-item.is-active + .scroll-item .chrome-tab-divider,
+.chrome-item:hover + .chrome-item .chrome-tab-divider {
+  opacity: 0;
+}
+
 .arrow-left,
 .arrow-right,
-.arrow-down {
+.arrow-down,
+.tags-refresh {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
-  height: 34px;
+  height: var(--layout-tags-item-h);
   color: var(--el-text-color-primary);
 
   svg {
@@ -236,8 +264,18 @@
   }
 }
 
+/* 刷新当前页按钮（设置面板「顶栏」→「刷新按钮」开关控制显隐） */
+.tags-refresh {
+  cursor: pointer;
+  border-left: 0.5px solid hsl(var(--border-strong));
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
 .arrow-left {
-  box-shadow: 5px 0 5px -6px #ccc;
+  box-shadow: 5px 0 5px -6px hsl(var(--border-strong));
 
   &:hover {
     cursor: w-resize;
@@ -245,8 +283,8 @@
 }
 
 .arrow-right {
-  border-right: 0.5px solid #ccc;
-  box-shadow: -5px 0 5px -6px #ccc;
+  border-right: 0.5px solid hsl(var(--border-strong));
+  box-shadow: -5px 0 5px -6px hsl(var(--border-strong));
 
   &:hover {
     cursor: e-resize;
@@ -264,11 +302,11 @@
 
 /* 卡片模式下鼠标移出隐藏蓝色边框 */
 .card-out {
-  color: #666;
+  color: hsl(var(--fg-muted));
   border: none;
 
   .tag-title {
-    color: #666;
+    color: hsl(var(--fg-muted));
   }
 }
 
@@ -290,7 +328,7 @@
   width: 100%;
   height: 2px;
   background: var(--el-color-primary);
-  animation: schedule-in-width 200ms ease-in;
+  animation: schedule-in-width var(--duration-fast) var(--ease-in);
 }
 
 /* 灵动模式下鼠标移出隐藏蓝色进度条 */
@@ -301,17 +339,18 @@
   width: 0;
   height: 2px;
   background: var(--el-color-primary);
-  animation: schedule-out-width 200ms ease-in;
+  animation: schedule-out-width var(--duration-fast) var(--ease-in);
 }
 
 /* 谷歌风格的页签 */
 .chrome-tab {
   position: relative;
+  z-index: 0;
   display: inline-flex;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
+  padding: 0 12px;
   white-space: nowrap;
   cursor: pointer;
 
@@ -327,14 +366,12 @@
   }
 
   &:hover {
-    z-index: 10;
-
     .chrome-tab__bg {
-      color: #dee1e6;
+      color: hsl(var(--fill-strong));
     }
 
     .tag-title {
-      color: #1f1f1f;
+      color: hsl(var(--fg));
     }
 
     .chrome-tab-divider {
@@ -346,7 +383,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    z-index: -10;
+    z-index: -1;
     width: 100%;
     height: 100%;
     color: transparent;
@@ -359,12 +396,60 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    color: #666;
+    color: hsl(var(--fg-muted));
     border-radius: 50%;
 
     &:hover {
-      color: white;
-      background-color: #b1b3b8;
+      color: var(--el-color-white);
+      background-color: hsl(var(--fg-disabled));
     }
   }
+}
+
+/* 拖拽排序：被拖拽项的原位占位（幽灵元素），松手后写回 multiTags */
+.tag-drag-ghost {
+  background: var(--el-fill-color-light) !important;
+  border: 1px dashed var(--el-color-primary-light-5) !important;
+  border-radius: var(--radius-sm);
+  opacity: 0.45;
+}
+
+/* 朴素风格（plain）：激活页签用主色浅底圆角块标识，无下划线、无浏览器页签形状 */
+.tags-view .scroll-container.plain-scroll-container {
+  .scroll-item {
+    padding-right: 22px;
+    margin-right: 4px;
+    border-radius: var(--radius-sm);
+    transition:
+      background-color var(--duration-instant),
+      color var(--duration-instant);
+
+    &:nth-child(1) {
+      margin-left: 4px;
+    }
+
+    &:hover:not(.is-active) {
+      color: var(--el-color-primary);
+      background: var(--el-fill-color-light);
+    }
+
+    &.is-active {
+      background: var(--el-color-primary-light-9);
+      box-shadow: none;
+
+      .tag-title {
+        font-weight: 500;
+      }
+
+      .el-icon-close {
+        color: var(--el-color-primary);
+      }
+    }
+  }
+}
+
+/* 圆角块之间不画分隔线，页签形状（chrome-tab__bg）整体隐藏 */
+.tags-view .chrome-tab-divider,
+.tags-view .chrome-tab .chrome-tab__bg {
+  display: none;
 }

@@ -5,6 +5,7 @@ import * as parserVue from "vue-eslint-parser";
 import configPrettier from "eslint-config-prettier";
 import pluginPrettier from "eslint-plugin-prettier";
 import { defineConfig, globalIgnores } from "eslint/config";
+import eslintPluginBetterTailwindcss from "eslint-plugin-better-tailwindcss";
 
 export default defineConfig([
   globalIgnores([
@@ -81,8 +82,8 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/prefer-as-const": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/prefer-as-const": "error",
       "@typescript-eslint/no-empty-function": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-unused-expressions": "error",
@@ -109,10 +110,7 @@ export default defineConfig([
   {
     files: ["**/*.d.ts"],
     rules: {
-      "eslint-comments/no-unlimited-disable": "off",
-      "import/no-duplicates": "off",
-      "no-restricted-syntax": "off",
-      "unused-imports/no-unused-vars": "off"
+      "no-restricted-syntax": "off"
     }
   },
   {
@@ -171,6 +169,36 @@ export default defineConfig([
           math: "always"
         }
       ]
+    }
+  },
+  // any 治理已验收收官：存量清零（226→0），豁免清单已删除，
+  // no-explicit-any / prefer-as-const 对 *.ts/tsx 与 *.vue 均为 error 级。
+  {
+    files: ["**/*.vue"],
+    plugins: {
+      "@typescript-eslint": tseslint.plugin
+    },
+    rules: {
+      // any 清零验收：*.ts/tsx 与 *.vue 同等 error 级约束
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-function-type": "error",
+      "@typescript-eslint/prefer-as-const": "error"
+    }
+  },
+  {
+    files: ["**/*.vue", "**/*.tsx"],
+    plugins: {
+      "better-tailwindcss": eslintPluginBetterTailwindcss
+    },
+    rules: {
+      "better-tailwindcss/enforce-consistent-variable-syntax": "warn",
+      "better-tailwindcss/enforce-canonical-classes": "warn"
+    },
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: "src/style/tailwind.css",
+        rootFontSize: 16
+      }
     }
   }
 ]);

@@ -1,67 +1,89 @@
 <script setup lang="ts">
-import { emitter } from "@/utils/mitt";
+import { useRoute } from "vue-router";
 import { useNav } from "@/layout/hooks/useNav";
-import LaySearch from "../lay-search/index.vue";
-import LayNotice from "../lay-notice/index.vue";
-import { responsiveStorageNameSpace } from "@/config";
 import { ref, nextTick, computed, onMounted } from "vue";
-import { storageLocal, isAllEmpty } from "@pureadmin/utils";
-import { useTranslationLang } from "../../hooks/useTranslationLang";
+import {
+  isAllEmpty,
+  useDark,
+  useGlobal,
+  useResizeObserver
+} from "@pureadmin/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { groupMenuChildren } from "@/utils/menuGroups";
+import {
+  resolveBrandVisible,
+  resolveLogoImageStyle,
+  resolveLogoMode,
+  resolveLogoSrc,
+  resolveLogoTextVisible
+} from "@/layout/hooks/logoPreferences";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
-import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vue";
-import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
-import AccountSettingsIcon from "~icons/ri/user-settings-line";
-import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
-import Setting from "~icons/ri/settings-3-line";
-import Check from "~icons/ep/check";
+import NavbarActions from "../lay-navbar/NavbarActions.vue";
 
+/**
+ * 水平布局：通栏顶栏 = Logo + 一级菜单 + 右侧动作区。
+ * 动作区与纵向顶栏共用 NavbarActions（同一套落位编排与设置入口形态）。
+ */
 const menuRef = ref();
-const showLogo = ref(
-  storageLocal().getItem<StorageConfigs>(
-    `${responsiveStorageNameSpace()}configure`
-  )?.showLogo ?? true
-);
+const headerRef = ref();
 
-const { t, route, locale, translationCh, translationEn } =
-  useTranslationLang(menuRef);
-const {
-  title,
-  logout,
-  onPanel,
-  getLogo,
-  username,
-  userAvatar,
-  backTopMenu,
-  avatarsStyle,
-  toAccountSettings,
-  getDropdownItemStyle,
-  getDropdownItemClass
-} = useNav();
+const route = useRoute();
+const { title, getLogo, backTopMenu } = useNav();
+const { $storage } = useGlobal<GlobalPropertiesApi>();
+const { isDark } = useDark();
+
+const configure = computed(() => $storage?.configure);
+/** Logo 自定义三件套 + 形态派生（实现见 layout/hooks/logoPreferences） */
+const logoSrc = computed(() =>
+  resolveLogoSrc(configure.value, getLogo(), Boolean(isDark.value))
+);
+const logoMode = computed(() => resolveLogoMode(configure.value));
+/** Logo 图片显隐（「侧边栏Logo」开关，与「Logo 文字」正交） */
+const showLogoImage = computed(() => configure.value?.showLogo ?? true);
+const showLogoText = computed(() => resolveLogoTextVisible(configure.value));
+/** 品牌位是否有可见内容：图片与文字都关时整块不渲染 */
+const brandVisible = computed(() => resolveBrandVisible(configure.value));
+const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 
 const defaultActive = computed(() =>
   !isAllEmpty(route.meta?.activePath) ? route.meta.activePath : route.path
 );
 
+/** 顶栏渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
+const topMenuData = computed(() =>
+  groupMenuChildren(usePermissionStoreHook().wholeMenus)
+);
+
+/** 菜单项数量/宽度变化后重算 EP 的溢出收纳（否则多出的一级项会盖到右侧动作区） */
+function relayoutMenu() {
+  nextTick(() => menuRef.value?.handleResize());
+}
+
 nextTick(() => {
   menuRef.value?.handleResize();
 });
 
+useResizeObserver(headerRef, relayoutMenu);
+
 onMounted(() => {
-  emitter.on("logoChange", key => {
-    showLogo.value = key;
-  });
+  relayoutMenu();
 });
 </script>
 
 <template>
   <div
+    ref="headerRef"
     v-loading="usePermissionStoreHook().wholeMenus.length === 0"
     class="horizontal-header"
   >
-    <div v-if="showLogo" class="horizontal-header-left" @click="backTopMenu">
-      <img :src="getLogo()" alt="logo" />
-      <span>{{ title }}</span>
+    <div
+      v-if="brandVisible"
+      class="horizontal-header-left"
+      :class="[`logo-mode-${logoMode}`]"
+      @click="backTopMenu"
+    >
+      <img v-if="showLogoImage" :src="logoSrc" :style="logoStyle" alt="logo" />
+      <span v-if="showLogoText">{{ title }}</span>
     </div>
     <el-menu
       ref="menuRef"
@@ -69,117 +91,22 @@ onMounted(() => {
       popper-class="pure-scrollbar"
       class="horizontal-header-menu"
       :default-active="defaultActive"
+      :show-timeout="300"
+      :hide-timeout="300"
     >
       <LaySidebarItem
-        v-for="route in usePermissionStoreHook().wholeMenus"
+        v-for="route in topMenuData"
         :key="route.path"
-        :item="route"
+        :item="route as never"
         :base-path="route.path"
       />
     </el-menu>
-    <div class="horizontal-header-right">
-      <!-- 菜单搜索 -->
-      <LaySearch id="header-search" />
-      <!-- 国际化 -->
-      <el-dropdown id="header-translation" trigger="click">
-        <div
-          class="globalization-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
-        >
-          <IconifyIconOffline :icon="GlobalizationIcon" />
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu class="translation">
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'zh')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
-              @click="translationCh"
-            >
-              <span v-show="locale === 'zh'" class="check-zh">
-                <IconifyIconOffline :icon="Check" />
-              </span>
-              简体中文
-            </el-dropdown-item>
-            <el-dropdown-item
-              :style="getDropdownItemStyle(locale, 'en')"
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
-              @click="translationEn"
-            >
-              <span v-show="locale === 'en'" class="check-en">
-                <IconifyIconOffline :icon="Check" />
-              </span>
-              English
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <!-- 全屏 -->
-      <LaySidebarFullScreen id="full-screen" />
-      <!-- 消息通知 -->
-      <LayNotice id="header-notice" />
-      <!-- 退出登录 -->
-      <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
-        </span>
-        <template #dropdown>
-          <el-dropdown-item @click="toAccountSettings">
-            <IconifyIconOffline
-              :icon="AccountSettingsIcon"
-              style="margin: 5px"
-            />
-            {{ t("menus.accountSettings") }}
-          </el-dropdown-item>
-          <el-dropdown-menu class="logout">
-            <el-dropdown-item @click="logout">
-              <IconifyIconOffline
-                :icon="LogoutCircleRLine"
-                style="margin: 5px"
-              />
-              {{ t("buttons.loginOut") }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <span
-        class="set-icon navbar-bg-hover hover:[&>svg]:animate-scale-bounce"
-        :title="t('buttons.systemSet')"
-        @click="onPanel"
-      >
-        <IconifyIconOffline :icon="Setting" />
-      </span>
-    </div>
+    <NavbarActions class="horizontal-header-right" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 :deep(.el-loading-mask) {
   opacity: 0.45;
-}
-
-.translation {
-  :deep(.el-dropdown-menu__item) {
-    padding: 5px 40px;
-  }
-
-  .check-zh {
-    position: absolute;
-    left: 20px;
-  }
-
-  .check-en {
-    position: absolute;
-    left: 20px;
-  }
-}
-
-.logout {
-  width: 120px;
-
-  :deep(.el-dropdown-menu__item) {
-    display: inline-flex;
-    flex-wrap: wrap;
-    min-width: 100%;
-  }
 }
 </style>

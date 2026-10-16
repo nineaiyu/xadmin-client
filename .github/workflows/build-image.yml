@@ -6,8 +6,109 @@ on:
       - 'v*'
 
 jobs:
-  build-and-push:
+  test:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 11.25.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Run Unit Tests
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test:run
+
+  security-scan:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 11.25.0
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 依赖高危门禁：官方源存量已于 2026-09-07 清零（59→0），正式从告警切为阻断。
+      # 该步骤发现 high/critical 即非零退出，阻断后续 build-and-push。
+      # 显式指定官方源：镜像源（如 npmmirror）不实现 security/advisories 端点，
+      # 会让 audit 以 ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS 报错退出（假红）
+      - name: Dependency audit (blocking)
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
+
+      - name: Generate SBOM (CycloneDX)
+        run: pnpm sbom --sbom-format cyclonedx --out sbom/sbom-client.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-client
+          path: sbom/sbom-client.cdx.json
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scan (single arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          build-args: VERSION=${{ github.ref_name }}
+          tags: xadmin-client:scan
+
+      # 高危/严重漏洞阻断发布
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: xadmin-client:scan
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+
+  build-and-push:
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    # id-token / attestations 供镜像构建溯源签发；contents 供上传 Release 附件
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
 
@@ -39,6 +140,7 @@ jobs:
             type=semver,pattern={{version}}
 
       - name: Build and push multi-arch image
+        id: push
         uses: docker/build-push-action@v6
         with:
           build-args: VERSION=${{ steps.meta.outputs.version }}
@@ -47,3 +149,23 @@ jobs:
           file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      # 多架构推送时 digest 即镜像索引（manifest list）摘要，作为构建溯源主体
+      - name: Attest image build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: nineaiyu/xadmin-client
+          subject-digest: ${{ steps.push.outputs.digest }}
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-client
+          path: sbom
+
+      - name: Upload SBOM to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sbom/sbom-client.cdx.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,7 @@ import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "@/assets/avatar.png";
 import { useI18n } from "vue-i18n";
+import type { CropperPayload } from "../index";
 
 defineOptions({
   name: "RePictureUpload"
@@ -19,15 +20,23 @@ defineProps({
   canvasOption: Object
 });
 
-const emit = defineEmits(["cropper"]);
+const emit = defineEmits<{ cropper: [payload: CropperPayload] }>();
 const { t } = useI18n();
-const infos = ref();
+const infos = ref<Record<string, unknown>>();
 const popoverRef = ref();
 const refCropper = ref();
 const showPopover = ref(false);
 const cropperImg = ref<string>("");
 
-function onCropper({ base64, blob, info }) {
+function onCropper({
+  base64,
+  blob,
+  info
+}: {
+  base64: string;
+  blob: Blob;
+  info: Record<string, unknown>;
+}) {
   infos.value = info;
   cropperImg.value = base64;
   emit("cropper", { base64, blob, info });
@@ -67,7 +76,7 @@ defineExpose({ hidePopover });
           </p>
         </div>
       </template>
-      <div class="flex flex-wrap justify-center items-center text-center">
+      <div class="flex-c flex-wrap text-center">
         <el-image
           v-if="cropperImg"
           :preview-src-list="Array.of(cropperImg)"
@@ -78,15 +87,15 @@ defineExpose({ hidePopover });
           <p>
             {{
               t("avatarUpload.imageSize", {
-                x: parseInt(infos.width),
-                y: parseInt(infos.height)
+                x: parseInt(infos.width as string, 10),
+                y: parseInt(infos.height as string, 10)
               })
             }}
           </p>
           <p>
             {{
               t("avatarUpload.fileSize", {
-                x: formatBytes(infos.size),
+                x: formatBytes(infos.size as number),
                 y: infos.size
               })
             }}

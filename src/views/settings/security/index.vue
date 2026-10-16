@@ -6,6 +6,7 @@ import {
   settingsCaptchaApi,
   settingsLoginAuthApi,
   settingsLoginLimitApi,
+  settingsMfaApi,
   settingsPasswordApi,
   settingsRegisterAuthApi,
   settingsResetPasswordCodeApi,
@@ -14,7 +15,8 @@ import {
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import Setting from "@/views/settings/components/settings/index.vue";
-import { settingItemProps } from "@/views/settings/components/settings/types";
+import { settingsPane } from "@/views/settings/components/settings/types";
+import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 import { useI18n } from "vue-i18n";
 
@@ -22,87 +24,97 @@ defineOptions({
   name: "SettingSecurity"
 });
 
-const settingData = computed<Array<settingItemProps>>(() => [
+/** 面板键取各配置域标题（code/captcha/...），与 i18n 片段一一对应 */
+const settingData = computed<Array<settingsPane>>(() => [
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityVerifyCode"),
-      retrieve: hasAuth("retrieve:SecurityVerifyCode")
-    },
-    api: settingsVerifyCodeApi,
-    localeName: "settingSecurity",
-    title: "code"
+    key: "code",
+    item: {
+      auth: settingAuth("SecurityVerifyCode"),
+      api: settingsVerifyCodeApi,
+      localeName: "settingSecurity",
+      title: "code"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityCaptchaCode"),
-      retrieve: hasAuth("retrieve:SecurityCaptchaCode")
-    },
-    api: settingsCaptchaApi,
-    localeName: "settingSecurity",
-    title: "captcha"
+    key: "captcha",
+    item: {
+      auth: settingAuth("SecurityCaptchaCode"),
+      api: settingsCaptchaApi,
+      localeName: "settingSecurity",
+      title: "captcha"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityLoginAuth"),
-      retrieve: hasAuth("retrieve:SecurityLoginAuth")
-    },
-    api: settingsLoginAuthApi,
-    localeName: "settingSecurity",
-    title: "login"
+    key: "login",
+    item: {
+      auth: settingAuth("SecurityLoginAuth"),
+      api: settingsLoginAuthApi,
+      localeName: "settingSecurity",
+      title: "login"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityLoginLimit"),
-      retrieve: hasAuth("retrieve:SecurityLoginLimit")
-    },
-    api: settingsLoginLimitApi,
-    localeName: "settingSecurity",
-    title: "limit"
+    key: "limit",
+    item: {
+      auth: settingAuth("SecurityLoginLimit"),
+      api: settingsLoginLimitApi,
+      localeName: "settingSecurity",
+      title: "limit"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityRegisterAuth"),
-      retrieve: hasAuth("retrieve:SecurityRegisterAuth")
-    },
-    api: settingsRegisterAuthApi,
-    localeName: "settingSecurity",
-    title: "register"
+    key: "mfa",
+    item: {
+      auth: settingAuth("SecurityMFA"),
+      api: settingsMfaApi,
+      localeName: "settingSecurity",
+      title: "mfa"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityResetPasswordAuth"),
-      retrieve: hasAuth("retrieve:SecurityResetPasswordAuth")
-    },
-    api: settingsResetPasswordCodeApi,
-    localeName: "settingSecurity",
-    title: "resetPassword"
+    key: "register",
+    item: {
+      auth: settingAuth("SecurityRegisterAuth"),
+      api: settingsRegisterAuthApi,
+      localeName: "settingSecurity",
+      title: "register"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityPasswordRule"),
-      retrieve: hasAuth("retrieve:SecurityPasswordRule")
-    },
-    api: settingsPasswordApi,
-    localeName: "settingSecurity",
-    title: "passwordRule"
+    key: "resetPassword",
+    item: {
+      auth: settingAuth("SecurityResetPasswordAuth"),
+      api: settingsResetPasswordCodeApi,
+      localeName: "settingSecurity",
+      title: "resetPassword"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityBindEmailAuth"),
-      retrieve: hasAuth("retrieve:SecurityBindEmailAuth")
-    },
-    api: settingsBindEmailApi,
-    localeName: "settingSecurity",
-    title: "bingEmail"
+    key: "passwordRule",
+    item: {
+      auth: settingAuth("SecurityPasswordRule"),
+      api: settingsPasswordApi,
+      localeName: "settingSecurity",
+      title: "passwordRule"
+    }
   },
   {
-    auth: {
-      partialUpdate: hasAuth("partialUpdate:SecurityBindPhoneAuth"),
-      retrieve: hasAuth("retrieve:SecurityBindPhoneAuth")
-    },
-    api: settingsBindPhoneApi,
-    localeName: "settingSecurity",
-    title: "bindPhone"
+    key: "bindEmail",
+    item: {
+      auth: settingAuth("SecurityBindEmailAuth"),
+      api: settingsBindEmailApi,
+      localeName: "settingSecurity",
+      title: "bindEmail"
+    }
+  },
+  {
+    key: "bindPhone",
+    item: {
+      auth: settingAuth("SecurityBindPhoneAuth"),
+      api: settingsBindPhoneApi,
+      localeName: "settingSecurity",
+      title: "bindPhone"
+    }
   }
 ]);
 const auth = ref({
@@ -111,27 +123,31 @@ const auth = ref({
   batchDestroy: hasAuth("batchDestroy:SecurityBlockIp")
 });
 const api = ref(settingsBlockIpApi);
-api.value.fields = undefined;
 const { t } = useI18n();
+
+/** 登录拦截 IP：列表型自定义面板，仅在有列表权限时并入导航 */
+const panes = computed<Array<settingsPane>>(() => [
+  ...settingData.value,
+  ...(auth.value.list
+    ? [{ key: "blockIp", label: t("settingSecurity.blockIp") }]
+    : [])
+]);
 </script>
 
 <template>
-  <setting :model-value="settingData">
-    <el-tab-pane
-      v-if="auth.list"
-      :label="t('settingSecurity.blockIp')"
-      :lazy="true"
-    >
+  <setting :panes="panes">
+    <template #blockIp>
       <RePlusPage
         ref="tableRef"
         :title="t('settingSecurity.blockIp')"
         :api="api"
         :auth="auth"
         locale-name="settingSecurity"
+        :fetch-search-fields="false"
         :pureTableProps="{
           adaptiveConfig: { offsetBottom: 160 }
         }"
       />
-    </el-tab-pane>
+    </template>
   </setting>
 </template>

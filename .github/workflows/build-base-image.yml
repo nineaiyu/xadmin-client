@@ -9,6 +9,11 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'Dockerfile-base'
+      # 依赖层镜像直接 COPY scripts（postinstall 的运行面）：脚本变化需重建，
+      # 否则镜像内旧脚本与仓库漂移（曾致构建失败且触发面缺位、无法验证）
+      - 'scripts/**'
+  # 支持手动重跑：触发面变化或失败修复后无需等下一次依赖变更即可验证
+  workflow_dispatch:
 
 jobs:
   build-and-push:

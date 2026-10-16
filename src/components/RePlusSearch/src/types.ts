@@ -12,14 +12,15 @@ interface PlusSearchProps {
   localeName?: string;
   searchColumnsFormat?: (columns: PageColumn[]) => PageColumn[];
   listColumnsFormat?: (columns: PageTableColumn[]) => PageTableColumn[];
-  baseColumnsFormat?: ({
-    listColumns,
-    detailColumns,
-    searchColumns,
-    addOrEditRules,
-    addOrEditColumns,
-    searchDefaultValue,
-    addOrEditDefaultValue
+  baseColumnsFormat?: (payload: {
+    /** 表格列（响应式 ref，就地修改生效） */
+    listColumns: Ref<PageColumn[]>;
+    detailColumns: Ref<PageColumn[]>;
+    searchColumns: Ref<PageColumn[]>;
+    addOrEditRules: Ref<Record<string, unknown>>;
+    addOrEditColumns: Ref<PageColumn[]>;
+    searchDefaultValue: Ref<Record<string, unknown>>;
+    addOrEditDefaultValue: Ref<Record<string, unknown>>;
   }) => void;
   pagination?: Partial<PaginationProps> & {
     size?: string;

@@ -1,13 +1,12 @@
-import { message } from "@/utils/message";
+import { copyText } from "@/utils/clipboard";
 import { useEventListener } from "@vueuse/core";
-import { copyTextToClipboard } from "@pureadmin/utils";
 import type { Directive, DirectiveBinding } from "vue";
 
 export interface CopyEl extends HTMLElement {
   copyValue: string;
 }
 
-/** 文本复制指令（默认双击复制） */
+/** 文本复制指令（默认双击复制，`v-copy:click` 切换单击；提示口径走剪贴板统一出口） */
 export const copy: Directive = {
   mounted(el: CopyEl, binding: DirectiveBinding<string>) {
     const { value } = binding;
@@ -16,16 +15,8 @@ export const copy: Directive = {
       const arg = binding.arg ?? "dblclick";
       // Register using addEventListener on mounted, and removeEventListener automatically on unmounted
       useEventListener(el, arg, () => {
-        if (copyTextToClipboard(el.copyValue)) {
-          message("复制成功", { type: "success" });
-        } else {
-          message("复制失败", { type: "error" });
-        }
+        void copyText(el.copyValue);
       });
-    } else {
-      // throw new Error(
-      //   '[Directive: copy]: need value! Like v-copy="modelValue"'
-      // );
     }
   },
   updated(el: CopyEl, binding: DirectiveBinding) {

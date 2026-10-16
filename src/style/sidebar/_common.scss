@@ -1,0 +1,738 @@
+@use "../tokens/breakpoints" as bp;
+
+/* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离
+   $sideBarOffset: 移动端侧栏收起时向左平移的距离（值为 var() / calc() 表达式，
+   水平布局传 0；宽度已是变量，负值必须在调用侧用 calc 求值） */
+@mixin merge-style($sideBarWidth, $sideBarOffset) {
+  /* 极窄视口允许纵向滚动（固定头模式下的内容高度补偿），断点见 tokens/breakpoints */
+  @include bp.below("xs") {
+    .app-main-nofixed-header {
+      overflow-y: hidden;
+    }
+  }
+
+  @include bp.above("xs") {
+    .app-main-nofixed-header {
+      overflow: hidden;
+    }
+  }
+
+  /* 修复 windows 下双滚动条问题 https://github.com/pure-admin/vue-pure-admin/pull/936#issuecomment-1968125992 */
+  .el-popper.pure-scrollbar {
+    overflow: hidden;
+  }
+
+  /* popper menu 超出内容区可滚动 */
+  .pure-scrollbar {
+    max-height: calc(100vh - calc(var(--layout-header-h) * 2.5));
+    max-height: calc(100dvh - calc(50px * 2.5));
+    overflow: hidden auto;
+  }
+
+  .sub-menu-icon {
+    margin-right: var(--nav-item-icon-gap);
+    font-size: var(--font-size-lg);
+
+    svg,
+    .svg-raw-icon {
+      width: var(--nav-item-icon-size);
+      height: var(--nav-item-icon-size);
+    }
+
+    .svg-raw-icon {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .svg-raw-icon svg path {
+      fill: currentcolor !important;
+    }
+
+    /* hover 图标微缩放：作用于图标本体（svg / img / iconfont 包裹层），不影响布局宽度 */
+    > * {
+      transition: transform var(--duration-fast) var(--ease-standard);
+    }
+  }
+
+  /* 菜单项 hover：图标放大 `scale(1.2)`（强化操作目标） */
+  .el-menu-item:hover .sub-menu-icon > *,
+  .el-sub-menu__title:hover .sub-menu-icon > * {
+    transform: scale(1.2);
+  }
+
+  /* 顶栏动作项：热区尺寸 / 圆角 / 居中由 `navbar-action` 工具类提供
+     （tokens/primitives.scss 的 --navbar-action-*），此处只补图标尺寸与兜底布局。
+     类名保留以兼容半暗顶栏等既有选择器；不得再写死 width / height。 */
+  .navbar-action {
+    svg {
+      width: var(--navbar-action-icon);
+      height: var(--navbar-action-icon);
+    }
+  }
+
+  /* `:not(.setting-fab)`：右下角悬浮球虽然沿用 `.set-icon` 类做定位契约，
+     但它自带主色底与自己的尺寸（见 lay-setting），不能套用顶栏动作项的字号 */
+  .set-icon:not(.setting-fab),
+  .fullscreen-icon,
+  .search-container,
+  .globalization-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+  }
+
+  .main-container {
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100%;
+    margin-left: $sideBarWidth;
+    background: hsl(var(--bg-page));
+
+    /* main-content 属性动画 */
+    transition: margin-left var(--duration-base);
+
+    .el-scrollbar__wrap {
+      height: 100%;
+      overflow: auto;
+    }
+  }
+
+  .fixed-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 998;
+    width: calc(100% - #{$sideBarWidth});
+
+    /* fixed-header 属性左上角动画 */
+    transition:
+      width var(--duration-base),
+      transform var(--duration-base) var(--ease-standard);
+  }
+
+  /* 顶栏滚动自动隐藏（useHeaderAutoHide）：整块固定头部（顶栏 + 页签条）上移出视口 */
+  .fixed-header.header-hidden {
+    transform: translateY(-100%);
+  }
+
+  .main-hidden {
+    margin-left: 0 !important;
+
+    .fixed-header {
+      width: 100% !important;
+
+      + .app-main {
+        padding-top: 37px !important;
+      }
+    }
+  }
+
+  /* 切割模式（混合 / 双列）当前一级没有子菜单：侧栏容器整块不渲染，顶栏与内容区占满
+     （无子菜单即隐藏侧栏，否则顶栏下方会留一条空白侧栏） */
+  .no-sidebar {
+    .main-container {
+      margin-left: 0;
+    }
+
+    .fixed-header {
+      width: 100%;
+    }
+  }
+
+  .sidebar-container {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1001;
+    width: $sideBarWidth !important;
+    height: 100%;
+    overflow: visible;
+    font-size: 0;
+    background: var(--sidebar) !important;
+    border-right: 1px solid var(--pure-theme-sidebar-border);
+
+    /* 展开动画 */
+    transition: width var(--duration-base);
+
+    /* 菜单区顶部留白（padding-top 8px） */
+    .el-scrollbar__view {
+      padding-top: 8px;
+    }
+
+    .scrollbar-wrapper {
+      overflow-x: hidden !important;
+    }
+
+    .el-scrollbar__bar.is-vertical {
+      right: 0;
+    }
+
+    &.has-logo {
+      .el-scrollbar.pc {
+        /* logo: 48px、leftCollapse: 40px、leftCollapse-shadow: 4px */
+        height: calc(
+          100% - var(--sidebar-logo-h) - var(--sidebar-collapse-bar-h)
+        );
+      }
+
+      /* logo: 48px */
+      .el-scrollbar.mobile {
+        height: calc(100% - var(--sidebar-logo-h));
+      }
+    }
+
+    &.no-logo {
+      .el-scrollbar.pc {
+        /* leftCollapse: 40px、leftCollapse-shadow: 4px */
+        height: calc(100% - var(--sidebar-collapse-bar-h));
+      }
+
+      .el-scrollbar.mobile {
+        height: 100%;
+      }
+    }
+
+    .is-horizontal {
+      display: none;
+    }
+
+    a {
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .el-menu {
+      /* 层级缩进步长收敛到导航令牌（与 tokens/primitives 的 --nav-item-indent 同源） */
+      --el-menu-level-padding: var(--nav-item-indent);
+
+      height: 100%;
+      background-color: transparent !important;
+      border: none;
+    }
+
+    .el-menu-item,
+    .el-sub-menu__title {
+      height: var(--nav-item-height);
+
+      /* 项间纵距（margin-bottom 2px）：行步进 = 项高 + 该值 */
+      margin-bottom: var(--nav-item-margin-y);
+      color: var(--pure-theme-menu-text);
+      background-color: transparent !important;
+
+      /* 悬停/激活反馈节奏（0.15s；EP 缺省为 0.3s） */
+      transition:
+        background-color var(--duration-hover) var(--ease-standard),
+        color var(--duration-hover) var(--ease-standard);
+
+      &:hover {
+        color: var(--pure-theme-menu-title-hover) !important;
+
+        /* 悬停浅背景（主题令牌，深浅主题各自取色）：替代既往的强制透明 */
+        background-color: var(--pure-theme-menu-hover) !important;
+      }
+
+      div,
+      span {
+        height: var(--nav-item-height);
+        line-height: var(--nav-item-height);
+      }
+    }
+
+    /* 层级缩进口径：一级 16px、二级 32px、三级 48px（步长 = --nav-item-indent 16px）；
+       一级起点取 16px（实机观感贴左显局促）——16px 起 + 激活块 8px
+       内缩 = 图标距侧栏边缘 16px，与内容纸留白同一节奏。EP 默认从 base 20px 起步，
+       此处按本项目的层级口径重写 */
+    .el-menu-item,
+    .el-sub-menu__title {
+      padding-left: calc(16px + var(--el-menu-level, 0) * 16px);
+    }
+
+    .outer-most > .el-menu-item,
+    .outer-most > .el-sub-menu > .el-sub-menu__title {
+      padding-left: 16px;
+    }
+
+    .is-active > .el-sub-menu__title,
+    .is-active.submenu-title-noDropdown {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+    }
+
+    .is-active {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+      transition: color var(--duration-base) var(--ease-standard);
+    }
+
+    .el-menu-item.is-active.nest-menu > * {
+      z-index: 1;
+      color: var(--pure-theme-menu-active-text);
+    }
+
+    .el-menu-item.is-active.nest-menu::before {
+      position: absolute;
+      inset: 0 var(--nav-item-inset);
+      clear: both;
+      margin: var(--nav-item-margin-y) 0;
+      content: "";
+      background: var(--pure-theme-menu-active-bg) !important;
+      border-radius: var(--nav-item-radius);
+    }
+
+    .el-menu .el-menu--inline .el-sub-menu__title,
+    & .el-sub-menu .el-menu-item {
+      min-width: $sideBarWidth !important;
+      font-size: var(--font-size-base);
+      background-color: var(--pure-theme-sub-menu-bg) !important;
+    }
+
+    /* 有子集的激活菜单左侧小竖条 */
+    .el-menu--collapse
+      .is-active.outer-most.el-sub-menu
+      > .el-sub-menu__title::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      clear: both;
+      width: 2px;
+      height: 100%;
+      content: "";
+      background-color: var(--pure-theme-menu-active-before);
+      transform: translateY(0);
+      transition: all var(--duration-base) var(--ease-standard);
+    }
+
+    .el-menu--collapse .outer-most.el-sub-menu > .el-sub-menu__title::before {
+      position: absolute;
+      top: 50%;
+      display: block;
+      width: 3px;
+      height: 0;
+      content: "";
+      transform: translateY(-50%);
+    }
+
+    /* 无子集的激活菜单背景 */
+    .is-active.submenu-title-noDropdown.outer-most > * {
+      z-index: 1;
+      color: var(--pure-theme-menu-active-text);
+    }
+
+    .is-active.submenu-title-noDropdown.outer-most::before {
+      position: absolute;
+      inset: 0 var(--nav-item-inset);
+      clear: both;
+      margin: var(--nav-item-margin-y) 0;
+      content: "";
+      background: var(--pure-theme-menu-active-bg) !important;
+      border-radius: var(--nav-item-radius);
+    }
+  }
+
+  /* vertical 菜单折叠 */
+  .el-menu--vertical {
+    .el-menu--popup {
+      background-color: var(--pure-theme-sub-menu-bg) !important;
+
+      .el-menu-item {
+        span {
+          font-size: var(--font-size-base);
+        }
+      }
+    }
+
+    & > .el-menu {
+      i,
+      svg {
+        margin-right: var(--nav-item-icon-gap);
+      }
+    }
+
+    .is-active > .el-sub-menu__title,
+    .is-active.submenu-title-noDropdown {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+    }
+
+    /* 子菜单中还有子菜单 */
+    .el-menu .el-sub-menu__title {
+      min-width: $sideBarWidth !important;
+      font-size: var(--font-size-base);
+      background-color: var(--pure-theme-sub-menu-bg) !important;
+    }
+
+    .el-menu-item,
+    .el-sub-menu__title {
+      height: var(--nav-item-height);
+      line-height: var(--nav-item-height);
+      color: var(--pure-theme-menu-text);
+      background-color: var(--pure-theme-sub-menu-bg);
+
+      &:hover {
+        color: var(--pure-theme-menu-title-hover) !important;
+        background-color: var(--pure-theme-menu-hover) !important;
+      }
+    }
+
+    .is-active {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+      transition: color var(--duration-base) var(--ease-standard);
+    }
+
+    .el-menu-item.is-active.nest-menu > * {
+      z-index: 1;
+      color: var(--pure-theme-menu-active-text);
+    }
+
+    .el-menu-item.is-active.nest-menu::before {
+      position: absolute;
+      inset: 0 var(--nav-item-inset);
+      clear: both;
+      content: "";
+      background: var(--pure-theme-menu-active-bg) !important;
+      border-radius: var(--nav-item-radius);
+    }
+
+    .el-menu-item,
+    .el-sub-menu {
+      .iconfont {
+        font-size: var(--font-size-lg);
+      }
+
+      .el-menu-tooltip__trigger {
+        width: var(--sidebar-collapse-width);
+        padding: 0;
+      }
+    }
+  }
+
+  /* horizontal 菜单 */
+  .el-menu--horizontal {
+    & > .el-sub-menu .el-sub-menu__icon-arrow {
+      position: static !important;
+      margin-top: 0;
+    }
+
+    /* 无子菜单时激活 border-bottom */
+    a > .is-active.submenu-title-noDropdown {
+      border-bottom: 2px solid var(--el-menu-active-color);
+    }
+
+    .el-menu--popup {
+      background-color: var(--pure-theme-sub-menu-bg) !important;
+
+      a > .is-active.submenu-title-noDropdown {
+        border-bottom: none;
+      }
+
+      .el-menu-item {
+        color: var(--pure-theme-menu-text);
+        background-color: var(--pure-theme-sub-menu-bg);
+
+        &:hover {
+          background-color: var(--pure-theme-menu-hover) !important;
+        }
+
+        span {
+          font-size: var(--font-size-base);
+        }
+      }
+
+      .el-sub-menu__title {
+        color: var(--pure-theme-menu-text);
+
+        &:hover {
+          background-color: var(--pure-theme-menu-hover) !important;
+        }
+      }
+    }
+
+    /* 子菜单中还有子菜单 */
+    .el-menu .el-sub-menu__title {
+      min-width: $sideBarWidth !important;
+      font-size: var(--font-size-base);
+      background-color: var(--pure-theme-sub-menu-bg) !important;
+
+      &:hover {
+        color: var(--pure-theme-menu-title-hover) !important;
+      }
+    }
+
+    .is-active > .el-sub-menu__title,
+    .is-active.submenu-title-noDropdown {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+    }
+
+    .nest-menu .el-sub-menu > .el-sub-menu__title,
+    .el-menu-item {
+      &:hover {
+        color: var(--pure-theme-menu-title-hover) !important;
+        background-color: var(--pure-theme-menu-hover) !important;
+      }
+    }
+
+    .el-menu-item.is-active {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+      transition: color var(--duration-base) var(--ease-standard);
+    }
+
+    .el-menu-item.is-active.nest-menu > * {
+      z-index: 1;
+      color: var(--pure-theme-menu-active-text);
+    }
+
+    .el-menu-item.is-active.nest-menu::before {
+      position: absolute;
+      inset: 0 var(--nav-item-inset-mix);
+      clear: both;
+      content: "";
+      background: var(--pure-theme-menu-active-bg) !important;
+      border-radius: var(--nav-item-radius);
+    }
+  }
+
+  .horizontal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    height: var(--layout-header-h);
+    background: var(--pure-theme-menu-bg) !important;
+
+    .horizontal-header-left {
+      display: flex;
+      align-items: center;
+      width: auto;
+      min-width: 200px;
+      height: 100%;
+      padding-left: 10px;
+      cursor: pointer;
+      transition: all var(--duration-base) var(--ease-standard);
+
+      img {
+        display: inline-block;
+        height: 32px;
+      }
+
+      span {
+        display: inline-block;
+        height: 32px;
+        margin: 2px 0 0 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        line-height: 32px;
+        color: var(--pure-theme-sub-menu-active-text);
+        white-space: nowrap;
+      }
+    }
+
+    .horizontal-header-menu {
+      flex: 1;
+      align-items: center;
+      justify-content: var(--menu-align, start);
+      min-width: 0;
+      height: 100%;
+    }
+
+    .horizontal-header-right {
+      display: flex;
+      gap: var(--navbar-action-gap);
+      align-items: center;
+      justify-content: flex-end;
+      min-width: 340px;
+      padding-right: var(--navbar-action-pad-right);
+
+      /* 动作区取常规文字色（与竖向顶栏 nav-actions 同口径）：此前误用「子菜单激活
+         文字色」——亮色主题下该变量为主色，右上角的功能图标与用户名整体泛蓝 */
+      color: var(--el-text-color-regular);
+
+      /* 搜索 */
+      .search-container,
+        /* 国际化 */
+      .globalization-icon,
+        /* 全屏 */
+      .fullscreen-icon,
+        /* 消息通知 */
+      .dropdown-badge,
+        /* 用户名 */
+      .el-dropdown-link,
+        /* 设置（悬浮球形态自持主色 hover，见 lay-setting） */
+      .set-icon:not(.setting-fab) {
+        &:hover {
+          background: var(--pure-theme-menu-hover);
+        }
+      }
+
+      /* 通知：热区 / 高度由 navbar-action 提供，此处只绑定颜色 */
+      .dropdown-badge {
+        color: var(--pure-theme-sub-menu-active-text);
+      }
+
+      .globalization-icon {
+        color: var(--pure-theme-sub-menu-active-text);
+      }
+
+      .el-dropdown-link {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        height: var(--navbar-action-size);
+        padding: 0 10px;
+        color: var(--pure-theme-sub-menu-active-text);
+        cursor: pointer;
+        border-radius: var(--navbar-action-radius);
+        transition: background var(--duration-fast) var(--ease-standard);
+
+        p {
+          font-size: var(--font-size-base);
+        }
+
+        img {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+        }
+      }
+    }
+
+    .el-menu {
+      width: 100% !important;
+      height: 100%;
+      background-color: transparent;
+      border: none;
+    }
+
+    /* 顶栏菜单项（水平 / 混合系共用）：项高 40 居中于顶栏、12px 左内距、圆角块，
+       （顶栏 50px 内上下各留 5px） */
+    .el-menu-item,
+    .submenu-title-noDropdown,
+    .el-sub-menu__title {
+      height: var(--nav-item-height-horizontal);
+      padding-right: var(--el-menu-base-level-padding);
+      padding-left: 12px;
+      line-height: var(--nav-item-height-horizontal);
+      color: var(--pure-theme-menu-text);
+      background: var(--pure-theme-menu-bg) !important;
+      border-radius: var(--radius-md);
+
+      &:hover {
+        color: var(--pure-theme-menu-title-hover) !important;
+
+        /* 顶栏菜单项悬停浅背景（主题令牌）：覆盖「菜单底色」强制声明 */
+        background: var(--pure-theme-menu-hover) !important;
+      }
+
+      svg {
+        position: static !important;
+      }
+    }
+
+    /* 顶栏菜单激活态：主色浅底圆角块 + 主色文字（与侧栏同一套令牌） */
+    .el-menu-item.is-active,
+    .is-active > .el-sub-menu__title,
+    .is-active.submenu-title-noDropdown {
+      color: var(--pure-theme-menu-active-text) !important;
+      background: var(--pure-theme-menu-active-bg) !important;
+    }
+
+    .is-active {
+      color: var(--pure-theme-sub-menu-active-text) !important;
+      transition: color var(--duration-base) var(--ease-standard);
+    }
+  }
+
+  /* ================ 菜单徽标（后端 meta：badge / badgeType） ================ */
+  .sidebar-menu-badge {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    margin-left: 6px;
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    color: var(--pure-theme-menu-active-text);
+    background: var(--el-color-danger);
+    border-radius: 9px;
+
+    &.is-dot {
+      width: 8px;
+      min-width: 8px;
+      height: 8px;
+      padding: 0;
+      border-radius: 50%;
+    }
+  }
+
+  /* 折叠态（仅图标）：徽标叠在图标右上角；悬停临时展开时按展开形态渲染 */
+  .el-menu--collapse {
+    .sidebar-menu-badge {
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      z-index: 2;
+      visibility: visible;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      margin-left: 0;
+    }
+  }
+
+  /* ================ 菜单分组标题（后端 meta：groupName / groupRank 的渲染层装配） ================ */
+  .sidebar-menu-group {
+    .el-menu-item-group__title {
+      height: 30px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: var(--font-size-xs);
+      line-height: 30px;
+      color: var(--pure-theme-menu-text);
+      white-space: nowrap;
+      opacity: 0.7;
+    }
+  }
+
+  /* 折叠态隐藏分组标题（仅图标形态容不下标题） */
+  .el-menu--collapse .sidebar-menu-group .el-menu-item-group__title {
+    display: none;
+  }
+
+  .el-menu--collapse .el-menu .el-sub-menu {
+    min-width: $sideBarWidth !important;
+  }
+
+  /* 手机端 */
+  .mobile {
+    .fixed-header {
+      width: 100% !important;
+      transition: width var(--duration-base);
+    }
+
+    .main-container {
+      margin-left: 0 !important;
+    }
+
+    .sidebar-container {
+      z-index: 2001;
+      width: $sideBarWidth;
+      transition: transform var(--duration-base);
+    }
+
+    &.hideSidebar {
+      .sidebar-container {
+        pointer-events: none;
+        transform: translate3d($sideBarOffset, 0, 0);
+        transition-duration: var(--duration-base);
+      }
+    }
+  }
+}

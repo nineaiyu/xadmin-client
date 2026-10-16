@@ -1,0 +1,178 @@
+<script lang="ts" setup>
+import { useI18n } from "vue-i18n";
+import { deptApi } from "@/api/identity/dept";
+import type { DeptPreviewResult } from "@/api/types/permission-preview";
+import ReEmpty from "@/components/ReEmpty";
+import {
+  PreviewDescriptions,
+  PreviewFieldMatrix,
+  PreviewMenuTree,
+  PreviewNotes,
+  PreviewStatusTag,
+  PreviewUsersTable,
+  RePermissionPreviewShell,
+  toFieldMatrixEntries,
+  usePermissionPreview
+} from "@/components/RePermissionPreview";
+
+defineOptions({ name: "DeptPermissionPreview" });
+
+/**
+ * 部门授权只读预览（弹层内容组件形态）。
+ *
+ * 由页面经 `addDrawer` 打开（抽屉体系收敛，不在模板手挂 el-drawer）：
+ * 挂载即按行主键加载数据，关闭即销毁（destroyOnClose）。
+ */
+const props = defineProps<{ row: { pk?: string | number } }>();
+
+const { t } = useI18n();
+
+const { loading, data: preview } = usePermissionPreview<DeptPreviewResult>(
+  async pk => (await deptApi.preview(pk)).data,
+  () => props.row.pk
+);
+</script>
+
+<template>
+  <RePermissionPreviewShell
+    v-slot="{ data }"
+    :loading="loading"
+    :data="preview"
+  >
+    <!-- 部门信息 -->
+    <PreviewDescriptions :title="t('permissionPreview.deptInfo')">
+      <el-descriptions-item :label="t('systemDept.name')">
+        {{ data.dept.name }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('systemDept.code')">
+        {{ data.dept.code }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.status')">
+        <PreviewStatusTag :active="data.dept.is_active" />
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.deptParent')">
+        {{ data.dept.parent?.name || "-" }}
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.deptLeader')">
+        <span v-if="data.dept.leader">
+          {{ data.dept.leader.nickname || data.dept.leader.username }}
+        </span>
+        <span v-else>-</span>
+      </el-descriptions-item>
+      <el-descriptions-item :label="t('permissionPreview.deptChildren')">
+        {{ data.dept.active_child_count }} / {{ data.dept.child_count }}
+      </el-descriptions-item>
+    </PreviewDescriptions>
+
+    <PreviewNotes :notes="data.notes" />
+
+    <el-collapse
+      class="mt-3"
+      :model-value="['roles', 'menu', 'data', 'field', 'users']"
+    >
+      <!-- 挂载角色 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.rolesGranted')}（${data.roles.length}）`"
+        name="roles"
+      >
+        <div v-if="data.roles.length" class="flex flex-wrap gap-1">
+          <el-tag
+            v-for="role in data.roles"
+            :key="role.pk"
+            :type="role.is_active ? 'primary' : 'info'"
+            size="small"
+          >
+            {{ role.name }}（{{ role.code }}）
+          </el-tag>
+        </div>
+        <ReEmpty
+          v-else
+          :description="t('permissionPreview.noRoles')"
+          :image-size="70"
+        />
+      </el-collapse-item>
+
+      <!-- 可见菜单（部门角色并集） -->
+      <el-collapse-item :title="t('permissionPreview.menuTree')" name="menu">
+        <PreviewMenuTree :data="data.menu_tree" />
+      </el-collapse-item>
+
+      <!-- 部门数据权限 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.dataGrant')}（${data.data_permissions.rules.length}）`"
+        name="data"
+      >
+        <el-alert
+          v-if="!data.data_permissions.enabled"
+          :title="t('permissionPreview.dataDisabled')"
+          class="mb-2"
+          :closable="false"
+          show-icon
+          type="info"
+        />
+        <template v-if="data.data_permissions.rules.length">
+          <div
+            v-for="group in data.data_permissions.rules"
+            :key="group.pk"
+            class="mb-3"
+          >
+            <div class="mb-1 flex items-center gap-1 text-sm font-medium">
+              <span>{{ group.name }}</span>
+              <el-tooltip
+                v-if="group.menu_scoped"
+                :content="t('permissionPreview.menuScopedHint')"
+              >
+                <el-tag size="small" type="warning">
+                  {{ t("permissionPreview.boundMenus") }}
+                </el-tag>
+              </el-tooltip>
+            </div>
+            <div class="text-sm text-(--el-text-color-regular)">
+              {{ group.rule_text }}
+            </div>
+          </div>
+        </template>
+        <ReEmpty
+          v-else
+          :description="t('permissionPreview.noGrantAtLevel')"
+          :image-size="70"
+        />
+      </el-collapse-item>
+
+      <!-- 字段权限（部门角色配置） -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.fieldPermission')}（${data.field_permissions.length}）`"
+        name="field"
+      >
+        <el-alert
+          v-if="!data.field_permission_enabled"
+          :title="t('permissionPreview.fieldDisabled')"
+          class="mb-2"
+          :closable="false"
+          show-icon
+          type="info"
+        />
+        <el-alert
+          :title="t('permissionPreview.fieldBlank')"
+          class="mb-2"
+          :closable="false"
+          show-icon
+          type="info"
+        />
+        <PreviewFieldMatrix
+          v-if="data.field_permissions.length"
+          compact
+          :entries="toFieldMatrixEntries(data.field_permissions)"
+        />
+      </el-collapse-item>
+
+      <!-- 成员采样 -->
+      <el-collapse-item
+        :title="`${t('permissionPreview.deptMembers')}（${data.users.total}）`"
+        name="users"
+      >
+        <PreviewUsersTable :data="data.users" />
+      </el-collapse-item>
+    </el-collapse>
+  </RePermissionPreviewShell>
+</template>

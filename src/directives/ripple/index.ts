@@ -144,7 +144,7 @@ const ripples = {
   }
 };
 
-function isRippleEnabled(value: any): value is true {
+function isRippleEnabled(value: unknown): value is true {
   return typeof value === "undefined" || !!value;
 }
 

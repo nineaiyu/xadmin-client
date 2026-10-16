@@ -1,0 +1,374 @@
+/**
+ * 设计令牌 · 内置主题预设（层 2 附加：表面色系）
+ *
+ * 「主题预设」= 中性表面（背景 / 卡片 / 描边 / 填充）的色相倾向 + 一支配套主色。
+ * 主色在本文件按明暗成对给出（内置预设即生效）；面板显式取色写入的内联
+ * `--primary` 优先级更高，用于覆盖预设主色（见 layout/hooks/themePresets.ts）。
+ * 选择器按 `html[data-theme-preset="<预设>"]` 落值，由 usePreferenceAttributes 写入；
+ * 默认预设与「自定义」不写属性，回到 semantic.scss 的内置取值。预设清单与
+ * 本文件的漂移由 utils/__tests__/themePresets.spec.ts 校验。
+ */
+
+html[data-theme-preset="violet"] {
+  --primary: 245 82% 67%;
+  --bg-page: 245 13% 95.5%;
+  --border: 245 16.7% 88.2%;
+  --border-light: 245 20% 91.2%;
+  --border-lighter: 245 33.3% 94.1%;
+  --border-strong: 245 13.2% 85.1%;
+  --fill: 245 20% 95.1%;
+  --fill-muted: 245 33.3% 97.1%;
+  --fill-subtle: 245 30% 98%;
+  --fill-strong: 245 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="violet"] {
+  --primary: 245 82% 67%;
+  --bg-page: 245 30% 5.5%;
+  --bg-card: 245 14% 8.5%;
+  --bg-elevated: 245 12% 12.5%;
+  --border: 245 12% 30.4%;
+  --border-light: 245 12% 25.9%;
+  --border-lighter: 245 10% 21.4%;
+  --border-strong: 245 14% 35.1%;
+  --fill: 245 10% 18.8%;
+  --fill-muted: 245 10% 15.1%;
+  --fill-subtle: 245 10% 11.4%;
+  --fill-strong: 245 10% 22.5%;
+}
+
+html[data-theme-preset="pink"] {
+  --primary: 347 77% 60%;
+  --bg-page: 347 13% 95.5%;
+  --border: 347 16.7% 88.2%;
+  --border-light: 347 20% 91.2%;
+  --border-lighter: 347 33.3% 94.1%;
+  --border-strong: 347 13.2% 85.1%;
+  --fill: 347 20% 95.1%;
+  --fill-muted: 347 33.3% 97.1%;
+  --fill-subtle: 347 30% 98%;
+  --fill-strong: 347 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="pink"] {
+  --primary: 347 77% 60%;
+  --bg-page: 347 30% 5.5%;
+  --bg-card: 347 14% 8.5%;
+  --bg-elevated: 347 12% 12.5%;
+  --border: 347 12% 30.4%;
+  --border-light: 347 12% 25.9%;
+  --border-lighter: 347 10% 21.4%;
+  --border-strong: 347 14% 35.1%;
+  --fill: 347 10% 18.8%;
+  --fill-muted: 347 10% 15.1%;
+  --fill-subtle: 347 10% 11.4%;
+  --fill-strong: 347 10% 22.5%;
+}
+
+html[data-theme-preset="yellow"] {
+  --primary: 42 84% 61%;
+  --bg-page: 42 13% 95.5%;
+  --border: 42 16.7% 88.2%;
+  --border-light: 42 20% 91.2%;
+  --border-lighter: 42 33.3% 94.1%;
+  --border-strong: 42 13.2% 85.1%;
+  --fill: 42 20% 95.1%;
+  --fill-muted: 42 33.3% 97.1%;
+  --fill-subtle: 42 30% 98%;
+  --fill-strong: 42 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="yellow"] {
+  --primary: 42 84% 61%;
+  --bg-page: 42 30% 5.5%;
+  --bg-card: 42 14% 8.5%;
+  --bg-elevated: 42 12% 12.5%;
+  --border: 42 12% 30.4%;
+  --border-light: 42 12% 25.9%;
+  --border-lighter: 42 10% 21.4%;
+  --border-strong: 42 14% 35.1%;
+  --fill: 42 10% 18.8%;
+  --fill-muted: 42 10% 15.1%;
+  --fill-subtle: 42 10% 11.4%;
+  --fill-strong: 42 10% 22.5%;
+}
+
+html[data-theme-preset="skyBlue"] {
+  --primary: 231 98% 65%;
+  --bg-page: 231 13% 95.5%;
+  --border: 231 16.7% 88.2%;
+  --border-light: 231 20% 91.2%;
+  --border-lighter: 231 33.3% 94.1%;
+  --border-strong: 231 13.2% 85.1%;
+  --fill: 231 20% 95.1%;
+  --fill-muted: 231 33.3% 97.1%;
+  --fill-subtle: 231 30% 98%;
+  --fill-strong: 231 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="skyBlue"] {
+  --primary: 231 98% 65%;
+  --bg-page: 231 30% 5.5%;
+  --bg-card: 231 14% 8.5%;
+  --bg-elevated: 231 12% 12.5%;
+  --border: 231 12% 30.4%;
+  --border-light: 231 12% 25.9%;
+  --border-lighter: 231 10% 21.4%;
+  --border-strong: 231 14% 35.1%;
+  --fill: 231 10% 18.8%;
+  --fill-muted: 231 10% 15.1%;
+  --fill-subtle: 231 10% 11.4%;
+  --fill-strong: 231 10% 22.5%;
+}
+
+html[data-theme-preset="green"] {
+  --primary: 161 90% 43%;
+  --bg-page: 161 13% 95.5%;
+  --border: 161 16.7% 88.2%;
+  --border-light: 161 20% 91.2%;
+  --border-lighter: 161 33.3% 94.1%;
+  --border-strong: 161 13.2% 85.1%;
+  --fill: 161 20% 95.1%;
+  --fill-muted: 161 33.3% 97.1%;
+  --fill-subtle: 161 30% 98%;
+  --fill-strong: 161 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="green"] {
+  --primary: 161 90% 43%;
+  --bg-page: 161 30% 5.5%;
+  --bg-card: 161 14% 8.5%;
+  --bg-elevated: 161 12% 12.5%;
+  --border: 161 12% 30.4%;
+  --border-light: 161 12% 25.9%;
+  --border-lighter: 161 10% 21.4%;
+  --border-strong: 161 14% 35.1%;
+  --fill: 161 10% 18.8%;
+  --fill-muted: 161 10% 15.1%;
+  --fill-subtle: 161 10% 11.4%;
+  --fill-strong: 161 10% 22.5%;
+}
+
+html[data-theme-preset="zinc"] {
+  --primary: 240 5.9% 10%;
+  --bg-page: 240 3.9% 95.5%;
+  --border: 240 5% 88.2%;
+  --border-light: 240 6% 91.2%;
+  --border-lighter: 240 10% 94.1%;
+  --border-strong: 240 4% 85.1%;
+  --fill: 240 6% 95.1%;
+  --fill-muted: 240 10% 97.1%;
+  --fill-subtle: 240 9% 98%;
+  --fill-strong: 240 4.3% 93.1%;
+}
+
+html.dark[data-theme-preset="zinc"] {
+  --primary: 0 0% 98%;
+  --bg-page: 240 9% 5.5%;
+  --bg-card: 240 4.2% 8.5%;
+  --bg-elevated: 240 3.6% 12.5%;
+  --border: 240 3.6% 30.4%;
+  --border-light: 240 3.6% 25.9%;
+  --border-lighter: 240 3% 21.4%;
+  --border-strong: 240 4.2% 35.1%;
+  --fill: 240 3% 18.8%;
+  --fill-muted: 240 3% 15.1%;
+  --fill-subtle: 240 3% 11.4%;
+  --fill-strong: 240 3% 22.5%;
+}
+
+html[data-theme-preset="deepGreen"] {
+  --primary: 181 84% 32%;
+  --bg-page: 181 13% 95.5%;
+  --border: 181 16.7% 88.2%;
+  --border-light: 181 20% 91.2%;
+  --border-lighter: 181 33.3% 94.1%;
+  --border-strong: 181 13.2% 85.1%;
+  --fill: 181 20% 95.1%;
+  --fill-muted: 181 33.3% 97.1%;
+  --fill-subtle: 181 30% 98%;
+  --fill-strong: 181 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="deepGreen"] {
+  --primary: 181 84% 32%;
+  --bg-page: 181 30% 5.5%;
+  --bg-card: 181 14% 8.5%;
+  --bg-elevated: 181 12% 12.5%;
+  --border: 181 12% 30.4%;
+  --border-light: 181 12% 25.9%;
+  --border-lighter: 181 10% 21.4%;
+  --border-strong: 181 14% 35.1%;
+  --fill: 181 10% 18.8%;
+  --fill-muted: 181 10% 15.1%;
+  --fill-subtle: 181 10% 11.4%;
+  --fill-strong: 181 10% 22.5%;
+}
+
+html[data-theme-preset="deepBlue"] {
+  --primary: 211 91% 39%;
+  --bg-page: 211 13% 95.5%;
+  --border: 211 16.7% 88.2%;
+  --border-light: 211 20% 91.2%;
+  --border-lighter: 211 33.3% 94.1%;
+  --border-strong: 211 13.2% 85.1%;
+  --fill: 211 20% 95.1%;
+  --fill-muted: 211 33.3% 97.1%;
+  --fill-subtle: 211 30% 98%;
+  --fill-strong: 211 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="deepBlue"] {
+  --primary: 211 91% 39%;
+  --bg-page: 211 30% 5.5%;
+  --bg-card: 211 14% 8.5%;
+  --bg-elevated: 211 12% 12.5%;
+  --border: 211 12% 30.4%;
+  --border-light: 211 12% 25.9%;
+  --border-lighter: 211 10% 21.4%;
+  --border-strong: 211 14% 35.1%;
+  --fill: 211 10% 18.8%;
+  --fill-muted: 211 10% 15.1%;
+  --fill-subtle: 211 10% 11.4%;
+  --fill-strong: 211 10% 22.5%;
+}
+
+html[data-theme-preset="orange"] {
+  --primary: 18 89% 40%;
+  --bg-page: 18 13% 95.5%;
+  --border: 18 16.7% 88.2%;
+  --border-light: 18 20% 91.2%;
+  --border-lighter: 18 33.3% 94.1%;
+  --border-strong: 18 13.2% 85.1%;
+  --fill: 18 20% 95.1%;
+  --fill-muted: 18 33.3% 97.1%;
+  --fill-subtle: 18 30% 98%;
+  --fill-strong: 18 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="orange"] {
+  --primary: 18 89% 40%;
+  --bg-page: 18 30% 5.5%;
+  --bg-card: 18 14% 8.5%;
+  --bg-elevated: 18 12% 12.5%;
+  --border: 18 12% 30.4%;
+  --border-light: 18 12% 25.9%;
+  --border-lighter: 18 10% 21.4%;
+  --border-strong: 18 14% 35.1%;
+  --fill: 18 10% 18.8%;
+  --fill-muted: 18 10% 15.1%;
+  --fill-subtle: 18 10% 11.4%;
+  --fill-strong: 18 10% 22.5%;
+}
+
+html[data-theme-preset="rose"] {
+  --primary: 0 75% 42%;
+  --bg-page: 0 13% 95.5%;
+  --border: 0 16.7% 88.2%;
+  --border-light: 0 20% 91.2%;
+  --border-lighter: 0 33.3% 94.1%;
+  --border-strong: 0 13.2% 85.1%;
+  --fill: 0 20% 95.1%;
+  --fill-muted: 0 33.3% 97.1%;
+  --fill-subtle: 0 30% 98%;
+  --fill-strong: 0 14.3% 93.1%;
+}
+
+html.dark[data-theme-preset="rose"] {
+  --primary: 0 75% 42%;
+  --bg-page: 0 30% 5.5%;
+  --bg-card: 0 14% 8.5%;
+  --bg-elevated: 0 12% 12.5%;
+  --border: 0 12% 30.4%;
+  --border-light: 0 12% 25.9%;
+  --border-lighter: 0 10% 21.4%;
+  --border-strong: 0 14% 35.1%;
+  --fill: 0 10% 18.8%;
+  --fill-muted: 0 10% 15.1%;
+  --fill-subtle: 0 10% 11.4%;
+  --fill-strong: 0 10% 22.5%;
+}
+
+html[data-theme-preset="neutral"] {
+  --primary: 240 5.9% 10%;
+  --bg-page: 0 3.9% 95.5%;
+  --border: 0 5% 88.2%;
+  --border-light: 0 6% 91.2%;
+  --border-lighter: 0 10% 94.1%;
+  --border-strong: 0 4% 85.1%;
+  --fill: 0 6% 95.1%;
+  --fill-muted: 0 10% 97.1%;
+  --fill-subtle: 0 9% 98%;
+  --fill-strong: 0 4.3% 93.1%;
+}
+
+html.dark[data-theme-preset="neutral"] {
+  --primary: 0 0% 98%;
+  --bg-page: 0 9% 5.5%;
+  --bg-card: 0 4.2% 8.5%;
+  --bg-elevated: 0 3.6% 12.5%;
+  --border: 0 3.6% 30.4%;
+  --border-light: 0 3.6% 25.9%;
+  --border-lighter: 0 3% 21.4%;
+  --border-strong: 0 4.2% 35.1%;
+  --fill: 0 3% 18.8%;
+  --fill-muted: 0 3% 15.1%;
+  --fill-subtle: 0 3% 11.4%;
+  --fill-strong: 0 3% 22.5%;
+}
+
+html[data-theme-preset="slate"] {
+  --primary: 240 5.9% 10%;
+  --bg-page: 215 6.5% 95.5%;
+  --border: 215 8.3% 88.2%;
+  --border-light: 215 10% 91.2%;
+  --border-lighter: 215 16.6% 94.1%;
+  --border-strong: 215 6.6% 85.1%;
+  --fill: 215 10% 95.1%;
+  --fill-muted: 215 16.6% 97.1%;
+  --fill-subtle: 215 15% 98%;
+  --fill-strong: 215 7.2% 93.1%;
+}
+
+html.dark[data-theme-preset="slate"] {
+  --primary: 0 0% 98%;
+  --bg-page: 215 15% 5.5%;
+  --bg-card: 215 7% 8.5%;
+  --bg-elevated: 215 6% 12.5%;
+  --border: 215 6% 30.4%;
+  --border-light: 215 6% 25.9%;
+  --border-lighter: 215 5% 21.4%;
+  --border-strong: 215 7% 35.1%;
+  --fill: 215 5% 18.8%;
+  --fill-muted: 215 5% 15.1%;
+  --fill-subtle: 215 5% 11.4%;
+  --fill-strong: 215 5% 22.5%;
+}
+
+html[data-theme-preset="gray"] {
+  --primary: 240 5.9% 10%;
+  --bg-page: 217 6.5% 95.5%;
+  --border: 217 8.3% 88.2%;
+  --border-light: 217 10% 91.2%;
+  --border-lighter: 217 16.6% 94.1%;
+  --border-strong: 217 6.6% 85.1%;
+  --fill: 217 10% 95.1%;
+  --fill-muted: 217 16.6% 97.1%;
+  --fill-subtle: 217 15% 98%;
+  --fill-strong: 217 7.2% 93.1%;
+}
+
+html.dark[data-theme-preset="gray"] {
+  --primary: 0 0% 98%;
+  --bg-page: 217 15% 5.5%;
+  --bg-card: 217 7% 8.5%;
+  --bg-elevated: 217 6% 12.5%;
+  --border: 217 6% 30.4%;
+  --border-light: 217 6% 25.9%;
+  --border-lighter: 217 5% 21.4%;
+  --border-strong: 217 7% 35.1%;
+  --fill: 217 5% 18.8%;
+  --fill-muted: 217 5% 15.1%;
+  --fill-subtle: 217 5% 11.4%;
+  --fill-strong: 217 5% 22.5%;
+}

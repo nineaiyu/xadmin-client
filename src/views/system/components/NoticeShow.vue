@@ -1,9 +1,23 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, shallowRef } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  ref,
+  shallowRef
+} from "vue";
 import "@wangeditor/editor/dist/css/style.css";
-import { Editor } from "@wangeditor/editor-for-vue";
+import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
 import { useI18n } from "vue-i18n";
+
+// 先注册附件插件、再加载只读编辑器组件，保持 wangeditor 栈留在懒加载 chunk
+// （同 WangEditor.vue 的做法，见 src/utils/wangEditorBoot.ts）
+const Editor = defineAsyncComponent(async () => {
+  await ensureWangEditorBoot();
+  return (await import("@wangeditor/editor-for-vue")).Editor;
+});
 import { NoticeChoices } from "@/views/system/constants";
+import { sanitizeHtml } from "@/utils/sanitize";
 
 interface FormItemProps {
   pk?: number;
@@ -45,7 +59,7 @@ const editorConfig = {
   readOnly: true
 };
 
-const handleCreated = editor => {
+const handleCreated = (editor: unknown) => {
   // 记录 editor 实例，重要！
   editorRef.value = editor;
 };
@@ -58,10 +72,15 @@ onBeforeUnmount(() => {
 });
 
 const loading = ref(false);
+
+/** 系统通知内容以 v-html 渲染，展示前经 DOMPurify 净化（服务端 bleach 净化的兜底） */
+const sanitizedMessage = computed(() =>
+  sanitizeHtml(newFormInline.value?.message)
+);
 </script>
 
 <template>
-  <el-form ref="formRef" :model="newFormInline" label-width="82px">
+  <el-form ref="formRef" :model="newFormInline" label-width="90px">
     <el-card shadow="never">
       <template #header>
         <h2 class="inline-block mr-6">
@@ -81,7 +100,7 @@ const loading = ref(false);
       </template>
       <div
         v-if="newFormInline?.notice_type?.value === NoticeChoices.SYSTEM"
-        v-html="newFormInline.message"
+        v-html="sanitizedMessage"
       />
       <div v-else class="wangeditor">
         <Editor
@@ -96,3 +115,15 @@ const loading = ref(false);
     </el-card>
   </el-form>
 </template>
+
+<style lang="scss" scoped>
+/**
+ * 只读展示区高度修正（同 WangEditor.vue 的说明）：Editor 的 style 落在组件 wrapper 上，
+ * `.w-e-text-container` / `.w-e-scroll` 的 `height: 100%` 解析失败会退化为内容高度
+ * （空内容约 52px），触发「编辑区域高度 < 300px …」告警。补 min-height 保持自适应增高。
+ */
+:deep(.w-e-text-container),
+:deep(.w-e-text-container .w-e-scroll) {
+  min-height: 500px;
+}
+</style>

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { goBackOrHome, hasInAppHistory } from "@/router/utils";
 import back from "@/assets/svg/back_top.svg?component";
 
 defineOptions({
@@ -7,14 +9,21 @@ defineOptions({
 });
 
 const router = useRouter();
+const { t } = useI18n();
+/** 是否有站内上一页：决定返回落点与提示文案（直达进入时回首页，go(-1) 是无操作） */
+const canBack = hasInAppHistory(router);
 </script>
 
 <template>
-  <div class="w-full h-full text-center">
-    <h1>业务内容模块</h1>
-    <p>使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块</p>
-    <div class="back" title="返回上一页" @click="router.go(-1)">
-      <back class="w-[80px] h-[80px]" />
+  <div class="size-full text-center">
+    <h1>{{ t("emptyPage.title") }}</h1>
+    <p>{{ t("emptyPage.description") }}</p>
+    <div
+      class="back"
+      :title="canBack ? t('emptyPage.back') : t('error.goBack')"
+      @click="goBackOrHome(router)"
+    >
+      <back class="size-20" />
     </div>
   </div>
 </template>
@@ -30,13 +39,15 @@ const router = useRouter();
   width: 200px;
   height: 200px;
   cursor: pointer;
-  background: rgb(138 150 160 / 8%);
-  border-radius: 18px;
+
+  /* 底色/悬浮色取 EP 令牌（暗色下由 EP 重定义）；18px 为设计圆角，无对应令牌 */
+  background: var(--el-fill-color-light);
+  border-radius: var(--radius-xl);
   transform: translate(-50%, -50%);
 
   &:hover {
-    background: rgb(138 150 160 / 20%);
-    transition: background 0.6s;
+    background: var(--el-fill-color);
+    transition: background var(--duration-slower) var(--ease-standard);
   }
 }
 </style>

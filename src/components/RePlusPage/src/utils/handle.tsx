@@ -1,275 +1,16 @@
-import { addDialog, type DialogOptions } from "@/components/ReDialog/index";
-import { deviceDetection } from "@pureadmin/utils";
-import { type Component, h, type Ref, ref, toRaw } from "vue";
-import { cloneDeep } from "lodash-es";
+import { isSuccess } from "@/api/types";
+import type { CSSProperties, Ref } from "vue";
 import { message } from "@/utils/message";
-import type { PlusFormProps } from "plus-pro-components";
-import { ElMessageBox, type FormInstance, type TabsProps } from "element-plus";
-import type { BaseApi } from "@/api/base";
-import type { DetailResult } from "@/api/types";
-import { type PageColumn, uniqueArrayObj } from "@/components/RePlusPage";
-import { resourcesIDCacheApi } from "@/api/common";
-import AddOrEdit from "../components/AddOrEdit.vue";
-import ExportData from "../components/ExportData.vue";
-import ImportData from "../components/ImportData.vue";
-import { addDrawer, type DrawerOptions } from "@/components/ReDrawer/index";
-
-const modeFuncMap = {
-  drawer: addDrawer,
-  dialog: addDialog
-} satisfies {
-  [key in "dialog" | "drawer"]: (
-    options: Partial<DrawerOptions & DialogOptions>
-  ) => any;
-};
-
-interface callBackArgs {
-  formData: object | any;
-  formRef: FormInstance;
-  formOptions: formDialogDrawerOptions;
-  closeLoading: () => void;
-  success: (detail: string, close?: boolean) => void;
-  failed: (detail: string, close?: boolean) => void;
-  done: () => void;
-}
-
-interface formDialogDrawerOptions {
-  mode?: "dialog" | "drawer";
-  t: (arg0: string, arg1?: object) => string;
-  isAdd?: boolean;
-  row?:
-    | object
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      }; //  外部处理方法
-  title: string; // 弹窗的的title
-  formValue?: Ref; // 表单值
-  rawRow: { [key: string]: any }; //  默认数据或者更新的数据
-  minWidth?: string; // 弹窗的的最小宽度
-  columns?:
-    | object
-    | {
-        [key: string]: (
-          formOptions: Partial<formDialogDrawerOptions> & { column: PageColumn }
-        ) => object;
-      }; // 表单字段
-  rawColumns?: PageColumn[] | Array<any>; // 表单字段
-  form?: Component | any; // 挂载的form组件，默认是AddOrEdit组件
-  props?: ((formOptions: formDialogDrawerOptions) => object) | object; //  内容区组件的 props，可通过 defineProps 接收
-  formProps?:
-    | object
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      }; //  plus form 的props
-  tabsProps?:
-    | Partial<TabsProps>
-    | {
-        [key: string]: (formOptions: Partial<formDialogDrawerOptions>) => any;
-      };
-  rawFormProps?: PlusFormProps; //  plus form 的props
-  dialogDrawerOptions?: Partial<DrawerOptions & DialogOptions>; // dialog options
-  beforeSubmit?: ({
-    formData,
-    formRef,
-    formOptions
-  }: {
-    formData: object | any;
-    formRef: Ref;
-    formOptions: formDialogDrawerOptions;
-  }) => object | any;
-  saveCallback?: ({
-    formData,
-    formRef,
-    formOptions,
-    closeLoading,
-    success,
-    failed,
-    done
-  }: callBackArgs) => void; // 点击保存回调
-}
-
-const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
-  const formRef = ref();
-  const rowResult = {};
-  Object.keys(formOptions?.row ?? {}).forEach(key => {
-    const getValue = formOptions.row[key];
-    if (typeof formOptions.row[key] === "function") {
-      rowResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      rowResult[key] = getValue;
-    }
-  });
-
-  const formInline = {
-    ...(cloneDeep(formOptions?.rawRow) ?? {}),
-    ...rowResult
-  };
-
-  formOptions.formValue = formOptions.formValue ?? ref(cloneDeep(formInline));
-
-  const propsResult = {};
-  Object.keys(formOptions?.props ?? {}).forEach(key => {
-    const getValue = formOptions.props[key];
-    if (typeof formOptions.props[key] === "function") {
-      propsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      propsResult[key] = getValue;
-    }
-  });
-
-  // let editColumns = [];
-  // if (typeof formOptions?.columns === "function") {
-  //   editColumns = formOptions.columns(cloneDeep(formOptions));
-  // } else {
-  //   editColumns = [...(formOptions?.columns ?? [])];
-  // }
-  const rawColumns = {};
-  cloneDeep(formOptions?.rawColumns ?? []).forEach(column => {
-    rawColumns[column._column?.key ?? column.prop] = column;
-  });
-  const editColumns = {};
-  Object.keys(formOptions?.columns ?? {}).forEach(key => {
-    const getValue = formOptions.columns[key];
-    if (typeof formOptions.columns[key] === "function") {
-      try {
-        editColumns[key] = getValue({
-          ...cloneDeep({ ...formOptions, column: rawColumns[key] }),
-          formValue: formOptions.formValue
-        });
-      } catch (err) {
-        console.warn(err);
-      }
-    } else {
-      editColumns[key] = getValue;
-    }
-  });
-
-  const formPropsResult = {};
-
-  Object.keys(formOptions?.formProps ?? {}).forEach(key => {
-    const getValue = formOptions?.formProps[key];
-    if (typeof formOptions?.formProps[key] === "function") {
-      formPropsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      formPropsResult[key] = getValue;
-    }
-  });
-
-  const tabsPropsResult = {};
-
-  Object.keys(formOptions?.tabsProps ?? {}).forEach(key => {
-    const getValue = formOptions?.tabsProps[key];
-    if (typeof formOptions?.tabsProps[key] === "function") {
-      tabsPropsResult[key] = getValue(cloneDeep(formOptions));
-    } else {
-      tabsPropsResult[key] = getValue;
-    }
-  });
-
-  const clientWidth = document.documentElement.clientWidth;
-  const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
-  const width = formOptions?.dialogDrawerOptions?.width ?? "50%";
-  let numberWidth: number;
-  if (width.endsWith("%") || width.endsWith("vw")) {
-    numberWidth =
-      (clientWidth * Number(width.replace("%", "").replace("vw", ""))) / 100;
-  } else {
-    numberWidth = Number(width.replace("px", ""));
-  }
-  const func = modeFuncMap[formOptions.mode ?? "dialog"] ?? addDialog;
-  func({
-    title: formOptions.title,
-    props: {
-      formInline,
-      ...propsResult,
-      columns: uniqueArrayObj(
-        [
-          ...(formOptions?.rawColumns ?? []),
-          ...(Object.values(editColumns) ?? [])
-        ],
-        "prop"
-      ),
-      formProps: { ...formOptions?.rawFormProps, ...(formPropsResult ?? {}) },
-      tabsProps: { ...(tabsPropsResult ?? {}) }
-    },
-    draggable: true,
-    sureBtnLoading: true,
-    fullscreen: deviceDetection(),
-    destroyOnClose: true,
-    fullscreenIcon: true,
-    closeOnClickModal: false,
-    contentRenderer: () => h(formOptions?.form ?? AddOrEdit, { ref: formRef }),
-    beforeSure: async (done, { options, closeLoading }) => {
-      const FormRef: FormInstance = formRef.value.getRef();
-      const allFormInstances = (FormRef as any)?._allInstances ?? [FormRef]; // 获取所有 PlusForm 实例
-      const formInlineData = cloneDeep(options.props.formInline);
-
-      const success = (detail = undefined, close = true) => {
-        message(detail ?? formOptions?.t("results.success"), {
-          type: "success"
-        });
-        closeLoading();
-        if (close) {
-          done();
-        }
-      };
-
-      const failed = (detail: string, close = false) => {
-        message(`${formOptions?.t("results.failed")}，${detail}`, {
-          type: "error"
-        });
-        closeLoading();
-        if (close) {
-          done();
-        }
-      };
-
-      for (let i = 0; i < allFormInstances.length; i++) {
-        const valid = await allFormInstances[i]?.validate(valid => {
-          if (!valid) {
-            formRef.value.setActiveName(i);
-            closeLoading();
-          }
-        });
-        if (!valid) {
-          return;
-        }
-      }
-      const formData =
-        (formOptions?.beforeSubmit &&
-          formOptions?.beforeSubmit({
-            formData: formInlineData,
-            formRef: formRef,
-            formOptions
-          })) ||
-        formInlineData;
-      formOptions?.saveCallback({
-        formData,
-        formRef: FormRef,
-        closeLoading,
-        formOptions,
-        success,
-        failed,
-        done
-      });
-    },
-    ...formOptions?.dialogDrawerOptions,
-    width: `${minWidth > numberWidth ? minWidth : numberWidth}px`,
-    size: `${minWidth > numberWidth ? minWidth : numberWidth}`,
-    onChange(data) {
-      if (data?.values) {
-        formOptions.formValue.value = data?.values?.values;
-      }
-      if (formOptions?.dialogDrawerOptions?.onChange) {
-        formOptions?.dialogDrawerOptions?.onChange(data);
-      }
-    }
-  } as Partial<DrawerOptions & DialogOptions>);
-};
+import { invalidateMetaCache } from "@/utils/metaCache";
+import type { RecordType } from "plus-pro-components";
+import { useConfirm } from "@/hooks/useConfirm";
+import type { TableColumnRenderer } from "@pureadmin/table";
+import type { ApiResult, DetailResult } from "@/api/types";
 
 interface operationOptions {
   t: (arg0: string, arg1?: object) => string;
-  apiReq: Promise<any>;
+  /** 标准接口请求（`create`/`update` 返回 `DetailResult`，其余写操作返回 `BaseResult`，读取仅依赖 `code`/`detail`） */
+  apiReq?: Promise<ApiResult>;
   showSuccessMsg?: boolean;
   showFailedMsg?: boolean;
   success?: (res?: DetailResult) => void;
@@ -277,6 +18,17 @@ interface operationOptions {
   exception?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
+
+/**
+ * 单元格渲染作用域是否处于只读场景（回收站抽屉以 `readonly: true` 调用）。
+ *
+ * 回收站里的行已软删除，除操作列「恢复」外不应再提供任何可变更/可交互入口：
+ * 框架内建开关渲染器据此置灰，业务自定义交互单元格（下载链接 / 预览按钮 /
+ * 明细入口等）应在只读场景下降级为纯展示。该标记由 ReRecycleBin 附加，
+ * `@pureadmin/table` 的 TableColumnRenderer 未声明该位，故从 unknown 收窄读取。
+ */
+const isReadonlyCell = (scope: unknown) =>
+  (scope as { readonly?: boolean } | undefined)?.readonly === true;
 
 /**
  * 请求接口封装
@@ -295,20 +47,23 @@ const handleOperation = (options: operationOptions) => {
   } = options;
 
   apiReq
-    ?.then((res: DetailResult) => {
-      if (res.code === 1000) {
+    ?.then((res: ApiResult) => {
+      if (isSuccess(res)) {
+        // 写操作成功即失效共享元数据缓存（菜单等全量列表）：避免「刚保存的改动
+        // 在其它页面的树/下拉里看不到」。命中缓存的下次读取会重新拉取。
+        invalidateMetaCache();
         if (showSuccessMsg) {
           message(res.detail ?? t("results.success"), { type: "success" });
         }
         if (success) {
-          success(res);
+          success(res as DetailResult);
         }
       } else {
         if (showFailedMsg) {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
         if (failed) {
-          failed(res);
+          failed(res as DetailResult);
         }
       }
     })
@@ -326,12 +81,13 @@ const handleOperation = (options: operationOptions) => {
 
 interface changeOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<ApiResult>; // 更新方法
   switchLoadMap: Ref;
   index: number; // 更新行索引
   row: {
     pk?: string | number;
     id?: string | number;
+    [key: string]: unknown;
   }; // 更新的表单数据
   field: string; // 更新的字段
   actionMsg: string;
@@ -340,6 +96,20 @@ interface changeOptions {
   failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
 }
+
+/** 确认弹窗走 dangerouslyUseHTMLString，插值（含服务端列名/文案）必须转义防注入 */
+const escapeHtml = (value: unknown): string =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    char =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char] as string
+  );
 
 const onSwitchChange = (changeOptions: changeOptions) => {
   const {
@@ -355,67 +125,62 @@ const onSwitchChange = (changeOptions: changeOptions) => {
     failed,
     requestEnd
   } = changeOptions;
-  ElMessageBox.confirm(
+  const confirm = useConfirm();
+  confirm(
     `${t("buttons.operateConfirm", {
-      action: `<strong>${actionMsg}</strong>`,
-      message: `<strong style="color:var(--el-color-primary)">${msg}</strong>`
+      action: `<strong>${escapeHtml(actionMsg)}</strong>`,
+      message: `<strong style="color:var(--el-color-primary)">${escapeHtml(msg)}</strong>`
     })}`,
     {
-      confirmButtonText: t("buttons.sure"),
-      cancelButtonText: t("buttons.cancel"),
-      type: "warning",
       dangerouslyUseHTMLString: true,
       draggable: true
     }
-  )
-    .then(() => {
-      switchLoadMap.value[index] = Object.assign(
-        {},
-        switchLoadMap.value[index],
-        {
-          loading: true
-        }
-      );
-      const updateData = {};
-      updateData[field] = row[field];
-      handleOperation({
-        t,
-        apiReq: updateApi(row?.pk ?? row?.id, updateData),
-        requestEnd(options) {
-          switchLoadMap.value[index] = Object.assign(
-            {},
-            switchLoadMap.value[index],
-            {
-              loading: false
-            }
-          );
-          if (requestEnd) {
-            requestEnd(options);
-          }
-        },
-        success,
-        failed,
-        exception() {
-          row[field] = row[field] === false;
-        }
-      });
-    })
-    .catch(() => {
+  ).then(ok => {
+    if (!ok) {
+      // 取消/关闭：回滚开关（与请求异常同口径）
       row[field] = row[field] === false;
+      return;
+    }
+    switchLoadMap.value[index] = Object.assign({}, switchLoadMap.value[index], {
+      loading: true
     });
+    const updateData: Record<string, unknown> = {};
+    updateData[field] = row[field];
+    handleOperation({
+      t,
+      apiReq: updateApi((row?.pk ?? row?.id) as string | number, updateData),
+      requestEnd(options) {
+        switchLoadMap.value[index] = Object.assign(
+          {},
+          switchLoadMap.value[index],
+          {
+            loading: false
+          }
+        );
+        if (requestEnd) {
+          requestEnd(options);
+        }
+      },
+      success,
+      failed,
+      exception() {
+        row[field] = row[field] === false;
+      }
+    });
+  });
 };
 
 interface switchOptions {
   t: (arg0: string, arg1?: object) => string;
-  updateApi: (pk: string | number, data: object) => Promise<any>; // 更新方法
+  updateApi: (pk: string | number, data: object) => Promise<ApiResult>; // 更新方法
   switchLoadMap: Ref;
-  switchStyle: Ref;
+  switchStyle: Ref<CSSProperties>;
   field: string; // 更新的字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
   activeMap?: object; // active映射 {true:'发布',false:'未发布'}
   msg?: string;
   actionMsg?: string;
-  disabled?: (row?: any) => boolean;
+  disabled?: (row?: RecordType) => boolean;
   success?: (res?: DetailResult) => void;
   failed?: (res?: DetailResult) => void;
   requestEnd?: (options?: operationOptions) => void;
@@ -438,18 +203,18 @@ const renderSwitch = (switchOptions: switchOptions) => {
     disabled
   } = switchOptions;
 
-  const defaultActionMap = {
+  const defaultActionMap: Record<string, string> = {
     true: t("labels.enable"),
     false: t("labels.disable"),
     ...(actionMap ?? {})
   };
 
-  const defaultActiveMap = {
+  const defaultActiveMap: Record<string, boolean> = {
     true: true,
     false: false,
     ...(activeMap ?? {})
   };
-  return scope => (
+  return (scope: TableColumnRenderer) => (
     <el-switch
       size={scope.props.size === "small" ? "small" : "default"}
       loading={switchLoadMap.value[scope.index]?.loading}
@@ -459,19 +224,21 @@ const renderSwitch = (switchOptions: switchOptions) => {
       active-text={defaultActionMap["true"]}
       inactive-text={defaultActionMap["false"]}
       inline-prompt
-      disabled={disabled && disabled(scope.row)}
+      aria-label={String(scope.column?.label ?? t("labels.enable"))}
+      disabled={isReadonlyCell(scope) || Boolean(disabled?.(scope.row))}
       style={switchStyle.value}
       onChange={() => {
         onSwitchChange({
           t,
-          msg: msg ?? scope.column.label,
+          msg: msg ?? scope.column?.label,
           field,
           updateApi,
           switchLoadMap,
           row: scope.row,
           index: scope.index,
           actionMsg:
-            actionMsg ?? defaultActionMap[defaultActiveMap[scope.row[field]]],
+            actionMsg ??
+            defaultActionMap[String(defaultActiveMap[scope.row[field]])],
           success,
           failed,
           requestEnd
@@ -483,151 +250,40 @@ const renderSwitch = (switchOptions: switchOptions) => {
 
 interface booleanTagOptions {
   t: (arg0: string, arg1?: object) => string;
-  tagStyle: Ref;
+  tagStyle: Ref<(status: boolean) => CSSProperties>;
   field: string; // 字段
   actionMap?: object; // msg映射 {true:'发布',false:'未发布'}
   disabled?: boolean;
 }
 
 const renderBooleanTag = (booleanTagOptions: booleanTagOptions) => {
-  const { t, tagStyle, field, disabled, actionMap } = booleanTagOptions;
-  const defaultActionMap = {
+  const { t, tagStyle, field, actionMap } = booleanTagOptions;
+  const defaultActionMap: Record<string, string> = {
     true: t("labels.enable"),
     false: t("labels.disable"),
     ...actionMap
   };
-  return scope => (
-    <el-tag
-      size={scope.props.size}
-      style={tagStyle.value(scope.row[field])}
-      disabled={disabled}
-    >
+  return (scope: TableColumnRenderer) => (
+    <el-tag size={scope.props.size} style={tagStyle.value(scope.row[field])}>
       {defaultActionMap[scope.row[field]]}
     </el-tag>
   );
 };
 
-interface exportDataOptions {
-  mode?: "dialog" | "drawer";
-  t: (arg0: string, arg1?: object) => string;
-  api: Partial<BaseApi>;
-  pks: Array<string | number>;
-  allowTypes?: Array<string>;
-  searchFields?: Ref;
-}
-
-// 数据导出
-const handleExportData = (options: exportDataOptions) => {
-  const {
-    t,
-    mode,
-    api,
-    pks,
-    allowTypes = ["all", "search", "selected"],
-    searchFields = undefined
-  } = options;
-
-  openDialogDrawer({
-    t,
-    mode,
-    title: t("exportImport.export"),
-    rawRow: {
-      type: "xlsx",
-      range: pks.length > 0 ? "selected" : "all",
-      pks: pks
-    },
-    props: {
-      allowTypes
-    },
-    dialogDrawerOptions: { width: "600px" },
-    form: ExportData,
-    saveCallback: async ({ formData, done, closeLoading }) => {
-      if (formData.range === "all") {
-        await api.exportData(formData).finally(() => {
-          closeLoading();
-        });
-      } else if (formData.range === "search" && searchFields) {
-        searchFields.value["type"] = formData["type"];
-        await api.exportData(toRaw(searchFields.value)).finally(() => {
-          closeLoading();
-        });
-      } else if (formData.range === "selected") {
-        resourcesIDCacheApi(formData.pks)
-          .then(async res => {
-            formData["spm"] = res.spm;
-            delete formData.pks;
-            await api.exportData(formData).finally(() => {
-              closeLoading();
-            });
-          })
-          .finally(() => {
-            closeLoading();
-          });
-      }
-      done();
-    }
-  });
-};
-
-interface importDataOptions {
-  mode?: "dialog" | "drawer";
-  t: (arg0: string, arg1?: object) => string;
-  api: Partial<BaseApi>;
-  success?: (res?: DetailResult) => void;
-}
-
-// 数据导入
-const handleImportData = (options: importDataOptions) => {
-  const { t, api, mode } = options;
-
-  openDialogDrawer({
-    t,
-    mode,
-    title: t("exportImport.import"),
-    rawRow: {
-      action: "create",
-      ignore_error: false,
-      api: api
-    },
-    dialogDrawerOptions: { width: "600px" },
-    form: ImportData,
-    saveCallback: ({ formData, success, failed, closeLoading }) => {
-      api
-        .importData(
-          { action: formData.action, ignore_error: formData.ignore_error },
-          formData.upload[0].raw
-        )
-        .then(res => {
-          if (res.code === 1000) {
-            if (options?.success) {
-              options?.success(res);
-            }
-            success(res.detail);
-          } else {
-            failed(res.detail, false);
-          }
-        })
-        .finally(() => {
-          closeLoading();
-        });
-    }
-  });
-};
-
+// 弹层（openDialogDrawer）与导入导出（handleExportData/handleImportData）已按职责
+// 拆分至 handle-dialog / handle-record，此处仅 re-export 保持既有导入路径不变
+export { openDialogDrawer } from "./handle-dialog";
+export { handleExportData, handleImportData } from "./handle-record";
+export type {
+  formDialogDrawerOptions,
+  DialogFormInstance
+} from "./handle-dialog";
+export type { exportDataOptions, importDataOptions } from "./handle-record";
 export {
   renderSwitch,
   onSwitchChange,
   handleOperation,
-  openDialogDrawer,
   renderBooleanTag,
-  handleExportData,
-  handleImportData
+  isReadonlyCell
 };
-export type {
-  changeOptions,
-  switchOptions,
-  operationOptions,
-  exportDataOptions,
-  importDataOptions,
-  formDialogDrawerOptions
-};
+export type { changeOptions, switchOptions, operationOptions };

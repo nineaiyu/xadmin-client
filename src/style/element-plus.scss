@@ -1,5 +1,7 @@
+@use "tokens/breakpoints" as bp;
+
 .el-form-item__label {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .el-breadcrumb__inner,
@@ -12,7 +14,8 @@
 }
 
 .is-dark {
-  z-index: 9999 !important;
+  /* 暗色 tooltip（v-tippy 独立 popper 引擎）：必须高于 EP 弹层，取值见 z-index 阶梯 */
+  z-index: var(--z-index-tippy) !important;
 }
 
 /* 重置 el-button 中 icon 的 margin */
@@ -25,22 +28,15 @@
   padding: 0 !important;
 }
 
-/* nprogress 适配 element-plus 的主题色 */
-#nprogress {
-  & .bar {
-    background-color: var(--el-color-primary) !important;
-  }
+/* 顶栏进度条（src/utils/progress）的配色在模块内联样式中读取
+   --el-color-primary，无需在此重复定义，避免主题色两处维护 */
 
-  & .peg {
-    box-shadow:
-      0 0 10px var(--el-color-primary),
-      0 0 5px var(--el-color-primary) !important;
-  }
-
-  & .spinner-icon {
-    border-top-color: var(--el-color-primary);
-    border-left-color: var(--el-color-primary);
-  }
+/* 窄屏守卫：非全屏弹窗宽度钳制在视口内。--el-dialog-width 由 el-dialog 的
+   width 属性注入（档位 px / 百分比），min() 在窄屏取 92vw 上限——驳回原因、
+   审批进度等固定宽度弹窗在移动端不再出屏（关闭按钮不可点）；桌面端 92vw
+   大于全部档位宽度，零影响；全屏形态由 is-fullscreen 排除 */
+.el-dialog.pure-dialog:not(.is-fullscreen) {
+  width: min(var(--el-dialog-width, 50%), 92vw);
 }
 
 .pure-dialog {
@@ -83,19 +79,20 @@
   .el-upload-list__item.is-ready &.el-icon--close {
     width: 24px;
     height: 24px;
-    outline: none;
+
+    /* 不抹除焦点环：键盘用户需要看到关闭按钮的焦点位置（a11y） */
     border-radius: 4px;
     transition:
-      background-color 0.2s,
-      color 0.2s;
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
 
     &:hover {
-      color: rgb(0 0 0 / 88%) !important;
+      color: hsl(var(--fg) / 88%) !important;
       text-decoration: none;
-      background-color: rgb(0 0 0 / 6%);
+      background-color: hsl(var(--fg) / 6%);
 
       .pure-dialog-svg {
-        color: rgb(0 0 0 / 88%) !important;
+        color: hsl(var(--fg) / 88%) !important;
       }
     }
   }
@@ -103,43 +100,39 @@
 
 /* 克隆并自定义 ElMessage 样式，不会影响 ElMessage 原本样式，在 src/utils/message.ts 中调用自定义样式 ElMessage 方法即可，整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-message {
-  background: #fff !important;
+  background: hsl(var(--bg-elevated)) !important;
   border-width: 0 !important;
-  box-shadow:
-    0 3px 6px -4px #0000001f,
-    0 6px 16px #00000014,
-    0 9px 28px 8px #0000000d !important;
+  box-shadow: var(--shadow-lg) !important;
 
   & .el-message__content {
-    color: #000000d9 !important;
+    color: hsl(var(--fg)) !important;
     pointer-events: all !important;
     background-image: initial !important;
   }
 
   & .el-message__closeBtn {
-    outline: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition:
-      background-color 0.2s,
-      color 0.2s;
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
 
     &:hover {
-      background-color: rgb(0 0 0 / 6%);
+      background-color: hsl(var(--fg) / 6%);
     }
   }
 }
 
 /* 自定义菜单搜索样式 */
 .pure-search-dialog {
-  @media screen and (width > 760px) and (width <= 940px) {
+  @include bp.between("md", "lg") {
     .el-input__inner {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
     }
   }
 
-  @media screen and (width <= 470px) {
+  @include bp.below("xs") {
     .el-input__inner {
-      font-size: 12px;
+      font-size: var(--font-size-xs);
     }
   }
 
@@ -156,14 +149,14 @@
     padding: 10px 20px;
     margin: auto -16px -16px;
     box-shadow:
-      0 -1px 0 0 #e0e3e8,
-      0 -3px 6px 0 rgb(69 98 155 / 12%);
+      0 -1px 0 0 hsl(var(--border-strong)),
+      0 -3px 6px 0 hsl(var(--fg) / 12%);
   }
 }
 
 /* 仿 el-scrollbar 滚动条样式，支持大多数浏览器，如Chrome、Edge、Firefox、Safari等。整体暗色风格在 src/style/dark.scss 文件进行了适配 */
 .pure-scrollbar {
-  scrollbar-color: rgb(221 222 224) transparent; /* 滑块颜色、轨道颜色 */
+  scrollbar-color: hsl(var(--border)) transparent; /* 滑块颜色、轨道颜色 */
 
   /* Firefox */
   scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
@@ -176,14 +169,43 @@
     background: transparent; /* 轨道颜色 */
   }
 
-  /* 滚动条滑块 */
+  /* 滚动条滑块（与 EP 边框色同源，暗色由 --border 自动反转） */
   ::-webkit-scrollbar-thumb {
-    background-color: rgb(221 222 224);
-    border-radius: 4px;
+    background-color: hsl(var(--border));
+    border-radius: var(--radius-sm);
   }
 
   /* 滚动条滑块：hover状态 */
   ::-webkit-scrollbar-thumb:hover {
-    background: rgb(199 201 203); /* 滑块hover颜色 */
+    background: hsl(var(--border-strong)); /* 滑块hover颜色 */
   }
+}
+
+/* ================ 对比度收口（WCAG AA） ================
+   小字号文本在浅色底上必须 ≥4.5:1：EP 的表格空态占位与 info alert 标题
+   默认取 secondary / info 色（白底约 3.5:1），统一提到满足 AA 的档位；
+   暗色下语义槽/EP 变量自动反转，无需特判。 */
+
+/* 选择器含 `.el-table` 前缀：EP 组件样式为 `.el-table .el-table__empty-text`（0-2-0） */
+.el-table .el-table__empty-text {
+  color: var(--el-text-color-regular);
+}
+
+/* 表格表头统一单行：EP 的表头 `.cell` 默认 `white-space: normal`，列宽不足即折成两行；
+   只有开了 showOverflowTooltip 的列（列表页全列）才走 nowrap —— 于是「有的表两行、
+   有的表单行」。这里统一为单行 + 省略号，与列表页口径一致（列头文案短，省略极少见）。 */
+.el-table th.el-table__cell > .cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.el-alert--info .el-alert__title {
+  color: var(--el-text-color-regular);
+}
+
+/* 表格已读行（RePlusPage 的 viewedRow 开关开启后挂 is-viewed 行类）：整行文字降级为
+   次要色（操作列仍可辨识）；未开启的页面不产生该类，零视觉变化。 */
+.re-plus-table-card .el-table__row.is-viewed {
+  color: var(--el-text-color-secondary);
 }

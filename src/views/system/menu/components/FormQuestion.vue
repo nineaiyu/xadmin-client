@@ -1,0 +1,31 @@
+<script lang="ts" setup>
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Question from "~icons/ep/question-filled";
+
+defineProps({
+  label: {
+    required: true,
+    type: String
+  },
+  description: {
+    required: false,
+    type: String
+  }
+});
+defineOptions({ name: "FormQuestion" });
+</script>
+
+<template>
+  <div class="flex-c">
+    <el-tooltip
+      v-if="description"
+      :content="description"
+      effect="dark"
+      placement="top"
+      trigger="hover"
+    >
+      <component :is="useRenderIcon(Question)" />
+    </el-tooltip>
+    {{ label }}
+  </div>
+</template>

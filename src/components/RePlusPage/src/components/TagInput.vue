@@ -35,8 +35,11 @@ import { computed, ref } from "vue";
 import { debounce } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 
+/** el-tag 的 type 联合（primary/success/warning/info/danger） */
+type TagType = "primary" | "success" | "warning" | "info" | "danger";
+
 interface TagInputProps {
-  tagType?: Function;
+  tagType?: (_v: unknown) => TagType;
   autocomplete?: boolean;
   placeholder?: string;
   inputType?: string;
@@ -44,19 +47,19 @@ interface TagInputProps {
 
 defineOptions({ name: "TagInput" });
 
-const filterTags = defineModel<Array<any>>({ default: [] });
+const filterTags = defineModel<Array<string>>({ default: () => [] });
 
 const props = withDefaults(defineProps<TagInputProps>(), {
-  tagType: () => "info",
+  tagType: () => "info" as TagType,
   autocomplete: false,
   placeholder: undefined,
   inputType: "text"
 });
 const emit = defineEmits<{
-  change: [values: any];
+  change: [values: string[]];
 }>();
 
-const SearchInput = ref(null);
+const SearchInput = ref<HTMLInputElement | null>(null);
 const { t } = useI18n();
 
 const focus = ref(false);
@@ -72,7 +75,7 @@ const iPlaceholder = computed(
 const editingIndex = ref(-1);
 
 // 处理标签关闭
-const handleTagClose = (tag, index) => {
+const handleTagClose = (tag: string, index: number) => {
   filterTags.value.splice(index, 1);
   // 如果正在编辑的标签被删除，重置编辑状态
   if (editingIndex.value === index) {
@@ -87,8 +90,8 @@ const handleTagClose = (tag, index) => {
 };
 
 // 处理自动完成选择
-const handleSelect = item => {
-  filterTags.value = item.value;
+const handleSelect = (item: { value: string }) => {
+  filterTags.value = [item.value];
   handleConfirm();
 };
 
@@ -116,7 +119,7 @@ const handleConfirm = () => {
   // 重置状态
   filterValue.value = "";
   editingIndex.value = -1;
-  SearchInput.value.focus();
+  SearchInput.value?.focus();
 };
 
 // 处理输入变化
@@ -125,13 +128,13 @@ const handleChange = debounce(() => {
 }, 200);
 
 // 处理标签点击 - 进入编辑模式
-const handleTagClick = (value, index) => {
+const handleTagClick = (value: string, index: number) => {
   // 设置正在编辑的标签索引
   editingIndex.value = index;
   // 将标签值放入输入框
   filterValue.value = value;
   // 聚焦到输入框
-  SearchInput.value.focus();
+  SearchInput.value?.focus();
 };
 </script>
 
@@ -172,7 +175,7 @@ const handleTagClick = (value, index) => {
 }
 
 .el-input :deep(.el-input__inner) {
-  font-size: 13px;
+  font-size: var(--el-font-size-small);
   border: none !important;
   box-shadow: none !important;
 }

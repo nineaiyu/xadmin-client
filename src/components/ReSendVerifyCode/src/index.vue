@@ -11,19 +11,37 @@ import Keyhole from "~icons/ri/shield-keyhole-line";
 
 defineOptions({ name: "ReSendVerifyCode" });
 
+/** 验证码配置（hooks.ts 内 verifyCodeConfig 的响应式形状） */
+interface VerifyCodeConfig {
+  access: boolean;
+  captcha: boolean;
+  token: boolean;
+  encrypted: boolean;
+  email: boolean;
+  sms: boolean;
+  rate: number;
+}
+
+/** 发送验证码接口返回的 data 载荷（verify_token / extra 由后端按需下发） */
+interface SendCodeResultData {
+  verify_token?: string;
+  extra?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 const props = withDefaults(defineProps<{ category?: string }>(), {
   category: ""
 });
 
 const formData = defineModel({
   type: Object,
-  default: {}
+  default: () => ({})
 });
 
 const emit = defineEmits<{
-  configReqSuccess: [...args: any[]];
-  sendCodeReqSuccess: [...args: any[]];
-  configReqEnd: [...args: any[]];
+  configReqSuccess: [config: VerifyCodeConfig];
+  sendCodeReqSuccess: [data: SendCodeResultData];
+  configReqEnd: [];
 }>();
 const formDataRef = ref<FormInstance>();
 const captchaRef = ref();
@@ -45,7 +63,7 @@ const {
 
 defineExpose({ getRef, handleSendCode });
 
-const updatePhone = phone => {
+const updatePhone = (phone: { code: string; phone: string }) => {
   formData.value.phone = `${phone.code}${phone.phone}`;
 };
 const phone = ref({ code: "+86", phone: "" });
@@ -88,7 +106,6 @@ const phone = ref({ code: "+86", phone: "" });
               clearable
               :trigger-on-focus="false"
               :fetch-suggestions="fetchSuggestions"
-              tabindex="100"
             />
           </el-form-item>
         </el-tab-pane>
@@ -106,7 +123,6 @@ const phone = ref({ code: "+86", phone: "" });
           :placeholder="t('login.verifyCode')"
           :prefix-icon="useRenderIcon(Keyhole)"
           clearable
-          tabindex="100"
         >
           <template #append>
             <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
@@ -123,10 +139,8 @@ const phone = ref({ code: "+86", phone: "" });
             :placeholder="t('login.verifyCode')"
             :prefix-icon="useRenderIcon(Keyhole)"
             clearable
-            tabindex="200"
           />
           <el-button
-            tabindex="100"
             :disabled="isDisabled"
             class="ml-2"
             @click="handleSendCode(null)"

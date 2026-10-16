@@ -1,17 +1,15 @@
 import { settingsApi } from "@/api/system/settings";
 import { useI18n } from "vue-i18n";
-import { getDefaultAuths } from "@/router/utils";
-import { getCurrentInstance, reactive } from "vue";
+import { usePageAuth } from "@/router/utils";
+import { reactive } from "vue";
 
 export function useSystemSetting() {
   const { t } = useI18n();
 
   const api = reactive(settingsApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance()),
-    partialUpdate: false
-  });
+  const auth = usePageAuth();
+  auth.partialUpdate = false;
 
   return {
     t,

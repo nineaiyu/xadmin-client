@@ -1,0 +1,415 @@
+import { expect, test } from "@playwright/test";
+
+import { FRONT_URL, login, openMenuPath } from "./helpers";
+
+/** 顶部指标条高度（px） */
+const barHeight = (page: import("@playwright/test").Page) =>
+  page
+    .locator('[data-testid="file-stats-bar"]')
+    .evaluate(el => Math.round(el.getBoundingClientRect().height));
+
+/**
+ * 文件中心增强：个人配额统计卡片 + 分类（字典驱动）下拉筛选 + 上传去重。
+ *
+ * 保留期清理（FILE_KEEP_DAYS）默认 0 = 不清理，且属定时任务行为，由后端单测覆盖
+ * （xadmin-server/tests/unit/system/test_upload_enhance.py 的守护与清理用例）。
+ */
+test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ page }) => {
+  await login(page);
+
+  // 基线统计（?no_cache=1 穿透服务端 10s 短缓存，保证读到真实值）
+  const baseResp = await page.request.get(
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
+  );
+  const basePayload = await baseResp.json();
+  expect(basePayload.code, `stats: ${JSON.stringify(basePayload)}`).toBe(1000);
+  const baseCount = basePayload.data.count as number;
+  // 统计面板新维度：分类分布 + 近 7 天趋势（后端已按天补零，恒为 7 个点）
+  expect(Array.isArray(basePayload.data.category_stats)).toBe(true);
+  expect(basePayload.data.recent_trend).toHaveLength(7);
+
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 顶部紧凑指标条：初始数量与基线一致（重型图表已移入「统计详情」抽屉）
+  const bar = page.locator('[data-testid="file-stats-bar"]');
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('[data-testid="stat-count"]')).toHaveText(
+    String(baseCount)
+  );
+  await expect(bar.locator('[data-testid="stat-remaining"]')).toHaveText(/\S/);
+  // 指标条为单行轻量条（重型图表见详情抽屉，不再常驻顶部）
+  expect(await barHeight(page)).toBeLessThan(80);
+
+  // 统计详情抽屉：分类分布饼图与最大文件卡片（echarts 懒加载就绪后渲染 SVG）
+  await bar.locator('[data-testid="file-stats-detail"]').click();
+  const statsDrawer = page.locator(".el-drawer:visible").first();
+  await expect(statsDrawer).toBeVisible({ timeout: 15_000 });
+  await expect(
+    statsDrawer
+      .locator(".el-card", { hasText: "分类分布" })
+      .first()
+      .locator("svg")
+      .first()
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(
+    statsDrawer.locator(".el-card", { hasText: "占用最大的文件" }).first()
+  ).toBeVisible();
+  // 详情为只读弹层：Escape 收回，后续上传入口不被遮挡
+  await page.keyboard.press("Escape");
+  await expect(statsDrawer).toBeHidden({ timeout: 15_000 });
+
+  // 上传弹窗上传一个文件：成功后 loadStats(true) 穿透短缓存刷新卡片数量
+  const filename = `e2e-file-${Date.now()}.txt`;
+  await page.getByRole("button", { name: "上传" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog
+    .locator("input[type='file']")
+    .first()
+    .setInputFiles({
+      name: filename,
+      mimeType: "text/plain",
+      buffer: Buffer.from("hello e2e file center")
+    });
+  await expect(bar.locator('[data-testid="stat-count"]')).toHaveText(
+    String(baseCount + 1),
+    { timeout: 15_000 }
+  );
+
+  // 重新加载页面（收起上传弹窗）：上传即自动分类（txt → 文档），无需人工挑选
+  await page.reload();
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  const autoRow = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(autoRow).toBeVisible({ timeout: 15_000 });
+  await expect(autoRow).toContainText("文档");
+
+  const listResp = await page.request.get(
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
+  );
+  const listPayload = await listResp.json();
+  const row = listPayload.data.results[0];
+  expect(row?.pk, `uploaded row: ${JSON.stringify(listPayload)}`).toBeTruthy();
+  // 字典驱动字段序列化为 {value,label,color}
+  expect(row.category?.value ?? row.category, "auto category").toBe("document");
+  const patchResp = await page.request.patch(
+    `${FRONT_URL}/api/file/file/${row.pk}`,
+    { data: { category: "image" } }
+  );
+  expect((await patchResp.json()).code, "set category").toBe(1000);
+
+  // 人工改分类后按字典 renderer 渲染彩色标签（label = 图片）
+  await page.reload();
+  const table = page.locator(".el-table").first();
+  await expect(table).toBeVisible({ timeout: 15_000 });
+  const targetRow = table
+    .locator(".el-table__row", { hasText: filename })
+    .first();
+  await expect(targetRow).toBeVisible({ timeout: 15_000 });
+  await expect(targetRow).toContainText("图片");
+
+  // 搜索区默认折叠，展开后按「分类 = 图片」筛选
+  const expand = page.getByRole("button", { name: /展开/ });
+  if (await expand.isVisible().catch(() => false)) {
+    await expand.click();
+  }
+  const categoryItem = page
+    .locator(".el-form-item", { hasText: "分类" })
+    .first();
+  await categoryItem.locator(".el-select").click();
+  const option = page
+    .locator(".el-select-dropdown__item")
+    .filter({ hasText: "图片" })
+    .locator("visible=true")
+    .first();
+  await expect(option).toBeVisible({ timeout: 10_000 });
+  await option.click();
+  await page.getByRole("button", { name: "搜索" }).first().click();
+
+  // 过滤后目标行仍在（分类命中）
+  await expect(
+    page.locator(".el-table__row", { hasText: filename }).first()
+  ).toBeVisible({ timeout: 15_000 });
+});
+
+/**
+ * 上传去重：同一文件重复上传复用磁盘副本（access_url 相同），
+ * 配额仍按记录全量计入（保守口径：数量 +2、大小按两条记录计）。
+ */
+test("文件中心：重复上传同一文件复用磁盘副本", async ({ page }) => {
+  await login(page);
+
+  const filename = `e2e-dedup-${Date.now()}.txt`;
+  const content = "dedup e2e content";
+
+  const statsResp = await page.request.get(
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
+  );
+  const baseCount = (await statsResp.json()).data.count as number;
+
+  // 第一次：API 上传
+  const firstResp = await page.request.post(
+    `${FRONT_URL}/api/file/file/upload`,
+    {
+      multipart: {
+        file: {
+          name: filename,
+          mimeType: "text/plain",
+          buffer: Buffer.from(content)
+        }
+      }
+    }
+  );
+  const firstPayload = await firstResp.json();
+  expect(firstPayload.code, `upload: ${JSON.stringify(firstPayload)}`).toBe(
+    1000
+  );
+
+  // 第二次：走 UI 上传同一文件 → 成功后提示「已复用」
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await page.getByRole("button", { name: "上传" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog
+    .locator("input[type='file']")
+    .first()
+    .setInputFiles({
+      name: filename,
+      mimeType: "text/plain",
+      buffer: Buffer.from(content)
+    });
+  await expect(page.locator(".el-message").last()).toContainText("复用", {
+    timeout: 15_000
+  });
+
+  // 两条记录指向同一物理文件（access_url 相同）＋配额按记录全量计入
+  const listResp = await page.request.get(
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
+  );
+  const results = (await listResp.json()).data.results as Array<
+    Record<string, unknown>
+  >;
+  expect(results.length).toBe(2);
+  expect(results[0].access_url).toBe(results[1].access_url);
+
+  const afterResp = await page.request.get(
+    `${FRONT_URL}/api/file/file/stats?no_cache=1`
+  );
+  expect((await afterResp.json()).data.count).toBe(baseCount + 2);
+});
+
+/** 16x16 PNG（Pillow 可解码）：用于验证真实缩略图生成链路 */
+const PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAI0lEQVR4nGOUqzjBQApgIkk1w6gG4gATkergYFQDMYDkUAIAYMYBfhU7IIEAAAAASUVORK5CYII=";
+
+async function uploadViaApi(
+  page: import("@playwright/test").Page,
+  name: string,
+  mime: string,
+  buffer: Buffer
+) {
+  const resp = await page.request.post(`${FRONT_URL}/api/file/file/upload`, {
+    multipart: { file: { name, mimeType: mime, buffer } }
+  });
+  expect((await resp.json()).code).toBe(1000);
+  return name;
+}
+
+test("文件中心：图片在线预览（行内按钮 → 抽屉大图）", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  const filename = `e2e-preview-${Date.now()}.png`;
+  await uploadViaApi(
+    page,
+    filename,
+    "image/png",
+    Buffer.from(PNG_BASE64, "base64")
+  );
+
+  await page.reload();
+  const row = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  // 上传 png 自动归入「图片」分类（分类列按字典 label 渲染）
+  await expect(row).toContainText("图片");
+
+  await row.getByRole("button", { name: "预览" }).click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 15_000 });
+  // 抽屉内图片加载成功（object URL 由鉴权接口取回的 blob 生成）
+  await expect(drawer.locator(".preview-image img").first()).toBeVisible({
+    timeout: 30_000
+  });
+});
+
+test("文件中心：不支持预览的类型不显示预览按钮", async ({ page }) => {
+  await login(page);
+  const filename = `e2e-nopreview-${Date.now()}.zip`;
+  await uploadViaApi(
+    page,
+    filename,
+    "application/zip",
+    Buffer.from("PK\x03\x04zip")
+  );
+
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  const row = page.locator(".el-table__row", { hasText: filename }).first();
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  // zip 自动归入「压缩包」；不支持预览的类型不渲染预览按钮
+  await expect(row).toContainText("压缩包");
+  await expect(row.getByRole("button", { name: "预览" })).toHaveCount(0);
+});
+
+/**
+ * 大文件分片 / 断点续传：>5MB（分片阈值）的文件经上传弹窗走 chunk/init →
+ * chunk/part → chunk/complete 协议（e2e 后端 FILE_UPLOAD_SIZE 默认 10MB，
+ * 6MB 文件同时满足「可上传」与「超阈值走分片」两个条件）。
+ */
+test("文件中心：大文件上传走分片协议并落库", async ({ page }) => {
+  const filename = `e2e-chunk-${Date.now()}.bin`;
+  // 6MB：> 分片阈值（5MB，走分片路径）且 < 服务端上限（10MB，可上传）
+  const chunkSize = 5 * 1024 * 1024;
+  const buffer = Buffer.alloc(chunkSize + 1024, 0x61);
+
+  // 记录协议响应（response 事件保证拿到响应码，比 request 更可靠）：
+  // init/part/complete 应齐备（分片路径确实生效）
+  const chunkEvents: string[] = [];
+  page.on("response", response => {
+    const url = response.url();
+    if (!url.includes("/api/file/file/chunk/")) return;
+    if (url.includes("/chunk/init")) chunkEvents.push("init");
+    if (url.includes("/chunk/part")) chunkEvents.push("part");
+    if (url.includes("/chunk/complete")) chunkEvents.push("complete");
+  });
+
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/file/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  await page.getByRole("button", { name: "上传" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog.locator("input[type='file']").first().setInputFiles({
+    name: filename,
+    mimeType: "application/octet-stream",
+    buffer
+  });
+  // 上传成功 toast 带文件名前缀：按文件名过滤（页面顶部可能残留登录页的
+  // 「登录成功」toast，通用 .el-message 匹配会在上传完成前秒过造成假阳性）
+  await expect(
+    page.locator(".el-message").filter({ hasText: filename }).last()
+  ).toContainText("成功", { timeout: 30_000 });
+  // 协议三段齐备：init 1 次、part ≥ 2 片、complete 1 次
+  expect(chunkEvents.filter(e => e === "init")).toHaveLength(1);
+  expect(chunkEvents.filter(e => e === "part").length).toBeGreaterThanOrEqual(
+    2
+  );
+  expect(chunkEvents.filter(e => e === "complete")).toHaveLength(1);
+
+  // 落库记录与单请求上传同构：文件名、大小、自动分类
+  const listResp = await page.request.get(
+    `${FRONT_URL}/api/file/file?filename=${encodeURIComponent(filename)}`
+  );
+  const results = (await listResp.json()).data.results as Array<
+    Record<string, unknown>
+  >;
+  expect(results.length).toBe(1);
+  expect(results[0].filesize).toBe(buffer.length);
+});
+
+/**
+ * 非超管视角回归：页面与接口权限点齐全时，打开文件中心全程零 403。
+ *
+ * 超管绕过权限链，上面 5 条用例看不到「页面有授权、接口权限点漏配」的缺口
+ * （曾发生：文件页新增 stats / access-logs 等接口后未同步授权给角色，非超管
+ * 打开页面即 403）。此处用 e2e_user（E2E-文件中心角色，页内权限点与字段白名单
+ * 全量授权）覆盖该视角；401/其它错误不在此断言面内。
+ */
+test("文件中心：非超管角色页面加载零 403（接口权限点齐全）", async ({
+  page
+}) => {
+  const forbidden: string[] = [];
+  page.on("response", response => {
+    if (response.status() === 403) forbidden.push(response.url());
+  });
+
+  await login(page, { username: "e2e_user", password: "E2E-User-2026!" });
+  // 直达路由：非超管侧栏的一级项名随授权收缩（system 目录下仅文件页时显示为
+  // 「文件管理」），openMenuPath 的固定一级名不适用；goto 同样触发整页初始化
+  // 与页内全部请求，零 403 断言面不变
+  await page.goto("/#/system/file/index");
+
+  // 指标条渲染 = stats 请求已成功（该端点由 retrieve 权限点覆盖）
+  await expect(page.locator('[data-testid="file-stats-bar"]')).toBeVisible({
+    timeout: 15_000
+  });
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+  // 收尾窗口：等分类/趋势等尾随请求落定后再核对
+  await page.waitForTimeout(800);
+
+  expect(forbidden, `出现 403 响应：${forbidden.join(", ")}`).toEqual([]);
+});
+
+/**
+ * 布局守护：统计区收敛为单行指标条后，文件列表拿到完整可用高度。
+ *
+ * 固定 1440×900 桌面视口——E2E 默认 1280×720 高度偏矮（可用空间本身已接近
+ * 自适应高度下限），量不出真实差异。收敛前同视口实测：统计区 605px（空库
+ * 793px）→ 表格被自适应高度钳到最小 260px、表体可视 220px（约 5 行）、
+ * 整页纵向溢出 312px。
+ */
+test.describe("文件中心布局", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test("统计区收敛为指标条，列表高度不再被统计图表挤压", async ({ page }) => {
+    await login(page);
+    await openMenuPath(page, ["系统管理"], "/system/file/index");
+    await expect(page.locator(".el-table").first()).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(page.locator('[data-testid="file-stats-bar"]')).toBeVisible({
+      timeout: 15_000
+    });
+    await page.waitForTimeout(500);
+
+    const layout = await page.evaluate(() => {
+      const rect = (sel: string) => {
+        const el = document.querySelector<HTMLElement>(sel);
+        return el ? Math.round(el.getBoundingClientRect().height) : 0;
+      };
+      const scroller = document.querySelector<HTMLElement>(
+        ".app-main .el-scrollbar__wrap"
+      );
+      return {
+        bar: rect('[data-testid="file-stats-bar"]'),
+        table: rect(".pure-table .el-table"),
+        body: rect(".pure-table .el-table__body-wrapper"),
+        overflow: scroller ? scroller.scrollHeight - scroller.clientHeight : 0
+      };
+    });
+
+    // 单行指标条（收敛前统计区为 605px）
+    expect(layout.bar).toBeLessThan(80);
+    // 表格拿到真实可用高度（收敛前被钳到自适应高度下限 260px；此处约 9 行 @41px）
+    expect(layout.table).toBeGreaterThan(400);
+    expect(layout.body).toBeGreaterThan(380);
+    // 列表不再把页面撑出纵向滚动条（收敛前溢出 312px）
+    expect(layout.overflow).toBeLessThanOrEqual(8);
+  });
+});

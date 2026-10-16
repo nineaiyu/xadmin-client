@@ -1,0 +1,65 @@
+<script lang="ts" setup>
+import { isSuccess } from "@/api/types";
+import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import {
+  oauthApi,
+  OAUTH_BIND_FLAG,
+  type OAuthProvider
+} from "@/api/identity/oauth";
+import { message } from "@/utils/message";
+
+/**
+ * 第三方登录入口：**无 provider 配置时不渲染**（后端 OAUTH_PROVIDERS 默认空 = 整体休眠）。
+ *
+ * 只拉取已启用的 provider（接口不返回密钥），点击后取一次性 state 的授权地址再整体跳转。
+ */
+
+defineOptions({ name: "OAuthEntry" });
+
+const { t } = useI18n();
+const providers = ref<OAuthProvider[]>([]);
+
+onMounted(() => {
+  oauthApi
+    .providers()
+    .then(res => {
+      if (isSuccess(res)) {
+        providers.value = (res.data?.providers ?? []) as OAuthProvider[];
+      }
+    })
+    .catch(() => undefined);
+});
+
+const goAuthorize = (key: string) => {
+  oauthApi
+    .authorize(key)
+    .then(res => {
+      if (isSuccess(res) && res.data?.url) {
+        // 登录发起即宣告本次回跳非绑定：清掉可能残留的绑定意图标记，
+        // 避免回调失败页被旧标记误导出「返回账户设置」出口
+        sessionStorage.removeItem(OAUTH_BIND_FLAG);
+        window.location.href = String(res.data.url);
+      } else if (res.detail) {
+        message(res.detail, { type: "warning" });
+      }
+    })
+    .catch(() => undefined);
+};
+</script>
+
+<template>
+  <div v-if="providers.length > 0" class="oauth-entry">
+    <el-divider>{{ t("login.thirdPartyLogin") }}</el-divider>
+    <div class="flex flex-wrap justify-center gap-2">
+      <el-button
+        v-for="item in providers"
+        :key="item.key"
+        plain
+        @click="goAuthorize(item.key)"
+      >
+        {{ item.name }}
+      </el-button>
+    </div>
+  </div>
+</template>

@@ -12,7 +12,281 @@ commonLabels:
   descending: 降序
   ascending: 升序
 
+fileAccess:
+  download: 下载
+  accessLogs: 访问记录
+  accessLogsTitle: 访问记录 - {name}
+  total: 记录总数
+  time: 时间
+  user: 操作人
+  action: 动作
+  actionUpload: 上传
+  actionDownload: 下载
+  actionPreview: 预览
+  actionDelete: 删除
+  ipaddress: IP
+  result: 结果
+  detail: 明细
+  loadFailed: 访问记录加载失败，请稍后重试
+
+forcePassword:
+  title: 需要修改密码
+  tip: 管理员已要求你修改密码，请立即设置新密码后再继续使用系统
+  submit: 修改密码
+  success: 密码修改成功
+  later: 稍后处理
+
+savedView:
+  button: 视图
+  title: 我的视图
+  save: 保存当前筛选
+  saveCurrent: 保存当前筛选
+  saveTitle: 保存为我的视图
+  editTitle: 编辑视图
+  duplicateTitle: 另存为副本
+  nameLabel: 视图名称
+  namePlaceholder: 例如：在职研发同学
+  nameRequired: 请输入视图名称
+  remarkLabel: 说明
+  remarkPlaceholder: 选填，便于团队识别用途
+  conditionsLabel: 筛选条件
+  noConditions: 无筛选条件
+  defaultLabel: 设为默认视图
+  defaultHint: 打开页面且未设置筛选时自动套用
+  sharedLabel: 共享给同页其他用户
+  sharedHint: 他人可见并套用（只读，不能修改）
+  searchPlaceholder: 搜索视图
+  emptyHint: 还没有保存的视图，先设置筛选条件再保存
+  noMatch: 没有匹配的视图
+  footerHint: 点击视图即可套用筛选条件
+  current: 当前
+  saveSuccess: 视图已保存
+  empty: 暂无保存的视图
+  default: 默认视图
+  setDefault: 设为默认
+  cancelDefault: 取消默认
+  defaultSet: 已设为默认视图
+  defaultCleared: 已取消默认视图
+  updateCurrent: 用当前筛选更新
+  rename: 重命名
+  duplicate: 另存副本
+  copySuffix: 副本
+  updated: 视图「{name}」已更新
+  deleteConfirm: 确认删除视图「{name}」？
+  applied: 已应用视图「{name}」
+  sharedShort: 共享
+  emptyConditions: 当前没有筛选条件可保存，请先设置筛选
+
+advancedFilter:
+  button: 高级筛选
+  title: 高级筛选
+  fieldPlaceholder: 选择字段
+  valuePlaceholder: 输入值
+  numberPlaceholder: 输入数值
+  datePlaceholder: 选择日期
+  timePlaceholder: 选择时间
+  choicePlaceholder: 选择取值
+  multiPlaceholder: 多个值用英文逗号分隔
+  tagPlaceholder: 输入后回车添加
+  addCondition: 添加条件
+  clearAll: 清空条件
+  noFields: 当前页面没有支持高级筛选的字段
+  true: 是
+  false: 否
+  hint: 条件之间为「与」关系；字段与取值仍受当前账号的字段权限约束
+  kinds:
+    text: 文本
+    number: 数字
+    boolean: 是/否
+    date: 日期
+    datetime: 日期时间
+    time: 时间
+    choice: 选项
+    multiple: 多选
+  errors:
+    field: 第 {no} 行：请选择字段
+    value: 第 {no} 行：请填写筛选值
+    duplicate: 第 {no} 行：与前面的条件重复
+  lookups:
+    icontains: 包含
+    exact: 等于
+    startswith: 开头是
+    in: 属于（多值）
+    gte: 大于等于
+    lte: 小于等于
+    isnull: 为空
+    ne: 不等于
+
+passkey:
+  title: Passkey 凭据
+  add: 添加 Passkey
+  name: 凭据名称
+  namePlaceholder: 例如：MacBook 指纹
+  lastUsed: 最近使用
+  created: 绑定时间
+  empty: 暂无 Passkey 凭据
+  removeConfirm: 确认删除该 Passkey 凭据？
+  removeSuccess: 凭据已删除
+  registerSuccess: Passkey 绑定成功
+  unsupported: 当前环境不支持 Passkey（需 HTTPS 且浏览器支持 WebAuthn）
+  failed: Passkey 操作失败
+  loginTip: 请在系统弹窗中完成指纹 / 人脸 / 安全密钥验证
+  login: 使用 Passkey 验证
+
+messageTemplate:
+  title: 消息模板
+  messageType: 消息类型
+  category: 分类
+  override: 覆盖状态
+  overridden: 已自定义
+  defaultState: 代码默认
+  defaultSubject: 默认标题
+  variables: 可用变量
+  subject: 标题模板
+  body: 正文模板
+  subjectPlaceholder: 留空表示使用代码默认标题
+  edit: 编辑
+  editTitle: 编辑模板 - {name}
+  preview: 预览
+  previewTip: 预览使用样例数据渲染，不会真实发送
+  reset: 重置为默认
+  resetConfirm: 确认重置「{name}」为代码默认模板？
+  saveSuccess: 模板已保存
+  resetSuccess: 已重置为默认模板
+  syntaxHint: "变量以 {'{{'}名称{'}}'} 形式插入；留空表示沿用代码默认内容"
+  previewUnsupported: 该消息类型未提供样例数据，暂不支持预览
+  defaultContent: 代码默认内容
+  panelHint: 未编辑的模板沿用系统默认文案；保存覆盖后即时生效，可随时重置为默认
+  searchPlaceholder: 搜索消息类型
+  filterCategory: 按分类筛选
+  updatedAt: 修改时间
+  inactiveMark: 停用
+  variableCopied: 已复制 {name}
+  previewTitle: 预览 - {name}
+  prefilledHint: 已预填代码默认内容，可直接在此基础上修改；与默认一致的部分不会产生覆盖
+
+approvalDiscussion:
+  title: 讨论
+  placeholder: 输入评论，可用 {'@'}用户名 提醒相关人
+  submit: 发表评论
+  empty: 暂无评论
+  deleteConfirm: 确认删除这条评论？
+  submitted: 评论已发表
+  cc: 抄送人
+  ccPlaceholder: 选择抄送人（可多选）
+
+accountRisk:
+  scan: 立即巡检
+  batchHandle: 批量处置
+  handle: 处置
+  detail: 详情
+  detailTitle: 风险详情 - {name}
+  handleTitle: 风险处置（已选 {count} 项）
+  action: 处置动作
+  remark: 处置备注
+  suggestion: 处理建议
+  metricDays: 距今天数
+  metricCount: 当前数量
+  metricThreshold: 阈值
+  metricPasswordUpdatedAt: 密码更新时间
+  actionNotify: 发送提醒
+  actionForcePassword: 强制改密
+  actionForceLogout: 强制下线
+  actionDisable: 停用账号
+  actionIgnore: 豁免（不再提醒）
+  actionResolve: 标记已处理
+  typePasswordExpired: 密码已过期
+  typePasswordStale: 长期未改密码
+  typeLoginStale: 长期未登录
+  typeNeverLoggedIn: 从未登录
+  typeSuperuserNoMfa: 管理员未绑定 MFA
+  typeSuperuserCount: 超管数量异常
+  statsOverview: 概览
+  statsTotal: 全部
+  statsByLevel: 等级
+  statsByStatus: 状态
+  statsByType: 类型
+  levelHigh: 高危
+  levelMedium: 中危
+  levelLow: 低危
+  statusPending: 待处理
+  statusResolved: 已处理
+  statusIgnored: 已豁免
+  batchHandlePartial: "另有 {n} 项处置失败：{detail}"
+
+loginPolicy:
+  add: 新增策略
+  addTitle: 新增登录策略
+  editTitle: 编辑登录策略
+  name: 策略名称
+  priority: 优先级
+  priorityTip: 数字越小越先匹配，首个命中的策略生效
+  isActive: 启用
+  targetType: 目标对象
+  targetAll: 全部用户
+  targetRole: 指定角色
+  targetUser: 指定用户
+  targetValue: 对象值
+  rolePlaceholder: 角色编码（多个用逗号分隔）
+  userPlaceholder: 用户名（多个用逗号分隔）
+  weekdays: 生效星期
+  weekday1: 周一
+  weekday2: 周二
+  weekday3: 周三
+  weekday4: 周四
+  weekday5: 周五
+  weekday6: 周六
+  weekday7: 周日
+  timeRange: 生效时段
+  startTime: 开始时间
+  endTime: 结束时间
+  ipRanges: 限制网段
+  ipPlaceholder: 每行一个 CIDR 或区间，例如 192.168.0.0/24
+  action: 命中动作
+  actionAccept: 允许登录（豁免后续策略）
+  actionReject: 拒绝登录
+  actionRequireMfa: 要求二次验证
+  actionRecord: 仅记录
+  remark: 备注
+  preview: 命中预演
+  previewTitle: 登录策略命中预演
+  previewUser: 样例用户
+  previewUserTip: 留空表示当前用户
+  previewIp: 样例 IP
+  previewIpTip: 留空表示当前来源 IP
+  previewWhen: 样例时间
+  previewWhenTip: 留空表示当前时间
+  previewRun: 预演
+  previewResult: 命中「{policy}」→ {action}
+  previewEcho: 实际预演样例——用户 {username} / IP {ip} / 时间 {when}
+  previewNoMatch: 当前没有策略命中该样例
+  previewMatched: 是否匹配
+  previewDims: 匹配明细
+  dimTarget: 对象
+  dimTime: 时段
+  dimIp: 网段
+  previewEffective: 最终生效
+  effective: 生效
+  inactive: 未启用
+  previewMfaDegraded: 该用户没有可用的二次验证方式，实际登录将降级放行
+  invalidIp: IP 格式不正确
+  nameRequired: 请填写策略名称
+  timePairInvalid: 生效时段需同时填写开始与结束时间，或同时留空
+  targetValueRequired: 请填写对象值
+
+batchUpdate:
+  button: 批量更新
+  title: 批量更新（已选 {count} 条）
+  field: 更新字段
+  fieldPlaceholder: 请选择要更新的字段
+  value: 目标值
+  valuePlaceholder: 请输入目标值
+  tip: 将把选中记录的同名字段统一改为该值，操作不可撤销
+  selectFirst: 请先勾选要更新的记录
+  fieldRequired: 请选择字段并填写目标值
+
 tableBar:
+  list: 列表
   loose: 宽松
   default: 默认
   compact: 紧凑
@@ -24,6 +298,9 @@ tableBar:
   unfold: 展开
   fullscreen: 全屏
   exitFullscreen: 退出全屏
+  pinLeft: 固定在左边
+  pinRight: 固定在右边
+  unpin: 取消固定
 
 avatarUpload:
   tips: 温馨提示：右键上方裁剪区可开启功能菜单
@@ -49,7 +326,48 @@ cropper:
   anticlockwise: 逆时针旋转
   clockwise: 顺时针旋转
 
+jsonViewer:
+  copy: 复制
+  copied: 已复制
+
+sliderCaptcha:
+  text: 向右拖动滑块填充拼图
+  successText: 验证通过
+
+sliderRotateCaptcha:
+  text: 拖动滑块旋转图片至正向
+
+sliderTranslateCaptcha:
+  text: 拖动滑块拼合图片缺口
+
+backTop:
+  text: 回到顶部
+
+collapseParams:
+  name: 名称
+  value: 值
+  description: 说明
+  unfold: 展开
+  fold: 收起
+
+reState:
+  empty: 暂无数据
+  error: 加载失败
+
+tableAction:
+  confirmTitle: 确定执行该操作吗？
+
+tableA11y:
+  dataTable: 数据表格
+  pageSize: 每页条数
+
 layout:
+  saveConfigSuccess: 项目配置保存成功
+  impersonating: 正在模拟用户「{ user }」，所有操作将以该用户身份执行并留痕，点击退出模拟
+  impersonateExit: 退出模拟
+  impersonateExitFailed: 退出模拟失败，请重试
+  resetConfigSuccess: 个人偏好已恢复默认
+  saveConfigFailed: 项目配置自动保存失败，请检查网络后重试
   notice: 消息通知
   announcement: 系统公告
   settings: 项目配置
@@ -60,28 +378,322 @@ layout:
   unfold: 点击展开
   searchPlaceholder: 搜索菜单（中文模式下支持拼音搜索）
   theme: 主题模式
+  themeDesc: 亮暗外观，可跟随系统
   menuLayout: 菜单布局
   leftMode: 左侧菜单，亲切熟悉
   topMode: 顶部菜单，简洁概览
   mixedMode: 混合菜单，灵活多变
+  menuLayoutVertical: 垂直
+  menuLayoutVerticalTip: 侧边垂直菜单模式
+  menuLayoutHorizontal: 水平
+  menuLayoutHorizontalTip: 水平菜单模式，菜单全部显示在顶部
+  menuLayoutMix: 混合垂直
+  menuLayoutMixTip: 垂直水平菜单共存
+  menuLayoutSidebarMixed: 双列菜单
+  menuLayoutSidebarMixedTip: 垂直双列菜单模式
+  menuLayoutHeaderSidebar: 侧边导航
+  menuLayoutHeaderSidebarTip: 顶部通栏，侧边导航模式
+  menuLayoutHeaderMixed: 混合双列
+  menuLayoutHeaderMixedTip: 双列、水平菜单共存模式
+  menuLayoutFullContent: 内容全屏
+  menuLayoutFullContentTip: 不显示任何菜单，只显示内容主体
   themeColor: 主题色
+  themeColorDesc: 预设色板或自定义取色，实时生效
+  themeColorCustom: 自定义主色
+  themeColorCustomTip: 取任意颜色作为主色（只改主色与派生色阶，不改变导航皮肤）
+  themeColorNames:
+    light: 亮白
+    default: 默认
+    saucePurple: 紫罗兰
+    pink: 深粉
+    dusk: 猩红
+    volcano: 橙红
+    mingQing: 绿宝石
+    auroraGreen: 酸橙
+    geekblue: 极客蓝
+    gold: 金盏黄
+    lime: 青柠
+    brown: 咖褐
+    custom: 自定义
+  themePreset: 主题预设
+  themePresetDesc: 预设色系同时调整背景、卡片、描边与填充的色相，并应用配套主色
+  themePresetNames:
+    default: 默认
+    violet: 紫罗兰
+    pink: 樱花粉
+    yellow: 柠檬黄
+    skyBlue: 天蓝
+    green: 浅绿
+    zinc: 锌灰
+    deepGreen: 深绿
+    deepBlue: 深蓝
+    orange: 橙黄
+    rose: 玫瑰红
+    neutral: 中性
+    slate: 石板灰
+    gray: 中灰
+    custom: 自定义
+  tabAppearance: 外观
+  tabLayout: 布局
+  tabGeneral: 通用
+  tabShortcut: 快捷键
+  general: 通用设置
+  siteTitle: 站点标题
+  siteTitleTip: 侧栏 / 顶栏品牌区与浏览器标签页的站点名（留空用平台配置的 Title）
+  siteTitlePlaceholder: 如：xAdmin 管理平台
+  siteWideAdminOnly: 站点级外观配置全局生效（所有账号与登录页一致），仅管理员可修改
+  language: 语言
+  languageTip: 界面语言，与顶栏语言切换为同一入口
+  headerAutoHide: 顶栏自动隐藏
+  headerAutoHideTip: 向下滚动自动收起顶栏，向上滚动恢复
+  compactMode: 紧凑模式
+  compactModeTip: 收紧内容留白并居中限宽
   display: 界面显示
   greyMode: 灰色模式
   colorWeakMode: 色弱模式
   hideTabs: 隐藏标签页
   hideFooter: 隐藏页脚
   sidebarLogo: 侧边栏Logo
+  sidebarLogoTip: 显示品牌位的 Logo 图片；标题文字由「Logo 文字」单独控制，两者都关时品牌位收起
   labelPersistence: 标签页持久化
   labelStyle: 标签风格
+  tagsStylePlain: 朴素风格
+  tagsStylePlainTip: 去底色与卡片边，激活页签用主色浅底圆角块标识
   tagsStyleCard: 卡片
   tagsStyleSmart: 灵动
   tagsStyleChrome: 谷歌
+  displayEffect: 显示效果
+  semanticColors: 功能色
+  navigationStyle: 导航风格
+  navigation: 导航行为
+  navigationSplit: 导航切割
+  navigationSplitTip: 仅混合模式生效：开启后侧栏显示顶栏所选一级菜单的子菜单，关闭则顶栏与侧栏都显示完整菜单
+  navStyleRounded: 圆角
+  navStyleRoundedTip: 菜单激活块带圆角并在两侧留出间距
+  navStylePlain: 朴素
+  navStylePlainTip: 去掉圆角与内缩，激活块整行铺满
+  tagsHeight: 页签高度
+  tagsHeightTip: 页签项的高度（28~48px），顶栏与页签条总高随之计算
+  tagsKeepAlive: 页签缓存
+  tagsKeepAliveTip: 关闭后所有页面都不再缓存（逐页的缓存设置整体失效）
+  tagsVisitHistory: 页签访问历史
+  tagsVisitHistoryTip: 记录访问顺序；关闭当前页签时回到上一个访问过的页面（否则回到最后一个页签）
+  footerFixed: 固定页脚
+  footerFixedTip: 页脚吸附在内容区底部，页面滚动时保持可见
+  footerHeight: 页脚高度
+  footerHeightTip: 页脚高度（px），0 = 自动（沿用内置留白）
+  logoSource: Logo 图片
+  logoSourceTip: 自定义 Logo 图片地址（站内路径或图片 URL），留空使用内置资源
+  logoSourcePlaceholder: 留空使用内置 Logo
+  logoShowText: Logo 文字
+  logoShowTextTip: 在 Logo 右侧显示平台标题文字
+  logoFit: 图片填充
+  logoFitTip: Logo 图片在容器内的填充方式（object-fit）
+  logoFitContain: 完整显示
+  logoFitCover: 裁剪铺满
+  logoFitFill: 拉伸铺满
+  logoFitNone: 原始尺寸
+  logoFitScaleDown: 等比缩小
+  logoMode: Logo 形态
+  logoModeTip: 图标 = 图片 + 右侧平台标题；整图 = 图片自身含文字，不再单独渲染标题
+  logoModeIcon: 图标
+  logoModeFull: 整图
+  fullLogoHeight: 整图高度
+  fullLogoHeightTip: 整图形态下 Logo 图片的高度（px）
+  logoSourceDark: 暗色 Logo
+  logoSourceDarkTip: 暗色外观下的专用图片地址（空 = 与浅色共用）
+  moreWidgets: 更多
+  navbarWidgets: 顶栏组件
+  navbarWidgetsDesc: 拖拽调整顺序，右侧选择每个组件的落位（顶栏 / 更多下拉 / 头像菜单 / 不显示）
+  navbarWidgetsTip: 搜索、语言、全屏、通知为弹层类组件，固定顶栏位置
+  navbarPositionHeader: 顶栏
+  navbarPositionMore: 更多下拉
+  navbarPositionHidden: 不显示
+  navbarPositionUserDropdown: 头像菜单
+  headerMenuAlign: 顶栏菜单对齐
+  headerMenuAlignTip: 水平与混合布局的顶栏菜单对齐方式（侧栏菜单不受影响）
+  menuAlignStart: 左侧
+  menuAlignCenter: 居中
+  menuAlignEnd: 右侧
+  sidebarCollapseWidth: 折叠宽度
+  sidebarCollapseWidthTip: 侧栏收起后的宽度（48~96px）
+  sidebarMixedWidth: 混合宽度
+  sidebarMixedWidthTip: 双列布局的一级窄列宽度（0 = 设计令牌默认值 80px）
+  sidebarHidden: 隐藏侧栏
+  sidebarHiddenTip: 隐藏侧栏并把内容区铺满（与页签右键「内容全屏」同效）
+  sidebarFixedButton: 钉住按钮
+  sidebarFixedButtonTip: 侧栏显示「钉住」按钮：钉住常驻展开，取消后恢复悬停展开
+  sidebarExtraCollapse: 额外收起
+  sidebarExtraCollapseTip: 仅混合布局：单独收起第二列侧栏，不影响其它布局的折叠状态
+  semanticColorsDesc: 成功 / 警告 / 危险三色驱动 Element Plus 的语义色阶（按钮、标签、消息等）
+  semanticColorsTip: 留空即跟随内置默认；自定义后可用右侧按钮恢复默认
+  semanticColorsPick: 点击取色
+  semanticColorsReset: 恢复默认
+  semanticColorSuccess: 成功色
+  semanticColorWarning: 警告色
+  semanticColorDanger: 危险色
+  greyModeTip: 整站转为灰度，便于核对对比度或打印观感
+  colorWeakModeTip: 反色补偿，缓解色弱用户辨识困难
+  radius: 圆角
+  radiusTip: 统一缩放卡片、按钮、输入框的圆角（设计令牌档位）
+  radiusNone: 无
+  radiusSmall: 小
+  radiusDefault: 默认
+  radiusLarge: 大
+  radiusXlarge: 特大
+  fontSize: 字号
+  fontSizeTip: 缩放全站文字大小；根字号与控件高度、间距不变
+  fontSmall: 小
+  fontDefault: 默认
+  fontLarge: 大
+  fontCustom: 自定义
+  fontSizeScale: 字号档位
+  fontCustomSize: 基准字号
+  sidebar: 侧边栏
+  sidebarAccordion: 手风琴展开
+  sidebarAccordionTip: 同级菜单只保留一项展开
+  sidebarCollapseButton: 折叠按钮
+  sidebarCollapseButtonTip: 显示侧栏底部的折叠与展开按钮
+  semiDarkSidebar: 半暗侧栏
+  semiDarkHeader: 半暗顶栏
+  semiDarkHeaderTip: 浅色外观下顶栏用深色调色板（暗色外观本身即深色，无需此档）
+  semiDarkSidebarTip: 浅色外观下让侧栏保持深色（深色外观本身即深色，无需此档）
+  semiDarkSidebarSub: 半暗子侧栏
+  semiDarkSidebarSubTip: 浅色外观下让混合布局的侧栏（第二列）保持深色（仅混合布局生效）
+  sidebarWidth: 侧栏宽度
+  sidebarWidthTip: 侧栏展开时的宽度（160~320px），折叠宽度不随之变化
+  sidebarExpandOnHover: 悬停展开
+  sidebarExpandOnHoverTip: 折叠态鼠标移入时临时展开侧栏，移开复位（不改变保存的折叠状态）
+  sidebarDraggable: 拖拽调宽
+  sidebarDraggableTip: 侧栏右缘出现拖拽把手，松开后保存宽度
+  sidebarCollapsedShowTitle: 折叠态显示标题
+  sidebarCollapsedShowTitleTip: 折叠侧栏时一级菜单在图标下方显示标题（仅垂直布局）
+  sidebarAutoActivateChild: 自动激活子菜单
+  sidebarAutoActivateChildTip: 点击展开有子级的顶层菜单时，自动跳转到第一个子菜单
+  header: 顶栏
+  headerFixed: 固定顶栏
+  headerFixedTip: 关闭后顶栏随页面一起滚动（页签条同步跟随）
+  headerVisible: 显示顶栏
+  headerVisibleTip: 关闭后顶栏整块不渲染（页签条保留）；与「非固定」的区别是不占位
+  headerMode: 顶栏模式
+  headerModeTip: 静止 = 随内容滚动；固定 = 吸附顶部；自动 = 下滑隐藏、上滑显示
+  headerModeStatic: 静止
+  headerModeFixed: 固定
+  headerModeAuto: 自动隐藏和显示
+  headerModeAutoScroll: 滚动隐藏和显示
+  breadcrumbVisible: 面包屑
+  breadcrumbVisibleTip: 顶栏左侧显示当前页面的路径导航
+  breadcrumbShowIcon: 面包屑图标
+  breadcrumbShowIconTip: 面包屑项前显示菜单图标
+  breadcrumbShowHome: 显示首页
+  breadcrumbShowHomeTip: 面包屑最前追加「首页」项
+  breadcrumbHideOnlyOne: 仅一项时隐藏
+  breadcrumbHideOnlyOneTip: 面包屑只有一层（例如首页）时整条隐藏
+  breadcrumbStyle: 面包屑样式
+  breadcrumbStyleTip: 普通文字或浅底卡片
+  breadcrumbStyleNormal: 普通
+  breadcrumbStyleBackground: 浅底
+  breadcrumbHome: 首页
+  navbarSearch: 菜单搜索
+  navbarLanguage: 语言切换
+  navbarFullscreen: 全屏按钮
+  navbarLock: 锁屏按钮
+  navbarLockTip: 顶栏显示一键锁屏按钮，锁屏后需输入登录密码解锁
+  navbarNotice: 消息通知
+  navbarTimezone: 时区
+  navbarRefresh: 顶栏刷新
+  navbarSidebarToggle: 顶栏折叠
+  navbarSidebarToggleTip: 与侧栏底部折叠按钮等效（默认隐藏，避免重复）
+  navbarThemeToggle: 顶栏明暗切换
+  navbarThemeToggleTip: 顶栏一键切换浅色 / 深色外观
+  refreshPage: 刷新当前页
+  sidebarToggle: 折叠侧栏
+  tabbar: 页签
+  persistenceTip: 刷新后保留已打开的页签（写入本地存储）
+  tagsMiddleClickClose: 中键关闭
+  tagsMiddleClickCloseTip: 鼠标中键点击页签即关闭，固定标签不受影响
+  tagsWheelSwitch: 滚轮滚动
+  tagsWheelSwitchTip: 在页签条上滚动滚轮横向浏览
+  tagsShowIcon: 页签图标
+  tagsShowIconTip: 页签标题前显示菜单图标
+  tagsShowRefresh: 刷新按钮
+  tagsShowRefreshTip: 页签条右侧显示刷新当前页按钮
+  tagsShowMore: 更多按钮
+  tagsShowMoreTip: 页签条右侧显示批量操作下拉（关闭、固定等）
+  tagsShowMaximize: 最大化按钮
+  tagsShowMaximizeTip: 页签栏内显示「内容最大化 / 还原」按钮（等同右键菜单，隐藏顶栏与侧栏）
+  maxTagsCount: 最大数量
+  maxTagsCountTip: 超出后自动关闭最早打开的可关闭页签（首页与固定页签除外）；0 表示不限制
+  footer: 页脚
+  authPage: 登录页
+  authPageLayout: 登录页布局
+  authPageLayoutTip: 认证页（登录 / 注册 / 找回密码）插画与表单的相对位置；窄屏一律居中且不显示插画
+  authPanelLeft: 插画在左
+  authPanelCenter: 仅表单
+  authPanelRight: 插画在右
+  dynamicTitle: 动态标题
+  dynamicTitleTip: 浏览器标题随当前页面变化
+  pageTransition: 切换动画
+  pageTransitionTip: 页面切换的过渡效果，单个路由可单独覆盖
+  transitionNone: 关闭
+  transitionFadeTransform: 横向滑动
+  transitionFadeSlide: 淡入滑动
+  transitionFadeUp: 上滑淡入
+  transitionFadeDown: 下滑淡入
+  transitionFadeScale: 缩放淡入
+  transitionProgress: 顶部进度条
+  transitionProgressTip: 路由切换时顶栏显示加载进度条
+  transitionLoading: 内容区 loading
+  transitionLoadingTip: 首次加载页面时内容区显示加载遮罩（已访问页面瞬时切换不点亮）
+  transitionEffect: 切换效果
+  shortcut: 快捷键
+  shortcutEnable: 快捷键开关
+  shortcutEnableTip: 关闭后所有快捷键失效（顶栏按钮不受影响）
+  shortcutSearch: 全局搜索
+  shortcutSearchTip: 唤起命令面板；关闭后仍可点顶栏搜索图标
+  shortcutLock: 锁屏
+  shortcutLockTip: 输入框聚焦时不响应，避免打字误触发
+  shortcutSidebar: 折叠侧栏
+  shortcutSidebarTip: 与顶栏折叠按钮等效；移动端同样生效
+  shortcutPreferences: 打开项目配置
+  shortcutPreferencesTip: 快速打开右侧项目配置面板
+  shortcutLogout: 退出登录
+  shortcutLogoutTip: 默认未设置：留空可避免误触退出
+  shortcutUnset: 未设置
+  shortcutRecording: 请按组合键
+  shortcutRecord: 录制快捷键
+  shortcutClear: 清除
+  shortcutReserved: 该组合为浏览器保留键，请换一组
+  shortcutConflict: 该组合已被其它动作占用，请换一组
+  copyPreferences: 复制偏好
+  copyPreferencesTip: 复制完整的平台配置（含全部字段），可整文件覆盖 platform-config.json，或整段粘贴为「系统配置」站点配置项的值
+  copyPreferencesSuccess: 平台配置已复制（可整文件覆盖 platform-config.json）
+  enableCopyPreferences: 显示复制偏好按钮
+  enableCopyPreferencesTip: 面板底部「更多」菜单提供一键复制完整平台配置的入口
   cleanOut: 清空缓存并返回登录页
+  preferencesEntry: 偏好入口
+  enablePreferences: 设置入口
+  enablePreferencesTip: 显示顶栏齿轮或右下角悬浮球入口（关闭后仍可从头像菜单与快捷键打开面板）
+  enablePreferencesOffConfirm: 关闭后顶栏齿轮 / 悬浮球入口隐藏，头像菜单里保留「系统设置」一项，快捷键（默认 ⌘/Ctrl + ,）仍可打开面板。确认关闭？
+  preferencesPosition: 入口位置
+  preferencesPositionTip: 顶栏齿轮 / 悬浮球（可拖动）/ 头像菜单 / 自动（水平布局走悬浮球）/ 不显示（隐藏后仍可从头像菜单与快捷键打开）
+  preferencesPositionHeader: 顶栏
+  preferencesPositionFixed: 悬浮球
+  preferencesPositionUserDropdown: 头像菜单
+  preferencesPositionAuto: 自动
+  preferencesPositionNone: 不显示
+  preferencesFabTip: 点击打开设置面板，按住可拖到任意位置
+  preferencesHiddenNotice: 设置入口已隐藏：可用快捷键 Ctrl / ⌘ + , 或头像菜单里的「系统设置」重新打开
+  preferencesStickyNavEnable: 吸顶页签导航
+  preferencesStickyNavDisable: 取消吸顶
   noticeTime: YYYY年MM月DD日 HH:mm:ss
+  timezone: 时区
+  timezoneFollowBrowser: 跟随浏览器时区
+  timezoneTip: 顶栏时区组件与时钟展示使用的时区，默认跟随浏览器
   backTop: 回到顶部
+  skipToContent: 跳到主内容
   updateCheck: 检测到新版本
   updateNow: 立即更新
-  clearCache: 清空缓存
   light: 浅色
   dark: 深色
   auto: 自动
@@ -99,16 +711,49 @@ layout:
   fixedTip: 紧凑页面，轻松找到所需信息
   customization: 自定义
   customTip: 最小1280、最大1600
+  fluid: 流式
+  fluidTip: 内容区占满可用宽度，宽表页更从容
+  fixedWidth: 定宽
+  fixedWidthTip: 内容区居中并限制最大宽度，阅读更聚焦
+  pageWidthMode: 页宽模式
+  pageWidthSize: 内容宽度
+  about: 关于
+  currentVersion: 当前版本
+  checkUpdate: 检查更新
+  checkUpdateTip: 拉取部署端版本文件与本地版本比对
+  autoCheckUpdates: 自动检查更新
+  autoCheckUpdatesTip: 后台定时轮询部署端版本，发现新版本时提示刷新；关闭后可在下方手动检查
+  checkUpdateLatest: 已是最新版本
+  checkUpdateFound: 发现新版本 {version}
+  checkUpdateFailed: 检查更新失败，请稍后重试
+  lockScreen: 锁屏
+  lockScreenTip: 锁屏后界面被遮挡，需输入登录密码解锁
+  lockScreenPlaceholder: 请输入登录密码解锁
+  lockScreenUnlock: 解锁
+  lockScreenLocked: 已锁定
+  lockScreenPasswordError: 密码不正确
+  lockScreenBack: 返回登录页
   saveConfig: 保存
   saveConfigTip: 将当前项目配置保存到服务器
-  resetConfig: 重置
-  resetConfigTip: 重置为默认项目配置并刷新页面
+  revertChanges: 撤销本次调整
+  revertChangesTip: 放弃本次设置面板中的全部改动，回到打开面板时的状态
+  revertChangesSuccess: 已撤销本次调整
+  resetConfig: 恢复默认
+  resetConfigTip: 清除你的个人偏好，回到站点默认（管理员统一配置）
+  resetConfigConfirm: 将清除你的个人偏好并回到站点默认配置，是否继续？
+  resetSiteWide: 恢复站点默认
+  resetSiteWideConfirm: 将站点标题 / Logo 品牌位 / 登录页布局恢复为平台默认值，并对全部用户与登录页立即生效，是否继续？
+  resetSiteWideSuccess: 站点级外观已恢复默认
+  panelMoreTip: 更多操作：恢复站点默认 / 复制偏好 / 清空缓存并返回登录页
 
 error:
   error403: 抱歉，你无权访问该页面
   error404: 抱歉，你访问的页面不存在
   error500: 抱歉，服务器出错了
   goBack: 返回首页
+  moduleDisabled: 功能模块已停用
+  moduleDisabledTip: 该功能对应的模块已被停用，如需使用请联系管理员开启
+  back: 返回上一页
 
 password:
   veryWeak: 很弱
@@ -145,6 +790,7 @@ labels:
   offline: 下线
   yes: 是
   no: 否
+  noData: 暂无数据
 
 exportImport:
   import: 导入
@@ -153,24 +799,266 @@ exportImport:
   exportRange: 导出范围
   exportAll: 导出所有
   exportSelected: 导出选中项
-  exportFiltered: 仅导出搜素结果
+  exportFiltered: 仅导出搜索结果
   create: 创建
   update: 更新
   upload: 上传
   uploadRuleTip: 文件不能为空
   uploadTip: 可点击或拖拽上传
+  pleaseSelectFile: 请先选择文件
   downloadTip: 下载{ action }模板
+  downloadTemplate: 下载模板
   ignoreError: 忽略错误
+  ignoreErrorAsyncTip: 异步导入无需此选项：失败行逐行隔离并生成错误报告
+  asyncExport: 异步导出
+  asyncTip: 数据量大时开启：提交后台任务，完成后在「系统管理 - 下载中心」下载
+  asyncSubmitted: 导出任务已提交，请稍后在下载中心查看
+  mode: 执行方式
+  modeImport: 导入
+  modeValidate: 仅校验
+  async: 异步导入
+  asyncImportTip: 数据量大时开启：提交后台任务，进度与错误报告在「下载中心 - 导入记录」查看
+  validateResult: 导入校验结果
+  validateDone: 校验完成
+  validateSummary: 共 { total } 行，通过 { valid } 行，失败 { invalid } 行
+  validateTruncated: 错误明细已截断
+  validateRow: 数据行
+  validateField: 字段
+  validateError: 错误信息
+  importSubmitted: 导入任务已提交，请稍后在下载中心查看进度与错误报告
+  mappingStep: 列映射
+  mappingTip: 文件表头与字段名不一致时，按列映射导入；未映射列默认忽略
+  mappingSource: 文件列
+  mappingTarget: 目标字段
+  mappingIgnore: 忽略该列
+  mappingMatched: 等名候选：{ field }
+  mappingUnmatched: 未匹配到字段
+  mappingParseFailed: 表头解析失败，请检查文件格式
+  templatePlaceholder: 选择映射模板（可选）
+  templateShared: 共享
+  templateSavePlaceholder: 模板名称
+  saveAsTemplate: 另存为模板
+  templateSaved: 映射模板已保存
+  templateNameRequired: 请先填写模板名称
+  ignoreUnknown: 保留未映射列
+  ignoreUnknownTip: 勾选后未映射列保留原表头并再尝试等名匹配；不勾选则直接忽略
+  unmatchedColumns: 以下列未匹配到任何字段，已忽略：{ columns }
 
 messageNotifications:
   messageType: 消息类型
   receivers: 接收人
   editRecipient: 修改消息接收人
   editRecipientTitle: 修改 { title } 的消息接收人
+  sendTestMessage: 发送测试
+
+taskCenter:
+  title: 任务中心
+  pendingApproval: 审批待办
+  runningTasks: 进行中任务
+  recentExports: 最近导出
+  recentImports: 最近导入
+  viewAll: 查看全部
+  download: 下载
+  log: 日志
+  handle: 去处理
+  logTitle: 执行日志
+  empty: 暂无异步任务记录
+  noData: 暂无记录
+  type: 记录类型
+  status: 状态
+  keyword: 名称关键字
+  total: 共 {total} 条
+  colType: 类型
+  colName: 名称
+  colModule: 来源
+  colStatus: 状态
+  colProgress: 进度
+  colCreator: 创建人
+  colCreated: 创建时间
+  colError: 失败原因
+  colActions: 操作
+  typeTask: 执行任务
+  typeExport: 导出
+  typeImport: 导入
+  type_task: 任务
+  type_export: 导出
+  type_import: 导入
+  statusPending: 等待中
+  statusRunning: 运行中
+  statusSuccess: 成功
+  statusFailure: 失败
+  statusRevoked: 已取消
+  status_PENDING: 等待中
+  status_RUNNING: 运行中
+  status_SUCCESS: 成功
+  status_FAILURE: 失败
+  status_REVOKED: 已取消
+  cancel: 取消
+  cancelTitle: 取消任务
+  cancelConfirm: 取消后任务将在安全点停止（运行中的导出/导入会在下一个检查点结束），是否继续？
+  cancelDone: 已取消
+  rerun: 重跑
+  rerunDone: 已提交重跑
+  colTimeCost: 耗时
+  deleteConfirm: 确认删除这条执行历史？
+  deleteDone: 已删除
+  deleteProductHint: 导出/导入记录的清理请在下载中心操作
+  batchDelete: 批量删除
+  batchDeleteConfirm: 确认删除选中的 {count} 条执行历史？
+  batchDeleteEmpty: 选中的记录里没有可清理的执行历史
+  selected: 已选 {count} 条
+
+post:
+  title: 岗位
+  create: 新建岗位
+  edit: 编辑岗位
+  saveOk: 岗位已保存
+  name: 岗位名称
+  nameRequired: 请填写岗位名称
+  code: 岗位编码
+  codeRequired: 请填写岗位编码
+  dept: 所属部门
+  deptPlaceholder: 留空为组织通用岗
+  rank: 排序
+  isActive: 启用状态
+  description: 备注
+  memberCount: 成员数
+  enabled: 已启用
+  disabled: 已停用
+  members: 成员
+  memberHint: 移除已有成员或搜索添加新成员（保存后生效）
+  memberEmpty: 暂无成员
+  memberPlaceholder: 搜索用户名/昵称添加成员
+  memberNoChange: 未检测到成员变更
+  memberReadonlyHint: 只读查看成员名录（需要分配成员权限才能调整）
+  memberSaveOk: 岗位成员已更新
+  memberSkipped: 岗位成员已更新，{count} 个失效或不存在用户已跳过
+  preview: 预览
+
+directory:
+  membersLoadFailed: 成员加载失败，请稍后重试
+  title: 通讯录
+  viewByDept: 按部门
+  viewByPost: 按岗位
+  allMembers: 全部成员
+  allPosts: 全部岗位
+  searchDept: 搜索部门
+  searchPost: 搜索岗位
+  refresh: 刷新
+  searchPlaceholder: 用户名/昵称/邮箱/手机号
+  search: 搜索
+  total: "共 {n} 人"
+  viewCard: 卡片视图
+  viewList: 列表视图
+  empty: 暂无成员
+  emptyDept: 暂无可浏览的部门
+  emptyPosts: 暂无可用岗位
+  deptTreeTruncated: 部门数量超过单次加载上限，部门树已截断、可能不完整
+  postListTruncated: 岗位数量超过单次加载上限，岗位清单已截断、可能不完整
+  noPost: 未分配岗位
+  noContact: 暂无联系方式
+  memberDetail: 成员详情
+  copy: 复制
+  name: 姓名
+  username: 用户名
+  dept: 部门
+  posts: 岗位
+  gender: 性别
+  email: 邮箱
+  phone: 手机号
+  lastLogin: 最近登录
+  dateJoined: 加入日期
+
+tag:
+  title: 标签
+  create: 新建标签
+  edit: 编辑标签
+  saveOk: 标签已保存
+  name: 标签名称
+  nameRequired: 请填写标签名称
+  color: 颜色
+  remark: 备注
+  usage: 使用数
+  builtin: 内置
+  assignTitle: 打标
+  assignPlaceholder: 选择标签（可多选）
+  assignHint: 保存后为全量替换：未选中的标签将被解绑
+  assignDone: 标签已更新
+  selectPlaceholder: 请选择标签
+  selectRequired: 请至少选择一个标签
+  batchAssignTitle: 批量打标
+  batchHint: 批量：按所选应用方式作用于已选对象
+  batchDone: 已为 {success} 个对象打标
+  batchDonePartial: 成功 {success} 个，失败 {failures} 个
+  newPlaceholder: 输入名称新建标签
+  createDone: 标签已创建
+  modeLabel: 应用方式
+  modeAdd: 追加
+  modeRemove: 移除
+  modeReplace: 替换（覆盖原有标签）
+
+commandPalette:
+  title: 快捷动作
+  openAi: 打开 AI 助手
+  openTaskLog: 打开任务日志
+  openTags: 打开标签管理
+  openModules: 打开模块管理
+  toggleTheme: 切换浅色 / 深色
+  backHome: 返回首页
+
+invite:
+  title: 账号激活
+  subtitle: 设置登录密码以完成账号激活
+  password: 登录密码
+  confirm: 确认密码
+  submit: 激活账号
+  passwordRequired: 请输入登录密码
+  mismatch: 两次输入的密码不一致
+  success: 激活成功，请登录
+  invalid: 邀请链接无效或已过期，请联系管理员重新发送邀请
+  accepted: 账号已激活，请直接登录
+  toLogin: 去登录
+  captchaRequired: 请先完成拼图验证
+
+oauth:
+  title: 第三方登录
+  tabTitle: 第三方账号
+  bindTip: 绑定第三方账号后可直接用它登录本系统；解绑需验证登录密码，且不会解掉你最后一种可用的登录方式。
+  bound: 已绑定
+  bindable: 可绑定
+  bind: 绑定
+  bindSuccess: 绑定成功
+  bindAlready: 该第三方账号已绑定，无需重复操作
+  bindFailed: 绑定失败
+  backToAccount: 返回账户设置
+  providerNotConfigured: 管理员尚未配置可用的第三方登录，暂时无法绑定
+  allBound: 已启用的第三方账号均已绑定
+  noBindings: 暂无第三方账号绑定
+  unbind: 解绑
+  unbindPasswordTip: 请输入登录密码以确认解绑
+  unbindSuccess: 已解绑
+  password: 登录密码
+  invalidCallback: 回调参数不完整，请重新发起登录
+  loginFailed: 第三方登录失败
+  mfaRequired: 该账号需完成二次验证，请改用账号密码登录后绑定
+  idpError: 第三方授权未完成，已取消或认证方出错，请重试或改用其他方式登录
+  idpErrorDetail: "第三方授权未完成：{detail}"
+
+plus:
+  fileLink: 文件连接
+  metaMissingTitle: 页面列配置加载失败
+  metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成，当前未获取到。请刷新页面重试；若持续出现，请联系管理员（常见原因：页面未正确注册、序列化器未声明字段、当前账号缺少页面权限点）。
+  detailBlankTitle: 详情数据为空
+  detailBlankTip: 若已开启字段权限，请为当前菜单配置字段白名单（未配置白名单的模型字段会被裁剪为空）
 
 results:
+  copySuccess: 复制成功
+  copyFailed: 复制失败
+  operateSuccess: 操作成功
+  operateConfirmTitle: 确定操作？
   success: 执行成功
   failed: 执行失败
+  loadFailedRetry: 数据加载失败，请关闭后重试
   batchDestroy: 批量删除 { count } 条数据
   batchRead: 批量已读 { count } 条数据
   noSelectedData: 数据未选择
@@ -184,6 +1072,7 @@ sorts:
   rank: 排序
 
 buttons:
+  tips: 提示
   loginOut: 退出系统
   add: 新增
   save: 保存
@@ -193,6 +1082,7 @@ buttons:
   collapseAll: 全部折叠
   selectAll: 选择全部
   unSelectAll: 取消选择
+  selectIcon: 选择图标
   systemSet: 打开项目配置
   delete: 删除
   reload: 重新加载
@@ -203,9 +1093,17 @@ buttons:
   closeRightTabs: 关闭右侧标签页
   closeOtherTabs: 关闭其他标签页
   closeAllTabs: 关闭全部标签页
-  contentFullScreen: 内容区全屏
-  contentExitFullScreen: 内容区退出全屏
+  maximize: 最大化
+  restoreMaximize: 还原
+  pinTab: 固定标签
+  unpinTab: 取消固定
+  openInNewWindow: 新窗口打开
+  fullScreenToggle: 全屏切换
+  language: 切换语言
+  splitPaneReset: 重置分栏宽度
+  userMenu: 用户菜单
   cancel: 取消
+  confirm: 确定
   close: 关闭
   switch: 切换
   sure: 确定
@@ -219,8 +1117,12 @@ buttons:
   confirmUpdate: 确定更新该数据吗？
   checkStrictly: 层级关联
   checkUnStrictly: 层级独立
+  changeHistory: 变更历史
 
 menus:
+  searchData: 数据查询
+  userOnline: 在线用户
+  apiApp: API 应用
   home: 首页
   login: 登录
   sysManagement: 系统管理
@@ -228,9 +1130,29 @@ menus:
   basicSettings: 基本设置
   messageSettings: 消息通知
   smsSettings: 短信设置
+  ldapSettings: LDAP 目录
+  dataAnalysis: 数据分析
+  dataDashboard: 仪表盘
+  dataDataset: 数据集
+  dataReport: 定时报表
+  dataScreen: 大屏投屏
+  integration: 集成管理
+  webhookSubscription: Webhook 订阅
+  webhookDelivery: 投递审计
+  aiAssistant: AI 助手
+  aiAssistantConfig: AI 配置
+  aiKnowledge: 知识库
+  aiMcpServers: 外部工具
+  formCollection: 表单采集
+  formDesigner: 表单设计
+  formMySubmission: 我的填报
+  formData: 表单数据
   securitySettings: 安全设置
   userManagement: 用户管理
+  directory: 通讯录
   deptManagement: 部门管理
+  myScope: 我的管辖
+  postManagement: 岗位管理
   menuManagement: 菜单管理
   permissionManagement: 权限管理
   configManagement: 配置管理
@@ -239,6 +1161,8 @@ menus:
   roleManagement: 角色权限
   dataPermissionManagement: 数据权限
   logManagement: 日志管理
+  systemTaskCrontab: 定时表达式
+  systemTaskInterval: 间隔调度
   modelFieldManagement: 字段管理
   operationLogManagement: 访问日志
   loginLogManagement: 登录日志
@@ -253,12 +1177,361 @@ menus:
   noticeAndAnnouncement: 通知公告
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息
+  codeGenerator: 代码生成
   timingTask: 定时任务
+  taskManage: 任务管理
+  taskMonitor: 任务监控
+  taskExecution: 任务日志
   personalCenter: 个人中心
   accountSettings: 账户设置
   messageCenter: 消息中心
   chat: 聊天室
   apiDocs: 接口文档
+  exportCenter: 下载中心
+  exportRecord: 导出记录
+  importCenter: 导入记录
+  systemMonitor: 系统监控
+  dataDict: 数据字典
+  tag: 标签管理
+  taskCenter: 任务中心
+  accountRisk: 账号安全
+  loginPolicy: 登录策略
+  dataMaskRule: 脱敏规则
+  approval: 审批管理
+  approvalCenter: 审批中心
+  approvalFlow: 流程定义
+  approvalInstance: 流程审批
+  approvalDelegation: 审批委托
+  approvalRule: 审批规则
+  leaveApply: 请假申请
+  moduleManager: 模块管理
+  credential: 凭据与密钥
+
+impact:
+  title: 影响面预览
+  affected: 该操作会影响以下关联数据
+  confirmDelete: 确认删除
+
+credential:
+  title: 凭据与密钥
+  systemConfigs: 系统配置敏感项
+  settings: 设置项凭据
+  modelFields: 模型字段凭据
+  name: 名称
+  field: 字段
+  fields: 加密字段
+  category: 分类
+  status: 加密状态
+  action: 操作
+  updatedTime: 最近更新
+  configuredCount: 已配置数量
+  empty: 未配置
+  encrypted: 已加密
+  plaintext: 明文
+  plaintextWarn: "发现 {count} 项敏感配置仍为明文，请尽快轮换"
+  rotate: 轮换
+  rotateConfirm: "确认重新加密凭据 {name}？轮换后旧密文立即失效，使用该凭据的链路会读取新密文"
+  rotateOk: 凭据已重新加密
+  rotateFailed: 凭据轮换失败
+  description: 说明
+  masked: 掩码值
+  goChange: 去更换
+  rotateModelConfirm: "确认轮换「{name}」？将重新生成随机密钥并覆盖原值，依赖该密钥的外部集成（如 Webhook 验签）必须同步更新，否则校验失败"
+  usedBy: 使用方
+  lastRotated: 上次轮换
+  rotateOverdue: 建议轮换
+  neverRotated: 从未轮换
+  modelFieldsHint: 模型字段级凭据按行值级加密（AESCipherV3），此处仅展示已配置数量，不展示密钥内容
+  noPermission: 无凭据查看权限
+  noPermissionHint: 联系管理员授予「凭据与密钥」的查看权限后可见
+
+approval:
+  pendingTab: 待我审批
+  mineTab: 我发起的
+  candidateTruncated: 审批人候选目录已截断（用户数超出上限），本地搜索结果可能不全，请用关键字精确搜索
+  commentPlaceholder: 审批意见（选填）
+  approve: 通过
+  reject: 驳回
+  cancel: 撤回
+  batchApprove: 批量通过
+  batchReject: 批量驳回
+  batchRejectTitle: 批量驳回 {n} 条审批单
+  batchPartial: "{n} 条未处理：{detail}"
+  statsTip: "统计口径：最近 {n} 天"
+  statsSubmitted: 我提交
+  statsApproved: 我通过
+  statsRejected: 我驳回
+  statsPending: 待我审批
+  statsAvgDuration: 平均审批时长
+  relatedLogs: 相关日志
+  relatedLogsTip: 按「同请求路径 + 同对象 + 同申请人」回溯该审批单对应的操作痕迹（近似口径，不含审批动作本身）
+  approveConfirm: 确定通过审批单 {no} 吗？
+  cancelConfirm: 确定撤回审批单 {no} 吗？
+  batchApproveConfirm: 确定批量通过选中的审批单吗？
+  rejectTitle: 驳回审批单 {no}
+  rejectReasonRequired: 请填写驳回原因
+  reasonPlaceholder: 请输入驳回原因（必填）
+  module: 模块
+  method: 方法
+  path: 请求路径
+  object_pk: 对象主键
+  status: 状态
+  approver: 审批人
+  reason: 原因
+  creator: 申请人
+  statusPENDING: 待审批
+  statusAPPROVED: 已通过
+  statusREJECTED: 已驳回
+  statusEXPIRED: 已过期
+  statusCANCELLED: 已撤回
+  statusFAILED: 校验失败
+  levelNo: 第 {n} 级
+  pendingApprover: 待审批
+  progressTitle: 审批进度 - {no}
+  progressTip: 按配置顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过
+  target: 目标对象
+  targetChanges: 变更对照（变更前 → 变更后）
+  targetNoChanges: 未记录字段变更（删除类操作仅展示目标对象）
+  handler: 处理人
+  stepComment: 意见
+  modeOR: 或签
+  modeAND: 会签
+  andProgress: 已通过 {done}/{total}
+  actedUsers: 处理记录
+  progressLoadFailed: 审批进度加载失败，请稍后重试
+
+approvalRule:
+  createTitle: 新增审批规则
+  editTitle: 编辑审批规则
+  name: 规则名称
+  nameRequired: 请输入规则名称
+  path_patterns: 匹配路径
+  methods: 方法限定
+  level_count: 审批级数
+  priority: 优先级
+  is_active: 启用
+  remark: 备注
+  formName: 规则名称
+  formNameTip: 例如「书籍删除审批」
+  formPaths: 匹配路径
+  # 尖括号用字面量插值 {'<'} 包裹：直接写 <pk> 会被 message-compiler 判定为 HTML 而告警
+  formPathsTip: "每行一条路径正则，命中即按本规则逐级审批（如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）"
+  formMethods: 限定方法
+  methodsPlaceholder: 留空 = 不限方法
+  methodsTip: 非空时仅当请求方法在清单内才命中本规则（HEAD 按 GET 匹配）
+  methodsAll: 全部方法
+  pathRequired: 请至少填写一条匹配路径
+  pathsPlaceholder: 从接口清单中选择需要审批的接口
+  pathsTip: 勾选接口后按路径拦截；实际拦截仅发生在删除/批量删除等已登记审批的操作上
+  pathsRequired: 请至少配置一条匹配路径
+  pathsCustomTip: 自定义路径正则，每行一条（高级用法，如 api/demo/book/(?P{'<'}pk{'>'}[^/.]+)$）
+  approveType: 审批方式
+  approveTypeOR: 或签（任一人通过）
+  approveTypeAND: 会签（全部通过）
+  formPriority: 优先级
+  formPriorityTip: 多条规则同时命中时取优先级最大的规则
+  formActive: 启用
+  formRemark: 备注
+  levels: 审批级次
+  levelsTip: 按顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过（保存时校验审批人存在性）
+  levelOrder: 顺序
+  levelName: 级次名称
+  levelType: 审批人类型
+  levelTypeUser: 指定用户
+  levelTypeRole: 角色
+  levelTypePost: 岗位
+  levelAssignee: 审批人
+  levelUserTip: 输入用户名搜索（可多选，任一人通过即该级通过）
+  levelRoleTip: 选择角色（角色成员任一人通过即该级通过）
+  levelPostTip: 选择岗位（在岗成员任一人通过即该级通过，仅启用岗位）
+  levelAssigneeFallback: 输入审批人标识（用户名/角色 code/岗位 code，逗号分隔）
+  levelValueTip: 填写用户名或角色 code（逗号分隔）
+  levelActions: 操作
+  moveUp: 上移
+  moveDown: 下移
+  addLevel: 添加级次
+  levelCount: "{n} 级"
+
+systemApprovalFlow:
+  versionsLoadFailed: 版本列表加载失败，请稍后重试
+  createTitle: 新增流程
+  editTitle: 编辑配置
+  formName: 流程名称
+  formCode: 流程编码
+  formActive: 启用
+  formSchemaTitle: 表单字段
+  formSchemaTip: 发起申请时按此渲染动态表单；字段 key 供节点条件与「表单字段」审批人引用
+  formSchemaLocked: 该流程已绑定动态表单，表单字段由绑定表单自动同步维护（在表单设计器中修改，此处只读）
+  fieldLabel: 字段名称
+  fieldKey: 字段 key
+  fieldType: 类型
+  fieldRequired: 必填
+  fieldOptions: 选项（逗号分隔）
+  fieldOptionsTip: select 类型必填，逗号分隔
+  addField: 添加字段
+  nodesTitle: 审批节点
+  nodesTip: 按顺序依次经过（条件不命中的节点自动跳过）；或签=任一通过，会签=全部通过；审批人选「上级」时无需填值
+  nodeOrder: 顺序
+  nodeName: 节点名称
+  approveType: 审批方式
+  approveTypeOR: 或签
+  approveTypeAND: 会签
+  assigneeType: 审批人类型
+  assigneeType_role: 角色
+  assigneeType_user: 用户
+  assigneeType_leader: 申请人上级
+  assigneeType_field: 表单字段
+  assigneeType_post: 指定岗位
+  assigneeValue: 审批人值
+  assigneeHint_role: 角色 code，逗号分隔
+  assigneeHint_user: 用户名，逗号分隔
+  assigneeHint_leader: 无需填写（取申请人部门主管）
+  assigneeHint_field: 表单字段 key（值为用户名或用户名列表）
+  assigneeHint_post: 岗位 code，逗号分隔（仅启用岗位的在岗用户参与解析）
+  assigneeValueRequired: 请填写该节点的审批人（角色 / 用户 / 表单字段）
+  ratioRangeRequired: 比例会签的比例需在 1-100 之间
+  ccUsers: 抄送人
+  ccUsersHint: 节点默认抄送人（可多选，留空不抄送）
+  conditionField: 条件字段
+  conditionFieldTip: 留空=无条件
+  conditionOp: 运算符
+  conditionValue: 条件值
+  conditionValueNumericRequired: 数值条件（gt / gte / lt / lte）的值必须是数字
+  timeoutHours: 超时（小时）
+  timeoutAction: 超时动作
+  timeoutAction_none: 仅提醒
+  timeoutAction_approve: 自动通过
+  timeoutAction_reject: 自动驳回
+  timeoutAction_transfer_up: 升级给负责人
+  timeoutActionHint: 未配置超时
+  addNode: 添加节点
+  moveUp: 上移
+  moveDown: 下移
+  versionsTitle: 版本历史
+  versionsTip: 每次保存节点/表单定义都会留版本快照；回滚把历史快照写回当前定义。改版与回滚只影响之后发起的申请，在途单按发起时的版本推进
+  versionNo: 版本
+  versionRemark: 说明
+  versionCurrent: 当前
+  rollbackTitle: 回滚
+  rollbackConfirm: 确认回滚到 v{n}？当前定义将被覆盖并生成新版本
+  rollbackRemark: 回滚说明（可留空）
+  rollbackSuccess: 回滚成功
+  approveTypeRATIO: 比例会签
+  approveRatio: 通过比例 %
+  modeList: 列表编辑
+  modeCanvas: 画布视图
+  routes: 分支
+  routesTitle: 出口路由（条件分支）
+  routesTip: 按顺序逐条求值，首个命中的条件决定该节点通过后跳转的目标节点；全部未命中则走线性下一节点
+  routeTarget: 跳转节点
+  addRoute: 添加分支
+  routeAlways: 恒命中
+  nameAndCodeRequired: 请填写流程名称与编码
+  nodeRequired: 至少配置一个审批节点
+  nodeNameRequired: 存在未命名的节点
+  saveSuccess: 流程已保存
+  routeInvalidDropped: 已忽略无效分支（需填写条件字段，且目标不能是当前节点）
+
+systemApprovalInstance:
+  start: 发起申请
+  startTitle: 发起申请
+  pendingTab: 待我审批
+  mineTab: 我的申请
+  doneTab: 已办
+  ongoingTab: 全部在途
+  formTitle: 申请标题
+  formFlow: 审批流程
+  formStatus: 状态
+  formApplicant: 申请人
+  formCurrentNode: 当前节点
+  formCreatedTime: 提交时间
+  formReason: 驳回/结束说明
+  formData: 申请内容
+  formDataEmpty: 无表单数据
+  relatedObject: 关联业务对象
+  relatedType: 类型
+  relatedTitle: 对象
+  relatedStatus: 业务状态
+  relatedMissing: 对象已不可达（已删除或模块未启用）
+  detailRich: 申请详情
+  tasks: 审批轨迹
+  taskNode: 节点
+  taskAssignee: 审批人
+  taskAdded: 加签
+  taskComment: 审批意见
+  taskActedAt: 处理时间
+  approve: 通过
+  reject: 驳回
+  addSign: 加签
+  cancel: 撤回
+  approveConfirm: 确定通过「{title}」的当前节点吗？
+  rejectTitle: 驳回申请「{title}」
+  rejectReasonRequired: 请填写驳回原因
+  reasonPlaceholder: 请输入驳回原因（必填）
+  addSignTitle: 为「{title}」加签审批人
+  addSignRequired: 请输入要加签的用户名
+  addSignPlaceholder: 用户名，多个用逗号分隔
+  commentPlaceholder: 审批意见（选填）
+  batchApprove: 批量通过
+  batchReject: 批量驳回
+  batchApproveConfirm: 确定批量通过选中的申请吗？
+  batchRejectTitle: 批量驳回 {n} 条申请
+  batchRejectPartial: "{n} 条未处理：{detail}"
+  batchApprovePartial: "{n} 条未通过：{detail}"
+  cancelConfirm: 确定撤回申请「{title}」吗？
+  submit: 提交申请
+  submitSuccess: 申请已提交
+  flowRequired: 请选择审批流程
+  flowPlaceholder: 请选择审批流程
+  titleRequired: 请填写申请标题
+  titlePlaceholder: 请输入申请标题
+  fieldRequired: 请填写 {label}
+  numberInvalid: "{label} 须为数字"
+  fieldPlaceholder: 请输入
+  statusPENDING: 审批中
+  statusAPPROVED: 已通过
+  statusREJECTED: 已驳回
+  statusCANCELLED: 已撤回
+  approveTitle: 通过申请「{title}」
+  batchApproveTitle: 批量通过 {n} 条申请
+  urge: 催办
+  urgeTitle: 催办申请「{title}」
+  urgeMessagePlaceholder: 催办留言（选填）
+  urgeOk: 催办提醒已发送
+  resubmit: 重新提交
+  resubmitConfirm: 确定按原内容重新提交「{title}」吗？
+  resubmitSuccess: 已重新提交，等待审批
+  transfer: 转交
+  transferTitle: 转交申请「{title}」
+  transferTarget: 转交给
+  transferPlaceholder: 请输入被转交人的用户名
+  transferRequired: 请选择转交对象
+  transferOk: 已转交，等待对方处理
+  batchTransfer: 批量转交
+  batchTransferTitle: 批量转交 {n} 条待办
+  batchTransferPartial: "{n} 条转交失败：{detail}"
+  nodeProgress: 节点进度
+  progressCount: "已通过 {approved} / 需 {required} 人（候选 {total}）"
+  progressRatioHint: "比例会签：通过数达到 {ratio}% 即通过（加签会抬高达标线）"
+  progressOrHint: 或签：任一审批人通过即可
+  progressAndHint: 会签：需全部审批人通过
+  addSignThreshold: "加签后：已通过 {approved} / 需 {required} 人（候选 {total}）"
+  removeSign: 减签
+  removeSignTitle: 减签「{title}」的加签审批人
+  removeSignPlaceholder: 选择要移除的加签审批人
+  removeSignRequired: 请选择要移除的加签审批人
+  removeSignEmpty: 当前节点没有可减签的加签候选
+  return: 退回
+  returnTitle: 退回申请「{title}」
+  returnTarget: 退回至节点
+  returnTargetPlaceholder: 选择退回目标节点
+  returnReasonRequired: 请填写退回原因
+  returnReasonPlaceholder: 请输入退回原因（必填）
+  returnNoTarget: 没有可退回的节点
+  returnOk: 已退回，等待目标节点重新审批
+  delegatedFrom: 由 {name} 代理
+  tasksEmpty: 暂无审批记录
+  flowUnavailable: 原流程已停用或不可发起，请选择其他流程
 
 userinfo:
   userinfo: 个人信息
@@ -269,6 +1542,7 @@ userinfo:
   updateUserInfo: 更新信息
   oldPassword: 旧密码
   newPassword: 新密码
+  verifyPassword: 请输入密码
   verifyOldPassword: 请输入旧密码
   verifyNewPassword: 请输入新密码
   surePassword: 确认密码
@@ -279,6 +1553,7 @@ userinfo:
   gender: 性别
   dept: 部门
   roles: 角色
+  posts: 岗位
   date_joined: 注册时间
   last_login: 上次登录时间
   avatar: 头像
@@ -289,9 +1564,58 @@ userinfo:
   continueBind: 继续绑定将会自动
   bindInfo: 的绑定信息
 
+# MFA / 敏感操作二次验证
+mfa:
+  tabTitle: MFA 安全
+  confirmTitle: 敏感操作确认
+  confirmTip: 该操作需要先完成身份二次验证，请选择验证方式
+  method: 验证方式
+  code: 验证码
+  codePlaceholder: 请输入验证码
+  codeRequired: 请输入验证码
+  sendCode: 发送验证码
+  resendAfter: "{seconds} 秒后可重新发送"
+  codeSent: 验证码已发送
+  noAvailableMethod: 暂无可用的验证方式，请联系管理员
+  cancel: 取消
+  verify: 确认验证
+  verifySuccess: 验证通过
+  loginVerifyTip: 检测到您的账号已开启登录二次验证，请完成验证后进入系统
+  loginVerify: 验证并登录
+  backToLogin: 返回重新登录
+  otpStatus: 登录二次验证
+  otpEnabled: 已开启
+  otpClosed: 已关闭
+  otpDisabled: 未开启
+  otpEnabledTip: 登录时需要输入动态验证码进行二次验证
+  otpClosedTip: 登录二次验证已关闭，密钥保留中，输入动态码即可重新开启（无需重新扫码）
+  otpDisabledTip: 绑定 OTP 后，登录时需输入动态验证码二次验证，可有效防止密码泄露导致的账号盗用
+  startBind: 绑定 OTP
+  scanTip: 扫码绑定
+  manualEntry: 无法扫码时，可手动输入密钥
+  confirmBind: 确认绑定
+  cancelBind: 取消绑定
+  bindSuccess: OTP 绑定成功
+  closeMfa: 关闭
+  closeConfirmTip: 关闭后登录不再需要动态验证码，密钥保留，可随时免扫码重新开启，确定关闭？
+  openMfa: 重新开启
+  testKey: 校验密钥
+  testSuccess: 动态码校验通过，密钥可用
+  disableBind: 解绑 OTP
+  disableConfirmTip: 解绑将清除密钥，重新开启需重新扫码绑定，确定解绑？
+  recoveryRemaining: 恢复码剩余
+  recoveryTitle: 保存您的恢复码
+  recoveryTip: 请将恢复码保存在安全的地方。动态码设备丢失时，可使用恢复码完成验证；每个恢复码只能使用一次，且不会再次显示。
+  recoveryRegenerate: 重新生成
+  recoveryCopyAll: 复制全部
+  recoveryCopied: 恢复码已复制
+  recoverySaved: 我已保存
+
 account:
   profile: 个人信息
   preference: 偏好设置
+  prefCrossHint: 这里的开关控制实时提醒是否弹出（全局维度）；订阅哪些消息类型见「消息订阅」。
+  subCrossHint: 这里选择订阅哪些消息类型（类型维度）；是否弹出实时提醒见「偏好设置」。
   securityLog: 安全日志
   notifications: 消息订阅
   accountManagement: 账户管理
@@ -300,12 +1624,20 @@ account:
   messagePushTips: 消息公告将在右上角实时推送通知
   chatPush: "聊天室{'@'}推送"
   chatPushTips: "聊天{'@'}消息将在右上角实时推送通知"
+  preferenceLoadFailed: 偏好配置读取失败，暂不可修改
   password: 密码
   bind: 已绑定
   unbound: 暂未绑定
 
 systemUser:
+  invite: 邀请激活
+  inviteConfirm: 将向该用户发送邀请邮件（重置为待激活，原密码立即失效；已激活账号需重新激活），确认继续？
+  invitePending: 待接受邀请
+  inviteAccepted: 已激活
+  avatarAlt: 用户头像
   user: 用户
+  resetMfa: 重置MFA
+  imBinding: IM 绑定
   email: 邮箱
   username: 用户名
   phone: 手机号
@@ -321,12 +1653,47 @@ systemUser:
   resetPassword: 重置密码
   assignRoles: 分配角色权限
   resetPasswd: 重置用户 { user } 的密码
+  generatePassword: 生成随机密码
+  passwordCopied: 已生成随机密码并复制到剪贴板
+  passwordGenerated: 已生成随机密码，请手动复制
   assignRole: 分配用户 { user } 的角色权限
   updateAvatar: 更新用户 { user } 的头像
   password: 密码
+  passwordRequired: 请输入密码
   roles: 角色
   rules: 数据权限
+  posts: 岗位
+  preview: 权限预览
   logout: 登出
+  impersonate: 模拟用户
+  impersonateTip: 以该用户身份使用后台，全部操作以其身份留痕
+  impersonateConfirm: 将以用户 { user } 的身份使用后台，退出前所有操作均以其身份执行并留痕。确认开始模拟？
+  manage: 管理
+  manageUser: 管理用户 { user }
+  enabled: 已启用
+  disabled: 已禁用
+  locked: 已锁定
+  onlineSessions: 在线 { count } 台
+  dateExpired: 账号有效期
+  tags: 标签
+  sendNotice: 发送通知
+  actionGroups:
+    account: 账号与安全
+    permission: 权限与角色
+    lifecycle: 账号生命周期
+    collaboration: 通知与协作
+    record: 记录与审计
+  resetPasswordTip: 为该用户设置新密码，原密码立即失效
+  resetMfaTip: 清除动态口令与 Passkey 绑定，用户需重新绑定
+  editAvatarTip: 上传并裁剪新的头像
+  logoutTip: 终止该用户全部在线会话
+  assignRolesTip: 调整角色与数据权限范围
+  previewTip: 只读查看三层权限与数据权限试算
+  inviteTip: 发送邀请邮件并重置为待激活状态
+  sendNoticeTip: 打开通知公告并预填该用户为收件人
+  imBindingTip: 代录或解绑 IM 账号
+  tagsTip: 维护该用户的通用标签
+  changeHistoryTip: 查看该用户字段级变更记录
 
 systemDept:
   dept: 部门
@@ -341,6 +1708,55 @@ systemDept:
   parent: 归属部门
   roles: 角色
   rules: 数据权限
+  preview: 权限预览
+  managers: 部门管理员
+  managerHint: 管理员可管理本部门及全部下级的用户（数据权限自动收敛）
+  managerEmpty: 暂无管理员
+  managerPlaceholder: 搜索并添加管理员
+  managerNoChange: 管理员未发生变化
+  managerSaveOk: 管理员已更新
+  manage: 管理
+  manageDept: 管理部门 { dept }
+  viewMembers: 查看成员
+  assignRolesTip: 调整部门角色与数据权限范围
+  assignManagersTip: 任命或解任部门管理员（同步装配角色与数据权限）
+  previewTip: 只读查看部门挂载的角色、数据权限与成员采样
+  viewMembersTip: 跳转用户管理页查看该部门成员
+  changeHistoryTip: 查看该部门字段级变更记录
+  actionGroups:
+    permission: 权限与角色
+    member: 成员与管理
+    record: 记录与审计
+
+systemMyScope:
+  deptCount: 管辖部门数
+  userCount: 管辖成员数
+  directCount: 直接管辖
+  subCount: 下级部门
+  hint: 数据范围随「部门管理员」任命实时生效；点开部门可预览成员，跳转用户管理可继续操作
+  empty: 暂无管辖部门（由管理员在部门页任命）
+  direct: 直接管辖
+  members: 成员 { count } 人
+  searchPlaceholder: 搜索部门名称 / 编码
+  searchEmpty: 未找到匹配的部门
+  cardView: 卡片
+  treeView: 层级
+  refresh: 刷新
+  parentDept: 上级部门
+  leader: 主管
+  managers: 管理员
+  viewMembers: 预览成员
+  manageMembers: 管理成员
+  viewInUserPage: 在用户管理中查看
+  memberDrawerTitle: 成员预览 · { dept }
+  membersTotal: 共 { total } 人
+  colUser: 用户名
+  colNickname: 昵称
+  colStatus: 状态
+  colLastLogin: 最后登录
+  active: 在用
+  disabled: 停用
+  loadMore: 加载更多（剩余 {count} 个）
 
 systemPermission:
   permission: 数据权限
@@ -362,7 +1778,95 @@ systemPermission:
   notice_user: 用户
   notice_dept: 部门
   notice_role: 角色
+  notice_post: 岗位
   notice_menu: 菜单
+  preview: 权限预览
+  presets: 常用模板
+  preset_self: 仅本人
+  preset_ownDept: 本部门
+  preset_ownDeptTree: 本部门及下级
+  preset_leaderDepts: 我主管部门及下级
+  preset_leaderUsers: 我主管部门成员
+  preset_managerDepts: 我管理部门及下级
+  preset_managerUsers: 我管理部门的成员
+  preset_all: 全部数据
+  valueByRuntime: 该类型的值由系统按当前用户自动填充，无需填写
+  lookupNoAuth: 缺少模型字段查询权限，无法加载「匹配」选项，可手动输入
+  excludeInclude: 包含（只看匹配的数据）
+  excludeExclude: 排除（排除匹配的数据）
+  copyRule: 复制此规则
+  modeTypeSingleTip: 规则列表仅 1 条时系统按「或模式」保存（单条规则下且/或等价）
+  # 列表统计列（服务端 SerializerMethodField 的字段名 → 表头文案）
+  rule_count: 规则数
+  menu_count: 生效接口
+  user_count: 分配用户
+  dept_count: 分配部门
+  modeOr: 或模式
+  modeAnd: 且模式
+  modeOrShort: 或
+  modeAndShort: 且
+  notes:
+    title: 生效说明
+    rules: 规则之间按「组合模式」生效：且模式需同时满足全部规则，或模式满足任一规则即可。
+    priority: 同一用户/部门命中多条授权时取最宽结果（并集）；授权只用于放宽范围，不会收窄其他授权。
+    scope: 绑定接口后仅对该接口生效，未绑定表示对所有接口生效；超级管理员不受数据权限限制。
+  editor:
+    addRule: 添加规则
+    emptyRules: 尚未配置规则，可从常用模板开始，或点击「添加规则」
+    scope: 过滤对象
+    scopePlaceholder: 选择应用 / 模型 / 字段
+    scopeRequired: 请选择过滤对象（模型与字段）
+    scopeLockedTip: 取值方式为「全部数据」时无需选择过滤对象
+    anyField: 全部字段
+    multipleField: 多值字段
+    nullableField: 可为空
+    type: 取值方式
+    typePlaceholder: 选择取值方式
+    typeRequired: 请选择取值方式
+    typeGroup:
+      all: 全部数据
+      runtime: 跟随当前用户
+      explicit: 指定对象
+      time: 时间条件
+      free: 自定义值
+    match: 匹配条件
+    matchPlaceholder: 选择匹配条件
+    matchRequired: 请选择匹配条件
+    matchFixedTip: 该取值方式由系统固定匹配条件，无需选择
+    value: 取值
+    valueRequired: 请填写或选择取值
+    jsonPlaceholder: 请输入 JSON（保存时会校验格式）
+    jsonInvalid: JSON 格式不正确
+    pickerAuthMissing: 缺少通讯录搜索权限，无法选择对象
+    secondsPast: 过去
+    secondsFuture: 未来
+    secondsUnit:
+      "60": 分钟
+      "3600": 小时
+      "86400": 天
+    secondsValue: "{count} {unit}"
+    summaryAll: 全部数据（不限制）
+    summaryInclude: 包含
+    summaryExclude: 排除
+    summaryObjectCount: 已选 {count} 项
+  scope:
+    label: 生效范围
+    unlimited: 未限制（所有接口）
+    selected: 已选 {count} 个接口
+    tip: 绑定后仅对所选接口生效；勾选页面等于其下全部接口
+    dialogTitle: 选择生效接口
+    searchPlaceholder: 搜索页面或接口名称
+    expandAll: 展开全部
+    collapseAll: 折叠全部
+    selectAll: 全选
+    clear: 清空
+    anyMethod: 通用
+    apiCount: "{count} 个接口"
+    dialogTip: 勾选页面会同时勾选其下全部接口；保存后按接口权限点生效。
+  list:
+    modeSingle: 单条
+    scopeAll: 全部接口
+    scopeApis: "{count} 个接口"
 
 systemRole:
   role: 角色
@@ -371,6 +1875,152 @@ systemRole:
   permissions: 权限
   menuTitle: 请输入菜单标题
   menu: 菜单权限
+  preview: 授权预览
+
+# 角色菜单权限配置树
+rolePermission:
+  searchPlaceholder: 搜索菜单标题、权限码或路由
+  matchedCount: 匹配 {count} 项
+  linked: 父子联动
+  independent: 独立勾选
+  selectAll: 全选
+  invert: 反选
+  clear: 清空
+  expandAll: 展开全部
+  collapseAll: 折叠全部
+  reset: 重置
+  selectedTotal: 已选 {checked} / {total} 项
+  statDirectory: 目录 {checked}/{total}
+  statMenu: 菜单 {checked}/{total}
+  statPermission: 权限点 {checked}/{total}
+  statField: 字段 {checked}/{total}
+  empty: 暂无可配置的菜单
+  statusChecked: 已选
+  statusPartial: 部分选中
+  statusUnchecked: 未选
+  typeDirectory: 目录
+  typeMenu: 菜单
+  typePermission: 权限点
+  typeFieldGroup: 字段权限
+  typeField: 字段
+  labelWithName: "{label} ({name})"
+  fieldProgress: 已选 {checked}/{total}
+  linkedTip: 勾选父级会同时勾选其下全部菜单与权限点；取消后按剩余子级回算父级状态
+  independentTip: 各节点独立勾选，勾选子级不会自动勾选父级
+  foldedTip: 页面级勾选表示该页面全部权限点均已授权；如需逐项调整，请先取消页面勾选再重新选择
+
+permissionPreview:
+  userTitle: 用户权限预览
+  roleTitle: 角色授权预览
+  postTitle: 岗位维度预览
+  postUsers: 持有该岗位的用户
+  emptyPostUsers: 暂无持有该岗位的用户（或不在你的数据权限范围内）
+  basicInfo: 基本信息
+  menuTree: 可见菜单树
+  apiCodes: API 权限码
+  dataPermission: 数据权限
+  fieldPermission: 字段权限
+  trial: 数据权限试算
+  superuser: 超级管理员
+  superuserBypass: 超级管理员：三层权限全部旁路
+  dept: 部门
+  roles: 角色
+  status: 状态
+  enabled: 启用
+  disabled: 停用
+  yes: 是
+  no: 否
+  personal: 个人授权
+  deptChain: 部门链授权
+  relation_self: 本部门
+  relation_ancestor: 上级部门
+  noGrant: 无任何数据权限授权，默认不可见
+  noGrantAtLevel: 该部门层无授权
+  dataDisabled: 数据权限未启用，过滤不生效
+  boundMenus: 绑定菜单
+  generalGrant: 通用授权（未绑定菜单）
+  modeOr: 或模式
+  modeAnd: 且模式
+  colTable: 表
+  colField: 字段
+  colType: 类型
+  colMatch: 匹配
+  colValue: 值
+  colExclude: 排除
+  excludeYes: 排除
+  colCode: 权限码
+  colMethod: 方法
+  colTitle: 描述
+  colPath: 路径
+  colMenu: 菜单
+  colRole: 角色
+  colModel: 模型
+  colFields: 字段白名单
+  filterPlaceholder: 输入关键字过滤
+  emptyMenus: 无可见菜单
+  emptyApis: 无 API 权限码
+  fieldDisabled: 字段权限未启用，裁剪不生效
+  fieldBlank: 未配置字段白名单的模型，其字段会被裁剪为空（运行时不可见）
+  codeTag: 权限码
+  roleMenus: 该角色授权的菜单
+  roleFields: 字段授权
+  sql: SQL
+  users: 持有该角色的用户
+  emptyUsers: 暂无持有该角色的用户（或不在你的数据权限范围内）
+  sampleTruncated: 仅显示前 { limit } 个，共 { total } 个
+  model: 试算模型
+  menuContext: 菜单上下文
+  hasRules: 有规则
+  run: 试算
+  menuScopedHint: 仅在绑定的菜单页面生效，通用列表接口下不生效
+  inactiveDeptHint: 该部门已停用，其上的授权不生效
+  trialNoAuth: 无数据权限试算权限
+  trialFailed: 试算失败
+  deptTitle: 部门授权预览
+  deptInfo: 部门信息
+  deptParent: 上级部门
+  deptLeader: 部门主管
+  deptChildren: 启用子部门 / 全部子部门
+  deptMembers: 直属成员
+  rolesGranted: 挂载角色
+  noRoles: 该部门未挂载任何角色
+  dataGrant: 部门数据权限
+  trialDraft: 即时试算（未保存的规则）
+  draftEmpty: 请先添加规则，再试算
+  draftApplied: 已应用当前规则草稿
+  draftSkipped: 草稿未生效（菜单上下文不匹配）
+  hitCount: 命中行数
+  noModels: 数据权限注册表为空，请先执行 sync_model_field
+  trialHint: 用当前表单里尚未保存的规则试算：草稿不落库、与保存走同一套校验，且/或模式与绑定菜单自动取自表单。
+  trialDataScope: 数据权限
+  trialFieldScope: 字段权限
+  modeOverride: 手动模式
+  modeOverrideHint: 已手动指定试算模式（表单为 {mode}），保存仍按表单模式
+  boundMenuHint: 表单绑定了 {count} 个菜单，草稿只在对应菜单上下文生效
+  elapsed: 耗时 {ms} ms
+  staleHint: 规则已变化，请重新试算
+  sampleRows: 命中样本
+  sampleNote: 仅展示前 {limit} 行标识（不含字段内容，字段权限不影响数据试算）
+  grantDiagnosis: 生效授权来源
+  diagnosisSource: 来源
+  diagnosisName: 授权
+  diagnosisKind: 判定
+  sourcePersonal: 个人授权
+  sourceDept: 部门授权
+  sourceDraft: 当前草稿
+  kindAll: 全部数据
+  kindCondition: 条件过滤
+  kindDeny: 恒空
+  kindNone: 与模型无关
+  fieldDraftTip: 字段权限按菜单生效：选择用户与菜单后试算，可叠加一份未保存的字段白名单草稿。
+  fieldMenuRequired: 请先选择菜单（字段权限按菜单生效）
+  fieldResultTitle: 生效字段
+  fieldVisible: 可见 {visible} / {total}
+  fieldUnconfigured: 未配置=裁空
+  fieldNone: 无可见字段
+  draftModel: 草稿模型（可选）
+  draftFields: 草稿字段（可选）
+  loadFailed: 权限预览加载失败，请重试
 
 systemMenu:
   menus: 菜单
@@ -397,6 +2047,7 @@ systemMenu:
   verifyType: 请选择菜单类型
   verifyTitle: 请输入菜单标题
   verifyPath: 请输入路由地址
+  verifyComponentName: 请输入组件名称
   verifyComponentPath: 请输入组件路径
   verifyTransition: 请选择动画
   verifyRequestMethod: 请输入请求方式
@@ -421,11 +2072,139 @@ systemMenu:
   fixedTagTip: 当前菜单名称是否固定显示在标签页且不可关闭
   hiddenTag: 隐藏标签页
   hiddenTagTip: 当前菜单名称或自定义信息禁止添加到标签页
+  pageWatermark: 页面水印
+  pageWatermarkTip: 开启后该页面强制显示站点水印（需在基本设置中开启水印总开关，与生效页面路径范围是或关系）
+  activePath: 高亮路径
+  activePathTip: 进入本菜单之外的页面（如详情页）时，高亮侧栏中的指定菜单（填该菜单的路由地址）
+  activePathPlaceholder: "例如 /system/user/index"
+  activePathError: 高亮路径必须以 `/` 开头
+  badge: 菜单徽标
+  badgeTip: 显示在菜单标题旁的徽标；纯数字大于 99 时显示 99+
+  badgePlaceholder: 徽标文本或数字，留空不显示
+  badgeTypeNormal: 文本
+  badgeTypeDot: 红点
+  query: 查询参数
+  queryTip: 点击菜单时附加到路由上的查询参数，形如 k=v&k2=v2
+  queryPlaceholder: "例如 status=pending&page=1"
+  queryError: 查询参数格式不正确，应为 k=v 或 k=v&k2=v2
+  groupName: 分组标题
+  groupNameTip: 同级菜单配置相同分组标题时，聚合显示在该标题之下
+  groupNamePlaceholder: 分组标题，留空不分组
+  groupRank: 分组排序
   addPermissions: 自动批量添加权限
   codeSuffix: 权限标识后缀
   codeSuffixTip: 默认为组件名称，若为空，则默认为后端视图名称，可自行修改
   menuView: 后端视图名称
   skipExistingData: 跳过已存在数据
+  searchPlaceholder: 搜索菜单名称 / 路由 / 权限码
+  rank: 排序
+  verifyPermissionPath: 请选择权限路由
+  modelSelected: "已选 { count } 个关联模型"
+  inactiveDirectoryHint: 停用后该菜单在侧栏不可见；子菜单不会被自动停用（父级缺失时会被提升为顶级菜单）
+  cascadeInactive: "连同 { count } 个子节点一起停用"
+  importExport: 导入导出
+  permissionTip: 按后端视图批量生成接口权限点（生成前可预览新建/覆盖清单）
+  permissionViewsRequired: 请先选择后端视图
+  permissionPreviewTip: 预览与执行使用同一套构造逻辑，所见即所得
+  countDescendants: "含 { count } 个后代节点（其中 { inactive } 个停用）"
+  countDescendantsShort: "{ count } 项"
+  group:
+    basic: 基本信息
+    permission: 权限点
+    nav: 侧栏与标签
+    extra: 外链与高级
+  filter:
+    allType: 全部类型
+    allStatus: 全部状态
+    active: 启用
+    inactive: 停用
+    level1: 展开 1 级
+    level2: 展开 2 级
+    levelAll: 全部展开
+    typeLabel: 菜单类型
+    statusLabel: 菜单状态
+    levelLabel: 展开层级
+  stats:
+    summary: "共 { total } 个节点 · 目录 { directory } / 菜单 { menu } / 权限点 { permission }"
+    inactive: "停用 { count }"
+    matched: "命中 { count }"
+  action:
+    addChild: 新增子级
+    clone: 克隆节点
+    rename: 重命名
+    copyPath: 复制路由地址
+    copyPermissionPath: 复制接口路径
+    copyCode: 复制权限标识
+    moveUp: 上移一位
+    moveDown: 下移一位
+    moveTop: 置顶
+    enable: 启用
+    disable: 停用
+    batchEnable: 批量启用
+    batchDisable: 批量停用
+    multiMode: 多选模式
+    exitMulti: 退出多选
+    saveAndSwitch: 保存并切换
+    discard: 放弃修改
+  confirm:
+    removeTitle: 删除菜单
+    removeCount: "将删除 { count } 个节点"
+    cascade: "「{ title }」下的 { count } 个子节点会一并进入回收站"
+    impactUnavailable: 影响面预检不可用（不阻断删除，请自行确认引用）
+    impactItem: "{ label }：{ count }"
+    impactSamples: "（{ samples }）"
+    recycleHint: 删除的菜单可在「回收站」中成组恢复。
+    unsavedTitle: 未保存的修改
+    unsaved: 当前菜单有未保存的修改，确定要放弃吗？
+    activeTitle: 批量启用
+    inactiveTitle: 批量停用
+    activeCount: "将启用 { count } 个节点（含选中目录的后代）"
+    inactiveCount: "将停用 { count } 个节点（含选中目录的后代）"
+    inactiveDirectoryHint: 停用目录不会级联停用子菜单：父级不可见时子菜单会被提升为顶级
+  result:
+    enabled: "已启用「{ title }」"
+    disabled: "已停用「{ title }」"
+    batchActive: "已更新 { count } 个菜单状态"
+    sorted: 排序已保存
+  preview:
+    action: 动作
+    create: 新建
+    update: 覆盖
+    empty: 无待生成的权限点
+    pickViews: 选择后端视图后展示预览
+    summary: "将新建 { create } 条，覆盖 { update } 条"
+  dialog:
+    add: 新增菜单
+    addChild: "在「{ title }」下新增"
+    edit: 编辑菜单
+    clone: 克隆菜单
+    cloneSuffix: "{ title } 副本"
+  permissionAudit:
+    button: 权限检测
+    tip: 检测代码路由与菜单权限点的缺口、游离、重复项与角色字段权限缺口（只读，不改动数据）
+    title: 菜单权限检测
+    suggestion: 建议
+    missing: 权限缺口
+    orphan: 游离权限点
+    duplicate: 重复权限码
+    fieldUnconfigured: 角色未配置字段权限
+    role: 角色
+    locate: 定位菜单
+    allClear: 未发现权限缺口
+    summary: "已扫描路由 { routes } 条 / 权限点 { permissions } 个 · 问题 { total } 处"
+    suggest:
+      generate: 执行权限同步或「自动批量添加权限」补齐
+      verify: 确认端点是否已下线，必要时删除该权限点
+      merge: 合并重复权限码或确认是否有意为之
+      configure: 去角色页勾选该权限点的字段白名单（未配置时接口输出空对象）
+    empty:
+      missing: 未发现缺口
+      orphan: 未发现游离权限点
+      duplicate: 未发现重复权限码
+      fieldUnconfigured: 未发现未配置字段权限的角色
+  empty:
+    noMatch: 无匹配菜单，试试清空筛选条件
+    noData: 暂无菜单数据
 
 logsOperation:
   creator_id: 用户ID
@@ -437,7 +2216,19 @@ logsOperation:
   creator: 用户
   body: 请求体
   response_code: 状态码
+  status_code: 业务码
+  created_time: 操作时间
   response_result: 响应内容
+  method: 请求方法
+  exec_time: 耗时(秒)
+  exec_time_min: 耗时不小于(秒)
+  exec_time_max: 耗时不大于(秒)
+  has_changes: 含字段变更
+  changes: 变更字段
+  changesField: 字段
+  changesOld: 原值
+  changesNew: 新值
+  request_uuid: 请求ID
 
 logsLogin:
   creator_id: 用户ID
@@ -459,6 +2250,13 @@ configSystem:
   inheritTip: 允许用户继承该配置
   invalidCache: 缓存失效
   confirmInvalid: 确定缓存失效该数据么？
+  typeBoolean: 布尔值
+  typeInteger: 整数
+  typeNumber: 数字
+  typeString: 字符串
+  typeArray: JSON 数组
+  typeObject: JSON 对象
+  registeredTypeTip: 期望类型：{type}
 
 configUser:
   configUser: 用户配置
@@ -491,6 +2289,7 @@ systemNotice:
   notice_user: 用户
   notice_dept: 部门
   notice_role: 角色
+  notice_post: 岗位
   allRead: 全部
   showSystemNotice: 查看通知公告
 
@@ -508,7 +2307,9 @@ noticeRead:
   showSystemNotice: 查看通知公告
 
 userNotice:
+  readFailed: 标记已读失败，请稍后重试
   message: 内容
+  batchReadConfirm: 确定将选中的 {count} 条通知标记为已读吗？
   title: 标题
   unread: 是否已读
   level: 通知级别
@@ -521,14 +2322,153 @@ userNotice:
 systemUploadFile:
   upload: 上传
   fileLink: 文件连接
+  filename: 文件名
+  category: 分类
+  storageUsage: 存储使用
+  fileCount: 文件数量
   clickUpload: 点击上传
   dropFile: 拖拽文件到这里或
   uploadTip: 上传文件大小需要小于
+  defaultSizeTip: 未能读取上传大小配置，当前使用默认限制（{size}）
+  quotaTip: 同一文件重复上传会复用磁盘副本，配额仍按记录全量计入
+  usageRate: 使用率
+  usedSpace: 已用空间
+  remainingSpace: 剩余空间
+  unlimited: 不限
+  avgSize: 平均大小
+  totalSize: 总大小
+  size: 大小
+  categoryDist: 分类分布
+  uncategorized: 未分类
+  uploadTrend: 近 7 天上传
+  trendSummary: 近 7 天上传 {count} 个文件，共 {size}
+  largestFiles: 占用最大的文件
+  statsDetail: 统计详情
+  statsTitle: 文件统计
+  preview: 预览
+  previewPreparing: 文档转换中，请稍候……（首次预览需要转换）
+  previewUnsupported: 该文件类型不支持在线预览，请下载后查看
+  previewFailed: 预览加载失败，请稍后重试或下载查看
+  previewTruncated: 内容过大已截断显示，完整内容请下载查看
 
 status:
   hsLoad: 加载中...
 
+chat:
+  groupNameRequired: 请输入群名称
+  membersRequired: 请选择群成员
+  inputLabel: 请输入：
+  inputPlaceholder: 输入消息并回车发送
+  send: 发送
+  sessions: 会话
+  contacts: 最近在线
+  refresh: 刷新
+  searchPlaceholder: 搜索会话或联系人
+  publicRoom: 公共聊天室
+  publicRoomHint: 全站公开，所有成员可见
+  aiAssistant: AI 助手
+  aiRoomHint: 支持多轮对话，输入 /kb 加问题可查知识库
+  aiPlaceholder: "向 AI 助手提问，{command} 加问题可查知识库"
+  unknownUser: 未知用户
+  noMessageYet: 还没有消息
+  emptyRooms: 暂无会话
+  emptyContacts: 暂无联系人
+  emptyMessages: 还没有消息，说点什么吧
+  selectRoom: 选择一个会话开始聊天
+  online: 在线
+  offline: 离线
+  onlineCount: "在线 {count} 人"
+  connecting: 连接中…
+  enterHint: 回车发送，Shift + 回车换行
+  mentionHint: 输入 {'@'} 可提及在线成员
+  loadMore: 加载更早的消息
+  noMoreHistory: 没有更多历史消息
+  newMessages: "有 {count} 条新消息"
+  thinking: AI 正在思考…
+  stopGenerating: 停止生成
+  yes: 是
+  no: 否
+  isActive: 启用状态
+  targetUser: 目标用户
+  noticeTitle: 公告标题
+  noticeMessage: 公告内容
+  noticeLevel: 公告级别
+  aiFailed: AI 回复失败，请稍后重试
+  emoji: 表情
+  emojiGroups:
+    common: 常用
+    gesture: 手势
+    symbol: 符号
+    food: 美食
+    animal: 动物
+    nature: 自然
+    object: 物件
+  desktopNotify: 桌面通知
+  desktopNotifyOn: 已开启桌面通知，点击关闭
+  desktopNotifyOff: 开启桌面通知
+  desktopNotifyDenied: 未获得通知权限，请在浏览器地址栏设置中允许
+  desktopNotifyUnsupported: 当前浏览器不支持桌面通知
+  sources: 参考来源
+  hideSources: 收起来源
+  recall: 撤回
+  react: 回应
+  reactionCount: "{emoji} {count} 人"
+  recallConfirm: 确定撤回这条消息吗？撤回后双方都不再可见。
+  recalled: 对方撤回了一条消息
+  youRecalled: 你撤回了一条消息
+  sending: 发送中…
+  sendFailed: 发送失败
+  resend: 重试
+  disconnected: 连接已断开，正在重连
+  attachImage: 发送图片
+  attachFile: 发送文件
+  uploadFailed: 附件上传失败
+  attachmentMissing: 附件已失效
+  download: 下载
+  yesterday: 昨天
+  openPrivate: 发消息
+  actionCardTitle: "AI 动作确认：{label}"
+  actionNeedApproval: 需审批
+  actionConfirm: 确认执行
+  actionRetry: 重新确认
+  actionCancel: 暂不执行
+  actionCancelled: 已取消，未执行
+  actionDone: 已执行
+  actionPending: 已提交审批，审批通过后可再次确认执行
+  actionNoPermission: 需「AI 助手-指令执行」权限才能执行该操作
+  leaveType: 假期类型
+  startDate: 开始日期
+  endDate: 结束日期
+  days: 天数
+  reason: 事由
+  formName: 表单
+  formData: 表单数据
+  annual: 年假
+  sick: 病假
+  personal: 事假
+  compTime: 调休
+  marriage: 婚假
+  other: 其他
+  newGroup: 新建群聊
+  groupName: 群名称
+  groupNamePlaceholder: 请输入群名称
+  selectMembers: 选择成员
+  searchUserHint: 输入用户名或昵称搜索
+  groupMembers: 群成员
+  groupOwner: 群主
+  addMember: 添加成员
+  removeMember: 移除成员
+  renameGroup: 修改群名
+  leaveGroup: 退出群聊
+  leaveGroupConfirm: 确定退出该群聊吗？退出后将不再接收该群消息。
+  groupMemberCount: "{count} 人"
+  emptyMembers: 暂无成员
+
 login:
+  logoutSuccess: 登出成功
+  thirdPartyLogin: 第三方登录
+  serverForbidden: 当前服务器不允许登录
+  serverRegisterForbidden: 当前服务器不允许注册
   username: 账号
   password: 密码
   verifyCode: 验证码
@@ -537,27 +2477,20 @@ login:
   sure: 确认密码
   forget: 忘记密码?
   login: 登录
-  thirdLogin: 第三方登录
   verifyCodeLogin: 验证码登录
   basicLogin: 普通登录
-  qRCodeLogin: 二维码登录
   register: 注册
-  weChatLogin: 微信登录
-  alipayLogin: 支付宝登录
-  qqLogin: QQ登录
-  weiboLogin: 微博登录
   phone: 手机号码
   email: 邮箱地址
   smsVerifyCode: 短信验证码
   back: 返回
-  test: 模拟测试
-  tip: 扫码后点击"确认"，即可完成登录
   definite: 确定
   loginSuccess: 登录成功
   registerSuccess: 注册成功
   tickPrivacy: 请勾选隐私政策
   readAccept: 我已仔细阅读并接受
   privacyPolicy: 《隐私政策》
+  privacyPolicyBody: "本系统仅在你注册与使用过程中收集必要信息：账号名、手机号或邮箱（用于身份识别与验证码送达）、登录凭证（密码仅以不可逆加密形式保存）以及基本操作日志（用于安全审计）。上述信息仅用于账号管理与系统安全，不用于广告推送，亦不对外提供；如需导出或删除账号数据，请联系管理员处理。"
   getVerifyCode: 获取验证码
   info: 秒后重新获取
   usernameReg: 请输入账号
@@ -575,7 +2508,6 @@ login:
   passwordUpdateReg: 修改密码成功
   emailVerify: 邮件验证
   smsVerify: 短信验证
-  basic: 账户密码
 
 welcome:
   operateLog: 操作日志
@@ -588,12 +2520,143 @@ welcome:
   userNum: 用户人数
   loginTimes: 登录次数
 
+search:
+  globalResult: 全局搜索
+apiApp:
+  title: API 应用
+  tip: "换发凭证：POST /api/identity/open/token（client_id/client_secret），随后以 Authorization: Pat 令牌头调用接口"
+  create: 新建应用
+  edit: 编辑应用
+  name: 应用名称
+  clientId: Client ID
+  clientSecret: Client Secret
+  callbackSecret: 回调签名密钥
+  scopes: 接口范围
+  scopeCount: "接口范围：{n} 条"
+  ipAllowlist: IP 白名单
+  listPlaceholder: 多条用英文逗号分隔，留空 = 不限
+  rateLimit: 每分钟限流
+  callbackUrls: 回调地址
+  tokenTtl: 凭证有效期（秒）
+  isActive: 启用
+  on: 启用
+  off: 停用
+  actions: 操作
+  regenerate: 重置密钥
+  testCallback: 回调测试
+  manage: 管理
+  panelTitle: "管理应用 {name}"
+  copyClientId: 复制 Client ID
+  copyScopes: 复制接口范围
+  scopeDetail: 接口范围明细
+  scopeMore: "另有 {n} 条未展示"
+  probeTitle: 回调测试结果
+  probeSuccess: 投递成功
+  probeFailure: 投递失败
+  usageDesc: 查看近 7 天的调用量、失败分布、高频路径与配额使用情况
+  regenerateDesc: 生成新的 Client Secret 与回调签名密钥，旧凭证立即失效
+  regenerateConfirm: 重置密钥会使旧凭证立即失效，使用该应用的第三方集成需要同步更新。确定重置？
+  testCallbackDesc: 向各回调地址发送一次测试事件，投递结果在下方展示
+  editDesc: 修改名称、接口范围、限流、回调地址与资源授权
+  actionGroups:
+    access: 接入与密钥
+    verify: 联调与验证
+    manage: 应用配置
+  saveOk: 保存成功
+  saveFailed: 保存失败
+  cancel: 取消
+  confirm: 确定
+  credentialTitle: 一次性密钥（仅展示一次）
+  credentialTip: 请立即复制保存：明文只在本次返回；重置密钥会使旧凭证立即失效
+  copy: 复制
+  copied: 已复制
+  copyFailed: 复制失败，请手动选择复制
+  callbackOk: 回调投递成功
+  callbackFailed: 有 {count} 个回调投递失败
+  unlimited: 不限
+  dailyQuota: 每日配额（0 = 不限）
+  quotaAlertPercent: 配额告警阈值（%）
+  enforceDailyQuota: 超限硬阻断
+  enforceDailyQuotaTip: 开启后超过每日配额的请求返回 429（关闭时只告警不阻断）
+  grant:
+    title: 资源授权
+    hint: 未配置 = 沿用 owner 权限与接口范围；配置任意一条即白名单模式（模型 / 动作 / 字段 / 行四级收敛，只收紧不放宽）
+    add: 添加规则
+    remove: 删除
+    model: 模型
+    allModels: 全部模型
+    actions: 动作
+    allActions: 全部动作
+    fields: 字段
+    fieldsPlaceholder: 允许的字段（留空 = 全部字段）
+    enabled: 启用
+    rowFilter: 行级规则（可选，留空 = 不限）
+    addRow: 添加行级规则
+    rowField: 字段
+    rowMatch: 匹配
+    rowValue: 值（属于类型用逗号分隔）
+    removeRow: 删除规则
+    catalogFailed: 授权目录加载失败，请刷新重试
+    loadFailed: 资源授权未加载成功：本次保存跳过授权规则（不会清空已有规则）
+    saveFailed: 资源授权保存失败
+    matchExact: 等于
+    matchContains: 包含
+    matchIn: 属于（逗号分隔）
+    matchGt: 大于
+    matchGte: 大于等于
+    matchLt: 小于
+    matchLte: 小于等于
+  usage:
+    title: 用量
+    range: 统计窗口
+    days: "{n} 天"
+    total: 调用量
+    failed: 失败数
+    avgDuration: 平均耗时
+    quota: 当日配额
+    quotaDetail: 今日已用 {used} / 配额 {quota}（达 {percent}% 告警，软口径不阻断）
+    daily: 按天明细
+    date: 日期
+    topPaths: 高频路径
+    statusCodes: 业务码分布
+    statusCode: 业务码
+    empty: 暂无调用数据
+apiScope:
+  grantTip: 下拉列出的是你有权限的接口，勾选后凭证只能调用这些接口（越界返回 403）；留空 = 不限，保存后可随时回来调整
+  selectPlaceholder: 搜索并选择允许调用的接口
+  noOptions: 暂无可授权的接口（请联系管理员开通菜单权限）
+  selected: "已选 {n} 条"
+  emptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
+  custom: 自定义条目（高级）
+  customTip: 下拉未覆盖的路径或正则，一行一条，例如 GET /api/identity/user
+  other: 其它
+  placeholder: |-
+    /api/identity/user
+    /api/task/exports
+setting:
+  name: 配置名称
+  value: 配置数值
+  category: 分类
+  is_active: 启用状态
+  encrypted: 加密存储
+
 settingBasic:
   title: 基本设置
+
+settingWatermark:
+  title: 水印设置
+  preview: 实时预览
+  previewTip: 预览使用当前登录用户的真实信息解析占位符，样式与实际水印一致；颜色留空为默认灰
 
 settingMessage:
   mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
+  dingtalkTitle: 钉钉
+  wecomTitle: 企业微信
+  feishuTitle: 飞书
+
+settingLdap:
+  title: LDAP 目录
 
 settingSecurity:
   code: 验证码安全配置
@@ -603,8 +2666,10 @@ settingSecurity:
   register: 注册安全配置
   resetPassword: 重置密码配置
   passwordRule: 密码规则配置
-  bingEmail: 绑定邮箱配置
+  bindEmail: 绑定邮箱配置
   bindPhone: 绑定手机配置
+  mfa: MFA 二次验证配置
+  monitor: 资源告警
   blockIp: 安全拦截IP
 
 settingPassword:
@@ -617,6 +2682,7 @@ settingPassword:
 
 settingSms:
   title: 短信设置
+  backendsLoadFailed: 短信渠道子页签加载失败
 
 demoBook:
   book: 书籍
@@ -627,5 +2693,1656 @@ demoBook:
   publication_date: 出版日期
   price: 售价
   is_active: 是否启用
+  status: 上架状态
+  submitBook: 提交上架
+  confirmSubmitBook: 确定将《{name}》提交上架审批？
   pushBook: 推送书籍
   confirmPushBook: 确定将该书籍 {name} 推送到推荐服务？
+  publisherExample1: 人民出版社
+  publisherExample2: 中华书局
+  publisherExample3: 科学出版社
+
+systemTask:
+  name: 任务名称
+  task: 任务路径
+  crontab: cron 表达式
+  interval: 间隔调度
+  args: 位置参数 (args)
+  kwargs: 关键字参数 (kwargs)
+  queue: 队列
+  enabled: 启用状态
+  one_off: 单次执行
+  start_time: 开始时间
+  expires: 过期时间
+  last_run_at: 上次执行时间
+  total_run_count: 累计执行次数
+  date_changed: 变更时间
+  description: 任务描述
+  priority: 优先级
+  exchange: 交换机
+  routing_key: 路由键
+  headers: 消息头
+  expire_seconds: 过期秒数
+  solar: 太阳历调度
+  clocked: 定时时刻调度
+  enable: 启用/停用
+  runNow: 立即执行
+  runConfirm: 确认立即执行任务 {name}？
+  batchRun: 批量执行
+  batchRunConfirm: 确认批量立即执行选中的任务？
+  batchEnable: 批量启用
+  batchDisable: 批量停用
+  batchEnableConfirm: 确认批量启用选中的任务？
+  batchDisableConfirm: 确认批量停用选中的任务？
+  clone: 克隆
+  cloneConfirm: 确认克隆任务 {name}？（克隆体默认停用）
+  latestLog: 实时日志
+  noExecution: 该任务暂无执行记录
+  logTitle: 日志
+  noLogOutput: 暂无日志输出
+
+systemTaskExecution:
+  name: 任务名称
+  product_type: 记录类型
+  product_progress: 进度
+  product_error: 失败原因
+  periodic_task: 所属定时任务
+  status: 执行状态
+  statusPENDING: 等待中
+  statusRUNNING: 执行中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  statusREVOKED: 已撤销
+  creator: 触发人
+  time_cost: 耗时(秒)
+  date_start: 开始时间
+  date_finished: 结束时间
+  log: 日志
+
+systemExportRecord:
+  name: 文件名称
+  module: 来源模块
+  file_format: 文件格式
+  status: 导出状态
+  statusPENDING: 等待中
+  statusRUNNING: 导出中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  rows: 数据行数
+  filesize: 文件大小
+  file: 导出文件
+  creator: 触发人
+  error: 错误信息
+  created_time: 创建时间
+  download: 下载
+  log: 日志
+  logTitle: 导出日志
+
+systemImportRecord:
+  name: 文件名称
+  module: 目标模块
+  action: 导入动作
+  actioncreate: 新增
+  actionupdate: 更新
+  status: 导入状态
+  statusPENDING: 等待中
+  statusRUNNING: 导入中
+  statusSUCCESS: 成功
+  statusFAILURE: 失败
+  total: 总行数
+  success_rows: 成功行数
+  failed_rows: 失败行数
+  report_filesize: 报告大小
+  error_report: 错误报告
+  source_file: 源文件
+  creator: 触发人
+  error: 错误信息
+  created_time: 创建时间
+  download: 错误报告
+  log: 日志
+  logTitle: 导入日志
+
+changeHistory:
+  time: 操作时间
+  operator: 操作人
+  method: 方法
+  statusCode: 状态码
+  changes: 变更明细
+
+accessToken:
+  title: 访问令牌
+  tip: 个人访问令牌用于第三方系统/脚本调用本系统 API，权限与你的账号一致，可随时吊销。令牌仅在创建时展示一次，请妥善保存。
+  name: 令牌名称
+  nameRule: 用于识别令牌用途，如 jenkins-同步
+  prefix: 令牌前缀
+  active: 状态
+  expiredAt: 过期时间
+  neverExpire: 留空表示永不过期
+  lastUsed: 最后使用
+  createdTime: 创建时间
+  create: 创建令牌
+  createDialogTitle: 创建访问令牌
+  createdTitle: 令牌创建成功
+  onceTip: 这是令牌明文唯一一次展示机会，关闭后无法再次查看
+  copy: 复制令牌
+  copied: 已复制到剪贴板
+  copyFailed: 复制失败，请手动选中复制
+  revoke: 吊销
+  scope: 接口范围
+  scopeCount: "接口范围：{n} 条"
+  scopeUnrestricted: 不限
+  revokeConfirm: 吊销后「{name}」立即失效，所有用它调用的接口都会返回 401，且不可恢复。确定吊销吗？
+  ipAllowlist: IP 白名单
+  ipCount: "IP 白名单：{n} 条"
+  ipAllowlistUnrestricted: 不限来源
+  ipAllowlistTip: 每行一个允许的来源 IP 或 CIDR 网段（如 10.0.0.0/8），留空表示不限；不在白名单内的调用将被拒绝
+  ipAllowlistPlaceholder: |-
+    127.0.0.1
+    10.0.0.0/8
+  callLogs: 调用记录
+  callLogsTip: 调用记录按令牌精确归集（操作日志已记录令牌标识）；升级前产生的历史记录无法区分到具体令牌，不计入
+  token_prefix: 令牌前缀
+  scopes: 接口范围
+  ip_allowlist: IP 白名单
+  is_active: 状态
+  expired_at: 过期时间
+  last_used_time: 最后使用
+  description: 备注
+  totalCalls: 近 {n} 天调用
+  failedCalls: 失败调用
+  lastCall: 末次调用
+
+systemTaskCrontab:
+  minute: 分钟
+  hour: 小时
+  day_of_week: 星期
+  day_of_month: 日
+  month_of_year: 月
+  timezone: 时区
+  cronEveryWeek: 每周
+  cronWeekday0: 周日
+  cronWeekday1: 周一
+  cronWeekday2: 周二
+  cronWeekday3: 周三
+  cronWeekday4: 周四
+  cronWeekday5: 周五
+  cronWeekday6: 周六
+
+systemTaskInterval:
+  every: 周期数
+  period: 间隔周期
+
+imBinding:
+  title: "{user} 的 IM 绑定"
+  provider: 平台
+  subject: 账号标识
+  subjectPlaceholder: "IdP 侧唯一标识（钉钉为 unionId）"
+  nickname: 备注昵称
+  current: 已有绑定
+  empty: 暂无 IM 绑定
+  unbind: 解绑
+  required: 请填写平台与账号标识
+  saved: IM 绑定已保存
+  unbound: 已解绑
+
+systemApprovalDelegation:
+  allFlows: 全部流程
+  delegator: 委托人
+  delegator_name: 委托人
+  delegate: 代理人
+  delegate_name: 代理人
+  start_time: 生效时间
+  end_time: 失效时间
+  flow_codes: 流程范围（空 = 全部流程）
+  is_active: 启用
+  remark: 备注
+
+recycleBin:
+  title: 回收站
+  restore: 恢复
+  purge: 彻底清除
+  purgeExpired: 清空过期数据
+  deletedAt: 删除时间
+  actions: 操作
+  empty: 回收站为空
+  restoreConfirm: 确定恢复选中的 { count } 条数据？
+  restoreOneConfirm: 确定恢复该条数据？
+  purgeConfirm: 彻底清除后不可恢复，确定清除选中的 { count } 条数据？
+  purgeExpiredConfirm: 确定清空全部超过保留期（默认 30 天）的回收站数据？
+  restoreDone: 恢复成功
+  purgeDone: 清除完成
+
+systemMonitor:
+  worker: Worker
+  active: Active
+  reserved: Reserved
+  method: Method
+  cpu: CPU 使用率
+  memory: 内存使用率
+  disk: 磁盘使用率
+  load: CPU 负载
+  trend: 主机资源趋势（最近 60 个采样点）
+  noTrendData: 暂无监控数据
+  cores: CPU 核数
+  processes: 进程数
+  swap: Swap 使用率
+  netIo: 网络 I/O（累计）
+  db: 数据库
+  redis: Redis
+  celery: Celery
+  serviceHealth: 服务健康
+  healthy: 正常
+  unhealthy: 异常
+  uptime: 运行时长
+  version: 版本
+  usedMemory: 内存占用
+  hitRate: 缓存命中率
+  clients: 客户端连接
+  concurrency: 并发
+  celerySkipped: 当前环境未启用 Celery 探测
+  noWorker: 暂无在线 worker
+  slowRequests: 慢请求 Top 20
+  module: 模块
+  path: 请求路径
+  cost: 耗时
+  statusCode: 状态码
+  creator: 触发人
+  time: 时间
+  noSlowRequest: 窗口内无慢请求
+  taskHealth: 后台任务健康度（最近 {n} 天）
+  taskState: 健康状态
+  taskSuccessRate: 终态成功率
+  taskTotal: 执行总数
+  taskRunning: 在途（RUNNING/PENDING）
+  taskAvgCost: 平均耗时
+  taskPerTask: 高频任务 Top 10
+  taskRecentFailures: 近期失败/撤销
+  taskNoFailures: 窗口内无失败任务
+  taskSuccessRateNone: 无终态样本
+  stateHealthy: 健康
+  stateDegraded: 降级
+  stateFailing: 异常
+  autoRefresh: 自动刷新
+  refresh: 刷新
+  wsLive: 实时推送
+  wsFallback: 轮询模式
+
+  healthOverview: 健康总览
+  healthHealthy: 运行良好
+  healthWarning: 存在告警
+  healthCritical: 严重异常
+  itemWarning: 超阈值
+  itemCritical: 严重超限
+  itemUnknown: 未探测
+  alertsFiring: 未恢复告警
+  checkedAt: 检查时间
+  netRate: 网络速率
+  netSent: 上行
+  netRecv: 下行
+  netTotal: 累计 ↑{sent}MB ↓{recv}MB
+  historyTrend: 历史趋势
+  range1h: 1 小时
+  range6h: 6 小时
+  range24h: 24 小时
+  range7d: 7 天
+  range30d: 30 天
+  intervalLabel: 聚合粒度
+  intervalAuto: 自动
+  interval1m: 1 分钟
+  interval5m: 5 分钟
+  interval15m: 15 分钟
+  interval1h: 1 小时
+  interval1d: 1 天
+  metricsLabel: 指标
+  metricCpu: CPU 使用率
+  metricCpuLoad: CPU 负载
+  metricMemory: 内存使用率
+  metricDisk: 磁盘使用率
+  metricNetSent: 上行速率
+  metricNetRecv: 下行速率
+  summaryRange: 区间 {min} ~ {max}
+  trendEmpty: 窗口内暂无监控数据
+  exportImage: 导出图片
+  exportReport: 导出报表
+  exportHistoryCsv: 趋势数据（CSV）
+  exportHistoryXlsx: 趋势数据（Excel）
+  exportAlertsCsv: 告警记录（CSV）
+  exportAlertsXlsx: 告警记录（Excel）
+  exportDone: 报表已导出
+  share: 分享
+  shareCopied: 视图链接已复制
+  thresholdSettings: 告警阈值设置
+  thresholdSaved: 阈值已更新
+  thresholdCheckTip: 系统每 {seconds} 秒检查一次，超阈值时通知管理员
+  thresholdUnavailable: 阈值配置未加载，请刷新页面后重试
+  alertsTitle: 资源告警记录
+  alertFilterAll: 全部状态
+  alertFiring: 告警中
+  alertResolved: 已恢复
+  alertItem: 指标
+  alertStatus: 状态
+  alertValue: 触发值
+  alertThreshold: 阈值
+  alertCount: 命中次数
+  alertFirstTime: 首次触发
+  alertLastTime: 最近触发
+  alertResolvedTime: 恢复时间
+  alertMessage: 说明
+  noAlert: 窗口内无告警记录
+  events: 事件记录
+  errorEvents: 异常请求
+  taskEvents: 任务失败
+  noErrorEvent: 窗口内无异常请求
+  taskName: 任务名称
+  taskStart: 开始时间
+  taskFinished: 结束时间
+  bizCode: 业务码
+  ip: IP 地址
+systemOnline:
+  forceLogout: 强制下线
+  forceLogoutConfirm: 确认强制 { name } 下线？该用户全部会话将立即失效
+  forceLogoutNoUser: 该行缺少用户信息，无法执行强制下线
+  batchForceLogout: 批量强制下线
+  batchForceLogoutConfirm: 确认对选中用户执行强制下线？其全部会话将立即失效
+
+dataDict:
+  dictType: 字典类型
+  parent: 所属类型
+  parent_code: 类型编码
+  code: 字典编码
+  label: 显示名称
+  label_en: 英文名称
+  value: 字典值
+  sort: 排序
+  color: 标签颜色
+  is_active: 是否启用
+  is_locked: 系统内置
+  children_count: 字典项数量
+  items: 字典项
+  locked: 内置
+  moveUp: 上移
+  moveDown: 下移
+  batchActive: 批量启用
+  batchActiveConfirm: 确认启用选中的字典类型/字典项？
+  batchInactive: 批量停用
+  batchInactiveConfirm: 确认停用选中的字典类型/字典项？停用后该类型不参与下拉与消费接口
+  refreshCache: 刷新缓存
+  addType: 新增字典类型
+  addChild: 新增子项
+
+mask:
+  model: 所属模型
+  field: 字段
+  mask_type: 掩码类型
+  keep_head: 保留前
+  keep_tail: 保留后
+  mask_char: 掩码字符
+  pattern: 正则
+  roles: 角色
+  is_active: 启用
+  sort: 排序
+  description: 描述
+  creator: 创建人
+  preview: 脱敏预览
+  previewValue: 样例值
+  previewTip: 请输入样例值
+  previewMultiTip: 每行一条样例，可一次粘贴多条
+  previewResult: 预览结果
+  previewTruncated: 样例过多或过长，已按上限截断展示
+  previewBtn: 预览
+  previewRoles: 预览视角角色
+  previewRolesTip: 模拟非超管查看者的角色集合；留空表示无任何角色
+  previewNotApplied: 所选视角角色未命中该规则，列表中该字段不脱敏
+  previewRolesLoadFailed: 角色选项加载失败
+  customOnlyTip: 仅 custom 类型使用
+  maskTypePhone: 手机号
+  maskTypeIdcard: 身份证
+  maskTypeEmail: 邮箱
+  maskTypeName: 姓名
+  maskTypeBankcard: 银行卡
+  maskTypeCustom: 自定义正则
+
+dashboard:
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
+  exportImage: 导出图片
+  exportNoChart: 指标卡没有可导出的图表
+  title: 仪表盘
+  pickDashboard: 选择仪表盘
+  create: 新建仪表盘
+  edit: 编辑布局
+  cancelEdit: 退出编辑
+  saveLayout: 保存布局
+  remove: 删除
+  empty: 暂无仪表盘，点击「新建仪表盘」开始
+  addCard: 添加卡片
+  dataset: 数据集
+  cardTitle: 卡片标题
+  chartType: 图表类型
+  chartNumber: 数字卡片
+  chartLine: 趋势图
+  chartBar: 柱状图
+  chartPie: 饼图
+  chartMetric: 指标卡
+  metricCardTip: 单值指标：计数=行总数，求和/平均需选数值字段
+  groupBy: 分组字段
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  metric: 聚合方式
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  cardSpan: 卡片宽度
+  dashName: 仪表盘名称
+  visibility: 可见性
+  personal: 个人
+  shared: 共享
+  cancel: 取消
+  confirm: 确认
+  saveOk: 保存成功
+  cardRequired: 请完整填写卡片配置
+  manageDatasets: 管理数据集
+  cardHeight: 卡片高度
+  cardSettings: 卡片设置
+  editCard: 编辑卡片
+  cardRoles: 可见角色
+  cardRolesPlaceholder: 留空 = 能看此仪表盘的人均可见
+  removeConfirm: 确定删除仪表盘「{name}」吗？布局与卡片将一并移除，引用它的大屏将失去此页
+  valueField: 度量字段
+  valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
+  valueFieldRequired: 请选择度量字段
+  loadFailed: 数据加载失败
+  retry: 重试
+  settings: 设置
+  refresh: 刷新
+  autoRefreshOff: 不自动刷新
+  autoRefresh10s: 每 10 秒
+  autoRefresh30s: 每 30 秒
+  autoRefresh60s: 每 1 分钟
+  autoRefresh5m: 每 5 分钟
+  autoRefreshTip: 定时自动刷新当前仪表盘的卡片数据（挂屏轮看用）
+
+  share: 分享
+  shareCopied: 仪表盘链接已复制
+dataDataset:
+  metaLoadFailed: 数据集元数据加载失败，编辑与字段选项暂不可用
+  previewFailed: 预览执行失败，请检查数据集配置或稍后重试
+  title: 数据集
+  create: 新建数据集
+  edit: 编辑
+  delete: 删除
+  preview: 执行预览
+  name: 名称
+  model: 绑定模型
+  columns: 数据列
+  filters: 过滤条件
+  addFilter: 添加条件
+  value: 值
+  inHint: 逗号分隔多个值
+  isNullTrue: 字段为空（IS NULL）
+  isNullFalse: 字段非空（IS NOT NULL）
+  ordering: 排序
+  rowLimit: 行数上限
+  dateField: 时间字段（趋势用）
+  visibilityLabel: 可见性
+  personal: 个人
+  shared: 共享
+  description: 描述
+  actions: 操作
+  total: 总行数
+  cancel: 取消
+  confirm: 确认
+  required: 请完整填写名称、模型与数据列
+  saveOk: 保存成功
+  deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
+  dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 |date 标注
+  jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 |number，日期（趋势用）加 |date（值须为 YYYY-MM-DD）"
+  exportCsv: 导出 CSV
+  previewRows: 明细
+  previewAggregate: 聚合
+  groupByOptional: 分组字段（可选）
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  valueField: 数值字段
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  runAggregate: 聚合
+  groupName: 名称
+  metricValue: 值
+  aggregateEmpty: 设置聚合方式后点「聚合」查看结果
+
+dataScreen:
+  dashboardHidden: 不可见仪表盘
+  designer: 设计
+  designerTitle: 大屏画布设计器
+  pickScreenFirst: 请先从大屏列表进入设计器
+  loadFailed: 大屏加载失败
+  dashboardsLoadFailed: 仪表盘列表加载失败，请刷新页面重试
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
+  retry: 重试
+  layoutSaved: 画布已保存
+  unsaved: 有未保存改动
+  readonlyHint: 只读（仅创建者可编辑）
+  palette: 组件库
+  paneDashboard: 仪表盘
+  paneText: 文本
+  paneClock: 时钟
+  paneMetric: 指标卡
+  paneImage: 图片
+  paneVideo: 视频
+  paneHtml: 自定义 HTML
+  paneUrl: 地址
+  panePoster: 封面
+  urlPlaceholder: https://…
+  videoMuted: 静音
+  videoLoop: 循环
+  videoAutoplay: 自动播放
+  videoHint: 投屏默认静音 + 循环 + 自动播放（带声音的自动播放会被浏览器拦下）；编辑态不自动播。
+  embedHint: 只接受 http(s) 的 iframe 地址（不接受原样 HTML）；内嵌页面在投屏态可交互。
+  videoMissing: 未配置视频地址
+  embedMissing: 未配置嵌入地址
+  embedUrlInvalid: 只接受 http(s) 绝对地址
+  paneTitle: 窗格标题
+  paneTitlePlaceholder: 留空则用仪表盘名
+  paneContent: 文本内容
+  paneFontSize: 字号
+  paneAlign: 对齐
+  alignLeft: 左
+  alignCenter: 居中
+  alignRight: 右
+  panePosition: 位置
+  paneSize: 尺寸
+  gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
+  modeGrid: 栅格
+  modeFree: 自由画布
+  layer: 层级
+  layerTop: 置顶
+  layerUp: 上移
+  layerDown: 下移
+  layerBottom: 置底
+  freeHint: 自由画布按像素定位（位置与尺寸为 px，允许重叠）；层级 = 数组顺序（后者在上）
+  paneRotate: 旋转
+  paneAnimation: 入场动画
+  paneAnimationDuration: 动画时长(ms)
+  paneAnimationDelay: 动画延迟(ms)
+  paneAnimationLoop: 循环播放
+  paneTextFormat: 文本格式
+  textFormatPlain: 纯文本
+  textFormatRich: 富文本
+  richTextHint: "标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c] [文本](https://…) ![图片](https://…)；“- ”无序列表、“1. ”有序列表、| a | b | 表格用 |---| 分隔行"
+  richBold: 粗体
+  richItalic: 斜体
+  richUnderline: 下划线
+  richStrike: 删除线
+  richColor: 颜色
+  richLink: 链接
+  richImage: 图片
+  richList: 无序列表
+  richOrderedList: 有序列表
+  richTable: 表格
+  richPreview: 实时预览
+  richPlaceholder: 文本
+  animationNone: 无
+  animationFade: 淡入
+  animationSlideUp: 上滑入
+  animationSlideDown: 下滑入
+  animationSlideLeft: 左滑入
+  animationSlideRight: 右滑入
+  animationZoomIn: 缩放进入
+  gridSnap: 吸附网格
+  zoomKeyboardHint: 快捷键：Ctrl/⌘ + = / - 切换档位，Ctrl/⌘ + 0 适应窗口
+  zoom: 缩放
+  zoomFit: 适应窗口
+  zoomReset: "100%"
+  multiSelected: 已选 {n} 个窗格
+  multiHint: 拖动画布空白处框选；拖动任一选中窗格可整组移动；方向键整组微调
+  multiBatch: 批量设置
+  multiBatchHint: 改动会统一写到选中的窗格（不适用的窗格自动跳过）
+  align: 对齐
+  alignLeftEdge: 左对齐
+  alignCenterH: 水平居中
+  alignRightEdge: 右对齐
+  alignTopEdge: 顶对齐
+  alignCenterV: 垂直居中
+  alignBottomEdge: 底对齐
+  distribute: 分布
+  distributeH: 水平等间距
+  alignToGrid: 对齐网格
+  distributeV: 垂直等间距
+  copy: 复制
+  paste: 粘贴
+  copyDone: 已复制 {n} 个窗格
+  clipboardBlocked: 浏览器存储不可用，本次复制仅在同一页面内有效
+  pasteNothing: 没有可插入的窗格（剪贴板为空或引用均不可见）
+  insertSkipped: 已跳过 {n} 个引用不可见的窗格
+  insertTruncated: 画布窗格已达上限，已截断 {n} 个窗格
+  templateMenu: 应用模板
+  templateApplyReplace: 替换应用
+  templateApplyAppend: 追加应用
+  templateSave: 保存为模板
+  templateManage: 管理我的模板
+  templateEmptyMine: 暂无我的模板
+  templateRename: 重命名
+  templateExport: 导出
+  templateDelete: 删除
+  templateNamePrompt: 请输入模板名称（最多 40 字）
+  templateNameRequired: 模板名称不能为空
+  templateEmptyCanvas: 当前画布没有可保存的窗格
+  templateLimit: 模板数量已达上限（20 个）
+  templateStorageFailed: 浏览器存储不可用，模板未保存
+  templateSaved: 已保存模板「{name}」
+  templateApplied: 已应用模板「{name}」
+  templateMissing: 模板不存在（可能已被删除）
+  templateRenamed: 模板已重命名
+  templateRemoved: 模板已删除
+  templateReplaceConfirm: 将替换当前自由画布的全部窗格（画幅随之切换），确认继续？
+  templateDeleteConfirm: 删除该模板？
+  templateExportDone: 模板已导出
+  templateExportFailed: 导出失败（浏览器不支持下载）
+  templateGroupBuiltin: 内置模板
+  templateGroupServer: 团队模板
+  templateServerEmpty: 暂无团队模板
+  templateGroup: 模板分组
+  templateGroupPrompt: 分组名（可留空 = 未分组）：
+  templateName: 模板名称
+  templateVersions: 版本历史
+  templateRollback: 回滚
+  templateRollbackConfirm: 回滚到版本 {n}？当前名称 / 分组 / 画布会被该版本覆盖（历史仍保留，可再回滚回来）
+  templateRolledBack: 已回滚到版本 {n}
+  templateRollbackFailed: 回滚失败（只有创建者可以回滚）
+  templateVersionEmpty: 暂无历史版本
+  templateVersionColumn: 版本
+  updatedTime: 最近更新
+  pasteCloud: 云端粘贴
+  clipboardCloudEmpty: 云端剪贴板还是空的（先在另一台设备复制一次）
+  clipboardCloudFailed: 云端剪贴板写入失败（本地剪贴板仍可用）
+  loading: 加载中…
+  templateSaveServer: 另存团队模板
+  templateVisibilityHint: 是否共享给团队（取消 = 仅自己可见）
+  templateVisibilityShared: 团队共享
+  templateVisibilityPersonal: 仅自己可见
+  templateServerSaved: 已保存为团队模板
+  templateServerFailed: 团队模板保存失败（名称重复或引用不可见）
+  templateServerWriteDenied: 仅创建者可修改该团队模板
+  templateImport: 导入 JSON
+  templateImportModeHint: 导入方式：确认 = 替换当前画布，取消 = 追加到当前画布
+  templateImportFormat: JSON 格式不正确，未导入任何窗格
+  templateImportEmpty: 没有可导入的窗格（坐标或类型缺失）
+  templateImportTooLarge: 文件过大，已取消导入
+  templateImported: 已导入 {n} 个窗格
+  tplPromo: 宣传屏
+  tplPromoTitle: 标题
+  tplPromoSubtitle: 副标题 / 说明
+  tplReport: 汇报屏
+  tplReportTitle: 汇报标题
+  tplReportBody: 在此输入正文内容
+  tplReportFooter: 页脚：单位 / 日期
+  tplSkeleton: 数据骨架
+  tplSkeletonTitle: 看板标题
+  tplSkeletonSection: 分区标题
+  inspector: 窗格属性
+  noSelection: 选中画布上的窗格后可编辑属性
+  emptyCanvas: 从左侧组件库添加窗格（文本 / 时钟 / 仪表盘）
+  canvasFull: 画布剩余空间放不下该组件，请先调整或删除窗格
+  panesFull: 窗格数量已达上限（{max} 个）
+  overlapRejected: 该位置与其他窗格重叠
+  removePane: 删除窗格
+  dragHint: 拖动移动窗格
+  textPlaceholder: 空文本（在右侧属性面板输入内容）
+  dataset: 数据集
+  imageUrl: 图片地址
+  imageFit: 填充方式
+  fitCover: 填充
+  fitContain: 适配
+  fitFill: 拉伸
+  imageMissing: 未配置图片地址
+  imageUrlInvalid: 图片地址需以 http(s):// 或 / 开头
+  undo: 撤销
+  redo: 重做
+  undoHint: 撤销（Ctrl+Z）
+  redoHint: 重做（Ctrl+Shift+Z / Ctrl+Y）
+  duplicate: 复制窗格
+  duplicateHint: 复制选中窗格（Ctrl+D）
+  leaveConfirm: 有未保存的画布改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在编辑器
+  shortcutsHint: 方向键移动窗格（Shift+方向=缩放）；Ctrl+D 复制 / Delete 删除 / Ctrl+S 保存 / Ctrl+Z 撤销
+  paneNoCard: 该仪表盘暂无可见卡片
+  clearLayout: 清空画布
+  clearLayoutConfirm: 清空后该大屏回到仪表盘轮播模式，确认继续？
+  freeClearConfirm: 清空自由画布窗格？（栅格布局保留；若栅格也为空则回到轮播）
+  preview: 预览
+  editMode: 退出预览
+  refreshData: 刷新数据
+  backToList: 返回列表
+  save: 保存
+  noDashboards: 无可投屏仪表盘
+  exportScreen: 导出当前屏
+  exportNoChart: 当前屏没有可导出的图表
+  exportSkipped: 有 { count } 个指标卡未导出
+  pause: 暂停轮播
+  resume: 恢复轮播
+  fullscreen: 全屏显示
+  title: 大屏投屏
+  create: 新建大屏
+  edit: 编辑
+  delete: 删除
+  display: 投屏
+  name: 名称
+  dashboards: 仪表盘序列
+  interval: 切换间隔(秒)
+  refresh: 数据刷新(秒)
+  visibilityLabel: 可见性
+  personal: 个人
+  shared: 共享
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并选择仪表盘
+  saveOk: 保存成功
+  deleteConfirm: 确定删除大屏「{name}」吗？
+  remoteControl: 远程控制
+  remoteControlling: 远程控制中
+  controlState: 当前状态
+  controlAuto: 自动轮播
+  controlManual: 远程接管
+  controlPageText: 页码
+  controlSwitch: 切换仪表盘
+  controlSwitchHint: 选择要投屏的仪表盘
+  controlApply: 切换
+  controlPage: 翻页与刷新
+  controlPrev: 上一页
+  controlNext: 下一页
+  controlRefresh: 刷新数据
+  controlResume: 恢复轮播
+  controlSent: 指令已下发
+  controlHint: 展示端需已打开投屏页并保持在线；切换或翻页后展示端停轮播，点「恢复轮播」后继续自动切换。
+  close: 关闭
+
+dataReport:
+  datasetUnavailable: 关联数据集不可见或已删除，无法编辑取数配置
+  designer: 设计报表
+  pickReportFirst: 请先从报表列表进入设计器
+  loadFailed: 报表加载失败
+  datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
+  designSaved: 设计已保存
+  unsaved: 有未保存改动
+  readonlyHint: 只读（仅创建者可编辑）
+  template: 模板
+  templateDetail: 明细表
+  templateSummary: 分组统计
+  templateTrend: 趋势看板
+  templateMetrics: 指标汇总
+  templateApplied: 已套用模板「{name}」
+  designDetail: 明细表设计
+  datasetLabel: 数据集
+  tableLimit: 行数上限
+  componentShelf: 组件库
+  componentNumber: 指标卡
+  componentBar: 柱状图
+  componentLine: 折线图
+  componentPie: 饼图
+  componentProps: 组件属性
+  componentTitle: 标题
+  componentWidth: 宽度
+  widthFull: 整行
+  widthHalf: 半行
+  truncNone: 不按时间
+  truncDay: 按天
+  truncMonth: 按月
+  removeComponent: 删除组件
+  componentLimit: 组件数量已达上限（{max} 个）
+  noComponent: 还没有聚合组件，从左侧组件库添加
+  noComponentSelection: 点击画布上的组件后可编辑属性
+  metricOnly: 整表聚合
+  detailTable: 明细表
+  tableRows: 预览 {shown} 行 / 共 {total} 行
+  tableLoadFailed: 明细预览加载失败
+  tableTruncated: 明细已按行数上限截断（{shown} / {total}）
+  selectAllColumns: 全选
+  clearColumns: 清空
+  columnsResetHint: 已清空勾选，明细列恢复为跟随数据集全部列
+  moveUp: 上移
+  moveDown: 下移
+  duplicateComponent: 复制组件
+  leaveConfirm: 有未保存的设计改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在编辑器
+  runDirty: 有未保存改动，请先保存再运行
+  cronInvalid: Cron 表达式需为 5 段（分 时 日 月 周）
+  recipientsRequired: 勾选邮件渠道时必须填写邮件接收人
+  recipientsInvalid: 邮件接收人格式不正确：{value}
+  monthDayHint: 每月几号投递（1~28）
+  columnsRequired: 至少保留一列明细
+  groupByRequired: 图表组件必须先选分组字段
+  refreshData: 刷新数据
+  preview: 预览
+  editMode: 退出预览
+  backToList: 返回列表
+  save: 保存
+  title: 定时报表
+  weekday0: 周一
+  weekday1: 周二
+  weekday2: 周三
+  weekday3: 周四
+  weekday4: 周五
+  weekday5: 周六
+  weekday6: 周日
+  create: 新建报表
+  edit: 编辑
+  delete: 删除
+  run: 立即运行
+  runOk: 已派发执行，产物稍后进入下载中心
+  name: 名称
+  dataset: 数据集
+  mode: 内容
+  modeRows: 行数据
+  modeAggregate: 聚合
+  groupBy: 分组字段
+  metric: 聚合方式
+  metricCount: 计数
+  metricSum: 求和
+  metricAvg: 平均
+  dateTrunc: 时间粒度
+  byDay: 按天
+  byMonth: 按月
+  frequency: 频率
+  daily: 每天
+  weekly: 每周
+  monthly: 每月
+  sendTime: 发送时刻
+  cronExpression: Cron 表达式
+  cronHint: 留空则按上方固定频次；填写后优先级更高（如 0 9 * * 1-5 表示工作日 9 点）
+  recipients: 收件人
+  recipientsHint: 多个邮箱用逗号分隔
+  notifyChannels: 投递渠道
+  channelEmail: 邮件
+  channelDingtalk: 钉钉
+  channelWecom: 企业微信
+  channelFeishu: 飞书
+  notifyChannelsHint: 至少选择一个渠道；邮件渠道需填收件人，IM 渠道需选接收人
+  imRecipients: IM 接收人
+  imRecipientsHint: 输入用户名或昵称搜索（需先绑定对应 IM 账号）
+  channelRequired: 请至少选择一个投递渠道
+  isActive: 启用
+  lastStatus: 上次状态
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并选择数据集
+  saveOk: 保存成功
+  deleteConfirm: 确定删除报表「{name}」吗？
+  valueField: 度量字段
+  valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
+  valueFieldRequired: 请选择度量字段
+
+webhook:
+  urlInvalid: 回调地址需以 http:// 或 https:// 开头
+  title: Webhook 订阅
+  deliveryTitle: 投递审计
+  create: 新建订阅
+  edit: 编辑
+  delete: 删除
+  test: 测试
+  retry: 重试
+  retryOk: 投递已重新派发
+  name: 名称
+  url: 地址
+  secret: 签名密钥
+  secretKeep: 留空沿用原密钥
+  secretHint: 用于 HMAC-SHA256 签名
+  events: 订阅事件
+  isActive: 启用
+  on: 启用
+  off: 停用
+  lastFailure: 最近失败
+  description: 描述
+  actions: 操作
+  cancel: 取消
+  confirm: 确认
+  required: 名称、地址与订阅事件为必填
+  secretRequired: 新建订阅必须设置签名密钥
+  saveOk: 保存成功
+  testDispatched: 测试事件已派发
+  eventsLoadFailed: 事件目录加载失败，事件列将显示原始标识
+  statusFilter: 状态
+  stSuccess: 成功
+  stFailed: 失败
+  stExhausted: 已耗尽
+  stPending: 待投递
+  search: 查询
+  time: 时间
+  subscriptionCol: 订阅
+  event: 事件
+  statusCol: 状态
+  attempt: 次数
+  responseCode: 响应码
+  responseBody: 响应内容
+  duration: 耗时(秒)
+
+ai:
+  toolsLoadFailed: 工具清单加载失败，部分信息暂不可用
+  title: AI 助手
+  features: 功能入口
+  noFeature: 暂无可用功能
+  featureDocs: 文档问答
+  featureDocsDesc: 基于平台文档库的引用问答
+  featureNl: 数据查询
+  featureNlDesc: 自然语言查数（解释后执行）
+  featureAction: 指令执行
+  featureActionDesc: 白名单系统操作（确认后执行）
+  actionPlaceholder: 例如：新建一个角色，或查询某位用户的信息
+  actionFailed: 指令解析失败，请重试或更换模型
+  actionToolCount: 可执行操作 {count} 项（统一工具目录）
+  emptyMessages: 还没有与{name}的对话，开始提问吧
+  persistHint: 对话与操作记录已保存在服务端，刷新后可回看
+  partialHint: 回答未完成
+  streamInterrupted: 回答流已中断，已保留部分内容
+  resultRows: "共 {count} 条，显示前 {shown} 条"
+  resultName: 指标
+  resultValue: 值
+  nlModeRows: 明细
+  nlModeAggregate: 聚合
+  paramKeyword: 关键字
+  paramNickname: 昵称
+  paramPhone: 手机号
+  paramEmail: 邮箱
+  paramName: 名称
+  paramCode: 编码
+  paramDescription: 描述
+  paramMenus: 授权菜单
+  paramPassword: 初始密码
+  paramValue: 配置值
+  paramParent: 上级部门
+  paramGroupBy: 分组字段
+  paramMetric: 聚合方式
+  paramStatus: 状态
+  docsTab: 文档问答
+  nlTab: 数据查询
+  nlPlaceholder: 例如：最近创建的启用用户有哪些？
+  nlInterpret: 解释查询
+  nlDataset: 命中数据集
+  nlPreview: 预览行数
+  nlFilters: 过滤条件
+  nlNoFilters: 无
+  nlRun: 确认执行
+  on: 已启用
+  off: 未启用
+  knowledgeChunks: 知识块
+  goConfig: 前往配置
+  disabledHint: AI 助手未启用，请到「AI 配置」开启并完成配置
+  notConfiguredHint: AI 服务未配置完成，请到「AI 配置」填写接口地址、API 密钥与模型
+  emptyHint: 基于平台文档库的使用，回答将引用文档出处
+  sources: 出处
+  askPlaceholder: 例如：数据集如何做数据权限过滤？
+  ask: 提问
+  thinking: 思考过程
+  thinkingRunning: 思考中…
+  thinkingDone: 已思考 · {count} 字
+  stopGenerating: 停止生成
+  askFailed: 文档问答失败，请重试或更换模型
+  nlFailed: 数据查询失败，请重试或更换模型
+  statusLoadFailed: AI 控制台状态加载失败
+  retry: 重试
+
+aiConfig:
+  title: AI 配置
+  globalTitle: 全局开关
+  assistantEnabled: 启用 AI 助手
+  nlQueryEnabled: 启用数据问答（NL 查数）
+  actionEnabled: 启用 AI 动作草稿（确认后执行，默认关闭）
+  structuredMaxTokens: 结构化输出上限
+  structuredMaxTokensPlaceholder: 默认 2048
+  structuredMaxTokensHint: >-
+    动作草稿 / NL 查数在未配置「Max tokens」时的 token 上限。思考型模型（R1
+    等）思考消耗大，遇到「回答未完成」可调大此值或改配 Max tokens；0 = 使用内置默认 2048
+  globalSave: 保存开关
+  globalSaved: 全局开关已保存
+  metricsTitle: 调用观测（文档问答 / NL 查数 / 受限动作）
+  metricsTotal: 调用总数
+  metricsSuccess: 成功
+  metricsFailed: 失败
+  metricsRate: 成功率
+  metricsModule: 类型分布
+  metricsTopUsers: 活跃用户
+  metricsTokens: Token 用量
+  profileTitle: AI 配置档案
+  profileHint: 可维护多套配置并激活其中一套，供全部 AI 功能使用；未激活任何档案时回落到历史配置
+  create: 新建档案
+  edit: 编辑
+  test: 测试
+  activate: 设为默认
+  deactivate: 取消默认
+  profileOn: 使用中
+  profileOff: 未激活
+  unset: 默认
+  name: 档案名称
+  model: 模型
+  baseUrl: 接口地址
+  apiKey: API 密钥
+  apiKeyKeep: 留空表示沿用原密钥
+  apiKeyHint: OpenAI 兼容密钥，加密存储、不回显
+  apiKeyRequired: 新建档案必须填写 API 密钥
+  temperature: 温度
+  maxTokens: 最大输出 tokens
+  topP: Top P
+  frequencyPenalty: 频率惩罚
+  presencePenalty: 存在惩罚
+  stop: 停止序列
+  stopHint: 逗号分隔，如：结束,STOP
+  seed: 随机种子
+  timeout: 超时（秒）
+  maxRetries: 重试次数
+  contextLimit: 聊天上下文条数
+  persona: 助手人设
+  personaHint: 聊天室 AI 的系统提示词，留空使用内置默认
+  isActive: 设为默认配置
+  remark: 备注
+  sectionBasic: 连接配置
+  sectionSampling: 采样参数
+  sectionBehavior: 行为参数
+  required: 请填写档案名称、接口地址与模型
+  saveOk: 档案已保存
+  probe: 探测能力
+  probeDone: 探测完成
+  probeHint: 按序验证结构化 JSON / 原生工具调用 / 思考内容（可选多模态），结果写入档案画像
+  capabilityTitle: 模型能力
+  capJson: JSON 输出
+  capToolCalls: 原生工具调用
+  capReasoning: 思考内容
+  capVision: 多模态
+  capUnknown: 未探测
+  capOk: 支持
+  capFail: 不支持
+  probeAt: 探测时间
+  purpose: 用途
+  purposeChat: 对话问答
+  purposeStructured: 结构化输出
+  purposeEmbedding: 文本向量化
+  purposeHint: 对话问答供聊天/文档问答；结构化输出供 NL 查数与动作草稿（未配置时回落对话档案）
+  purposeEmbeddingTip: 供知识库向量检索（OpenAI 兼容 /embeddings 接口）；该用途不做回落，激活后在知识库页「构建向量」
+  nativeTools: 原生工具调用（结构化链路）
+  probeVision: 探测（含多模态）
+  trackTitle: 草稿链路
+  trackNative: 原生轨道
+  trackPrompt: prompt-JSON 轨道
+  nativeToolsHint: 开启且档案探测通过 tool_calls 能力时，动作草稿优先走原生 function calling，否则回落 prompt-JSON
+  quotaTitle: 用量配额（0 = 不限）
+  quotaCalls: 单用户日调用次数
+  quotaTokens: 单用户日 token 上限
+  quotaStreams: 全局并发流式上限
+  usageTitle: 用量账本
+  usageHint: 逐次记账（档案 / 链路 / token / 耗时），保留期随监控保留天数清理
+  usageCalls: 调用数
+  usageTokens: Token
+  usageFailed: 失败数
+  usageByFeature: 链路分布
+  usageByDay: 日用量
+  dashboardTitle: 运行看板
+  dashboardHint: 成功率与延迟取自用量账本；P95 需样本足够才给出
+  dashboardRate: 成功率
+  dashboardAvg: 平均延迟
+  dashboardP95: P95 延迟
+  dashboardP95LowSample: 抽样不足
+  dashboardSamples: 延迟样本数
+  dashboardTrend: 日调用量
+  dashboardByProfile: 按档案分布
+  dashboardByModel: 按模型分布
+  dashboardEmpty: 暂无用量数据
+  manage: 管理
+  panelTitle: "管理档案 {name}"
+  apiKeySet: 已配置
+  apiKeyUnset: 未配置
+  probeVisionDesc: 追加多模态探测（发送图片），无多模态能力的模型耗时较长
+  editDesc: 修改接口地址、模型、采样与行为参数
+  deleteDesc: 删除该档案（使用中需先取消默认；删除后不可恢复）
+  actionGroups:
+    probe: 能力探测
+    manage: 档案配置
+    danger: 危险操作
+  usageTopUsers: 用户用量 Top
+  deleteConfirm: 确定删除该档案吗？
+  deleteDone: 档案已删除
+  activateConfirm: 确定将 AI 全部功能切换到该档案吗？
+  activateDone: 档案已激活
+  deactivateConfirm: 确定停用该档案吗？AI 将回落到历史配置
+  deactivateDone: 档案已停用
+  testOk: 连接成功
+  actions: 操作
+
+dform:
+  detailFallback: 详情加载失败，当前展示列表数据
+  noApprovalNeeded: 无需审批
+  designerTitle: 表单设计
+  fillTitle: 可填表单
+  mySubmissions: 我的提交
+  exportCsv: 导出 CSV
+  create: 新建表单
+  edit: 编辑
+  delete: 删除
+  name: 名称
+  # 列表列标题（RePlusPage 按 `dform.<字段名>` 取词条）
+  form_name: 表单
+  created_time: 提交时间
+  description: 描述
+  fieldCount: 字段数
+  isActive: 状态
+  active: 启用
+  inactive: 停用
+  actions: 操作
+  fields: 字段定义
+  addField: 添加字段
+  fieldKey: 标识
+  fieldLabel: 标签
+  fieldType: 控件
+  fieldOptions: 选项
+  optionsHint: 逗号分隔
+  fieldRequired: 必填
+  fieldFilterable: 可筛选
+  fieldFilterableTip: 勾选后该字段取值随提交物化，可在「表单数据」页按该字段筛选
+  fieldFormula: 公式表达式
+  fieldFormulaPlaceholder: "如 {'{'}price{'}'} * {'{'}qty{'}'}、SUM({'{'}items.amount{'}'})"
+  fieldFormulaTip: 支持 + - * / 与括号；{'{'}price{'}'} 形式引用数值字段，SUM/AVG/MIN/MAX 聚合明细列，另有 ROUND/ABS 函数；点击下方标签插入引用
+  noForms: 暂无可填表单
+  noDescription: 无描述
+  approvalRequired: 提交审批
+  approvalOn: 需审批
+  approvalOff: 直接提交
+  approvalTip: 开启后提交需审批通过才落库（超管直提）
+  approvalHint: 该表单提交需审批，审批通过后系统将自动完成提交
+  submissionData: 提交内容
+  submittedAt: 提交时间
+  editSubmission: 修改提交
+  cancel: 取消
+  confirm: 确认
+  required: 请填写名称并添加字段
+  formUnavailable: 表单已停用或不存在
+  requiredFieldMissing: "「{name}」为必填项，请填写后提交"
+  requiredItemTip: 此项为必填
+  unsupportedFieldType: "不支持的字段类型「{type}」，请联系表单设计者"
+  saveOk: 保存成功
+  typeInput: 单行文本
+  typeTextarea: 多行文本
+  typeNumber: 数字
+  typeSelect: 下拉
+  typeRadio: 单选
+  typeCheckbox: 多选
+  typeDate: 日期
+  typeSwitch: 开关
+  typeUpload: 附件
+  typeDaterange: 日期范围
+  typeTable: 明细子表
+  typeAmount: 金额
+  typeUser: 选人
+  typeCascader: 级联
+  typeFormula: 公式计算
+  columnsHint: "每行一条：标识,标签,类型[,选项]"
+  cascaderHint: "每行一条叶子路径，段以 / 分隔，如：华东/江苏/南京"
+  tableColumnsRequired: 明细子表字段需先定义列
+  formula:
+    errors:
+      required: 公式表达式不能为空
+      tooLong: 公式表达式过长（最多 {max} 个字符）
+      invalid: 公式表达式语法错误
+      tooDeep: 公式表达式嵌套过深
+      unknownField: "公式引用了不存在的字段：{key}"
+      notNumeric: "公式只能引用数值字段：{key}"
+      unknownTable: "公式引用了不存在的明细子表：{key}"
+      invalidColumn: "公式引用了无效的明细列：{table}.{column}"
+      columnUsage: 明细列引用只能用于 SUM/AVG/MIN/MAX 聚合
+      columnRequired: SUM/AVG/MIN/MAX 的参数必须是明细列引用
+      unknownFunction: "未知公式函数：{name}"
+      argCount: "公式函数 {name} 需要 {range} 个参数"
+      roundDigits: ROUND 位数必须是 0-{max} 的整数
+      selfReference: "公式不能引用自身：{key}"
+      circular: "公式存在循环引用：{chain}"
+  userSearchPlaceholder: 输入用户名或昵称搜索
+  approvalFlow: 审批流程
+  noApprovalFlow: 不绑定流程
+  approvalFlowTip: 绑定后提交进入该流程的多级审批，审批结果回写到提交状态；绑定后「提交审批」开关不再生效
+  approvalFlowHint: 该表单已绑定审批流程，提交后将进入流程审批
+  flowOn: 流程审批
+  status: 审批状态
+  resubmit: 重新提交
+  resubmitOk: 已重新提交，等待审批
+  addRow: 添加一行
+  rangeStart: 开始日期
+  rangeEnd: 结束日期
+  fieldProps: 属性
+  moveUp: 上移
+  moveDown: 下移
+  fieldKeyHint: 小写字母开头，字母/数字/下划线
+  fieldKeyInvalid: 标识需以小写字母开头（字母/数字/下划线，≤32 位）
+  fieldKeyDuplicated: "字段标识「{key}」重复，请修改"
+  fieldLabelRequired: 请填写字段标签
+  fieldPlaceholder: 占位提示
+  fieldPlaceholderHint: 输入框中的灰色提示文案
+  fieldMaxLength: 最大长度
+  fieldMin: 最小值
+  fieldMax: 最大值
+  fieldPrecision: 小数位
+  fieldMultiple: 允许多选
+  fieldDict: 数据字典
+  fieldDictHint: 选择或输入字典类型 code
+  fieldDictTip: 绑定后选项由数据字典维护，与内联选项互斥（提交校验按字典项收敛）
+  fieldDictBound: "字典：{code}"
+  dictEmpty: 字典暂无可选项，请联系管理员维护
+  selectPlaceholder: 请选择
+  yes: 是
+  no: 否
+  saveDraft: 存为草稿
+  draftSaved: 草稿已保存
+  submitDraft: 提交
+  submitDraftOk: 已提交
+  detail: 详情
+  continueEdit: 继续编辑
+  updatedAt: 更新时间
+  instanceNo: 流程单号
+  noData: 暂无数据
+  approvalTrail: 审批轨迹
+  removeConfirm: 确定删除「{name}」的这条提交吗？
+  fromTemplate: 从模板新建
+  saveAsTemplate: 存为模板
+  templateNameHint: 请输入模板名称
+  templateNameDefault: "{name} 模板"
+  templateNameRequired: 模板名称不能为空
+  templateCopyName: "{name}（副本）"
+  templateSaved: 已保存为模板
+  templateRemoved: 模板已删除
+  templateRemoveConfirm: 确定删除模板「{name}」吗？
+  noTemplates: 暂无表单模板
+  useTemplate: 使用
+  fieldSort: 排序
+  dragHint: 拖拽调整字段顺序
+  linkage: 联动规则
+  linkageAdd: 新增规则
+  linkageEdit: 编辑规则
+  linkageNone: 暂无联动规则
+  linkageTrigger: 触发字段
+  linkageCond: 条件
+  linkageTarget: 目标字段
+  linkageTargetPlaceholder: 选择一个或多个目标字段
+  linkageEffect: 效果
+  linkageValuePlaceholder: 请选择或输入条件值
+  linkageOpEq: 等于
+  linkageOpNe: 不等于
+  linkageOpIn: 属于
+  linkageOpNotin: 不属于
+  linkageOpEmpty: 为空
+  linkageOpNotempty: 不为空
+  linkageEffectHide: 隐藏
+  linkageEffectShow: 显示
+  linkageEffectRequire: 必填
+  linkageEffectOptional: 非必填
+  linkageRequired: 请选择触发字段、效果与至少一个目标字段
+  linkageValueRequired: 请选择或输入条件值
+  linkageHint: 服务端提交校验与页面展示使用同一份规则：隐藏字段跳过必填且不落库，必填/非必填覆盖字段自身开关
+  linkageTip: 多选目标字段会展开为多条同条件规则；触发字段与目标字段不能相同
+  linkageDropped: 有 {count} 条联动规则引用了已删除字段，已自动移除
+  history: 版本
+  historyTitle: 版本历史（{name}）
+  historyCurrent: 当前版本
+  historyVersion: 版本
+  historyFields: 字段数
+  historyLinkages: 联动数
+  historyUpdated: 更新时间
+  historyBy: 操作人
+  historyEmpty: 暂无历史版本（修改 schema 保存后生成）
+  historySchema: 该版本配置
+  historyRollback: 回滚
+  historyRollbackConfirm: 确定回滚到版本 v{version} 吗？将应用该版本的字段与联动配置并生成新版本
+  historyRollbackDone: 已回滚到版本 v{version}
+  historyLoadFailed: 版本历史加载失败
+
+formData:
+  selectTitle: 选择表单
+  selectPlaceholder: 请选择表单
+  noForms: 暂无可查看的表单
+  selectHint: 请先选择表单
+  inactive: 已停用
+  tableRows: "{count} 行"
+  filterTitle: 字段筛选
+  filterClear: 清空筛选
+  filterEmpty: 该表单还没有可筛选字段（在设计器中勾选字段的「可筛选」后可用）
+  formsLoadFailed: 表单清单加载失败
+  retry: 重试
+leaveApply:
+  leave_type: 请假类型
+  start_date: 开始日期
+  end_date: 结束日期
+  days: 请假天数
+  daysUnit: 天
+  reason: 请假事由
+  status: 状态
+  current_node_name: 当前节点
+  instance_no: 申请单号
+  reject_reason: 驳回原因
+  finished_at: 结束时间
+  creator: 申请人
+  created_time: 提交时间
+  submit: 提交审批
+  cancel: 撤回
+  confirmTitle: 操作确认
+  submitConfirm: 确定重新提交该请假申请进入审批吗？
+  cancelConfirm: 确定撤回该请假申请吗？撤回后需重新提交。
+  submitSuccess: 请假申请已提交审批
+  cancelSuccess: 请假申请已撤回
+  viewInstance: 查看审批
+  rejectedTip: 已驳回
+  statusDRAFT: 草稿
+  statusPENDING: 审批中
+  statusAPPROVED: 已通过
+  statusREJECTED: 已驳回
+  statusCANCELLED: 已撤回
+  savedAsDraft: 已存草稿，未提交审批
+  statsSubmitted: 我提交
+  statsPending: 审批中
+  statsApproved: 已通过
+  statsRejected: 已驳回
+
+mcp:
+  create: 新建服务器
+  createTitle: 新建外部 MCP 服务器
+  editTitle: 编辑外部 MCP 服务器
+  formName: 名称
+  formUrl: 服务地址
+  formUrlTip: Streamable HTTP 端点；http 仅限本机联调或 OUTBOUND_ALLOWED_HOSTS 白名单登记的内网目标
+  formAuthHeader: 鉴权头
+  formAuthToken: 鉴权令牌
+  formAuthTokenPlaceholder: 请输入令牌
+  formAuthTokenLeave: 留空保持不变
+  formTimeout: 超时（秒）
+  formAllowedTools: 允许调用的工具
+  formAllowedToolsTip: 逗号分隔（如 echo, search）；为空则不允许调用任何工具（同步后可按快照维护）
+  formEnabled: 启用
+  formExposeToAi: 接入 AI 动作面
+  formExposeToAiTip: 开启后，白名单内工具将进入 AI 助手动作目录（助手确认后可调用；默认关闭）
+  formRemark: 备注
+  nameRequired: 请填写名称
+  urlRequired: 请填写服务地址
+  saveDone: 保存成功
+  sync: 同步工具
+  syncDone: 已同步 {count} 个工具
+  tools: 工具
+  drawerTitle: "外部工具 - {name}"
+  panelUrl: 服务地址
+  panelAuth: 令牌状态
+  panelAuthSet: 已配置
+  panelAuthUnset: 未配置
+  panelTimeout: 超时（秒）
+  panelAllowed: 白名单工具
+  panelAllowedEmpty: 未配置（全部禁止）
+  panelLastSync: 上次同步
+  panelSyncError: 同步失败原因
+  toolName: 工具名
+  toolDescription: 描述
+  toolReadOnly: 类型
+  toolParams: 参数
+  toolActionSurface: 动作面
+  toolCall: 调用
+  callTitle: "调用测试 - {name}"
+  callArguments: 参数（JSON）
+  callArgumentsTip: 按工具参数填写 JSON 对象（键为参数名，如 text 参数填 "hello"）
+  callRun: 执行调用
+  callSuccess: 调用成功
+  callFailed: 调用失败
+  callInvalidJson: 参数不是合法的 JSON 对象
+  whitelistTip: 仅白名单内工具可调用，调用会被审计
+  empty: 暂无工具快照，请先「同步工具」
+  readOnlyYes: 只读
+  readOnlyNo: 可写
+  enabled: 已启用
+  disabled: 已停用
+  actionSurfaceIn: 已接入
+  actionSurfaceOut: 未接入
+aiKnowledge:
+  upload: 上传文档
+  uploadTitle: 上传文档
+  syncRepo: 同步仓库文档
+  syncDone: 同步完成：新增 {created}、更新 {updated}、清理 {removed}
+  syncSubmitted: 仓库同步任务已提交，正在后台执行
+  syncAlreadyRunning: 已有仓库同步在执行，请稍候
+  syncPollTimeout: 仓库同步耗时较长，已停止进度跟踪；稍后刷新查看结果
+  preview: 预览
+  previewTitle: 文档预览
+  enable: 启用
+  disable: 停用
+  toggleDone: 状态已更新
+  deleteConfirm: 确定删除该上传文档吗？其分块将从问答检索中移除
+  deleteDone: 文档已删除
+  required: 请填写文档名称与内容
+  tooLarge: 文档内容超出 20 万字符上限
+  uploadDone: 文档已上传并生效
+  readFileFailed: 文件读取失败，请确认编码为 UTF-8
+  name: 文档名称
+  namePlaceholder: 请输入文档名称（同名文档将覆盖更新）
+  chooseFile: 选择本地文件
+  chooseFileTip: 支持 .md/.markdown/.txt/.pdf/.docx；文本可编辑，pdf/docx 解析后入库
+  content: 文档内容
+  contentPlaceholder: 粘贴或编辑 Markdown 文本
+  contentTitle: 原文
+  chunksTitle: 知识分块（问答检索命中的最小单元）
+  chunkLabel: 第 {n} 块
+  chunkSize: "{size} 字符"
+  title: 文档名称
+  source: 来源
+  sourceRepo: 仓库文档
+  sourceUpload: 上传文档
+  source_type: 来源
+  chunkCount: 分块数
+  chunk_count: 分块数
+  is_active: 状态
+  creator: 上传人
+  syncedAt: 同步时间
+  synced_at: 同步时间
+  path: 存储路径
+  batchEnable: 批量启用
+  batchDisable: 批量停用
+  batchToggleDone: 已更新 {count} 条
+  buildEmbeddings: 构建向量
+  buildConfirm: 增量构建向量索引：当前可用 {fresh} / {total} 块（模型 {model}）。只补「未向量化与正文变更」的块，可反复执行
+  buildDone: 向量构建完成：新增或更新 {embedded} 块，跳过 {skipped} 块
+  detailLoadFailed: 文档详情加载失败
+  retry: 重试
+  binarySelected: 已选择 {type} 文件，解析为纯文本后入库（不可编辑）
+  binaryTooLarge: 文件超过 2MB 上限
+  buildSubmitted: 向量构建任务已提交，正在后台执行
+  buildAlreadyRunning: 已有构建任务在运行，正在跟踪其进度
+  buildProgress: 向量构建中… {percent}%
+  buildPollTimeout: 构建耗时较长，已停止进度跟踪；稍后刷新向量状态查看结果
+  vectorDisabled: 未配置「用途 = 文本向量化」的激活档案，请先在 AI 配置页添加并激活
+  panelTitle: "管理文档 {title}"
+  enabled: 已启用
+  disabled: 已停用
+  enableDesc: 启用后重建分块，重新参与问答检索
+  disableDesc: 停用后移除全部分块，不再参与问答检索
+  deleteDesc: 删除文档并清理其全部检索分块（不可恢复）
+  actionGroups:
+    retrieval: 检索生效
+    danger: 危险操作
+
+oauthAuthorize:
+  title: 授权请求
+  appRequest: "{app} 请求访问你的 xadmin 账号"
+  user: 当前用户
+  scopesTitle: 请求的权限范围
+  scopesEmpty: 该应用未限制接口范围（以你在应用中的授权面为准）
+  hint: 同意后，该应用将以你的身份调用授权范围内的接口（权限仍受应用授权与你的账号权限双重约束）
+  approve: 同意授权
+  deny: 拒绝
+  invalidRequest: 请求参数不完整（缺少 client_id / redirect_uri）
+  loadFailed: 授权请求加载失败
+  invalidRedirect: 授权已完成，但应用登记的回调地址无效，无法跳转；请联系应用提供方修正 redirect_uri
+
+systemModule:
+  currentPreset: 当前生效预设
+  enabledSummary: "已启用 {enabled} / {total} 个模块"
+  restartTip: 模块裁剪保存后需重启进程生效；关闭模块只隐藏入口与接口，不删除任何数据
+  disabledModules: 已停用模块
+  configSnippet: 裁剪配置片段（重启后生效）
+  copy: 复制
+  copied: 已复制到剪贴板
+  copyFailed: 复制失败，请手动选择文本
+  docsTip: 模块清单与裁剪语义见
+  moduleId: 模块标识
+  moduleName: 名称
+  level: 等级
+  levelCore: 内核
+  levelStandard: 标配
+  levelOptional: 可选
+  status: 状态
+  enabled: 启用
+  disabled: 停用
+  coverage: 覆盖范围
+  coverageValue: "页面 {menus} / 路由 {routes}"
+  depends: 依赖
+  note: 说明
+  loadFailed: 加载模块清单失败
+  desiredPreset: 待生效预设
+  overrideActive: 已启用后台覆盖
+  baseline: 部署基线
+  baselineValue: "预设 {preset}，额外启用 {enable}，额外停用 {disable}"
+  baselineEmpty: 无
+  pendingTitle: 配置已保存，待重启生效
+  pendingTip: 当前进程仍按原配置运行，重启服务后新配置才会生效
+  restartCommand: 重启命令
+  copyCommand: 复制命令
+  diffEnable: 将启用
+  diffDisable: 将停用
+  presetChanged: 预设将变更
+  editTitle: 模块配置
+  selectPreset: 预设
+  enableSwitch: 启用
+  coreLocked: 内核模块不可关闭
+  editTip: 按预设调整模块开关后保存；保存只落库，需重启进程生效
+  save: 保存配置
+  saved: 已保存，重启后生效
+  saveFailed: 保存失败
+  noChange: 没有需要保存的改动
+  reset: 恢复部署配置
+  resetConfirm: 确认清除后台覆盖，恢复为部署基线（config.yml / 环境变量）？
+  resetDone: 已恢复为部署配置，重启后生效
+  discardConfirm: 有未保存的改动，切换预设将丢弃这些改动，是否继续？
+
+about:
+  intro: xAdmin 是一款开源免费且开箱即用的中后台管理系统模版。完全采用 ECMAScript 模块（ESM）规范来编写和组织代码，使用了最新的 Vue3、Vite、Element-Plus、TypeScript、Pinia、Tailwindcss 等主流技术开发。
+  platformInfo: 平台信息
+  prodDeps: 生产环境依赖
+  devDeps: 开发环境依赖
+  version: 当前版本
+  buildTime: 构建时间
+  nodeVersion: Node 版本
+  pnpmVersion: pnpm 版本
+  webRepo: 前端代码地址
+  serverRepo: 后端代码地址
+  docUrl: 文档地址
+  demoUrl: 预览地址
+
+pickerShortcuts:
+  today: 今天
+  yesterday: 昨天
+  beforeYesterday: 前天
+  thisWeek: 本周
+  lastWeek: 上周
+  thisMonth: 本月
+  lastMonth: 上个月
+  thisYear: 本年
+
+emptyPage:
+  title: 业务内容模块
+  description: "使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块"
+  back: 返回上一页
+
+codegen:
+  model: 目标模型
+  modelPlaceholder: 搜索并选择模型（app.Model）
+  ordering: 列表排序
+  orderingPlaceholder: 留空 = 引擎推导（-created_time）
+  menuTitle: 菜单标题
+  menuTitlePlaceholder: 留空 = 模型 verbose_name
+  component: 组件名
+  urlPrefix: API 前缀
+  frontendDir: 前端目录
+  defaultDerive: 留空 = 按模型推导
+  options: 生成选项
+  withImportExport: 导入导出
+  withTags: 标签接入
+  withModule: 模块声明
+  withAi: AI 声明
+  withFrontend: 前端产物
+  autoPreview: 实时预览
+  fields: 序列化器字段
+  preview: 预览产物
+  download: 下载 zip
+  downloadStarted: 下载已开始
+  artifactTip: 生成产物（字段配置决定序列化器字段面）
+  previewEmpty: 选择模型后点击「预览产物」查看生成文件
+  previewEmptyTip: 配置完成后点击「预览产物」查看生成文件
+  modeSingle: 单模型
+  modeBatch: 批量
+  batchModelPlaceholder: 选择多个模型批量打包
+  batchTip: 批量模式按引擎默认字段计划逐模型生成、忽略字段级覆盖与模型专属命名，共享下方开关；同 app 多模型时 urls.py 等共享文件需按提示手工合并
+  batchDownload: 批量下载 zip
+  batchPickFirst: 请先选择至少一个模型
+  batchPreviewEmpty: 批量模式直接打包下载，无预览
+  menuParent: 菜单上级
+  menuParentPlaceholder: 留空 = 顶级菜单
+  menuIcon: 菜单图标
+  planLoading: 正在加载字段计划…
+  withTests: 测试骨架
+  skipMenuSeed: 跳过菜单种子
+  moduleId: 模块 ID
+  moduleIdPlaceholder: 留空 = app label
+  moduleLevel: 模块等级
+  moduleLevel_core: core 核心
+  moduleLevel_standard: standard 标准
+  moduleLevel_optional: optional 可选
+  fieldConfig: 字段配置
+  fieldSummary: 已启用 {enabled}/{total} 个字段（拖拽调整顺序）
+  resetFields: 恢复默认
+  fieldName: 字段
+  fieldLabel: 显示名
+  colTable: 表格列
+  colSearch: 搜索
+  colRequired: 必填
+  colReadOnly: 只读
+  colInputType: 输入类型
+  colDict: 数据字典
+  colEnabled: 启用
+  inputTypeDefault: 默认（{type}）
+  inputTypeObjectRelated: 关联选择
+  inputTypeM2m: 多选关联
+  inputTypeApiSearchUser: 远程联想（用户）
+  inputTypeDisabled: 引擎按字段类型推导
+  dictPlaceholder: 绑定字典类型
+  planEmpty: 选择模型后展示字段配置
+  groupServer: 后端（xadmin-server）
+  groupClient: 前端（xadmin-client）
+  groupSeed: 菜单种子
+  groupRoot: 说明文档
+  copyCode: 复制文件内容
+  copyOk: 已复制到剪贴板
+  copyEmpty: 没有可复制的内容
+  downloadFile: 下载当前文件
+  savedPlans: 生成方案
+  planPick: 选择已保存方案
+  planPickFirst: 请先选择一个方案
+  planSave: 保存方案
+  planSavePrompt: 输入方案名称（保存到服务端，可导出 JSON 迁移）
+  planShared: 共享
+  planShareOnSave: 共享给同页用户
+  planNameRequired: 方案名称不能为空
+  planLoad: 载入
+  planDelete: 删除
+  planDeleteConfirm: 确认删除该方案？
+  planExport: 导出
+  planImport: 导入
+  planSaved: 方案已保存
+  planSaveFailed: 保存失败
+  planLoaded: 方案已载入
+  planDeleted: 方案已删除
+  planDeleteFailed: 删除失败
+  planImported: 方案已导入
+  planImportFailed: 导入失败

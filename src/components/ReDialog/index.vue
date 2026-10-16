@@ -1,27 +1,57 @@
 <script setup lang="ts">
-import {
-  type EventType,
-  type ButtonProps,
-  type DialogOptions,
-  closeDialog,
-  dialogStore
-} from "./index";
-import { ref, computed } from "vue";
+import type { EventType, ArgsType, ButtonProps, DialogOptions } from "./type";
+import { closeDialog, dialogStore, getDialogUid } from "./store";
+import { ref, computed, watch } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "~icons/ri/fullscreen-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
+import { getLayoutScrollElement } from "@/utils/dom";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 defineOptions({
   name: "ReDialog"
 });
 
-const sureBtnMap = ref({});
-const fullscreen = ref(false);
+const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
+/**
+ * 每个弹层的全屏运行时状态（按 uid 隔离，多弹层并存互不串扰）。
+ * 未命中时回退 `options.fullscreen` 初始值；每次 `addDialog` 分配新 uid，
+ * 因此重开弹层自然回到初始态。关闭时清理，避免无界累积。
+ */
+const fullscreenMap = ref<Record<string | number, boolean>>({});
 const { t } = useI18n();
+
+/** 当前弹层是否全屏（运行时状态优先，回退打开时的初始配置） */
+const isFullscreen = (options: DialogOptions, index: number) =>
+  fullscreenMap.value[getDialogUid(options) ?? index] ??
+  options?.fullscreen ??
+  false;
+
+/** 全屏切换：只改当前弹层的运行时状态，不影响其它并存弹层 */
+function toggleFullscreen(options: DialogOptions, index: number) {
+  const uid = getDialogUid(options) ?? index;
+  const next = !isFullscreen(options, index);
+  fullscreenMap.value[uid] = next;
+  eventsCallBack("fullscreenCallBack", { ...options, fullscreen: next }, index);
+}
+
+/**
+ * 弹层打开期间锁定布局滚动容器：防止背景滚动穿透，并以滚动条槽位预留
+ * （`scrollbar-gutter`）避免关闭后内容横向跳动；独立页（无布局滚动容器）
+ * 不重复锁定——EP 内置 lock-scroll 已锁 body，避免双重补偿。
+ */
+const overlayLocked = useScrollLock({ immediate: false });
+watch(
+  () => dialogStore.value.some(options => options.visible),
+  visible => {
+    if (!getLayoutScrollElement()) return;
+    overlayLocked.value = visible;
+  }
+);
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
-    return options?.footerButtons?.length > 0
+    return (options?.footerButtons?.length ?? 0) > 0
       ? options.footerButtons
       : ([
           {
@@ -43,20 +73,28 @@ const footerButtons = computed(() => {
             type: "primary",
             text: true,
             bg: true,
+            // 稳定标识：footer loading 按 code 判定（替代数组下标魔法数，
+            // 自定义 footerButtons 时不会把转圈落到错误按钮上）
+            code: "sure",
             popconfirm: options?.popconfirm,
             btnClick: ({ dialog: { options, index } }) => {
+              // 以弹层唯一标识（回退下标）作为状态键，避免多弹层并存时下标漂移串状态
+              const uid = getDialogUid(options) ?? index;
               if (options?.sureBtnLoading) {
-                sureBtnMap.value[index] = Object.assign(
+                sureBtnMap.value[uid] = Object.assign(
                   {},
-                  sureBtnMap.value[index],
+                  sureBtnMap.value[uid],
                   {
                     loading: true
                   }
                 );
               }
               const closeLoading = () => {
-                if (options?.sureBtnLoading) {
-                  sureBtnMap.value[index].loading = false;
+                // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用，
+                // 如表单助手 finally 里补关 loading）：判空兜底，避免
+                // "Cannot set properties of undefined" 把 finally 变成未捕获拒绝
+                if (options?.sureBtnLoading && sureBtnMap.value[uid]) {
+                  sureBtnMap.value[uid].loading = false;
                 }
               };
               const done = () => {
@@ -86,44 +124,62 @@ const fullscreenClass = computed(() => {
 function eventsCallBack(
   event: EventType,
   options: DialogOptions,
-  index: number,
-  isClickFullScreen = false
+  index: number
 ) {
-  if (!isClickFullScreen) fullscreen.value = options?.fullscreen ?? false;
   if (options?.[event] && isFunction(options?.[event])) {
     return options?.[event]({ options, index });
   }
 }
 
-function handleCloseDialog(options: DialogOptions, index: number, args: any) {
-  if (options?.sureBtnLoading && sureBtnMap.value[index]?.loading) {
-    sureBtnMap.value[index].loading = false;
-  }
+function handleCloseDialog(
+  options: DialogOptions,
+  index: number,
+  args?: ArgsType
+) {
+  const uid = getDialogUid(options) ?? index;
+  // 关闭即清理该弹层的运行时状态（loading / 全屏），避免无界累积与重开残留
+  delete sureBtnMap.value[uid];
+  delete fullscreenMap.value[uid];
   closeDialog(options, index, args);
 }
 
 function handleClose(
   options: DialogOptions,
   index: number,
-  args = { command: "close" }
+  args: ArgsType = { command: "close" }
 ) {
   handleCloseDialog(options, index, args);
   eventsCallBack("close", options, index);
 }
 
-function handleChange(options: DialogOptions, index: number, values: any) {
+function handleChange(options: DialogOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
+}
+
+/**
+ * 内容组件 props：既有 `options.props` + （启用载荷通道时）注入 `getData/setData`。
+ * 仅在显式传入 `payload` 的弹层注入，未传的弹层零影响
+ * （避免未声明这两个 props 的内容组件把它们落到根元素 DOM 上）。
+ */
+function contentProps(options: DialogOptions) {
+  if (!options.getData && !options.setData) return options?.props;
+  return {
+    ...options?.props,
+    getData: options.getData,
+    setData: options.setData
+  };
 }
 </script>
 
 <template>
   <el-dialog
     v-for="(options, index) in dialogStore"
-    :key="index"
+    :key="getDialogUid(options) ?? index"
     v-bind="options"
     v-model="options.visible"
     class="pure-dialog"
-    :fullscreen="fullscreen ? true : options?.fullscreen ? true : false"
+    :fullscreen="isFullscreen(options, index)"
+    :close-on-press-escape="options.closeOnPressEscape ?? true"
     @closed="handleClose(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
@@ -134,48 +190,32 @@ function handleChange(options: DialogOptions, index: number, values: any) {
       v-if="options?.fullscreenIcon || options?.headerRenderer"
       #header="{ close, titleId, titleClass }"
     >
-      <div
-        v-if="options?.fullscreenIcon"
-        class="flex items-center justify-between"
-      >
+      <div v-if="options?.fullscreenIcon" class="flex-bc">
         <span :id="titleId" :class="titleClass">{{ options?.title }}</span>
+        <!-- 静态 fullscreen 选项 = 常驻全屏（无可切换按钮）；
+             运行时全屏（点击切换）保留按钮，允许再点退出 -->
         <i
           v-if="!options?.fullscreen"
           :class="fullscreenClass"
-          @click="
-            () => {
-              fullscreen = !fullscreen;
-              eventsCallBack(
-                'fullscreenCallBack',
-                { ...options, fullscreen },
-                index,
-                true
-              );
-            }
-          "
+          data-testid="dialog-fullscreen-toggle"
+          @click="() => toggleFullscreen(options, index)"
         >
           <IconifyIconOffline
             class="pure-dialog-svg"
-            :icon="
-              options?.fullscreen
-                ? ExitFullscreen
-                : fullscreen
-                  ? ExitFullscreen
-                  : Fullscreen
-            "
+            :icon="isFullscreen(options, index) ? ExitFullscreen : Fullscreen"
           />
         </i>
       </div>
       <component
-        :is="options?.headerRenderer({ close, titleId, titleClass })"
+        :is="options?.headerRenderer?.({ close, titleId, titleClass })"
         v-else
       />
     </template>
     <component
-      v-bind="options?.props"
-      :is="options.contentRenderer({ options, index })"
-      @change="values => handleChange(options, index, values)"
-      @close="args => handleClose(options, index, args)"
+      v-bind="contentProps(options)"
+      :is="options.contentRenderer?.({ options, index })"
+      @change="(values: unknown) => handleChange(options, index, values)"
+      @close="(args: ArgsType) => handleClose(options, index, args)"
     />
     <!-- footer -->
     <template v-if="!options?.hideFooter" #footer>
@@ -188,7 +228,7 @@ function handleChange(options: DialogOptions, index: number, values: any) {
             v-if="btn.popconfirm"
             v-bind="btn.popconfirm"
             @confirm="
-              btn.btnClick({
+              btn.btnClick?.({
                 dialog: { options, index },
                 button: { btn, index: key }
               })
@@ -201,9 +241,12 @@ function handleChange(options: DialogOptions, index: number, values: any) {
           <el-button
             v-else
             v-bind="btn"
-            :loading="key === 1 && sureBtnMap[index]?.loading"
+            :loading="
+              btn.code === 'sure' &&
+              sureBtnMap[getDialogUid(options) ?? index]?.loading
+            "
             @click="
-              btn.btnClick({
+              btn.btnClick?.({
                 dialog: { options, index },
                 button: { btn, index: key }
               })

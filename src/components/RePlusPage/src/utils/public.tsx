@@ -1,30 +1,35 @@
 import { computed } from "vue";
 import { useDark } from "@pureadmin/utils";
 
+/**
+ * 状态色（启用 / 禁用）统一取 EP 语义色：跟随「语义色自定义」与暗色主题，
+ * `-light-*` 档在暗色下由 Element Plus 重定义为深色适配值。
+ */
+const STATUS_TONES = {
+  on: {
+    "--el-tag-text-color": "var(--el-color-success)",
+    "--el-tag-bg-color": "var(--el-color-success-light-9)",
+    "--el-tag-border-color": "var(--el-color-success-light-8)"
+  },
+  off: {
+    "--el-tag-text-color": "var(--el-color-danger)",
+    "--el-tag-bg-color": "var(--el-color-danger-light-9)",
+    "--el-tag-border-color": "var(--el-color-danger-light-8)"
+  }
+} as const;
+
 export const usePublicHooks = () => {
   const { isDark } = useDark();
 
   const switchStyle = computed(() => {
     return {
-      "--el-switch-on-color": "#6abe39",
-      "--el-switch-off-color": "#e84749"
+      "--el-switch-on-color": "var(--el-color-success)",
+      "--el-switch-off-color": "var(--el-color-danger)"
     };
   });
 
   const tagStyle = computed(() => {
-    return (status: boolean) => {
-      return status
-        ? {
-            "--el-tag-text-color": isDark.value ? "#6abe39" : "#389e0d",
-            "--el-tag-bg-color": isDark.value ? "#172412" : "#f6ffed",
-            "--el-tag-border-color": isDark.value ? "#274a17" : "#b7eb8f"
-          }
-        : {
-            "--el-tag-text-color": isDark.value ? "#e84749" : "#cf1322",
-            "--el-tag-bg-color": isDark.value ? "#2b1316" : "#fff1f0",
-            "--el-tag-border-color": isDark.value ? "#58191c" : "#ffa39e"
-          };
-    };
+    return (status: boolean) => STATUS_TONES[status ? "on" : "off"];
   });
 
   return {

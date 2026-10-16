@@ -33,6 +33,15 @@ export default {
       meta: {
         title: $t("menus.FiveZeroZero")
       }
+    },
+    {
+      // 功能模块已停用：命中模块裁剪网关（404 + code=1001）的整页提示
+      path: "/error/module-disabled",
+      name: "ModuleDisabled",
+      component: () => import("@/views/error/module-disabled.vue"),
+      meta: {
+        title: $t("error.moduleDisabled")
+      }
     }
   ]
 } satisfies RouteConfigsTable;

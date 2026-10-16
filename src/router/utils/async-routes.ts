@@ -1,0 +1,236 @@
+import type { RouteMeta, RouteRecordRaw, Router } from "vue-router";
+import { cloneDeep, storageLocal } from "@pureadmin/utils";
+import { isExternalRoute } from "@/utils/rules/url";
+import { getConfig } from "@/config";
+import { type RouteConfigs, routerArrays } from "@/layout/types";
+import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
+import { usePermissionStoreHook } from "@/store/modules/permission";
+// 动态路由
+import { getAsyncRoutes } from "@/api/routes";
+import { useUserStoreHook } from "@/store/modules/user";
+import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
+import { clearRouteSnapshot } from "@/utils/routeSnapshot";
+
+import { router } from "../router";
+import { resolveComponentKey } from "./resolve-component";
+import { ascending, formatFlatteningRoutes } from "./route-tree";
+
+const IFrame = () => import("@/layout/frame.vue");
+// https://cn.vitejs.dev/guide/features.html#glob-import
+const modulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
+
+function addPathMatch() {
+  // 动态路由就绪后，用 redirect 版本替换 router/index.ts 中预注册的无组件兜底
+  // （同名 addRoute 会替换旧记录），保证未匹配路径仍能跳转 404 页
+  router.addRoute({
+    path: "/:pathMatch(.*)",
+    name: "pathMatch",
+    redirect: "/error/404"
+  });
+}
+
+/** 处理动态路由（后端返回的路由） */
+function handleAsyncRoutes(routeList: RouteRecordRaw[], authList: string[]) {
+  usePermissionStoreHook().handleWholeAuths(authList);
+  if (routeList.length === 0) {
+    usePermissionStoreHook().handleWholeMenus(routeList);
+  } else {
+    // 根路由（constantRoutes 首条 Layout 记录）的 children 由构造期保证存在；
+    // 原地 splice 保持数组引用不变（options.routes 的消费方按引用读取）
+    const rootChildren = router.options.routes[0].children as RouteRecordRaw[];
+    const existingPaths = new Set(rootChildren.map(value => value.path));
+    const fresh = formatFlatteningRoutes(
+      addAsyncRoutes(routeList) ?? []
+    ).filter((v: RouteRecordRaw) => !existingPaths.has(v.path));
+    // 批量注册（原实现逐条 push + 每条全量 ascending 重排 + 每条重注册 "/"，O(n²) 双写）：
+    // 追加 → 单次排序 → 逐条 addRoute 匹配记录 → "/" 末尾重注册一次。
+    // 排序在同步循环内完成、中间态无观察者，options.routes 与 matcher 的最终状态等价
+    rootChildren.splice(rootChildren.length, 0, ...fresh);
+    ascending(rootChildren);
+    fresh.forEach((v: RouteRecordRaw) => {
+      // 后端目录型路由（含 children、子级为绝对 path）若连同 children 一起注册，
+      // 会与拍平后的同级子记录产生同 path 的嵌套/扁平双 matcher，最终命中哪条
+      // 取决于注册顺序；目录被命中时其组件无 <router-view>，子路由渲染被整体
+      // 遮蔽（页面白屏）。matcher 只注册拍平记录，目录访问由 redirect 兜底；
+      // options.routes 中保留完整父子树供面包屑/菜单查找。
+      const matcherRecord: RouteRecordRaw =
+        (v.children?.length ?? 0) > 0
+          ? ({ ...v, children: undefined } as RouteRecordRaw)
+          : v;
+      if (!matcherRecord.name || !router.hasRoute(matcherRecord.name))
+        router.addRoute(matcherRecord);
+    });
+    const flattenRouters = router.getRoutes().find(n => n.path === "/");
+    // 保持router.options.routes[0].children与path为"/"的children一致，防止数据不一致导致异常
+    if (flattenRouters) {
+      flattenRouters.children = rootChildren.map(c =>
+        (c.children?.length ?? 0) > 0
+          ? ({ ...c, children: undefined } as RouteRecordRaw)
+          : c
+      );
+      router.addRoute(flattenRouters);
+    }
+    usePermissionStoreHook().handleWholeMenus(routeList);
+  }
+  if (!useMultiTagsStoreHook().getMultiTagsCache) {
+    useMultiTagsStoreHook().handleTags("equal", [
+      ...routerArrays,
+      ...usePermissionStoreHook().flatteningRoutes.filter(
+        v => v?.meta?.fixedTag
+      )
+    ] as RouteConfigs[]);
+  }
+  addPathMatch();
+}
+
+/** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
+function initRouter(loadConfig: boolean = false): Promise<Router> {
+  if (loadConfig) {
+    useSiteConfigStoreHook().getSiteConfig();
+  }
+  useUserStoreHook()
+    .getUserInfo()
+    .then(() => {
+      useUserStoreHook().messageHandler();
+    })
+    .catch(error => {
+      // 用户信息拉取失败（凭证失效/网络异常）：不建立 WS，避免半登录态下无谓的重连风暴
+      console.error("get user info failed", error);
+    });
+
+  // 拉取失败（后端 5xx/网络异常）必须向调用方抛出而非吞掉：
+  // 否则本 Promise 永不 settle，登录按钮永久 loading、刷新后停留在无菜单的兜底路由。
+  // 兜底在调用方：登录/注册态跳 /error/500（静态路由，返回按钮重新触发本函数即重试）
+  const fetchRoutes = () =>
+    getAsyncRoutes()
+      .then(({ data, auths, version }) => {
+        handleAsyncRoutes(cloneDeep(data), auths);
+        return { data, auths, version };
+      })
+      .catch(error => {
+        console.error("get async routes failed", error);
+        throw error;
+      });
+
+  if (getConfig()?.CachingAsyncRoutes) {
+    // 开启动态路由缓存本地localStorage
+    const key = "async-routes";
+    const authKey = "async-auths";
+    const versionKey = "async-routes-version";
+    const asyncRouteList = storageLocal().getItem<RouteRecordRaw[]>(key);
+    const asyncAuthList = storageLocal().getItem<string[]>(authKey);
+    if (asyncRouteList && asyncRouteList?.length > 0) {
+      // 快照即时渲染（保持零等待体验）；版本号后台比对自愈：
+      // 收权/菜单变更后旧快照若继续沿用，已收权限会一直可用到登出——这是快照模式的
+      // 原生缺陷，靠响应里的内容指纹（/api/system/routes 的 version）校验并整页刷新
+      reconcileRoutesVersion(storageLocal().getItem<string>(versionKey));
+      return new Promise(resolve => {
+        handleAsyncRoutes(asyncRouteList, asyncAuthList ?? []);
+        resolve(router);
+      });
+    }
+    return fetchRoutes().then(({ data, auths, version }) => {
+      handleAsyncRoutes(cloneDeep(data), auths);
+      storageLocal().setItem(key, data);
+      storageLocal().setItem(authKey, auths);
+      storageLocal().setItem(versionKey, version);
+      return router;
+    });
+  }
+  return fetchRoutes().then(() => router);
+}
+
+/** 每次页面会话仅做一次快照版本校验（失败按退避重试覆盖） */
+let routesVersionChecked = false;
+
+/** 快照版本校验失败的重试节奏：30s 退避、最多 2 次（校验请求偶发失败不再整会话放弃） */
+const ROUTES_VERSION_RETRY_DELAY_MS = 30_000;
+const ROUTES_VERSION_MAX_RETRIES = 2;
+
+/**
+ * 后台比对快照版本：不一致（菜单/授权已变更）则清快照整页刷新，重走正常拉取注册链路。
+ *
+ * 校验请求失败（网络抖动/网关瞬时错误）按 30s 退避重试最多 2 次：只校验一次且失败
+ * 静默时，「会话内被收权」的旧快照会一直用到下次刷新；退避重试把窗口收敛到一个
+ * 校验周期内，重试期间不阻塞快照渲染（渲染早已完成）。
+ */
+function reconcileRoutesVersion(cachedVersion?: string) {
+  if (routesVersionChecked || !cachedVersion) return;
+  routesVersionChecked = true;
+
+  const attempt = (retriesLeft: number) => {
+    getAsyncRoutes()
+      .then(({ version }) => {
+        if (version && version !== cachedVersion) {
+          clearRouteSnapshot();
+          window.location.reload();
+        }
+      })
+      .catch(() => {
+        if (retriesLeft > 0) {
+          window.setTimeout(
+            () => attempt(retriesLeft - 1),
+            ROUTES_VERSION_RETRY_DELAY_MS
+          );
+        }
+        // 重试耗尽：保持快照渲染，下次启动再校验
+      });
+  };
+
+  attempt(ROUTES_VERSION_MAX_RETRIES);
+}
+
+/** 过滤后端传来的动态路由 重新生成规范路由 */
+function addAsyncRoutes(
+  arrRoutes: Array<RouteRecordRaw>
+): Array<RouteRecordRaw> | undefined {
+  if (!arrRoutes || !arrRoutes.length) return;
+  const modulesRoutesKeys = Object.keys(modulesRoutes);
+  arrRoutes.forEach((v: RouteRecordRaw) => {
+    // 将backstage属性加入meta，标识此路由为后端返回路由（后端返回记录的 meta 由接口保证存在）
+    (v.meta as RouteMeta).backstage = true;
+    // 父级的redirect属性取值：如果子级存在且父级的redirect属性不存在，默认取第一个子级的path；如果子级存在且父级的redirect属性存在，取存在的redirect属性，会覆盖默认值
+    if (v?.children && v.children.length && !v.redirect)
+      v.redirect = v.children[0].path;
+    // 父级的name属性取值：如果子级存在且父级的name属性不存在，默认取第一个子级的name；如果子级存在且父级的name属性存在，取存在的name属性，会覆盖默认值（注意：测试中发现父级的name不能和子级name重复，如果重复会造成重定向无效（跳转404），所以这里给父级的name起名的时候后面会自动加上`Parent`，避免重复）
+    if (v?.children && v.children.length && !v.name) {
+      if (isExternalRoute(v.children[0].name as string)) {
+        v.name = v.children[0].name as string;
+        v.children[0].name = v.name + "Child";
+      } else {
+        v.name = (v.children[0].name as string) + "Parent";
+      }
+    }
+    if (v.meta?.frameSrc) {
+      v.component = IFrame;
+    } else {
+      // 对后端传component组件路径和不传做兼容（如果后端传component组件路径，那么path可以随便写，如果不传，组件路径会跟path保持一致）
+      // 后端下发的 `component` 实际是组件路径字符串，先退化为 `unknown` 再按类型收窄
+      const rawComponent = v.component as unknown;
+      const target =
+        typeof rawComponent === "string" && rawComponent
+          ? rawComponent
+          : String(v.path ?? "");
+      const index = resolveComponentKey(target, modulesRoutesKeys);
+      // 目录/分组节点（有子菜单）自身不带页面，页面完全由子路由渲染：
+      // 后端对这类节点可能不下发 component，也可能残留历史脏值（如 /system/notice/ 上
+      // 挂着 system/notify/index），两种情况都不是「组件漏配」，开发态不报错
+      const hasChildren = Boolean(v.children?.length);
+      if (index === -1 && import.meta.env.DEV && !hasChildren) {
+        // 开发态显式报错：叶子菜单 component 与 src/views 下文件路径未匹配（运行期表现为空白路由）
+        console.error(
+          `[xadmin] 动态路由组件未匹配：component=${String(rawComponent ?? "")} path=${String(v.path ?? "")}——` +
+            "请确认 src/views 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
+        );
+      }
+      v.component =
+        index === -1 ? undefined : modulesRoutes[modulesRoutesKeys[index]];
+    }
+    if (v?.children && v.children.length) {
+      addAsyncRoutes(v.children);
+    }
+  });
+  return arrRoutes;
+}
+
+export { addPathMatch, addAsyncRoutes, initRouter };

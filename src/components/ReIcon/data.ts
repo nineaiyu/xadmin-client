@@ -2562,8 +2562,6 @@ export const IconJson = {
     "taobao-line",
     "tape-fill",
     "tape-line",
-    "task-fill",
-    "task-line",
     "taxi-fill",
     "taxi-line",
     "taxi-wifi-fill",

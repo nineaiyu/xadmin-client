@@ -8,12 +8,7 @@ type ArgsType = {
 };
 
 type ButtonType =
-  | "primary"
-  | "success"
-  | "warning"
-  | "danger"
-  | "info"
-  | "text";
+  "primary" | "success" | "warning" | "danger" | "info" | "text";
 
 type DrawerProps = {
   /** `Drawer` 的显示与隐藏 */
@@ -99,8 +94,9 @@ type PopConfirm = {
 };
 
 type BtnClickDrawer = {
-  options?: DrawerOptions;
-  index?: number;
+  // 框架调用 btnClick 时必然携带当前弹层信息（原先标可选导致全量消费方判空噪声）
+  options: DrawerOptions;
+  index: number;
 };
 type BtnClickButton = {
   btn?: ButtonProps;
@@ -110,6 +106,11 @@ type BtnClickButton = {
 type ButtonProps = {
   /** 按钮文字 */
   label: string;
+  /**
+   * 稳定标识：框架默认按钮组携带（`cancel` / `sure`），footer loading 等
+   * 按此判定（替代数组下标）。自定义按钮可自带 `code` 参与同一机制。
+   */
+  code?: string;
   /** 按钮尺寸 */
   size?: "large" | "default" | "small";
   /** 按钮类型 */
@@ -126,7 +127,12 @@ type ButtonProps = {
   round?: boolean;
   /** 是否为圆形按钮，默认 `false` */
   circle?: boolean;
-  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置 */
+  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置（与 ReDialog 同名同义） */
+  popconfirm?: PopConfirm;
+  /**
+   * @deprecated 拼写不统一的历史名（EP 官方为 popconfirm），保留兼容；
+   * 新代码一律用 `popconfirm`，读取时 `popconfirm ?? popConfirm`
+   */
   popConfirm?: PopConfirm;
   /** 是否为加载中状态，默认 `false` */
   loading?: boolean;
@@ -160,12 +166,52 @@ type ButtonProps = {
   }) => void;
 };
 
-interface DrawerOptions extends DrawerProps {
+/**
+ * 内容组件 `change` 事件转发载荷：框架只透传，`values` 的形态由
+ * `contentRenderer` 指定的内容组件决定（AddOrEdit 约定为 `{ values, column }`）
+ */
+type DrawerChangeData = {
+  options: DrawerOptions;
+  index: number;
+  values: unknown;
+};
+
+/**
+ * 抽屉载荷通道（类型化）：`addDrawer` 传入 `payload` 时创建并返回本对象，
+ * 同时挂到抽屉选项上（`options.getData / options.setData`）。
+ * - `getData()` 读取当前载荷——打开方与内容组件看到同一份数据；
+ * - `setData(data | updater)` 覆盖或增量更新载荷（内容组件回传、打开方预置）。
+ * 内容组件经 `props` 同名接收（仅在传了 `payload` 时注入，未传的抽屉零影响）。
+ *
+ * 与 `ReDialog` 的 `DialogPayloadApi` 同构（两套弹层体系各自自足，不互相 import）。
+ */
+interface DrawerPayloadApi<T> {
+  /** 读取当前载荷 */
+  getData: () => T;
+  /** 覆盖载荷（或传入更新函数，基于旧值派生新值） */
+  setData: (data: T | ((prev: T) => T)) => void;
+}
+
+interface DrawerOptions<T = Record<string, unknown>> extends DrawerProps {
+  /**
+   * 类型化载荷：传入后框架创建受控载荷并注入 `getData / setData`
+   * （`addDrawer` 返回值与选项上均可取用；内容组件经 `props` 同名接收）
+   */
+  payload?: T;
+  /** 读取载荷（由 `addDrawer` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  getData?: () => T;
+  /** 写入载荷（由 `addDrawer` 在传入 `payload` 时注入；未传时为 `undefined`） */
+  setData?: (data: T | ((prev: T) => T)) => void;
   /** 内容区组件的 `props`，可通过 `defineProps` 接收 */
-  props?: any;
+  props?: Record<string, unknown>;
   /** 是否隐藏 `Drawer` 按钮操作区的内容 */
   hideFooter?: boolean;
-  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置 */
+  /** 确认按钮的 `PopConfirm` 气泡确认框相关配置（与 ReDialog 同名同义） */
+  popconfirm?: PopConfirm;
+  /**
+   * @deprecated 拼写不统一的历史名（EP 官方为 popconfirm），保留兼容；
+   * 新代码一律用 `popconfirm`，读取时 `popconfirm ?? popConfirm`
+   */
   popConfirm?: PopConfirm;
   /** 点击确定按钮后是否开启 `loading` 加载动画 */
   sureBtnLoading?: boolean;
@@ -187,7 +233,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义按钮操作区的内容渲染器，会覆盖`footerButtons`以及默认的 `取消` 和 `确定` 按钮 */
@@ -195,7 +241,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => VNode | Component;
   /** 自定义底部按钮操作 */
@@ -205,7 +251,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** `Drawer` 关闭后的回调（只有点击右上角关闭按钮或空白页或按下了esc键关闭页面时才会触发） */
@@ -213,7 +259,7 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** `Drawer` 关闭后的回调。 `args` 返回的 `command` 值解析：`cancel` 点击取消按钮、`sure` 点击确定按钮、`close` 点击右上角关闭按钮或空白页或按下了esc键  */
@@ -222,16 +268,16 @@ interface DrawerOptions extends DrawerProps {
     index,
     args
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
-    args: any;
+    args?: ArgsType;
   }) => void;
   /** 输入焦点聚焦在 `Drawer` 内容时的回调 */
   openAutoFocus?: ({
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
   /** 输入焦点从 `Drawer` 内容失焦时的回调 */
@@ -239,10 +285,10 @@ interface DrawerOptions extends DrawerProps {
     options,
     index
   }: {
-    options: DrawerOptions;
+    options: DrawerOptions<T>;
     index: number;
   }) => void;
-  onChange?: (data: any) => void;
+  onChange?: (data: DrawerChangeData) => void;
   /** 点击底部取消按钮的回调，会暂停 `Drawer` 的关闭. 回调函数内执行 `done` 参数方法的时候才是真正关闭对话框的时候 */
   beforeCancel?: (
     done: () => void,
@@ -250,7 +296,7 @@ interface DrawerOptions extends DrawerProps {
       options,
       index
     }: {
-      options: DrawerOptions;
+      options: DrawerOptions<T>;
       index: number;
     }
   ) => void;
@@ -262,11 +308,18 @@ interface DrawerOptions extends DrawerProps {
       index,
       closeLoading
     }: {
-      options: DrawerOptions;
+      options: DrawerOptions<T>;
       index: number;
       closeLoading: () => void;
     }
   ) => void;
 }
 
-export type { ButtonProps, DrawerOptions, ArgsType, DrawerProps, EventType };
+export type {
+  ButtonProps,
+  DrawerOptions,
+  DrawerPayloadApi,
+  ArgsType,
+  DrawerProps,
+  EventType
+};

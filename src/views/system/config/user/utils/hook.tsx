@@ -1,38 +1,41 @@
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { getDefaultAuths, hasAuth } from "@/router/utils";
-import { getCurrentInstance, reactive, type Ref, shallowRef } from "vue";
+import { goUserDetail } from "@/views/system/hooks";
+import { reactive, shallowRef, type Ref } from "vue";
 import { userConfigApi } from "@/api/system/config/user";
 import {
   type PageTableColumn,
-  handleOperation,
-  type OperationProps,
-  type RePlusPageProps
+  type RePlusPageProps,
+  formatPageColumns
 } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import CircleClose from "~icons/ep/circle-close";
+import type { RecordType } from "plus-pro-components";
+import { useConfigPage } from "../../useConfigPage";
 
 export function useUserConfig(tableRef: Ref) {
   const { t } = useI18n();
 
   const api = reactive(userConfigApi);
 
-  const auth = reactive({
-    ...getDefaultAuths(getCurrentInstance()),
-    invalid: hasAuth("invalid:UserConfig")
+  // 权限表与「清除缓存」行内按钮由配置页共用壳装配（invalid:UserConfig）
+  const { auth, operationButtonsProps } = useConfigPage({
+    t,
+    api,
+    tableRef,
+    invalidText: t("configUser.invalidCache"),
+    invalidConfirmTitle: t("configUser.confirmInvalid")
   });
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
       row: {
-        config_user: ({ rawRow }) => {
+        config_user: ({ rawRow }: { rawRow?: RecordType }) => {
           return rawRow?.owner ? [rawRow?.owner] : [];
         }
       },
       columns: {
         config_user: ({ column, isAdd }) => {
           if (!isAdd) {
-            column["fieldProps"]["disabled"] = true;
+            (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
           }
           return column;
         }
@@ -40,65 +43,27 @@ export function useUserConfig(tableRef: Ref) {
     }
   });
 
-  const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
-      switch (column._column?.key) {
-        case "owner":
-          column["cellRenderer"] = ({ row }) => (
-            <el-link onClick={() => onGoUserDetail(row as any)}>
-              {row.owner?.username ? row.owner?.username : "/"}
-            </el-link>
-          );
-          break;
+  const listColumnsFormat = (columns: PageTableColumn[]) =>
+    formatPageColumns(columns, {
+      owner: column => {
+        column["cellRenderer"] = ({ row }) => (
+          <el-link onClick={() => onGoUserDetail(row)}>
+            {row.owner?.username ? row.owner?.username : "/"}
+          </el-link>
+        );
       }
     });
-    return columns;
-  };
 
   const router = useRouter();
 
-  const onGoUserDetail = (row: any) => {
-    if (hasAuth("list:SystemUser") && row.owner && row.owner?.pk) {
-      router.push({
-        name: "SystemUser",
-        query: { pk: row.owner.pk }
-      });
-    }
+  /** 行内 `owner` 嵌套字段（点击跳转 SystemUser 详情） */
+  type OwnerRow = {
+    owner?: { username?: string; pk?: number | string };
   };
 
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 250,
-    buttons: [
-      {
-        text: t("configUser.invalidCache"),
-        code: "invalid",
-        confirm: { title: t("configUser.confirmInvalid") },
-        props: {
-          type: "danger",
-          icon: useRenderIcon(CircleClose),
-          link: true
-        },
-        onClick: ({ row, loading }) => {
-          loading.value = true;
-          handleOperation({
-            t,
-            apiReq: api.invalid(row?.pk ?? row?.id),
-            success() {
-              tableRef.value.handleGetData();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        },
-        show: auth.invalid && 3
-      },
-      {
-        code: "detail",
-        show: false
-      }
-    ]
-  });
+  const onGoUserDetail = (row: OwnerRow) => {
+    goUserDetail(router, row.owner?.pk);
+  };
 
   return {
     api,
