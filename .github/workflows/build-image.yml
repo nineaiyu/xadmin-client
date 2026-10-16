@@ -84,7 +84,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build image for scan (single arch)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -141,7 +141,7 @@ jobs:
 
       - name: Build and push multi-arch image
         id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: VERSION=${{ steps.meta.outputs.version }}
           platforms: linux/amd64,linux/arm64
