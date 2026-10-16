@@ -8,7 +8,8 @@ minimumReleaseAge: 0
 # 原则：仅范围内最小跳版；上游发布包含修复后应删除对应条目
 overrides:
   'preact@<10.28.2': '>=10.28.2'
-  'devalue@<5.6.4': '>=5.6.4'
+  'devalue@<5.9.3': '>=5.9.3'
+  'source-map-js@<1.2.2': '>=1.2.2'
   'minimatch@>=9 <9.0.7': '>=9.0.7'
   'rollup@<4.59': '>=4.59.0'
   'flatted@<3.4.2': '>=3.4.2'
@@ -53,3 +54,7 @@ allowBuilds:
   core-js: true
   typeit: true
   node-pty: false
+
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
