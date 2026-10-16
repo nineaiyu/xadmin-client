@@ -41,7 +41,8 @@ export default defineConfig({
       VITE_COMPRESSION: "none",
       VITE_HIDE_HOME: "false"
     },
-    include: ["src/**/*.spec.ts"],
+    // build/ 为构建链路脚本（vite 插件、工具函数）：纳入单测以守护构建期行为
+    include: ["src/**/*.spec.ts", "build/**/*.spec.ts"],
     coverage: {
       provider: "v8",
       // 2026-09-27 口径复核：曾试验把 views/components/layout/router/directives 纳入
