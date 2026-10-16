@@ -147,7 +147,7 @@
     "@types/path-browserify": "^1.0.3",
     "@types/qs": "^6.15.1",
     "@types/sortablejs": "^1.15.9",
-    "@vitejs/plugin-vue": "^6.0.9",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vitest/coverage-v8": "^5.0.1",
     "@vue/test-utils": "^2.5.1",
