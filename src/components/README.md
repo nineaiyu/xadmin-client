@@ -111,7 +111,67 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 | `ReSliderRotateCaptcha`    | `<ReSliderRotateCaptcha :src="img" v-model="passed" />`                        | 旋转验证码：拖动滑条把随机倾斜的图片转正（复用 `ReSliderCaptcha`，`isSlot` 关闭自动通过、按角度容差判定）；几何纯函数在 `src/geometry.ts`                                                                                                                                                                                                                |
 | `ReSliderTranslateCaptcha` | `<ReSliderTranslateCaptcha :src="img" v-model="passed" />`                     | 拼图验证码：拖动滑条使拼图块对齐缺口（复用 `ReSliderCaptcha` + `actionOffset` 行程换算）；几何纯函数在 `src/geometry.ts`                                                                                                                                                                                                                                 |
 
-## 五、单测与文档维护
+## 五、确认交互三范式
+
+破坏性 / 不可逆操作的二次确认在全项目有三条并存路径。选型口径 = **触发位置与是否按答案分支**：
+同一操作不要混用两种形态（用户认知负担 + 守护用例重复）；新代码按下表对号入座。
+
+| 范式                       | 入口                                                       | 返回                             | 适用                                                                     | 不适用                 |
+| -------------------------- | ---------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------ | ---------------------- |
+| 行内气泡确认（声明式）     | 操作按钮的 `confirm` / `popconfirm` 配置                   | 无（确认后执行按钮 `onClick`）   | 行 / 批量操作按钮上的直接动作（删除、重置密钥、停用、撤回）              | 需要按答案分支流程     |
+| 流程阻断确认（promise 化） | `useConfirm()`（`src/hooks/useConfirm.ts`）                | `Promise<boolean>`               | 异步流程内、菜单 / 抽屉 / 快捷键等非按钮入口，需 `if (!ok) return` 收口  | 三态语义               |
+| 三态原生确认               | `ElMessageBox.confirm` + `distinguishCancelAndClose: true` | `"confirm" / "cancel" / "close"` | 必须区分「取消」与「关闭」的三分支流程（如「保存并切换 / 放弃 / 取消」） | 二值确认（范式二更短） |
+
+**范式一 · 行内气泡确认**（RePlusPage `operationButtonsProps` 与 `ReTableAction` 共用同一渲染器）：
+
+```ts
+// RePlusPage：按钮级声明，title 支持按行取值
+operationButtonsProps: {
+  confirm: { title: (row) => `确认删除「${row.name}」？`, props: { confirmButtonText: "删除" } },
+  ...
+}
+// ReTableAction：操作项级声明（popConfirm 为 deprecated 别名，新代码用 popconfirm）
+{ text: "重置密钥", popconfirm: { title: "重置后旧密钥立即失效", okText: "重置", confirm: onReset } }
+```
+
+框架已内置的交互兜底（`RePlusPage/src/components/ButtonOperation/src/OperationButton.tsx`，改动前先读）：
+点击触发（不继承 tooltip 的 hover 触发，鼠标移向确认框途中不关闭）；「更多」下拉内确认框的
+reference 重建防护与 click-outside 拦截（确认框 popper 内事件不冒泡，避免被判定为下拉外点击）；
+确认框淡出（约 260ms）后再收下拉，防止定位跳变。
+
+**范式二 · 流程阻断确认**：
+
+```ts
+const confirm = useConfirm();
+if (!(await confirm(t("knowledge.deleteConfirm"), { danger: true }))) return;
+// 确认后继续；取消 / 关闭 / ESC 一律 false，不抛错
+```
+
+默认口径 = warning 图标 + 「提示」标题 + 确定 / 取消（`buttons.*` 词条）；`danger: true` 时确认按钮
+着危险色且 `autofocus: false`（焦点从「取消」起步，防连续回车误确认）。无组件上下文也可用
+（utils / 事件回调内直接调用），直接走 `i18n.global` 取词。
+
+**范式三 · 三态原生确认**（仅「取消 ≠ 关闭」时；参照 `views/system/menu/utils/menuDrawerSwitch.ts::confirmSwitchUnsaved`）：
+
+```ts
+try {
+  await ElMessageBox.confirm(message, title, { distinguishCancelAndClose: true, ... });
+  return "save";
+} catch (action) {
+  return action === "cancel" ? "discard" : "cancel";
+}
+```
+
+**反模式（两条，均已按缺陷修复过）**：
+
+- `ElMessageBox.confirm(...).catch(() => null)` 后继续执行 —— 「取消」仍会执行动作；确认结果必须
+  await 后分支（用 `useConfirm` 天然收口）；
+- 行内按钮上用范式二弹模态框 —— 遮挡表格、与同行按钮的气泡确认形态不一致；按钮上的确认一律范式一。
+
+**守护**：范式二见 `src/hooks/useConfirm.spec.ts`（默认口径 / danger / 取消关闭不抛错 / i18n 取词）；
+范式一的框架兜底与 E2E 确认流（重置密钥、删除知识库文档等）见 `e2e/` 对应 spec。
+
+## 六、单测与文档维护
 
 - 组件级单测与实现同目录（`__tests__/`），纯逻辑单独成测试文件；
 - 新增组件请同步本文件分组表，并在实现文件头部写清「何时用 / 何时不用」；

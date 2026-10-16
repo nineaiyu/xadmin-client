@@ -23,7 +23,7 @@ test("审计日志：DELETE 操作入日志且可按方法检索", async ({ page
   );
   expect((await delResp.json()).code).toBe(1000);
 
-  // 操作日志按方法检索（on_commit 落库有延迟，轮询等待）
+  // 操作日志按方法检索（响应阶段单条 INSERT 同步落库，无需等待提交钩子）
   const listResp = await page.request.get(
     `${FRONT_URL}/api/audit/logs/operation?method=DELETE&page_size=20`
   );
