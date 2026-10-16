@@ -86,11 +86,19 @@ type PackageSizeOptions = {
   format?: boolean;
 };
 
-/** 获取指定文件夹中所有文件的总大小 */
+/**
+ * 获取指定文件夹中所有文件的总大小。
+ *
+ * 体积统计是构建的**装饰性输出**（打包完成提示），不是门禁——真实门禁是
+ * `pnpm check:bundle-size`。因此目录读取失败必须容错返回而非抛错：
+ * vite 8（rolldown）下 `closeBundle` 可能早于产物落盘执行，`readdir(outDir)`
+ * 会以 ENOENT 失败，抛错会经异步回调变成未捕获异常、把构建打成 exit 1
+ * （Linux/CI 确定性复现，macOS 因时序差异不易复现）。
+ */
 const getPackageSize = (options: PackageSizeOptions) => {
   const { folder = "dist", callback, format = true } = options;
   readdir(folder, (err, files: string[]) => {
-    if (err) throw err;
+    if (err) return;
     let count = 0;
     const checkEnd = () => {
       if (++count == files.length) {
@@ -99,7 +107,9 @@ const getPackageSize = (options: PackageSizeOptions) => {
     };
     files.forEach((item: string) => {
       stat(`${folder}/${item}`, async (err, stats) => {
-        if (err) throw err;
+        // 单条目失败同样跳过：计数不推进则仅在极端情况下不打印统计，
+        // 不影响构建结果
+        if (err) return;
         if (stats.isFile()) {
           fileListTotal.push(stats.size);
           checkEnd();
