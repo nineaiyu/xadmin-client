@@ -47,6 +47,21 @@ function installRevealApi() {
   return { animate, startViewTransition };
 }
 
+/**
+ * 媒体查询替身：按 ``matchMedia`` 返回值结构逐字构造（只填被测实现读取的成员）。
+ * 用 ``Object.assign`` 到已有替身副本上派生——jsdom 无 ``MediaQueryList`` 全局，
+ * 无法走原型链；而 object literal 直接强转会撞 as-unknown-as 门禁（基线已清零）。
+ */
+function stubMatchMedia(reducedMotion: boolean) {
+  const base = window.matchMedia("(prefers-reduced-motion: reduce)");
+  vi.spyOn(window, "matchMedia").mockImplementation(query =>
+    Object.assign(Object.create(Object.getPrototypeOf(base)), base, {
+      matches: query.includes("prefers-reduced-motion") && reducedMotion,
+      media: query
+    })
+  );
+}
+
 function removeRevealApi() {
   delete (document as { startViewTransition?: unknown }).startViewTransition;
 }
@@ -153,19 +168,7 @@ describe("withCircleReveal：降级口径", () => {
     stubViewport();
     stubReadyState("complete");
     const { startViewTransition } = installRevealApi();
-    vi.spyOn(window, "matchMedia").mockImplementation(
-      query =>
-        ({
-          matches: query.includes("prefers-reduced-motion"),
-          media: query,
-          onchange: null,
-          addListener: vi.fn(),
-          removeListener: vi.fn(),
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-          dispatchEvent: vi.fn()
-        }) as unknown as MediaQueryList
-    );
+    stubMatchMedia(true);
     const { withCircleReveal } = await loadReveal();
     const apply = vi.fn();
 
