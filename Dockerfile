@@ -1,7 +1,7 @@
 # 构建阶段固定跑在构建机架构：前端产物（dist）与架构无关，多架构发布会为每个
 # 目标架构重复执行 pnpm install + vite/rolldown 构建（arm64 走 QEMU 模拟 Rust
 # 工具链，实测 50 分钟无进展而卡死）。仅最终 nginx 镜像按目标架构生成。
-FROM --platform=$BUILDPLATFORM nineaiyu/xadmin-client-base:20261016_110344 AS stage-build
+FROM --platform=$BUILDPLATFORM nineaiyu/xadmin-client-base:20261017_080659 AS stage-build
 
 ARG VERSION
 
