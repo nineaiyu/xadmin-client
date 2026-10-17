@@ -34,7 +34,8 @@ const currentPage = computed(() => {
 const { initStorage } = useLayout();
 initStorage();
 const { dataTheme, themeMode, dataThemeChange } = useDataThemeChange();
-dataThemeChange(themeMode.value);
+// 首帧应用主题：不播圆形揭示（动画只服务用户主动切换）
+dataThemeChange(themeMode.value, { animate: false });
 
 /** el-switch 的 change 载荷为 boolean/string/number，按既有调用口径透传给主题切换 */
 const handleDataThemeChange = (value: string | number | boolean) => {
@@ -62,7 +63,8 @@ watch(
   () => $storage?.layout?.darkMode,
   dark => {
     dataTheme.value = Boolean(dark);
-    dataThemeChange(themeMode.value);
+    // 站点配置同步（非用户操作）：不播揭示动效
+    dataThemeChange(themeMode.value, { animate: false });
   }
 );
 </script>

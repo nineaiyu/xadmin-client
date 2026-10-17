@@ -3,13 +3,22 @@
  * `document.startViewTransition`，并以最近一次指针落点或元素中心为圆心
  * 做 `clip-path` 圆形扩散。
  *
+ * 只用于**用户主动触发**的一次性切换；初始化 / 外部状态同步（布局挂载应用主题、
+ * 站点配置到达、系统明暗变化）应直接应用，调用本模块会表现为「打开页面即全屏
+ * 铺开」的无意义动画，见 `useDataThemeChange` 的 `animate` 选项。
+ *
  * 降级口径：浏览器不支持 View Transitions API、用户开启「减弱动效」、
  * 或切换未发生浏览器绘制时，直接同步执行回调（行为等价，无动画）。
  */
 
-/** 最近一次指针按下位置（供无事件对象调用方取圆心；模块级单例） */
-let lastPointerX = 0;
-let lastPointerY = 0;
+/**
+ * 最近一次指针按下位置（供无事件对象调用方取圆心；模块级单例）。
+ *
+ * 初值是 `null` 而不是 (0,0)：指针坐标的 0 是视口左上角的有效值，用数字初值会让
+ * 「尚未发生指针交互」与「点在左上角」无法区分——此前写成 0 导致空指针兜底分支
+ * 永不生效，未交互时的揭示圆心恒定落在左上角（表现为整页从左上角向右下铺开）。
+ */
+let lastPointer: { x: number; y: number } | null = null;
 let pointerTracked = false;
 
 function trackPointer() {
@@ -18,8 +27,7 @@ function trackPointer() {
   window.addEventListener(
     "pointerdown",
     event => {
-      lastPointerX = event.clientX;
-      lastPointerY = event.clientY;
+      lastPointer = { x: event.clientX, y: event.clientY };
     },
     { capture: true, passive: true }
   );
@@ -59,8 +67,8 @@ export function withCircleReveal(
     return;
   }
 
-  const x = origin?.x ?? lastPointerX ?? window.innerWidth / 2;
-  const y = origin?.y ?? lastPointerY ?? window.innerHeight / 2;
+  const x = origin?.x ?? lastPointer?.x ?? window.innerWidth / 2;
+  const y = origin?.y ?? lastPointer?.y ?? window.innerHeight / 2;
   const radius = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y)

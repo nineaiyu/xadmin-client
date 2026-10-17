@@ -29,7 +29,10 @@ const route = useRoute();
 const isOpen = ref(!deviceDetection());
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 onBeforeMount(() => {
-  useDataThemeChange().dataThemeChange($storage.layout?.themeMode);
+  // 初始化应用主题：不播圆形揭示（动画只服务用户主动切换）
+  useDataThemeChange().dataThemeChange($storage.layout?.themeMode, {
+    animate: false
+  });
 });
 const { t } = useI18n();
 
