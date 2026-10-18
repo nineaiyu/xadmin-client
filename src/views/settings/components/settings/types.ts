@@ -1,5 +1,6 @@
 import type { DetailResult, SearchColumnsResult } from "@/api/types";
 import type { FieldValues } from "plus-pro-components";
+import type { PageColumn } from "@/components/RePlusPage";
 
 /**
  * 设置页签消费的接口面（SettingItem 实际调用的四个方法）：以结构化契约而非
@@ -45,6 +46,11 @@ export interface settingItemProps {
   queryParams?: object;
   /** 保存成功后的回调（autoSubmit 请求 code=1000 时触发；失败不回调） */
   onSaved?: (values: FieldValues) => void | Promise<void>;
+  /**
+   * 列加工口（可选）：框架装配列之后、渲染之前逐列调用。
+   * 用于页面级诉求（E2E data-testid 锚点、控件微调），避免各页面复制 SettingItem。
+   */
+  columnDecorator?: (column: PageColumn) => void;
   auth?: {
     partialUpdate?: boolean;
     retrieve: boolean;

@@ -4,9 +4,16 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useDialogForm } from "@/hooks/useDialogForm";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
-import AiProfileForm from "../components/AiProfileForm.vue";
+import AiProfileFields from "../components/AiProfileFields.vue";
 
-/** 新建/编辑弹窗（ReDialog + AiProfileForm）：api_key 留空沿用的语义收敛在表单内 */
+/**
+ * 档案新建/编辑弹窗：与「添加用户」同形态——RePlusPage 的 `addOrEditOptions`
+ * 通道，表单由后端 search-columns 元数据驱动（PlusForm 两列 + label 右对齐
+ * + help_text 问号），不再手写 el-form。
+ *
+ * 定制点（aiProfileFields.ts）：api_key 建号必填 / 编辑留空沿用、采样与行为
+ * 参数的必填回退默认值、禁用框架默认提交按钮由 beforeSure 统一收口。
+ */
 export function useAiProfileDialog({
   t,
   refresh
@@ -14,11 +21,11 @@ export function useAiProfileDialog({
   t: ReturnType<typeof useI18n>["t"];
   refresh: () => void;
 }) {
-  const formRef = ref<InstanceType<typeof AiProfileForm>>();
+  // 仅用于触发弹窗（表单内容由框架列渲染）：toolbar「新建档案」走后装配
+  const formRef = ref();
 
   const openDialog = (row: AiProfileItem | null) => {
-    formRef.value = undefined;
-    // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
+    // 显式指定载荷泛型：ref 包装的实例类型无法反推（TS 退化 unknown）
     const { beforeSure } = useDialogForm<Record<string, unknown>>({
       formRef,
       submit: payload =>
@@ -31,12 +38,18 @@ export function useAiProfileDialog({
     });
     addDialog({
       title: row ? t("aiConfig.edit") : t("aiConfig.create"),
-      width: dialogSize("md"),
+      // 档案字段 19 项（连接/采样/行为三组）：xxl(960) 宽 + 两列栅格，
+      // 与「宽表格 / 权限树 / 变更历史」同一档（该类表单字段量最大的形态）
+      width: dialogSize("xxl"),
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,
       sureBtnLoading: true,
-      contentRenderer: () => h(AiProfileForm, { ref: formRef, row }),
+      contentRenderer: () =>
+        h(AiProfileFields, {
+          ref: formRef,
+          row: row ?? undefined
+        }),
       beforeSure
     });
   };

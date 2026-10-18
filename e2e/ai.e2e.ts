@@ -33,18 +33,41 @@ async function jsonRequest(
   };
 }
 
-/** 确保 el-switch 处于开启态（click 是切换语义：前序用例可能已打开，直接点会关掉） */
+/**
+ * 确保布尔字段处于开启态。
+ *
+ * 兼容两种框架渲染形态：
+ * - el-switch（checkbox 语义，click 是切换：前序用例可能已打开，直接点会关掉）；
+ * - SettingItem / PlusForm 的 boolean 字段：渲染为 ReSegmented（内部原生 radio，
+ *   选项「启用 / 禁用」——第一个 radio 即开启项）。
+ */
 const ensureSwitchOn = async (
   page: import("@playwright/test").Page,
   testId: string
 ) => {
-  const sw = page.getByTestId(testId);
-  await expect(sw).toBeVisible({ timeout: 15_000 });
-  // aria-checked 在内部隐藏 checkbox 上（根元素没有），直接读原生 checked
-  const checked = await sw.locator("input[type=checkbox]").isChecked();
-  if (!checked) {
-    await sw.click();
+  const field = page.getByTestId(testId);
+  await expect(field).toBeVisible({ timeout: 15_000 });
+
+  const checkbox = field.locator("input[type=checkbox]");
+  if ((await checkbox.count()) > 0) {
+    // aria-checked 在内部隐藏 checkbox 上（根元素没有），直接读原生 checked
+    if (!(await checkbox.first().isChecked())) {
+      await field.click();
+    }
+    return;
   }
+
+  // ReSegmented：第一个 radio = 启用
+  const radio = field.locator('input[type="radio"]').first();
+  if ((await radio.count()) > 0) {
+    if (!(await radio.isChecked())) {
+      await field.getByText("启用", { exact: true }).click();
+    }
+    return;
+  }
+
+  // 兜底：开关类控件直接点击
+  await field.click();
 };
 
 test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({ page }) => {
@@ -62,14 +85,18 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   }).toPass({ timeout: 15_000 });
 
   // ---- 配置页：全局开关确保「开启」 ----
+  // 配置中心为三分栏（配置档案 / 功能开关 / 运行观测），默认落在档案面板；
+  // 全局开关在「功能开关」面板，先切页签（面板懒挂载，不切不可见）
   await openMenuPath(page, ["集成管理"], "/integration/ai/config");
+  await page.getByRole("tab", { name: "功能开关" }).click();
   await ensureSwitchOn(page, "ai-assistant-enabled");
-  await page.getByRole("button", { name: "保存开关" }).click();
+  await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(page.locator(".el-message").first()).toBeVisible({
     timeout: 15_000
   });
 
   // ---- 新建配置档案（双浏览器共享库：随机名防唯一约束冲突） ----
+  await page.getByRole("tab", { name: "配置档案" }).click();
   const profileName = `E2E档案-${Math.floor(Math.random() * 1_000_000)}`;
   await page.getByRole("button", { name: "新建档案" }).click();
   const dialog = page.getByRole("dialog");
@@ -117,13 +144,15 @@ test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await login(page);
 
   // 配置页：全局开关开启 AI 助手 + NL 查数（不配真实 LLM，解释动作将得到可读错误）
+  // 配置中心三分栏，开关在「功能开关」面板（默认落在档案面板）
   await openMenuPath(page, ["集成管理"], "/integration/ai/config");
+  await page.getByRole("tab", { name: "功能开关" }).click();
   await expect(page.getByTestId("ai-assistant-enabled")).toBeVisible({
     timeout: 15_000
   });
   await ensureSwitchOn(page, "ai-assistant-enabled");
   await ensureSwitchOn(page, "ai-nl-query-enabled");
-  await page.getByRole("button", { name: "保存开关" }).click();
+  await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(page.locator(".el-message").first()).toBeVisible();
 
   // 助手页：数据查询入口出现 → 解释 → 无真实 LLM 得可读错误（UI 链路验证）。

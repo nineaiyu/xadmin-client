@@ -13,8 +13,9 @@ import { useAiProfileButtons } from "./useAiProfileButtons";
  *
  * - 行内保留在线处置（测试 / 激活 / 停用）；档案参数速览、能力画像与低频动作
  *   （能力探测含多模态、编辑、删除）收敛进「管理」抽屉，操作列由 430 收窄到 240；
- * - 新建/编辑关闭框架默认表单按钮，统一走 ReDialog + AiProfileForm
- *   （api_key 明文不回显、留空沿用原密钥的语义在表单内收敛）；
+ * - 新建/编辑关闭框架默认表单按钮，统一走 ReDialog + AiProfileFields
+ *   （框架列驱动表单：search-columns 元数据 + help_text 问号；api_key 明文
+ *   不回显、留空沿用原密钥的语义在表单内收敛）；
  * - 删除关闭框架默认入口（带二次确认的删除动作移入抽屉危险区，统一入口）；
  * - is_active 列渲染为彩色 tag（使用中/未激活），与「设为默认/停用」按钮语义一致，
  *   故覆盖框架对 boolean 列的自动开关渲染。
