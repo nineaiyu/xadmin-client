@@ -589,3 +589,16 @@ E2E_PARALLEL=4 E2E_PLAN_ONLY=1 node scripts/e2e-parallel.mjs  # 核对各片负�
 | **列表页操作列宽度按内容实测收敛（`useOperationContentWidth`）的实测时机**：数据到达的那次 flush 里 el-table 只有骨架——`<tr class="el-table__row">` 无子节点、表头 `tr` 亦为空（单元格由列组件注册后才渲染），此时量单元格内容恒得 0，表现为「功能写好了但列宽毫无变化」，极易误判为选择器写错 | 实测放到 **rAF**（与 EP `doLayout` 同帧）并做有限重试；给 E2E 探针量表格 DOM 时同理——先等 `waitFor` 出行与单元格再量（2026-10-14 操作列收敛实测） |
 | **页面模板根级注释 ⇒ 离开该页后整页白屏（永久，刷新才恢复）**：`<template>` 后紧跟 `<!-- -->` 时，组件在 dev 下会渲染成「多根」（带 `DEV_ROOT_FRAGMENT` 的 Fragment 根）；布局的 `<Transition mode="out-in">` 在离开时给该 vnode 挂 leave hooks，而 Vue 的 `remove()` 对 Fragment **提前 return**（不处理 transition）⇒ leave 永不完成 ⇒ BaseTransition 的 `state.isLeaving` 永不复位 ⇒ 此后每次渲染都返回空占位（`#main-content` 只剩 `<!---->`），切任何页面都白屏、只有刷新能恢复。静态读代码极难发现（页面源码看上去正常） | 约定：模板注释一律写在**根元素内部**。防复发：门禁 `pnpm check:template-root` + 守护用例 `system-pages.e2e.ts`「关于页：往返导航后内容区正常渲染」（同文件早有「系统设置」同类守护）。定位手法：浏览器注入 Vue dep 日志（`setTransitionHooks` / `remove`）并读组件实例 `subTree`（`Symbol(v-fgt)` + `patchFlag=2112` 即多根），再用 `mode: default` / `pageTransition: none` 两组对照排除过渡与配置因素 |
 | **顶栏角标跨多来源聚合**（未读站内信 + 待我审批 + 进行中任务），而弹层只列站内信 → 站内信为 0 时用户看到角标 4 却无从解释（实测：4 = 待审批 1 + 进行中任务 3，弹层一片空白） | 聚合入口必须让「打开处」能解释数字：弹层底栏「任务中心」入口挂角标（= 角标 − 站内信）+ 悬停展示拆分，打开弹层时同步刷新三路计数；`e2e/notice-badge.e2e.ts` 守护不变式「角标 = 弹层页签合计 + 任务中心角标」 |
+
+### 全量并行跑批（2026-10-18）
+
+- **提速用分片，不要直接加 workers**：`E2E_PARALLEL=6 node scripts/e2e-run.mjs parallel`
+  （每 shard 独立 PG 库 + 独立前后端端口）→ 全量 724 passed / 8 failed / 约 16 分钟；
+  直接 `--workers=6` 共享同一后端与库 → 92 failed（设置/主题/站点配置用例互相踩）。
+- **生成器命名变更要同步「产物发现」**：`seed_demo_book_scene` 曾按 `*_book.json`
+  通配生成器产物，改为规范文件名（`menu.json` / `menumeta.json`）后匹配为空、静默跳过，
+  `demo-book` 与表单标签宽度用例整页空白。产物发现一律读 `seeds/manifest.json`
+  按 `order` 装载（兼容旧命名），守护 `tests/unit/scripts/test_e2e_seed_scenes.py`。
+- **启动静默窗口必须被用户交互打断**：暗色/灰色模式用例在页面加载后 700ms 内点击开关，
+  写入被当成首屏噪声吞掉 → 刷新回退。窗口只吸收初始化回写，`pointerdown` / `keydown`
+  立即结束；自动保存「待发/在途」时不得做无差异跳过（防抖窗内改回原值也要回写）。
