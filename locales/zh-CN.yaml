@@ -2301,6 +2301,18 @@ systemNotice:
   markdownLink: 链接
   markdownLinkText: 链接文字
   markdownCode: 行内代码
+  markdownStrikethrough: 删除线
+  markdownQuote: 引用
+  markdownQuoteText: 引用内容
+  markdownCodeBlock: 代码块
+  markdownTable: 表格
+  markdownDivider: 分割线
+  markdownSplit: 分栏
+  markdownWordCount: "{count} 字"
+  markdownUploading: 上传中…
+  markdownUploadHint: 支持拖拽或粘贴图片上传
+  markdownDropHint: 松开上传图片/附件
+  markdownUploadNoPermission: 没有文件上传权限
   markdownUploadImage: 上传图片
   markdownUploadAttachment: 上传附件
   markdownUploadFailed: 文件上传失败

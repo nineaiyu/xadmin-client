@@ -141,13 +141,19 @@ export function buildNoticeFormColumns({ t }: { t: TFunction }) {
   /** 消息正文：按正文格式渲染富文本 / Markdown 编辑器，附件清单回写表单值 files */
   const message: ColumnHandler = ({ column, formValue }) => {
     column["hasLabel"] = false;
+    // 正文编辑器占满整行（弹窗内容区自适应），不受半宽列/标签宽度挤压
+    column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 24, xl: 24 };
     column["renderField"] = (
       value: unknown,
       onChange: (val: unknown) => void
     ) => {
+      const isMarkdown =
+        resolveMessageFormat(formValue?.value?.message_format) === "markdown";
       return h(NoticeMessageEditor, {
         modelValue: value as string,
         format: formValue?.value?.message_format ?? "html",
+        // Markdown 分栏编辑给弹窗留出更多垂直空间；富文本保持原高度
+        minHeight: isMarkdown ? 320 : 400,
         onChange: ({
           messages,
           files

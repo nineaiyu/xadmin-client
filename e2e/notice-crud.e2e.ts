@@ -212,6 +212,10 @@ test("通知公告：Markdown 正文创建 → 列表 → 详情渲染 → 编�
     .first()
     .click();
   await pickSelectOption(page, dialog, "Markdown");
+  // 下拉关闭动画可能短暂覆盖编辑器工具栏：等它完全收起再断言编辑区
+  await expect(page.locator(".el-select-dropdown:visible")).toHaveCount(0, {
+    timeout: 5_000
+  });
 
   // 空正文切换格式不弹确认，直接进入 Markdown 编辑器（textarea + 实时预览）
   await dialog.locator("textarea").first().fill(body);
@@ -219,6 +223,40 @@ test("通知公告：Markdown 正文创建 → 列表 → 详情渲染 → 编�
   await expect(dialog.locator(".md-view table")).toBeVisible();
   await expect(dialog.locator(".md-view pre code")).toContainText(
     "systemctl restart xadmin"
+  );
+
+  // 分栏分隔条可拖拽：向左栏方向拖动后左栏变宽（与用户管理页同款 ReSplitPane）
+  const editPane = dialog.locator(".md-editor__pane--edit").first();
+  const resizer = dialog.locator(".splitter-pane-resizer.vertical").first();
+  const paneBefore = await editPane.boundingBox();
+  const handle = await resizer.boundingBox();
+  expect(paneBefore && handle).toBeTruthy();
+  await page.mouse.move(
+    handle!.x + handle!.width / 2,
+    handle!.y + handle!.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    handle!.x + handle!.width / 2 + 100,
+    handle!.y + handle!.height / 2,
+    { steps: 5 }
+  );
+  await page.mouse.up();
+  const paneAfter = await editPane.boundingBox();
+  expect(paneAfter!.width).toBeGreaterThan(paneBefore!.width + 50);
+
+  // Markdown 编辑器内附件上传：文件选择 → 上传接口 → 插入 Markdown 语法 → 保存关联
+  const attachmentName = `e2e-note-${Date.now()}.txt`;
+  const chooserPromise = page.waitForEvent("filechooser");
+  await dialog.getByRole("button", { name: "上传附件" }).click();
+  const chooser = await chooserPromise;
+  await chooser.setFiles({
+    name: attachmentName,
+    mimeType: "text/plain",
+    buffer: Buffer.from("xadmin markdown attachment")
+  });
+  await expect(dialog.locator("textarea").first()).toHaveValue(
+    new RegExp(`\\[${attachmentName}\\]\\(<[^>]*\\/media\\/`)
   );
 
   await dialog
@@ -242,6 +280,9 @@ test("通知公告：Markdown 正文创建 → 列表 → 详情渲染 → 编�
   await expect(detailDialog.locator(".md-view pre code")).toContainText(
     "systemctl restart xadmin"
   );
+  await expect(
+    detailDialog.locator(".md-view a", { hasText: attachmentName })
+  ).toBeVisible();
   await expect(detailDialog.locator(".w-e-scroll")).toHaveCount(0);
   await detailDialog.locator(".el-dialog__headerbtn").first().click();
   await expect(page.locator(".el-dialog:visible")).toHaveCount(0, {

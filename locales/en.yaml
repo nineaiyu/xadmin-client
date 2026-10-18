@@ -2301,6 +2301,18 @@ systemNotice:
   markdownLink: Link
   markdownLinkText: Link text
   markdownCode: Inline code
+  markdownStrikethrough: Strikethrough
+  markdownQuote: Quote
+  markdownQuoteText: Quote text
+  markdownCodeBlock: Code block
+  markdownTable: Table
+  markdownDivider: Divider
+  markdownSplit: Split
+  markdownWordCount: "{count} chars"
+  markdownUploading: Uploading…
+  markdownUploadHint: Drag or paste images to upload
+  markdownDropHint: Drop to upload images/attachments
+  markdownUploadNoPermission: No permission to upload files
   markdownUploadImage: Upload image
   markdownUploadAttachment: Upload attachment
   markdownUploadFailed: File upload failed
