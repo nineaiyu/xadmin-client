@@ -50,7 +50,8 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
 2. 两处类型声明 + 注入缺省（`src/utils/responsive.ts` 的 `injectResponsiveStorage`）；
 3. 本地初始化 / 读取消费点；
 4. 站点级配置的读写清单（`src/store/modules/siteConfig.ts` 的 `saveSiteConfig` / `getSiteConfig`）；
-5. 后端种子（站点级键要进 `loadjson/systemconfig.json` 的 `WEB_SITE_CONFIG`）；
+5. 后端种子（站点级键进 `settings/seeds/systemconfig.json` 的 `WEB_SITE_CONFIG`；
+   只有跨应用共用的键才留在平台层 `loadjson/systemconfig.json`）；
 6. 跑 `pnpm check:platform-config`（死参数 / 断链双检）。
 
 ## 五、样式与组件约定
