@@ -1,9 +1,18 @@
 import { computed, h, type Ref, type VNode } from "vue";
+import { ElMessageBox } from "element-plus";
+import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { NoticeChoices } from "@/views/system/constants";
-import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
-import { NOTICE_TARGET_AUTH, noticeTypeOptionLocked } from "./noticeFormRules";
+import NoticeMessageEditor from "@/views/system/notice/components/NoticeMessageEditor.vue";
+import {
+  NOTICE_TARGET_AUTH,
+  noticeMessageHasContent,
+  noticeTypeOptionLocked
+} from "./noticeFormRules";
+import { resolveMessageFormat } from "./noticeFormat";
 import type { RecordType } from "plus-pro-components";
+
+type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** plus-pro select 选项条目（value 为对象形态，供 fieldSlot 展示与禁用判定） */
 type ElTextType = "" | "primary" | "success" | "warning" | "info" | "danger";
@@ -26,7 +35,7 @@ type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown>;
  * 通知公告表单列装配（自 useNoticeFormOptions 拆出）：等级选项着色、类型联动
  * 接收对象列显隐（映射见 NOTICE_TARGET_AUTH）、富文本消息渲染。
  */
-export function buildNoticeFormColumns() {
+export function buildNoticeFormColumns({ t }: { t: TFunction }) {
   /** 接收对象列显隐：通知类型匹配且具备对应搜索权限 */
   const noticeTargetColumn = (target: number): ColumnHandler => {
     return ({ column, formValue }) => {
@@ -82,15 +91,63 @@ export function buildNoticeFormColumns() {
     return column;
   };
 
-  /** 消息正文：WangEditor 渲染，附件清单回写表单值 files */
+  /** 正文格式：创建时可选，编辑态锁定；切换格式会改变正文解释方式，
+   * 非空正文需二次确认后清空（避免同一份源码被两种渲染器误解） */
+  const messageFormat: ColumnHandler = ({ column, formValue, isAdd }) => {
+    const fieldProps = (column["fieldProps"] ?? {}) as Record<string, unknown>;
+    column["fieldProps"] = fieldProps;
+    if (!isAdd) {
+      fieldProps.disabled = true;
+      column["tooltip"] = t("systemNotice.formatLocked");
+      return column;
+    }
+
+    let previous = resolveMessageFormat(formValue?.value?.message_format);
+    let previousValue: unknown = formValue?.value?.message_format ?? {
+      value: previous
+    };
+    fieldProps.onChange = async (value: unknown) => {
+      const next = resolveMessageFormat(value);
+      if (next === previous) return;
+      if (noticeMessageHasContent(formValue?.value?.message)) {
+        try {
+          await ElMessageBox.confirm(
+            t("systemNotice.formatSwitchConfirm"),
+            t("systemNotice.formatSwitchTitle"),
+            {
+              type: "warning",
+              confirmButtonText: t("buttons.confirm"),
+              cancelButtonText: t("buttons.cancel")
+            }
+          );
+        } catch {
+          // 取消切换：恢复原选项，正文保持不变
+          if (formValue?.value) {
+            formValue.value.message_format = previousValue;
+          }
+          return;
+        }
+        if (formValue?.value) {
+          formValue.value.message = "";
+          formValue.value.files = [];
+        }
+      }
+      previous = next;
+      previousValue = formValue?.value?.message_format ?? { value: next };
+    };
+    return column;
+  };
+
+  /** 消息正文：按正文格式渲染富文本 / Markdown 编辑器，附件清单回写表单值 files */
   const message: ColumnHandler = ({ column, formValue }) => {
     column["hasLabel"] = false;
     column["renderField"] = (
       value: unknown,
       onChange: (val: unknown) => void
     ) => {
-      return h(WangEditor, {
+      return h(NoticeMessageEditor, {
         modelValue: value as string,
+        format: formValue?.value?.message_format ?? "html",
         onChange: ({
           messages,
           files
@@ -110,6 +167,7 @@ export function buildNoticeFormColumns() {
     level,
     files,
     notice_type: noticeType,
+    message_format: messageFormat,
     notice_user: noticeTargetColumn(NoticeChoices.USER),
     notice_dept: noticeTargetColumn(NoticeChoices.DEPT),
     notice_role: noticeTargetColumn(NoticeChoices.ROLE),

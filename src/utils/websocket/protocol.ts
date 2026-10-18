@@ -166,6 +166,7 @@ export interface PushMessagePayload {
   message_type?: string;
   title?: string;
   message?: string;
+  message_format?: { value?: string; label?: string };
   level?: { value?: string };
   notice_type?: { value?: number; label?: string };
   pk?: string | number;

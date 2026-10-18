@@ -6,24 +6,32 @@ import {
   ref,
   shallowRef
 } from "vue";
-import "@wangeditor/editor/dist/css/style.css";
 import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
 import { useI18n } from "vue-i18n";
 
 // 先注册附件插件、再加载只读编辑器组件，保持 wangeditor 栈留在懒加载 chunk
-// （同 WangEditor.vue 的做法，见 src/utils/wangEditorBoot.ts）
+// （同 WangEditor.vue 的做法，见 src/utils/wangEditorBoot.ts）。样式也随组件懒加载：
+// Markdown 公告只渲染 MarkdownView，不需要把 WangEditor 的样式带进当前 chunk。
 const Editor = defineAsyncComponent(async () => {
+  await import("@wangeditor/editor/dist/css/style.css");
   await ensureWangEditorBoot();
   return (await import("@wangeditor/editor-for-vue")).Editor;
 });
+// 本组件经通知 store 进入首屏闭包；MarkdownView 依赖 markdown-it（约 40KB gzip），
+// 按需异步加载，避免所有用户为公告详情付出首屏体积。
+const MarkdownView = defineAsyncComponent(
+  () => import("@/components/MarkdownView")
+);
 import { NoticeChoices } from "@/views/system/constants";
 import { sanitizeHtml } from "@/utils/sanitize";
+import { resolveMessageFormat } from "@/views/system/notice/utils/noticeFormat";
 
 interface FormItemProps {
   pk?: number;
   publish?: boolean;
   level?: { value: "primary" | "success" | "warning" | "danger" | "info" };
   title?: string;
+  message_format?: { value?: string; label?: string } | string;
   message?: string;
   notice_type?: { value?: number; label?: string };
 }
@@ -77,6 +85,11 @@ const loading = ref(false);
 const sanitizedMessage = computed(() =>
   sanitizeHtml(newFormInline.value?.message)
 );
+
+/** 正文格式：Markdown 走共享渲染器，其余（含存量数据）按 HTML 展示 */
+const isMarkdown = computed(
+  () => resolveMessageFormat(newFormInline.value?.message_format) === "markdown"
+);
 </script>
 
 <template>
@@ -98,8 +111,13 @@ const sanitizedMessage = computed(() =>
           }}
         </el-tag>
       </template>
+      <MarkdownView
+        v-if="isMarkdown"
+        class="notice-markdown"
+        :content="newFormInline.message ?? ''"
+      />
       <div
-        v-if="newFormInline?.notice_type?.value === NoticeChoices.SYSTEM"
+        v-else-if="newFormInline?.notice_type?.value === NoticeChoices.SYSTEM"
         v-html="sanitizedMessage"
       />
       <div v-else class="wangeditor">

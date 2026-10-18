@@ -22,6 +22,41 @@ async function pickSelectOption(page: Page, dialog: Locator, label: string) {
   await option.click();
 }
 
+/** 按表单标签定位字段容器（新增「正文格式」列后不能按下标取最后一个 select） */
+function formItemByLabel(page: Page, dialog: Locator, label: string) {
+  return dialog
+    .locator(".el-form-item")
+    .filter({
+      has: page.locator(".el-form-item__label", { hasText: label })
+    })
+    .first();
+}
+
+/** 新增弹窗内选择接收用户（api-search-user 表格弹层） */
+async function pickNoticeUser(page: Page, dialog: Locator) {
+  const userSelect = formItemByLabel(page, dialog, "用户")
+    .locator(".el-select")
+    .first();
+  await userSelect.click();
+  const pickerTable = page.locator(".el-table").last();
+  await pickerTable
+    .locator(".el-table__row")
+    .first()
+    .waitFor({ state: "visible", timeout: 15_000 });
+  await page
+    .locator(".el-loading-mask:visible")
+    .first()
+    .waitFor({ state: "hidden", timeout: 15_000 })
+    .catch(() => undefined);
+  await pickerTable
+    .locator(".el-table__row")
+    .first()
+    .locator(".el-checkbox")
+    .first()
+    .click();
+  await page.getByRole("button", { name: "确定" }).last().click();
+}
+
 test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字典色 → 查看 → 编辑 → 删除", async ({
   page
 }) => {
@@ -47,28 +82,13 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
   await expect(dialog).toBeVisible({ timeout: 10_000 });
   await dialog.getByPlaceholder("请输入标题").first().fill(title);
   // 通知级别（notice_level 字典下发：普遍通知 info/#909399）
-  await dialog.locator(".el-select").first().click();
-  await pickSelectOption(page, dialog, "普遍通知");
-  // 通知类型保持默认「用户通知」时必须选择用户：api-search-user 表格弹层
-  const userSelect = dialog.locator(".el-select").last();
-  await userSelect.click();
-  const pickerTable = page.locator(".el-table").last();
-  await pickerTable
-    .locator(".el-table__row")
-    .first()
-    .waitFor({ state: "visible", timeout: 15_000 });
-  await page
-    .locator(".el-loading-mask:visible")
-    .first()
-    .waitFor({ state: "hidden", timeout: 15_000 })
-    .catch(() => undefined);
-  await pickerTable
-    .locator(".el-table__row")
-    .first()
-    .locator(".el-checkbox")
+  await formItemByLabel(page, dialog, "通知级别")
+    .locator(".el-select")
     .first()
     .click();
-  await page.getByRole("button", { name: "确定" }).last().click();
+  await pickSelectOption(page, dialog, "普遍通知");
+  // 通知类型保持默认「用户通知」时必须选择用户：api-search-user 表格弹层
+  await pickNoticeUser(page, dialog);
   // 正文（WangEditor）：真实键盘输入
   // 附件菜单（uploadAttachment）由 @wangeditor/plugin-upload-attachment 提供、在
   // src/App.vue 注册（需在创建编辑器前且只能注册一次）。历史上 rolldown 预打包会把
@@ -148,4 +168,112 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
 
   // 全流程（创建/编辑/查看三处编辑器）都不应出现编辑区高度告警
   expect(editorWarnings).toEqual([]);
+});
+
+test("通知公告：Markdown 正文创建 → 列表 → 详情渲染 → 编辑态格式锁定", async ({
+  page
+}) => {
+  const title = `E2E-MD公告-${Date.now()}`;
+  const body = [
+    "## 维护窗口",
+    "",
+    "- 时间：今晚 23:00",
+    "- 预计 30 分钟",
+    "",
+    "| 指标 | 值 |",
+    "| --- | --- |",
+    "| 时长 | 30m |",
+    "",
+    "```bash",
+    "systemctl restart xadmin",
+    "```"
+  ].join("\n");
+
+  await login(page);
+  await openMenuPath(page, ["系统管理", "通知公告"], "/system/notice/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  // 新增：用户通知 + Markdown 正文
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible");
+  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await dialog.getByPlaceholder("请输入标题").first().fill(title);
+  await formItemByLabel(page, dialog, "通知级别")
+    .locator(".el-select")
+    .first()
+    .click();
+  await pickSelectOption(page, dialog, "普遍通知");
+  await pickNoticeUser(page, dialog);
+
+  await formItemByLabel(page, dialog, "正文格式")
+    .locator(".el-select")
+    .first()
+    .click();
+  await pickSelectOption(page, dialog, "Markdown");
+
+  // 空正文切换格式不弹确认，直接进入 Markdown 编辑器（textarea + 实时预览）
+  await dialog.locator("textarea").first().fill(body);
+  await expect(dialog.locator(".md-view h2")).toHaveText("维护窗口");
+  await expect(dialog.locator(".md-view table")).toBeVisible();
+  await expect(dialog.locator(".md-view pre code")).toContainText(
+    "systemctl restart xadmin"
+  );
+
+  await dialog
+    .getByRole("button", { name: /保存|确定/ })
+    .first()
+    .click();
+  await expect(page.locator(".el-dialog:visible")).toHaveCount(0, {
+    timeout: 15_000
+  });
+
+  const row = page.locator(".el-table__row", { hasText: title }).first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
+
+  // 详情：按 Markdown 渲染（标题/表格/代码块），且不加载 WangEditor
+  await row.hover();
+  await row.locator("button").nth(2).click();
+  const detailDialog = page.locator(".el-dialog:visible");
+  await expect(detailDialog).toBeVisible({ timeout: 10_000 });
+  await expect(detailDialog.locator(".md-view h2")).toHaveText("维护窗口");
+  await expect(detailDialog.locator(".md-view table")).toBeVisible();
+  await expect(detailDialog.locator(".md-view pre code")).toContainText(
+    "systemctl restart xadmin"
+  );
+  await expect(detailDialog.locator(".w-e-scroll")).toHaveCount(0);
+  await detailDialog.locator(".el-dialog__headerbtn").first().click();
+  await expect(page.locator(".el-dialog:visible")).toHaveCount(0, {
+    timeout: 10_000
+  });
+
+  // 编辑：格式锁定，正文仍以 Markdown 源码编辑
+  await row.hover();
+  await row.getByRole("button", { name: /编辑/ }).first().click();
+  const editDialog = page.locator(".el-dialog:visible");
+  await expect(editDialog).toBeVisible({ timeout: 10_000 });
+  await expect(
+    formItemByLabel(page, editDialog, "正文格式").getByRole("combobox")
+  ).toBeDisabled();
+  await expect(editDialog.locator("textarea").first()).toHaveValue(
+    /## 维护窗口/
+  );
+  await editDialog.locator(".el-dialog__headerbtn").first().click();
+  await expect(page.locator(".el-dialog:visible")).toHaveCount(0, {
+    timeout: 10_000
+  });
+
+  // 清理：删除刚创建的行
+  await row.hover();
+  await row.getByRole("button", { name: "删除" }).first().click();
+  const confirm = page
+    .locator(".el-popconfirm, .el-popper")
+    .getByRole("button", { name: "确定" })
+    .first();
+  await expect(confirm).toBeVisible({ timeout: 10_000 });
+  await confirm.click();
+  await expect(page.locator(".el-table__row", { hasText: title })).toHaveCount(
+    0
+  );
 });

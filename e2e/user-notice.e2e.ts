@@ -40,7 +40,10 @@ async function jsonRequest(
 }
 
 /** 超管自建唯一标题定向通知（USER 类型发给 e2e_user），返回标题供列表断言定位 */
-async function seedFreshNotice(page: Page): Promise<string> {
+async function seedFreshNotice(
+  page: Page,
+  options: { messageFormat?: "html" | "markdown"; message?: string } = {}
+): Promise<string> {
   const title = `E2E通知：升级预告-${Date.now()}`;
   // 收件人取 pk：种子助手以超管身份调用，e2e_user 由 scripts/e2e_seed.py 种入
   const list = await jsonRequest(
@@ -65,7 +68,10 @@ async function seedFreshNotice(page: Page): Promise<string> {
       notice_user: [target!.pk ?? target!.id],
       publish: true,
       files: [],
-      message: `<p>${title}——${NOTICE_BODY}，可在「我的通知」中查看。</p>`
+      message_format: options.messageFormat ?? "html",
+      message:
+        options.message ??
+        `<p>${title}——${NOTICE_BODY}，可在「我的通知」中查看。</p>`
     }
   );
   expect(created.code).toBe(1000);
@@ -99,6 +105,29 @@ test.describe("我的通知", () => {
 
     // 打开详情即已读（无论此前是否未读，重复执行仍成立）
     await expect(row.getByText("已读", { exact: true })).toBeVisible();
+  });
+
+  test("Markdown 通知详情按格式渲染（标题/列表，源码标记不原样出现）", async ({
+    page
+  }) => {
+    await login(page);
+    const title = await seedFreshNotice(page, {
+      messageFormat: "markdown",
+      message: "## 维护窗口\n\n- 23:00 开始\n- 预计 30 分钟"
+    });
+    await logout(page);
+    await login(page, PLAIN_USER);
+    await openNoticePage(page, title);
+
+    const row = page.getByRole("row", { name: new RegExp(title) }).first();
+    await row.getByRole("button", { name: "查看", exact: true }).click();
+
+    const dialog = page.locator(".el-dialog").filter({ hasText: title });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator(".md-view h2")).toHaveText("维护窗口");
+    await expect(dialog.locator(".md-view li")).toHaveCount(2);
+    await expect(dialog.locator(".md-view")).not.toContainText("##");
+    await dialog.locator(".el-dialog__headerbtn").click();
   });
 
   test("全部已读后未读清零、顶栏角标归零", async ({ page }) => {

@@ -2,10 +2,30 @@ import { describe, expect, it } from "vitest";
 
 import {
   NOTICE_TARGET_AUTH,
+  noticeMessageHasContent,
   noticeTypeOptionLocked,
   parseNoticeUserParam
 } from "../noticeFormRules";
 import { NoticeChoices } from "@/views/system/constants";
+
+describe("noticeMessageHasContent", () => {
+  it("treats empty editor markup as empty", () => {
+    expect(noticeMessageHasContent(undefined)).toBe(false);
+    expect(noticeMessageHasContent("")).toBe(false);
+    expect(noticeMessageHasContent("   ")).toBe(false);
+    // WangEditor 空文档序列化形态
+    expect(noticeMessageHasContent("<p><br></p>")).toBe(false);
+    expect(noticeMessageHasContent("<p>&nbsp;</p>")).toBe(false);
+  });
+
+  it("accepts text, markdown and media-only content", () => {
+    expect(noticeMessageHasContent("<p>正文</p>")).toBe(true);
+    expect(noticeMessageHasContent("## 标题")).toBe(true);
+    expect(
+      noticeMessageHasContent('<p><img src="/media/upload/a.png"></p>')
+    ).toBe(true);
+  });
+});
 
 describe("noticeTypeOptionLocked", () => {
   it("locks the announcement (SYSTEM) option unconditionally", () => {

@@ -9,12 +9,29 @@ import {
 import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
 import { sanitizeHtml } from "@/utils/sanitize";
+import { resolveMessageFormat } from "@/views/system/notice/utils/noticeFormat";
 import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
 import type { NotificationOptions, NotificationType } from "element-plus";
 
 import { router } from "@/router/router";
 import { store } from "../utils";
+
+/**
+ * Markdown → 纯文本预览。
+ *
+ * 动态引入：markdown-it 约 40KB（gzip），本 store 属首屏闭包，静态引入会把整个
+ * 渲染器带进首屏；只有真正收到 Markdown 公告推送时才加载（模块 Promise 缓存，
+ * 后续推送不再重复加载）。
+ */
+let markdownPreviewModule: Promise<typeof import("@/utils/markdown")> | null =
+  null;
+
+async function markdownPreviewText(content: string): Promise<string> {
+  markdownPreviewModule ??= import("@/utils/markdown");
+  const { markdownToPlainText } = await markdownPreviewModule;
+  return markdownToPlainText(content);
+}
 
 /**
  * 站内消息通知 store：消息推送 WebSocket 连接 + 未读计数 + 桌面/应用内通知分发。
@@ -73,13 +90,20 @@ export const useNoticeStore = defineStore("pure-notice", {
      *                  避免本 store 反向依赖登录态模块）
      */
     messageHandler(identity: string, onLogout: () => void) {
-      const onMessage = (raw: unknown) => {
+      const onMessage = async (raw: unknown) => {
         // 协议帧分派（protocol.ts）：仅处理 push_message 通知推送
         if (
           isOutboundMessage<PushMessagePayload>(raw, MessageAction.PUSH_MESSAGE)
         ) {
           const data = raw.data ?? {};
           let message: string | VNode | undefined = data?.message;
+          // 推送预览只走纯文本：Markdown 先渲染再取文本（否则通知里出现 ** / #），
+          // HTML 保持既有剥标签口径
+          const isMarkdownMessage =
+            resolveMessageFormat(data?.message_format) === "markdown";
+          const previewText = isMarkdownMessage
+            ? await markdownPreviewText(String(data?.message ?? ""))
+            : stripHtml(String(data?.message ?? ""));
           // 桌面通知：聊天类（@提及/私聊）前台也弹，
           // 其余站内推送仅页面不可见时弹；点击行为与应用内通知一致
           // （聊天类直达会话，站内信就地弹出详情弹窗）
@@ -90,7 +114,7 @@ export const useNoticeStore = defineStore("pure-notice", {
           notifyDesktop({
             type: isChatPush ? "chat" : "push",
             title: `${data?.notice_type?.label}-${data?.title}`,
-            body: stripHtml(String(data?.message ?? "")),
+            body: previewText,
             tag: data?.pk ? String(data.pk) : undefined,
             onClick: () => {
               if (isChatPush) {
@@ -105,7 +129,10 @@ export const useNoticeStore = defineStore("pure-notice", {
           });
           switch (data?.message_type) {
             case "notify_message":
-              if (data?.notice_type?.value === 0) {
+              if (isMarkdownMessage) {
+                // Markdown 公告：预览用纯文本，禁用 HTML 通道（渲染结果不塞进通知）
+                message = previewText;
+              } else if (data?.notice_type?.value === 0) {
                 // 统一按字符串测试（RegExp.test 本身会 ToString；显式归一消除类型歧义）
                 const isHtml =
                   /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
@@ -124,7 +151,7 @@ export const useNoticeStore = defineStore("pure-notice", {
                 title: `${data?.notice_type?.label}-${data?.title}`,
                 message: message ?? "",
                 duration: 5000,
-                dangerouslyUseHTMLString: true,
+                dangerouslyUseHTMLString: !isMarkdownMessage,
                 type: (data?.level?.value
                   ?.replace("primary", "")
                   ?.replace("danger", "warning") ?? undefined) as

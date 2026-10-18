@@ -2286,6 +2286,24 @@ systemNotice:
   level: 通知级别
   publish: 是否发布
   message: 内容
+  message_format: 正文格式
+  formatLocked: 正文格式创建后不可修改
+  formatSwitchTitle: 切换正文格式
+  formatSwitchConfirm: 切换格式会清空当前正文，确定继续吗？
+  markdownPlaceholder: 支持 Markdown 语法，可上传图片与附件
+  markdownEmptyPreview: 暂无内容
+  markdownEdit: 编辑
+  markdownPreview: 预览
+  markdownBold: 加粗
+  markdownItalic: 斜体
+  markdownHeading: 标题
+  markdownHeadingText: 标题
+  markdownLink: 链接
+  markdownLinkText: 链接文字
+  markdownCode: 行内代码
+  markdownUploadImage: 上传图片
+  markdownUploadAttachment: 上传附件
+  markdownUploadFailed: 文件上传失败
   title: 标题
   read_user_count: 接收人数/已读人数
   notice_user: 用户

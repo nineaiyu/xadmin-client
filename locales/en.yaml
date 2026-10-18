@@ -2286,6 +2286,24 @@ systemNotice:
   level: Level
   publish: Publish
   message: Message
+  message_format: Format
+  formatLocked: The format cannot be changed after creation
+  formatSwitchTitle: Switch content format
+  formatSwitchConfirm: Switching the format clears the current content. Continue?
+  markdownPlaceholder: Markdown supported; images and attachments can be uploaded
+  markdownEmptyPreview: No content
+  markdownEdit: Edit
+  markdownPreview: Preview
+  markdownBold: Bold
+  markdownItalic: Italic
+  markdownHeading: Heading
+  markdownHeadingText: Heading
+  markdownLink: Link
+  markdownLinkText: Link text
+  markdownCode: Inline code
+  markdownUploadImage: Upload image
+  markdownUploadAttachment: Upload attachment
+  markdownUploadFailed: File upload failed
   title: Title
   read_user_count: Receive/Read
   notice_user: Users
@@ -3897,7 +3915,7 @@ dform:
   formUnavailable: This form is disabled or does not exist
   requiredFieldMissing: '"{name}" is required, please fill it in before submitting'
   requiredItemTip: This field is required
-  unsupportedFieldType: "Unsupported field type \"{type}\". Please contact the form designer"
+  unsupportedFieldType: 'Unsupported field type "{type}". Please contact the form designer'
   saveOk: Saved
   typeInput: Input
   typeTextarea: Textarea
