@@ -1,4 +1,9 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  type BrowserContext,
+  type Locator,
+  type Page
+} from "@playwright/test";
 
 /**
  * E2E 公共助手：凭据与登录/登出/菜单导航。
@@ -134,19 +139,28 @@ async function healSharedLocale(page: Page) {
 const SESSION_REUSE_ENABLED = process.env.E2E_SESSION_REUSE !== "0";
 /** 取号缓存有效期：access token 1h，留足余量（refresh 15 天照常兜底续期） */
 const SESSION_CACHE_MS = 45 * 60 * 1000;
-let cachedAdminAuth:
-  | {
-      access: string;
-      refresh: string;
-      accessLifetime: number;
-      refreshLifetime: number;
-      at: number;
-    }
-  | undefined;
+type CachedAdminAuth = {
+  access: string;
+  refresh: string;
+  accessLifetime: number;
+  refreshLifetime: number;
+  at: number;
+};
+/**
+ * 取号缓存按浏览器上下文隔离。
+ *
+ * 进程级共享 refresh token 时，同一 shard 内任一 context 触发刷新都会轮换并
+ * 拉黑旧 refresh token，其他 context 随后拿着旧 token 续期，日志里表现为成批
+ * 「令牌已被加入黑名单」+ 跳登录页（全量并行下的登录类 flaky）。按 context
+ * 缓存后每个用例拿到独立会话；同一 context 内重复 login() 仍复用，不增加
+ * 登录请求数量级。
+ */
+const adminAuthCache = new WeakMap<BrowserContext, CachedAdminAuth>();
 
 async function acquireAdminAuth(page: Page) {
-  if (cachedAdminAuth && Date.now() - cachedAdminAuth.at < SESSION_CACHE_MS) {
-    return cachedAdminAuth;
+  const cached = adminAuthCache.get(page.context());
+  if (cached && Date.now() - cached.at < SESSION_CACHE_MS) {
+    return cached;
   }
   // 临时令牌与登录两步的客户端指纹必须完全一致（UA + Accept + IP 参与 ident 计算），
   // 因此两请求显式带同一组头；临时令牌一次性消费，每次取号都要重新申请
@@ -190,39 +204,56 @@ async function acquireAdminAuth(page: Page) {
       `会话取号失败：HTTP ${resp.status()} ${JSON.stringify(body).slice(0, 200)}`
     );
   }
-  cachedAdminAuth = {
+  const auth: CachedAdminAuth = {
     access: data.access,
     refresh: data.refresh,
     accessLifetime: data.access_token_lifetime ?? 3600,
     refreshLifetime: data.refresh_token_lifetime ?? 15 * 24 * 3600,
     at: Date.now()
   };
-  return cachedAdminAuth;
+  adminAuthCache.set(page.context(), auth);
+  return auth;
 }
 
 /** 注入登录 Cookie 并引导至应用壳；会话不可用返回 false（由调用方回落表单登录） */
 async function trySessionLogin(page: Page): Promise<boolean> {
   try {
-    const auth = await acquireAdminAuth(page);
-    const now = Math.floor(Date.now() / 1000);
-    await page.context().addCookies([
-      {
-        name: "X-Token",
-        value: auth.access,
-        url: FRONT_URL,
-        expires: now + Math.max(auth.accessLifetime - 10, 60),
-        sameSite: "Lax"
-      },
-      {
-        name: "X-Refresh-Token",
-        value: auth.refresh,
-        url: FRONT_URL,
-        expires: now + Math.max(auth.refreshLifetime - 10, 3600),
-        sameSite: "Lax"
-      },
-      // 路由守卫以该 Cookie 判定「已登录」（见 src/router/index.ts）
-      { name: "multiple-tabs", value: "true", url: FRONT_URL }
-    ]);
+    const cookies = await page.context().cookies();
+    const hasAccess = cookies.some(cookie => cookie.name === "X-Token");
+    const hasRefresh = cookies.some(
+      cookie => cookie.name === "X-Refresh-Token"
+    );
+    if (!hasAccess || !hasRefresh) {
+      const auth = await acquireAdminAuth(page);
+      const now = Math.floor(Date.now() / 1000);
+      await page.context().addCookies([
+        {
+          name: "X-Token",
+          value: auth.access,
+          url: FRONT_URL,
+          expires: now + Math.max(auth.accessLifetime - 10, 60),
+          sameSite: "Lax"
+        },
+        {
+          name: "X-Refresh-Token",
+          value: auth.refresh,
+          url: FRONT_URL,
+          expires: now + Math.max(auth.refreshLifetime - 10, 3600),
+          sameSite: "Lax"
+        },
+        // 路由守卫以该 Cookie 判定「已登录」（见 src/router/index.ts）
+        { name: "multiple-tabs", value: "true", url: FRONT_URL }
+      ]);
+    } else if (
+      !cookies.some(
+        cookie => cookie.name === "multiple-tabs" && cookie.value === "true"
+      )
+    ) {
+      // 应用可能在用例内轮换过 token：只补路由守卫标记，不覆盖已轮换的凭据
+      await page
+        .context()
+        .addCookies([{ name: "multiple-tabs", value: "true", url: FRONT_URL }]);
+    }
     await page.goto("/");
     const shell = page.locator("#header-translation");
     const loginForm = page.getByPlaceholder("账号");
@@ -255,12 +286,31 @@ export async function loginWithForm(page: Page, creds: Credentials = ADMIN) {
     if (ready) break;
     await page.reload();
   }
-  await accountInput.fill(creds.username);
-  await page.getByPlaceholder("密码").fill(creds.password);
-  await page.getByRole("button", { name: "登录", exact: true }).click();
+  const passwordInput = page.getByPlaceholder("密码");
+  const submitButton = page.getByRole("button", { name: "登录", exact: true });
+
+  const fillAndSubmit = async () => {
+    await accountInput.fill(creds.username);
+    await passwordInput.fill(creds.password);
+    await submitButton.click();
+  };
+
+  await fillAndSubmit();
   // hash 路由：登录成功后离开 #/login。上限给足 30s：并行分片（e2e-parallel）
-  // 高负载下登录 POST + 路由拉取可能超过 15s（auto-retry 断言的上界，非盲等）
-  await expect(page).not.toHaveURL(/#\/login/, { timeout: 30_000 });
+  // 高负载下登录 POST + 路由拉取可能超过 15s（auto-retry 断言的上界，非盲等）。
+  //
+  // 登录页可能在「填表」与「提交」之间被整页重载（站点配置/路由快照版本校验、
+  // 并行高负载下的慢请求），表现为输入被清空、提交后只剩「请输入账号/密码」。
+  // 检测到表单校验错误就重新填表提交；真实口令错误会再次失败并由最终断言暴露。
+  await expect(async () => {
+    const formReset = await page
+      .locator(".el-form-item__error")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (formReset) await fillAndSubmit();
+    await expect(page).not.toHaveURL(/#\/login/, { timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
   await healSharedLocale(page);
 }
 
@@ -326,14 +376,24 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
   const link = page.locator(`a[href="#${path}"]`).first();
   const dirTitle = (dir: string) =>
     page.locator(".el-sub-menu__title", { hasText: dir }).first();
+  /** 标题所属的 el-sub-menu 根节点（展开态 class 挂在它上面） */
+  const dirItem = (title: Locator) =>
+    title.locator("xpath=ancestor::li[contains(@class,'el-sub-menu')][1]");
+  const isOpened = async (title: Locator) =>
+    (
+      await dirItem(title)
+        .getAttribute("class")
+        .catch(() => "")
+    )?.includes("is-opened") ?? false;
+
   /**
-   * 逐级展开目录，并等待每级真正展开后再进下一级：避免链路后半段元素未稳定/
-   * 被遮挡导致 webkit 下点击偶发失败（intercepts pointer events）。
+   * 逐级展开目录，并等待每级真正展开后再进下一级。
    *
-   * el-menu **不暴露展开状态属性**（`aria-expanded` 读到的一直是 null，据此判断会
-   * 恒定走「未展开」分支），但折叠时子级元素不可见（`isVisible()` 为 false），
-   * 故统一以「下一级标题（最后一级用目标链接）已可见」作为本级已展开的判据（web-first）：
-   * 既替代了固定 300ms 延时，也保证重复调用幂等（已展开则跳过点击，不会误折叠）。
+   * 展开态必须看父级 li 的 `is-opened`，不能用「子级可见」判断：手风琴切换时
+   * `is-opened` 立即翻转，但子级仍在折叠动画中保持可见；此时若判定「已展开」
+   * 而跳过点击，随后的链接点击会落在正在消失的节点上（全量并行 webkit 实测：
+   * click 报 element is not visible / 被相邻菜单项拦截）。`aria-expanded` 不可用
+   * （el-menu 读到的一直是 null）。
    */
   const openDirs = async () => {
     for (let i = 0; i < dirs.length; i++) {
@@ -344,38 +404,51 @@ export async function openMenuPath(page: Page, dirs: string[], path: string) {
         .waitFor({ state: "visible", timeout: 3_000 })
         .catch(() => undefined);
       if (!(await title.isVisible().catch(() => false))) continue;
+      if (!(await isOpened(title))) {
+        // 动画/重渲染期间点击可能落空，外层重试会再次展开
+        await title.click({ timeout: 8_000 }).catch(() => undefined);
+      }
+      // 等本级展开动画结束（下一级标题或目标链接可见）再进入下一级
       const next = i + 1 < dirs.length ? dirTitle(dirs[i + 1]) : link;
-      if (await next.isVisible().catch(() => false)) continue;
-      await title.click({ timeout: 8_000 });
+      await next
+        .waitFor({ state: "visible", timeout: 5_000 })
+        .catch(() => undefined);
     }
   };
-  await openDirs();
-  await link.scrollIntoViewIfNeeded().catch(() => undefined);
-  // 目标链接最终仍不可见（某级展开被遮挡失败）时，整段重开一次
-  for (let i = 0; i < 3 && !(await link.isVisible().catch(() => false)); i++) {
-    // 等目标链接出现（web-first）后再重开目录，替代固定 300ms 延时；超时进入下一轮
-    await link
-      .waitFor({ state: "visible", timeout: 2_000 })
-      .catch(() => undefined);
-    await openDirs();
-    await link.scrollIntoViewIfNeeded().catch(() => undefined);
-  }
+
   // 点击后必须确认路由真的切走了：偶发情况下点击落在菜单重渲染前的旧节点上
   // （登录后权限/菜单数据仍在异步刷新），hash 不变、页面停在 welcome，
-  // 后续 `expect(table)` 才报「element(s) not found」——历史上被当成时序 flaky
+  // 后续 `expect(table)` 才报「element(s) not found」——历史上被当成时序 flaky。
+  //
+  // 顶层单页路由由后端 format_menu_data 套 `/default` 前缀（href 是
+  // `#/default/chat/index`），但子路由是绝对路径 `/chat/index`，Vue Router 落地后
+  // hash 不含 `/default`——只按传入 path 匹配会把「已到达」误判为失败。
+  const routePath = path.replace(/^\/default(?=\/)/, "");
+  const reached = () =>
+    page.url().includes(path) || page.url().includes(routePath);
   const arrived = () =>
+    reached() ||
     page
-      .waitForURL(url => url.hash.includes(path), { timeout: 5_000 })
+      .waitForURL(
+        url => url.hash.includes(path) || url.hash.includes(routePath),
+        { timeout: 5_000 }
+      )
       .then(() => true)
       .catch(() => false);
-  await link.click({ timeout: 10_000 });
-  if (!(await arrived())) {
-    // arrived() 内部已等待 5s，登录后的菜单异步刷新必然已结束，直接重开目录补点一次；
-    // 不再插入固定延时（web-first：以 arrived() 的 waitForURL 重试为准）
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (reached()) return;
     await openDirs();
-    await link.click({ timeout: 10_000 }).catch(() => undefined);
-    await arrived();
+    await link.scrollIntoViewIfNeeded().catch(() => undefined);
+    const clicked = await link
+      .click({ timeout: 8_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (clicked && (await arrived())) return;
+    // 点击落空或路由未切换：重开目录再点一次（点击成功但路由慢时也复用该重试）
   }
+  if (reached()) return;
+  throw new Error(`openMenuPath 无法打开菜单：${dirs.join(" / ")} → ${path}`);
 }
 
 /**

@@ -155,10 +155,29 @@ test("聊天室：私聊实时送达、未读红点与已读清零", async ({ pa
     await pageB.locator('[data-testid="chat-room-public"]').click();
 
     // A 侧刷新联系人（对端刚登录，会话才可见）→ 点联系人开通私聊
+    const contactsLoaded = page.waitForResponse(
+      response =>
+        response.url().includes("/api/chat/contacts") &&
+        response.request().method() === "GET" &&
+        response.ok()
+    );
     await page.getByRole("button", { name: "刷新" }).first().click();
+    await contactsLoaded;
     const contact = page.locator('[data-testid="chat-contact-e2e_approver"]');
     await contact.waitFor({ state: "visible", timeout: 20_000 });
+    // 显式等开通响应：API 失败时给出业务码，而不是只报「会话行不出现」
+    const opened = page.waitForResponse(
+      response =>
+        response.url().includes("/api/chat/room/open-private") &&
+        response.request().method() === "POST"
+    );
     await contact.click();
+    const openedResponse = await opened;
+    const openedBody = await openedResponse.json().catch(() => ({}));
+    expect(
+      openedBody.code,
+      `open-private 响应：${openedResponse.status()} ${JSON.stringify(openedBody)}`
+    ).toBe(1000);
     await expect(page.locator('[data-testid="chat-room-private"]')).toBeVisible(
       {
         timeout: 15_000

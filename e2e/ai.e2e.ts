@@ -174,7 +174,10 @@ test("文档问答：流式回答 + 思考过程展示（指向桩 LLM）", asyn
     name: `E2E-问答档案-${Date.now()}`,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
-    model: "stub-model"
+    model: "stub-model",
+    // 并行分片下本机回环偶发瞬时连接失败：档案层重试吸收，避免把环境抖动
+    // 记成「思考面板不出现」（服务端日志为 All connection attempts failed）
+    max_retries: 2
   });
   expect(created.code).toBe(1000);
   const activated = await jsonRequest(
@@ -230,7 +233,8 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
     name: `E2E-动作档案-${Date.now()}`,
     base_url: STUB_LLM_URL,
     api_key: "sk-e2e-stub",
-    model: "stub-model"
+    model: "stub-model",
+    max_retries: 2
   });
   expect(created.code).toBe(1000);
   const activated = await jsonRequest(

@@ -4,6 +4,7 @@ import {
   APPROVER,
   BACKEND_URL,
   FRONT_URL,
+  PANEL_ACTION_TIMEOUT,
   PLAIN_USER,
   getAccessToken,
   login,
@@ -121,10 +122,12 @@ test("流程审批：通过初审后退回 → 待办重开 + 轨迹留痕", asy
   await expect(row).toBeVisible({ timeout: 20_000 });
   await row.getByRole("button", { name: "通过" }).first().click();
   const approveDialog = approverPage.locator(".el-dialog:visible").first();
-  await approveDialog
-    .getByRole("button", { name: /保存|确定/ })
-    .first()
-    .click();
+  await expect(async () => {
+    await approveDialog
+      .getByRole("button", { name: /保存|确定/ })
+      .first()
+      .click({ timeout: 5_000 });
+  }).toPass({ timeout: PANEL_ACTION_TIMEOUT });
   await waitNotificationsGone(approverPage);
   await expect(row).toBeVisible({ timeout: 20_000 });
 
@@ -205,10 +208,13 @@ test("流程审批：会签加签后减签 → 剩余候选通过即流转", asy
   await expect(dialog).toContainText(PLAIN_USER.nickname, {
     timeout: 10_000
   });
-  await dialog
-    .getByRole("button", { name: /保存|确定/ })
-    .first()
-    .click();
+  // 弹窗内容异步渲染，按钮可能在点击瞬间被重建（detached）：在超时窗口内重试点击
+  await expect(async () => {
+    await dialog
+      .getByRole("button", { name: /保存|确定/ })
+      .first()
+      .click({ timeout: 5_000 });
+  }).toPass({ timeout: PANEL_ACTION_TIMEOUT });
   await expect(approverPage.locator(".el-message").first()).toContainText(
     /已移除加签审批人/,
     { timeout: 15_000 }
@@ -218,10 +224,12 @@ test("流程审批：会签加签后减签 → 剩余候选通过即流转", asy
   await waitNotificationsGone(approverPage);
   await row.getByRole("button", { name: "通过" }).first().click();
   const approveDialog = approverPage.locator(".el-dialog:visible").first();
-  await approveDialog
-    .getByRole("button", { name: /保存|确定/ })
-    .first()
-    .click();
+  await expect(async () => {
+    await approveDialog
+      .getByRole("button", { name: /保存|确定/ })
+      .first()
+      .click({ timeout: 5_000 });
+  }).toPass({ timeout: PANEL_ACTION_TIMEOUT });
   await waitNotificationsGone(approverPage);
   await expect(
     approverPage.locator(".el-table__row", { hasText: title })

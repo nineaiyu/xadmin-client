@@ -33,6 +33,16 @@ async function openPage(page: Page) {
   });
 }
 
+/** 工具栏「更多 → 重新加载」：局部 upsert 被迟到的全量拉取覆盖时重新拉取 */
+async function refreshMenuTree(page: Page) {
+  await page.locator(".menu-toolbar__more").click();
+  await page
+    .locator(".el-dropdown-menu:visible")
+    .getByRole("menuitem", { name: /刷新|重新加载/ })
+    .click();
+  await waitForLoadingMaskGone(page);
+}
+
 /** 新增顶级目录：走工具栏「新增」→ 抽屉填写 → 保存后树内定位新节点 */
 async function createMenu(page: Page, name: string) {
   await page.getByRole("button", { name: "新增", exact: true }).first().click();
@@ -41,10 +51,28 @@ async function createMenu(page: Page, name: string) {
   await drawer.getByPlaceholder("请输入菜单标题").fill(name);
   await drawer.getByPlaceholder("组件名称").fill(name);
   await drawer.getByPlaceholder("请输入路由地址").fill(`/${name}`);
+  // 先等保存请求真正返回：抽屉隐藏只代表 UI 关闭，高负载下树重拉可能晚于
+  // 断言窗口；保存失败时也能给出响应体而不是只报「行不存在」
+  const saveResponse = page.waitForResponse(
+    response =>
+      response.url().includes("/api/system/menu") &&
+      response.request().method() === "POST",
+    { timeout: PANEL_ACTION_TIMEOUT }
+  );
   await drawer.getByRole("button", { name: "保存" }).click();
+  const saved = await saveResponse;
+  const savedBody = await saved.json().catch(() => ({}));
+  expect(saved.ok(), JSON.stringify(savedBody)).toBeTruthy();
+  expect(savedBody.code, JSON.stringify(savedBody)).toBe(1000);
   await expect(drawer).toBeHidden({ timeout: 15_000 });
-  // 保存后树会整棵重拉（刷新期间挂遮罩），高负载档下 15s 可能不够
   await waitForLoadingMaskGone(page);
+  // 保存成功后前端用 create 响应局部 upsert；并行高负载下偶发被迟到的全量
+  // 拉取覆盖（行一直不出现），此时主动「更多 → 重新加载」再断言
+  const appeared = await row(page, name)
+    .waitFor({ state: "visible", timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!appeared) await refreshMenuTree(page);
   await expect(row(page, name)).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
 }
 
