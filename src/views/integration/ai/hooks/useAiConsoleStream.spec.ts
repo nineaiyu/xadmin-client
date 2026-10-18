@@ -29,6 +29,7 @@ vi.mock("@/api/ai/ai", () => ({
 }));
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 
+import { message } from "@/utils/message";
 import { useAiConsoleStream } from "./useAiConsoleStream";
 
 function build() {
@@ -109,5 +110,17 @@ describe("useAiConsoleStream 手动中断保留已收增量", () => {
     const store = build();
     store.abortStream();
     expect(store.upsertMessage).not.toHaveBeenCalled();
+  });
+
+  it("流正常结束但未收到 done/error 时提示失败（服务端异常断流）", async () => {
+    vi.mocked(message).mockClear();
+    const store = build();
+    store.send("断流问题");
+
+    mocks.settle();
+    await flushPromises();
+
+    expect(message).toHaveBeenCalledWith("ai.askFailed", { type: "warning" });
+    expect(store.streaming.value).toBeNull();
   });
 });

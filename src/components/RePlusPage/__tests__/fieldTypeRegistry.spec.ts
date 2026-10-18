@@ -40,7 +40,7 @@ const vocabulary = new Set(
 );
 
 /** 词表外兼容项白名单（历史筛选形态登记，仅高级筛选使用；勿新增） */
-const EXTRA_ALLOWED = new Set(["url", "password", "decimal", "switch", "time"]);
+const EXTRA_ALLOWED = new Set(["url", "password", "decimal", "switch"]);
 
 /** 迁移前 advancedFilter.ts KIND_BY_INPUT_TYPE 的冻结快照（行为等价回归基准） */
 const LEGACY_KIND_BY_INPUT_TYPE: Record<string, LookupFieldKind> = {
@@ -106,6 +106,26 @@ describe("字段类型能力清单 ⇄ 契约词表 对账", () => {
     for (const [type, kind] of Object.entries(LEGACY_KIND_BY_INPUT_TYPE)) {
       expect(filterKindOf(type), type).toBe(kind);
     }
+  });
+
+  it("time：表单通道为 time-picker 且提交格式与后端同口径", () => {
+    const fieldProps: Record<string, unknown> = {};
+    const column: Record<string, unknown> = {
+      key: "start_time",
+      label: "开始时间",
+      prop: "start_time",
+      input_type: "time",
+      fieldProps
+    };
+    pickRenderers("form").time(column as never, {
+      column: column as never,
+      t: (key: string) => key,
+      te: () => false,
+      localeName: "zh",
+      apiSearchComponents: {}
+    });
+    expect(column.valueType).toBe("time-picker");
+    expect(fieldProps.valueFormat).toBe("HH:mm:ss");
   });
 
   it("迁移前未收录筛选形态的类型保持未收录（回落自由文本）", () => {

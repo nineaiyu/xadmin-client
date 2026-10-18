@@ -8,6 +8,7 @@ import {
   type RowFilterRule
 } from "@/api/identity/open";
 import { message } from "@/utils/message";
+import { normalizeGrants } from "../utils/grants";
 
 /**
  * 应用资源授权编辑器：模型 × 动作 × 字段 × 行 四级收敛。
@@ -124,18 +125,6 @@ const removeRowRule = (grant: ApiApplicationGrant, index: number) => {
   grant.row_filter = next;
 };
 
-/** `in` 匹配的值以逗号分隔数组提交，其余原样字符串 */
-const normalizeRuleValue = (rule: RowFilterRule) => {
-  const raw = String(rule.value ?? "").trim();
-  if (rule.match === "in") {
-    return raw
-      .split(/[,，]/)
-      .map(item => item.trim())
-      .filter(Boolean);
-  }
-  return raw;
-};
-
 const ruleValueText = (rule: RowFilterRule) =>
   Array.isArray(rule.value) ? rule.value.join(",") : String(rule.value ?? "");
 
@@ -143,15 +132,8 @@ const onRuleValueChange = (rule: RowFilterRule, text: string) => {
   rule.value = text;
 };
 
-/** 提交前把规则值归一（页面 getPayload 调用） */
-const normalize = () =>
-  grants.value.map(grant => ({
-    ...grant,
-    row_filter: (grant.row_filter ?? []).map(rule => ({
-      ...rule,
-      value: normalizeRuleValue(rule)
-    }))
-  }));
+/** 提交前把规则值归一（页面提交载荷时调用，实现见 utils/grants） */
+const normalize = () => normalizeGrants(grants.value);
 
 defineExpose({ normalize });
 </script>

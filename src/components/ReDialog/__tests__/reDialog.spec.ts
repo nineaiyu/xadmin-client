@@ -223,6 +223,11 @@ describe("ReDialog 弹层容器", () => {
       document.querySelectorAll('[data-testid="dialog-fullscreen-toggle"]')
     ).toHaveLength(0);
     expect(document.querySelector(".spec-custom-header")).not.toBeNull();
+    // 渲染函数不得随 v-bind 落到 DOM（历史缺陷：headerrenderer="() => h(...)"）
+    const dialogNode = document.querySelector(".el-dialog") as HTMLElement;
+    expect(dialogNode.hasAttribute("headerrenderer")).toBe(false);
+    expect(dialogNode.hasAttribute("contentrenderer")).toBe(false);
+    expect(dialogNode.hasAttribute("beforesure")).toBe(false);
   });
 
   it("容器：自定义 footerButtons 覆盖默认页脚；hideFooter 时不渲染页脚", async () => {

@@ -60,7 +60,8 @@ describe("AiMessageBlock AI 回复块", () => {
     expect(thinking.exists()).toBe(true);
     expect(thinking.attributes("data-streaming")).toBe("false");
     expect(wrapper.find(".ai-message__text").text()).toBe("答案");
-    expect(wrapper.find(".ai-message__cursor").exists()).toBe(true);
+    // 流式态由 AiMarkdown 的末尾光标承接（不再由 AiMessageBlock 插 span）
+    expect(wrapper.find(".ai-md--streaming").exists()).toBe(true);
   });
 
   it("无思考且等待首字：展示三点等待动画", () => {

@@ -1,4 +1,4 @@
-import { reactive, type Ref } from "vue";
+import { reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
@@ -9,38 +9,26 @@ import {
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { useSubscriptionEvents } from "./useSubscriptionEvents";
-import { useSubscriptionDialog } from "./useSubscriptionDialog";
+import { useSubscriptionFormOptions } from "./useSubscriptionFormOptions";
 import { useSubscriptionColumns } from "./useSubscriptionColumns";
 import { useSubscriptionButtons } from "./useSubscriptionButtons";
 
 /**
  * Webhook 订阅：CRUD + 测试 + 行内启停。
  *
- * - 新建/编辑关闭框架默认表单按钮，统一走 ReDialog + SubscriptionForm（事件多选语义）；
- * - is_active 自定义开关渲染：默认编辑按钮关闭（auth.partialUpdate=false）会连带
- *   禁用框架 boolean 列开关，故在列渲染层接管，失败回滚行内值；
+ * - 新建/编辑走框架元数据表单，页面在 `useSubscriptionFormOptions` 里把
+ *   `events`（JSONField）换成事件目录多选、`secret` 换成密码框并给出新建必填规则；
+ * - is_active 行内开关由页面接管渲染与乐观回滚（列渲染层覆盖框架默认单元格）；
  * - 删除保留框架默认入口（带二次确认）。
- *
- * 职责拆分：
- * - useSubscriptionEvents   事件目录拉取与标签回落；
- * - useSubscriptionDialog   新建/编辑弹窗；
- * - useSubscriptionColumns  列渲染（含行内启停开关）；
- * - useSubscriptionButtons  工具栏与行操作按钮装配。
  */
-export function useWebhookSubscription(tableRef: Ref) {
+export function useWebhookSubscription() {
   const { t } = useI18n();
   const api = reactive(webhookSubscriptionApi);
   const auth = usePageAuth("WebhookSubscription");
-  auth.create = false;
-  auth.update = false;
-  auth.partialUpdate = false;
-  const canCreate = hasAuth("create:WebhookSubscription");
-  const canEdit = hasAuth("partialUpdate:WebhookSubscription");
   const canTest = hasAuth("test:WebhookSubscription");
 
-  const refresh = () => tableRef.value?.handleGetData();
-
   const { events, eventLabel } = useSubscriptionEvents({ t });
+  const { addOrEditOptions } = useSubscriptionFormOptions({ t, events });
 
   /** 行内启停：乐观更新，失败回滚（框架默认编辑按钮关闭后的等价能力） */
   const toggleActive = async (row: WebhookSubscriptionItem, value: boolean) => {
@@ -56,8 +44,6 @@ export function useWebhookSubscription(tableRef: Ref) {
     if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
-  const { openDialog } = useSubscriptionDialog({ t, refresh, events });
-
   const testSubscription = async (row: WebhookSubscriptionItem) => {
     // 异常归一为可读失败结果：测试触发失败（回调地址不通等）需给出可读原因
     const res = await webhookSubscriptionApi.test(row.pk).catch(normalizeError);
@@ -71,24 +57,22 @@ export function useWebhookSubscription(tableRef: Ref) {
   };
 
   const { listColumnsFormat } = useSubscriptionColumns({
-    canEdit,
+    canEdit: Boolean(auth.partialUpdate || auth.update),
     eventLabel,
     toggleActive
   });
 
-  const { operationButtonsProps, tableBarButtonsProps } =
-    useSubscriptionButtons({
-      t,
-      flags: { canCreate, canEdit, canTest },
-      testSubscription,
-      openDialog
-    });
+  const { operationButtonsProps } = useSubscriptionButtons({
+    t,
+    canTest,
+    testSubscription
+  });
 
   return {
     api,
     auth,
+    addOrEditOptions,
     listColumnsFormat,
-    operationButtonsProps,
-    tableBarButtonsProps
+    operationButtonsProps
   };
 }

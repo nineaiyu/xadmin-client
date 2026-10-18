@@ -1,40 +1,18 @@
 import { computed, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
+import type { AiConsoleFeature, AiConsoleMessage } from "@/api/ai/ai";
 import {
-  aiAssistantApi,
-  type AiConsoleFeature,
-  type AiConsoleMessage
-} from "@/api/ai/ai";
+  buildSettledHandlers,
+  FAILED_KEY,
+  runConsoleEntry
+} from "./aiConsoleStreamHandlers";
 import {
   buildPartialMessage,
-  buildStreamHandlers,
   notifyStreamError,
-  type StreamHandlers,
   type StreamState
 } from "./useAiConsoleFrames";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
-
-function runEntry(
-  kind: AiConsoleFeature,
-  text: string,
-  handlers: StreamHandlers,
-  signal: AbortSignal
-) {
-  if (kind === "nl") {
-    return aiAssistantApi.nlInterpretStream(text, handlers, signal);
-  }
-  if (kind === "action") {
-    return aiAssistantApi.actionInterpretStream(text, handlers, signal);
-  }
-  return aiAssistantApi.askStream(text, handlers, signal);
-}
-
-const FAILED_KEY: Record<AiConsoleFeature, string> = {
-  docs: "ai.askFailed",
-  nl: "ai.nlFailed",
-  action: "ai.actionFailed"
-};
 
 /**
  * AI 控制台流式发送域（自 useAiConsole 抽出）：同一时刻只允许一路流式生成；
@@ -67,23 +45,36 @@ export function useAiConsoleStream({
       : null
   );
   let streamAbort: AbortController | null = null;
+  /** 本次流是否收到终止帧（done/error）；EOF 未终结 = 服务端异常断流 */
+  let settled = false;
 
-  const handlers = buildStreamHandlers({
-    streaming,
-    atBottom,
-    scrollToBottom,
-    upsertMessage
-  });
+  const handlers = buildSettledHandlers(
+    { streaming, atBottom, scrollToBottom, upsertMessage },
+    () => {
+      settled = true;
+    }
+  );
 
   /** 单次流式请求：乐观上屏 → 帧分派 → 失败归一 → 收尾复位 */
   async function runStream(kind: AiConsoleFeature, text: string) {
     pushOptimistic(text);
     scrollToBottom();
     streaming.value = { feature: kind, content: "", reasoning: "" };
+    settled = false;
     streamAbort = new AbortController();
     const signal = streamAbort.signal;
     try {
-      await runEntry(kind, text, handlers, signal);
+      await runConsoleEntry(kind, text, handlers, signal);
+      if (!settled && !signal.aborted) {
+        // 响应正常结束却没有 done/error：服务端流内异常未转 error 帧（历史 KeyError
+        // 场景即如此），必须给出可见失败提示，避免界面静默停在「思考中」
+        notifyStreamError(
+          new Error("AI stream ended unexpectedly"),
+          t(FAILED_KEY[kind]),
+          text,
+          removeOptimistic
+        );
+      }
     } catch (error) {
       notifyStreamError(error, t(FAILED_KEY[kind]), text, removeOptimistic);
     } finally {

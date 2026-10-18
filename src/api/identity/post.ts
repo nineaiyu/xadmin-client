@@ -10,7 +10,8 @@ export interface PostItem {
   pk: string;
   name: string;
   code: string;
-  dept: number | null;
+  /** 关联字段输出：pk + 展示 label（部门名）；未设置部门为 null */
+  dept: { pk: string; name?: string; label?: string } | null;
   dept_name: string;
   rank: number;
   is_active: boolean;

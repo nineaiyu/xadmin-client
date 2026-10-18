@@ -14,7 +14,7 @@ const props = defineProps<{ mode: "subscription" | "delivery" }>();
 const tableRef = ref();
 const config =
   props.mode === "subscription"
-    ? useWebhookSubscription(tableRef)
+    ? useWebhookSubscription()
     : useWebhookDelivery(tableRef);
 
 // 这组 props 在 hook 里以 shallowRef 承载，必须提到 setup 顶层再下传给模板：
@@ -23,9 +23,9 @@ const config =
 // 按钮与列宽设置会静默失效
 const { api, auth, listColumnsFormat, operationButtonsProps } = config;
 
-// 工具栏按钮仅订阅页装配（新建入口）；投递页只读 + 行内重试，无工具栏
-const tableBarButtonsProps =
-  "tableBarButtonsProps" in config ? config.tableBarButtonsProps : undefined;
+// 表单定制仅订阅页装配（事件多选 / 密钥必填规则）；投递页为只读审计无表单
+const addOrEditOptions =
+  "addOrEditOptions" in config ? config.addOrEditOptions : undefined;
 </script>
 
 <template>
@@ -35,8 +35,8 @@ const tableBarButtonsProps =
     :auth="auth"
     locale-name="webhook"
     :selection="false"
+    :add-or-edit-options="addOrEditOptions"
     :list-columns-format="listColumnsFormat"
     :operation-buttons-props="operationButtonsProps"
-    :table-bar-buttons-props="tableBarButtonsProps"
   />
 </template>

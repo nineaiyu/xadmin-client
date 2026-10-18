@@ -8,6 +8,7 @@ import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
 import { getLayoutScrollElement } from "@/utils/dom";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { dialogDomProps } from "./attrs";
 
 defineOptions({
   name: "ReDialog"
@@ -183,7 +184,7 @@ function contentProps(options: DialogOptions) {
   <el-dialog
     v-for="(options, index) in dialogStore"
     :key="getDialogUid(options) ?? index"
-    v-bind="options"
+    v-bind="dialogDomProps(options)"
     v-model="options.visible"
     class="pure-dialog"
     :fullscreen="isFullscreen(options, index)"

@@ -10,20 +10,20 @@ const tableRef = ref();
 const {
   api,
   auth,
+  addOrEditOptions,
   operationButtonsProps,
-  tableBarButtonsProps,
   listColumnsFormat
-} = useApprovalRule(tableRef);
+} = useApprovalRule();
 </script>
 <template>
   <RePlusPage
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :addOrEditOptions="addOrEditOptions"
     locale-name="approvalRule"
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :tableBarButtonsProps="tableBarButtonsProps"
     :allowAsyncExport="false"
   />
 </template>

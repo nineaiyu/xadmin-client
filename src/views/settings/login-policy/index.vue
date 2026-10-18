@@ -8,8 +8,7 @@ defineOptions({
 
 const tableRef = ref();
 
-const { api, auth, tableBarButtonsProps, operationButtonsProps } =
-  useLoginPolicy(tableRef);
+const { api, auth, addOrEditOptions, tableBarButtonsProps } = useLoginPolicy();
 </script>
 
 <template>
@@ -20,8 +19,8 @@ const { api, auth, tableBarButtonsProps, operationButtonsProps } =
       :api="api"
       :auth="auth"
       locale-name="systemLoginPolicy"
+      :addOrEditOptions="addOrEditOptions"
       :tableBarButtonsProps="tableBarButtonsProps"
-      :operationButtonsProps="operationButtonsProps"
     />
   </div>
 </template>

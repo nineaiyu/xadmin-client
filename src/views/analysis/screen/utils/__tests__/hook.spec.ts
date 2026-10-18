@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { nextTick, ref } from "vue";
+import { nextTick } from "vue";
 import type { RecordType } from "plus-pro-components";
 import type { ButtonsCallBackParams } from "@/components/RePlusPage/src/components/ButtonOperation/src/types";
 
@@ -44,9 +44,6 @@ vi.mock("@/components/RePlusPage", () => ({
   formatPageColumns: (cols: unknown) => cols
 }));
 
-vi.mock("../components/ScreenForm.vue", () => ({
-  default: { name: "ScreenForm", render: () => null }
-}));
 vi.mock("../components/ScreenControlForm.vue", () => ({
   default: { name: "ScreenControlForm", render: () => null }
 }));
@@ -60,7 +57,7 @@ async function setup() {
   const bag: Record<string, unknown> = {};
   const host = defineComponent({
     setup(_, { expose }) {
-      const api = useScreen(ref());
+      const api = useScreen();
       bag.api = api;
       expose(api);
       return () => h("div");

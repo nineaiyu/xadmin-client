@@ -142,15 +142,27 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
 
   try {
     await page.goto(`${FRONT_URL}/#/integration/ai/mcp`);
-    await page.getByRole("button", { name: "新建服务器" }).click();
-    const dialog = page.locator(".el-dialog").last();
-    await expect(dialog.getByTestId("mcp-form-name")).toBeVisible({
-      timeout: 10_000
-    });
-    // ElInput 把 data-testid 透传到内部 input 元素本身（inheritAttrs:false）：直接 fill
-    await dialog.getByTestId("mcp-form-name").fill(name);
-    await dialog.getByTestId("mcp-form-url").fill(stub.url);
-    await dialog.getByTestId("mcp-form-allowed").fill("echo");
+    await page.getByRole("button", { name: "新增", exact: true }).click();
+    const dialog = page.locator(".el-dialog:visible").first();
+    const formItem = (label: string) =>
+      dialog.locator(".el-form-item").filter({ hasText: label }).first();
+    const nameInput = formItem("服务器名称").locator("input");
+    await expect(nameInput).toBeVisible({ timeout: 10_000 });
+    // 字段形态：pk 由服务端生成（不得出现可编辑的 ID）、令牌为密码框、
+    // 允许工具为逗号文本（不是 JSON 编辑器）
+    await expect(
+      dialog.locator(".el-form-item__label", { hasText: /^ID:?$/ })
+    ).toHaveCount(0);
+    await expect(formItem("鉴权令牌").locator("input")).toHaveAttribute(
+      "type",
+      "password"
+    );
+    await expect(formItem("允许调用的工具").locator(".jsoneditor")).toHaveCount(
+      0
+    );
+    await nameInput.fill(name);
+    await formItem("服务地址").locator("input").fill(stub.url);
+    await formItem("允许调用的工具").locator("input").fill("echo");
     await dialog.getByRole("button", { name: "保存" }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10_000 });
 

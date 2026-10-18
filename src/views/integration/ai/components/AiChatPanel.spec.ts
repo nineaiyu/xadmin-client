@@ -109,6 +109,16 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     );
   });
 
+  it("列表壳滚动元素就绪时向上冒泡 scroller（发送后自动到底依赖该元素）", () => {
+    const wrapper = mountPanel();
+
+    const emitted = wrapper.emitted("scroller");
+    expect(emitted).toHaveLength(1);
+    expect(emitted![0][0]).toBe(
+      wrapper.find('[data-testid="ai-messages"]').element
+    );
+  });
+
   it("流式进行中：发送按钮切换为停止按钮，点击 emit stop", async () => {
     const wrapper = mountPanel({
       streaming: true,

@@ -227,6 +227,7 @@ loginPolicy:
   targetRole: Roles
   targetUser: Users
   targetValue: Target Value
+  targetValuePlaceholder: Ignored for "All Users"; role codes or usernames separated by commas
   rolePlaceholder: Role codes separated by commas
   userPlaceholder: Usernames separated by commas
   weekdays: Weekdays
@@ -919,6 +920,7 @@ post:
   codeRequired: Post code is required
   dept: Department
   deptPlaceholder: Leave empty for an organization-wide post
+  deptNoPermission: No department list permission, selection unavailable
   rank: Rank
   isActive: Active
   description: Remark

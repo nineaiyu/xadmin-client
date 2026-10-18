@@ -10,8 +10,8 @@ const tableRef = ref();
 const {
   api,
   auth,
+  addOrEditOptions,
   listColumnsFormat,
-  tableBarButtonsProps,
   operationButtonsProps
 } = useMcpServers(tableRef);
 </script>
@@ -21,8 +21,8 @@ const {
     :api="api"
     :auth="auth"
     locale-name="mcp"
+    :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :tableBarButtonsProps="tableBarButtonsProps"
   />
 </template>

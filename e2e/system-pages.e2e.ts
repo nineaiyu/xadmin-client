@@ -195,12 +195,21 @@ test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async
   const table = page.locator(".el-table");
   await expect(table).toBeVisible({ timeout: 20_000 });
 
-  // 自定义按钮组（关闭了框架默认 create）：工具栏「新建岗位」
-  await page.getByRole("button", { name: "新建岗位" }).first().click();
+  // 元数据表单：工具栏「新增」由框架按 create 权限点渲染
+  await page.getByRole("button", { name: "新增", exact: true }).first().click();
   const dialog = page.locator(".el-dialog:visible").first();
   await expect(dialog).toBeVisible();
-  await dialog.locator('[data-testid="post-name"]').fill(postName);
-  await dialog.locator('[data-testid="post-code"]').fill(`e2e_${Date.now()}`);
+  // 字段由元数据装配（label 取 post.* 词条）：按表单项定位输入框
+  await dialog
+    .locator(".el-form-item")
+    .filter({ hasText: "岗位名称" })
+    .locator("input")
+    .fill(postName);
+  await dialog
+    .locator(".el-form-item")
+    .filter({ hasText: "岗位编码" })
+    .locator("input")
+    .fill(`e2e_${Date.now()}`);
   await dialog.getByRole("button", { name: "保存" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 15_000 });
   await expect(table.getByText(postName).first()).toBeVisible({

@@ -1,5 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils";
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -21,14 +21,9 @@ vi.mock("@/api/task/webhook", () => ({
   }
 }));
 vi.mock("@/utils/message", () => ({ message: mocks.message }));
-vi.mock("@/components/ReDialog", () => ({ addDialog: vi.fn() }));
-vi.mock("@/components/ReDialog/size", () => ({ dialogSize: (v: string) => v }));
 vi.mock("@/components/RePlusPage", () => ({
   handleOperation: vi.fn(),
   formatPageColumns: (cols: unknown) => cols
-}));
-vi.mock("../../components/SubscriptionForm.vue", () => ({
-  default: { name: "SubscriptionForm", render: () => null }
 }));
 
 import { useWebhookSubscription } from "../hook";
@@ -37,8 +32,7 @@ import { useWebhookSubscription } from "../hook";
 function mountHook() {
   let store: ReturnType<typeof useWebhookSubscription> | null = null;
   const Host = defineComponent(() => {
-    const tableRef = ref();
-    store = useWebhookSubscription(tableRef);
+    store = useWebhookSubscription();
     return () => null;
   });
   mount(Host);

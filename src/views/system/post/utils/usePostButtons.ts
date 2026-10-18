@@ -7,39 +7,34 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 岗位页按钮显隐开关（装配期由 hook 计算的权限位收敛） */
 export type PostButtonFlags = {
-  canCreate: boolean;
-  canEdit: boolean;
   canAssign: boolean;
   canViewMembers: boolean;
   canPreview: boolean;
 };
 
-/** 岗位页工具栏（新建）与行操作（编辑/成员/预览）按钮装配（自 hook.tsx 抽出） */
+/**
+ * 岗位页行操作按钮装配：只保留页面专属的「成员 / 预览」。
+ *
+ * 编辑与新增由框架元数据表单提供（`auth.create/partialUpdate` 未关闭），
+ * 删除保留框架默认入口；这里不再重复声明编辑按钮。
+ */
 export function usePostButtons({
   t,
   flags,
-  openDialog,
   openMembers,
   openPreview
 }: {
   t: TFunction;
   flags: PostButtonFlags;
-  openDialog: (row: PostItem | null) => void;
   openMembers: (row: PostItem, readonly?: boolean) => void;
   openPreview: (row: PostItem) => void;
 }) {
   const operationButtonsProps = shallowRef<OperationProps>({
-    showNumber: 4,
-    width: 220,
+    // 默认按钮（编辑 / 删除 / 详情）+ 成员 / 预览 同行排布：默认按钮占用
+    // -30 ~ -10，自定义按钮从 8 起排，showNumber 覆盖全部以免折进「更多」
+    showNumber: 6,
+    width: 300,
     buttons: [
-      {
-        text: t("post.edit"),
-        code: "edit",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openDialog(row as PostItem),
-        show: flags.canEdit,
-        index: 10
-      },
       {
         text: t("post.members"),
         code: "members",
@@ -59,17 +54,5 @@ export function usePostButtons({
     ]
   });
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("post.create"),
-        code: "create",
-        props: { type: "primary" },
-        onClick: () => openDialog(null),
-        show: flags.canCreate
-      }
-    ]
-  });
-
-  return { tableBarButtonsProps, operationButtonsProps };
+  return { operationButtonsProps };
 }

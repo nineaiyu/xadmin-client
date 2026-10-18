@@ -104,6 +104,9 @@ importers:
       lodash-es:
         specifier: ^4.18.1
         version: 4.18.1
+      markdown-it:
+        specifier: ^15.0.3
+        version: 15.0.3
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
@@ -2112,6 +2115,9 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  argparse@3.0.3:
+    resolution: {integrity: sha512-Sn98ftV3KfsO8xfLPHG6oT8y+b0yvbrLgZjgPDXsharNY15tTAjqIsIju4S32nl6/iEUNNE4v+yL2Zhm8ooP3w==}
+
   argue-cli@3.2.0:
     resolution: {integrity: sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==}
     engines: {node: '>=22'}
@@ -3409,6 +3415,9 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
+  linkify-it@6.1.0:
+    resolution: {integrity: sha512-wJ/TwpSDTLepCrQoYWYIExIKg5Zchex2Nn5yk2mFnB+6PtdkHtyLx742md9csRjjOnGkKIS/RrbY7l8D6gT9Vw==}
+
   lint-staged@17.5.1:
     resolution: {integrity: sha512-7EDuco1xnBMeVpvAbeMq1U5KXwJGLmY8q6l+Ye78r36C4mPc+Vg1Z2SK8gHyRTyvPro90A0q5/FAZ+Au23d6QQ==}
     engines: {node: '>=22.22.1'}
@@ -3493,6 +3502,10 @@ packages:
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
+  markdown-it@15.0.3:
+    resolution: {integrity: sha512-+Az7Ojz3iRGu8KYMvJ6xVhvrxP3eE+vEtJX75Ow88XBpcQNV/0lGX5ZynIIBftREo4DC2jsveAMDaeltmm8QvQ==}
+    hasBin: true
+
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
@@ -3511,6 +3524,9 @@ packages:
 
   mdn-data@2.34.0:
     resolution: {integrity: sha512-OgIlLv0NxJKVW4GTSAoEgpRGd4F2XCqGinK0MsMlBCCS/Zcm2/LsbercNWNA7PeMMcjl75NnI97eqyo7zkdxWA==}
+
+  mdurl@2.1.0:
+    resolution: {integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==}
 
   memoize-one@6.0.0:
     resolution: {integrity: sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw==}
@@ -3994,6 +4010,10 @@ packages:
   proxy-from-env@2.1.0:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
+
+  punycode.js@2.3.1:
+    resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
+    engines: {node: '>=6'}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -4496,6 +4516,9 @@ packages:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  uc.micro@3.0.0:
+    resolution: {integrity: sha512-U3PppEkleoTnIfi8BozMx3yju3qc/L6SwqWo2Sw+54PX+PX0q9I+r1Um5HCmqD7n9VDX5/v3vQH/AjA6deDdtw==}
 
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
@@ -6734,6 +6757,8 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  argparse@3.0.3: {}
+
   argue-cli@3.2.0: {}
 
   aria-query@5.3.1: {}
@@ -8040,6 +8065,10 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
+  linkify-it@6.1.0:
+    dependencies:
+      uc.micro: 3.0.0
+
   lint-staged@17.5.1:
     dependencies:
       picomatch: 4.0.7
@@ -8122,6 +8151,15 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.2
 
+  markdown-it@15.0.3:
+    dependencies:
+      argparse: 3.0.3
+      entities: 8.1.0
+      linkify-it: 6.1.0
+      mdurl: 2.1.0
+      punycode.js: 2.3.1
+      uc.micro: 3.0.0
+
   math-intrinsics@1.1.0: {}
 
   mathml-tag-names@4.0.0: {}
@@ -8133,6 +8171,8 @@ snapshots:
   mdn-data@2.27.1: {}
 
   mdn-data@2.34.0: {}
+
+  mdurl@2.1.0: {}
 
   memoize-one@6.0.0: {}
 
@@ -8561,6 +8601,8 @@ snapshots:
   proto-list@1.2.4: {}
 
   proxy-from-env@2.1.0: {}
+
+  punycode.js@2.3.1: {}
 
   punycode@2.3.1: {}
 
@@ -9124,6 +9166,8 @@ snapshots:
       - supports-color
 
   typescript@6.0.3: {}
+
+  uc.micro@3.0.0: {}
 
   ufo@1.6.4: {}
 

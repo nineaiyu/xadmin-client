@@ -15,9 +15,9 @@ const tableRef = ref();
 const {
   api,
   auth,
+  addOrEditOptions,
   listColumnsFormat,
   operationButtonsProps,
-  tableBarButtonsProps,
   credentialDialog,
   credential,
   copyText,
@@ -49,9 +49,9 @@ const {
       :auth="auth"
       locale-name="apiApp"
       :selection="false"
+      :addOrEditOptions="addOrEditOptions"
       :listColumnsFormat="listColumnsFormat"
       :operationButtonsProps="operationButtonsProps"
-      :tableBarButtonsProps="tableBarButtonsProps"
     />
 
     <el-dialog

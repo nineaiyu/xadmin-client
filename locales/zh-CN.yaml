@@ -227,6 +227,7 @@ loginPolicy:
   targetRole: 指定角色
   targetUser: 指定用户
   targetValue: 对象值
+  targetValuePlaceholder: 目标对象为「全部用户」时忽略；角色编码或用户名（多个用逗号分隔）
   rolePlaceholder: 角色编码（多个用逗号分隔）
   userPlaceholder: 用户名（多个用逗号分隔）
   weekdays: 生效星期
@@ -919,6 +920,7 @@ post:
   codeRequired: 请填写岗位编码
   dept: 所属部门
   deptPlaceholder: 留空为组织通用岗
+  deptNoPermission: 无部门列表权限，暂不可选择
   rank: 排序
   isActive: 启用状态
   description: 备注

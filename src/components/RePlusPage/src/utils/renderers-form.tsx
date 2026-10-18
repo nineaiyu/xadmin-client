@@ -87,6 +87,13 @@ export const builtinFormRenderers: PlusColumnRegistry = {
       </span>
     );
   },
+  // DRF TimeField（如登录策略 start_time/end_time）：提交格式与后端同口径 HH:mm:ss
+  time: item => {
+    item["valueType"] = "time-picker";
+    item["fieldProps"]!["format"] = "HH:mm:ss";
+    item["fieldProps"]!["valueFormat"] = "HH:mm:ss";
+    item["width"] = 120;
+  },
   boolean: item => {
     item["valueType"] = "radio";
     item["renderField"] = renderBooleanSegmentedOption();
