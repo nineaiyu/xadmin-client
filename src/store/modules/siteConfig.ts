@@ -5,7 +5,7 @@ import { setConfig } from "@/config";
 import Storage from "responsive-storage";
 import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, isEqual } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
 import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
 
@@ -32,7 +32,14 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      * 自动保存用它与当前值深比较，无差异时不发整包 PATCH——否则每次页面加载
      * 都会产生一次无意义写入。
      */
-    syncedSnapshot: null as { layout: unknown; configure: unknown } | null
+    syncedSnapshot: null as { layout: unknown; configure: unknown } | null,
+    /**
+     * 自动保存「待发或在途」：防抖计时器已排或 PATCH 未返回。
+     * 布局层据此禁止「与快照无差异」跳过——用户在防抖窗内改回原值时，快照仍是
+     * 旧值，跳过会丢掉这次回写，客户端与服务端从此分叉（历史缺陷：快速关→开
+     * 灰度模式后服务器仍是关闭）。
+     */
+    autoSavePending: false
   }),
   actions: {
     setSiteConfig(config: PlatformConfigs) {
@@ -240,19 +247,44 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       });
     },
     /**
+     * 布局层自动保存的「无差异跳过」判据。
+     *
+     * 只有「无待发/在途保存」且当前值与最近一次同步快照深度相等时才可跳过：
+     * 防抖窗内用户把设置改回原值时，快照仍是旧值——此时跳过会丢掉这次回写，
+     * 造成客户端与服务端分叉（快速关→开灰度模式后服务器仍为关闭）。
+     */
+    shouldSkipAutoSave() {
+      if (this.autoSavePending || !this.syncedSnapshot) {
+        return false;
+      }
+      return isEqual(
+        {
+          layout: Storage.getData("layout", this.nameSpace),
+          configure: Storage.getData("configure", this.nameSpace)
+        },
+        this.syncedSnapshot
+      );
+    },
+    /**
      * 设置项变更后的自动保存（防抖 + 静默）——项目设置面板已改为实时生效，
      * 无需用户手动点「保存配置」。失败时提示一次，避免配置静默丢失。
      */
     autoSaveSiteConfig() {
+      this.autoSavePending = true;
       if (autoSaveTimer) clearTimeout(autoSaveTimer);
       autoSaveTimer = setTimeout(() => {
         autoSaveTimer = null;
-        this.saveSiteConfig(true).catch(error => {
-          message(transformI18n("layout.saveConfigFailed"), {
-            type: "error"
+        this.saveSiteConfig(true)
+          .catch(error => {
+            message(transformI18n("layout.saveConfigFailed"), {
+              type: "error"
+            });
+            console.warn("[site-config] auto save failed:", error);
+          })
+          .finally(() => {
+            // 保存期间又排入新计时器时保持 pending，由后一次保存收尾
+            this.autoSavePending = autoSaveTimer !== null;
           });
-          console.warn("[site-config] auto save failed:", error);
-        });
       }, AUTO_SAVE_DEBOUNCE_MS);
     },
     async getSiteConfig() {
