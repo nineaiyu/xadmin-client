@@ -159,6 +159,72 @@ describe("ReDialog 弹层容器", () => {
     expect(dialogs()[1].classList.contains("is-fullscreen")).toBe(true);
   });
 
+  it("全屏按钮默认渲染：未传 fullscreenIcon 也有切换按钮，点击后进入全屏", async () => {
+    mountContainer();
+    addDialog({
+      title: "岗位",
+      contentRenderer: () => h("div", "正文")
+    });
+    await nextTick();
+    await flushPromises();
+
+    const icons = () =>
+      Array.from(
+        document.querySelectorAll('[data-testid="dialog-fullscreen-toggle"]')
+      );
+    expect(icons()).toHaveLength(1);
+
+    (icons()[0] as HTMLElement).click();
+    await nextTick();
+    expect(
+      document.querySelector(".el-dialog")?.classList.contains("is-fullscreen")
+    ).toBe(true);
+
+    // 再点退出：可逆，不是单向开关
+    (icons()[0] as HTMLElement).click();
+    await nextTick();
+    expect(
+      document.querySelector(".el-dialog")?.classList.contains("is-fullscreen")
+    ).toBe(false);
+  });
+
+  it("全屏按钮显式关闭：fullscreenIcon=false 时走 EP 默认头部", async () => {
+    mountContainer();
+    addDialog({
+      title: "无按钮",
+      fullscreenIcon: false,
+      contentRenderer: () => h("div", "正文")
+    });
+    await nextTick();
+    await flushPromises();
+
+    expect(
+      document.querySelectorAll('[data-testid="dialog-fullscreen-toggle"]')
+    ).toHaveLength(0);
+    // EP 默认头部仍渲染标题与关闭按钮（结构完整性不回退）
+    expect(document.querySelector(".el-dialog__title")?.textContent).toBe(
+      "无按钮"
+    );
+    expect(document.querySelector(".el-dialog__headerbtn")).not.toBeNull();
+  });
+
+  it("自定义 headerRenderer 优先：按钮不插入自绘头部", async () => {
+    mountContainer();
+    addDialog({
+      title: "自定义",
+      headerRenderer: ({ close: _close }) =>
+        h("div", { class: "spec-custom-header" }, "自绘头部"),
+      contentRenderer: () => h("div", "正文")
+    });
+    await nextTick();
+    await flushPromises();
+
+    expect(
+      document.querySelectorAll('[data-testid="dialog-fullscreen-toggle"]')
+    ).toHaveLength(0);
+    expect(document.querySelector(".spec-custom-header")).not.toBeNull();
+  });
+
   it("容器：自定义 footerButtons 覆盖默认页脚；hideFooter 时不渲染页脚", async () => {
     const custom = vi.fn();
     mountContainer();
