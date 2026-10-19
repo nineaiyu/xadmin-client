@@ -181,7 +181,10 @@ test("自由画布：拖动缩放保存 → 投屏等比缩放；切回栅格不
 
   // ---- 投屏：按设计画幅等比缩放（transform 为单位比例矩阵，字与间距同缩）----
   await page.goto(`/#/analysis/screen/index`);
-  await expect(page.getByRole("button", { name: "新建大屏" })).toBeVisible({
+  // 列表页新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
   await page

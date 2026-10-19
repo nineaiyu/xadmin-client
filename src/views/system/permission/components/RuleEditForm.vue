@@ -18,15 +18,17 @@ import {
   ruleValueRequired
 } from "./utils/ruleMeta";
 import {
-  fromSecondsEditor,
-  isEmptyValue,
   parseObjectValue,
   parseRangeValue,
   SECOND_UNIT_CHOICES,
-  serializeObjectValue,
   toSecondsEditor,
   type SecondsEditor
 } from "./utils/ruleValue";
+import {
+  buildRulePayload,
+  editorValueOf,
+  validateRule
+} from "./utils/ruleFormLogic";
 import type {
   FieldLookupItem,
   FieldLookupNode,
@@ -213,79 +215,58 @@ function handleTypeChange(value: string) {
 }
 
 function editorValue(): unknown {
-  switch (input.value) {
-    case "none":
-      return "*";
-    case "json":
-      return jsonValue.value;
-    case "datetime":
-      return datetimeValue.value;
-    case "datetimerange":
-      return rangeValue.value ?? [];
-    case "seconds":
-      return fromSecondsEditor(secondsEditor.value);
-    case "user":
-    case "dept":
-    case "role":
-    case "menu":
-      return serializeObjectValue(objectValue.value);
-    default:
-      return textValue.value;
-  }
+  return editorValueOf({
+    input: input.value,
+    text: textValue.value,
+    json: jsonValue.value,
+    datetime: datetimeValue.value,
+    range: rangeValue.value,
+    seconds: secondsEditor.value,
+    object: objectValue.value
+  });
 }
 
 function validate(): Record<string, string> {
-  const next: Record<string, string> = {};
-  if (!type.value) next.type = t("systemPermission.editor.typeRequired");
-  if (!isAll.value) {
-    if (!table.value || !field.value) {
-      next.scope = t("systemPermission.editor.scopeRequired");
+  return validateRule(
+    {
+      type: type.value,
+      isAll: isAll.value,
+      table: table.value,
+      field: field.value,
+      matchFixed: matchFixed.value,
+      match: match.value,
+      objectPickerMissing: objectPickerMissing.value,
+      input: input.value,
+      json: jsonValue.value,
+      valueRequired: valueRequired.value,
+      value: editorValue()
+    },
+    {
+      typeRequired: t("systemPermission.editor.typeRequired"),
+      scopeRequired: t("systemPermission.editor.scopeRequired"),
+      matchRequired: t("systemPermission.editor.matchRequired"),
+      pickerAuthMissing: t("systemPermission.editor.pickerAuthMissing"),
+      jsonInvalid: t("systemPermission.editor.jsonInvalid"),
+      valueRequired: t("systemPermission.editor.valueRequired")
     }
-    if (!matchFixed.value && !match.value)
-      next.match = t("systemPermission.editor.matchRequired");
-    if (objectPickerMissing.value) {
-      // 取值控件缺搜索权限时无法构造合法的关联对象值，提交前拦截并定位到取值行
-      next.value = t("systemPermission.editor.pickerAuthMissing");
-    }
-    if (input.value === "json" && jsonValue.value) {
-      try {
-        JSON.parse(jsonValue.value);
-      } catch {
-        next.value = t("systemPermission.editor.jsonInvalid");
-      }
-    }
-    if (
-      valueRequired.value &&
-      isEmptyValue(input.value, editorValue()) &&
-      !next.value
-    ) {
-      next.value = t("systemPermission.editor.valueRequired");
-    }
-  }
-  return next;
+  );
 }
 
 function handleSubmit() {
   errors.value = validate();
   if (Object.keys(errors.value).length) return;
-  const payload: FieldRuleRow = isAll.value
-    ? {
-        table: table.value && table.value !== "*" ? table.value : "*",
-        field: "*",
-        match: "all",
-        exclude: false,
-        type: FieldKeyChoices.ALL,
-        value: "*"
-      }
-    : {
-        table: table.value,
-        field: field.value,
-        match: effectiveMatch.value || "exact",
-        exclude: exclude.value,
-        type: type.value,
-        value: editorValue()
-      };
-  emit("update:modelValue", payload);
+  emit(
+    "update:modelValue",
+    buildRulePayload({
+      isAll: isAll.value,
+      table: table.value,
+      field: field.value,
+      match: effectiveMatch.value,
+      exclude: exclude.value,
+      type: type.value,
+      value: editorValue()
+    })
+  );
   emit("submit");
 }
 

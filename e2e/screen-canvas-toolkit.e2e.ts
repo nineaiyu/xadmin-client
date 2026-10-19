@@ -411,7 +411,10 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
 
   // ---- 投屏：两类窗格真实渲染（video 属性 / iframe sandbox 收紧）----
   await page.goto(`/#/analysis/screen/index`);
-  await expect(page.getByRole("button", { name: "新建大屏" })).toBeVisible({
+  // 列表页新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
   await page
