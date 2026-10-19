@@ -203,9 +203,32 @@ test("AI 配置页展示 AI 动作灰度开关", async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);
   await openMenuPath(page, ["集成管理"], "/integration/ai/config");
+  // 配置页已改为 Tab 骨架（默认停在「配置档案」）；全局开关在「功能开关」页签
+  await page.getByRole("tab", { name: "功能开关" }).click();
   await expect(page.getByTestId("ai-action-enabled")).toBeVisible({
     timeout: 20_000
   });
+});
+
+test("新增只读动作声明可直接执行（API 直调确认卡片后端链路）", async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  await login(page);
+  await enableAiAction(page);
+  for (const action of [
+    "post.list",
+    "task.unified_list",
+    "setting.password_rule"
+  ]) {
+    const result = await jsonRequest(
+      page,
+      "post",
+      "/api/ai/assistant/action/execute",
+      { action, params: {} }
+    );
+    expect(result.code).toBe(1000);
+  }
 });
 
 test("AI 受限动作：/do 发全体公告 → 确认卡片 → 执行发布", async ({ page }) => {
