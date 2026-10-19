@@ -38,7 +38,15 @@ test("表格已读行：打开详情后行挂 is-viewed 且刷新保持", async 
   await dialog.locator(".el-select").first().click();
   await pickSelectOption(page, dialog, "普遍通知");
   // 通知类型保持默认「用户通知」时必须选择用户：api-search-user 表格弹层
-  const userSelect = dialog.locator(".el-select").last();
+  // 定位纪律：按表单项标签取「用户」下拉——表单尾部新增「正文格式」下拉后，
+  // `.el-select` 的 last() 会落到正文格式上，用户弹层永远不出现（勿用序号定位）。
+  // 点击必须落在 `.el-select` 外壳：内部 input 会被占位层拦截指针事件。
+  const userSelect = dialog
+    .locator(".el-form-item")
+    .filter({ hasText: "用户:" })
+    .first()
+    .locator(".el-select")
+    .first();
   await expect(userSelect).toBeVisible();
   await userSelect.click();
   const pickerTable = page.locator(".el-table").last();

@@ -151,7 +151,10 @@ test("大屏设计器：加窗格 → 拖动 → 保存 → 投屏按画布渲�
 
   // ---- 投屏：画布渲染（无轮播页码/暂停控件）----
   await page.goto(`/#/analysis/screen/index`);
-  await expect(page.getByRole("button", { name: "新建大屏" })).toBeVisible({
+  // 列表页新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
   await page
