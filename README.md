@@ -5,7 +5,7 @@ xadmin 前端 —— 基于 [vue-pure-admin](https://github.com/pure-admin/vue-p
 
 后端：[xadmin-server](https://github.com/nineaiyu/xadmin-server)（Django 6 + DRF + Channels）
 
-> **版本 5.0.1**：前端与后端**必须同版本发布**（CI 三方校验 `xadmin-server/server/const.py` ↔
+> **版本 5.0.2**：前端与后端**必须同版本发布**（CI 三方校验 `xadmin-server/server/const.py` ↔
 > 本仓 `package.json` ↔ 发布 tag）。变更总览见
 > [xadmin-server/CHANGELOG.md](https://github.com/nineaiyu/xadmin-server/blob/dev/CHANGELOG.md)，
 > 4.x → 5.0 升级步骤见
