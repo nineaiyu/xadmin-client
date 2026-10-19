@@ -25,7 +25,7 @@ export function useRoleButtons({
 }) {
   const operationButtonsProps = shallowRef<OperationProps>({
     // 160px 下 3 个按钮（编辑/删除/详情）换行使行高翻倍，200px 单行
-    width: 200,
+    width: 260,
     buttons: [
       { code: "detail", show: false },
       {

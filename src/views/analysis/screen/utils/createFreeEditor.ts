@@ -401,7 +401,7 @@ export function createFreeEditor(deps: {
       message(deps.t("dataScreen.clipboardBlocked"), { type: "warning" });
     }
     hasClipboard.value = true;
-    // 双写云端（ADR-090 D4）：失败只警告不阻断——本地剪贴板仍然可用
+    // 双写云端：失败只警告不阻断——本地剪贴板仍然可用
     void saveCloudClipboard({
       design_w: payload.design.design_w,
       design_h: payload.design.design_h,

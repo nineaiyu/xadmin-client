@@ -14,7 +14,7 @@ import {
 defineOptions({ name: "ScreenPaneAnimationFields" });
 
 /**
- * 窗格动画字段（属性面板的动画区，ADR-088/089）：动画种类 + 时长 / 延迟 / 循环。
+ * 窗格动画字段（属性面板的动画区）：动画种类 + 时长 / 延迟 / 循环。
  *
  * 时序三项**只在配了动画时出现**（`none` 时服务端会静默忽略，面板上就不给入口）；
  * 所有夹取走 `utils/paneEffects` 的同一份口径（与服务端 `_normalize_pane_body` 同值），

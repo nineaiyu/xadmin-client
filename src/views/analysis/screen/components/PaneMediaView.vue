@@ -5,7 +5,7 @@ import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 defineOptions({ name: "ScreenPaneMediaView" });
 
 /**
- * 媒体类窗格内容（图片 / 视频 / 自定义 HTML，ADR-090 D3；拆分动机：窗格组件行数门禁）。
+ * 媒体类窗格内容（图片 / 视频 / 自定义 HTML拆分动机：窗格组件行数门禁）。
  *
  * 口径三条：
  * - 图片与视频地址由服务端与属性面板共同校验（http(s) 或站内根相对路径），这里只渲染；

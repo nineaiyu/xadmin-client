@@ -7,7 +7,7 @@ import { isValidPaneEmbedUrl, isValidPaneImageUrl } from "../utils/layout";
 defineOptions({ name: "ScreenPaneMediaFields" });
 
 /**
- * 视频 / 自定义 HTML 窗格的属性字段（ADR-090 D3，拆分动机：属性面板行数门禁）。
+ * 视频 / 自定义 HTML 窗格的属性字段（拆分动机：属性面板行数门禁）。
  *
  * 地址口径与服务端一致：视频与图片同口径（http(s) 或站内根相对路径），
  * **自定义 HTML 只收 http(s) 绝对地址**（iframe src，不接受原样 HTML）；输入过程只提示，

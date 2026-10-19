@@ -27,6 +27,7 @@ const tree: FieldLookupNode[] = [
 
 const ctx: RuleDescribeContext = {
   fieldLabel: (table, field) => `${table}.${field}`,
+  tableLabel: table => (table === "*" ? "全部表" : `表:${table}`),
   typeLabel: type => `类型:${type}`,
   matchLabel: match => `匹配:${match}`,
   objectText: count => `已选 ${count} 项`,
@@ -54,6 +55,18 @@ describe("ruleSummary 规则摘要", () => {
       value: "*"
     };
     expect(describeRule(allRule, "none", ctx)).toBe("全部数据");
+
+    // 单表全量必须标出作用表，避免与「全部表」混淆
+    const tableAllRule: FieldRuleRow = {
+      table: "system.userinfo",
+      field: "*",
+      match: "all",
+      type: "value.all",
+      value: "*"
+    };
+    expect(describeRule(tableAllRule, "none", ctx)).toBe(
+      "表:system.userinfo 全部数据"
+    );
 
     const ownRule: FieldRuleRow = {
       table: "system.userinfo",

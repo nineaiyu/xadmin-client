@@ -15,7 +15,7 @@ import { isAxisAligned, rotatedBounds } from "./paneGeometry";
 /** 吸附阈值（px）：超过该距离不吸附（保留自由摆放的手感） */
 export const FREE_SNAP_THRESHOLD = 4;
 
-/** 元素级网格吸附的步长档位（px）与缺省值（ADR-088，默认关闭） */
+/** 元素级网格吸附的步长档位（px）与缺省值（默认关闭） */
 export const FREE_GRID_STEPS = [2, 4, 8, 10, 16, 20];
 export const FREE_GRID_DEFAULT_STEP = 8;
 
@@ -30,7 +30,7 @@ export type FreeSnapResult = { box: PaneBox; guides: FreeSnapGuide[] };
 /**
  * 单轴候选线：画幅边界与中线 + 其他窗格的边框与中心线。
  *
- * 其他窗格若带旋转，取**外接 AABB**的边与中线（ADR-090 D2：吸附看视觉边界）。
+ * 其他窗格若带旋转，取**外接 AABB**的边与中线（吸附看视觉边界）。
  */
 function axisTargets(
   axis: "x" | "y",
@@ -120,7 +120,7 @@ function hitGuides(
  * （tl/tm/tr/mr/br/bm/bl/ml，只吸附被拖动的那条边，对边保持不动），
  * 缩放后仍不小于最小尺寸，否则放弃该轴吸附。
  *
- * `grid` 为元素级网格吸附（ADR-088）：**参考线优先、网格兜底**，两轴独立判定；
+ * `grid` 为元素级网格吸附：**参考线优先、网格兜底**，两轴独立判定；
  * 缺省不传 = 行为与一期完全一致（只吸附参考线）。
  */
 export function snapFreeBox(
@@ -132,7 +132,7 @@ export function snapFreeBox(
   grid?: FreeGridSnap,
   rotate = 0
 ): FreeSnapResult {
-  // 旋转窗格的**缩放**不吸附（ADR-090 D2 的取舍）：视觉盒尺寸是 w/h 与角度的耦合函数，
+  // 旋转窗格的**缩放**不吸附（ 的取舍）：视觉盒尺寸是 w/h 与角度的耦合函数，
   // 逐像素反解在 cosθ→0 时发散；「要么精确、要么不吸附」比近似吸附更可预测。
   // 对齐 / 分布 / 组拖动 / 移动吸附都已覆盖视觉语义，缩放的视觉吸附可后补。
   if (dir && !isAxisAligned(rotate)) return { box: { ...box }, guides: [] };

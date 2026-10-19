@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import { mount } from "@vue/test-utils";
 import { describe, expect, it } from "vitest";
 
@@ -35,10 +32,12 @@ const mountEmpty = (props: Record<string, unknown> = {}, slots = {}) =>
   });
 
 describe("ReEmpty 统一空态", () => {
-  it("默认渲染：主文案 + 图标底托（页面级尺寸档 64）", () => {
+  it("默认渲染：主文案 + 内置插画（页面级尺寸档 64）", () => {
     const wrapper = mountEmpty({ description: "暂无数据" });
     expect(wrapper.find(".empty-desc").text()).toBe("暂无数据");
     expect(wrapper.find(".re-empty-art--default").exists()).toBe(true);
+    expect(wrapper.find(".re-empty-illustration").exists()).toBe(true);
+    expect(wrapper.find(".icon-stub").exists()).toBe(false);
     expect(wrapper.find(".empty-stub").attributes("data-size")).toBe("64");
   });
 
@@ -48,6 +47,12 @@ describe("ReEmpty 统一空态", () => {
     expect(wrapper.find(".empty-stub").attributes("data-size")).toBe("44");
   });
 
+  it("imageSize 覆盖档位尺寸（既有页面按 image-size 传值的意图）", () => {
+    expect(
+      mountEmpty({ imageSize: 96 }).find(".empty-stub").attributes("data-size")
+    ).toBe("96");
+  });
+
   it("hint 传入时渲染次级提示，未传时不渲染", () => {
     const withHint = mountEmpty({ hint: "点击右上角新建" });
     expect(withHint.find(".re-empty-hint").text()).toBe("点击右上角新建");
@@ -55,13 +60,13 @@ describe("ReEmpty 统一空态", () => {
     expect(withoutHint.find(".re-empty-hint").exists()).toBe(false);
   });
 
-  it("icon 透传到图标组件（默认为 ep/box）", () => {
-    const wrapper = mountEmpty({ icon: "ri/inbox-archive-line" });
+  it("传 icon 时切换为语义化图标形态，渲染图标而非插画", () => {
+    const wrapper = mountEmpty({ icon: "ep/warning" });
+    expect(wrapper.find(".re-empty-art--icon").exists()).toBe(true);
     expect(wrapper.find(".icon-stub").attributes("data-icon")).toBe(
-      "ri/inbox-archive-line"
+      "ep/warning"
     );
-    const fallback = mountEmpty({});
-    expect(fallback.find(".icon-stub").attributes("data-icon")).toBe("ep/box");
+    expect(wrapper.find(".re-empty-illustration").exists()).toBe(false);
   });
 
   it("默认插槽渲染行动区（如「新建」按钮）", () => {
@@ -70,14 +75,5 @@ describe("ReEmpty 统一空态", () => {
       { default: '<button class="empty-action">新建</button>' }
     );
     expect(wrapper.find(".empty-action").text()).toBe("新建");
-  });
-
-  it("默认图标必须随包注册（图标集懒加载不回填已挂载实例，未注册首屏渲染为空）", () => {
-    // 源码扫描守护（`~icons/*?raw` 在 vitest 下不可导入，与 elementPlus.spec 同范式）
-    const offline = readFileSync(
-      resolve(__dirname, "../../ReIcon/src/offlineIcon.ts"),
-      "utf8"
-    );
-    expect(offline).toContain('["ep/box", EpBox]');
   });
 });

@@ -475,13 +475,15 @@ onMounted(loadScreen);
   }
 }
 
-/* 恒深色页的空态：文字与底托取白色透明度（不随站点主题的深浅） */
+/* 恒深色页的空态：插画与图标改取大屏前景色（不随站点主题的深浅） */
 .screen-root :deep(.el-empty__description p) {
   color: var(--screen-fg-subtle);
 }
 
 .screen-root :deep(.re-empty-art) {
+  --el-svg-monochrome-grey: var(--screen-fg-dense);
+  --re-empty-sheet-bg: var(--screen-surface-strong);
+
   color: var(--screen-fg-dense);
-  background: var(--screen-surface-strong);
 }
 </style>

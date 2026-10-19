@@ -143,6 +143,7 @@ export function useRecordCenter(options: RecordCenterOptions) {
 
   const operationButtonsProps = shallowRef<OperationProps>({
     showNumber: 4,
+    width: 280,
     buttons: [
       {
         text: t(`${localePrefix}.download`),

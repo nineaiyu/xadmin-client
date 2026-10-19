@@ -21,7 +21,7 @@
   "src/views/dashboard/components/CardForm.vue": "仪表盘卡片：内存草稿（随保存布局整单提交），无对应模型元数据",
   "src/views/dashboard/components/DashboardCreateForm.vue": "新建仪表盘：内存草稿，随保存布局提交，无对应模型元数据",
   "src/views/dashboard/dataset/components/DatasetForm.vue": "数据集混合形态：filters 三元组行编辑器与列/排序结构无法用元数据表达",
-  "src/views/form/designer/components/DynamicFormForm.vue": "动态表单设计器：schema 协议与元数据协议不同源（ADR-064）",
+  "src/views/form/designer/components/DynamicFormForm.vue": "动态表单设计器：schema 协议与元数据协议不同源",
   "src/views/form/designer/components/FormFieldDialog.vue": "动态表单设计器：字段属性为 schema 片段，非模型元数据",
   "src/views/form/designer/components/FormLinkageDialog.vue": "动态表单设计器：联动规则为 schema 片段，非模型元数据",
   "src/views/form/my/components/SubmissionForm.vue": "填报表单：按动态表单 schema 渲染，非模型元数据",

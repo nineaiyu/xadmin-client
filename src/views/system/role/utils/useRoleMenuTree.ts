@@ -80,7 +80,10 @@ export function useRoleMenuTree() {
           })
             .then(result => {
               if (isSuccess(result)) {
-                result.data.results.forEach(item => {
+                // 接口返回的是扁平行（parent 引用父级），注入的字段分组直接取
+                // rows 的 children 作为字段叶子：传扁平行会让每个分组都渲染成
+                // 「已选 0/0」并丢失可勾选的字段节点
+                handleTree(result.data.results).forEach(item => {
                   fieldLookupsData.value[item.pk] = item;
                 });
                 // 原地注入字段分组/叶子节点（menuTreeData 持有同一棵树）

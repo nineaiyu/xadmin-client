@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 大屏画布进阶（ADR-090）：旋转几何 / 模板版本回滚 / 跨设备（云端）剪贴板。
+ * 大屏画布进阶：旋转几何 / 模板版本回滚 / 跨设备（云端）剪贴板。
  *
  * 三期 spec 只验到「旋转能设置并渲染」；本用例补三处端到端口径：
  * 1. **旋转 OBB 几何**：框选命中按旋转矩形——正例（框完全落在未旋转盒之外、只与旋转矩形相交

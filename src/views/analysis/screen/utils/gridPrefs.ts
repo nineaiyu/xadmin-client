@@ -6,7 +6,7 @@ import {
 import { readScreenStorage, writeScreenStorage } from "./screenStorage";
 
 /**
- * 元素级网格吸附的本地偏好（ADR-088；拆分动机：编辑域组合层行数门禁）。
+ * 元素级网格吸附的本地偏好（拆分动机：编辑域组合层行数门禁）。
  *
  * 选择记忆在浏览器侧（换会话仍然生效）：非法 / 缺失一律回落缺省（关闭 + 8px），
  * 与服务端无关——网格只是编辑体验，不进载荷。

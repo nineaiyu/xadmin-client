@@ -150,7 +150,7 @@ const onPreview = () => {
 </script>
 
 <template>
-  <el-form label-width="100px" label-position="left">
+  <el-form label-width="100px">
     <el-form-item v-if="ruleLabel" :label="t('mask.preview')">
       <el-text type="info">{{ ruleLabel }}</el-text>
     </el-form-item>

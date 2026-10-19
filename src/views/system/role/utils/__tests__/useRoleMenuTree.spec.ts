@@ -99,12 +99,11 @@ describe("useRoleMenuTree 菜单树回填", () => {
 
   it("字段接口成功：绑定模型的叶子菜单注入字段分组节点", async () => {
     hasAuthMock.mockReturnValue(true);
+    // 接口返回扁平行（parent 引用父级），分组节点需自行构树才能拿到字段叶子，
+    // 否则分组渲染为「已选 0/0」且字段不可勾选
     const fieldRows = [
-      {
-        pk: "f1",
-        label: "用户",
-        children: [{ pk: "u1", label: "username" }]
-      }
+      { pk: "f1", label: "用户", parent: null },
+      { pk: "u1", label: "username", parent: "f1" }
     ];
     fetchAllRowsMock.mockImplementation(async (api: unknown) => {
       if (api === menuApi.list) {

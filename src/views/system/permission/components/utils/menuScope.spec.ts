@@ -6,6 +6,7 @@ import {
   countTreePermissions,
   expandScopePks,
   menuTypeOf,
+  methodOf,
   parentIdOf,
   type MenuScopeRow
 } from "./menuScope";
@@ -93,5 +94,70 @@ describe("menuScope 生效范围树与展开", () => {
       { pk: "a", parent: null, menu_type: 2, meta: { title: "A" }, rank: 1 }
     ]);
     expect(tree.map(node => node.pk)).toEqual(["a", "b"]);
+  });
+
+  it("methodOf / buildScopeTree：字典字段 {value,label} 归一为方法字符串", () => {
+    expect(methodOf({ value: "GET", label: "GET" })).toBe("GET");
+    expect(methodOf("POST")).toBe("POST");
+    expect(methodOf(null)).toBe("");
+    expect(methodOf(undefined)).toBe("");
+
+    const tree = buildScopeTree([
+      {
+        pk: "p",
+        parent: null,
+        menu_type: 2,
+        meta: { title: "查询应用" },
+        method: { value: "GET", label: "GET" },
+        rank: 1
+      }
+    ]);
+    expect(tree[0].method).toBe("GET");
+  });
+
+  it("buildScopeTree：标题经注入的翻译器转换（种子存词条 key 时不裸露 key）", () => {
+    const keyedRows: MenuScopeRow[] = [
+      {
+        pk: "dir",
+        parent: null,
+        menu_type: 0,
+        meta: { title: "menus.sysManagement" },
+        rank: 1
+      },
+      {
+        pk: "page",
+        parent: "dir",
+        menu_type: 1,
+        meta: { title: "menus.user" },
+        rank: 1
+      },
+      {
+        pk: "p1",
+        parent: "page",
+        menu_type: 2,
+        meta: { title: "查询用户" },
+        method: "GET",
+        rank: 1
+      }
+    ];
+    const translate = (title?: string) =>
+      title === "menus.sysManagement"
+        ? "系统管理"
+        : title === "menus.user"
+          ? "用户管理"
+          : (title ?? "");
+
+    const tree = buildScopeTree(keyedRows, translate);
+    expect(tree[0].title).toBe("系统管理");
+    expect(tree[0].children?.[0].title).toBe("用户管理");
+    // 非词条标题原样保留
+    expect(tree[0].children?.[0].children?.[0].title).toBe("查询用户");
+
+    // 缺省不翻译（纯函数保持无 i18n 依赖），空标题回退节点标识
+    expect(buildScopeTree(keyedRows)[0].title).toBe("menus.sysManagement");
+    const blank = buildScopeTree([
+      { pk: "p", parent: null, menu_type: 2, meta: { title: "" }, rank: 1 }
+    ]);
+    expect(blank[0].title).toBe("p");
   });
 });

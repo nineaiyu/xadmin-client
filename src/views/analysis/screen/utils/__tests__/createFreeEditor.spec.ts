@@ -404,7 +404,7 @@ describe("自由画布编辑域：批量对齐网格", () => {
   });
 });
 
-describe("自由画布编辑域：云端剪贴板与模板版本（ADR-090 D4）", () => {
+describe("自由画布编辑域：云端剪贴板与模板版本", () => {
   it("复制时双写云端（本地照旧可用）", async () => {
     const { fetchCloudClipboard, saveCloudClipboard } =
       await import("../serverTemplates");

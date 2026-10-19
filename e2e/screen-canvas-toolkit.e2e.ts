@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
- * 大屏画布工具集三期（ADR-088）：窗格旋转 / 入场动画 / 富文本 / 元素级网格吸附 /
+ * 大屏画布工具集三期：窗格旋转 / 入场动画 / 富文本 / 元素级网格吸附 /
  * zoom 键盘档位 / 团队模板（另存 + 应用 + 删除）/ 模板 JSON 导入 / 多选批量改属性。
  *
  * 素材走 API 直建（数据集 / 看板主链路已由别的用例覆盖）；断言两层：DOM 证交互效果
@@ -228,7 +228,7 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   await page.getByTestId("free-template-save-server").click();
   await page.locator(".el-message-box input").last().fill(templateName);
   await clickBoxButton(page, "保存为模板");
-  // 分组名（ADR-090 D4；可留空 = 未分组）
+  // 分组名（可留空 = 未分组）
   await page.locator(".el-message-box input").last().fill(templateGroup);
   await clickBoxButton(page, "保存为模板");
   await clickBoxButton(page, "团队共享");
@@ -367,7 +367,7 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   }[];
   expect(leftRows.some(item => item.name === templateName)).toBe(false);
 
-  // ---- 视频与自定义 HTML 窗格（ADR-090 D3）----
+  // ---- 视频与自定义 HTML 窗格----
   await page.keyboard.press("Escape");
   await page.getByTestId("palette-video").click();
   await expect(paneEls).toHaveCount(4);

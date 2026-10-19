@@ -82,7 +82,7 @@ describe("组位移夹取", () => {
   });
 });
 
-describe("旋转窗格的框选与包围盒（ADR-090 D2）", () => {
+describe("旋转窗格的框选与包围盒", () => {
   const textPane = (
     pk: string,
     box: { x: number; y: number; w: number; h: number },

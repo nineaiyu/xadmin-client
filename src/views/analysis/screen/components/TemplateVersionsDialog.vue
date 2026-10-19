@@ -9,7 +9,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({ name: "ScreenTemplateVersionsDialog" });
 
 /**
- * 模板版本历史与回滚（ADR-090 D4）。
+ * 模板版本历史与回滚。
  *
  * 自取自管：打开时按模板 pk 拉历史版本（失败 / 无版本给空态），回滚走 `rollback` 事件由
  * 组合层执行（成功后本弹窗重拉一次，因为回滚本身也会记一版）。弹窗不碰画布数据。

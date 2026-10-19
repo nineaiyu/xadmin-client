@@ -8,6 +8,9 @@ import { MenuChoices } from "@/views/system/constants";
  * 这里提供同一口径的前端展开与统计，用于「将生效 N 个接口」的即时提示。
  */
 
+/** 接口方法：字典字段下发 `{value,label}`，历史数据/其他来源可能是纯字符串 */
+export type MenuMethod = string | { value?: string; label?: string } | null;
+
 export interface MenuScopeRow {
   pk: string;
   id?: string;
@@ -15,7 +18,7 @@ export interface MenuScopeRow {
   menu_type: { value: number } | number;
   meta: { title?: string } | null;
   path?: string;
-  method?: string;
+  method?: MenuMethod;
   rank?: number;
 }
 
@@ -34,6 +37,13 @@ export function menuTypeOf(item: MenuScopeRow): number {
   return typeof item.menu_type === "number"
     ? item.menu_type
     : (item.menu_type?.value ?? -1);
+}
+
+/** 接口方法归一：`{value:"GET",label:"GET"}` → `"GET"`（模板直接渲染对象会显示成 JSON 串） */
+export function methodOf(method?: MenuMethod): string {
+  if (!method) return "";
+  if (typeof method === "string") return method;
+  return String(method.value ?? "");
 }
 
 export function parentIdOf(item: MenuScopeRow): string | null {
@@ -86,11 +96,20 @@ export function countScopePermissions(
   return expandScopePks(rows, pks).length;
 }
 
+/** 菜单标题翻译器（内置种子标题存词条 key，展示前需经 transformI18n 转换） */
+export type MenuTitleTranslator = (title?: string) => string;
+
 /**
  * 生效范围树：保留「权限点自身」与「含接口权限点后代的页面/目录」，
  * 节点按 rank 排序，权限点节点用方法（GET/POST）标注。
+ *
+ * `translate` 由调用方注入（通常为 translateMenuTitle）：`meta.title` 可能是
+ * 词条 key（如 `menus.sysManagement`），不翻译会直接把 key 显示给管理员。
  */
-export function buildScopeTree(rows: MenuScopeRow[]): ScopeNode[] {
+export function buildScopeTree(
+  rows: MenuScopeRow[],
+  translate: MenuTitleTranslator = title => title ?? ""
+): ScopeNode[] {
   const children = new Map<string, MenuScopeRow[]>();
   const roots: MenuScopeRow[] = [];
   const ids = new Set(rows.map(row => String(row.pk)));
@@ -123,10 +142,10 @@ export function buildScopeTree(rows: MenuScopeRow[]): ScopeNode[] {
     if (permissionCount === 0) return null;
     return {
       pk: String(row.pk),
-      title: row.meta?.title ?? String(row.pk),
+      title: translate(row.meta?.title) || String(row.pk),
       menuType: type,
       permissionCount,
-      method: row.method,
+      method: methodOf(row.method),
       path: row.path,
       children: childNodes.length ? childNodes : undefined
     };

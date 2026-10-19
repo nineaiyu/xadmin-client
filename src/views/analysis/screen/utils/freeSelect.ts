@@ -30,7 +30,7 @@ export function rectFromPoints(
  * 框选矩形与窗格是否相交。
  *
  * 未旋转窗格 = 轴对齐重叠判定（边界相接不算，与历史一致）；
- * **旋转窗格按旋转矩形做 SAT 相交**（ADR-090 D2：框选看真正覆盖到的像素）。
+ * **旋转窗格按旋转矩形做 SAT 相交**（框选看真正覆盖到的像素）。
  */
 export function rectHitsPane(
   rect: FreeRect,

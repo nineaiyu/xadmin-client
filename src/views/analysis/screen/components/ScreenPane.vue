@@ -294,7 +294,7 @@ const clockStyle = computed(() => ({
 </template>
 
 <style lang="scss" scoped>
-/* 入场动画（ADR-088）：类名由 utils/paneEffects 给出，样式定义在共享 partial 里
+/* 入场动画：类名由 utils/paneEffects 给出，样式定义在共享 partial 里
    （keyframes 与本组件 scoped 样式一起编译，命名口径一致；编辑态不挂类 = 不播） */
 @use "@/style/screen-animations";
 @use "@/style/screen-richtext";

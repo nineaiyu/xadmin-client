@@ -1818,8 +1818,9 @@ systemPermission:
     scope: 过滤对象
     scopePlaceholder: 选择应用 / 模型 / 字段
     scopeRequired: 请选择过滤对象（模型与字段）
-    scopeLockedTip: 取值方式为「全部数据」时无需选择过滤对象
+    scopeAllTip: 「全部数据」只作用于所选表；选择「全部表」表示不限制任何表
     anyField: 全部字段
+    anyTable: 全部表
     multipleField: 多值字段
     nullableField: 可为空
     type: 取值方式
