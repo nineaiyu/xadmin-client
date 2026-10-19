@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { storageMock } = vi.hoisted(() => ({
   storageMock: {
@@ -99,5 +99,85 @@ describe("token 工具", () => {
     remoteAccessToken();
     expect(getToken()).toBe("");
     expect(getRefreshToken()).toBe("refresh-1");
+  });
+});
+
+describe("认证 Cookie 的 Secure 属性", () => {
+  const SECURE_ENV_KEY = "VITE_COOKIE_SECURE";
+
+  /** 取最近一次 Cookies.set 的 attributes */
+  function lastSetAttributes() {
+    const calls = setSpy.mock.calls;
+    return calls.length ? (calls[calls.length - 1][2] ?? {}) : {};
+  }
+
+  let setSpy: ReturnType<typeof vi.spyOn>;
+  let originalSecureContext: boolean | undefined;
+
+  beforeEach(() => {
+    Object.keys(Cookies.get()).forEach(key => Cookies.remove(key));
+    setSpy = vi.spyOn(Cookies, "set");
+    originalSecureContext = window.isSecureContext;
+  });
+
+  afterEach(() => {
+    setSpy.mockRestore();
+    Object.defineProperty(window, "isSecureContext", {
+      value: originalSecureContext,
+      configurable: true
+    });
+    delete (import.meta.env as Record<string, unknown>)[SECURE_ENV_KEY];
+  });
+
+  function mockSecureContext(value: boolean) {
+    Object.defineProperty(window, "isSecureContext", {
+      value,
+      configurable: true
+    });
+  }
+
+  it("默认按页面上下文判定：安全上下文带上 Secure", () => {
+    mockSecureContext(true);
+    setAccessToken("token-secure");
+    expect(lastSetAttributes().secure).toBe(true);
+  });
+
+  it("默认按页面上下文判定：非安全上下文（内网 HTTP）不带 Secure", () => {
+    // 内网 http://<IP> 部署：Secure Cookie 会被浏览器静默丢弃，
+    // 导致「登录成功即未授权」，故此处必须收窄为不带 Secure
+    mockSecureContext(false);
+    setAccessToken("token-plain");
+    expect(lastSetAttributes().secure).toBe(false);
+  });
+
+  it("构建期显式 VITE_COOKIE_SECURE=true 时强制带上 Secure", () => {
+    // 覆盖场景：前端有 TLS 终结反代但未传 X-Forwarded-Proto，
+    // isSecureContext 误判为 false，此时需显式强制
+    (import.meta.env as Record<string, unknown>)[SECURE_ENV_KEY] = "true";
+    mockSecureContext(false);
+    setAccessToken("token-forced");
+    expect(lastSetAttributes().secure).toBe(true);
+  });
+
+  it("构建期显式 VITE_COOKIE_SECURE=false 时强制关闭 Secure", () => {
+    (import.meta.env as Record<string, unknown>)[SECURE_ENV_KEY] = "false";
+    mockSecureContext(true);
+    setAccessToken("token-forced-off");
+    expect(lastSetAttributes().secure).toBe(false);
+  });
+
+  it("三种认证 Cookie 的 Secure 口径一致", () => {
+    mockSecureContext(false);
+    setToken({
+      access: "access-1",
+      refresh: "refresh-1",
+      access_token_lifetime: 100,
+      refresh_token_lifetime: 200
+    } as never);
+    const secureFlags = setSpy.mock.calls.map(
+      (call: unknown[]) => (call[2] as { secure?: boolean } | undefined)?.secure
+    );
+    expect(secureFlags.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(secureFlags).size).toBe(1);
   });
 });
