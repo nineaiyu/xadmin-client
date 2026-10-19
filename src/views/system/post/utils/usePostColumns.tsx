@@ -10,8 +10,8 @@ import type { useI18n } from "vue-i18n";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
- * 岗位列表列渲染（自 hook.tsx 抽出）：启停用列为只读标签（关闭框架
- * partialUpdate 后默认开关恒禁用，避免双入口），成员数走计数标签。
+ * 岗位列表列渲染（自 hook.tsx 抽出）：启停用列为只读标签（启停用入口统一在
+ * 编辑表单内，避免与框架内联开关形成双入口），成员数走计数标签。
  */
 export function usePostColumns({ t }: { t: TFunction }) {
   const listColumnsFormat = (columns: PageTableColumn[]) =>

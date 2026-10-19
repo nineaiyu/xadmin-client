@@ -34,8 +34,12 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
    `operationButtonsProps`；不要手写 `el-table` + 权限判断（既有历史页面正在逐步迁移，新页面一律走框架）。
 2. **权限从 `auth` 快照来**：默认按钮的显示由框架按 `动作:组件名` 判定；跨资源 / 自定义按钮用
    `hasAuth("动作:组件名")` 显式判定——`getDefaultAuths` 只按组件名拼通用动作清单。
-3. 弹层统一用 `addDialog` / `addDrawer`（ReDialog / ReDrawer）：表单组件抽成 `XxxForm.vue` +
-   `getPayload()`（校验失败返回 null 以保持弹层）；**先 `done()` 关弹层再 `await load*()` 刷新**。
+3. 弹层统一用 `addDialog` / `addDrawer`（ReDialog / ReDrawer）。**新增/编辑表单先按
+   `xadmin-server/docs/architecture/component-handbook.md` §六「表单选型判定」选型**：
+   标准模型 CRUD 走元数据表单（`addOrEditOptions`，字段来自后端），只有无模型元数据 /
+   schema 不同源 / 元数据表达不了的混合形态才手写 `XxxForm.vue` + `getPayload()`
+   （校验失败返回 null 以保持弹层），且必须登记 `scripts/handwritten-forms-exempt.json`
+   （`pnpm check:forms` 会拦）；**先 `done()` 关弹层再 `await load*()` 刷新**。
 4. API 调用统一 `.catch(error => ({code: -1, data: null, detail}))` 归一异常，避免 `beforeSure`
    抛错导致 loading 悬挂。
 5. **200 + 业务码失败必须页面显式处理**（`res.code === SUCCESS_CODE` 之外的分支要 `ElMessage.error`）——
@@ -50,7 +54,8 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
 2. 两处类型声明 + 注入缺省（`src/utils/responsive.ts` 的 `injectResponsiveStorage`）；
 3. 本地初始化 / 读取消费点；
 4. 站点级配置的读写清单（`src/store/modules/siteConfig.ts` 的 `saveSiteConfig` / `getSiteConfig`）；
-5. 后端种子（站点级键要进 `loadjson/systemconfig.json` 的 `WEB_SITE_CONFIG`）；
+5. 后端种子（站点级键进 `settings/seeds/systemconfig.json` 的 `WEB_SITE_CONFIG`；
+   只有跨应用共用的键才留在平台层 `loadjson/systemconfig.json`）；
 6. 跑 `pnpm check:platform-config`（死参数 / 断链双检）。
 
 ## 五、样式与组件约定
@@ -75,7 +80,7 @@ pnpm test:run                                  # vitest（含契约 / 词条 / �
 pnpm typecheck && pnpm lint
 for g in bundle-size entry-closure success-code platform-config i18n as-unknown hook-length \
          font-size-literals color-literals module-cycles contract contract-usage menu-permissions \
-         version quarantine template-root; do pnpm check:$g || break; done
+         version quarantine template-root forms; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（单文件 ≤ 500 行，无基线豁免）
 ```
 

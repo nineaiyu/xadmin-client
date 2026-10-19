@@ -10,9 +10,9 @@ const tableRef = ref();
 const {
   api,
   auth,
+  addOrEditOptions,
   listColumnsFormat,
-  operationButtonsProps,
-  tableBarButtonsProps
+  operationButtonsProps
 } = usePosts(tableRef);
 </script>
 
@@ -22,8 +22,8 @@ const {
     :api="api"
     :auth="auth"
     locale-name="post"
+    :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :tableBarButtonsProps="tableBarButtonsProps"
   />
 </template>

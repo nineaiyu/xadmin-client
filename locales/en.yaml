@@ -227,6 +227,7 @@ loginPolicy:
   targetRole: Roles
   targetUser: Users
   targetValue: Target Value
+  targetValuePlaceholder: Ignored for "All Users"; role codes or usernames separated by commas
   rolePlaceholder: Role codes separated by commas
   userPlaceholder: Usernames separated by commas
   weekdays: Weekdays
@@ -919,6 +920,7 @@ post:
   codeRequired: Post code is required
   dept: Department
   deptPlaceholder: Leave empty for an organization-wide post
+  deptNoPermission: No department list permission, selection unavailable
   rank: Rank
   isActive: Active
   description: Remark
@@ -2284,6 +2286,36 @@ systemNotice:
   level: Level
   publish: Publish
   message: Message
+  message_format: Format
+  formatLocked: The format cannot be changed after creation
+  formatSwitchTitle: Switch content format
+  formatSwitchConfirm: Switching the format clears the current content. Continue?
+  markdownPlaceholder: Markdown supported; images and attachments can be uploaded
+  markdownEmptyPreview: No content
+  markdownEdit: Edit
+  markdownPreview: Preview
+  markdownBold: Bold
+  markdownItalic: Italic
+  markdownHeading: Heading
+  markdownHeadingText: Heading
+  markdownLink: Link
+  markdownLinkText: Link text
+  markdownCode: Inline code
+  markdownStrikethrough: Strikethrough
+  markdownQuote: Quote
+  markdownQuoteText: Quote text
+  markdownCodeBlock: Code block
+  markdownTable: Table
+  markdownDivider: Divider
+  markdownSplit: Split
+  markdownWordCount: "{count} chars"
+  markdownUploading: Uploading…
+  markdownUploadHint: Drag or paste images to upload
+  markdownDropHint: Drop to upload images/attachments
+  markdownUploadNoPermission: No permission to upload files
+  markdownUploadImage: Upload image
+  markdownUploadAttachment: Upload attachment
+  markdownUploadFailed: File upload failed
   title: Title
   read_user_count: Receive/Read
   notice_user: Users
@@ -3690,27 +3722,34 @@ ai:
 aiConfig:
   title: AI Configuration
   globalTitle: Global Switches
+  sectionSwitch: Feature switches
+  sectionStructured: Structured output
+  sectionQuota: Usage quotas
   assistantEnabled: Enable AI assistant
+  assistantEnabledHint: When off, the assistant page and all AI entries are unavailable
   nlQueryEnabled: Enable NL data query
-  actionEnabled: Enable AI action drafts (run after confirmation, off by default)
+  nlQueryEnabledHint: Allow natural-language data queries (interpret, then run)
+  actionEnabled: Enable AI action drafts (run after confirmation)
+  actionEnabledHint: Allow restricted action drafts (run after confirmation)
   structuredMaxTokens: Structured max tokens
   structuredMaxTokensPlaceholder: default 2048
   structuredMaxTokensHint: >-
     Token cap for action drafts / NL query when "Max tokens" is not configured.
     Reasoning models consume many thinking tokens; raise this (or set Max tokens)
     if you see "no final answer". 0 = built-in default 2048
+  quotaHint: 0 = unlimited; size the concurrency cap to your deployment
   globalSave: Save switches
   globalSaved: Global switches saved
-  metricsTitle: Usage overview (docs Q&A / NL query / actions)
-  metricsTotal: Total calls
-  metricsSuccess: Succeeded
-  metricsFailed: Failed
-  metricsRate: Success rate
-  metricsModule: By type
-  metricsTopUsers: Active users
-  metricsTokens: Tokens used
+  paneProfiles: Profiles
+  paneProfilesDesc: Maintain multiple model profiles; at most one active per purpose. Structured flows fall back to the chat profile when none is configured.
+  paneSwitch: Switches
+  paneSwitchDesc: Global switches for the assistant, NL query and action drafts; act as the fallback path when no profile is active
+  paneObservability: Observability
+  paneObservabilityDesc: Call volume, token usage and success rate; latency P95 shows only with enough samples
+  activeProfilesTitle: Active chain
+  noPermission: Your account has no AI configuration permission; please ask an administrator to grant it
   profileTitle: AI Profiles
-  profileHint: Maintain multiple profiles and activate one for all AI features; falls back to the legacy config when none is active
+  profileHint: Maintain multiple profiles; at most one active per purpose. Structured flows fall back to the chat profile when none is configured.
   create: New Profile
   edit: Edit
   test: Test
@@ -3732,16 +3771,22 @@ aiConfig:
   frequencyPenalty: Frequency Penalty
   presencePenalty: Presence Penalty
   stop: Stop Sequences
-  stopHint: Comma separated, e.g. END,STOP
+  stopHint: Comma separated, e.g. END,STOP; blank = none
   seed: Seed
+  seedHint: Leave blank for random
   timeout: Timeout (seconds)
   maxRetries: Max Retries
   contextLimit: Context Messages
   persona: Persona
   personaHint: System prompt for the chat assistant; blank uses the builtin default
   isActive: Set as default
+  isActiveHint: Only one active profile per purpose; activating replaces the old one
   remark: Remark
   sectionBasic: Connection
+  samplingGroupHint: >-
+    Temperature 0–2 (lower is more deterministic; recommended 0.2); Top P 0–1
+    (1 = no nucleus restriction); penalties -2–2 (0 = no penalty); Seed blank =
+    random; Max Tokens recommended 2048
   sectionSampling: Sampling
   sectionBehavior: Behavior
   required: Profile name, base URL and model are required
@@ -3763,8 +3808,13 @@ aiConfig:
   purposeStructured: Structured output
   purposeEmbedding: Text embedding
   purposeHint: Chat serves Q&A; structured serves NL query and action drafts (falls back to the chat profile when unset)
+  purposeChatHint: Serves chat and docs Q&A; also the fallback for structured flows when none is configured (no duplicate profile needed)
+  purposeStructuredHint: Serves NL query and action drafts; falls back to the chat profile when unset
+  purposeEmbeddingHint: Used by knowledge vector retrieval; no fallback, activate separately (embedding models are not interchangeable with chat models)
   purposeEmbeddingTip: Used by knowledge vector retrieval (OpenAI-compatible /embeddings); this purpose has no fallback — activate it and build vectors on the knowledge page
+  embeddingFieldsHint: Sampling parameters, context messages and persona do not apply to embedding
   nativeTools: Native tool calling (structured flows)
+  nativeToolsShortHint: Requires a passing tool_calls probe; otherwise falls back to prompt-JSON
   probeVision: Probe (with vision)
   trackTitle: Draft track
   trackNative: Native
@@ -3781,13 +3831,10 @@ aiConfig:
   usageFailed: Failed
   usageByFeature: By flow
   usageByDay: Daily usage
-  dashboardTitle: Run dashboard
-  dashboardHint: Success rate and latency come from the usage ledger; P95 shows only with enough samples
   dashboardRate: Success rate
   dashboardAvg: Avg latency
   dashboardP95: P95 latency
   dashboardP95LowSample: Not enough samples
-  dashboardSamples: Latency samples
   dashboardTrend: Daily calls
   dashboardByProfile: By profile
   dashboardByModel: By model
@@ -3806,13 +3853,31 @@ aiConfig:
   usageTopUsers: Top users
   deleteConfirm: Delete this profile?
   deleteDone: Profile deleted
-  activateConfirm: Switch all AI features to this profile?
+  activateConfirm: Activate this profile? The previous active profile for the same purpose will be deactivated.
   activateDone: Profile activated
-  deactivateConfirm: Deactivate this profile? AI will fall back to the legacy config
+  deactivateConfirm: Deactivate this profile? This purpose will fall back to the chat profile or the legacy config.
   deactivateDone: Profile deactivated
   testOk: Connected
   actions: Actions
 
+  AI_ASSISTANT_ENABLED: Enable AI assistant
+  AI_NL_QUERY_ENABLED: Enable NL data query
+  AI_ACTION_ENABLED: Enable AI action drafts (run after confirmation)
+  AI_NATIVE_TOOLS_ENABLED: Native tool calling (structured flows)
+  AI_STRUCTURED_MAX_TOKENS: Structured max tokens
+  AI_QUOTA_USER_DAILY_CALLS: Daily calls per user
+  AI_QUOTA_USER_DAILY_TOKENS: Daily tokens per user
+  AI_QUOTA_MAX_CONCURRENT_STREAMS: Concurrent streams (global)
+  base_url: Base URL
+  api_key: API Key
+  max_tokens: Max tokens
+  top_p: Top P
+  frequency_penalty: Frequency penalty
+  presence_penalty: Presence penalty
+  max_retries: Max retries
+  context_limit: Context messages
+  capabilities: Capabilities
+  probed_at: Probed at
 dform:
   detailFallback: Failed to load details, showing list data instead
   noApprovalNeeded: No approval required
@@ -3862,7 +3927,7 @@ dform:
   formUnavailable: This form is disabled or does not exist
   requiredFieldMissing: '"{name}" is required, please fill it in before submitting'
   requiredItemTip: This field is required
-  unsupportedFieldType: "Unsupported field type \"{type}\". Please contact the form designer"
+  unsupportedFieldType: 'Unsupported field type "{type}". Please contact the form designer'
   saveOk: Saved
   typeInput: Input
   typeTextarea: Textarea

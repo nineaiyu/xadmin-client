@@ -58,6 +58,7 @@ export type SearchColumnsData = {
         | "string"
         | "text"
         | "textarea"
+        | "time"
       )
     | string
   ) &

@@ -43,6 +43,7 @@ const props = withDefaults(defineProps<settingItemProps>(), {
   formProps: () => ({}),
   queryParams: () => ({}),
   onSaved: undefined,
+  columnDecorator: undefined,
   auth: () => ({
     partialUpdate: false,
     retrieve: false,
@@ -114,6 +115,9 @@ const getData = () => {
           column["colProps"] = FORM_SPAN_FULL;
           (column["fieldProps"] as { disabled?: boolean })["disabled"] =
             !props.auth.partialUpdate;
+          // 消费方列加工口（可选）：E2E 锚点、控件微调等页面级诉求，
+          // 避免各页面复制一份 SettingItem
+          props.columnDecorator?.(column);
         });
         addOrEditData.value.formData = pickBy(
           cloneDeep(addOrEditDefaultValue.value),

@@ -52,12 +52,13 @@ test.describe("审批规则方法限定", () => {
 
     try {
       await openRulePage(page);
-      await page.getByRole("button", { name: "新增审批规则" }).first().click();
+      // 新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+      await page.getByRole("button", { name: "新增", exact: true }).click();
       const dialog = page.locator(".el-dialog:visible").first();
       await expect(dialog).toBeVisible({ timeout: 15_000 });
 
       // 规则名 + 自定义路径正则（绕开接口清单目录，专注方法限定联调）
-      await dialog.getByPlaceholder("例如「书籍删除审批」").fill(ruleName);
+      await dialog.getByLabel("规则名称").fill(ruleName);
       await dialog
         .getByPlaceholder(/自定义路径正则/)
         .fill("api/identity/user/(?P<pk>[^/.]+)$");

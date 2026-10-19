@@ -122,16 +122,13 @@ test("报表与大屏主链路", async ({ page }) => {
 
   // ---- 大屏：创建 + 投屏 ----
   await openMenuPath(page, ["数据分析"], "/analysis/screen/index");
-  await page.getByRole("button", { name: "新建大屏" }).click();
-  const screenDialog = page
-    .locator(".el-dialog")
-    .filter({ hasText: "新建大屏" });
+  // 新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+  await page.getByRole("button", { name: "新增", exact: true }).click();
+  const screenDialog = page.locator(".el-dialog:visible").first();
   await screenDialog.getByLabel("名称").fill(screenName);
   // 仪表盘序列是 el-select multiple：选完不自动收起，残留下拉会拦截「保存」点击
   // （webkit 必现、chromium 时序侥幸），必须走多选辅助（选完点标题收起并等隐藏）
-  await pickMultiSelectOptions(page, screenDialog, "仪表盘序列", [
-    dashboardName
-  ]);
+  await pickMultiSelectOptions(page, screenDialog, "仪表盘", [dashboardName]);
   await screenDialog.getByRole("button", { name: "保存" }).click();
   await expect(screenDialog).not.toBeVisible();
 
@@ -192,15 +189,11 @@ test("大屏远程控制：管理端下发切换，展示端实时跟随", async
 
   // ---- 大屏：仪表盘序列按 A → B 勾选（顺序即服务端下标序） ----
   await openMenuPath(page, ["数据分析"], "/analysis/screen/index");
-  await page.getByRole("button", { name: "新建大屏" }).click();
-  const screenDialog = page
-    .locator(".el-dialog")
-    .filter({ hasText: "新建大屏" });
+  // 新建/编辑已迁到框架元数据表单：入口是工具栏默认「新增」按钮
+  await page.getByRole("button", { name: "新增", exact: true }).click();
+  const screenDialog = page.locator(".el-dialog:visible").first();
   await screenDialog.getByLabel("名称").fill(screenName);
-  await pickMultiSelectOptions(page, screenDialog, "仪表盘序列", [
-    dashA,
-    dashB
-  ]);
+  await pickMultiSelectOptions(page, screenDialog, "仪表盘", [dashA, dashB]);
   await screenDialog.getByRole("button", { name: "保存" }).click();
   await expect(screenDialog).not.toBeVisible();
 

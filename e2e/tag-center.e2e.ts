@@ -60,15 +60,42 @@ test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", as
   const userId = String((await created.json())?.data?.pk ?? "");
   expect(userId).not.toBe("");
 
-  // 1) 标签管理页：新建标签（ReDialog + TagForm）+ 列表出现（使用计数 0）
+  // 1) 标签管理页：新建标签（框架元数据表单）+ 列表出现（使用计数 0）
   await openTagCenter(page);
-  await page
-    .getByRole("button", { name: /新建标签/ })
-    .first()
-    .click();
-  const dialog = page.locator(".el-dialog", { hasText: "新建标签" }).first();
+  await page.getByRole("button", { name: "新增", exact: true }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
   await expect(dialog).toBeVisible();
-  await dialog.getByTestId("tag-name").fill(TAG_NAME);
+  await dialog
+    .locator(".el-form-item")
+    .filter({ hasText: "标签名称" })
+    .locator("input")
+    .fill(TAG_NAME);
+  // 颜色列由后端 ColorField（input_type=color）驱动，必须是颜色选择器而非文本输入
+  const colorItem = dialog
+    .locator(".el-form-item")
+    .filter({ hasText: "颜色" })
+    .first();
+  await expect(colorItem.locator(".el-color-picker")).toBeVisible();
+  await colorItem.locator(".el-color-picker__trigger").click();
+  // Element Plus 2.14 的取色面板是 `.el-color-picker__panel`（非旧版 el-color-dropdown）；
+  // 直接点语义色板（页面注入的项目色板），再从 DOM 读出实际颜色用于落库断言
+  const swatch = page
+    .locator(
+      ".el-color-picker__panel:visible .el-color-predefine__color-selector"
+    )
+    .first();
+  const rgb = await swatch
+    .locator("div")
+    .evaluate(el => getComputedStyle(el).backgroundColor);
+  const pickedColor = `#${(rgb.match(/\d+/g) ?? [])
+    .slice(0, 3)
+    .map(v => Number(v).toString(16).padStart(2, "0"))
+    .join("")}`;
+  await swatch.click();
+  // 面板确认按钮（EP 2.14：`.el-color-footer__btn`）提交选中值
+  await page
+    .locator(".el-color-picker__panel:visible .el-color-footer__btn")
+    .click();
   await dialog.getByRole("button", { name: /保存|确定/ }).click();
   const tagRow = page.getByRole("row", { name: new RegExp(TAG_NAME) }).first();
   await expect(tagRow).toBeVisible({ timeout: 10_000 });
@@ -87,6 +114,13 @@ test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", as
     ).pk ?? ""
   );
   expect(tagPk).not.toBe("");
+  // 颜色写入路径：值必须按原样落库（证明选择器绑定的是同一个 color 字段）
+  const savedTag = await (
+    await page.request.get(`${FRONT_URL}/api/system/tags?name=${TAG_NAME}`, {
+      headers: auth
+    })
+  ).json();
+  expect(savedTag?.data?.results?.[0]?.color).toBe(pickedColor);
   const assigned = await page.request.post(
     `${FRONT_URL}/api/system/tags/assign`,
     {

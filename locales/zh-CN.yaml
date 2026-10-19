@@ -227,6 +227,7 @@ loginPolicy:
   targetRole: 指定角色
   targetUser: 指定用户
   targetValue: 对象值
+  targetValuePlaceholder: 目标对象为「全部用户」时忽略；角色编码或用户名（多个用逗号分隔）
   rolePlaceholder: 角色编码（多个用逗号分隔）
   userPlaceholder: 用户名（多个用逗号分隔）
   weekdays: 生效星期
@@ -919,6 +920,7 @@ post:
   codeRequired: 请填写岗位编码
   dept: 所属部门
   deptPlaceholder: 留空为组织通用岗
+  deptNoPermission: 无部门列表权限，暂不可选择
   rank: 排序
   isActive: 启用状态
   description: 备注
@@ -2284,6 +2286,36 @@ systemNotice:
   level: 通知级别
   publish: 是否发布
   message: 内容
+  message_format: 正文格式
+  formatLocked: 正文格式创建后不可修改
+  formatSwitchTitle: 切换正文格式
+  formatSwitchConfirm: 切换格式会清空当前正文，确定继续吗？
+  markdownPlaceholder: 支持 Markdown 语法，可上传图片与附件
+  markdownEmptyPreview: 暂无内容
+  markdownEdit: 编辑
+  markdownPreview: 预览
+  markdownBold: 加粗
+  markdownItalic: 斜体
+  markdownHeading: 标题
+  markdownHeadingText: 标题
+  markdownLink: 链接
+  markdownLinkText: 链接文字
+  markdownCode: 行内代码
+  markdownStrikethrough: 删除线
+  markdownQuote: 引用
+  markdownQuoteText: 引用内容
+  markdownCodeBlock: 代码块
+  markdownTable: 表格
+  markdownDivider: 分割线
+  markdownSplit: 分栏
+  markdownWordCount: "{count} 字"
+  markdownUploading: 上传中…
+  markdownUploadHint: 支持拖拽或粘贴图片上传
+  markdownDropHint: 松开上传图片/附件
+  markdownUploadNoPermission: 没有文件上传权限
+  markdownUploadImage: 上传图片
+  markdownUploadAttachment: 上传附件
+  markdownUploadFailed: 文件上传失败
   title: 标题
   read_user_count: 接收人数/已读人数
   notice_user: 用户
@@ -3690,26 +3722,33 @@ ai:
 aiConfig:
   title: AI 配置
   globalTitle: 全局开关
+  sectionSwitch: 功能开关
+  sectionStructured: 结构化输出
+  sectionQuota: 用量配额
   assistantEnabled: 启用 AI 助手
+  assistantEnabledHint: 关闭后助手页与全部 AI 入口不可用
   nlQueryEnabled: 启用数据问答（NL 查数）
-  actionEnabled: 启用 AI 动作草稿（确认后执行，默认关闭）
+  nlQueryEnabledHint: 允许自然语言查数（解释后执行）
+  actionEnabled: 启用 AI 动作草稿（确认后执行）
+  actionEnabledHint: 允许生成受限动作草稿（确认后执行）
   structuredMaxTokens: 结构化输出上限
   structuredMaxTokensPlaceholder: 默认 2048
   structuredMaxTokensHint: >-
     动作草稿 / NL 查数在未配置「Max tokens」时的 token 上限。思考型模型（R1
     等）思考消耗大，遇到「回答未完成」可调大此值或改配 Max tokens；0 = 使用内置默认 2048
+  quotaHint: 0 = 不限；并发上限建议按部署规模设置
   globalSave: 保存开关
   globalSaved: 全局开关已保存
-  metricsTitle: 调用观测（文档问答 / NL 查数 / 受限动作）
-  metricsTotal: 调用总数
-  metricsSuccess: 成功
-  metricsFailed: 失败
-  metricsRate: 成功率
-  metricsModule: 类型分布
-  metricsTopUsers: 活跃用户
-  metricsTokens: Token 用量
+  paneProfiles: 配置档案
+  paneProfilesDesc: 维护多套模型档案；每种用途至多激活一套，未配置结构化档案时回落对话档案
+  paneSwitch: 功能开关
+  paneSwitchDesc: 助手、NL 查数、动作草稿等全局开关；档案未激活时仍作为回落通路生效
+  paneObservability: 运行观测
+  paneObservabilityDesc: 调用量、Token 消耗与成功率；延迟 P95 需样本足够才给出
+  activeProfilesTitle: 当前生效链路
+  noPermission: 当前账号没有 AI 配置相关权限，请联系管理员授权
   profileTitle: AI 配置档案
-  profileHint: 可维护多套配置并激活其中一套，供全部 AI 功能使用；未激活任何档案时回落到历史配置
+  profileHint: 可维护多套配置；每种用途至多激活一套，未配置结构化档案时回落对话档案
   create: 新建档案
   edit: 编辑
   test: 测试
@@ -3731,16 +3770,21 @@ aiConfig:
   frequencyPenalty: 频率惩罚
   presencePenalty: 存在惩罚
   stop: 停止序列
-  stopHint: 逗号分隔，如：结束,STOP
+  stopHint: 逗号分隔，如：结束,STOP；留空 = 不设置
   seed: 随机种子
+  seedHint: 留空 = 随机
   timeout: 超时（秒）
   maxRetries: 重试次数
   contextLimit: 聊天上下文条数
   persona: 助手人设
   personaHint: 聊天室 AI 的系统提示词，留空使用内置默认
   isActive: 设为默认配置
+  isActiveHint: 同用途仅一个激活档案，激活会顶掉旧的
   remark: 备注
   sectionBasic: 连接配置
+  samplingGroupHint: >-
+    温度 0~2（越低越稳定，建议 0.2）；Top P 0~1（1 = 不限制）；惩罚 -2~2（0 = 不惩罚）；
+    随机种子留空 = 随机；最大输出 tokens 建议 2048
   sectionSampling: 采样参数
   sectionBehavior: 行为参数
   required: 请填写档案名称、接口地址与模型
@@ -3762,8 +3806,13 @@ aiConfig:
   purposeStructured: 结构化输出
   purposeEmbedding: 文本向量化
   purposeHint: 对话问答供聊天/文档问答；结构化输出供 NL 查数与动作草稿（未配置时回落对话档案）
+  purposeChatHint: 供聊天 / 文档问答；结构化链路未单独配置时自动回落此档案（无需重复建档）
+  purposeStructuredHint: 供 NL 查数与动作草稿；未配置时回落对话档案
+  purposeEmbeddingHint: 供知识库向量检索；不做回落，需单独激活（向量模型不可与对话模型混用）
   purposeEmbeddingTip: 供知识库向量检索（OpenAI 兼容 /embeddings 接口）；该用途不做回落，激活后在知识库页「构建向量」
+  embeddingFieldsHint: 向量化用途不使用采样参数、上下文条数与助手人设
   nativeTools: 原生工具调用（结构化链路）
+  nativeToolsShortHint: 需档案探测通过 tool_calls，否则回落 prompt-JSON
   probeVision: 探测（含多模态）
   trackTitle: 草稿链路
   trackNative: 原生轨道
@@ -3780,13 +3829,10 @@ aiConfig:
   usageFailed: 失败数
   usageByFeature: 链路分布
   usageByDay: 日用量
-  dashboardTitle: 运行看板
-  dashboardHint: 成功率与延迟取自用量账本；P95 需样本足够才给出
   dashboardRate: 成功率
   dashboardAvg: 平均延迟
   dashboardP95: P95 延迟
   dashboardP95LowSample: 抽样不足
-  dashboardSamples: 延迟样本数
   dashboardTrend: 日调用量
   dashboardByProfile: 按档案分布
   dashboardByModel: 按模型分布
@@ -3805,13 +3851,31 @@ aiConfig:
   usageTopUsers: 用户用量 Top
   deleteConfirm: 确定删除该档案吗？
   deleteDone: 档案已删除
-  activateConfirm: 确定将 AI 全部功能切换到该档案吗？
+  activateConfirm: 确定激活该档案吗？同用途的旧档案将自动停用。
   activateDone: 档案已激活
-  deactivateConfirm: 确定停用该档案吗？AI 将回落到历史配置
+  deactivateConfirm: 确定停用该档案吗？该用途将回落到对话档案或历史配置。
   deactivateDone: 档案已停用
   testOk: 连接成功
   actions: 操作
 
+  AI_ASSISTANT_ENABLED: 启用 AI 助手
+  AI_NL_QUERY_ENABLED: 启用数据问答（NL 查数）
+  AI_ACTION_ENABLED: 启用 AI 动作草稿（确认后执行）
+  AI_NATIVE_TOOLS_ENABLED: 原生工具调用（结构化链路）
+  AI_STRUCTURED_MAX_TOKENS: 结构化输出上限
+  AI_QUOTA_USER_DAILY_CALLS: 单用户日调用次数
+  AI_QUOTA_USER_DAILY_TOKENS: 单用户日 token 上限
+  AI_QUOTA_MAX_CONCURRENT_STREAMS: 全局并发流式上限
+  base_url: 接口地址
+  api_key: API 密钥
+  max_tokens: 最大输出 tokens
+  top_p: Top P
+  frequency_penalty: 频率惩罚
+  presence_penalty: 存在惩罚
+  max_retries: 重试次数
+  context_limit: 聊天上下文条数
+  capabilities: 能力画像
+  probed_at: 探测时间
 dform:
   detailFallback: 详情加载失败，当前展示列表数据
   noApprovalNeeded: 无需审批

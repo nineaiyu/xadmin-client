@@ -1,6 +1,9 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult } from "@/api/types";
 
+/** 公告正文格式（创建时确定，编辑期不可切换） */
+export type MessageFormat = "html" | "markdown";
+
 class NoticeApi extends BaseApi {
   announcement = (data?: object) => {
     return this.request<BaseResult>(

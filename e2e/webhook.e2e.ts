@@ -18,12 +18,14 @@ test("Webhook 订阅与投递审计主链路", async ({ page }) => {
   // ---- 建订阅（指向不可达端口，触发失败路径） ----
   await openMenuPath(page, ["集成管理"], "/integration/subscription/index");
   // RePlusPage 列表以工具栏按钮为加载锚点（表格行需等种子/新建数据）
-  await expect(page.getByRole("button", { name: "新建订阅" })).toBeVisible({
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
 
-  await page.getByRole("button", { name: "新建订阅" }).click();
-  const dialog = page.locator(".el-dialog").filter({ hasText: "新建订阅" });
+  await page.getByRole("button", { name: "新增", exact: true }).click();
+  const dialog = page.locator(".el-dialog:visible").first();
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("名称").fill(subName);
   await dialog.getByLabel("地址").fill("http://127.0.0.1:9/hook");

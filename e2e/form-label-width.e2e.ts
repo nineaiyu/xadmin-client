@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { PANEL_ACTION_TIMEOUT, login, openMenuPath } from "./helpers";
 
 /**
  * 表单标签宽度守护。
@@ -65,9 +65,9 @@ test("表单标签宽度：长标签不折行（书籍弹窗）", async ({ page 
   await page.getByRole("button", { name: "新增" }).click();
 
   const dialog = page.locator(".el-dialog:visible").first();
-  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await expect(dialog).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
-    timeout: 10_000
+    timeout: PANEL_ACTION_TIMEOUT
   });
   // 等宽度校正落地（挂载后按真实内容实测一次）
   await page.waitForTimeout(400);
@@ -89,9 +89,9 @@ test("表单标签宽度：标签变宽后半宽列控件不被压塌（书籍�
   await page.getByRole("button", { name: "新增" }).click();
 
   const dialog = page.locator(".el-dialog:visible").first();
-  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await expect(dialog).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
-    timeout: 10_000
+    timeout: PANEL_ACTION_TIMEOUT
   });
   await page.waitForTimeout(400);
 
@@ -102,7 +102,7 @@ test("表单标签宽度：标签变宽后半宽列控件不被压塌（书籍�
     .filter({ hasText: "售价" })
     .first()
     .locator(".el-input-number");
-  await expect(priceNumber).toBeVisible();
+  await expect(priceNumber).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
   const priceBox = await priceNumber.boundingBox();
   expect(priceBox?.width ?? 0).toBeGreaterThanOrEqual(120);
 
@@ -138,9 +138,9 @@ test("表单标签宽度：带帮助图标的标签不折行（间隔调度弹�
   await page.getByRole("button", { name: "新增" }).first().click();
 
   const dialog = page.locator(".el-dialog:visible").first();
-  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  await expect(dialog).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
-    timeout: 10_000
+    timeout: PANEL_ACTION_TIMEOUT
   });
   await page.waitForTimeout(400);
 

@@ -56,11 +56,24 @@ const MUST_CODE_EVIDENCE = [
 const serverDir = path.resolve(
   process.env.XADMIN_SERVER_DIR ?? "../xadmin-server"
 );
-const menuJsonPath = path.join(serverDir, "loadjson", "menu.json");
+// 种子按应用分层：平台层 loadjson/ + 各应用 <app>/seeds/（同一模型可能来自多个文件）
+function collectMenuSeedFiles(root) {
+  const files = [path.join(root, "loadjson", "menu.json")];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const seedDir = path.join(root, entry.name, "seeds");
+    if (existsSync(path.join(seedDir, "manifest.json"))) {
+      files.push(path.join(seedDir, "menu.json"));
+    }
+  }
+  return files.filter(file => existsSync(file));
+}
 
-if (!existsSync(menuJsonPath)) {
+const menuSeedFiles = collectMenuSeedFiles(serverDir);
+
+if (menuSeedFiles.length === 0) {
   console.log(
-    `[skip] 未找到菜单种子：${menuJsonPath}\n` +
+    `[skip] 未找到菜单种子：${serverDir}\n` +
       "       如需对账请设置 XADMIN_SERVER_DIR，或在双仓同工作区环境下运行。"
   );
   process.exit(0);
@@ -68,7 +81,8 @@ if (!existsSync(menuJsonPath)) {
 
 // ---------- 种子侧 ----------
 
-const menuRows = JSON.parse(readFileSync(menuJsonPath, "utf-8"))
+const menuRows = menuSeedFiles
+  .flatMap(file => JSON.parse(readFileSync(file, "utf-8")))
   .filter(row => row.model === "system.menu")
   .map(row => row.fields);
 

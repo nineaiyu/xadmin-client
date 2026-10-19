@@ -8,6 +8,7 @@ import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
 import { getLayoutScrollElement } from "@/utils/dom";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { dialogDomProps } from "./attrs";
 
 defineOptions({
   name: "ReDialog"
@@ -21,6 +22,14 @@ const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
  */
 const fullscreenMap = ref<Record<string | number, boolean>>({});
 const { t } = useI18n();
+
+/**
+ * 是否渲染自定义 `#header`：`headerRenderer` 自绘头部（调用方全权渲染，
+ * 内部按钮无从插入），否则默认渲染「标题 + 全屏切换」头部，仅显式传
+ * `fullscreenIcon: false` 关闭。
+ */
+const showFullscreenHeader = (options: DialogOptions) =>
+  Boolean(options?.headerRenderer) || options?.fullscreenIcon !== false;
 
 /** 当前弹层是否全屏（运行时状态优先，回退打开时的初始配置） */
 const isFullscreen = (options: DialogOptions, index: number) =>
@@ -175,7 +184,7 @@ function contentProps(options: DialogOptions) {
   <el-dialog
     v-for="(options, index) in dialogStore"
     :key="getDialogUid(options) ?? index"
-    v-bind="options"
+    v-bind="dialogDomProps(options)"
     v-model="options.visible"
     class="pure-dialog"
     :fullscreen="isFullscreen(options, index)"
@@ -187,10 +196,14 @@ function contentProps(options: DialogOptions) {
   >
     <!-- header -->
     <template
-      v-if="options?.fullscreenIcon || options?.headerRenderer"
+      v-if="showFullscreenHeader(options)"
       #header="{ close, titleId, titleClass }"
     >
-      <div v-if="options?.fullscreenIcon" class="flex-bc">
+      <component
+        :is="options?.headerRenderer?.({ close, titleId, titleClass })"
+        v-if="options?.headerRenderer"
+      />
+      <div v-else class="flex-bc">
         <span :id="titleId" :class="titleClass">{{ options?.title }}</span>
         <!-- 静态 fullscreen 选项 = 常驻全屏（无可切换按钮）；
              运行时全屏（点击切换）保留按钮，允许再点退出 -->
@@ -206,10 +219,6 @@ function contentProps(options: DialogOptions) {
           />
         </i>
       </div>
-      <component
-        :is="options?.headerRenderer?.({ close, titleId, titleClass })"
-        v-else
-      />
     </template>
     <component
       v-bind="contentProps(options)"

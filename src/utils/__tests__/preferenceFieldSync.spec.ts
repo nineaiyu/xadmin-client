@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -18,20 +18,41 @@ import { describe, expect, it } from "vitest";
  *   7) `src/utils/preferenceDiff.ts` 的 `SNAPSHOT_NAMESPACES`（复制偏好为全量快照，
  *      按命名空间整包覆盖：命名字段天然包含，新命名空间才需登记）
  *   8) `public/platform-config.json` 平台默认值
- *   9) `xadmin-server/loadjson/systemconfig.json` 的 `WEB_SITE_CONFIG` 种子
- *      （单仓检出时此处跳过，其余 8 点仍强制校验）
+ *   9) `xadmin-server` 的 `systemconfig` 种子（平台层 `loadjson/` + 各 app 的
+ *      `seeds/` 层，取并集；单仓检出时此处跳过，其余 8 点仍强制校验）
  *
  * 新增偏好：把 Pascal 名登记到 SERVER_PERSISTED_FIELDS（configure 命名空间）或
  * LAYOUT_PERSISTED_FIELDS（layout 命名空间，如主题色）。
  */
 
 const ROOT = resolve(__dirname, "../../..");
-const SERVER_SEED = resolve(
-  ROOT,
-  "../xadmin-server/loadjson/systemconfig.json"
-);
+const SERVER_ROOT = resolve(ROOT, "../xadmin-server");
 
 const read = (p: string) => readFileSync(join(ROOT, p), "utf-8");
+
+/**
+ * 跨层发现 systemconfig 种子文件：平台层 `loadjson/` + 各已注册 app 的 `seeds/`
+ * （种子按 app 分层后同一模型分布在多个文件，按单文件读取会静默漏行——
+ * 与服务端 `read_model_rows` 同口径）。目录不存在（单仓检出）时返回空表。
+ */
+function discoverSystemconfigSeeds(): string[] {
+  if (!existsSync(SERVER_ROOT)) return [];
+  const found: string[] = [];
+  const platform = join(SERVER_ROOT, "loadjson/systemconfig.json");
+  if (existsSync(platform)) found.push(platform);
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(SERVER_ROOT, { withFileTypes: true });
+  } catch {
+    return found;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const candidate = join(SERVER_ROOT, entry.name, "seeds/systemconfig.json");
+    if (existsSync(candidate)) found.push(candidate);
+  }
+  return found;
+}
 
 /** configure 命名空间：随站点配置持久化的界面偏好（服务端字段名） */
 const SERVER_PERSISTED_FIELDS = [
@@ -165,17 +186,25 @@ const platformKeys = declaredKeys(
 const responsiveKeys = declaredKeys(/configure:\s*\{([\s\S]*?)\n\s*\};/);
 const layoutKeys = declaredKeys(/\n\s*layout:\s*\{([\s\S]*?)\n\s*\};/);
 
-const seedKeys = existsSync(SERVER_SEED)
-  ? new Set(
-      Object.keys(
-        (
-          JSON.parse(readFileSync(SERVER_SEED, "utf-8")) as Array<{
-            fields: { key: string; value: unknown };
-          }>
-        ).find(row => row.fields.key === "WEB_SITE_CONFIG")?.fields.value ?? {}
-      )
-    )
-  : null;
+const seedKeys = (() => {
+  const seedFiles = discoverSystemconfigSeeds();
+  if (seedFiles.length === 0) return null;
+  const keys = new Set<string>();
+  for (const file of seedFiles) {
+    const rows = JSON.parse(readFileSync(file, "utf-8")) as Array<{
+      fields: { key: string; value: unknown };
+    }>;
+    const row = rows.find(item => item.fields.key === "WEB_SITE_CONFIG");
+    if (row && row.fields.value && typeof row.fields.value === "object") {
+      for (const key of Object.keys(
+        row.fields.value as Record<string, unknown>
+      )) {
+        keys.add(key);
+      }
+    }
+  }
+  return keys;
+})();
 
 /** 逐点检查一个字段是否在 9 处都同步（namespace = configure | layout） */
 function checkField(pascal: string, namespace: "configure" | "layout") {

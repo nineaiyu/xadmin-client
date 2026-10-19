@@ -77,6 +77,12 @@ export function useAiConsole() {
     { immediate: true }
   );
 
+  // 滚动容器就绪：历史可能先于右栏挂载返回（此时 loadHistory 的 scrollToBottom
+  // 没有容器可滚），元素就绪后补一次到底，保证进入页面即看到最新消息
+  watch(scroller, element => {
+    if (element) scrollToBottom();
+  });
+
   onUnmounted(() => {
     abortStream();
   });

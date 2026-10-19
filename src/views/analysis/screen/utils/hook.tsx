@@ -1,4 +1,4 @@
-import { onMounted, reactive, ref, type Ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth, usePageAuth } from "@/router/utils";
@@ -12,23 +12,21 @@ import type { DashboardItem } from "@/api/dataset/datasets";
 import { useScreenColumns } from "./useScreenColumns";
 import { useScreenDialogs } from "./useScreenDialogs";
 import { useScreenButtons } from "./useScreenButtons";
+import { useScreenFormOptions } from "./useScreenFormOptions";
 
 /**
  * 大屏模板：CRUD + 投屏 + 远程控制。
  *
- * - 新建/编辑与远程控制弹窗见 useScreenDialogs（ReDialog + 表单，行数门禁拆分）；
+ * - 新建/编辑走框架元数据表单（`useScreenFormOptions`），远程控制弹窗见
+ *   useScreenDialogs；
  * - 列渲染见 useScreenColumns、按钮装配见 useScreenButtons；
  * - 删除保留框架默认入口；投屏为行内按钮（跳独立全屏页，保留原交互）。
  */
-export function useScreen(tableRef: Ref) {
+export function useScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const api = reactive(screenApi);
   const auth = usePageAuth("DataScreen");
-  auth.create = false;
-  auth.update = false;
-  auth.partialUpdate = false;
-  const canCreate = hasAuth("create:DataScreen");
   const canEdit = hasAuth("partialUpdate:DataScreen");
   const canCommand = hasAuth("command:DataScreen");
 
@@ -45,10 +43,8 @@ export function useScreen(tableRef: Ref) {
   });
 
   const { listColumnsFormat } = useScreenColumns({ dashboards });
-  const { openControl, openDialog } = useScreenDialogs({
-    dashboards,
-    tableRef
-  });
+  const { addOrEditOptions } = useScreenFormOptions({ t, dashboards });
+  const { openControl } = useScreenDialogs({ dashboards });
 
   /** 投屏：新开独立全屏页（隐藏静态路由，保留原交互） */
   const display = (row: ScreenItem) => {
@@ -60,21 +56,19 @@ export function useScreen(tableRef: Ref) {
     router.push({ path: "/analysis/screen/designer", query: { pk: row.pk } });
   };
 
-  const { operationButtonsProps, tableBarButtonsProps } = useScreenButtons({
-    canCreate,
+  const { operationButtonsProps } = useScreenButtons({
     canEdit,
     canCommand,
     display,
     design,
-    openControl,
-    openDialog
+    openControl
   });
 
   return {
     api,
     auth,
+    addOrEditOptions,
     listColumnsFormat,
-    operationButtonsProps,
-    tableBarButtonsProps
+    operationButtonsProps
   };
 }

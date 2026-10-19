@@ -35,6 +35,22 @@ export function parseNoticeUserParam(
 }
 
 /**
+ * 正文是否有实际内容（切换正文格式前是否需要二次确认）。
+ *
+ * 富文本编辑器空文档会序列化成 `<p><br></p>` / `<p>&nbsp;</p>`，直接 trim 会被
+ * 误判为非空；这里剥离标签与占位空白后再判断，图片/视频/表格等无文字结构仍算内容。
+ */
+export function noticeMessageHasContent(message: unknown): boolean {
+  const raw = String(message ?? "");
+  if (!raw.trim()) return false;
+  const text = raw
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+  return text.length > 0 || /<(img|video|audio|table|iframe)\b/i.test(raw);
+}
+
+/**
  * 接收对象列（notice_user/dept/role/post）↔ 对应搜索权限码契约：
  * 仅当通知类型匹配且具备对应搜索权限时该列才进表单。
  */

@@ -10,10 +10,10 @@ const tableRef = ref();
 const {
   api,
   auth,
+  addOrEditOptions,
   listColumnsFormat,
-  operationButtonsProps,
-  tableBarButtonsProps
-} = useScreen(tableRef);
+  operationButtonsProps
+} = useScreen();
 </script>
 
 <template>
@@ -21,10 +21,10 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :addOrEditOptions="addOrEditOptions"
     locale-name="dataScreen"
     :selection="false"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
-    :tableBarButtonsProps="tableBarButtonsProps"
   />
 </template>

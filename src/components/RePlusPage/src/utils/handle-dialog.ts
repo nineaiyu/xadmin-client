@@ -25,8 +25,65 @@ const modeFuncMap = {
   ) => void;
 };
 
+/**
+ * 取列解析器的上下文列表：
+ * - 元数据已下发该键 → 使用装配好的列（页面在其上就地微调）；
+ * - 元数据未下发（如资源授权编辑器这类「独立端点 + 专属控件」的扩展字段）
+ *   → 提供一个只有 `prop` / `_column.key` 的空列，页面解析器可自行建立
+ *   `valueType` / `renderField` / `label` / `fieldProps` 并作为新增表单字段注入。
+ *
+ * 扩展字段同样进入 `uniqueArrayObj([...rawColumns, ...editColumns], "prop")` 的合并，
+ * 因此会出现在元数据字段之后（提交载荷与普通字段同通道，无需额外契约）。
+ */
+export function resolveFormColumn(
+  rawColumnsMap: Record<string, RawColumn>,
+  key: string
+): EditableColumn {
+  return (
+    (rawColumnsMap[key] as EditableColumn | undefined) ?? {
+      prop: key,
+      _column: { key }
+    }
+  );
+}
+
+/**
+ * 合并表单 props：元数据生成的 `rules`（必填/类型校验）与页面补充的 `rules`
+ * （跨字段校验、扩展字段必填）按字段**合并**而不是整块覆盖。
+ *
+ * 页面经 `addOrEditOptions.formProps` 只声明自己关心的字段时，不能把框架按
+ * 元数据生成的校验规则丢掉（否则 name/url 等必填只剩红点、提交打到后端才报错）。
+ */
+export function mergeFormProps(
+  rawFormProps?: Record<string, unknown>,
+  formPropsResult?: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {
+    ...(rawFormProps ?? {}),
+    ...(formPropsResult ?? {})
+  };
+  if (rawFormProps?.rules || formPropsResult?.rules) {
+    merged.rules = {
+      ...((rawFormProps?.rules as Record<string, unknown>) ?? {}),
+      ...((formPropsResult?.rules as Record<string, unknown>) ?? {})
+    };
+  }
+  return merged;
+}
+
 /** 导入/导出弹窗统一宽度（两弹窗视觉对称，取 md 档） */
 export const EXPORT_IMPORT_DIALOG_WIDTH = dialogSize("md");
+
+/**
+ * 新增/编辑表单弹层默认宽度：md(640) / lg(760) 对两列表单仍偏窄（标签 + 控件易被压缩），
+ * 默认取 xxl(960)；页面需要更宽/更窄时经 `dialogDrawerOptions.width` 显式覆盖。
+ */
+export const DEFAULT_FORM_DIALOG_WIDTH = dialogSize("xxl");
+
+/** 弹层宽度解析：页面显式配置优先，未配置时取表单默认档位。 */
+export function resolveFormDialogWidth(options?: { width?: string }): string {
+  return options?.width ?? DEFAULT_FORM_DIALOG_WIDTH;
+}
 
 /**
  * 动态属性表：每个键的值可以是静态值，也可以是接收表单上下文求值的解析器。
@@ -204,7 +261,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
         const resolved = getValue({
           ...cloneDeep({
             ...formOptions,
-            column: rawColumnsMap[key] as EditableColumn
+            column: resolveFormColumn(rawColumnsMap, key)
           }),
           formValue: formOptions.formValue
         });
@@ -224,7 +281,7 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
 
   const clientWidth = document.documentElement.clientWidth;
   const minWidth = Number((formOptions.minWidth ?? "600px").replace("px", ""));
-  const width = formOptions?.dialogDrawerOptions?.width ?? dialogSize("md");
+  const width = resolveFormDialogWidth(formOptions?.dialogDrawerOptions);
   let numberWidth: number;
   if (width.endsWith("%") || width.endsWith("vw")) {
     numberWidth =
@@ -252,7 +309,10 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
         [...(formOptions?.rawColumns ?? []), ...Object.values(editColumns)],
         "prop"
       ),
-      formProps: { ...formOptions?.rawFormProps, ...formPropsResult },
+      formProps: mergeFormProps(
+        formOptions?.rawFormProps,
+        formPropsResult
+      ) as PlusFormProps,
       tabsProps: { ...tabsPropsResult }
     },
     draggable: true,

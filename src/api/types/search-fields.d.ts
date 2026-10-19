@@ -55,6 +55,7 @@ export type SearchFieldsData = {
         | "string"
         | "text"
         | "textarea"
+        | "time"
       )
     | string
   ) &

@@ -69,6 +69,11 @@ jobs:
         # 防巨型文件回潮：>500 行新增即失败；存量基线只减不增（scripts/check-file-length.mjs）
         run: node scripts/check-file-length.mjs
 
+      - name: Handwritten forms gate
+        # 表单选型收口：RePlusPage 模块内的手写表单、或单文件 >12 个 el-form-item，
+        # 必须显式登记豁免并写明理由（scripts/handwritten-forms-exempt.json）
+        run: node scripts/check-handwritten-forms.mjs
+
       - name: Quarantine manifest gate
         # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
         # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）

@@ -20,7 +20,7 @@ type DialogProps = {
   width?: string;
   /** 是否为全屏 `Dialog`（会一直处于全屏状态，除非弹框关闭），默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */
   fullscreen?: boolean;
-  /** 是否显示全屏操作图标，默认 `false`，`fullscreen` 和 `fullscreenIcon` 都传时只有 `fullscreen` 会生效 */
+  /** 是否显示全屏操作图标。**ReDialog 默认渲染**（显式传 `false` 关闭）；调用 `headerRenderer` 自绘头部时无效——按钮无从插入自绘头部。`fullscreen` 为 `true`（常驻全屏）时也不渲染可切换按钮 */
   fullscreenIcon?: boolean;
   /** `Dialog CSS` 中的 `margin-top` 值，默认 `15vh` */
   top?: string;

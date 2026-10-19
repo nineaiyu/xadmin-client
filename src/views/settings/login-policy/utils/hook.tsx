@@ -1,78 +1,41 @@
-import { reactive, shallowRef, type Ref } from "vue";
+import { reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { loginPolicyApi } from "@/api/system/security";
-import { hasAuth, usePageAuth } from "@/router/utils";
+import { usePageAuth } from "@/router/utils";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import AddFill from "~icons/ri/add-circle-line";
-import Edit from "~icons/ep/edit";
 import Search from "~icons/ep/search";
 import { useLoginPolicyDialogs } from "./useLoginPolicyDialogs";
+import { useLoginPolicyFormOptions } from "./useLoginPolicyFormOptions";
 
 /**
- * 登录访问策略：策略 CRUD 走自定义弹窗（关闭框架默认新增/编辑按钮，
- * 因为 target_type / action 为 LabeledChoiceField，需要前端给选项与回显转换）；
- * 权限点本身不变（create / partialUpdate 仍按 hasAuth 判定入口可见性）。
+ * 登录访问策略：策略 CRUD + 命中预演。
+ *
+ * - 新增/编辑走框架元数据表单（`target_type` / `action` 是 LabeledChoiceField，
+ *   元数据已带本地化选项，无需前端再拉 choices 端点）；
+ * - 预演是页面专属能力，保留 ReDialog 面板与工具栏入口；
+ * - 权限点本身不变（create / partialUpdate 仍按菜单授权判定入口可见性）。
  */
-export function useLoginPolicy(tableRef: Ref) {
+export function useLoginPolicy() {
   const { t } = useI18n();
-
   const api = reactive(loginPolicyApi);
-  // 关闭框架内建的增/改入口：本页统一走 LoginPolicyForm 自定义弹窗。
-  // 必须在 usePageAuth 之后覆写——默认返回值含 create/update，否则工具栏会
-  // 同时出现「新增」与「新增策略」两个入口，且框架默认入口按元数据自动成表
-  // （weekdays 数组会渲染成 JSON 编辑器）。
-  // 注意 auth.partialUpdate 必须保留：框架的 is_active 内联开关按
-  // auth.partialUpdate || auth.update 判定置灰，关掉会导致激活状态无法切换；
-  // 操作列默认编辑按钮改用 operationButtonsProps.hideEdit 隐藏。
   const auth = usePageAuth(["preview"]);
-  auth.create = false;
-  auth.update = false;
 
-  const { openEdit, openPreview } = useLoginPolicyDialogs({
-    t,
-    api,
-    tableRef
-  });
+  const { addOrEditOptions } = useLoginPolicyFormOptions({ t });
+  const { openPreview } = useLoginPolicyDialogs({ t });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [
-      {
-        text: t("loginPolicy.add"),
-        code: "create-policy",
-        props: { type: "primary", icon: useRenderIcon(AddFill) },
-        onClick: () => openEdit(),
-        show: () => hasAuth("create:SystemLoginPolicy")
-      },
       {
         text: t("loginPolicy.preview"),
         code: "preview",
         props: { type: "info", plain: true, icon: useRenderIcon(Search) },
         onClick: () => openPreview(),
         // 与「新增」入口同口径：函数式求值（布尔快照在权限表就绪前求值会失真）
-        show: () => auth.preview
+        show: () => Boolean(auth.preview)
       }
     ]
   });
 
-  const operationButtonsProps = shallowRef<OperationProps>({
-    // 操作列三个入口（删除 / 查看 / 编辑）同行排布：实测 54 + 20 + 54，间距各 12px，
-    // 加单元格左右内边距 24px 共需 176px；140 / 160 都会把末位按钮折到下一行、
-    // 把行高撑成两倍，180 留出余量
-    width: 180,
-    // 自有编辑弹窗已提供「编辑」入口，藏掉框架默认编辑按钮；
-    // auth.partialUpdate 保持可用以支持激活状态内联开关
-    hideEdit: true,
-    buttons: [
-      {
-        text: t("buttons.edit"),
-        code: "edit-policy",
-        props: { type: "primary", link: true, icon: useRenderIcon(Edit) },
-        onClick: ({ row }) => openEdit(row),
-        show: () => hasAuth("partialUpdate:SystemLoginPolicy")
-      }
-    ]
-  });
-
-  return { api, auth, tableBarButtonsProps, operationButtonsProps };
+  return { api, auth, addOrEditOptions, tableBarButtonsProps };
 }

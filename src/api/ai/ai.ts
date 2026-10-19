@@ -173,8 +173,8 @@ export type AiProfileItem = {
   max_retries: number;
   context_limit: number;
   persona: string;
-  /** 用途（档案分流）：chat 供问答/聊天，structured 供 NL 查数/动作草稿 */
-  purpose?: "chat" | "structured";
+  /** 用途（档案分流）：chat 供问答/聊天，structured 供 NL 查数/动作草稿，embedding 供向量化 */
+  purpose?: "chat" | "structured" | "embedding";
   /** 能力画像（探测结果，可人工修正） */
   capabilities?: Record<string, { ok?: boolean; detail?: string } | undefined>;
   probed_at?: string | null;

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   openNoticeDetailDialog: vi.fn(),
   push: vi.fn(),
   notify: vi.fn(),
+  desktopNotify: vi.fn(),
   batchRead: vi.fn(() => Promise.resolve({ code: 1000, data: null }))
 }));
 
@@ -49,6 +50,12 @@ vi.mock("element-plus/es/components/notification/index.mjs", () => ({
 vi.mock("@/api/user/notice", () => ({
   userNoticeReadApi: { batchRead: mocks.batchRead }
 }));
+vi.mock("@/utils/desktopNotify", async () => {
+  const actual = await vi.importActual<typeof import("@/utils/desktopNotify")>(
+    "@/utils/desktopNotify"
+  );
+  return { ...actual, notifyDesktop: mocks.desktopNotify };
+});
 vi.mock("@/views/system/notice/utils/noticeDetailDialog", () => ({
   openNoticeDetailDialog: mocks.openNoticeDetailDialog
 }));
@@ -161,5 +168,38 @@ describe("notice store 推送分派", () => {
     // 事件属性与脚本标签必须被剥掉（存储型 XSS 纵深缺口守护）
     expect(options.message).not.toContain("onerror");
     expect(options.message).not.toContain("<script");
+  });
+
+  it("Markdown 推送：预览转纯文本，禁用 HTML 通道", async () => {
+    deliver({
+      message_type: "notify_message",
+      pk: 9,
+      title: "Markdown 公告",
+      message: "## 维护窗口\n\n**重点**\n\n- 第一项\n- 第二项",
+      message_format: { value: "markdown", label: "Markdown" },
+      level: { value: "primary" },
+      notice_type: { value: 0, label: "公告" }
+    });
+    // Markdown 渲染器按需动态加载，等待首个 await 完成
+    await vi.waitFor(() => expect(mocks.notify).toHaveBeenCalledTimes(1));
+
+    const options = mocks.notify.mock.calls.at(-1)?.[0] as {
+      message?: string;
+      dangerouslyUseHTMLString?: boolean;
+    };
+    // 通知正文只走纯文本通道，Markdown 源码标记不得原样出现
+    expect(options.dangerouslyUseHTMLString).toBe(false);
+    expect(options.message).toContain("维护窗口");
+    expect(options.message).toContain("重点");
+    expect(options.message).toContain("第一项");
+    expect(options.message).not.toContain("#");
+    expect(options.message).not.toContain("**");
+
+    // 桌面通知正文同口径（纯文本预览）
+    const desktop = mocks.desktopNotify.mock.calls.at(-1)?.[0] as {
+      body?: string;
+    };
+    expect(desktop.body).toContain("维护窗口");
+    expect(desktop.body).not.toContain("**");
   });
 });

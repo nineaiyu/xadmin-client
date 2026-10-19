@@ -580,7 +580,7 @@ E2E_PARALLEL=4 E2E_PLAN_ONLY=1 node scripts/e2e-parallel.mjs  # 核对各片负�
 | 跑批时长与预算：`DOWNLOAD_TIMEOUT`（高负载 90s）大于用例 60s 上限时，等待永远等不到——表现为「下载事件超时」而不是「用例超时」；同类还有登录（30s）、树刷新遮罩（15s）、分栏重置（5s） | 与真实时间域对齐：重型用例 `test.slow()`（×3）后再用长超时；交互等待改「可见信号 + 轮询补点」（`expect.poll` / `toPass`）而非单次点击 + 固定延时 |
 | 面板内按钮圆角断言目标漂移：区块内新增按钮后 `.right-panel .el-button` 的 `.first()` 不再是底部操作按钮（尺寸档不同 ⇒ 圆角口径不同，实测 small 档为 7px 而非 8px） | 断言锚定容器：`.right-panel .lay-panel__footer .el-button`；同理行内文字取 `.pref-row__text`（`.pref-row__label` 已改为容器） |
 | 拖拽排序（sortablejs）与 Vue `v-for` **下标 key** 冲突：sortable 直接搬动 DOM，Vue 的下标补丁把文本按老位置写回，等于把排序结果抵消——表现为「store 已是新序、界面仍是旧序」，极易误判成 store 没更新 | `v-for` 换**稳定 key**（页签用 `path + query`，与 store 去重口径一致）；排障手法=从页面里直接翻转 store 数组看 DOM 是否跟随（一次性隔离「响应性」与「拖拽实现」）；另外 Playwright 驱动 sortable 需 `forceFallback: true`（原生 HTML5 拖放不响应合成鼠标事件） |
-| 验证码**倒计时**断言跨浏览器偶发：`reset-password.e2e.ts` 在双浏览器连跑时第二个浏览器「点了获取验证码但按钮不出数字」（10s 超时）——同批 chromium 通过、隔离单跑 webkit 3.8s 通过 ⇒ 非确定性（发送链路偶发失败/前端未进入倒计时），与验证码频控无关（E2E 档 `SECURITY_LOGIN_LIMIT_COUNT=50`、throttle 档已放到 100000/m，两次发送远未触界） | 归类为负载瞬态：CI 由 retries 吸收（本轮 CI 未失败）；若复现率上升再加固（发送失败时页面有错误 toast，可改为「倒计时 ∨ 明确错误提示」竞速断言并保留失败文案） |
+| 验证码**倒计时**断言跨浏览器偶发：`reset-password.e2e.ts` 在双浏览器连跑时第二个浏览器「点了获取验证码但按钮不出数字」（10s 超时）。**根因是发码限流按目标邮箱计数**：E2E 档 `VERIFY_CODE_LIMIT=1000s`，chromium 已向固定管理员邮箱发过码，webkit 再发命中 429「请在 968 秒后发送」，前端不会进入倒计时（服务端日志可见 `SendVerifyCodeAPIView ERROR`；与登录频控无关） | 目标邮箱每次尝试唯一：用例先经 API 建一个专用用户（唯一邮箱），结束后删除，双浏览器/重试各自拥有独立发码窗口（2026-10-18 全量并行复现并修复）。排障口径：倒计时不出现时先看服务端是否 429，不要先归因负载 |
 | 合成 `wheel` 事件不带指针坐标 → 缩放锚点把画布滚出可视区：自由画布二期的「`Ctrl+滚轮` 指针锚点缩放」用 `dispatchEvent("wheel")` 驱动，事件缺省 `clientX/clientY = 0`（等于在容器外滚轮），缩回原档位时锚点补偿把容器滚到 `scrollLeft=47 / scrollTop=22`，画布左上角离开可视区 —— 后续「从画布左上角空白框选」的 `pointerdown` 落在工具条上，`marquee` 永不出现（断言报 `element(s) not found`，看起来像功能没实现） | 合成输入类事件必须带**视口内坐标**（与真实一致）：`dispatchEvent('wheel', { ...wrapBox 中心, ctrlKey: true })`；并加一条「放大再缩回 → `scrollLeft/scrollTop` 回到 0」的断言把锚点补偿的行为钉住。排障手法：`elementFromPoint(点)` + 容器 `scrollLeft/scrollTop` + 画布 `boundingBox()` 三件套，一眼看出「点不在谁身上」 |
 | 自由画布的**几何断言点落到了右侧属性面板下**：画布 1920 宽而可视区只露左侧一段，按「窗格默认落点 + 外接 AABB」算出的探测点（如 AABB 右上角）在横向已越过可视区、被属性面板盖住 —— `page.mouse` 点在面板上，框选自然不发生（表现为「反例断言 value 不是 true」） | 几何用例先用**属性面板把窗格钉死在左上可视区**（位置 / 尺寸输入，盒模型可控），再用 `elementFromPoint(点).closest(...)` 把「点在画布上」「点不在窗格上」写成前置断言：坐标换算一旦跑偏立刻报出来，而不是静静点空 |
 | 属性面板刚填过输入框 → 直接发 `Ctrl+A` 不生效：画布快捷键在**可编辑目标**上不劫持（输入框吃掉组合键，浏览器行为是「全选输入框内容」） | 发画布级快捷键前先点一下画布空白（顺带清空选中）把焦点交回页面；这类用例里 `fill + Enter` 之后紧跟 `Control+a` 是典型踩法 |
@@ -589,3 +589,16 @@ E2E_PARALLEL=4 E2E_PLAN_ONLY=1 node scripts/e2e-parallel.mjs  # 核对各片负�
 | **列表页操作列宽度按内容实测收敛（`useOperationContentWidth`）的实测时机**：数据到达的那次 flush 里 el-table 只有骨架——`<tr class="el-table__row">` 无子节点、表头 `tr` 亦为空（单元格由列组件注册后才渲染），此时量单元格内容恒得 0，表现为「功能写好了但列宽毫无变化」，极易误判为选择器写错 | 实测放到 **rAF**（与 EP `doLayout` 同帧）并做有限重试；给 E2E 探针量表格 DOM 时同理——先等 `waitFor` 出行与单元格再量（2026-10-14 操作列收敛实测） |
 | **页面模板根级注释 ⇒ 离开该页后整页白屏（永久，刷新才恢复）**：`<template>` 后紧跟 `<!-- -->` 时，组件在 dev 下会渲染成「多根」（带 `DEV_ROOT_FRAGMENT` 的 Fragment 根）；布局的 `<Transition mode="out-in">` 在离开时给该 vnode 挂 leave hooks，而 Vue 的 `remove()` 对 Fragment **提前 return**（不处理 transition）⇒ leave 永不完成 ⇒ BaseTransition 的 `state.isLeaving` 永不复位 ⇒ 此后每次渲染都返回空占位（`#main-content` 只剩 `<!---->`），切任何页面都白屏、只有刷新能恢复。静态读代码极难发现（页面源码看上去正常） | 约定：模板注释一律写在**根元素内部**。防复发：门禁 `pnpm check:template-root` + 守护用例 `system-pages.e2e.ts`「关于页：往返导航后内容区正常渲染」（同文件早有「系统设置」同类守护）。定位手法：浏览器注入 Vue dep 日志（`setTransitionHooks` / `remove`）并读组件实例 `subTree`（`Symbol(v-fgt)` + `patchFlag=2112` 即多根），再用 `mode: default` / `pageTransition: none` 两组对照排除过渡与配置因素 |
 | **顶栏角标跨多来源聚合**（未读站内信 + 待我审批 + 进行中任务），而弹层只列站内信 → 站内信为 0 时用户看到角标 4 却无从解释（实测：4 = 待审批 1 + 进行中任务 3，弹层一片空白） | 聚合入口必须让「打开处」能解释数字：弹层底栏「任务中心」入口挂角标（= 角标 − 站内信）+ 悬停展示拆分，打开弹层时同步刷新三路计数；`e2e/notice-badge.e2e.ts` 守护不变式「角标 = 弹层页签合计 + 任务中心角标」 |
+
+### 全量并行跑批（2026-10-18）
+
+- **提速用分片，不要直接加 workers**：`E2E_PARALLEL=6 node scripts/e2e-run.mjs parallel`
+  （每 shard 独立 PG 库 + 独立前后端端口）→ 全量 724 passed / 8 failed / 约 16 分钟；
+  直接 `--workers=6` 共享同一后端与库 → 92 failed（设置/主题/站点配置用例互相踩）。
+- **生成器命名变更要同步「产物发现」**：`seed_demo_book_scene` 曾按 `*_book.json`
+  通配生成器产物，改为规范文件名（`menu.json` / `menumeta.json`）后匹配为空、静默跳过，
+  `demo-book` 与表单标签宽度用例整页空白。产物发现一律读 `seeds/manifest.json`
+  按 `order` 装载（兼容旧命名），守护 `tests/unit/scripts/test_e2e_seed_scenes.py`。
+- **启动静默窗口必须被用户交互打断**：暗色/灰色模式用例在页面加载后 700ms 内点击开关，
+  写入被当成首屏噪声吞掉 → 刷新回退。窗口只吸收初始化回写，`pointerdown` / `keydown`
+  立即结束；自动保存「待发/在途」时不得做无差异跳过（防抖窗内改回原值也要回写）。

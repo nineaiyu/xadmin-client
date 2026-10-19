@@ -91,6 +91,27 @@ describe("siteConfig 实时自动保存", () => {
     expect(mocks.message).not.toHaveBeenCalled();
   });
 
+  it("无差异且没有待发保存时跳过自动保存（首屏回写不产生整包 PATCH）", () => {
+    const store = useSiteConfigStoreHook();
+    store.captureSyncedSnapshot();
+    expect(store.shouldSkipAutoSave()).toBe(true);
+  });
+
+  it("保存待发/在途时禁止跳过（防抖窗内改回原值也不丢回写）", async () => {
+    const store = useSiteConfigStoreHook();
+    store.captureSyncedSnapshot();
+    // 模拟一次变更：此刻值仍与快照相等，但保存已排入防抖窗
+    store.autoSaveSiteConfig();
+    expect(store.autoSavePending).toBe(true);
+    expect(store.shouldSkipAutoSave()).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(600);
+    expect(mocks.setSiteConfig).toHaveBeenCalledTimes(1);
+    // 保存完成：pending 复位，值未再变化 → 恢复「无差异跳过」
+    expect(store.autoSavePending).toBe(false);
+    expect(store.shouldSkipAutoSave()).toBe(true);
+  });
+
   it("自动保存失败时提示一次，不静默丢配置", async () => {
     mocks.setSiteConfig.mockRejectedValueOnce(new Error("network"));
     const store = useSiteConfigStoreHook();

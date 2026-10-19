@@ -222,12 +222,16 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
     form: builtinFormRenderers.textarea,
     filterKind: "text"
   },
+  // DRF TimeField（登录策略生效时段等）：表单用 time-picker，值格式 HH:mm:ss
+  time: {
+    form: builtinFormRenderers.time,
+    filterKind: "time"
+  },
   // —— 词表外兼容项（契约词表不含；仅高级筛选形态的历史登记，勿新增）——
   url: { filterKind: "text" },
   password: { filterKind: "text" },
   decimal: { filterKind: "number" },
-  switch: { filterKind: "boolean" },
-  time: { filterKind: "time" }
+  switch: { filterKind: "boolean" }
 };
 
 /** input_type → 高级筛选取值形态（未登记返回 undefined，由消费方回落自由文本） */

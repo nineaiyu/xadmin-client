@@ -15,14 +15,32 @@ import {
 test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
   await login(page);
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
-  await expect(page.getByTestId("api-app-create")).toBeVisible({
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
 
-  await page.getByTestId("api-app-create").click();
-  // 编辑弹窗按标题定位：页面存在多个「保存」按钮（弹窗外的配置面板），必须限定在弹窗内
-  const createDialog = page.locator(".el-dialog", { hasText: "新建应用" });
-  await createDialog.locator("input").first().fill("E2E 应用");
+  await page.getByRole("button", { name: "新增", exact: true }).click();
+  // 弹窗按可见态定位：页面存在多个「保存」按钮（弹窗外的配置面板），必须限定在弹窗内
+  const createDialog = page.locator(".el-dialog:visible").first();
+  // 字段形态：pk 不出现、接口范围换勾选器（非 JSON 编辑器）、资源授权为扩展字段
+  await expect(
+    createDialog.locator(".el-form-item__label", { hasText: /^ID:?$/ })
+  ).toHaveCount(0);
+  // 授权字段的说明文案里也含「接口范围」，按可访问名精确定位分组
+  await expect(
+    createDialog.getByRole("group", { name: "接口范围:" })
+  ).toBeVisible();
+  await expect(
+    createDialog.getByRole("group", { name: "资源授权:" })
+  ).toBeVisible();
+  await expect(createDialog.locator(".jsoneditor")).toHaveCount(0);
+  await createDialog
+    .locator(".el-form-item")
+    .filter({ hasText: "应用名称" })
+    .locator("input")
+    .fill("E2E 应用");
   // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「确定」）
   await createDialog.getByRole("button", { name: "保存" }).click();
 
@@ -47,14 +65,20 @@ test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
 test("API 应用：接口范围勾选后列表显示条数", async ({ page }) => {
   await login(page);
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
-  await expect(page.getByTestId("api-app-create")).toBeVisible({
+  await expect(
+    page.getByRole("button", { name: "新增", exact: true })
+  ).toBeVisible({
     timeout: 15_000
   });
 
   const name = `E2E 范围应用 ${Date.now()}`;
-  await page.getByTestId("api-app-create").click();
-  const createDialog = page.locator(".el-dialog", { hasText: "新建应用" });
-  await createDialog.getByTestId("api-app-name").fill(name);
+  await page.getByRole("button", { name: "新增", exact: true }).click();
+  const createDialog = page.locator(".el-dialog:visible").first();
+  await createDialog
+    .locator(".el-form-item")
+    .filter({ hasText: "应用名称" })
+    .locator("input")
+    .fill(name);
   // 选项按本人权限异步下发：等加载遮罩消失再展开下拉（否则点击会被遮罩吃掉）
   await expect(createDialog.locator(".el-loading-mask")).toHaveCount(0, {
     timeout: 15_000
@@ -95,9 +119,9 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
   const row = page.locator(".el-table__row", { hasText: name }).first();
   await expect(row).toBeVisible({ timeout: 15_000 });
-  await row.getByRole("button", { name: "编辑应用" }).click();
+  await row.getByRole("button", { name: "编辑", exact: true }).click();
 
-  const dialog = page.locator(".el-dialog", { hasText: "编辑应用" });
+  const dialog = page.locator(".el-dialog:visible").first();
   // 授权目录按本人可授权面异步下发：等遮罩消失
   await expect(dialog.locator(".el-loading-mask")).toHaveCount(0, {
     timeout: 15_000
@@ -113,9 +137,14 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   await page.keyboard.press("Escape");
 
   await dialog.getByRole("button", { name: "保存" }).click();
-  await expect(page.getByText("保存成功").first()).toBeVisible({
-    timeout: 15_000
-  });
+  // 元数据表单的成功提示取服务端 detail（默认「操作成功」），与手写弹窗时代的
+  // 页面文案「保存成功」不同；落库断言（下方 grants 查询）才是本用例的实质检查
+  await expect(
+    page
+      .locator(".el-message--success")
+      .filter({ hasText: /保存成功|操作成功/ })
+      .first()
+  ).toBeVisible({ timeout: 15_000 });
 
   // 先钉服务端落库（区分「没保存」与「没回显」）
   const grantsRes = await page.request.get(
@@ -126,8 +155,8 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   expect(grantsBody.data?.results?.[0]?.model).toBe("identity.userinfo");
 
   // 重新打开：规则回显（模型下拉显示已保存的模型）
-  await row.getByRole("button", { name: "编辑应用" }).click();
-  const reopened = page.locator(".el-dialog", { hasText: "编辑应用" });
+  await row.getByRole("button", { name: "编辑", exact: true }).click();
+  const reopened = page.locator(".el-dialog:visible").first();
   await expect(reopened.locator(".el-loading-mask")).toHaveCount(0, {
     timeout: 15_000
   });
@@ -138,7 +167,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
 });
 
 /**
- * 行操作收敛：操作列只留「编辑应用 / 管理」，用量报表入口在「管理」抽屉内。
+ * 行操作收敛：操作列只留「编辑 / 管理」，用量报表入口在「管理」抽屉内。
  * 抽屉打开后动作执行前先收起抽屉（避免与用量抽屉叠加）。
  */
 test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {

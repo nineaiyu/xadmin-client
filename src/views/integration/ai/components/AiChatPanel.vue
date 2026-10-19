@@ -59,9 +59,10 @@ const { t } = useI18n();
 const draft = ref("");
 const scrollEl = ref<HTMLElement | null>(null);
 
-/** 列表壳滚动元素就绪：登记后经 defineExpose 供父级滚动到底等操作使用 */
+/** 列表壳滚动元素就绪：登记并向上冒泡，供父级滚动到底/离底检测持有 */
 function onListReady(element: HTMLElement | null) {
   scrollEl.value = element;
+  emit("scroller", element);
 }
 
 /** 「最新一条 assistant 消息」才可操作（NL 运行 / 动作确认）：执行后新消息

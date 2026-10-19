@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 
+import AiMarkdown from "@/components/AiMarkdown";
 import AiThinking from "@/components/AiThinking";
 
 import type { AiMessageBlockProps } from "./types";
@@ -43,7 +44,7 @@ const showThinking = () => Boolean(props.reasoning);
     />
 
     <div v-if="content" class="ai-message__text">
-      {{ content }}<span v-if="streaming" class="ai-message__cursor" />
+      <AiMarkdown :content="content" :streaming="streaming" />
     </div>
     <div v-else-if="streaming && !showThinking()" class="ai-message__pending">
       <span class="ai-message__dots" aria-hidden="true"><i /><i /><i /></span>
@@ -79,17 +80,6 @@ const showThinking = () => Boolean(props.reasoning);
 
 .ai-message__text {
   white-space: pre-wrap;
-}
-
-/* 流式光标：细竖条（比 ▍ 字符更精细，宽度不受字体影响） */
-.ai-message__cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 2px;
-  vertical-align: -0.15em;
-  background: var(--el-color-primary);
-  animation: ai-message-blink 1s steps(1) infinite;
 }
 
 /* 等待首字：三点跳动 + 文案（替代纯文字占位） */
@@ -138,12 +128,6 @@ const showThinking = () => Boolean(props.reasoning);
 
 .ai-message__source {
   overflow-wrap: anywhere;
-}
-
-@keyframes ai-message-blink {
-  50% {
-    opacity: 0;
-  }
 }
 
 @keyframes ai-message-bounce {

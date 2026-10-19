@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { BACKEND_URL, FRONT_URL, getAccessToken, login } from "./helpers";
+import {
+  BACKEND_URL,
+  FRONT_URL,
+  PANEL_ACTION_TIMEOUT,
+  getAccessToken,
+  login
+} from "./helpers";
 
 /**
  * 表单设计器升级用例（联动规则 / 版本化 / 拖拽排序）：
@@ -45,8 +51,9 @@ async function openDesigner(page: Page, formName: string) {
   const row = page.getByRole("row", { name: formName });
   await expect(row).toBeVisible({ timeout: 15_000 });
   await row.getByRole("button", { name: "编辑" }).click();
-  const dialog = page.locator(".el-dialog").last();
-  await expect(dialog).toBeVisible({ timeout: 10_000 });
+  // 只认可见弹窗：EP 关闭后的弹窗会以 hidden 副本留在 DOM，`.last()` 可能命中旧节点
+  const dialog = page.locator(".el-dialog:visible").last();
+  await expect(dialog).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
   return dialog;
 }
 
@@ -62,14 +69,14 @@ async function pickOption(
   optionText: string | RegExp,
   collapseTarget: ReturnType<Page["locator"]>
 ) {
-  await select.click();
+  await select.click({ timeout: PANEL_ACTION_TIMEOUT });
   const option = page
     .locator(".el-select-dropdown__item")
     .filter({ hasText: optionText, visible: true })
     .first();
-  await expect(option).toBeVisible({ timeout: 10_000 });
-  await option.click();
-  await collapseTarget.click();
+  await expect(option).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
+  await option.click({ timeout: PANEL_ACTION_TIMEOUT });
+  await collapseTarget.click({ timeout: PANEL_ACTION_TIMEOUT });
 }
 
 /** 在设计器内新增一条联动规则（弹窗内保存） */
@@ -84,8 +91,15 @@ async function addLinkageRule(
   }
 ) {
   await dialog.getByTestId("linkage-add").click();
-  const ruleDialog = page.locator(".el-dialog").last();
-  await expect(ruleDialog.getByTestId("linkage-trigger")).toBeVisible();
+  // 规则弹窗按内容锚定（linkage-trigger）：外层设计器弹窗与关闭动画中的旧弹窗
+  // 都可能被 `.last()` 命中，导致等待/点击落在已销毁节点上
+  const ruleDialog = page
+    .locator(".el-dialog:visible")
+    .filter({ has: page.getByTestId("linkage-trigger") })
+    .last();
+  await expect(ruleDialog.getByTestId("linkage-trigger")).toBeVisible({
+    timeout: PANEL_ACTION_TIMEOUT
+  });
   const header = ruleDialog.locator(".el-dialog__header");
   await pickOption(
     page,
@@ -106,8 +120,12 @@ async function addLinkageRule(
     rule.target,
     header
   );
-  await ruleDialog.getByRole("button", { name: "保存" }).click();
-  await expect(page.getByTestId("linkage-trigger")).not.toBeVisible();
+  await ruleDialog
+    .getByRole("button", { name: "保存" })
+    .click({ timeout: PANEL_ACTION_TIMEOUT });
+  await expect(page.getByTestId("linkage-trigger")).not.toBeVisible({
+    timeout: PANEL_ACTION_TIMEOUT
+  });
 }
 
 test("表单联动：设计器配置 → 填报页隐藏/动态必填 → 服务端同源校验", async ({
@@ -170,8 +188,8 @@ test("表单联动：设计器配置 → 填报页隐藏/动态必填 → 服务
       .filter({ hasText: formName });
     await expect(card).toBeVisible({ timeout: 15_000 });
     await card.click();
-    const fillDialog = page.locator(".el-dialog").last();
-    await expect(fillDialog).toBeVisible({ timeout: 10_000 });
+    const fillDialog = page.locator(".el-dialog:visible").last();
+    await expect(fillDialog).toBeVisible({ timeout: PANEL_ACTION_TIMEOUT });
     const item = (label: string) =>
       fillDialog.locator(".el-form-item").filter({ hasText: label });
     const reasonItem = item("说明");

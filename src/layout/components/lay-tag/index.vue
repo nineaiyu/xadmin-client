@@ -84,6 +84,13 @@ const tagsShowMaximize = computed(
   () => $storage?.configure?.tagsShowMaximize ?? false
 );
 const maximizeOn = computed(() => Boolean(pureSetting.hiddenSideBar));
+/**
+ * 最大化 / 还原按钮显隐：偏好开启时常态显示；已处于最大化态时强制显示，
+ * 否则偏好关闭的用户进入最大化后顶栏消失、页签栏又没有还原入口。
+ */
+const showMaximizeButton = computed(
+  () => tagsShowMaximize.value || maximizeOn.value
+);
 
 /**
  * 页签 v-for 的稳定 key（path + query，与 store 的去重口径一致）。
@@ -299,7 +306,7 @@ onBeforeUnmount(() => {
     </span>
     <!-- 内容区最大化 / 还原（与右键菜单同口径：隐藏顶栏与侧栏、保留页签条作为还原入口） -->
     <span
-      v-if="tagsShowMaximize"
+      v-if="showMaximizeButton"
       class="tags-refresh tags-maximize hover:[&>svg]:animate-scale-bounce"
       role="button"
       tabindex="0"

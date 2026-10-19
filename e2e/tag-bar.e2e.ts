@@ -46,10 +46,16 @@ test.describe("标签栏右键菜单", () => {
     await expect(tabs.nth(1)).toHaveClass(/fixed-tag/);
   });
 
-  test("最大化 / 还原：隐藏顶栏与侧栏，菜单文案随态切换", async ({ page }) => {
+  test("最大化 / 还原：隐藏顶栏与侧栏，菜单文案与页签栏按钮均可还原", async ({
+    page
+  }) => {
     await login(page);
     const tabs = await openTwoTabs(page);
     const menu = page.locator(".contextmenu");
+    const maximizeButton = page.locator(".tags-view .tags-maximize");
+
+    // 偏好默认关闭：常态不渲染最大化按钮（保持既有页签栏外观）
+    await expect(maximizeButton).toHaveCount(0);
 
     await tabs.nth(1).click({ button: "right" });
     await expect(menu).toBeVisible({ timeout: 10_000 });
@@ -62,11 +68,15 @@ test.describe("标签栏右键菜单", () => {
     await expect(page.locator(".fixed-header .navbar")).toBeHidden();
     await expect(page.locator(".sidebar-container")).toBeHidden();
 
-    // 页签条保留（还原入口），菜单文案切到「还原」
+    // 页签条保留；即使偏好关闭，最大化态也强制显示还原按钮（否则无可见出口）
     await expect(tabs).toHaveCount(3);
+    await expect(maximizeButton).toBeVisible({ timeout: 10_000 });
+
+    // 右键菜单文案切到「还原」，随后用页签栏按钮还原
     await tabs.nth(2).click({ button: "right" });
     await expect(menu).toBeVisible({ timeout: 10_000 });
-    await menu.getByText(/还原|Restore/).click();
+    await expect(menu).toContainText(/还原|Restore/);
+    await maximizeButton.click();
 
     await expect(page.locator(".main-container")).not.toHaveClass(
       /main-hidden/,
@@ -74,6 +84,8 @@ test.describe("标签栏右键菜单", () => {
     );
     await expect(page.locator(".fixed-header .navbar")).toBeVisible();
     await expect(page.locator(".sidebar-container")).toBeVisible();
+    // 还原后按钮回到偏好口径：默认关闭即消失
+    await expect(maximizeButton).toHaveCount(0);
   });
 
   test("新窗口打开：以当前标签路径打开新页签", async ({ page, context }) => {

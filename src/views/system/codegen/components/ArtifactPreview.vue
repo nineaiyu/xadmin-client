@@ -32,15 +32,23 @@ const active = computed(
 /** 产物按落点分组：后端仓 / 前端仓 / 菜单种子 / 说明文档；notice 产物单列 */
 type ArtifactGroup = { key: string; title: string; items: CodegenArtifact[] };
 
+/**
+ * 种子产物判据：平台层 `loadjson/` 与各应用 `seeds/`（生成器现在写 `<app>/seeds/`，
+ * 只认 `loadjson/` 会让种子组恒空、全部落到「后端仓」）。
+ */
+function isSeedArtifact(path: string) {
+  return path.includes("/loadjson/") || path.includes("/seeds/");
+}
+
 const groups = computed<ArtifactGroup[]>(() => {
   const server: CodegenArtifact[] = [];
   const client: CodegenArtifact[] = [];
   const seed: CodegenArtifact[] = [];
   const root: CodegenArtifact[] = [];
   for (const item of props.artifacts) {
-    if (item.path.startsWith("xadmin-server/")) server.push(item);
+    if (isSeedArtifact(item.path)) seed.push(item);
+    else if (item.path.startsWith("xadmin-server/")) server.push(item);
     else if (item.path.startsWith("xadmin-client/")) client.push(item);
-    else if (item.path.includes("loadjson/")) seed.push(item);
     else root.push(item);
   }
   const built: ArtifactGroup[] = [];

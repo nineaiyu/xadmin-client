@@ -1,4 +1,5 @@
 import { shallowRef } from "vue";
+import { useI18n } from "vue-i18n";
 import type { noticeApi } from "@/api/system/notice";
 import { hasAuth } from "@/router/utils";
 import { NoticeChoices } from "@/views/system/constants";
@@ -15,9 +16,10 @@ type NoticeApiLike = Pick<typeof noticeApi, "announcement">;
  * 弹层形态与公告接口分流（apiReq）。
  */
 export function useNoticeFormOptions({ api }: { api: NoticeApiLike }) {
+  const { t } = useI18n();
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
-      columns: buildNoticeFormColumns(),
+      columns: buildNoticeFormColumns({ t }),
       dialogDrawerOptions: {
         top: "10vh",
         width: dialogSize("xxl")

@@ -43,7 +43,6 @@ import {
   useGlobal,
   useResizeObserver
 } from "@pureadmin/utils";
-import { isEqual } from "lodash-es";
 
 import { useRoute } from "vue-router";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -178,7 +177,26 @@ useSystemThemeWatch();
 //   侧栏状态等初始化动作），窗口内的变化只重设同步基线，不发保存；
 // - 幂等跳过：窗口外的写入若与最近一次服务端同步快照深比较无差异也不发保存。
 const STARTUP_QUIET_MS = 700;
-const startupQuietUntil = Date.now() + STARTUP_QUIET_MS;
+let startupQuietUntil = Date.now() + STARTUP_QUIET_MS;
+/**
+ * 用户一旦交互即结束静默窗口。
+ *
+ * 窗口只用于吸收首屏初始化回写（主题色大小写归一、菜单布局等），但「页面刚打开
+ * 就点开关」是真实改动：若被窗口吞掉，本地已生效、服务端仍是旧值，刷新后回退
+ * （历史缺陷：暗色模式 / 灰色模式用例在 700ms 内点击即丢保存）。
+ */
+const endStartupQuiet = () => {
+  startupQuietUntil = 0;
+};
+window.addEventListener("pointerdown", endStartupQuiet, {
+  once: true,
+  capture: true,
+  passive: true
+});
+window.addEventListener("keydown", endStartupQuiet, {
+  once: true,
+  capture: true
+});
 watch(
   () => [$storage.layout, $storage.configure],
   () => {
@@ -191,12 +209,7 @@ watch(
       siteConfigStore.capturePreferenceBaseline();
       return;
     }
-    if (
-      isEqual(
-        { layout: $storage.layout, configure: $storage.configure },
-        siteConfigStore.syncedSnapshot
-      )
-    ) {
+    if (siteConfigStore.shouldSkipAutoSave()) {
       return;
     }
     siteConfigStore.autoSaveSiteConfig();
@@ -306,7 +319,10 @@ onMounted(() => {
 });
 
 onBeforeMount(() => {
-  useDataThemeChange().dataThemeChange($storage.layout?.themeMode);
+  // 初始化应用主题：不播圆形揭示（动画只服务用户主动切换）
+  useDataThemeChange().dataThemeChange($storage.layout?.themeMode, {
+    animate: false
+  });
 });
 
 /** 顶栏（含设置入口）的隐藏只跟随「内容全屏」内存态：设置面板的「隐藏侧栏」只隐藏侧栏 */

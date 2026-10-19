@@ -6,8 +6,8 @@
 //   1. 选择器候选：src/components/ReIcon/data.ts 的 IconJson 三个数组——选择器
 //      只从这里出候选，因此子集按构造包含选择器可提供的每个图标（一致性不靠对账靠生成）；
 //   2. 代码引用：src/** 的 `~icons/<set>/<name>?raw` 静态 import（offlineIcon.ts 的随包注册）；
-//   3. 服务端种子：xadmin-server/loadjson/*.json 的 `icon: "<set>:<name>"`（菜单元数据，
-//      跨仓缺失时跳过——与 check_doc_facts 的跨仓口径一致）。
+//   3. 服务端种子：xadmin-server 平台层 `loadjson/*.json` + 各应用 `<app>/seeds/*.json`
+//      的 `icon: "<set>:<name>"`（菜单元数据；跨仓缺失时跳过——与 check_doc_facts 的跨仓口径一致）。
 //
 // 产物：src/components/ReIcon/data/subsets/<set>.json（iconify 集合格式，剥除 info/
 // lastModified 元数据），gitignore 不入库；postinstall + prebuild 自动再生成，
@@ -70,23 +70,35 @@ function codeNames() {
   return names;
 }
 
-/** 3. 服务端种子菜单元数据（跨仓缺失跳过） */
+/** 3. 服务端种子菜单元数据（平台层 + 各应用 seeds/；跨仓缺失跳过） */
 function seedNames() {
   const names = { ep: new Set(), ri: new Set(), "fa-solid": new Set() };
-  const dir = resolve(ROOT, "../xadmin-server/loadjson");
-  let files = [];
-  try {
-    files = readdirSync(dir).filter(f => f.endsWith(".json"));
-  } catch {
+  const serverRoot = resolve(ROOT, "../xadmin-server");
+  if (!existsSync(serverRoot)) {
     console.log(
       "[icon-subset] 未找到 xadmin-server（独立检出），跳过种子图标收集"
     );
     return names;
   }
-  for (const f of files) {
-    const txt = readFileSync(join(dir, f), "utf-8");
-    for (const m of txt.matchAll(/"icon":\s*"([\w-]+):([\w-]+)"/g)) {
-      (names[m[1]] ??= new Set()).add(m[2]);
+  // 种子按应用分层后，菜单图标分散在 loadjson/ 与 <app>/seeds/（同一模型多个文件）
+  const dirs = [join(serverRoot, "loadjson")];
+  for (const entry of readdirSync(serverRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    const seedDir = join(serverRoot, entry.name, "seeds");
+    if (existsSync(seedDir)) dirs.push(seedDir);
+  }
+  for (const dir of dirs) {
+    let files = [];
+    try {
+      files = readdirSync(dir).filter(f => f.endsWith(".json"));
+    } catch {
+      continue;
+    }
+    for (const f of files) {
+      const txt = readFileSync(join(dir, f), "utf-8");
+      for (const m of txt.matchAll(/"icon":\s*"([\w-]+):([\w-]+)"/g)) {
+        (names[m[1]] ??= new Set()).add(m[2]);
+      }
     }
   }
   return names;

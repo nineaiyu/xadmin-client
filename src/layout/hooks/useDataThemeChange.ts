@@ -42,8 +42,12 @@ export function useDataThemeChange() {
    * 这一视觉动作放进圆形揭示动效（见 utils/viewTransition.ts）——View Transition
    * 的回调会被推迟到下一次渲染，若把存储写入放进去，站点配置自动保存会读到旧值
    * （实测表现为「切深色后刷新回浅色」）。
+   *
+   * `options.animate = false`：**初始化 / 外部同步**（布局与账户页挂载、站点配置到达、
+   * 系统明暗变化）直接应用暗色 class，不播圆形揭示。揭示动效只为「用户主动切换」
+   * 服务——初始化时播放会表现为打开页面即全屏从左上角铺开的无意义动画。
    */
-  function dataThemeChange(overall?: string) {
+  function dataThemeChange(overall?: string, options?: { animate?: boolean }) {
     themeMode.value = overall ?? "";
     if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
       setLayoutThemeColor("default", false);
@@ -54,9 +58,14 @@ export function useDataThemeChange() {
       setLayoutThemeColor("light", false);
     }
 
-    withCircleReveal(() => {
+    const applyDarkClass = () => {
       document.documentElement.classList.toggle("dark", dataTheme.value);
-    });
+    };
+    if (options?.animate === false) {
+      applyDarkClass();
+      return;
+    }
+    withCircleReveal(applyDarkClass);
   }
 
   const onReset = createAppReset({ setEpThemeColor });
@@ -91,7 +100,8 @@ export function useSystemThemeWatch() {
     if (($storage?.layout?.themeMode ?? "") !== "system") return;
     const { dataTheme, dataThemeChange } = useDataThemeChange();
     dataTheme.value = mediaQueryList.matches;
-    dataThemeChange("system");
+    // 外部事件（含挂载时的首次同步）不播揭示动效：无用户指针落点可作圆心
+    dataThemeChange("system", { animate: false });
   }
 
   onMounted(() => {
