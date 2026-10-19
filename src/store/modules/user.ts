@@ -5,14 +5,9 @@ import { transformI18n } from "@/plugins/i18n";
 // 类型导入保持顶层静态（编译期擦除）；认证接口是运行期值，改在动作内动态引入：
 // store → api/auth 的顶层静态边会与 api/auth → utils/http → store 的链路成环，
 // 环内 api 模块的类声明可能在基类就绪前求值。环检测脚本守护此约束。
-import type {
-  LoginResult,
-  TokenInfo,
-  TokenResult,
-  UserInfo,
-  UserInfoResult
-} from "@/api/auth";
+import type { TokenInfo, UserInfo, UserInfoResult } from "@/api/auth";
 import { getRefreshToken, removeToken, setToken, userKey } from "@/utils/auth";
+import { encryptCredential } from "@/utils/aes";
 import { clearPendingApprovals } from "@/utils/http/pendingApproval";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
@@ -21,7 +16,38 @@ import { routerArrays, storageLocal, store, type userType } from "../utils";
 import { useMultiTagsStoreHook } from "./multiTags";
 import { useNoticeStoreHook } from "./notice";
 import { useWatermarkStoreHook } from "./watermark";
-import { AesEncrypted } from "@/utils/aes";
+
+/**
+ * 认证类请求的统一包装：调 api → 业务成功即写 token（可选）→ resolve/reject。
+ *
+ * loginByUsername / registerByUsername / handRefreshToken 三个动作此前各写一遍
+ * ``new Promise`` 包 ``api().then().catch()``，差异只在「成功时是否写 token」，
+ * 收敛于此；登录态写入由 utils/auth 的 setToken 单点负责。
+ */
+function requestWithToken<T>(
+  req: Promise<T>,
+  {
+    writeToken = true,
+    isSuccessData
+  }: {
+    writeToken?: boolean;
+    isSuccessData?: (res: T) => boolean;
+  } = {}
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    req
+      .then(res => {
+        const ok = isSuccessData ? isSuccessData(res) : isSuccess(res as never);
+        if (ok && writeToken) {
+          setToken((res as { data: TokenInfo }).data);
+        }
+        resolve(res);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
 
 export const useUserStore = defineStore("pure-user", {
   state: (): userType => {
@@ -103,29 +129,20 @@ export const useUserStore = defineStore("pure-user", {
     /** 登入 */
     async loginByUsername(data: Record<string, unknown>, encrypted?: boolean) {
       if (encrypted) {
-        // 加密入参先按字符串归一（表单值类型在运行期为 string）
-        data["password"] = await AesEncrypted(
+        // 加密入参统一走凭证加密入口（与验证码类登录的载荷拼装同源）
+        data["password"] = await encryptCredential(
           String(data["token"] ?? ""),
           String(data["password"] ?? "")
         );
-        data["username"] = await AesEncrypted(
+        data["username"] = await encryptCredential(
           String(data["token"] ?? ""),
           String(data["username"] ?? "")
         );
       }
       const { loginBasicApi } = await import("@/api/auth");
-      return new Promise<LoginResult>((resolve, reject) => {
-        loginBasicApi(data)
-          .then(res => {
-            // mfa_required 时后端未签发 token（data 中无 access），不能写入
-            if (isSuccess(res) && "access" in res.data) {
-              setToken(res.data);
-            }
-            resolve(res);
-          })
-          .catch(error => {
-            reject(error);
-          });
+      // mfa_required 时后端未签发 token（data 中无 access），不能写入
+      return requestWithToken(loginBasicApi(data), {
+        isSuccessData: res => isSuccess(res) && "access" in res.data
       });
     },
     async getUserInfo() {
@@ -152,20 +169,7 @@ export const useUserStore = defineStore("pure-user", {
     /** 注册 */
     async registerByUsername(data: Record<string, unknown>) {
       const { registerApi } = await import("@/api/auth");
-      return new Promise<TokenResult>((resolve, reject) => {
-        registerApi(data)
-          .then(res => {
-            if (isSuccess(res)) {
-              setToken(res.data);
-              resolve(res);
-            } else {
-              reject(res);
-            }
-          })
-          .catch(error => {
-            reject(error);
-          });
-      });
+      return requestWithToken(registerApi(data));
     },
     /** 前端登出 **/
     async logOut() {
@@ -243,20 +247,7 @@ export const useUserStore = defineStore("pure-user", {
     /** 刷新`token` */
     async handRefreshToken(data: { refresh: string }) {
       const { refreshTokenApi } = await import("@/api/auth");
-      return new Promise<TokenResult>((resolve, reject) => {
-        refreshTokenApi(data)
-          .then(res => {
-            if (isSuccess(res)) {
-              setToken(res.data);
-              resolve(res);
-            } else {
-              reject(res);
-            }
-          })
-          .catch(error => {
-            reject(error);
-          });
-      });
+      return requestWithToken(refreshTokenApi(data));
     }
   }
 });

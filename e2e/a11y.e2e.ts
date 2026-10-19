@@ -135,6 +135,36 @@ test("a11y 基线：登录页无 critical/serious 违规", async ({ page }) => {
   ).toEqual([]);
 });
 
+test("a11y 基线：验证码登录页记住我组件有可访问名", async ({ page }) => {
+  await page.goto("/#/login");
+  await expect(page.getByPlaceholder("账号")).toBeVisible({
+    timeout: 15_000
+  });
+  // 切到验证码登录子页（记住我组件由 RememberLogin 收敛，两页共用）
+  await page.getByRole("button", { name: "验证码登录" }).click();
+  await expect(page.locator("select").first()).toBeVisible({
+    timeout: 15_000
+  });
+  // 天数 select 与提示图标都必须带 aria-label（否则 axe 报 select-name 违规）。
+  // 只断言可访问名、不做整页扫描：本页 ReSendVerifyCode 内的 EP autocomplete
+  // 输入框在 axe 扫描时有 aria-activedescendant 瞬态（Element Plus 既有行为，
+  // 与登录表单无关），整页基线另见登录主页用例。
+  await expect(
+    page.locator('select[aria-label="天内免登录"]').first()
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(
+        '[aria-label="勾选并登录后，规定天数内无需输入用户名和密码会自动登入系统"]'
+      )
+      .first()
+  ).toBeVisible();
+  // 可访问名经无障碍树暴露（role + name），而非仅 DOM 属性
+  await expect(
+    page.getByRole("combobox", { name: "天内免登录" }).first()
+  ).toBeVisible();
+});
+
 test("a11y 基线：用户管理页无 critical/serious 违规", async ({ page }) => {
   await login(page);
   await openMenuPath(page, ["系统管理"], "/system/user/index");

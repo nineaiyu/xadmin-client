@@ -13,8 +13,10 @@ export {
   createPasswordFormRules,
   formatLoginDayList
 } from "./utils/loginShared";
+export { useAuthInfo } from "./utils/useAuthInfo";
 export { useRememberLogin } from "./utils/useRememberLogin";
 export { useEnterSubmit } from "./utils/useEnterSubmit";
+export { useVerifyCodeSubmit } from "./utils/useVerifyCodeSubmit";
 
 /** 登录成功后的去向种类：login=登录（含 MFA 通过后签发），register=注册成功 */
 export type LoginSuccessKind = "login" | "register";

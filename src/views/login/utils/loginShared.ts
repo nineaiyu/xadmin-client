@@ -1,7 +1,7 @@
 import { reactive } from "vue";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { AesEncrypted } from "@/utils/aes";
+import { encryptCredential } from "@/utils/aes";
 import { passwordRulesCheck } from "@/utils";
 import { buildRepeatPasswordValidator } from "@/utils/rules/confirmPassword";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
@@ -59,9 +59,10 @@ export async function buildVerifyCodePayload(
     verify_code: formData.verify_code
   };
   if (authInfo.encrypted) {
-    data["password"] = await AesEncrypted(
-      data["verify_token"] as string,
-      data["password"] as string
+    // 凭证加密与账密登录同入口（utils/aes 的 encryptCredential）
+    data["password"] = await encryptCredential(
+      data["verify_token"],
+      data["password"]
     );
   }
   return data;
