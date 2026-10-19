@@ -17,26 +17,31 @@ const { t } = useI18n();
       prop="table_label"
       :label="t('permissionPreview.colTable')"
       min-width="110"
+      show-overflow-tooltip
     />
     <el-table-column
       prop="field_label"
       :label="t('permissionPreview.colField')"
       min-width="100"
+      show-overflow-tooltip
     />
     <el-table-column
       prop="type_text"
       :label="t('permissionPreview.colType')"
       min-width="120"
+      show-overflow-tooltip
     />
     <el-table-column
       prop="match_text"
       :label="t('permissionPreview.colMatch')"
       width="110"
+      show-overflow-tooltip
     />
     <el-table-column
       prop="value_text"
       :label="t('permissionPreview.colValue')"
-      min-width="140"
+      min-width="180"
+      show-overflow-tooltip
     />
     <el-table-column :label="t('permissionPreview.colExclude')" width="70">
       <template #default="{ row }">
