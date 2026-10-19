@@ -10,6 +10,8 @@ import {
   resolveUploadKind,
   runMarkdownUpload,
   uploadTexts,
+  type DragEventLike,
+  type PasteEventLike,
   type UploadRunnerDeps
 } from "../markdownUpload";
 
@@ -18,21 +20,20 @@ function makeFile(name: string, size: number, type = "text/plain") {
 }
 
 function makeDragEvent(files: File[] = [], types: string[] = ["Files"]) {
-  return {
-    dataTransfer: { files, types }
-  } as unknown as DragEvent;
+  const event: DragEventLike = { dataTransfer: { files, types } };
+  return event;
 }
 
 function makePasteEvent(items: Array<File | null>) {
-  return {
+  const event: PasteEventLike = {
     clipboardData: {
       items: items.map(file => ({
         kind: file ? "file" : "string",
         getAsFile: () => file
       }))
-    },
-    preventDefault: vi.fn()
-  } as unknown as ClipboardEvent;
+    }
+  };
+  return event;
 }
 
 function makeDeps(overrides: Partial<UploadRunnerDeps> = {}) {
@@ -106,9 +107,7 @@ describe("isFileDrag / collectDroppedFiles / collectPastedFiles", () => {
   it("仅携带 Files 的拖拽进入上传态", () => {
     expect(isFileDrag(makeDragEvent([], ["Files"]))).toBe(true);
     expect(isFileDrag(makeDragEvent([], ["text/plain"]))).toBe(false);
-    expect(isFileDrag({ dataTransfer: null } as unknown as DragEvent)).toBe(
-      false
-    );
+    expect(isFileDrag({ dataTransfer: null })).toBe(false);
   });
 
   it("拖拽取全部文件，粘贴只取文件项并滤掉 getAsFile 的空值", () => {
@@ -116,9 +115,7 @@ describe("isFileDrag / collectDroppedFiles / collectPastedFiles", () => {
     const b = makeFile("b.txt", 2);
     expect(collectDroppedFiles(makeDragEvent([a, b]))).toEqual([a, b]);
     expect(collectPastedFiles(makePasteEvent([a, null, b]))).toEqual([a, b]);
-    expect(
-      collectDroppedFiles({ dataTransfer: null } as unknown as DragEvent)
-    ).toEqual([]);
+    expect(collectDroppedFiles({ dataTransfer: null })).toEqual([]);
   });
 });
 

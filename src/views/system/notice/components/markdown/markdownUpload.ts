@@ -61,17 +61,32 @@ export function buildMediaSyntax(
   return kind === "image" ? `![${label}](<${url}>)` : `[${label}](<${url}>)`;
 }
 
+/** 拖拽事件的最小结构视图：真实 DragEvent 与单测替身都满足该形状 */
+export interface DragEventLike {
+  dataTransfer: {
+    types?: readonly string[];
+    files?: ArrayLike<File>;
+  } | null;
+}
+
+/** 粘贴事件的最小结构视图（只读文件项） */
+export interface PasteEventLike {
+  clipboardData: {
+    items: ArrayLike<{ kind: string; getAsFile: () => File | null }>;
+  } | null;
+}
+
 /** 拖拽是否携带文件（拖文本/链接时不应进入上传态）。 */
-export function isFileDrag(event: DragEvent): boolean {
+export function isFileDrag(event: DragEventLike): boolean {
   return Boolean(event.dataTransfer?.types?.includes("Files"));
 }
 
-export function collectDroppedFiles(event: DragEvent): File[] {
+export function collectDroppedFiles(event: DragEventLike): File[] {
   return Array.from(event.dataTransfer?.files ?? []);
 }
 
 /** 剪贴板中的文件项（截图/文件复制），忽略纯文本粘贴。 */
-export function collectPastedFiles(event: ClipboardEvent): File[] {
+export function collectPastedFiles(event: PasteEventLike): File[] {
   return Array.from(event.clipboardData?.items ?? [])
     .filter(item => item.kind === "file")
     .map(item => item.getAsFile())
@@ -86,7 +101,7 @@ export function createDropState(enabled: () => boolean) {
   const dragActive = ref(false);
   const dragDepth = ref(0);
 
-  function onDragEnter(event: DragEvent) {
+  function onDragEnter(event: DragEventLike) {
     if (!enabled() || !isFileDrag(event)) return;
     dragDepth.value += 1;
     dragActive.value = true;
