@@ -123,8 +123,8 @@ function scopePathInApp(tableName?: string, fieldName?: string): string[] {
  * 「全部数据」规则的级联路径：保留表、字段固定为通配。
  *
  * 全部数据只约束「表」维度（后端按 `table` 过滤规则、`type=value.all` 恒真），
- * 因此选了具体表时应表达「该表的全部数据」，不能改写成「全部表」——
- * 后者会把单表授权静默放大成所有表的授权。
+ * 因此选了具体表时应表达「该表的全部数据」，不能改写成「全部表」——后者会把
+ * 单表授权静默放大成所有表的授权。
  */
 function allFieldsPathOf(tableName?: string): string[] {
   return scopePathInApp(tableName, "*");
@@ -175,9 +175,7 @@ function initFromRule(rule: FieldRuleRow) {
     secondsEditor.value = toSecondsEditor(rule.value);
   }
   // 回填完成后恢复联动（回填期间的字段变化不应清空取值）
-  nextTick(() => {
-    initializing.value = false;
-  });
+  nextTick(() => (initializing.value = false));
 }
 
 watch(() => props.modelValue, initFromRule, { immediate: true });
@@ -201,8 +199,7 @@ function handleTypeChange(value: string) {
   errors.value = {};
   resetValueState();
   if (value === FieldKeyChoices.ALL) {
-    // 「全部数据」保留已选的表（表达「该表全部数据」），字段固定为全部字段；
-    // 未选表时才落到「全部表」，避免把单表规则静默放大成全表授权
+    // 保留已选表（表达「该表全部数据」），未选表才落「全部表」，避免单表规则被静默放大
     scopePath.value = allFieldsPathOf(table.value);
     match.value = "all";
     return;
@@ -501,11 +498,7 @@ defineExpose({ validate });
   color: var(--el-color-danger);
 }
 
-.rule-edit-meta {
-  font-size: var(--el-font-size-extra-small);
-  color: var(--el-text-color-secondary);
-}
-
+.rule-edit-meta,
 .rule-edit-option-hint {
   font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
