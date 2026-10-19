@@ -128,12 +128,21 @@ test.describe("用户权限预览（超管）", () => {
     await expect(drawer.getByText("基本信息", { exact: true })).toBeVisible();
     await expect(drawer.getByText(/可见菜单树（\d+）/)).toBeVisible();
     await expect(drawer.getByText(/API 权限码（\d+）/)).toBeVisible();
-    await expect(drawer.getByText("数据权限", { exact: true })).toBeVisible();
+    // 菜单树标题翻译后「数据权限」同时存在于树节点与分区头，取首个（分区头）
+    await expect(
+      drawer.getByText("数据权限", { exact: true }).first()
+    ).toBeVisible();
     await expect(drawer.getByText(/字段权限（\d+）/)).toBeVisible();
     await expect(
       drawer.getByText("数据权限试算", { exact: true })
     ).toBeVisible();
     await expect(drawer.getByText("三层权限全部旁路")).toBeVisible();
+    // 可见菜单树按词条展示（种子菜单标题存 menus.xxx key，不得原样泄漏）
+    const menuSection = drawer
+      .locator(".el-collapse-item")
+      .filter({ hasText: "可见菜单树" });
+    await expect(menuSection).toContainText("系统管理");
+    await expect(menuSection).not.toContainText("menus.");
   });
 
   test("API 权限码关键字过滤", async ({ page }) => {

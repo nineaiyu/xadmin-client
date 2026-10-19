@@ -2,7 +2,10 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { PreviewRuleGroupTable } from "@/components/RePermissionPreview";
+import {
+  PreviewRuleGroupTable,
+  translateMenuTitle
+} from "@/components/RePermissionPreview";
 import type {
   PreviewDataPermissions,
   PreviewDataRuleGroup
@@ -27,7 +30,9 @@ const hasContent = computed(
 
 function groupTitle(group: PreviewDataRuleGroup) {
   const menus = group.menus.length
-    ? ` · ${t("permissionPreview.boundMenus")}: ${group.menus.map(m => m.title).join("、")}`
+    ? ` · ${t("permissionPreview.boundMenus")}: ${group.menus
+        .map(m => translateMenuTitle(m.title))
+        .join("、")}`
     : ` · ${t("permissionPreview.generalGrant")}`;
   return `${group.name} [${MODE_LABELS[group.mode_type] ?? group.mode_type}]${menus}`;
 }
