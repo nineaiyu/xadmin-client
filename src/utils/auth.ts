@@ -30,17 +30,32 @@ export function getRefreshToken() {
 }
 
 /**
+ * 认证 Cookie 是否带 Secure 属性。
+ *
+ * Secure Cookie 在非安全上下文（http:// 内网地址）下会被浏览器**静默丢弃**，
+ * 表现为「登录成功 → 立即未授权」的循环。而页面是否安全上下文只有运行时才知道，
+ * 构建期开关答不了这个问题，故默认按 `isSecureContext` 自动判定：
+ *
+ * - 构建期显式 `VITE_COOKIE_SECURE=false`：强制关闭（内网 HTTP 镜像特供）；
+ * - 构建期显式 `VITE_COOKIE_SECURE=true`：强制开启（前端有 TLS 终结反代、
+ *   但未传 `X-Forwarded-Proto` 导致 `isSecureContext` 误判为 false 的场景）；
+ * - 其余（默认）：按当前页面上下文判定，HTTPS / localhost 自动带上 Secure。
+ */
+function cookieSecure(): boolean {
+  const configured = import.meta.env.VITE_COOKIE_SECURE;
+  if (configured === "false") return false;
+  if (configured === "true") return true;
+  return typeof window !== "undefined" && window.isSecureContext === true;
+}
+
+/**
  * 认证 Cookie 统一附带 SameSite/Secure 属性，防跨站自动携带与明文传输。
- * 生产默认 Secure；仅当构建时显式注入 VITE_COOKIE_SECURE=false 才关闭——
- * 供内网 HTTP 测试服使用（http://<内网IP> 属非安全上下文，Secure Cookie
- * 会被浏览器静默丢弃，表现为「登录成功后立即未授权」的循环）。
+ * 非安全上下文（HTTP 内网部署）下主动收窄为不带 Secure，避免 token 存不进去。
  */
 function cookieSecureOptions() {
   return {
     sameSite: "Lax",
-    ...(import.meta.env.PROD && import.meta.env.VITE_COOKIE_SECURE !== "false"
-      ? { secure: true }
-      : {})
+    secure: cookieSecure()
   } as Cookies.CookieAttributes;
 }
 
