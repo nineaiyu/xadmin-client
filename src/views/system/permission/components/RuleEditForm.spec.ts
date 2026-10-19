@@ -1,4 +1,5 @@
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { describe, expect, it, vi } from "vitest";
 import {
   ElAlert,
@@ -14,7 +15,7 @@ import {
   ElText
 } from "element-plus";
 
-import type { FieldRuleRow } from "./utils/types";
+import type { FieldLookupNode, FieldRuleRow } from "./utils/types";
 
 const mocks = vi.hoisted(() => ({
   hasAuth: vi.fn(() => true)
@@ -170,5 +171,138 @@ describe("RuleEditForm 关联对象取值的权限降级", () => {
       "update:modelValue"
     )?.[0]?.[0] as FieldRuleRow;
     expect(payload.value).toBe("abc");
+  });
+});
+
+/** 访问日志所在的应用 → 模型 → 字段树 */
+const auditTree: FieldLookupNode[] = [
+  {
+    name: "audit",
+    label: "审计",
+    children: [
+      {
+        name: "audit.operationlog",
+        label: "访问日志",
+        children: [{ name: "username", label: "用户名" }]
+      }
+    ]
+  }
+];
+
+const ruleTypes = [
+  {
+    label: "文本",
+    value: "value.text",
+    group: "free",
+    input: "text" as const,
+    value_required: true,
+    default_match: "exact"
+  },
+  {
+    label: "全部数据",
+    value: "value.all",
+    group: "all",
+    input: "none" as const,
+    value_required: false,
+    default_match: "all"
+  }
+];
+
+const mountRuleForm = (modelValue: FieldRuleRow) =>
+  mount(RuleEditForm, {
+    props: {
+      modelValue,
+      fieldLookupsData: auditTree,
+      valuesData: ruleTypes
+    },
+    global: {
+      components: {
+        ElAlert,
+        ElButton,
+        ElDatePicker,
+        ElInput,
+        ElInputNumber,
+        ElOption,
+        ElOptionGroup,
+        ElRadioButton,
+        ElRadioGroup,
+        ElSelect,
+        ElText
+      }
+    }
+  });
+
+/** 通过取值方式下拉切换类型（与用户操作同路径） */
+async function switchType(
+  wrapper: ReturnType<typeof mountRuleForm>,
+  value: string
+) {
+  const select = wrapper
+    .get('[data-testid="rule-type"]')
+    .findComponent(ElSelect);
+  select.vm.$emit("update:modelValue", value);
+  select.vm.$emit("change", value);
+  await nextTick();
+}
+
+async function saveAndRead(
+  wrapper: ReturnType<typeof mountRuleForm>
+): Promise<FieldRuleRow> {
+  await wrapper.find('[data-testid="rule-save"]').trigger("click");
+  return wrapper.emitted("update:modelValue")?.[0]?.[0] as FieldRuleRow;
+}
+
+describe("RuleEditForm「全部数据」保留过滤对象", () => {
+  it("已选具体表时切到全部数据，保存仍只作用于该表", async () => {
+    const wrapper = mountRuleForm({
+      table: "audit.operationlog",
+      field: "username",
+      match: "exact",
+      exclude: false,
+      type: "value.text",
+      value: "admin"
+    });
+
+    await switchType(wrapper, "value.all");
+    const payload = await saveAndRead(wrapper);
+
+    expect(payload.table).toBe("audit.operationlog");
+    expect(payload.field).toBe("*");
+    expect(payload.match).toBe("all");
+    expect(payload.type).toBe("value.all");
+  });
+
+  it("未选表时切到全部数据，才落为全部表", async () => {
+    const wrapper = mountRuleForm({
+      table: "",
+      field: "",
+      match: "",
+      exclude: false,
+      type: "",
+      value: ""
+    });
+
+    await switchType(wrapper, "value.all");
+    const payload = await saveAndRead(wrapper);
+
+    expect(payload.table).toBe("*");
+    expect(payload.field).toBe("*");
+  });
+
+  it("历史规则（具体表 + 非通配字段）回显后保存不丢表", async () => {
+    const wrapper = mountRuleForm({
+      table: "audit.operationlog",
+      field: "id",
+      match: "all",
+      exclude: false,
+      type: "value.all",
+      value: ""
+    });
+
+    const payload = await saveAndRead(wrapper);
+
+    expect(payload.table).toBe("audit.operationlog");
+    expect(payload.field).toBe("*");
+    expect(payload.type).toBe("value.all");
   });
 });

@@ -244,7 +244,7 @@ describe("画布栅格常量单一来源", () => {
   });
 });
 
-describe("视频与自定义 HTML 窗格（ADR-090 D3）", () => {
+describe("视频与自定义 HTML 窗格", () => {
   it("两类窗格都有栅格默认尺寸", () => {
     expect(PANE_DEFAULTS.video).toEqual({ w: 6, h: 4 });
     expect(PANE_DEFAULTS.html).toEqual({ w: 6, h: 4 });

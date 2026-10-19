@@ -3,6 +3,7 @@ import { computed, isRef, nextTick, ref, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FilterNodeMethodFunction, TreeInstance } from "element-plus";
 import { MenuChoices } from "@/views/system/constants";
+import { translateMenuTitle } from "@/components/RePermissionPreview";
 import {
   buildScopeTree,
   countScopePermissions,
@@ -39,7 +40,10 @@ const dialogVisible = ref(false);
 const keyword = ref("");
 const treeRef = ref<TreeInstance>();
 
-const treeData = computed(() => buildScopeTree(rowsValue.value));
+const treeData = computed(() =>
+  // 内置种子标题存词条 key（menus.xxx），与侧栏同一转换口径
+  buildScopeTree(rowsValue.value, translateMenuTitle)
+);
 const selectedCount = computed(() =>
   countScopePermissions(rowsValue.value, modelValue.value)
 );
@@ -91,18 +95,32 @@ const filterNode: FilterNodeMethodFunction = (value, data) => {
 
 watch(keyword, value => treeRef.value?.filter(value));
 
+/** 回显只设置接口权限点（页面节点由父子联动派生，历史数据里的页面 pk 亦然） */
+function syncChecked() {
+  const tree = treeRef.value;
+  if (!tree) return;
+  tree.setCheckedKeys(expandScopePks(rowsValue.value, modelValue.value));
+}
+
+/**
+ * 首次打开时弹窗内容在过渡里挂载，`nextTick` 拿不到 el-tree 实例，
+ * 勾选回显会静默丢失（表现为第二次打开才正常）；统一放到 `opened` 后同步。
+ */
+function handleOpened() {
+  syncChecked();
+  setExpandAll(false);
+}
+
 function openDialog() {
   if (props.disabled) return;
   keyword.value = "";
   dialogVisible.value = true;
-  nextTick(() => {
-    // 回显只设置接口权限点（页面节点由父子联动派生，历史数据里的页面 pk 亦然）
-    treeRef.value?.setCheckedKeys(
-      expandScopePks(rowsValue.value, modelValue.value)
-    );
-    setExpandAll(false);
-  });
 }
+
+// 菜单数据晚于弹窗到达时补一次回显（树随数据重建，勾选状态会重置）
+watch(rowsValue, () => {
+  if (dialogVisible.value) nextTick(syncChecked);
+});
 
 function handleConfirm() {
   const checked = (treeRef.value?.getCheckedKeys(true) ?? []) as string[];
@@ -142,6 +160,7 @@ function handleConfirm() {
     destroy-on-close
     :title="t('systemPermission.scope.dialogTitle')"
     :width="dialogSize('md')"
+    @opened="handleOpened"
   >
     <div class="scope-toolbar">
       <el-input

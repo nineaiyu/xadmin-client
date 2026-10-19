@@ -2,7 +2,7 @@ import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import { clampRotate } from "./paneEffects";
 
 /**
- * 多选批量改属性（ADR-088/089，纯函数 + 单测；拆分动机：编辑域组合层行数门禁）。
+ * 多选批量改属性（纯函数 + 单测；拆分动机：编辑域组合层行数门禁）。
  *
  * **统一值语义**：把同一个值写给选区里「该字段适用」的窗格；适用性口径与服务端
  * `_normalize_pane_body` 一致——避免把 `text_format` 塞给时钟、把 `size` 塞给图片这类

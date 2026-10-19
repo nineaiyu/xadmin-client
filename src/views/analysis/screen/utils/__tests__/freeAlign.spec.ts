@@ -119,7 +119,7 @@ describe("snapBoxesToGrid 批量对齐网格", () => {
   });
 });
 
-describe("旋转窗格对齐（ADR-090 D2）", () => {
+describe("旋转窗格对齐", () => {
   it("左对齐按视觉左边界：位移施加到未旋转 x", () => {
     const pane = {
       pk: "a",

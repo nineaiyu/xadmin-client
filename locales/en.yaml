@@ -1818,8 +1818,9 @@ systemPermission:
     scope: Filter target
     scopePlaceholder: Select application / model / field
     scopeRequired: Please select a filter target (model and field)
-    scopeLockedTip: No filter target is needed for the "All data" value type
+    scopeAllTip: '"All data" applies to the selected table only; choose "All tables" to leave every table unrestricted'
     anyField: All fields
+    anyTable: All tables
     multipleField: multiple values
     nullableField: nullable
     type: Value type

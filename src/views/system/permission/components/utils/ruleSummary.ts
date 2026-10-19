@@ -11,6 +11,8 @@ import { objectValueCount } from "./ruleValue";
 /** 摘要所需的文案函数（由调用方注入 i18n，纯函数不直接依赖 t） */
 export interface RuleDescribeContext {
   fieldLabel: (table?: string, field?: string) => string;
+  /** 表/模型可读名（「全部数据」摘要标注作用表；缺省回退表标识） */
+  tableLabel?: (table?: string) => string;
   typeLabel: (type?: string) => string;
   matchLabel: (match?: string) => string;
   /** 关联对象值（已选 N 项） */
@@ -67,7 +69,12 @@ export function describeRule(
   input: RuleValueInput,
   ctx: RuleDescribeContext
 ): string {
-  if (rule.type === "value.all" || rule.match === "all") return ctx.allText;
+  if (rule.type === "value.all" || rule.match === "all") {
+    // 「全部数据」也区分作用表：单表全量与全部表全量的影响面完全不同
+    if (!rule.table || rule.table === "*") return ctx.allText;
+    const table = ctx.tableLabel ? ctx.tableLabel(rule.table) : rule.table;
+    return `${table} ${ctx.allText}`;
+  }
   const field = ctx.fieldLabel(rule.table, rule.field);
   const direction = rule.exclude ? ctx.excludeText : ctx.includeText;
   const target =

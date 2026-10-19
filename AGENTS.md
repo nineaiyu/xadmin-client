@@ -105,7 +105,8 @@ node scripts/e2e-run.mjs parallel                                       # 4 路�
 
 - 只有用户明确要求才 `git commit`；`type(scope): 中文描述`，**subject 禁止以大写单词开头**，
   **commit body 每行 ≤ 100 字符**（commitlint 两个硬规则）。
-- 源码注释 / 测试名 / 基线 JSON 说明字段里**不写台账编号**（`T03-01` / `O10-2` 一类），
-  需要交代来龙去脉时写一句自足的语义说明。
+- 源码注释 / 测试名 / 基线 JSON 说明字段里**不写台账编号**（`ADR-090` 决策编号、
+  `T03-01` / `O10-2` 一类），需要交代来龙去脉时写一句自足的语义说明。
+  守护：`pnpm check:ledger-ids`。
 - 提交前 `git add -A` 全量暂存（避免 lint-staged 在「部分暂存」下污染提交），提交后核对
   `git show --stat` 与 `git status --short`。

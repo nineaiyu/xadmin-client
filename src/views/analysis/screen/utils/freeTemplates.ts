@@ -25,7 +25,7 @@ export type FreeTemplate = {
   /** 内置模板不可改名 / 删除 */
   builtin: boolean;
   /**
-   * 来源：内置 / 本地（localStorage）/ 团队（服务端，ADR-088）。
+   * 来源：内置 / 本地（localStorage）/ 团队（服务端）。
    * 缺省按内置处理（老版本落盘的本土模板没有该字段，语义上仍是「我的模板」，
    * 故读取侧显式补 "local"，见 `listMyTemplates`）。
    */

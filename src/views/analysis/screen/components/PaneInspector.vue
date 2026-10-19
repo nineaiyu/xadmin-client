@@ -95,7 +95,7 @@ const h = numeric("h");
 const size = numeric("size", 24);
 const clockSize = numeric("size", 40);
 
-/* ---------------- 表达类字段（ADR-088）：旋转 / 动画 / 富文本 ----------------
+/* ---------------- 表达类字段：旋转 / 动画 / 富文本 ----------------
  * 旋转是**视觉旋转**（不进几何：吸附 / 框选 / 对齐仍按未旋转的盒模型算），
  * 动画只在展示态播放一次；三者都随保存载荷下发（默认值不下发，见 utils/layout.paneBody）。 */
 const rotate = computed({
@@ -276,7 +276,7 @@ const imageUrlError = computed(() =>
 
       <template v-if="pane.type === 'text'">
         <el-form-item :label="t('dataScreen.paneContent')">
-          <!-- 富文本走「工具条 + 实时预览」（ADR-090）；纯文本保持朴素 textarea -->
+          <!-- 富文本走「工具条 + 实时预览」；纯文本保持朴素 textarea -->
           <RichTextEditor
             v-if="textFormat === 'rich'"
             :model-value="pane.text ?? ''"

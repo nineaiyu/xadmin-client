@@ -6,7 +6,7 @@ import { nextTick } from "vue";
 import RichTextEditor from "../RichTextEditor.vue";
 
 /**
- * 富文本编辑器（ADR-090 D1）：工具条按钮走**原生 textarea 的选区 API**。
+ * 富文本编辑器：工具条按钮走**原生 textarea 的选区 API**。
  *
  * 这条用例钉住一个真实踩坑：把 `ref` 挂在 `el-input` 组件上时拿不到 `selectionStart/End`
  * （两个属性在组件实例上是 undefined），`slice(undefined)` 会退化成「整串复制」，

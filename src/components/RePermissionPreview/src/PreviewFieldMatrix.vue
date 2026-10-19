@@ -3,6 +3,7 @@
 // 由归一化后的条目驱动；部门预览以 compact 形态把模型与字段合并为一列。
 import { useI18n } from "vue-i18n";
 import type { FieldMatrixEntry } from "./fieldMatrix";
+import { translateMenuTitle } from "./title";
 
 defineOptions({ name: "PreviewFieldMatrix" });
 
@@ -26,7 +27,7 @@ const { t } = useI18n();
     <el-collapse-item
       v-for="entry in entries"
       :key="entry.key"
-      :title="entry.menu"
+      :title="translateMenuTitle(entry.menu)"
     >
       <div v-for="model in entry.models" :key="model.model" class="mb-2">
         <div class="mb-1 text-sm font-medium">
@@ -45,11 +46,11 @@ const { t } = useI18n();
   </el-collapse>
 
   <el-table v-else :data="entries" size="small" border>
-    <el-table-column
-      prop="menu"
-      :label="t('permissionPreview.colMenu')"
-      min-width="140"
-    />
+    <el-table-column :label="t('permissionPreview.colMenu')" min-width="140">
+      <template #default="{ row }">
+        {{ translateMenuTitle(row.menu) }}
+      </template>
+    </el-table-column>
     <el-table-column
       prop="role"
       :label="t('permissionPreview.colRole')"

@@ -1,4 +1,4 @@
-// 大屏窗格入场动画（ADR-088）：由 `ScreenPane` 以 `@use` 引入（随该组件的 scoped 样式一起
+// 大屏窗格入场动画：由 `ScreenPane` 以 `@use` 引入（随该组件的 scoped 样式一起
 // 编译，keyframes 与类名的重命名口径一致），设计器预览与投屏共用同一份定义。
 // 关键帧一律用独立变换属性 `translate` / `scale`：窗格自身可能带 `transform: rotate()`
 // （视觉旋转），用 transform 做动画会把旋转顶掉、动画结束再跳回去。

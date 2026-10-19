@@ -104,8 +104,8 @@ const effectiveMatch = computed(() =>
 );
 const runtimeValueText = computed(() => t("systemPermission.valueByRuntime"));
 
-/** 由规则的 table / field 反推级联路径（编辑回显；找不到所属应用时退化为「表 / 字段」两段） */
-function scopePathOf(tableName?: string, fieldName?: string): string[] {
+/** table / field → 级联路径（具体表补上所属应用；找不到时退化为「表 / 字段」两段） */
+function scopePathInApp(tableName?: string, fieldName?: string): string[] {
   const tableValue = tableName ?? "*";
   const fieldValue = fieldName ? fieldName : "*";
   if (!tableValue || tableValue === "*") return ["*", fieldValue];
@@ -115,6 +115,17 @@ function scopePathOf(tableName?: string, fieldName?: string): string[] {
   return app
     ? [String(app.name), tableValue, fieldValue]
     : [tableValue, fieldValue];
+}
+
+/**
+ * 「全部数据」规则的级联路径：保留表、字段固定为通配。
+ *
+ * 全部数据只约束「表」维度（后端按 `table` 过滤规则、`type=value.all` 恒真），
+ * 因此选了具体表时应表达「该表的全部数据」，不能改写成「全部表」——
+ * 后者会把单表授权静默放大成所有表的授权。
+ */
+function allFieldsPathOf(tableName?: string): string[] {
+  return scopePathInApp(tableName, "*");
 }
 
 function resetValueState() {
@@ -129,7 +140,10 @@ function resetValueState() {
 function initFromRule(rule: FieldRuleRow) {
   initializing.value = true;
   type.value = rule.type ?? "";
-  scopePath.value = scopePathOf(rule.table, rule.field);
+  scopePath.value =
+    rule.type === FieldKeyChoices.ALL
+      ? allFieldsPathOf(rule.table)
+      : scopePathInApp(rule.table, rule.field);
   match.value = rule.match ?? "";
   exclude.value = Boolean(rule.exclude);
   resetValueState();
@@ -167,8 +181,16 @@ function initFromRule(rule: FieldRuleRow) {
 watch(() => props.modelValue, initFromRule, { immediate: true });
 
 // 过滤对象变化后旧的取值失去语义，一律清空重填；匹配符候选由字段选择器加载
-watch(scopePath, () => {
+watch(scopePath, path => {
   if (initializing.value) return;
+  if (isAll.value) {
+    // 全部数据只区分「哪张表」：用户改选到具体字段时归一为「表 + 全部字段」
+    const normalized = allFieldsPathOf(path[path.length - 2]);
+    if (normalized.join("\u0000") !== path.join("\u0000")) {
+      scopePath.value = normalized;
+    }
+    return;
+  }
   resetValueState();
 });
 
@@ -177,8 +199,9 @@ function handleTypeChange(value: string) {
   errors.value = {};
   resetValueState();
   if (value === FieldKeyChoices.ALL) {
-    // 「全部数据」不需要过滤对象，路径锁到「全部表 + 全部字段」并置为只读
-    scopePath.value = ["*", "*"];
+    // 「全部数据」保留已选的表（表达「该表全部数据」），字段固定为全部字段；
+    // 未选表时才落到「全部表」，避免把单表规则静默放大成全表授权
+    scopePath.value = allFieldsPathOf(table.value);
     match.value = "all";
     return;
   }
@@ -247,7 +270,7 @@ function handleSubmit() {
   if (Object.keys(errors.value).length) return;
   const payload: FieldRuleRow = isAll.value
     ? {
-        table: "*",
+        table: table.value && table.value !== "*" ? table.value : "*",
         field: "*",
         match: "all",
         exclude: false,
@@ -272,12 +295,11 @@ defineExpose({ validate });
 <template>
   <div class="rule-edit-card">
     <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-      <!-- 过滤对象：应用 / 模型 / 字段级联；选「全部表 + 全部字段」等价于全部数据 -->
+      <!-- 过滤对象：应用 / 模型 / 字段级联；字段选「全部字段」等价于该表全部数据 -->
       <RuleFieldPicker
         v-model:match="match"
         v-model:match-options="matchOptions"
         v-model:path="scopePath"
-        :disabled="isAll"
         :error="errors.scope"
         :field-lookups-data="fieldLookupsData"
         @wildcard="handleTypeChange(FieldKeyChoices.ALL)"

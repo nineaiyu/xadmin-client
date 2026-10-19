@@ -6,7 +6,7 @@ import { renderRichText } from "../utils/richText";
 defineOptions({ name: "ScreenRichTextEditor" });
 
 /**
- * 富文本编辑器（ADR-090 D1）：**选区包裹按钮 + 实时预览**。
+ * 富文本编辑器：**选区包裹按钮 + 实时预览**。
  *
  * 为什么不是 `contenteditable` 所见即所得：粘贴清洗、输入法、撤销栈、选区模型与安全面
  * 要全量翻新（收益/风险不匹配，ADR 里已登记为触发制）。这里用「标记编辑 + 右侧实时渲染」，

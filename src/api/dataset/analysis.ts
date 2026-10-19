@@ -219,13 +219,13 @@ export const screenApi = new BaseApi("/api/dataset/screens");
 export const reportApi = new BaseApi("/api/dataset/reports");
 
 /**
- * 大屏模板（团队共享，ADR-088）：载荷与自由画布同形（`free_layout`），
+ * 大屏模板（团队共享）：载荷与自由画布同形（`free_layout`），
  * 可见性 / 行级归属守卫与大屏同口径（非创建者改删 1003，列表下发 is_owner）。
  */
 export type ScreenTemplateItem = {
   pk: string;
   name: string;
-  /** 模板分组（ADR-090 D4；空 = 未分组） */
+  /** 模板分组（空 = 未分组） */
   group?: string;
   free_layout?: Partial<ScreenFreeLayout>;
   visibility: "personal" | "shared";
@@ -264,7 +264,7 @@ export const rollbackScreenTemplate = (pk: string, version: number) =>
     `${screenTemplateApi.baseApi}/${pk}/rollback`
   );
 
-/** 云端剪贴板（按用户单槽，ADR-090 D4）：跨设备复制粘贴 */
+/** 云端剪贴板（按用户单槽）：跨设备复制粘贴 */
 export const screenClipboardApi = new BaseApi("/api/dataset/screen-clipboard");
 
 /** 投递渠道枚举：choices_dict 在响应顶层（与其它 choices 消费方同口径） */

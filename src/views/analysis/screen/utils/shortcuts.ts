@@ -56,7 +56,7 @@ export function useScreenShortcuts(handlers: {
   copy?: () => void;
   paste?: () => void;
   selectAll?: () => void;
-  /** zoom 键盘档位（ADR-088）：`⌘/Ctrl + = / -` 上下档、`⌘/Ctrl + 0` 适应窗口 */
+  /** zoom 键盘档位：`⌘/Ctrl + = / -` 上下档、`⌘/Ctrl + 0` 适应窗口 */
   zoomIn?: () => void;
   zoomOut?: () => void;
   zoomFit?: () => void;

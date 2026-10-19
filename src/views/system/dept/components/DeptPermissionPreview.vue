@@ -1,17 +1,22 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { deptApi } from "@/api/identity/dept";
-import type { DeptPreviewResult } from "@/api/types/permission-preview";
+import type {
+  DeptPreviewResult,
+  PreviewDataRuleGroup
+} from "@/api/types/permission-preview";
 import ReEmpty from "@/components/ReEmpty";
 import {
   PreviewDescriptions,
   PreviewFieldMatrix,
   PreviewMenuTree,
   PreviewNotes,
+  PreviewRuleGroupTable,
   PreviewStatusTag,
   PreviewUsersTable,
   RePermissionPreviewShell,
   toFieldMatrixEntries,
+  translateMenuTitle,
   usePermissionPreview
 } from "@/components/RePermissionPreview";
 
@@ -31,6 +36,21 @@ const { loading, data: preview } = usePermissionPreview<DeptPreviewResult>(
   async pk => (await deptApi.preview(pk)).data,
   () => props.row.pk
 );
+
+/** 生效模式文案：单规则时与后端 rule_text 同口径按「或模式」展示 */
+function groupModeText(group: PreviewDataRuleGroup): string {
+  const mode = group.rules.length === 1 ? 0 : group.mode_type;
+  return mode === 1
+    ? t("permissionPreview.modeAnd")
+    : t("permissionPreview.modeOr");
+}
+
+/** 绑定菜单标题（词条化标题先翻译；过多时折叠为「等 N 个」） */
+function boundMenusText(group: PreviewDataRuleGroup): string {
+  const titles = group.menus.map(item => translateMenuTitle(item.title));
+  const shown = titles.slice(0, 8).join("、");
+  return titles.length > 8 ? `${shown} 等 ${titles.length} 个` : shown;
+}
 </script>
 
 <template>
@@ -114,22 +134,30 @@ const { loading, data: preview } = usePermissionPreview<DeptPreviewResult>(
           <div
             v-for="group in data.data_permissions.rules"
             :key="group.pk"
-            class="mb-3"
+            class="mb-4"
           >
-            <div class="mb-1 flex items-center gap-1 text-sm font-medium">
-              <span>{{ group.name }}</span>
+            <!-- 授权组头：名称 + 生效模式 + 绑定菜单（悬停看明细） -->
+            <div class="mb-2 flex flex-wrap items-center gap-2 text-sm">
+              <span class="font-medium">{{ group.name }}</span>
+              <el-tag size="small" type="info">{{
+                groupModeText(group)
+              }}</el-tag>
               <el-tooltip
                 v-if="group.menu_scoped"
-                :content="t('permissionPreview.menuScopedHint')"
+                :content="boundMenusText(group)"
               >
                 <el-tag size="small" type="warning">
-                  {{ t("permissionPreview.boundMenus") }}
+                  {{ t("permissionPreview.boundMenus") }}（{{
+                    group.menus.length
+                  }}）
                 </el-tag>
               </el-tooltip>
+              <el-tag v-if="!group.is_active" size="small" type="info">
+                {{ t("permissionPreview.disabled") }}
+              </el-tag>
             </div>
-            <div class="text-sm text-(--el-text-color-regular)">
-              {{ group.rule_text }}
-            </div>
+            <!-- 规则逐条成表：与用户预览同口径，避免长文案挤成一段 -->
+            <PreviewRuleGroupTable :rules="group.rules" />
           </div>
         </template>
         <ReEmpty

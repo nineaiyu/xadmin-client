@@ -143,7 +143,7 @@ export function isValidPaneImageUrl(url: string | undefined | null): boolean {
 }
 
 /**
- * 自定义 HTML 窗格地址口径（ADR-090 D3）：**只收 http(s) 绝对地址**。
+ * 自定义 HTML 窗格地址口径：**只收 http(s) 绝对地址**。
  *
  * 比图片更严：iframe 不接受站内根相对路径（避免把站内任意页面嵌进大屏造成点击劫持面），
  * 更不接受 `javascript:` / `data:` 与 `srcdoc` 形态的原样 HTML。
@@ -168,7 +168,7 @@ export function paneBody(pane: ScreenLayoutPane): PaneBody {
     type: pane.type,
     ...(pane.title ? { title: pane.title } : {})
   };
-  // 表达类字段（ADR-088）：非默认才下发——默认值（0 / none / plain）不下发，
+  // 表达类字段：非默认才下发——默认值（0 / none / plain）不下发，
   // 既有载荷升级后字节不变，服务端缺省也按同口径补齐
   if (pane.rotate) base.rotate = pane.rotate;
   if (pane.animation && pane.animation !== "none") {

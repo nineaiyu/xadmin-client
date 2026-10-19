@@ -137,7 +137,7 @@ test("自由画布：拖动缩放保存 → 投屏等比缩放；切回栅格不
   expect(movedBox.x).toBeLessThan(paneBox.x);
 
   // ---- 缩放：右下角手柄放大（八向手柄来自 ReResize）----
-  // 取手柄中心（不依赖手柄像素尺寸）：手柄自 ADR-088 起按 1/z 反缩放做「屏幕尺寸恒定」，
+  // 取手柄中心（不依赖手柄像素尺寸）：手柄自 按 1/z 反缩放做「屏幕尺寸恒定」，
   // 但写死偏移量在任意缩放下都脆弱，取中心对两种口径都稳
   const resizeHandle = freeCanvas.locator(".re-resize__stick--br").first();
   const handleBox = (await resizeHandle.boundingBox())!;

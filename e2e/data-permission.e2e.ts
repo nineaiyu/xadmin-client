@@ -27,6 +27,30 @@ async function pickOption(page: Page, scope: Locator, text: string) {
   await option.click();
 }
 
+/** 过滤对象逐级选择：应用 → 模型 → 字段（下拉面板每列一个 menu） */
+async function pickScopeNode(page: Page, column: number, name: string) {
+  await page
+    .locator(".el-cascader__dropdown .el-cascader-menu")
+    .nth(column)
+    .locator(".el-cascader-node")
+    .filter({ hasText: name })
+    .first()
+    .click();
+}
+
+/** 在规则卡片里配一条「创建人 = 当前用户」规则（表单要求至少一条规则） */
+async function fillOwnerRule(page: Page, drawer: Locator) {
+  await drawer.getByTestId("rule-add").click();
+  const card = drawer.locator(".rule-edit-card");
+  await expect(card).toBeVisible();
+  await card.getByTestId("rule-scope").locator("input").first().click();
+  await pickScopeNode(page, 0, "(identity)");
+  await pickScopeNode(page, 1, "(identity.userinfo)");
+  await pickScopeNode(page, 2, "(creator)");
+  await pickOption(page, card.getByTestId("rule-type"), "目标用户本人");
+  await card.getByTestId("rule-save").click();
+}
+
 test.describe("数据权限配置（抽屉式新增/编辑）", () => {
   test("新增：行内配置规则并保存，列表展示生效范围", async ({ page }) => {
     // 弹层装配不得产生控制台噪音：列解析器改 undefined 会抛错（被框架吞成 warn），
@@ -71,22 +95,12 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
     const card = drawer.locator(".rule-edit-card");
     await expect(card).toBeVisible();
     const scope = card.getByTestId("rule-scope");
-    // 过滤对象逐级选择：应用 → 模型 → 字段（下拉面板每列一个 menu）
-    const pickScopeNode = async (column: number, name: string) => {
-      await page
-        .locator(".el-cascader__dropdown .el-cascader-menu")
-        .nth(column)
-        .locator(".el-cascader-node")
-        .filter({ hasText: name })
-        .first()
-        .click();
-    };
     await scope.locator("input").first().click();
     // 一级是应用（app_label）：用户模型已从 system 域迁到 identity 域，
     // 模型树按当前 app 归属生成，故此处选 identity 而非 system
-    await pickScopeNode(0, "(identity)");
-    await pickScopeNode(1, "(identity.userinfo)");
-    await pickScopeNode(2, "(creator)");
+    await pickScopeNode(page, 0, "(identity)");
+    await pickScopeNode(page, 1, "(identity.userinfo)");
+    await pickScopeNode(page, 2, "(creator)");
     // 级联选中值显示在输入框 value（完整路径），不是文本节点
     await expect(scope.locator("input").first()).toHaveValue(/创建人/);
     await pickOption(page, card.getByTestId("rule-type"), "目标用户本人");
@@ -133,6 +147,33 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
     await expect(editDrawer.getByTestId("scope-trigger")).toContainText(
       "未限制"
     );
+    // 生效接口树：内置菜单标题存词条 key（menus.xxx），必须与侧栏同一口径翻译
+    await editDrawer.getByTestId("scope-trigger").click();
+    const scopeDialog = page
+      .locator(".el-dialog")
+      .filter({ hasText: "选择生效接口" })
+      .last();
+    await expect(scopeDialog.locator(".el-tree")).toContainText("系统管理");
+    await expect(scopeDialog.locator(".el-tree")).not.toContainText(
+      "menus.sysManagement"
+    );
+    // 方法标签是归一后的字符串（字典字段对象曾直接渲染成 JSON 串）
+    await scopeDialog.getByRole("button", { name: "展开全部" }).click();
+    await expect(scopeDialog.locator(".el-tree .el-tag").first()).toHaveText(
+      /^(GET|POST|PUT|PATCH|DELETE|\*)$/
+    );
+
+    // 首次打开带勾选的弹窗必须回显（此前需关闭再开一次才显示选中项）
+    await scopeDialog.getByRole("button", { name: "全选" }).click();
+    await scopeDialog.getByRole("button", { name: "保存" }).click();
+    await expect(scopeDialog).not.toBeVisible();
+    await expect(editDrawer.getByTestId("scope-trigger")).toContainText("已选");
+    await editDrawer.getByTestId("scope-trigger").click();
+    await expect(
+      scopeDialog.locator(".el-tree .el-checkbox.is-checked").first()
+    ).toBeVisible();
+    await scopeDialog.getByRole("button", { name: "取消" }).click();
+    await expect(scopeDialog).not.toBeVisible();
     // 行内编辑回显：表 / 取值方式（回填期间不得被「字段变化清空取值」的联动清掉）
     await editDrawer
       .getByTestId("rule-row")
@@ -144,12 +185,17 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
     await expect(editCard.getByTestId("rule-value")).toContainText(
       "由系统按当前用户自动填充"
     );
-    // 「全部数据」时过滤对象与匹配条件仍保留在界面上（只读 + 提示），不再整块消失
+    // 「全部数据」保留已选的表：单表规则不能被静默放大成「全部表」授权
     await pickOption(page, editCard.getByTestId("rule-type"), "全部数据");
     await expect(editCard.getByTestId("rule-scope")).toBeVisible();
     await expect(editCard.getByTestId("rule-scope")).toContainText(
-      "无需选择过滤对象"
+      "只作用于所选表"
     );
+    await expect(editCard.getByTestId("rule-scope").locator("input").first()) //
+      .toHaveValue(/用户信息/);
+    await expect(
+      editCard.getByTestId("rule-scope").locator("input").first()
+    ).not.toHaveValue(/全部表/);
     await expect(editCard.getByTestId("rule-match")).toBeVisible();
     await expect(editCard.getByTestId("rule-value")).toContainText(
       "全部数据（不限制）"
@@ -162,5 +208,76 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
 
     // 新增 / 编辑两次表单列装配均无控制台噪音
     expect(consoleNoise).toEqual([]);
+  });
+
+  test("编辑：页面首次打开生效接口弹窗即回显已选接口", async ({ page }) => {
+    await login(page);
+    await openMenuPath(
+      page,
+      ["系统管理", "权限管理"],
+      "/system/permission/index"
+    );
+    const name = `E2E-生效范围回显-${Date.now()}`;
+
+    await page.getByRole("button", { name: "新增" }).first().click();
+    const drawer = page
+      .locator(".el-drawer")
+      .filter({ hasText: "新增" })
+      .first();
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await drawer
+      .locator(".el-form-item")
+      .filter({ hasText: "权限名称" })
+      .locator("input")
+      .first()
+      .fill(name);
+    await fillOwnerRule(page, drawer);
+
+    // 新建时就绑定生效范围（全选），保存后编辑页首次打开应带回勾选
+    await drawer.getByTestId("scope-trigger").click();
+    const dialog = page
+      .locator(".el-dialog")
+      .filter({ hasText: "选择生效接口" })
+      .last();
+    await dialog.getByRole("button", { name: "全选" }).click();
+    await dialog.getByRole("button", { name: "保存" }).click();
+    await expect(dialog).not.toBeVisible();
+    await drawer
+      .locator(".el-drawer__footer")
+      .getByRole("button", { name: "保存" })
+      .click();
+
+    const row = page
+      .locator(".el-table__row")
+      .filter({ hasText: name })
+      .first();
+    await expect(row).toBeVisible({ timeout: 15_000 });
+    await expect(row).toContainText("个接口");
+
+    // 模拟菜单注册表晚于弹窗到达：刷新后延迟菜单请求，首次打开时树还是空的，
+    // 数据到达后必须补回显（此前要关掉再开一次才显示选中项）
+    await page.route("**/api/system/menu*", async route => {
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      await route.continue();
+    });
+    await page.reload();
+    const reloadedRow = page
+      .locator(".el-table__row")
+      .filter({ hasText: name })
+      .first();
+    await expect(reloadedRow).toBeVisible({ timeout: 15_000 });
+    await reloadedRow.getByRole("button", { name: "编辑" }).click();
+    const editDrawer = page
+      .locator(".el-drawer")
+      .filter({ hasText: "编辑" })
+      .first();
+    await expect(editDrawer).toBeVisible({ timeout: 15_000 });
+    await editDrawer.getByTestId("scope-trigger").click();
+    await expect(
+      dialog.locator(".el-tree .el-checkbox.is-checked").first()
+    ).toBeVisible({ timeout: 15_000 });
+    await page.unroute("**/api/system/menu*");
+    await dialog.getByRole("button", { name: "取消" }).click();
+    await expect(dialog).not.toBeVisible();
   });
 });

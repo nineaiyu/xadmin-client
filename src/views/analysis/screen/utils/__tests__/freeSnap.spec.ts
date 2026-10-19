@@ -136,7 +136,7 @@ describe("snapFreeBox 缩放吸附", () => {
   });
 });
 
-describe("snapFreeBox 网格吸附（ADR-088）", () => {
+describe("snapFreeBox 网格吸附", () => {
   const GRID = { enabled: true, step: FREE_GRID_DEFAULT_STEP };
 
   it("参考线未命中时落到步长倍数（拖动）", () => {
@@ -204,7 +204,7 @@ describe("snapFreeBox 网格吸附（ADR-088）", () => {
   });
 });
 
-describe("旋转窗格吸附（ADR-090 D2）", () => {
+describe("旋转窗格吸附", () => {
   it("移动吸附按视觉盒：4px 内命中后位移施加到未旋转盒", () => {
     const pane = { x: 100, y: 100, w: 200, h: 100 };
     // 旋转 90° 后视觉盒为 x∈[150,250]；把视觉左边界放到 402（距 OTHER 左边界 400 差 2px）

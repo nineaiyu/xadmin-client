@@ -3,6 +3,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { userApi } from "@/api/identity/user";
+import { translateMenuTitle } from "@/components/RePermissionPreview";
 import { message } from "@/utils/message";
 import TrialResultPanel from "@/views/system/components/TrialResultPanel.vue";
 import type {
@@ -41,7 +42,7 @@ const menuOptions = computed(() => {
   const walk = (nodes: PreviewMenuItem[]) => {
     nodes.forEach(node => {
       if (node.menu_type === 1) {
-        options.push({ value: node.pk, label: node.title });
+        options.push({ value: node.pk, label: translateMenuTitle(node.title) });
       }
       if (node.children?.length) walk(node.children);
     });

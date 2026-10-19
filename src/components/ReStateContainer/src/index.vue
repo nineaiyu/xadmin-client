@@ -29,7 +29,7 @@ const props = withDefaults(
     skeletonFill?: boolean;
     /** 空态文案 */
     emptyHint?: string;
-    /** 空态图标（离线图标集可用名） */
+    /** 空态图标（离线图标集可用名）；留空使用 ReEmpty 内置插画 */
     emptyIcon?: string;
     /** 错误态标题 */
     errorText?: string;
@@ -50,7 +50,7 @@ const props = withDefaults(
     skeletonRows: 3,
     skeletonFill: false,
     emptyHint: "",
-    emptyIcon: "ep/box",
+    emptyIcon: "",
     errorText: "",
     errorDetail: "",
     minHeight: 0,

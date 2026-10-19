@@ -105,6 +105,10 @@ const describeCtx = computed<RuleDescribeContext>(() => ({
       ? t("systemPermission.editor.anyField")
       : `${table}.${field}`;
   },
+  tableLabel: table =>
+    !table || table === "*"
+      ? t("systemPermission.editor.anyTable")
+      : (fieldIndex.value.get(String(table)) ?? String(table)),
   typeLabel,
   matchLabel,
   objectText: count =>

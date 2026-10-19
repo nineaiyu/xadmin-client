@@ -4,6 +4,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import type { PreviewMenuItem } from "@/api/types/permission-preview";
 import { PREVIEW_TREE_PROPS } from "./hook";
+import { translateMenuTitle } from "./title";
 
 defineOptions({ name: "PreviewMenuTree" });
 
@@ -26,7 +27,7 @@ const { t } = useI18n();
   >
     <template #default="{ data: node }">
       <span class="flex items-center gap-1">
-        <span>{{ node.title }}</span>
+        <span>{{ translateMenuTitle(node.title) }}</span>
         <el-tag
           v-if="showCodeTag && node.menu_type === 2"
           size="small"

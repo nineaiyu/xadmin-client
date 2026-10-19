@@ -33,7 +33,7 @@ const props = defineProps<{
   templates: FreeTemplate[];
   /** 团队模板（服务端，与本地模板分开渲染，便于按来源分组） */
   serverTemplates?: FreeTemplate[];
-  /** 元素级网格吸附（ADR-088，默认关） */
+  /** 元素级网格吸附（默认关） */
   gridSnap?: FreeGridSnap;
 }>();
 
@@ -282,7 +282,7 @@ async function onCommand(command: string) {
     >
       {{ t("dataScreen.paste") }}
     </el-button>
-    <!-- 跨设备剪贴板（ADR-090 D4）：读服务端槽位后走同一条插入链路 -->
+    <!-- 跨设备剪贴板：读服务端槽位后走同一条插入链路 -->
     <el-button
       size="small"
       data-testid="free-paste-cloud"

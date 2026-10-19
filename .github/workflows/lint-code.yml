@@ -177,6 +177,10 @@ jobs:
           XADMIN_SERVER_DIR: xadmin-server
         run: pnpm check:menu-permissions
 
+      - name: Ledger ids stay out of source
+        # 防台账编号回潮：ADR 决策编号与任务编号只允许出现在提交信息与 docs/ 台账本体
+        run: pnpm check:ledger-ids
+
       - name: Version is in sync with xadmin-server
         # 前后端版本号必须同步提升：发布侧另有 tag 门禁（server build-image.yml），
         # 这里把校验前移到提交/PR 阶段，避免发版时才暴露

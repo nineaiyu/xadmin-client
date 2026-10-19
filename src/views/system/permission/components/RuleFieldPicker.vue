@@ -12,19 +12,16 @@ defineOptions({ name: "PermissionRuleFieldPicker" });
 interface Props {
   /** 数据权限字段树（应用 → 模型 → 字段；含「全部表」通配节点） */
   fieldLookupsData?: FieldLookupNode[];
-  /** 取值方式为「全部数据」时锁定选择（控件保留在界面上，避免字段整块消失） */
-  disabled?: boolean;
   error?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   fieldLookupsData: () => [],
-  disabled: false,
   error: ""
 });
 
 const emit = defineEmits<{
-  /** 选中「全部表 + 全部字段」= 全部数据（由使用方决定是否切换取值方式） */
+  /** 字段选中「全部字段」= 对应表的全部数据（由使用方决定是否切换取值方式） */
   wildcard: [];
 }>();
 
@@ -54,8 +51,33 @@ const field = computed(() => {
   return list.length >= 1 ? list[list.length - 1] : "";
 });
 
-const cascaderOptions = computed(
-  () => props.fieldLookupsData as CascaderOption[]
+/**
+ * 级联选项：为每个具体模型补一个「全部字段」叶子。
+ *
+ * 后端只提供了「全部表 → 全部字段」，而「全部数据」规则本身约束的是表维度
+ * （`table` + `type=value.all`），缺了这个叶子就无法选中/回显「某张表的全部数据」。
+ */
+const cascaderOptions = computed<CascaderOption[]>(
+  () =>
+    (props.fieldLookupsData ?? []).map(app => {
+      if (!app.name || app.name === "*") return app;
+      return {
+        ...app,
+        children: (app.children ?? []).map(model => {
+          if (!model.name || model.name === "*") return model;
+          if ((model.children ?? []).some(child => child.name === "*")) {
+            return model;
+          }
+          return {
+            ...model,
+            children: [
+              { name: "*", label: t("systemPermission.editor.anyField") },
+              ...(model.children ?? [])
+            ]
+          };
+        })
+      };
+    }) as CascaderOption[]
 );
 
 const fieldMetaText = computed(() => {
@@ -72,9 +94,8 @@ const fieldMetaText = computed(() => {
 async function loadMatchOptions() {
   matchOptions.value = [];
   fieldMeta.value = null;
-  // 「全部数据」由读取侧固定匹配，无需候选，也不改动已确定的 match
-  if (props.disabled) return;
-  if (!table.value || !field.value) return;
+  // 通配字段（全部字段）没有具体类型，读取侧固定 match=all，无需候选
+  if (!table.value || !field.value || field.value === "*") return;
   if (!hasAuth("lookups:SystemModelLabelField")) return;
   const res = await modelLabelFieldApi
     .lookups({ table: table.value, field: field.value })
@@ -102,8 +123,9 @@ watch(
 
 function handlePathChange(value: unknown) {
   const list = (value ?? []) as string[];
-  // 「全部表 + 全部字段」语义上就是全部数据，交由使用方切换取值方式
-  if (list.length === 2 && list[0] === "*" && list[1] === "*") {
+  // 任意「全部字段」叶子（含「全部表 → 全部字段」）语义上就是该范围的
+  // 全部数据，交由使用方切换取值方式并补全路径
+  if (list.length && list[list.length - 1] === "*") {
     emit("wildcard");
   }
 }
@@ -119,7 +141,6 @@ function handlePathChange(value: unknown) {
       class="w-full"
       clearable
       filterable
-      :disabled="disabled"
       :options="cascaderOptions"
       :placeholder="t('systemPermission.editor.scopePlaceholder')"
       :props="{ value: 'name', label: 'label', children: 'children' }"
@@ -132,8 +153,8 @@ function handlePathChange(value: unknown) {
       </template>
     </el-cascader>
     <span v-if="error" class="rule-edit-error">{{ error }}</span>
-    <span v-else-if="disabled" class="rule-edit-meta">{{
-      t("systemPermission.editor.scopeLockedTip")
+    <span v-else-if="field === '*'" class="rule-edit-meta">{{
+      t("systemPermission.editor.scopeAllTip")
     }}</span>
     <span v-else-if="fieldMetaText" class="rule-edit-meta">{{
       fieldMetaText
