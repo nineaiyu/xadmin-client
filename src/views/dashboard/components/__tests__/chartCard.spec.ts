@@ -11,20 +11,35 @@ import type { DashboardCard } from "@/api/dataset/datasets";
  * 跳过全量行物化仅 count，挂屏 M 张数字卡每刷新周期不再产生 M 次全量行查询。
  */
 
-const state = vi.hoisted(() => ({ executeMock: vi.fn() }));
+const state = vi.hoisted(() => ({
+  executeMock: vi.fn(),
+  aggregateMock: vi.fn(),
+  setOptionsMock: vi.fn(),
+  initTheme: undefined as string | undefined
+}));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/api/dataset/datasets", () => ({
-  datasetApi: { execute: state.executeMock }
+  datasetApi: {
+    execute: state.executeMock,
+    aggregate: state.aggregateMock
+  }
 }));
-// 避免拉起 echarts：数字卡路径不触达图表实例
+// 避免拉起 echarts：数字卡路径不触达图表实例；图表路径用桩记录 theme / option
 vi.mock("@pureadmin/utils", () => ({
   useDark: () => ({ isDark: { value: false } }),
-  useECharts: () => ({
-    setOptions: vi.fn(),
-    resize: vi.fn(),
-    getInstance: vi.fn()
-  })
+  useECharts: (_el: unknown, options?: { theme?: { value?: string } }) => {
+    state.initTheme = options?.theme?.value;
+    return {
+      setOptions: state.setOptionsMock,
+      resize: vi.fn(),
+      getInstance: vi.fn()
+    };
+  }
+}));
+// jsdom 容器没有布局尺寸，跳过 waitChartSized 的 rAF 轮询
+vi.mock("@/utils/chart", () => ({
+  waitChartSized: vi.fn().mockResolvedValue(true)
 }));
 
 const NUMBER_CARD: DashboardCard = {
@@ -42,6 +57,24 @@ const METRIC_COUNT_CARD: DashboardCard = {
   metric: "count"
 };
 
+const BAR_CARD: DashboardCard = {
+  id: "c3",
+  dataset: "ds-1",
+  title: "分布",
+  chart_type: "bar",
+  group_by: "gender",
+  metric: "count"
+};
+
+const PIE_CARD: DashboardCard = {
+  id: "c4",
+  dataset: "ds-1",
+  title: "占比",
+  chart_type: "pie",
+  group_by: "gender",
+  metric: "count"
+};
+
 const mountCard = (
   card: DashboardCard,
   extraProps: Record<string, unknown> = {}
@@ -56,6 +89,16 @@ beforeEach(() => {
     code: 1000,
     data: { columns: [], rows: [], total: 42, limit: 1000 }
   });
+  state.aggregateMock.mockReset().mockResolvedValue({
+    code: 1000,
+    data: {
+      name: "x",
+      metric: "count",
+      series: [{ name: "A", value: 3 }]
+    }
+  });
+  state.setOptionsMock.mockReset();
+  state.initTheme = undefined;
 });
 
 describe("ChartCard 数字卡 count_only", () => {
@@ -104,5 +147,47 @@ describe("ChartCard 数字卡 count_only", () => {
     await wrapper.setProps({ refreshToken: 1 });
     await flushPromises();
     expect(state.executeMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+/**
+ * 恒深色大屏 / 投屏：站点可能是亮色，图表必须按 forceDark 强制深色渲染，
+ * 否则深色卡片里会嵌一块白底黑字（投屏页「黑白混排」现场）。
+ */
+describe("ChartCard 恒深色渲染", () => {
+  it("forceDark：dark 主题 + 深色坐标轴 / tooltip", async () => {
+    mountCard(BAR_CARD, { forceDark: true });
+    await flushPromises();
+
+    expect(state.initTheme).toBe("dark");
+    expect(state.setOptionsMock).toHaveBeenCalledTimes(1);
+    const option = state.setOptionsMock.mock.calls[0][0];
+    expect(option.tooltip.backgroundColor).toBe("#1d1e1f");
+    expect(option.tooltip.textStyle.color).toBe("#e5eaf3");
+    expect(option.tooltip.axisPointer.lineStyle.color).toBe("#cfd3dc");
+    expect(option.xAxis.axisLabel.color).toBe("#cfd3dc");
+    expect(option.yAxis.splitLine.lineStyle.color).toBe(
+      "rgba(255, 255, 255, 0.12)"
+    );
+  });
+
+  it("未指定 forceDark：站点亮色时仍走 light 主题", async () => {
+    mountCard(BAR_CARD);
+    await flushPromises();
+
+    expect(state.initTheme).toBe("light");
+    const option = state.setOptionsMock.mock.calls[0][0];
+    expect(option.tooltip.backgroundColor).toBe("#ffffff");
+    expect(option.xAxis.axisLabel.color).toBe("#606266");
+  });
+
+  it("forceDark：饼图标签与引导线同步走深色（默认文本色在深底上不可读）", async () => {
+    mountCard(PIE_CARD, { forceDark: true });
+    await flushPromises();
+
+    const option = state.setOptionsMock.mock.calls[0][0];
+    expect(option.series[0].label.color).toBe("#cfd3dc");
+    expect(option.series[0].labelLine.lineStyle.color).toBe("#4c4d4f");
+    expect(option.legend.textStyle.color).toBe("#cfd3dc");
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHART_ACCENT,
   CHART_FALLBACK_FONT_FAMILY,
+  chartColorScheme,
   chartFontFamily,
   chartTextTheme,
   cssVarColor,
@@ -51,6 +52,51 @@ describe("chartTheme 取色与回退", () => {
 
   it("图表强调色集中定义（不再散落各页面写死）", () => {
     expect(CHART_ACCENT).toBe("#9a66e4");
+  });
+});
+
+/**
+ * 恒深色大屏 / 投屏不能读站点变量：站点为亮色时 EP 变量仍是亮色值，
+ * 直接取色会把图表画成白底黑字，与深色画布割裂（投屏页「黑白混排」现场）。
+ */
+describe("chartColorScheme 亮暗配色", () => {
+  afterEach(() => {
+    document.documentElement.style.cssText = "";
+  });
+
+  it("暗色分支使用固定深色基线，不受亮色站点变量影响", () => {
+    document.documentElement.style.setProperty(
+      "--el-bg-color-overlay",
+      "#ffffff"
+    );
+    document.documentElement.style.setProperty(
+      "--el-text-color-primary",
+      "#303133"
+    );
+
+    const scheme = chartColorScheme(true);
+    expect(scheme.text).toBe("#e5eaf3");
+    expect(scheme.textSecondary).toBe("#cfd3dc");
+    expect(scheme.tooltipBg).toBe("#1d1e1f");
+    expect(scheme.tooltipBorder).toBe("#4c4d4f");
+    // 饼图扇区描边透明：深色卡片底色透出，避免白色分隔线
+    expect(scheme.pieBorder).toBe("transparent");
+  });
+
+  it("亮色分支跟随 EP 变量（自定义主题色生效）", () => {
+    document.documentElement.style.setProperty(
+      "--el-bg-color-overlay",
+      "#fafafa"
+    );
+    document.documentElement.style.setProperty(
+      "--el-text-color-primary",
+      "#111111"
+    );
+
+    const scheme = chartColorScheme(false);
+    expect(scheme.tooltipBg).toBe("#fafafa");
+    expect(scheme.text).toBe("#111111");
+    expect(scheme.pieBorder).toBe("#fafafa");
   });
 });
 

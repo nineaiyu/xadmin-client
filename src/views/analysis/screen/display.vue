@@ -325,6 +325,7 @@ onMounted(loadScreen);
             :key="`${currentDashboard?.pk}-${card.id}`"
             :ref="setCardRef(card.id)"
             :card="card"
+            force-dark
           />
         </div>
       </section>
@@ -459,17 +460,17 @@ onMounted(loadScreen);
   }
 }
 
-/* 图表内层用站点主题底色：图表按主题渲染，在深色卡片里保持清晰（画框式层次）；
-   文字取主题文本色，避免浅底上出现白字 */
+/* 图表直接浮在深色卡片上（ChartCard 以 force-dark 恒深色渲染）：不再用站点
+   主题底色做「画框」——亮色站点下会出现白底黑字，与深色画布割裂 */
 .screen-card__body {
   overflow: hidden;
-  color: var(--el-text-color-primary);
-  background: var(--el-bg-color-overlay);
+  color: var(--screen-fg-strong);
+  background: transparent;
   border-radius: var(--radius-lg);
 
-  /* 指标卡（大数字）：不做画框内层，数字直接浮在深色卡上（白色醒目） */
+  /* 指标卡（大数字）：数字直接浮在深色卡上（白色醒目） */
   &--plain {
-    color: inherit;
+    color: var(--screen-fg-bold);
     background: transparent;
     border-radius: 0;
   }

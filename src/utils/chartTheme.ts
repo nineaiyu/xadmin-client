@@ -130,6 +130,60 @@ export function epColorLight(name: EpColorName): string {
   return cssVarColor(`--el-color-${name}-light-9`, EP_LIGHT_FALLBACK[name]);
 }
 
+/** 图表配色方案（坐标轴 / 图例 / tooltip / 导出底色） */
+export interface ChartColorScheme {
+  /** 主要文字：tooltip 正文 */
+  text: string;
+  /** 次要文字：坐标轴标签、图例 */
+  textSecondary: string;
+  /** 坐标轴线与刻度 */
+  axisLine: string;
+  /** 网格分隔线 */
+  splitLine: string;
+  /** tooltip 底色 */
+  tooltipBg: string;
+  /** tooltip 描边 */
+  tooltipBorder: string;
+  /** 饼图扇区描边：亮色用图表底色形成留白，暗色透明露出卡片底色 */
+  pieBorder: string;
+  /** 图片导出底色（透明底在深色面板上不可读） */
+  exportBg: string;
+}
+
+/**
+ * 图表配色方案。
+ *
+ * `dark=true` 用于站点暗色主题与**恒深色大屏/投屏**（`ChartCard` 的 `forceDark`）。
+ * 后者站点可能仍是亮色，EP 变量取到的是亮色值；若继续走 `cssVarColor`，图表会
+ * 被画成白底黑字，与深色画布割裂。因此暗色分支使用固定深色基线（与 EP 暗色
+ * 主题同值），不读站点变量。
+ */
+export function chartColorScheme(dark: boolean): ChartColorScheme {
+  if (dark) {
+    return {
+      text: "#e5eaf3",
+      textSecondary: "#cfd3dc",
+      axisLine: "#4c4d4f",
+      splitLine: "rgba(255, 255, 255, 0.12)",
+      tooltipBg: "#1d1e1f",
+      tooltipBorder: "#4c4d4f",
+      pieBorder: "transparent",
+      exportBg: "#1d1e1f"
+    };
+  }
+  const overlay = cssVarColor("--el-bg-color-overlay", "#ffffff");
+  return {
+    text: cssVarColor("--el-text-color-primary", "#303133"),
+    textSecondary: cssVarColor("--el-text-color-regular", "#606266"),
+    axisLine: cssVarColor("--el-border-color", "#dcdfe6"),
+    splitLine: cssVarColor("--el-border-color-lighter", "#ebeef5"),
+    tooltipBg: overlay,
+    tooltipBorder: cssVarColor("--el-border-color-lighter", "#ebeef5"),
+    pieBorder: overlay,
+    exportBg: overlay
+  };
+}
+
 /**
  * 给色值附加透明度（图表渐变端点用；ECharts 只接受字面量，不能消费 CSS 变量）。
  *
