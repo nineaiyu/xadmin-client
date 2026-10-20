@@ -11,6 +11,10 @@ import { measureOperationContentWidth } from "./operationContentWidth";
  * 重试，兼顾「列注册晚一帧」的页面；实测结果在同一帧内写回列宽，浏览器尚未绘制，
  * 不产生「先按配置宽度画一遍再收窄」的跳变。
  *
+ * 列集合就绪（元数据到达 / 列设置调整）也要重测：列元数据与列表数据是两条
+ * 请求链路，列可能晚于数据渲染——只盯数据会因重试窗口耗尽而放弃，首屏列宽
+ * 停回配置值（实测用户/部门管理页首开偶发）。
+ *
  * 未测到（空表 / 非浏览器环境 / 表格未渲染）时返回 0，调用方按页面配置宽度渲染。
  */
 
@@ -20,7 +24,9 @@ export const MEASURE_RETRY_FRAMES = 6;
 export function useOperationContentWidth<T, U>(
   rootRef: Ref<HTMLElement | undefined>,
   dataList: Ref<T>,
-  loading: Ref<U>
+  loading: Ref<U>,
+  /** 列集合长度：列就绪后补测一次（列与数据分属两条请求链路） */
+  columnsLength?: Ref<number>
 ) {
   const operationContentWidth = ref(0);
 
@@ -59,6 +65,17 @@ export function useOperationContentWidth<T, U>(
     },
     { flush: "post" }
   );
+
+  // 列集合变化（元数据到达 / 列设置调整）：数据可能先于列渲染完成，补测一次
+  if (columnsLength) {
+    watch(
+      columnsLength,
+      () => {
+        if (!loading.value) scheduleMeasure();
+      },
+      { flush: "post" }
+    );
+  }
 
   onUnmounted(() => cancelAnimationFrame(frameId));
 

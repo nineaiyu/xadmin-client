@@ -121,4 +121,33 @@ describe("useOperationContentWidth（数据渲染后 rAF 实测 + 有限重试�
     expect(measureMock).toHaveBeenCalledTimes(1);
     scope.stop();
   });
+
+  it("列集合晚于数据到达时，列就绪后补测（首屏宽度不停回配置值）", async () => {
+    const rootRef = ref<HTMLElement | undefined>(document.createElement("div"));
+    const dataList = ref<unknown[]>([]);
+    const loading = ref(false);
+    const columnsLength = ref(0);
+    const scope = effectScope();
+    const api = scope.run(() =>
+      useOperationContentWidth(rootRef, dataList, loading, columnsLength)
+    )!;
+
+    // 数据先到、列还没注册：重试窗口耗尽，宽度保持未测到
+    measureMock.mockReturnValue(0);
+    dataList.value = [{ pk: 1 }];
+    await nextTick();
+    for (let frame = 0; frame < MEASURE_RETRY_FRAMES; frame += 1) {
+      await runFrame();
+    }
+    expect(measureMock).toHaveBeenCalledTimes(MEASURE_RETRY_FRAMES);
+    expect(api.operationContentWidth.value).toBe(0);
+
+    // 列元数据到达（列数变化）：补测一次并写回
+    measureMock.mockReturnValue(90);
+    columnsLength.value = 12;
+    await nextTick();
+    await runFrame();
+    expect(api.operationContentWidth.value).toBe(90);
+    scope.stop();
+  });
 });

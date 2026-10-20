@@ -65,7 +65,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
     item["valueType"] = "date-picker";
     item["fieldProps"]!["type"] = column.input_type;
     item["fieldProps"]!["valueFormat"] = "YYYY-MM-DD HH:mm:ss";
-    item["width"] = 160;
+    // "YYYY-MM-DD HH:mm:ss" 19 字符 + 单元格两侧内边距实测约 156px，160 已无余量，
+    // 不同字体/缩放下会被截成省略号；留出安全余量保证时间完整显示
+    item["width"] = 180;
     // pure-table ******
     item["cellRenderer"] = ({ row }) => (
       <span v-copy={row[column.key]}>

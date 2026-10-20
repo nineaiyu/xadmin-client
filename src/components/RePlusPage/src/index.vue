@@ -208,11 +208,13 @@ useTableA11y({
   ]
 });
 
-// 操作列内容实测宽度（按钮随权限/行数据显隐）：收敛「一个按钮占一大片列宽」
+// 操作列内容实测宽度（按钮随权限/行数据显隐）：收敛「一个按钮占一大片列宽」。
+// 列长度一并传入：列元数据与数据分属两条请求链路，列晚于数据渲染时需补测
 const { operationContentWidth } = useOperationContentWidth(
   rootRef,
   dataList,
-  loadingStatus
+  loadingStatus,
+  computed(() => listColumns.value.length)
 );
 
 const { tableLayoutPending } = useTableLayout({
