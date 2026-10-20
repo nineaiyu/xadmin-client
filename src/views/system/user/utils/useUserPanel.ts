@@ -73,6 +73,7 @@ export function useUserPanel({
                   assignTags: hasAuth("assign:Tag")
                 },
                 currentUsername: useUserStoreHook().username,
+                currentUserIsSuperuser: useUserStoreHook().is_superuser,
                 handlers: {
                   resetPassword: withClosed(handleReset),
                   uploadAvatar: withClosed(handleUpload),
