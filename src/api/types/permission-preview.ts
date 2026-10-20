@@ -143,6 +143,8 @@ export interface TrialGrantDiagnosis {
   dept_name: string | null;
   /** 是否参与本次编译（与当前模型相关） */
   applied: boolean;
+  /** 是否按「显式覆盖 + list 回退」进入本次合并集合 */
+  selected?: boolean;
   /** all=全部数据 / condition=条件过滤 / deny=恒空 / none=与模型无关 */
   kind: "all" | "condition" | "deny" | "none";
 }
@@ -165,6 +167,8 @@ export interface TrialResult {
   sample_limit?: number;
   /** 参与编译的授权组诊断 */
   grants?: TrialGrantDiagnosis[];
+  /** 本次实际使用的菜单范围：显式接口 / 列表回退 / 仅通用授权 */
+  scope_mode?: "exact" | "list" | "generic";
   /** 后端试算耗时（毫秒） */
   elapsed_ms?: number;
   is_superuser: boolean;

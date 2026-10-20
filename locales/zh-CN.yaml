@@ -2008,6 +2008,10 @@ permissionPreview:
   diagnosisSource: 来源
   diagnosisName: 授权
   diagnosisKind: 判定
+  diagnosisSelected: 参与
+  scopeModeExact: 按显式接口
+  scopeModeList: 按列表回退
+  scopeModeGeneric: 仅通用授权
   sourcePersonal: 个人授权
   sourceDept: 部门授权
   sourceDraft: 当前草稿

@@ -2008,6 +2008,10 @@ permissionPreview:
   diagnosisSource: Source
   diagnosisName: Grant
   diagnosisKind: Result
+  diagnosisSelected: Selected
+  scopeModeExact: Explicit API
+  scopeModeList: List fallback
+  scopeModeGeneric: General only
   sourcePersonal: Personal
   sourceDept: Department
   sourceDraft: Current draft
