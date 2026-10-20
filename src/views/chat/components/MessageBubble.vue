@@ -333,7 +333,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
           v-for="entry in reactionEntries"
           :key="entry.emoji"
           type="button"
-          class="flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors"
+          class="flex cursor-pointer items-center gap-1 rounded-full border-0 px-2 py-0.5 text-xs transition-colors"
           :class="
             entry.mine
               ? 'bg-(--el-color-primary-light-8) text-(--el-color-primary)'
@@ -376,7 +376,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         <el-popover
           v-if="canReact"
           placement="top"
-          :width="232"
+          :width="264"
           trigger="click"
           :show-arrow="false"
           popper-class="chat-reaction-popper"
@@ -384,9 +384,9 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
           <template #reference>
             <el-button
               link
-              type="info"
+              type="primary"
               size="small"
-              class="opacity-0 transition-opacity group-hover:opacity-100"
+              class="text-base opacity-0 transition-opacity group-hover:opacity-100"
               :aria-label="t('chat.react')"
               :title="t('chat.react')"
               data-testid="chat-react"
@@ -398,7 +398,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
               v-for="emoji in QUICK_REACTIONS"
               :key="emoji"
               type="button"
-              class="cursor-pointer rounded p-1 text-base hover:bg-(--el-fill-color)"
+              class="flex-c h-8 cursor-pointer rounded-md border-0 bg-transparent p-0 text-xl leading-none transition-colors hover:bg-(--el-fill-color)"
               :data-testid="`chat-react-${emoji}`"
               @click="toggleReaction(emoji)"
             >
