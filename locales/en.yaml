@@ -3290,6 +3290,16 @@ dataScreen:
   gridHint: 12 columns x 60 rows; position and size are column/row indexes
   modeGrid: Grid
   modeFree: Free canvas
+  theme: Theme
+  themeDark: Dark
+  themeLight: Light
+  themeAuto: Follow site
+  themeColor: Accent color
+  themeColorFollow: Follow site primary
+  themeLocalHint: Theme changes apply to this device only. Use "Save as default" to make them permanent.
+  themeReset: Reset to saved
+  themeSaveAsDefault: Save as default
+  themeSaved: Theme saved
   layer: Layer
   layerTop: Front
   layerUp: Up

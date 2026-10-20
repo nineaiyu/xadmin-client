@@ -1,0 +1,53 @@
+/* 大屏「仪表盘轮播」形态的卡片样式（投屏页用；画布态走 ScreenPane）。
+   与画布态共用 --screen-* 令牌，故深色 / 浅色主题下自动换肤；由 display.vue 在
+   scoped 样式里 @use（与 screen-animations 同一用法，编译期内联）。 */
+
+.screen-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-1) var(--space-6) var(--space-6);
+}
+
+.screen-card {
+  position: relative;
+  padding: 12px 14px 14px;
+  background: var(--screen-surface-raised);
+  border: 1px solid var(--screen-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--screen-shadow);
+  backdrop-filter: blur(6px);
+}
+
+.screen-card__title {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+  font-size: var(--el-font-size-small);
+  color: var(--screen-fg-strong);
+
+  &::before {
+    width: 3px;
+    height: 12px;
+    content: "";
+    background: var(--el-color-primary);
+    border-radius: 2px;
+  }
+}
+
+/* 图表直接浮在卡片表面上（不铺站点主题底色作「画框」）：配色由大屏主题决定 */
+.screen-card__body {
+  overflow: hidden;
+  color: var(--screen-fg-strong);
+  background: transparent;
+  border-radius: var(--radius-lg);
+
+  /* 指标卡（大数字）：数字直接浮在卡片上（取大屏前景色的最亮档） */
+  &--plain {
+    color: var(--screen-fg-bold);
+    background: transparent;
+    border-radius: 0;
+  }
+}

@@ -49,24 +49,27 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
   const wsOpened = waitAppWebSocket(page);
   await login(page);
   const ws = await wsOpened;
-  const pushFrame = new Promise<string>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error("timeout waiting frame: push_message")),
-      45_000
-    );
-    ws.on("framereceived", frame => {
-      const payload =
-        typeof frame.payload === "string"
-          ? frame.payload
-          : Buffer.from(frame.payload as Uint8Array).toString("utf-8");
-      // 信封 action=push_message（message/base.py _send_base 按 event.type 回包），
-      // 聊天 @ 消息的 data.message_type=chat_message
-      if (payload.includes("push_message")) {
-        clearTimeout(timer);
-        resolve(payload);
-      }
+  /** 等待下一个含指定标记的 push_message 帧（证明推送确实到达了浏览器） */
+  const waitPushFrame = (marker: string) =>
+    new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("timeout waiting frame: push_message")),
+        45_000
+      );
+      ws.on("framereceived", frame => {
+        const payload =
+          typeof frame.payload === "string"
+            ? frame.payload
+            : Buffer.from(frame.payload as Uint8Array).toString("utf-8");
+        // 信封 action=push_message（message/base.py _send_base 按 event.type 回包），
+        // 聊天 @ 消息的 data.message_type=chat_message
+        if (payload.includes("push_message") && payload.includes(marker)) {
+          clearTimeout(timer);
+          resolve(payload);
+        }
+      });
     });
-  });
+  const pushFrame = waitPushFrame("@xadmin");
 
   // 接收方（xadmin）停在聊天室公共房间：既是推送目标，也顺带断言新通道广播可达
   await openMenuPath(page, [], "/default/chat/index");
@@ -114,6 +117,36 @@ test("聊天室 @消息 实时收到 push_message 站内信推送", async ({ pag
     expect(
       notifications.some(item => (item.body ?? "").includes("E2E 实时推送验证"))
     ).toBe(true);
+
+    // ---- 展板态静默：投屏页收到同类推送不弹应用内 / 桌面通知（不遮挡画面） ----
+    const desktopBefore = await page.evaluate(
+      () =>
+        (window as unknown as { __desktopNotifications: unknown[] })
+          .__desktopNotifications.length
+    );
+    await page.goto(
+      "/#/analysis/screen/display?pk=5eed0003-0000-4000-8000-000000000003"
+    );
+    await expect(page.locator(".screen-root")).toBeVisible({ timeout: 20_000 });
+    // 展板上的「返回」入口（此前只能改地址栏回列表）
+    await expect(page.getByTestId("screen-back")).toBeVisible();
+
+    const quietMarker = `E2E 展板静默 ${Date.now()}`;
+    const quietFrame = waitPushFrame(quietMarker);
+    await inputB.fill(`@xadmin ${quietMarker}`);
+    await pageB.locator('[data-testid="chat-send"]').first().click();
+    // 帧到达 = 推送确实投递到了这个浏览器（不是没收到所以没弹）
+    await quietFrame;
+
+    // 推送正文不得出现在投屏页上（应用内浮层被静默；桌面通知数量不增加）
+    await page.waitForTimeout(1_000);
+    await expect(page.getByText(quietMarker)).toHaveCount(0);
+    const desktopAfter = await page.evaluate(
+      () =>
+        (window as unknown as { __desktopNotifications: unknown[] })
+          .__desktopNotifications.length
+    );
+    expect(desktopAfter).toBe(desktopBefore);
   } finally {
     await contextB.close();
   }

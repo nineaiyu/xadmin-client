@@ -15,7 +15,9 @@ const state = vi.hoisted(() => ({
   executeMock: vi.fn(),
   aggregateMock: vi.fn(),
   setOptionsMock: vi.fn(),
-  initTheme: undefined as string | undefined
+  initTheme: undefined as string | undefined,
+  /** 站点明暗（测试内可改：深色站点 + 大屏浅色主题是本轮的关键组合） */
+  siteDark: false
 }));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -27,7 +29,7 @@ vi.mock("@/api/dataset/datasets", () => ({
 }));
 // 避免拉起 echarts：数字卡路径不触达图表实例；图表路径用桩记录 theme / option
 vi.mock("@pureadmin/utils", () => ({
-  useDark: () => ({ isDark: { value: false } }),
+  useDark: () => ({ isDark: { value: state.siteDark } }),
   useECharts: (_el: unknown, options?: { theme?: { value?: string } }) => {
     state.initTheme = options?.theme?.value;
     return {
@@ -99,6 +101,7 @@ beforeEach(() => {
   });
   state.setOptionsMock.mockReset();
   state.initTheme = undefined;
+  state.siteDark = false;
 });
 
 describe("ChartCard 数字卡 count_only", () => {
@@ -189,5 +192,44 @@ describe("ChartCard 恒深色渲染", () => {
     expect(option.series[0].label.color).toBe("#cfd3dc");
     expect(option.series[0].labelLine.lineStyle.color).toBe("#4c4d4f");
     expect(option.legend.textStyle.color).toBe("#cfd3dc");
+  });
+});
+
+/**
+ * 大屏浅色主题：站点可能是暗色，EP 变量取到的是深底浅字——浅色画布上不可读，
+ * 故 forceLight 走固定浅色基线（与 forceDark 对称）。
+ */
+describe("ChartCard 强制浅色渲染", () => {
+  it("站点暗色 + forceLight：light 主题 + 固定浅色基线", async () => {
+    state.siteDark = true;
+    mountCard(BAR_CARD, { forceLight: true });
+    await flushPromises();
+
+    expect(state.initTheme).toBe("light");
+    const option = state.setOptionsMock.mock.calls[0][0];
+    expect(option.tooltip.backgroundColor).toBe("#ffffff");
+    expect(option.tooltip.textStyle.color).toBe("#303133");
+    expect(option.xAxis.axisLabel.color).toBe("#606266");
+    expect(option.yAxis.splitLine.lineStyle.color).toBe("#ebeef5");
+  });
+
+  it("forceDark 优先于 forceLight（两者同传按深色渲染）", async () => {
+    state.siteDark = false;
+    mountCard(BAR_CARD, { forceDark: true, forceLight: true });
+    await flushPromises();
+
+    expect(state.initTheme).toBe("dark");
+    expect(state.setOptionsMock.mock.calls[0][0].tooltip.backgroundColor).toBe(
+      "#1d1e1f"
+    );
+  });
+
+  it("浅色主题落在根类上（骨架同步走浅色，不闪深块）", async () => {
+    state.siteDark = true;
+    const wrapper = mountCard(BAR_CARD, { forceLight: true });
+    await flushPromises();
+
+    expect(wrapper.classes()).toContain("chart-card--force-light");
+    expect(wrapper.attributes("data-chart-theme")).toBe("light");
   });
 });

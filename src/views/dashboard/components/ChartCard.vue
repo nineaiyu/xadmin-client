@@ -15,6 +15,7 @@ import {
 import {
   CHART_ACCENT,
   chartColorScheme,
+  chartLightColorScheme,
   epColor,
   withAlpha
 } from "@/utils/chartTheme";
@@ -29,16 +30,26 @@ const props = defineProps<{
   /** 刷新信号：父组件自增令牌触发原位重拉（不销毁重建实例）；首拉仍走 onMounted */
   refreshToken?: number;
   /**
-   * 强制深色图表：恒深色大屏 / 投屏用，不跟随站点主题。
+   * 强制深色图表：深色主题大屏 / 投屏用，不跟随站点主题。
    * 站点为亮色时也按深色基线渲染，避免深色画布上出现白底黑字的图表。
    */
   forceDark?: boolean;
+  /**
+   * 强制浅色图表：浅色主题大屏用（站点可能为暗色，EP 变量取到的是深底浅字）。
+   * 优先级 forceDark > forceLight > 跟随站点；配色走固定浅色基线。
+   */
+  forceLight?: boolean;
 }>();
 
 const { t } = useI18n();
 const { isDark } = useDark();
-const dark = computed(() => Boolean(props.forceDark) || isDark.value);
+const dark = computed(
+  () => Boolean(props.forceDark) || (!props.forceLight && isDark.value)
+);
 const theme = computed(() => (dark.value ? "dark" : "light"));
+/** 取色作用域：卡片自身（大屏根节点内联覆写的主色对后代可见） */
+const rootRef = ref<HTMLElement>();
+const colorScope = computed(() => rootRef.value ?? null);
 
 const chartRef = ref();
 const { loading, runWithLoading } = usePageLoading();
@@ -55,20 +66,26 @@ const { setOptions, resize, getInstance } = useECharts(chartRef, {
 
 /** 分类色板：EP 语义色跟随主题（第 6 色为图表专用强调色，集中定义于 chartTheme）；调用时读取 */
 const palette = () => [
-  epColor("primary"),
-  epColor("success"),
-  epColor("warning"),
-  epColor("danger"),
-  epColor("info"),
+  epColor("primary", colorScope.value),
+  epColor("success", colorScope.value),
+  epColor("warning", colorScope.value),
+  epColor("danger", colorScope.value),
+  epColor("info", colorScope.value),
   CHART_ACCENT
 ];
+
+/** 配色方案：强制浅色走固定浅色基线（站点暗色时也不被污染） */
+const schemeOf = () =>
+  props.forceLight && !props.forceDark
+    ? chartLightColorScheme()
+    : chartColorScheme(dark.value, colorScope.value);
 
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
   const values = result.series.map(item => Number(item.value ?? 0));
   // tooltip / 坐标轴 / 图例统一取配色方案：亮色跟随 EP 变量，暗色与恒深色大屏
   // 用固定深色基线（站点亮色时 EP 变量仍是亮色，不能用于深色画布）
-  const scheme = chartColorScheme(dark.value);
+  const scheme = schemeOf();
   const tooltipStyle = {
     backgroundColor: scheme.tooltipBg,
     borderColor: scheme.tooltipBorder,
@@ -304,7 +321,7 @@ async function renderImage(): Promise<ExportedImage | null> {
   return renderEchartsImage(getInstance() as EChartsLike | null, {
     pixelRatio: 2,
     // 透明底在深色面板/暗色主题下不可读：按当前配色方案取不透明底色
-    backgroundColor: chartColorScheme(dark.value).exportBg
+    backgroundColor: schemeOf().exportBg
   });
 }
 
@@ -313,8 +330,13 @@ defineExpose({ loadData, applyData, renderImage });
 
 <template>
   <div
+    ref="rootRef"
     class="relative size-full"
-    :class="{ 'chart-card--force-dark': forceDark }"
+    :class="{
+      'chart-card--force-dark': forceDark,
+      'chart-card--force-light': forceLight && !forceDark
+    }"
+    :data-chart-theme="dark ? 'dark' : 'light'"
   >
     <div
       v-if="errorMsg"
@@ -369,5 +391,13 @@ defineExpose({ loadData, applyData, renderImage });
   --el-fill-color-light: rgb(255 255 255 / 8%);
 
   background: #0b1220;
+}
+
+/* 浅色主题大屏：站点可能是暗色，骨架不能跟着变深（浅色卡片上会闪黑块），
+   取大屏浅色档令牌（深色主题下这两支令牌本就是深色，不会误用） */
+.chart-card--force-light .chart-card-skeleton {
+  --el-fill-color-light: var(--screen-surface-strong);
+
+  background: var(--screen-canvas-top);
 }
 </style>

@@ -91,6 +91,45 @@ export const themeColors = ref<Array<themeColorsType>>([
 ]);
 
 /**
+ * 站点主题 → 生效主色 hex（纯函数）：
+ * 内置预设 → 自定义主色（仅非点击场景）→ 默认/亮白皮肤 → 主题色卡 → 默认主色。
+ *
+ * 装配期（全屏路由 / 登录页，无 Layout）与布局期共用同一优先级——两处各写一套
+ * 判定必然漂移（历史曾出现「直开全屏页主色回退内置蓝」）。
+ */
+export function resolveThemePrimaryHex(options: {
+  theme: string;
+  themeColor?: string;
+  epThemeColor?: string;
+  preset?: string;
+  dark: boolean;
+  isClick?: boolean;
+}): string {
+  const {
+    theme,
+    themeColor,
+    epThemeColor,
+    preset,
+    dark,
+    isClick = true
+  } = options;
+  // 内置预设接管主色（导航皮肤仍由 data-theme 生效）
+  if (preset && preset !== DEFAULT_THEME_PRESET) {
+    const hex = themePresetPrimaryHex(preset, dark);
+    if (hex) return hex;
+  }
+  // 自定义主色：非点击路径（明暗切换、初始化等「保留原配置」场景）沿用已存色值
+  if (!isClick && themeColor === CUSTOM_THEME_COLOR && epThemeColor) {
+    return epThemeColor;
+  }
+  if (!theme || theme === "default" || theme === "light") {
+    return DEFAULT_EP_THEME_COLOR;
+  }
+  const picked = themeColors.value.find(item => item.themeColor === theme);
+  return picked?.color ?? DEFAULT_EP_THEME_COLOR;
+}
+
+/**
  * 主题色应用（自 useDataThemeChange.ts 抽出）：主色令牌写入、导航主题色落库
  * （保留非点击场景的历史 themeColor）。
  */
@@ -127,19 +166,6 @@ export function createThemeColorScheme({
     }
   };
 
-  /**
-   * 内置主题预设接管主色：预设自带配套主色（随明暗取值）。
-   * 「默认 / 自定义」不接管（返回 false，主色仍由主题色卡 / 取色器决定）。
-   */
-  const applyPresetPrimary = () => {
-    const preset = storage.configure?.themePreset;
-    if (!preset || preset === DEFAULT_THEME_PRESET) return false;
-    const hex = themePresetPrimaryHex(preset, dataTheme.value);
-    if (!hex) return false;
-    setEpThemeColor(hex);
-    return true;
-  };
-
   /** 应用主题预设主色（面板选择预设时调用；选择「默认」回到内置默认主色） */
   const applyThemePreset = (preset: string) => {
     if (preset === DEFAULT_THEME_PRESET) {
@@ -169,27 +195,16 @@ export function createThemeColorScheme({
       themeMode: themeMode.value
     };
 
-    // 内置主题预设接管主色：明暗切换 / 布局切换时按新明暗取配套主色
-    // （导航皮肤仍按上面的 data-theme 生效，预设只接管主色）
-    if (applyPresetPrimary()) return;
-
-    // 自定义主色：非点击路径（明暗切换、布局切换等「保留原配置」场景）
-    // 沿用已保存的色值，避免被下面的预设回退重置为默认色
-    if (!isClick && storageThemeColor === CUSTOM_THEME_COLOR) {
-      const customColor = storage.layout?.epThemeColor;
-      if (customColor) {
-        setEpThemeColor(customColor);
-        return;
-      }
-    }
-
-    if (theme === "default" || theme === "light") {
-      // 当用户自定义主题色之后，保存服务器，默认的主题色会被覆盖，该操作可以修复默认的主题色
-      setEpThemeColor(DEFAULT_EP_THEME_COLOR);
-      return;
-    }
-    const colors = themeColors.value.find(v => v.themeColor === theme);
-    setEpThemeColor(colors?.color ?? DEFAULT_EP_THEME_COLOR);
+    setEpThemeColor(
+      resolveThemePrimaryHex({
+        theme,
+        themeColor: storageThemeColor,
+        epThemeColor: storage.layout?.epThemeColor,
+        preset: storage.configure?.themePreset,
+        dark: dataTheme.value,
+        isClick
+      })
+    );
   }
 
   /**

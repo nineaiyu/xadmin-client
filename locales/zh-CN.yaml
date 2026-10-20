@@ -3290,6 +3290,16 @@ dataScreen:
   gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
   modeGrid: 栅格
   modeFree: 自由画布
+  theme: 主题
+  themeDark: 深色
+  themeLight: 浅色
+  themeAuto: 跟随站点
+  themeColor: 主题色
+  themeColorFollow: 跟随站点主色
+  themeLocalHint: 主题切换仅本机生效；需要长期生效请点「保存为默认」。
+  themeReset: 恢复配置
+  themeSaveAsDefault: 保存为默认
+  themeSaved: 主题已保存
   layer: 层级
   layerTop: 置顶
   layerUp: 上移

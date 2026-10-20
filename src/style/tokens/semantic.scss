@@ -137,9 +137,10 @@ html.dark {
     0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
 }
 
-/* ================ 数据大屏画布（恒深色，不随站点主题） ================
-   大屏设计器与投屏页刻意保持深色（设计所见即投屏所得），其工具条 / 侧栏 /
-   卡片的「玻璃表面」自成一套层级；与明暗主题无关，故不进 html.dark 成对块。
+/* ================ 数据大屏画布（深色缺省，浅色成对覆写） ================
+   大屏设计器与投屏页共用一套「玻璃表面」层级，明暗由**大屏自身主题**决定
+   （Screen.theme：dark / light / auto），与站点 html.dark 无耦合，故不进
+   html.dark 成对块；浅色档由投屏根节点的 `.screen-root--light` 覆写（见下）。
    消费方：views/analysis/screen 的 designer / display 与三个子组件。 */
 
 :root {
@@ -163,6 +164,32 @@ html.dark {
   --screen-fg-subtle: rgb(255 255 255 / 62%); /* 副标题 / 空态说明 */
   --screen-fg-dim: rgb(255 255 255 / 55%); /* 提示文本 */
   --screen-fg-faint: rgb(255 255 255 / 45%); /* 画布空态 */
+}
+
+/* 浅色档：大屏 theme=light（或 auto 且站点为浅色）时由 `.screen-root--light`
+   挂到投屏 / 设计器根节点，成对覆写令牌——`--screen-*` 仍不随站点 html.dark 切换，
+   明暗只由大屏自身主题决定。取值与深色档同构反转（同透明度、色相反转）。 */
+.screen-root--light {
+  --screen-canvas: #f3f5f9;
+  --screen-canvas-top: #fff;
+  --screen-glow-primary: rgb(64 158 255 / 10%);
+  --screen-glow-accent: rgb(154 102 228 / 8%);
+  --screen-surface: rgb(13 27 62 / 3%);
+  --screen-surface-raised: rgb(13 27 62 / 4%);
+  --screen-surface-strong: rgb(13 27 62 / 8%);
+  --screen-border: rgb(13 27 62 / 8%);
+  --screen-border-subtle: rgb(13 27 62 / 6%);
+  --screen-border-strong: rgb(13 27 62 / 12%);
+  --screen-grid-line: rgb(13 27 62 / 5%);
+  --screen-shadow: 0 8px 28px rgb(31 45 80 / 10%);
+  --screen-fg-bold: rgb(19 33 66 / 92%);
+  --screen-fg: rgb(19 33 66 / 85%);
+  --screen-fg-strong: rgb(19 33 66 / 82%);
+  --screen-fg-dense: rgb(19 33 66 / 78%);
+  --screen-fg-muted: rgb(19 33 66 / 70%);
+  --screen-fg-subtle: rgb(19 33 66 / 62%);
+  --screen-fg-dim: rgb(19 33 66 / 55%);
+  --screen-fg-faint: rgb(19 33 66 / 45%);
 }
 
 /* ================ 菜单调色板（自 style/theme.scss 迁入） ================
