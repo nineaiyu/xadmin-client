@@ -34,7 +34,8 @@ function rowFromPlan(field: CodegenFieldItem): CodegenFieldOverride {
     in_table: field.in_table,
     in_search: field.in_search,
     input_type: field.default_input_type,
-    dict_code: ""
+    dict_code: "",
+    field_class: ""
   };
 }
 
@@ -262,6 +263,7 @@ useSortable(
             size="small"
             clearable
             filterable
+            :disabled="Boolean(row.field_class)"
             :placeholder="t('codegen.dictPlaceholder')"
           >
             <el-option
@@ -269,6 +271,27 @@ useSortable(
               :key="dict.code"
               :value="dict.code"
               :label="`${dict.label}（${dict.code}）`"
+            />
+          </el-select>
+          <span v-else class="text-xs text-gray-300">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('codegen.colFieldClass')" min-width="150">
+        <template #default="{ row }">
+          <el-select
+            v-if="planByName.get(row.name)?.can_field_class"
+            v-model="row.field_class"
+            size="small"
+            clearable
+            :disabled="Boolean(row.dict_code)"
+            :placeholder="t('codegen.fieldClassNone')"
+          >
+            <el-option
+              v-for="option in planByName.get(row.name)?.field_class_options ??
+              []"
+              :key="option"
+              :value="option"
+              :label="t(`codegen.fieldClass_${option}`)"
             />
           </el-select>
           <span v-else class="text-xs text-gray-300">—</span>

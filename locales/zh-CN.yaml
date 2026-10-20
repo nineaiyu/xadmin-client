@@ -4389,6 +4389,12 @@ codegen:
   colReadOnly: 只读
   colInputType: 输入类型
   colDict: 数据字典
+  colFieldClass: 专用字段类
+  fieldClassNone: 默认（按模型字段）
+  fieldClass_PhoneField: 手机号
+  fieldClass_ColorField: 颜色
+  fieldClass_RichTextField: 富文本
+  fieldClass_StepFloatField: 步进数值
   colEnabled: 启用
   inputTypeDefault: 默认（{type}）
   inputTypeObjectRelated: 关联选择

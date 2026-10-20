@@ -4391,6 +4391,12 @@ codegen:
   colReadOnly: Read-only
   colInputType: Input Type
   colDict: Dict
+  colFieldClass: Dedicated Field
+  fieldClassNone: Default (model field)
+  fieldClass_PhoneField: Phone
+  fieldClass_ColorField: Color
+  fieldClass_RichTextField: Rich text
+  fieldClass_StepFloatField: Stepped number
   colEnabled: On
   inputTypeDefault: Default ({type})
   inputTypeObjectRelated: Related select

@@ -1,23 +1,34 @@
 import { describe, expect, it } from "vitest";
 
 import { builtinFormRenderers } from "../renderers-form";
-import type { PageColumn, PlusColumnContext } from "../types";
+import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "../types";
 
 /** 构造 datetime 列的元数据上下文（列表列复用表单渲染器下发的 width） */
 const buildColumn = () => {
-  const column = {
+  const column: PlusColumnMeta = {
     key: "created_time",
     label: "创建时间",
     input_type: "datetime",
-    read_only: true
+    read_only: true,
+    write_only: false,
+    required: false,
+    choices: [],
+    default: ""
   };
-  const item = {
+  const item: PageColumn = {
     _column: column,
     prop: column.key,
     label: column.label,
     fieldProps: {}
-  } as unknown as PageColumn;
-  return { item, column, context: { column } as unknown as PlusColumnContext };
+  };
+  const context: PlusColumnContext = {
+    column,
+    t: (key: string) => key,
+    te: () => false,
+    localeName: "zh",
+    apiSearchComponents: {}
+  };
+  return { item, column, context };
 };
 
 describe("datetime 列宽", () => {

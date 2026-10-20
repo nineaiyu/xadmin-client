@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { TableColumnRenderer } from "@pureadmin/table";
-import { builtinDetailRenderers } from "../renderers-detail";
+import {
+  builtinDetailRenderers,
+  detailFallbackRenderer
+} from "../renderers-detail";
 import { builtinFormRenderers } from "../renderers-form";
 import { builtinSearchRenderers } from "../renderers-search";
 import {
@@ -27,6 +30,7 @@ import type { PageColumn, PlusColumnContext, PlusColumnMeta } from "../types";
 const CUSTOM_RENDER_TYPES = [
   "labeled_choice",
   "color",
+  "phone",
   "json",
   "list",
   "m2m_related_field",
@@ -34,7 +38,9 @@ const CUSTOM_RENDER_TYPES = [
   "object_related_field_file",
   "m2m_related_field_file",
   "m2m_related_field_image",
-  "file upload"
+  "file upload",
+  "url",
+  "rich_text"
 ] as const;
 
 /** 详情走 valueType / options 通道（select / img / text），列表仍需 cellRenderer */
@@ -58,6 +64,26 @@ const CLASSIFIED = new Set<string>([
  * 未登记且表单缺失 → 编辑弹窗退化为默认输入框，对象值会被写成 `[object Object]`。
  */
 const FORM_EXEMPT_TYPES: string[] = [];
+
+/**
+ * 详情通道豁免登记：表单有编辑器但详情无需专属渲染器的类型（标量 / 日期 / 选择值
+ * 由 PlusDescriptions 默认文本或 options 通道展示）。新增表单渲染器而未补详情时，
+ * 必须在此写明理由，否则「表单有、详情缺」会静默退化为空白（D4 曾如此漏网）。
+ */
+const DETAIL_EXEMPT_TYPES: Record<string, string> = {
+  integer: "数值详情走默认文本",
+  float: "数值详情走默认文本",
+  string: "标量详情走默认文本",
+  field: "兜底标量详情走默认文本",
+  datetime: "日期时间详情走默认文本",
+  date: "日期详情走默认文本",
+  time: "时间详情走默认文本",
+  textarea: "长文本详情走默认文本",
+  choice: "选择值详情走默认文本（无彩色 label 诉求）",
+  "multiple choice": "多选值详情走默认文本",
+  decimal: "小数值详情走默认文本（表单侧重精度，展示无需专属格式）",
+  password: "write_only 字段不进入详情 / 列表通道"
+};
 
 /** 搜索通道注册表分类清单（搜索侧有 `api-*` 兜底，不强制与详情/表单对齐，只防无登记新增） */
 const SEARCH_REGISTRY_TYPES = [
@@ -166,12 +192,34 @@ describe("RePlusPage 详情/列表渲染器成对守护", () => {
     expect(vnode, "列表渲染器对 {value,label} 行数据不应产出空值").toBeTruthy();
   });
 
+  it("phone：详情/列表从 {code, phone} 取字段，不渲染 [object Object]", () => {
+    const item = apply("phone");
+    const render = item.render as (value: unknown) => { children?: unknown };
+    const cellRenderer = item.cellRenderer as (ctx: TableColumnRenderer) => {
+      children?: unknown;
+    };
+    const phoneValue = { code: "+86", phone: 13800138000 };
+    expect(render(phoneValue)).toBeTruthy();
+    expect(
+      cellRenderer({ row: { field_a: phoneValue } } as TableColumnRenderer)
+    ).toBeTruthy();
+  });
+
   it("未注册的 input_type：详情返回 undefined、搜索/表单回退默认分支", () => {
     const unknown = "__not_a_real_input_type__";
     expect(getDetailRenderer(unknown)).toBeUndefined();
     expect(getSearchRenderer(unknown)).toBeTypeOf("function");
     expect(getFormRenderer(unknown)).toBeTypeOf("function");
     expect(getDetailRenderer("labeled_choice")).toBeTypeOf("function");
+  });
+
+  it("未注册类型的对象值：详情兜底为 JSON 文本（不再 [object Object]）", () => {
+    const item = makeColumn("__not_a_real_input_type__");
+    detailFallbackRenderer(item, makeContext(item));
+    expect(item.render).toBeTypeOf("function");
+    const vnode = (item.render as (value: unknown) => unknown)({ a: 1 });
+    expect(vnode).toBeTruthy();
+    expect(item.cellRenderer).toBeTypeOf("function");
   });
 });
 
@@ -188,6 +236,17 @@ describe("渲染器四通道契约守护（表单 / 搜索通道）", () => {
       missing,
       `以下类型缺表单渲染器：${missing.join(", ")}；` +
         "请在 renderers-form.tsx 补齐，或在 FORM_EXEMPT_TYPES 登记豁免理由（详情专用/只读展示）"
+    ).toEqual([]);
+  });
+
+  it("表单注册表的 input_type 必须在详情通道有归宿（或登记 DETAIL_EXEMPT_TYPES）", () => {
+    const missing = Object.keys(builtinFormRenderers).filter(
+      key => !builtinDetailRenderers[key] && !(key in DETAIL_EXEMPT_TYPES)
+    );
+    expect(
+      missing,
+      `以下类型表单有编辑器但详情无渲染器：${missing.join(", ")}；` +
+        "请在 renderers-detail.tsx 补齐 render + cellRenderer，或在 DETAIL_EXEMPT_TYPES 写明豁免理由"
     ).toEqual([]);
   });
 

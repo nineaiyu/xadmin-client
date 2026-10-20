@@ -13,6 +13,7 @@ import {
   filterKindOf,
   pickRenderers
 } from "../src/utils/fieldTypeRegistry";
+import { buildColumnRule } from "../src/utils/columnRules";
 import { builtinDetailRenderers } from "../src/utils/renderers-detail";
 import { builtinFormRenderers } from "../src/utils/renderers-form";
 import { builtinSearchRenderers } from "../src/utils/renderers-search";
@@ -40,7 +41,7 @@ const vocabulary = new Set(
 );
 
 /** 词表外兼容项白名单（历史筛选形态登记，仅高级筛选使用；勿新增） */
-const EXTRA_ALLOWED = new Set(["url", "password", "decimal", "switch"]);
+const EXTRA_ALLOWED = new Set(["switch"]);
 
 /** 迁移前 advancedFilter.ts KIND_BY_INPUT_TYPE 的冻结快照（行为等价回归基准） */
 const LEGACY_KIND_BY_INPUT_TYPE: Record<string, LookupFieldKind> = {
@@ -72,7 +73,9 @@ const LEGACY_KIND_BY_INPUT_TYPE: Record<string, LookupFieldKind> = {
   object_related_field: "choice",
   m2m_related_field: "choice",
   object_related_field_file: "choice",
-  m2m_related_field_file: "choice"
+  m2m_related_field_file: "choice",
+  object_related_field_image: "choice",
+  m2m_related_field_image: "choice"
 };
 
 describe("字段类型能力清单 ⇄ 契约词表 对账", () => {
@@ -135,13 +138,156 @@ describe("字段类型能力清单 ⇄ 契约词表 对账", () => {
       "image upload",
       "input",
       "json",
-      "list",
-      "m2m_related_field_image",
-      "object_related_field_image"
+      "list"
     ]) {
       expect(filterKindOf(type), type).toBeUndefined();
     }
     // 词表外未登记（如 api-* 前缀族）同样回落
     expect(filterKindOf("api-search-user")).toBeUndefined();
+  });
+
+  it("phone：表单渲染器不篡改 column.default（国家显示名不得混入字段值）", () => {
+    const column: Record<string, unknown> = {
+      key: "phone",
+      label: "手机号",
+      prop: "phone",
+      input_type: "phone"
+    };
+    pickRenderers("form").phone(column as never, {
+      column: column as never,
+      t: (key: string) => key,
+      te: () => false,
+      localeName: "zh",
+      apiSearchComponents: {}
+    });
+    expect("default" in column).toBe(false);
+  });
+
+  it("phone：对象值穿透取 .phone 判必填与格式", () => {
+    const column = {
+      key: "phone",
+      label: "手机号",
+      input_type: "phone",
+      required: true
+    };
+    const rules = buildColumnRule(column as never, "手机号");
+    const validate = (value: unknown) =>
+      new Promise<Error | undefined>(resolve => {
+        (rules[0].validator as (...args: unknown[]) => void)(
+          rules[0],
+          value,
+          (error?: Error) => resolve(error)
+        );
+      });
+
+    return Promise.all([
+      validate({ code: "+86", phone: "" }),
+      validate({ code: "+86", phone: "13800138000" }),
+      validate({ code: "+86", phone: "123" })
+    ]).then(([empty, valid, invalid]) => {
+      expect(empty).toBeInstanceOf(Error);
+      expect(valid).toBeUndefined();
+      expect(invalid).toBeInstanceOf(Error);
+    });
+  });
+
+  it("color：非法色值拒绝、空值按 required 语义", () => {
+    const rules = buildColumnRule(
+      {
+        key: "color",
+        label: "颜色",
+        input_type: "color",
+        required: false
+      } as never,
+      "颜色"
+    );
+    const validate = (value: unknown) =>
+      new Promise<Error | undefined>(resolve => {
+        (rules[0].validator as (...args: unknown[]) => void)(
+          rules[0],
+          value,
+          (error?: Error) => resolve(error)
+        );
+      });
+    return Promise.all([
+      validate(""),
+      validate("#409EFF"),
+      validate("409EFF")
+    ]).then(([empty, valid, invalid]) => {
+      expect(empty).toBeUndefined();
+      expect(valid).toBeUndefined();
+      expect(invalid).toBeInstanceOf(Error);
+    });
+  });
+
+  it("color：元数据 predefine 优先于内置 9 色兜底", () => {
+    const fieldProps: Record<string, unknown> = {};
+    const column: Record<string, unknown> = {
+      key: "color",
+      label: "颜色",
+      prop: "color",
+      input_type: "color",
+      predefine: ["#111111", "#222222"],
+      fieldProps
+    };
+    pickRenderers("form").color(column as never, {
+      column: column as never,
+      t: (key: string) => key,
+      te: () => false,
+      localeName: "zh",
+      apiSearchComponents: {}
+    });
+    expect(fieldProps.predefine).toEqual(["#111111", "#222222"]);
+  });
+
+  it("decimal：按 decimal_places 推导 step 与 precision", () => {
+    const fieldProps: Record<string, unknown> = {};
+    const column: Record<string, unknown> = {
+      key: "days",
+      label: "天数",
+      prop: "days",
+      input_type: "decimal",
+      decimal_places: 1,
+      fieldProps
+    };
+    pickRenderers("form").decimal(column as never, {
+      column: column as never,
+      t: (key: string) => key,
+      te: () => false,
+      localeName: "zh",
+      apiSearchComponents: {}
+    });
+    expect(column.valueType).toBe("input-number");
+    expect(fieldProps.step).toBe(0.1);
+    expect(fieldProps.precision).toBe(1);
+  });
+
+  it("url：非法链接拒绝、空值放行", () => {
+    const rules = buildColumnRule(
+      {
+        key: "site",
+        label: "站点",
+        input_type: "url",
+        required: false
+      } as never,
+      "站点"
+    );
+    const validate = (value: unknown) =>
+      new Promise<Error | undefined>(resolve => {
+        (rules[0].validator as (...args: unknown[]) => void)(
+          rules[0],
+          value,
+          (error?: Error) => resolve(error)
+        );
+      });
+    return Promise.all([
+      validate(""),
+      validate("https://example.com"),
+      validate("not a url")
+    ]).then(([empty, valid, invalid]) => {
+      expect(empty).toBeUndefined();
+      expect(valid).toBeUndefined();
+      expect(invalid).toBeInstanceOf(Error);
+    });
   });
 });

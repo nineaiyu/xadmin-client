@@ -36,6 +36,10 @@ export type CodegenFieldItem = {
   default_input_type: string;
   /** 是否文本类（可生成 icontains 自定义过滤器） */
   can_filter_custom: boolean;
+  /** 是否可选专用字段类（非关联字段） */
+  can_field_class: boolean;
+  /** 可选专用字段类（PhoneField / ColorField / RichTextField / StepFloatField） */
+  field_class_options: string[];
 };
 
 export type CodegenModelPlan = {
@@ -63,6 +67,8 @@ export type CodegenFieldOverride = {
   input_type?: string;
   /** 绑定数据字典类型 code（仅非关联字段，生成 DictChoiceField） */
   dict_code?: string;
+  /** 专用字段类（仅非关联字段，生成显式字段声明；空 = 引擎默认） */
+  field_class?: string;
 };
 
 /** 生成产物（path = 仓库相对路径，如 xadmin-server/demo/views.py） */

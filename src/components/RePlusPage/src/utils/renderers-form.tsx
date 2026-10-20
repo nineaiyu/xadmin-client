@@ -32,6 +32,9 @@ const PhoneInput = defineAsyncComponent(
 const SuggestSelect = defineAsyncComponent(
   () => import("../components/SuggestSelect.vue")
 );
+const WangEditor = defineAsyncComponent(
+  () => import("../components/WangEditor.vue")
+);
 
 /**
  * 表单列（新增/编辑）内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -40,16 +43,39 @@ const SuggestSelect = defineAsyncComponent(
 export const builtinFormRenderers: PlusColumnRegistry = {
   integer: numberFormRenderer,
   float: numberFormRenderer,
+  decimal: decimalFormRenderer,
   string: item => {
     item["valueType"] = "input";
+  },
+  url: item => {
+    item["valueType"] = "input";
+    item["fieldProps"]!["type"] = "url";
+  },
+  password: item => {
+    item["valueType"] = "input";
+    item["fieldProps"]!["type"] = "password";
+    item["fieldProps"]!["showPassword"] = true;
+  },
+  rich_text: item => {
+    item["renderField"] = (
+      value: unknown,
+      onChange: (val: unknown) => void
+    ) => {
+      return h(WangEditor, {
+        modelValue: value as string,
+        "onUpdate:modelValue": onChange,
+        minHeight: 280
+      });
+    };
   },
   field: item => {
     item["valueType"] = "input";
   },
-  color: item => {
+  color: (item, { column }) => {
     item["valueType"] = "color-picker";
     item["fieldProps"]!["showAlpha"] = true;
-    item["fieldProps"]!["predefine"] = [
+    // 预设色板随元数据下发（ColorField(predefine=[...])）；未声明时保留既有 9 色兜底
+    item["fieldProps"]!["predefine"] = column.predefine ?? [
       "#001100",
       "#ffffff",
       "#ff4500",
@@ -143,8 +169,9 @@ export const builtinFormRenderers: PlusColumnRegistry = {
       });
     };
   },
-  phone: (item, { column }) => {
-    column.default = { name: "China", code: "+86" };
+  phone: item => {
+    // 默认值不在渲染器内篡改元数据（历史缺陷：把 {name, code} 写回 column.default，
+    // 国家显示名混进字段值）；空值由 PhoneInput 的模型缺省兜底
     item["renderField"] = (
       value: unknown,
       onChange: (val: unknown) => void
@@ -226,6 +253,18 @@ function numberFormRenderer(item: PageColumn, { column }: PlusColumnContext) {
   item["colProps"] = { xs: 24, sm: 24, md: 12, lg: 12, xl: 12 };
   if (column.key === "pk") {
     item["minWidth"] = 80;
+  }
+}
+
+/** DecimalField：在数值渲染基础上按 decimal_places 推导步进与精度 */
+function decimalFormRenderer(item: PageColumn, ctx: PlusColumnContext) {
+  numberFormRenderer(item, ctx);
+  const places = ctx.column.decimal_places;
+  if (places !== undefined) {
+    item["fieldProps"]!["precision"] = places;
+    if (item["fieldProps"]!["step"] === undefined) {
+      item["fieldProps"]!["step"] = Number(`1e-${places}`);
+    }
   }
 }
 

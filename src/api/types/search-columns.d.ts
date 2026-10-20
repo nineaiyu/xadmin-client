@@ -32,6 +32,7 @@ export type SearchColumnsData = {
         | "date"
         | "datetime"
         | "datetimerange"
+        | "decimal"
         | "email"
         | "field"
         | "file upload"
@@ -51,7 +52,9 @@ export type SearchColumnsData = {
         | "object_related_field"
         | "object_related_field_file"
         | "object_related_field_image"
+        | "password"
         | "phone"
+        | "rich_text"
         | "select"
         | "select-multiple"
         | "select-ordering"
@@ -59,6 +62,7 @@ export type SearchColumnsData = {
         | "text"
         | "textarea"
         | "time"
+        | "url"
       )
     | string
   ) &
@@ -126,4 +130,18 @@ export type SearchColumnsData = {
    * 表单分组 tabs 名称
    */
   tabs_label?: string;
+  /**
+   * 小数位数（DRF DecimalField 标准属性，字段声明时下发；前端推导 step / precision）
+   */
+  decimal_places?: number;
+  /**
+   * 颜色预设色板（ColorField 显式声明 predefine 时下发；前端色板组件消费）
+   */
+  predefine?: string[];
+  /**
+   * ListField 子字段的元信息（child.choices 供前端多选下拉渲染）
+   */
+  child?: {
+    [k: string]: unknown;
+  };
 }[];

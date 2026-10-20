@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <el-input
-      v-model="value.phone"
+      v-model="phone"
       required
       clearable
       :disabled="disabled"
@@ -9,26 +9,25 @@
     >
       <template v-slot:prepend>
         <el-select
-          v-model="phoneCode"
+          v-model="selectedCode"
           :disabled="disabled"
           filterable
           style="width: 160px"
-          value-key="value"
           default-first-option
-          @change="onChange"
+          @change="onCodeChange"
         >
           <el-option
             v-for="country in countries"
-            :key="country.name"
-            :label="JSON.stringify(country)"
-            :value="country"
+            :key="country.value"
+            :label="`${country.name} ${country.value}`"
+            :value="country.value"
           >
             <span class="country-name">{{ country.name }}</span>
             <span style="float: right; font-size: var(--font-size-sm)">{{
               country.value
             }}</span>
           </el-option>
-          <template #label>{{ phoneCode.name }} {{ phoneCode.value }}</template>
+          <template #label>{{ selectedLabel }}</template>
         </el-select>
       </template>
     </el-input>
@@ -37,10 +36,47 @@
 
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { countriesApi } from "@/api/common";
 import type { PhoneInputProps } from "../utils/types";
 defineOptions({ name: "PhoneInput" });
+
+type CountryOption = { name: string; value: string };
+
+const DEFAULT_COUNTRY: CountryOption = { name: "China", value: "+86" };
+
+// 模块级缓存：一次会话只拉一次国家区号列表（多字段挂载不重复请求）
+let countriesCache: CountryOption[] | undefined;
+let countriesRequest: Promise<CountryOption[]> | undefined;
+
+function loadCountries(): Promise<CountryOption[]> {
+  if (countriesCache) return Promise.resolve(countriesCache);
+  if (!countriesRequest) {
+    countriesRequest = countriesApi()
+      .then(res => {
+        if (!isSuccess(res)) return [DEFAULT_COUNTRY];
+        // 同一区号可能对应多个国家/地区（如 +1）：按区号去重，保留下拉首项
+        const seen = new Set<string>();
+        return res.data
+          .map(item => ({
+            name: `${item.flag} ${item.name}`,
+            value: item.phone_code
+          }))
+          .filter(item => {
+            if (seen.has(item.value)) return false;
+            seen.add(item.value);
+            return true;
+          });
+      })
+      .catch(() => [DEFAULT_COUNTRY])
+      .then(options => {
+        countriesCache = options;
+        countriesRequest = undefined;
+        return options;
+      });
+  }
+  return countriesRequest;
+}
 
 const value = defineModel<PhoneInputProps>({
   default: () => ({ code: "+86", phone: "" })
@@ -50,33 +86,53 @@ defineProps({
     type: Boolean
   }
 });
-const phoneCode = ref({ name: "China", value: "+86" });
 
-const countries = ref([phoneCode.value]);
+const selectedCode = ref(value.value?.code || DEFAULT_COUNTRY.value);
+const countries = ref<CountryOption[]>([DEFAULT_COUNTRY]);
+
+const phone = computed({
+  get: () => String(value.value?.phone ?? ""),
+  set: phoneValue => {
+    value.value = { code: selectedCode.value, phone: phoneValue };
+  }
+});
+
+const selectedLabel = computed(() => {
+  const country = countries.value.find(
+    item => item.value === selectedCode.value
+  );
+  return country ? `${country.name} ${country.value}` : selectedCode.value;
+});
 
 const emit = defineEmits<{
   change: [values: PhoneInputProps];
 }>();
 
 onMounted(() => {
-  countriesApi().then(res => {
-    if (isSuccess(res)) {
-      countries.value = res.data.map(item => {
-        if (value.value.code === item.phone_code) {
-          phoneCode.value.name = `${item.flag} ${item.name}`;
-        }
-        return { name: `${item.flag} ${item.name}`, value: item.phone_code };
-      });
-    }
+  loadCountries().then(options => {
+    countries.value = options;
   });
 });
 
-const onChange = (country: { value: string }) => {
-  value.value.code = country.value;
+watch(
+  () => value.value?.code,
+  code => {
+    if (code && code !== selectedCode.value) selectedCode.value = code;
+  }
+);
+
+const onCodeChange = () => {
   onInputChange();
 };
+
+/** 提交净化后的 {code, phone}：不含国家显示名等展示键 */
 const onInputChange = () => {
-  emit("change", value.value);
+  const payload = {
+    code: selectedCode.value,
+    phone: String(value.value?.phone ?? "")
+  };
+  value.value = payload;
+  emit("change", payload);
 };
 </script>
 
