@@ -1,8 +1,7 @@
 import { computed, defineAsyncComponent, h } from "vue";
 import { get } from "lodash-es";
 import { isEmpty, isString } from "@pureadmin/utils";
-import { ElIcon, ElImage, ElLink, ElTooltip } from "element-plus";
-import { Link } from "@element-plus/icons-vue";
+import { ElLink, ElTooltip } from "element-plus";
 import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
@@ -10,7 +9,7 @@ import { getColourTypeByIndex } from "./index";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { colorBlockStyle } from "@/utils/cellRender";
 import { sanitizeHtml } from "@/utils/sanitize";
-import { transformI18n } from "@/plugins/i18n";
+import { mediaDetailRenderers } from "./renderers-detail-media";
 import type {
   ChoiceOptionItem,
   PageColumn,
@@ -250,201 +249,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       <span>{JSON.stringify(row[column.key])}</span>
     );
   },
-  object_related_field_image: (item, { column }) => {
-    item["valueType"] = "img";
-    item["formatter"] = ({ filepath }: { filepath?: string }) => {
-      return filepath;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(ElImage, {
-        lazy: true,
-        class: "plus-display-item__image",
-        src: row[column.key]?.filepath,
-        alt: row[column.key]?.filename,
-        previewSrcList: [row[column.key]?.filepath],
-        previewTeleported: true
-      });
-  },
-  object_related_field_file: (item, { column }) => {
-    item["render"] = ({
-      filepath,
-      filename
-    }: {
-      filepath?: string;
-      filename?: string;
-    }) => {
-      return h(
-        ElLink,
-        {
-          type: "success",
-          href: filepath,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => filename ?? transformI18n("plus.fileLink")
-        }
-      );
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(
-        ElLink,
-        {
-          type: "success",
-          href: row[column.key]?.filepath,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () =>
-            row[column.key]?.filename ?? transformI18n("plus.fileLink")
-        }
-      );
-  },
-  m2m_related_field_file: (item, { column }) => {
-    item["render"] = (
-      value: Array<{ pk: number; filepath: string; filename: string }>
-    ) => {
-      if (value instanceof Array) {
-        return (
-          <>
-            <el-scrollbar>
-              <el-space>
-                {value?.map(item => {
-                  return h(
-                    ElLink,
-                    {
-                      type: "success",
-                      href: item.filepath,
-                      target: "_blank"
-                    },
-                    {
-                      icon: () => h(ElIcon, null, () => h(Link)),
-                      default: () =>
-                        item.filename ?? transformI18n("plus.fileLink")
-                    }
-                  );
-                })}
-              </el-space>
-            </el-scrollbar>
-          </>
-        );
-      } else return <></>;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
-      <>
-        <el-scrollbar>
-          <el-space>
-            {row[column.key]?.map((item: ChoiceOptionItem) => {
-              return h(
-                ElLink,
-                {
-                  type: "success",
-                  href: item.filepath,
-                  target: "_blank"
-                } as Record<string, unknown>,
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => item.filename ?? transformI18n("plus.fileLink")
-                }
-              );
-            })}
-          </el-space>
-        </el-scrollbar>
-      </>
-    );
-  },
-  m2m_related_field_image: (item, { column }) => {
-    item["render"] = (
-      value: Array<{ pk: number; filepath: string; filename: string }>
-    ) => {
-      if (value instanceof Array) {
-        return (
-          <>
-            <el-scrollbar>
-              <el-space>
-                {value?.map(item => {
-                  return h(ElImage, {
-                    lazy: true,
-                    class: "plus-display-item__image",
-                    src: item.filepath,
-                    alt: item.filename,
-                    previewSrcList: [item.filepath],
-                    previewTeleported: true
-                  });
-                })}
-              </el-space>
-            </el-scrollbar>
-          </>
-        );
-      } else return <></>;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
-      <>
-        <el-scrollbar>
-          <el-space>
-            {row[column.key]?.map((item: ChoiceOptionItem) => {
-              return h(ElImage, {
-                lazy: true,
-                class: "plus-display-item__image",
-                src: item.filepath,
-                alt: item.filename,
-                previewSrcList: [item.filepath],
-                previewTeleported: true
-              } as Record<string, unknown>);
-            })}
-          </el-space>
-        </el-scrollbar>
-      </>
-    );
-  },
-  "image upload": (item, { column }) => {
-    item["valueType"] = "img";
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(ElImage, {
-        lazy: true,
-        class: "plus-display-item__image",
-        src: row[column.key],
-        alt: row[column.key],
-        previewSrcList: [row[column.key]],
-        previewTeleported: true
-      });
-  },
-  "file upload": (item, { column }) => {
-    item["render"] = (value: string) => {
-      return h(
-        ElLink,
-        {
-          type: "success",
-          href: value,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => transformI18n("plus.fileLink")
-        }
-      );
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(
-        ElLink,
-        {
-          type: "success",
-          href: row[column.key],
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => transformI18n("plus.fileLink")
-        }
-      );
-  },
+  ...mediaDetailRenderers,
   boolean: item => {
     item["options"] = computed(() => selectBooleanOptions);
     delete item["renderField"];
