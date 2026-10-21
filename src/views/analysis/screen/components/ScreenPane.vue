@@ -12,6 +12,7 @@ import {
   paneAnimationStyle
 } from "../utils/paneEffects";
 import { renderRichText } from "../utils/richText";
+import { injectScreenDark } from "../utils/screenTheme";
 import PaneMediaView from "./PaneMediaView.vue";
 
 /**
@@ -53,6 +54,12 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+/** 大屏生效明暗（设计器 / 投屏根节点提供）：图表配色随大屏主题，不受站点主题污染 */
+const screenDark = injectScreenDark();
+const chartAttrs = computed(() =>
+  screenDark.value ? { forceDark: true } : { forceLight: true }
+);
 
 type CardHandle = {
   loadData?: () => void;
@@ -274,7 +281,11 @@ const clockStyle = computed(() => ({
           }"
           :style="{ height: `${cardRenderHeight(card.height)}px` }"
         >
-          <ChartCard :ref="setCardRef(card.id)" :card="card" />
+          <ChartCard
+            :ref="setCardRef(card.id)"
+            :card="card"
+            v-bind="chartAttrs"
+          />
         </div>
       </section>
     </div>
@@ -363,15 +374,16 @@ const clockStyle = computed(() => ({
   color: var(--screen-fg-dense);
 }
 
-/* 图表内层用站点主题底色：图表按主题渲染，在深色卡片里保持清晰（与投屏页同口径） */
+/* 图表直接浮在窗格表面上（不铺站点主题底色作「画框」）：图表配色由大屏主题
+   决定（深色 → force-dark，浅色 → force-light），站点明暗不参与 */
 .screen-card__body {
   overflow: hidden;
-  color: var(--el-text-color-primary);
-  background: var(--el-bg-color-overlay);
+  color: var(--screen-fg-strong);
+  background: transparent;
   border-radius: var(--radius-lg);
 
   &--plain {
-    color: inherit;
+    color: var(--screen-fg-bold);
     background: transparent;
     border-radius: 0;
   }

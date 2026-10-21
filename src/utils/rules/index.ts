@@ -11,7 +11,12 @@
  *   不要 import 本目录的桶，以防引入不需要的依赖。
  */
 
-export { buildPhoneRule, isPhoneNumber } from "./phone";
+export {
+  buildPhoneRule,
+  isPhoneNumber,
+  isInternationalPhoneNumber
+} from "./phone";
+export { isColorValue } from "./color";
 export { buildEmailRule, isEmailAddress } from "./email";
 export { isExternalRoute, isUrl } from "./url";
 export { isIpAddress, isIPv4, isIPv6 } from "./ip";

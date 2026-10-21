@@ -1,19 +1,20 @@
 import { computed, defineAsyncComponent, h } from "vue";
 import { get } from "lodash-es";
 import { isEmpty, isString } from "@pureadmin/utils";
-import { ElIcon, ElImage, ElLink } from "element-plus";
-import { Link } from "@element-plus/icons-vue";
+import { ElLink, ElTooltip } from "element-plus";
 import { selectBooleanOptions } from "./constants";
 import { formatAddOrEditOptions } from "./renders";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { getColourTypeByIndex } from "./index";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { colorBlockStyle } from "@/utils/cellRender";
-import { transformI18n } from "@/plugins/i18n";
+import { sanitizeHtml } from "@/utils/sanitize";
+import { mediaDetailRenderers } from "./renderers-detail-media";
 import type {
   ChoiceOptionItem,
   PageColumn,
   PlusColumnContext,
+  PlusColumnHandler,
   PlusColumnRegistry
 } from "./types";
 
@@ -35,6 +36,33 @@ const dictTagStyle = (color: string) => ({
   color,
   style: SOLID_TAG_STYLE
 });
+
+/** phone 值（{code, phone} 对象或历史标量）→ 「+86 13800138000」文本 */
+function phoneText(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "object") {
+    const { code, phone } = value as { code?: string; phone?: string | number };
+    return [code, phone]
+      .filter(part => part !== undefined && part !== null && part !== "")
+      .join(" ");
+  }
+  return String(value);
+}
+
+/** 富文本 → 纯文本（去标签 + 压缩空白），列表摘要与 tooltip 共用 */
+function richTextPlain(value: unknown): string {
+  if (!value) return "";
+  return sanitizeHtml(String(value))
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** 富文本 → 列表摘要：超长截断，完整内容进 tooltip / 详情 */
+function richTextSummary(text: string, maxLength = 60): string {
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+}
 
 /**
  * 详情/表格列内置渲染器：input_type -> 对 PageColumn 就地配置
@@ -110,6 +138,55 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       );
     };
   },
+  phone: (item, { column }) => {
+    // 值为 {code, phone} 对象：详情与列表都必须显式取字段，否则渲染
+    // [object Object]（成对守护只查「详情有→表单必须有」，拦不住本缺口）
+    item["render"] = (value: unknown) => {
+      const text = phoneText(value);
+      return text ? <span v-copy={text}>{text}</span> : <span>—</span>;
+    };
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      const text = phoneText(get(row, column.key));
+      return text ? <span v-copy={text}>{text}</span> : <span>—</span>;
+    };
+  },
+  url: (item, { column }) => {
+    const renderLink = (value: unknown) => {
+      if (!value) return <span>—</span>;
+      const href = String(value);
+      return h(
+        ElLink,
+        {
+          type: "primary",
+          href,
+          target: "_blank",
+          rel: "noopener noreferrer"
+        },
+        { default: () => href }
+      );
+    };
+    item["render"] = renderLink;
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => renderLink(get(row, column.key));
+  },
+  rich_text: (item, { column }) => {
+    // 服务端入库已净化；展示层再走 DOMPurify 兜底（防御历史数据 / 跨端写入）
+    item["render"] = (value: unknown) =>
+      value ? <div innerHTML={sanitizeHtml(String(value))} /> : <span>—</span>;
+    // pure-table ******
+    item["cellRenderer"] = ({ row }) => {
+      const full = richTextPlain(get(row, column.key));
+      if (!full) return <span>—</span>;
+      const summary = richTextSummary(full);
+      if (summary === full) return <span>{summary}</span>;
+      return h(
+        ElTooltip,
+        { content: full, placement: "top", showAfter: 300 },
+        { default: () => h("span", summary) }
+      );
+    };
+  },
   object_related_field: (item, { column }) => {
     if (!isEmpty(column?.choices ?? [])) {
       item["prop"] = `${column.key}.pk`;
@@ -172,201 +249,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
       <span>{JSON.stringify(row[column.key])}</span>
     );
   },
-  object_related_field_image: (item, { column }) => {
-    item["valueType"] = "img";
-    item["formatter"] = ({ filepath }: { filepath?: string }) => {
-      return filepath;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(ElImage, {
-        lazy: true,
-        class: "plus-display-item__image",
-        src: row[column.key]?.filepath,
-        alt: row[column.key]?.filename,
-        previewSrcList: [row[column.key]?.filepath],
-        previewTeleported: true
-      });
-  },
-  object_related_field_file: (item, { column }) => {
-    item["render"] = ({
-      filepath,
-      filename
-    }: {
-      filepath?: string;
-      filename?: string;
-    }) => {
-      return h(
-        ElLink,
-        {
-          type: "success",
-          href: filepath,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => filename ?? transformI18n("plus.fileLink")
-        }
-      );
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(
-        ElLink,
-        {
-          type: "success",
-          href: row[column.key]?.filepath,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () =>
-            row[column.key]?.filename ?? transformI18n("plus.fileLink")
-        }
-      );
-  },
-  m2m_related_field_file: (item, { column }) => {
-    item["render"] = (
-      value: Array<{ pk: number; filepath: string; filename: string }>
-    ) => {
-      if (value instanceof Array) {
-        return (
-          <>
-            <el-scrollbar>
-              <el-space>
-                {value?.map(item => {
-                  return h(
-                    ElLink,
-                    {
-                      type: "success",
-                      href: item.filepath,
-                      target: "_blank"
-                    },
-                    {
-                      icon: () => h(ElIcon, null, () => h(Link)),
-                      default: () =>
-                        item.filename ?? transformI18n("plus.fileLink")
-                    }
-                  );
-                })}
-              </el-space>
-            </el-scrollbar>
-          </>
-        );
-      } else return <></>;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
-      <>
-        <el-scrollbar>
-          <el-space>
-            {row[column.key]?.map((item: ChoiceOptionItem) => {
-              return h(
-                ElLink,
-                {
-                  type: "success",
-                  href: item.filepath,
-                  target: "_blank"
-                } as Record<string, unknown>,
-                {
-                  icon: () => h(ElIcon, null, () => h(Link)),
-                  default: () => item.filename ?? transformI18n("plus.fileLink")
-                }
-              );
-            })}
-          </el-space>
-        </el-scrollbar>
-      </>
-    );
-  },
-  m2m_related_field_image: (item, { column }) => {
-    item["render"] = (
-      value: Array<{ pk: number; filepath: string; filename: string }>
-    ) => {
-      if (value instanceof Array) {
-        return (
-          <>
-            <el-scrollbar>
-              <el-space>
-                {value?.map(item => {
-                  return h(ElImage, {
-                    lazy: true,
-                    class: "plus-display-item__image",
-                    src: item.filepath,
-                    alt: item.filename,
-                    previewSrcList: [item.filepath],
-                    previewTeleported: true
-                  });
-                })}
-              </el-space>
-            </el-scrollbar>
-          </>
-        );
-      } else return <></>;
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) => (
-      <>
-        <el-scrollbar>
-          <el-space>
-            {row[column.key]?.map((item: ChoiceOptionItem) => {
-              return h(ElImage, {
-                lazy: true,
-                class: "plus-display-item__image",
-                src: item.filepath,
-                alt: item.filename,
-                previewSrcList: [item.filepath],
-                previewTeleported: true
-              } as Record<string, unknown>);
-            })}
-          </el-space>
-        </el-scrollbar>
-      </>
-    );
-  },
-  "image upload": (item, { column }) => {
-    item["valueType"] = "img";
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(ElImage, {
-        lazy: true,
-        class: "plus-display-item__image",
-        src: row[column.key],
-        alt: row[column.key],
-        previewSrcList: [row[column.key]],
-        previewTeleported: true
-      });
-  },
-  "file upload": (item, { column }) => {
-    item["render"] = (value: string) => {
-      return h(
-        ElLink,
-        {
-          type: "success",
-          href: value,
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => transformI18n("plus.fileLink")
-        }
-      );
-    };
-    // pure-table ******
-    item["cellRenderer"] = ({ row }) =>
-      h(
-        ElLink,
-        {
-          type: "success",
-          href: row[column.key],
-          target: "_blank"
-        },
-        {
-          icon: () => h(ElIcon, null, () => h(Link)),
-          default: () => transformI18n("plus.fileLink")
-        }
-      );
-  },
+  ...mediaDetailRenderers,
   boolean: item => {
     item["options"] = computed(() => selectBooleanOptions);
     delete item["renderField"];
@@ -394,8 +277,42 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
   }
 };
 
-/** m2m_related_field / labeled_multiple_choice 共用 */
-function multipleListDetailRenderer(
+/**
+ * 详情/列表兜底渲染器：未登记类型照旧走 plus-pro 默认通道，但对象/数组值在
+ * DEV 环境给出告警并以 JSON 文本展示，避免静默 `[object Object]`。
+ */
+export const detailFallbackRenderer: PlusColumnHandler = (item, { column }) => {
+  const format = (value: unknown): string => {
+    if (value === undefined || value === null || value === "") return "";
+    if (typeof value === "object") {
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[RePlusPage] 字段 "${column.key}"（input_type=${column.input_type}）无详情渲染器，` +
+            "对象值已降级为 JSON 文本；请按扩展流程补 renderers-detail.tsx 与 fieldTypeRegistry 登记"
+        );
+      }
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  };
+  item["render"] = (value: unknown) => {
+    const text = format(value);
+    return text ? <span v-copy={text}>{text}</span> : <span>—</span>;
+  };
+  // pure-table ******：已有列表格式化（如 datetime/date 的 cellRenderer）时不覆盖
+  if (!item["cellRenderer"]) {
+    item["cellRenderer"] = ({ row }) => {
+      const text = format(get(row, column.key));
+      return text ? <span v-copy={text}>{text}</span> : <span>—</span>;
+    };
+  }
+};
+
+/** m2m_related_field / labeled_multiple_choice 共用 */ function multipleListDetailRenderer(
   item: PageColumn,
   { column }: PlusColumnContext
 ) {

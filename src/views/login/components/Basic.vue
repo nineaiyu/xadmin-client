@@ -3,7 +3,6 @@ import { isSuccess } from "@/api/types";
 import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
-import { message } from "@/utils/message";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { LOGIN_PAGE, operates } from "../utils/enums";
@@ -11,21 +10,23 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { ReImageVerify } from "@/components/ReImageVerify";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { handleOperation } from "@/components/RePlusPage";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import Info from "~icons/ri/information-line";
 import Keyhole from "~icons/ri/shield-keyhole-line";
 import {
-  AuthInfoResult,
   getTempTokenApi,
   loginAuthApi,
+  type LoginResultData,
   type TokenInfo
 } from "@/api/auth";
 import { cloneDeep } from "@pureadmin/utils";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
+import RememberLogin from "./RememberLogin.vue";
 import type { RecordType } from "plus-pro-components";
 import {
+  useAuthInfo,
   useEnterSubmit,
   useLoginFlow,
   useRememberLogin
@@ -36,7 +37,6 @@ defineOptions({
 });
 
 const captchaRef = ref();
-const configLoading = ref(false);
 const ruleFormRef = ref<FormInstance>();
 const { t } = useI18n();
 
@@ -48,15 +48,7 @@ const {
   syncRememberToStore
 } = useRememberLogin();
 
-const authInfo = reactive<AuthInfoResult["data"]>({
-  access: false,
-  captcha: false,
-  token: false,
-  encrypted: false,
-  basic: false,
-  lifetime: 1,
-  reset: false
-});
+const { authInfo, configLoading, onConfig } = useAuthInfo();
 
 const ruleForm = reactive({
   username: "",
@@ -74,7 +66,8 @@ let tokenPromise: Promise<void> | null = null;
 
 /** 取一次性临时 Token 写入表单；force=true 强制刷新（登录失败后 token 已被消费） */
 const initToken = (force = false) => {
-  if (!(authInfo.access && authInfo.token)) return Promise.resolve();
+  if (!(authInfo.value.access && authInfo.value.token))
+    return Promise.resolve();
   if (!force && tokenPromise) return tokenPromise;
   tokenPromise = getTempTokenApi()
     .then(res => {
@@ -89,6 +82,15 @@ const initToken = (force = false) => {
   return tokenPromise;
 };
 
+/**
+ * 登录失败/异常后刷新一次性资源：临时 token 提交即消费、图形验证码校验即消费，
+ * 不刷新则用户重试必带失效资源。失败提示由 handleOperation 的默认文案负责。
+ */
+const refreshLoginResources = () => {
+  void initToken(true);
+  captchaRef.value?.getImgCode();
+};
+
 const {
   loading,
   disabled,
@@ -99,51 +101,56 @@ const {
   handleMfaBack
 } = useLoginFlow({
   // MFA 步骤返回重新登录：刷新一次性临时 token 与图形验证码
-  onMfaBack: () => {
-    void initToken(true);
-    captchaRef.value?.getImgCode();
-  }
+  onMfaBack: refreshLoginResources
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
   await formEl.validate(async valid => {
-    if (valid) {
-      loading.value = true;
-      // 临时 Token 必须与本次提交一一对应：首帧 token 请求尚未返回就提交会带着
-      // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
-      // 提交前等 token 就绪（就绪后瞬时返回；失败重试路径见下方 catch 的强制刷新）。
-      await initToken();
-      useUserStoreHook()
-        .loginByUsername(cloneDeep(ruleForm), authInfo.encrypted)
-        .then(res => {
-          if (isSuccess(res)) {
-            if ("mfa_required" in res.data && res.data.mfa_required) {
-              // 密码阶段通过，切换到登录 MFA 动态码验证步骤
-              loginMfaInfo.value = res.data;
-              mustChangePassword.value = Boolean(res.data.must_change_password);
-              return;
-            }
-            // 巡检处置联动：管理员要求改密时登录后引导到个人配置页
-            mustChangePassword.value = Boolean(res.data.must_change_password);
-            handleLoginSuccess("login");
-          } else {
-            message(res.detail, {
-              type: "warning"
-            });
-            throw res.detail;
-          }
-        })
-        .catch(() => {
-          void initToken(true);
-          captchaRef.value?.getImgCode();
-        })
-        .finally(() => {
-          loading.value = false;
-        });
-    } else {
+    if (!valid) {
       loading.value = false;
+      return;
     }
+    loading.value = true;
+    // 临时 Token 必须与本次提交一一对应：首帧 token 请求尚未返回就提交会带着
+    // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
+    // 提交前等 token 就绪（就绪后瞬时返回；失败路径见下方回调的强制刷新）。
+    await initToken();
+    // 登录请求（user store 封装）：成功时已写 token 并按 mfa_required 分支处理；
+    // 失败与异常都走 handleOperation 的回调刷新一次性资源——一次性 token 提交即
+    // 消费，不刷新则下次提交必带失效 token（验证码同理）
+    handleOperation({
+      t,
+      apiReq: useUserStoreHook().loginByUsername(
+        cloneDeep(ruleForm),
+        authInfo.value.encrypted
+      ),
+      // 成功提示由登录流弹出「登录成功」，关掉默认文案
+      showSuccessMsg: false,
+      success(res) {
+        const result = res?.data as LoginResultData;
+        if ("mfa_required" in result && result.mfa_required) {
+          // 密码阶段通过，切换到登录 MFA 动态码验证步骤
+          loginMfaInfo.value = result;
+          mustChangePassword.value = Boolean(result.must_change_password);
+          return;
+        }
+        // 巡检处置联动：管理员要求改密时登录后引导到个人配置页
+        mustChangePassword.value = Boolean(result.must_change_password);
+        handleLoginSuccess("login");
+      },
+      // 业务失败（如密码错误）：默认失败提示即面向用户的可读文案，刷新一次性资源
+      failed() {
+        refreshLoginResources();
+      },
+      // 请求异常（网络 / 5xx）：同样刷新，保证用户重试时资源就绪
+      exception() {
+        refreshLoginResources();
+      },
+      requestEnd() {
+        loading.value = false;
+      }
+    });
   });
 };
 
@@ -158,10 +165,9 @@ onMounted(() => {
   loginAuthApi()
     .then(res => {
       if (isSuccess(res)) {
-        const authData = res.data as RecordType;
-        Object.assign(authInfo, authData);
+        onConfig(res.data as RecordType);
         void initToken();
-        loginDay.value = authInfo.lifetime ?? 1;
+        loginDay.value = authInfo.value.lifetime ?? 1;
         formatLoginDayOptions();
         syncRememberToStore();
       }
@@ -231,43 +237,11 @@ onMounted(() => {
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
-              <el-checkbox v-model="checked">
-                <span class="flex">
-                  <select
-                    v-model="loginDay"
-                    :aria-label="t('login.remember')"
-                    :disabled="loginDayList.length < 2"
-                    :style="{
-                      width: loginDay < 10 ? '10px' : '16px',
-                      background: 'none',
-                      appearance: 'none',
-                      border: 'none'
-                    }"
-                  >
-                    <option
-                      v-for="item in loginDayList"
-                      :key="item"
-                      :value="item"
-                    >
-                      {{ item }}
-                    </option>
-                  </select>
-                  {{ t("login.remember") }}
-                  <el-tooltip
-                    :content="t('login.rememberInfo')"
-                    effect="dark"
-                    placement="top"
-                  >
-                    <!-- 提示图标：键盘焦点可达（EP 注入 tooltip trigger 语义），
-                         以说明文案作可访问名，避免焦点停在无名称元素上 -->
-                    <IconifyIconOffline
-                      :icon="Info"
-                      class="ml-1"
-                      :aria-label="t('login.rememberInfo')"
-                    />
-                  </el-tooltip>
-                </span>
-              </el-checkbox>
+              <RememberLogin
+                v-model:checked="checked"
+                v-model:login-day="loginDay"
+                :login-day-list="loginDayList"
+              />
               <el-button
                 v-if="authInfo.reset"
                 link

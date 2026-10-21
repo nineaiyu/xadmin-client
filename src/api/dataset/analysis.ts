@@ -114,6 +114,13 @@ export type ScreenItem = {
   interval: number;
   refresh: number;
   visibility: "personal" | "shared";
+  /**
+   * 投屏主题（labeled choice 形态，读取走 `choiceValue`）：
+   * dark 恒深色（缺省，存量观感）/ light 浅色画布 / auto 跟随站点明暗
+   */
+  theme?: ScreenChoiceValue;
+  /** 大屏主题色（hex，如 #006be6）：空 = 跟随站点主色 */
+  theme_color?: string;
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
 };

@@ -9,6 +9,14 @@ import {
 /** 取自 celery 定时任务页实测列宽（含多选列，不含操作列），累计边界见下方断言注释 */
 const TASK_COLUMNS = [48, 80, 120, 120, 120, 120, 120, 120, 160, 120, 160, 120];
 
+/** 用户管理页实测列宽（容器 771、内容 78；按旧口径会被对齐值 163 锚住） */
+const USER_COLUMNS = [
+  48, 80, 120, 120, 120, 120, 120, 120, 120, 120, 120, 160, 160, 120, 120
+];
+
+/** 部门管理页实测列宽（容器 980、内容 78；按旧口径会被对齐值 132 锚住） */
+const DEPT_COLUMNS = [48, 200, 120, 120, 120, 120, 120, 120, 120, 160];
+
 /** 页面配置宽度 = 内容宽度 = 未测到内容宽度时，行为与「按配置宽度渲染」完全一致 */
 const configuredOnly = (container: number, configured: number) =>
   resolveOperationColumnWidth(container, TASK_COLUMNS, configured, configured);
@@ -54,9 +62,16 @@ describe("resolveOperationColumnWidth（按页面配置宽度渲染）", () => {
 });
 
 describe("resolveOperationColumnWidth（按钮随权限显隐 → 按内容收敛）", () => {
-  it("只有内容宽度作为下限：对齐值不小于内容宽度（不会裁切按钮）", () => {
-    // 容器 800：边界 488 → 对齐值 192；内容仅 90（只剩一个按钮）→ 取对齐值 192
-    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 90, 300)).toBe(192);
+  it("对齐代价超过容差时按内容宽度渲染（用户/部门管理页实测场景）", () => {
+    // 只剩「管理」按钮：内容 78，对齐值 163（用户管理）/ 132（部门管理），
+    // 对齐多占 85 / 54 均超过容差 30 → 按内容宽度渲染，不再被对齐值锚住
+    expect(resolveOperationColumnWidth(771, USER_COLUMNS, 78, 260)).toBe(78);
+    expect(resolveOperationColumnWidth(980, DEPT_COLUMNS, 78, 260)).toBe(78);
+  });
+
+  it("对齐加宽在容差内时仍应用对齐（小幅修正保留）", () => {
+    // 容器 800：边界 488 → 对齐值 192；内容 170 → 多占 22 ≤ 30，应用对齐
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 170, 300)).toBe(192);
   });
 
   it("无横向滚动时直接按内容宽度渲染（固定列不覆盖任何内容）", () => {
@@ -65,9 +80,9 @@ describe("resolveOperationColumnWidth（按钮随权限显隐 → 按内容收�
     expect(resolveOperationColumnWidth(1498, TASK_COLUMNS, 90, 300)).toBe(90);
   });
 
-  it("对齐值超过「配置宽度 + 容差」时保持配置宽度（不因内容小而无限对齐）", () => {
-    // 容器 800：对齐值 192，配置 140 → 192 - 140 = 52 > 30 → 保持 140
-    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 90, 140)).toBe(140);
+  it("对齐代价超过「配置宽度 + 容差」时同样按内容宽度渲染", () => {
+    // 容器 800：对齐值 192，配置 140 → 对齐多占 102 > 30 → 内容宽度 90
+    expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 90, 140)).toBe(90);
   });
 
   it("内容比配置宽时不反向撑宽（页面配置放不下内容属页面级配置问题）", () => {
@@ -75,14 +90,19 @@ describe("resolveOperationColumnWidth（按钮随权限显隐 → 按内容收�
     expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 320, 300)).toBe(312);
   });
 
+  it("极端窄容器放弃对齐时同样按内容宽度渲染", () => {
+    // 容器 200：首列都放不下（48 < 200×35%），放弃对齐 → 内容宽度
+    expect(resolveOperationColumnWidth(200, TASK_COLUMNS, 78, 260)).toBe(78);
+  });
+
   it("未测到内容宽度（0）时退化为按配置宽度渲染", () => {
     expect(resolveOperationColumnWidth(800, TASK_COLUMNS, 0, 300)).toBe(312);
     expect(resolveOperationColumnWidth(2000, TASK_COLUMNS, 0, 300)).toBe(300);
   });
 
-  it("内容宽度不小于配置时与「按配置渲染」结果一致（零回归）", () => {
+  it("内容达到配置宽度时与「按配置渲染」结果一致（零回归）", () => {
     const samples = [
-      { container: 800, configured: 300, content: 260 },
+      { container: 800, configured: 300, content: 300 },
       { container: 996, configured: 420, content: 430 },
       { container: 818, configured: 300, content: 300 }
     ];

@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import OAuthEntry from "./OauthEntry.vue";
+import RememberLogin from "./RememberLogin.vue";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
-import Info from "~icons/ri/information-line";
 import {
   loginVerifyCodeApi,
   type LoginResultData,
@@ -14,21 +14,25 @@ import {
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import { handleOperation } from "@/components/RePlusPage";
 import LoginMfa from "./LoginMfa.vue";
+import type { FormInstance } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import {
   backToBasicPage,
   buildVerifyCodePayload,
+  useAuthInfo,
   useEnterSubmit,
   useLoginFlow,
-  useRememberLogin
+  useRememberLogin,
+  useVerifyCodeSubmit
 } from "../useLoginFlow";
 
 defineOptions({
   name: "Login"
 });
 
-const configLoading = ref(false);
-const verifyCodeRef = ref();
+const verifyCodeRef = ref<{
+  getRef?: () => FormInstance;
+}>();
 const { t } = useI18n();
 
 const {
@@ -51,12 +55,7 @@ const {
 /** 登录 MFA 验证通过：写入正式 token 并进入系统 */
 const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 
-const authInfo = ref({
-  access: false,
-  encrypted: false,
-  lifetime: 1,
-  reset: false
-});
+const { authInfo, configLoading, onConfig } = useAuthInfo();
 
 const formData = ref({
   form_type: "",
@@ -96,20 +95,17 @@ onMounted(() => {
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
-  authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
-
-  loginDay.value = authInfo.value.lifetime;
+  onConfig(verifyCodeConfig);
+  loginDay.value = authInfo.value.lifetime ?? 1;
   formatLoginDayOptions();
   syncRememberToStore();
 };
 
-const handleLogin = () => {
-  verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
-    if (isValid) {
-      onLogin();
-    }
-  });
-};
+// 本页无第二层表单：只校验验证码表单即提交（formRef 省略）
+const handleLogin = useVerifyCodeSubmit({
+  verifyRef: verifyCodeRef,
+  onSubmit: onLogin
+});
 
 /** 回车提交（随组件卸载自动移除监听） */
 useEnterSubmit(() => handleLogin());
@@ -138,36 +134,11 @@ const onBack = backToBasicPage;
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
-              <el-checkbox v-model="checked">
-                <span class="flex">
-                  <select
-                    v-model="loginDay"
-                    :disabled="loginDayList.length < 2"
-                    :style="{
-                      width: loginDay < 10 ? '10px' : '16px',
-                      background: 'none',
-                      appearance: 'none',
-                      border: 'none'
-                    }"
-                  >
-                    <option
-                      v-for="item in loginDayList"
-                      :key="item"
-                      :value="item"
-                    >
-                      {{ item }}
-                    </option>
-                  </select>
-                  {{ t("login.remember") }}
-                  <el-tooltip
-                    :content="t('login.rememberInfo')"
-                    effect="dark"
-                    placement="top"
-                  >
-                    <IconifyIconOffline :icon="Info" class="ml-1" />
-                  </el-tooltip>
-                </span>
-              </el-checkbox>
+              <RememberLogin
+                v-model:checked="checked"
+                v-model:login-day="loginDay"
+                :login-day-list="loginDayList"
+              />
               <el-button
                 v-if="authInfo.reset"
                 link

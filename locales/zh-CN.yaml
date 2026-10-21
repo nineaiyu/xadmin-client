@@ -2008,6 +2008,10 @@ permissionPreview:
   diagnosisSource: 来源
   diagnosisName: 授权
   diagnosisKind: 判定
+  diagnosisSelected: 参与
+  scopeModeExact: 按显式接口
+  scopeModeList: 按列表回退
+  scopeModeGeneric: 仅通用授权
   sourcePersonal: 个人授权
   sourceDept: 部门授权
   sourceDraft: 当前草稿
@@ -3290,6 +3294,16 @@ dataScreen:
   gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
   modeGrid: 栅格
   modeFree: 自由画布
+  theme: 主题
+  themeDark: 深色
+  themeLight: 浅色
+  themeAuto: 跟随站点
+  themeColor: 主题色
+  themeColorFollow: 跟随站点主色
+  themeLocalHint: 主题切换仅本机生效；需要长期生效请点「保存为默认」。
+  themeReset: 恢复配置
+  themeSaveAsDefault: 保存为默认
+  themeSaved: 主题已保存
   layer: 层级
   layerTop: 置顶
   layerUp: 上移
@@ -4375,6 +4389,12 @@ codegen:
   colReadOnly: 只读
   colInputType: 输入类型
   colDict: 数据字典
+  colFieldClass: 专用字段类
+  fieldClassNone: 默认（按模型字段）
+  fieldClass_PhoneField: 手机号
+  fieldClass_ColorField: 颜色
+  fieldClass_RichTextField: 富文本
+  fieldClass_StepFloatField: 步进数值
   colEnabled: 启用
   inputTypeDefault: 默认（{type}）
   inputTypeObjectRelated: 关联选择

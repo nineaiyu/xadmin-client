@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
-import { useConfirm } from "@/hooks/useConfirm";
+import { useRoute, useRouter } from "vue-router";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { choiceValue } from "@/utils/dict";
@@ -22,7 +21,7 @@ import ScreenPane from "./components/ScreenPane.vue";
 import PaneInspector from "./components/PaneInspector.vue";
 import MultiSelectInspector from "./components/MultiSelectInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
-import { normalizePanes } from "./utils/layout";
+import { useScreenPersistence } from "./utils/useScreenPersistence";
 import { usePaneHistory } from "./utils/history";
 import {
   createGridEditor,
@@ -32,7 +31,8 @@ import { createFreeEditor } from "./utils/createFreeEditor";
 import { useScreenShortcuts } from "./utils/shortcuts";
 import { onPaletteDragStart } from "./utils/dnd";
 import { loadScreenReferenceData } from "./utils/referenceData";
-import { normalizeError } from "@/utils/apiError";
+import { useScreenTheme, type ScreenTheme } from "./utils/screenTheme";
+import { useUnsavedGuard } from "./utils/useUnsavedGuard";
 
 defineOptions({ name: "DataScreenDesigner" });
 
@@ -52,7 +52,6 @@ defineOptions({ name: "DataScreenDesigner" });
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const confirm = useConfirm();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
@@ -76,6 +75,22 @@ const isFree = computed(() => mode.value === "free");
 const markDirty = () => {
   dirty.value = true;
 };
+
+/** 大屏主题（深色缺省 / 浅色 / 跟随站点）：编辑中即时预览，与投屏同一套解析 */
+const themeRoot = ref<HTMLElement>();
+const { screenDark } = useScreenTheme({ screen, root: themeRoot });
+
+/** 主题是表单级属性（不是画布操作）：不进撤销栈，改动即时标脏 */
+const setTheme = (patch: { theme?: ScreenTheme; theme_color?: string }) => {
+  if (!screen.value || readonly.value) return;
+  screen.value = { ...screen.value, ...patch };
+  markDirty();
+};
+/** 工具条回显（服务端 labeled choice → 标量）与保存载荷共用 */
+const themeValue = computed<ScreenTheme>(
+  () => (choiceValue(screen.value?.theme) as ScreenTheme) || "dark"
+);
+const themeColorValue = computed(() => screen.value?.theme_color ?? "");
 
 /* 两模式各持一个撤销栈（模式切换不把另一份载荷混进历史）；导出面按当前模式分派 */
 const grid = createGridEditor({
@@ -147,6 +162,33 @@ const freeSelectedPanes = computed(() =>
 /** 组件库点击：按当前模式落到对应载荷（栅格找空位 / 自由层叠错开） */
 const onPaletteAdd = (type: ScreenPaneType, dashboard?: string) =>
   isFree.value ? free.addPane(type, dashboard) : grid.addPane(type, dashboard);
+
+/** 保存 / 清空（实现见 utils/useScreenPersistence，行数门禁抽出） */
+const { save, clearCanvas } = useScreenPersistence({
+  t,
+  screen,
+  saving,
+  dirty,
+  readonly,
+  isFree,
+  activePanes,
+  gridPanes,
+  freePanes,
+  theme: () => ({
+    theme: themeValue.value,
+    theme_color: themeColorValue.value
+  }),
+  freePayload: () => free.toPayload(),
+  pushHistory: () => pushHistory(),
+  resetCoalesce: () => {
+    gridHistory.resetCoalesce();
+    freeHistory.resetCoalesce();
+  },
+  clearSelection: () => {
+    grid.clearSelection();
+    free.clearSelection();
+  }
+});
 
 /** 属性面板更新：按当前模式落到对应载荷（栅格重叠驳回 / 自由夹回画幅） */
 const updateSelected = (patch: Partial<ScreenLayoutPane>) =>
@@ -250,29 +292,14 @@ onMounted(async () => {
   clockTimer = window.setInterval(() => {
     clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
   }, 1000);
-  window.addEventListener("beforeunload", onBeforeUnload);
 });
 
 onBeforeUnmount(() => {
   window.clearInterval(clockTimer);
-  window.removeEventListener("beforeunload", onBeforeUnload);
 });
 
-/* ---------------- 未保存守卫 ---------------- */
-const onBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (!dirty.value) return;
-  event.preventDefault();
-  event.returnValue = "";
-};
-
-onBeforeRouteLeave(async () => {
-  if (!dirty.value) return true;
-  return confirm(t("dataScreen.leaveConfirm"), {
-    title: t("dataScreen.unsaved"),
-    confirmButtonText: t("dataScreen.leave"),
-    cancelButtonText: t("dataScreen.stay")
-  });
-});
+/* ---------------- 未保存守卫（关闭刷新 / 路由离开，实现见 useUnsavedGuard） ---------------- */
+useUnsavedGuard({ dirty, t });
 
 /* ---------------- 保存 / 清空 / 预览 ---------------- */
 const paneRefs = ref<Record<string, InstanceType<typeof ScreenPane> | null>>(
@@ -285,56 +312,22 @@ const refreshData = () => {
   Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
 };
 
-async function save() {
-  if (!screen.value || saving.value || readonly.value) return;
-  saving.value = true;
-  try {
-    // 只写当前模式的载荷 + layout_mode（另一模式载荷原样保留；服务端校验对应关系）
-    const payload = isFree.value
-      ? { layout_mode: "free" as const, free_layout: free.toPayload() }
-      : {
-          layout_mode: "grid" as const,
-          layout: normalizePanes(gridPanes.value)
-        };
-    const res = await screenApi
-      .partialUpdate(screen.value.pk, payload)
-      .catch(normalizeError);
-    if (isSuccess(res)) {
-      dirty.value = false;
-      gridHistory.resetCoalesce();
-      freeHistory.resetCoalesce();
-      message(t("dataScreen.layoutSaved"), { type: "success" });
-      return;
-    }
-    if (res.detail) message(String(res.detail), { type: "warning" });
-  } finally {
-    saving.value = false;
-  }
-}
-
-/** 清空当前模式的载荷（另一模式的载荷保留，切回即可见） */
-async function clearCanvas() {
-  if (activePanes.value.length === 0 || readonly.value) return;
-  const prompt = isFree.value
-    ? t("dataScreen.freeClearConfirm")
-    : t("dataScreen.clearLayoutConfirm");
-  if (!(await confirm(prompt, { title: t("dataScreen.clearLayout") }))) {
-    return;
-  }
-  pushHistory();
-  if (isFree.value) freePanes.value = [];
-  else gridPanes.value = [];
-  grid.clearSelection();
-  free.clearSelection();
-}
-
 const back = () => {
   router.push("/analysis/screen/index");
 };
 </script>
 
 <template>
-  <div class="designer-root fixed inset-0 flex flex-col text-white">
+  <div
+    ref="themeRoot"
+    class="designer-root fixed inset-0 flex flex-col"
+    :class="{
+      'screen-root--light': !screenDark,
+      'text-white': screenDark,
+      'text-(--screen-fg)': !screenDark
+    }"
+    :data-screen-theme="screenDark ? 'dark' : 'light'"
+  >
     <DesignerToolbar
       :screen-name="screen?.name"
       :dirty="dirty"
@@ -346,7 +339,10 @@ const back = () => {
       :can-redo="canRedo"
       :has-selection="Boolean(inspectorPane) || freeSelectionCount > 0"
       :panes-empty="activePanes.length === 0"
+      :theme="themeValue"
+      :theme-color="themeColorValue"
       @mode="switchMode"
+      @theme="setTheme"
       @undo="undo"
       @redo="redo"
       @duplicate="duplicatePane"

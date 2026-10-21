@@ -29,6 +29,7 @@ export type SearchFieldsData = {
         | "date"
         | "datetime"
         | "datetimerange"
+        | "decimal"
         | "email"
         | "field"
         | "file upload"
@@ -48,7 +49,9 @@ export type SearchFieldsData = {
         | "object_related_field"
         | "object_related_field_file"
         | "object_related_field_image"
+        | "password"
         | "phone"
+        | "rich_text"
         | "select"
         | "select-multiple"
         | "select-ordering"
@@ -56,6 +59,7 @@ export type SearchFieldsData = {
         | "text"
         | "textarea"
         | "time"
+        | "url"
       )
     | string
   ) &

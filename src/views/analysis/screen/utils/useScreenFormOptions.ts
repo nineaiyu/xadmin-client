@@ -5,12 +5,15 @@ import type { useI18n } from "vue-i18n";
 import type { RePlusPageProps } from "@/components/RePlusPage";
 import type { DashboardItem } from "@/api/dataset/datasets";
 import type { RecordType } from "plus-pro-components";
+import { themeColorFieldRender, themeFieldRender } from "./screenThemeForm";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 大屏新建/编辑表单（元数据驱动）：
  * - `name` / `interval` / `refresh` / `visibility` 直接用后端字段；
+ * - `theme` / `theme_color` 覆写为「深浅三选一 + 主色取色」：主题是 choices，
+ *   服务端回读为 `{value,label}` 对象、新建态是标量，统一按标量绑定；
  * - `dashboards` 是 JSONField（按序存仪表盘主键），换成多选下拉——选项来自
  *   页面已加载的仪表盘清单（浏览者可见域），顺序即轮播顺序；
  * - `layout` / `layout_mode` / `free_layout` 画布载荷由设计器页维护，不在本弹窗开放。
@@ -67,8 +70,12 @@ export function useScreenFormOptions({
           column.fieldProps = { ...column.fieldProps, min: 5, max: 3600 };
           return column;
         },
-        refresh: ({ column }) => {
-          column.fieldProps = { ...column.fieldProps, min: 10, max: 3600 };
+        theme: ({ column }) => {
+          Object.assign(column, themeFieldRender(t));
+          return column;
+        },
+        theme_color: ({ column }) => {
+          Object.assign(column, themeColorFieldRender());
           return column;
         },
         layout: ({ column }) => {

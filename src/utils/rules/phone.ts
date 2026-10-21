@@ -15,6 +15,17 @@ export function isPhoneNumber(value: unknown): boolean {
 }
 
 /**
+ * 国际化宽松口径（元数据字段场景）：可选 `+` + 6~15 位数字。
+ *
+ * 分工：登录 / 注册 / 重置密码面向国内手机号，沿用 `isPhone` 国内口径；
+ * 元数据驱动的通用字段（PhoneField 存储 E.164）可能承载任意国家号码，
+ * 服务端 phonenumbers 已做最终校验，前端只拦明显非号码输入。
+ */
+export function isInternationalPhoneNumber(value: unknown): boolean {
+  return /^\+?\d{6,15}$/.test(String(value ?? "").trim());
+}
+
+/**
  * 手机号表单规则（用于 el-form 的 rules）。
  *
  * - `formatCheck`：是否校验格式。登录/注册/重置密码页历史口径只校验非空

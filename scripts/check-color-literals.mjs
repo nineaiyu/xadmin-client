@@ -41,6 +41,8 @@ const PATTERNS = [
  * 均为「颜色自身的定义处」或运行期无法消费 CSS 变量的场景，逐条注明原因：
  * - 主题色板：菜单调色板选项 / 内置预设 swatch / 半暗顶栏与侧栏调色板
  * - EP 兜底：图表与 canvas 只接受字面量，`cssVarColor(name, fallback)` 第二参
+ * - 图表固定基线：大屏深色 / 浅色主题的 `chartColorScheme` 配色必须与站点变量
+ *   解耦（站点亮色时深色画布不能取亮色值，反之亦然），故按设计基线写定
  * - 语义色默认值：语义色自定义面板的默认值（用户初始色板）
  * - 二维码：扫码需要真白底
  * - 颜色选择器预设色板 / 颜色换算工具
@@ -49,7 +51,7 @@ const PATTERNS = [
 const BASELINE = {
   "src/layout/hooks/themeColorScheme.ts": 12,
   "src/layout/hooks/themePresets.ts": 14,
-  "src/utils/chartTheme.ts": 12,
+  "src/utils/chartTheme.ts": 33,
   "src/utils/themeConstants.ts": 4,
   "src/views/account/components/ReQrcode/src/index.tsx": 2,
   "src/views/account/components/ReQrcode/src/index.scss": 1,

@@ -3,74 +3,67 @@ import { useI18n } from "vue-i18n";
 import { onMounted, ref } from "vue";
 import Motion from "../utils/motion";
 import type { FormInstance } from "element-plus";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "~icons/ri/lock-fill";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
+import PasswordFields from "./PasswordFields.vue";
 import type { RecordType } from "plus-pro-components";
 import {
   backToBasicPage,
   buildVerifyCodePayload,
-  createPasswordFormRules
+  createPasswordFormRules,
+  useAuthInfo,
+  useVerifyCodeSubmit
 } from "../useLoginFlow";
 
 const { t } = useI18n();
 const loading = ref(false);
-const configLoading = ref(false);
+const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
   repeatPassword: "",
   verify_code: "",
-  verify_token: undefined
-});
-
-const authInfo = ref({
-  access: false,
-  encrypted: false,
-  password: []
+  verify_token: undefined as string | undefined
 });
 
 const formDataRef = ref<FormInstance>();
-const verifyCodeRef = ref();
+const verifyCodeRef = ref<{
+  getRef?: () => FormInstance;
+}>();
 
 const onBack = backToBasicPage;
 
-const handleSubmit = () => {
-  verifyCodeRef.value.getRef().validate((isValid: boolean) => {
-    if (isValid) {
-      formDataRef.value?.validate(async valid => {
-        if (valid) {
-          loading.value = true;
-          const data = await buildVerifyCodePayload(
-            formData.value,
-            authInfo.value
-          );
-          handleOperation({
-            t,
-            apiReq: resetPasswordApi(data),
-            success() {
-              // 重置密码不登录：成功即返回账号密码登录页
-              onBack();
-            },
-            requestEnd() {
-              loading.value = false;
-            }
-          });
-        }
-      });
+const onSubmit = async () => {
+  loading.value = true;
+  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  handleOperation({
+    t,
+    apiReq: resetPasswordApi(data),
+    success() {
+      // 重置密码不登录：成功即返回账号密码登录页
+      onBack();
+    },
+    requestEnd() {
+      loading.value = false;
     }
   });
 };
 
+// 共享提交链（含 ref 空值保护）：验证码表单 → 本表单 → 提交
+const handleSubmit = useVerifyCodeSubmit({
+  verifyRef: verifyCodeRef,
+  formRef: formDataRef,
+  onSubmit
+});
+
 const formRules = createPasswordFormRules({
   t,
-  getPasswordRules: () => authInfo.value.password,
+  getPasswordRules: () => authInfo.value.password ?? [],
   getPassword: () => formData.value.password
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
-  authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
+  onConfig(verifyCodeConfig);
 };
 onMounted(() => (configLoading.value = true));
 </script>
@@ -92,29 +85,13 @@ onMounted(() => (configLoading.value = true));
       size="large"
     >
       <div v-if="formData.verify_token">
-        <Motion :delay="150">
-          <el-form-item prop="password">
-            <el-input
-              v-model="formData.password"
-              :placeholder="t('login.password')"
-              :prefix-icon="useRenderIcon(Lock)"
-              clearable
-              show-password
-            />
-          </el-form-item>
-        </Motion>
-
-        <Motion :delay="200">
-          <el-form-item prop="repeatPassword">
-            <el-input
-              v-model="formData.repeatPassword"
-              :placeholder="t('login.sure')"
-              :prefix-icon="useRenderIcon(Lock)"
-              clearable
-              show-password
-            />
-          </el-form-item>
-        </Motion>
+        <PasswordFields
+          v-model:password="formData.password"
+          v-model:repeat-password="formData.repeatPassword"
+          :rules="formRules"
+          :password-delay="150"
+          :repeat-delay="200"
+        />
         <Motion :delay="250">
           <el-form-item>
             <el-button

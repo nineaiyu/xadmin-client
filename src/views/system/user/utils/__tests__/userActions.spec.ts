@@ -162,6 +162,47 @@ describe("buildUserActionGroups", () => {
     expect(action?.disabled?.({ username: "me" })).toBe(false);
   });
 
+  it("非超管不得操作超管账号，超管操作超管不受限", () => {
+    const groups = buildUserActionGroups({
+      t,
+      auth: allAuth,
+      flags: allFlags,
+      currentUserIsSuperuser: false,
+      handlers
+    });
+    const byCode = (code: string) =>
+      groups.flatMap(group => group.actions).find(item => item.code === code);
+
+    for (const code of [
+      "resetPassword",
+      "resetMfa",
+      "upload",
+      "logout",
+      "empower",
+      "invite",
+      "imBinding"
+    ]) {
+      expect(
+        byCode(code)?.disabled?.({ is_superuser: true, online_count: 2 })
+      ).toBe(true);
+      expect(
+        byCode(code)?.disabled?.({ is_superuser: false, online_count: 2 })
+      ).toBe(false);
+    }
+
+    const asSuperuser = buildUserActionGroups({
+      t,
+      auth: allAuth,
+      flags: allFlags,
+      currentUserIsSuperuser: true,
+      handlers
+    });
+    const upload = asSuperuser
+      .flatMap(group => group.actions)
+      .find(item => item.code === "upload");
+    expect(upload?.disabled?.({ is_superuser: true })).toBe(false);
+  });
+
   it("高危与谨慎动作带语义色标注", () => {
     const groups = buildUserActionGroups({
       t,

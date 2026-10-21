@@ -7,26 +7,22 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { onMounted, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import Lock from "~icons/ri/lock-fill";
+import PasswordFields from "./PasswordFields.vue";
 import type { RecordType } from "plus-pro-components";
 import {
   backToBasicPage,
   buildVerifyCodePayload,
   createPasswordFormRules,
-  useLoginFlow
+  useAuthInfo,
+  useLoginFlow,
+  useVerifyCodeSubmit
 } from "../useLoginFlow";
 
 const { t } = useI18n();
 const checked = ref(false);
-const configLoading = ref(false);
 /** 隐私政策弹窗：无独立路由，注册页内以对话框展示简要条款 */
 const privacyVisible = ref(false);
-const authInfo = ref({
-  access: false,
-  encrypted: false,
-  password: []
-});
+const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
   repeatPassword: "",
@@ -35,26 +31,11 @@ const formData = ref({
   verify_token: undefined as string | undefined
 });
 const formDataRef = ref<FormInstance>();
-const verifyCodeRef = ref();
+const verifyCodeRef = ref<{
+  getRef?: () => FormInstance;
+}>();
 
 const { loading, handleLoginSuccess } = useLoginFlow();
-const handleRegister = () => {
-  verifyCodeRef.value?.getRef()?.validate((isValid: boolean) => {
-    if (isValid) {
-      formDataRef.value?.validate(valid => {
-        if (valid) {
-          if (checked.value) {
-            onRegister();
-          } else {
-            message(transformI18n($t("login.tickPrivacy")), {
-              type: "warning"
-            });
-          }
-        }
-      });
-    }
-  });
-};
 
 const onRegister = async () => {
   loading.value = true;
@@ -77,13 +58,28 @@ const onBack = backToBasicPage;
 
 const formRules = createPasswordFormRules({
   t,
-  getPasswordRules: () => authInfo.value.password,
+  getPasswordRules: () => authInfo.value.password ?? [],
   getPassword: () => formData.value.password
 });
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
-  authInfo.value = Object.assign(authInfo.value, verifyCodeConfig);
+  onConfig(verifyCodeConfig);
 };
+
+// 隐私勾选是提交前置（非表单校验）：勾选通过才提交，否则提示
+const handleRegister = useVerifyCodeSubmit({
+  verifyRef: verifyCodeRef,
+  formRef: formDataRef,
+  onSubmit: async () => {
+    if (checked.value) {
+      await onRegister();
+    } else {
+      message(transformI18n($t("login.tickPrivacy")), {
+        type: "warning"
+      });
+    }
+  }
+});
 
 onMounted(() => (configLoading.value = true));
 </script>
@@ -105,31 +101,14 @@ onMounted(() => (configLoading.value = true));
       :rules="formRules"
       size="large"
     >
-      <div v-if="formData.verify_token">
-        <Motion :delay="200">
-          <el-form-item prop="password">
-            <el-input
-              v-model="formData.password"
-              :placeholder="t('login.password')"
-              :prefix-icon="useRenderIcon(Lock)"
-              clearable
-              show-password
-            />
-          </el-form-item>
-        </Motion>
-
-        <Motion :delay="250">
-          <el-form-item prop="repeatPassword">
-            <el-input
-              v-model="formData.repeatPassword"
-              :placeholder="t('login.sure')"
-              :prefix-icon="useRenderIcon(Lock)"
-              clearable
-              show-password
-            />
-          </el-form-item>
-        </Motion>
-      </div>
+      <PasswordFields
+        v-if="formData.verify_token"
+        v-model:password="formData.password"
+        v-model:repeat-password="formData.repeatPassword"
+        :rules="formRules"
+        :password-delay="200"
+        :repeat-delay="250"
+      />
       <Motion :delay="300">
         <el-form-item>
           <el-checkbox v-model="checked">

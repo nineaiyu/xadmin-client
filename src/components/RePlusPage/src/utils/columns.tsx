@@ -20,6 +20,7 @@ import {
   detailInputType,
   resolveColumnLabel
 } from "./columnRules";
+import { detailFallbackRenderer } from "./renderers-detail";
 import { formatAddOrEditOptions } from "./renders";
 import { getApiSearchComponents } from "./apiSearch";
 
@@ -138,10 +139,9 @@ export function useBaseColumns(localeName: string) {
         addOrEditDefaultValue.value[column.key] = columnDefaultValue(column);
       }
       if (!column.write_only) {
-        getDetailRenderer(detailInputType(column))?.(
-          item,
-          buildContext(column)
-        );
+        const detailRenderer =
+          getDetailRenderer(detailInputType(column)) ?? detailFallbackRenderer;
+        detailRenderer(item, buildContext(column));
         detailColumns.value.push(cloneDeep(item));
         if (column.table_show) {
           const tableItem = cloneDeep(item);

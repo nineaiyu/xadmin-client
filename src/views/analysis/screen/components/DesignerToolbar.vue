@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import type { ScreenLayoutMode } from "@/api/dataset/analysis";
+import type {
+  ScreenChoiceValue,
+  ScreenLayoutMode
+} from "@/api/dataset/analysis";
+import type { ScreenTheme } from "../utils/screenTheme";
+import DesignerThemePicker from "./DesignerThemePicker.vue";
 
 defineOptions({ name: "ScreenDesignerToolbar" });
 
@@ -20,10 +25,13 @@ const props = defineProps<{
   canRedo: boolean;
   hasSelection: boolean;
   panesEmpty: boolean;
+  theme?: ScreenChoiceValue;
+  themeColor?: string;
 }>();
 
 const emit = defineEmits<{
   mode: [mode: ScreenLayoutMode];
+  theme: [patch: { theme?: ScreenTheme; theme_color?: string }];
   undo: [];
   redo: [];
   duplicate: [];
@@ -74,6 +82,13 @@ const locked = () => props.preview || props.readonly;
         {{ t("dataScreen.modeFree") }}
       </el-radio-button>
     </el-radio-group>
+
+    <DesignerThemePicker
+      :theme="theme"
+      :theme-color="themeColor"
+      :disabled="locked()"
+      @change="emit('theme', $event)"
+    />
 
     <div class="flex-1" />
     <el-button

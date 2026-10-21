@@ -81,6 +81,7 @@ app.component(
 
 import { getToken } from "@/utils/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
+import { applyBootTheme } from "@/utils/bootTheme";
 
 // WebSocket 重连前无感刷新 token：由入口注入刷新器（utils 层不直连 api 层）。
 // 延迟注入：WS 客户端仅在登录后建连时才需要，静态导入会把 WS 客户端与 http
@@ -125,6 +126,10 @@ getPlatformConfig(app).then(async config => {
   );
   document.documentElement.lang =
     appliedLocale === "zh" ? "zh-CN" : appliedLocale;
+  // 装配期应用主题：全屏路由（大屏投屏 / 设计器）与登录页不挂 Layout，布局内的
+  // 初始化不会执行；须在 mount 前完成（首帧即正确，无闪烁）。布局内调用保留，
+  // 站点配置异步到达后仍可重应用（两处写入同值，幂等）。
+  applyBootTheme();
   app.use(router);
   await router.isReady();
   // @pureadmin/table 不在此全局注册：唯一消费方 RePlusPage 内部按需 import

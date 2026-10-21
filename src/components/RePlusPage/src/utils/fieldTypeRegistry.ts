@@ -19,7 +19,10 @@
  */
 
 import { isNumber } from "@pureadmin/utils";
+import { isColorValue } from "@/utils/rules/color";
 import { buildEmailRule } from "@/utils/rules/email";
+import { isInternationalPhoneNumber } from "@/utils/rules/phone";
+import { isUrl } from "@/utils/rules/url";
 import { builtinDetailRenderers } from "./renderers-detail";
 import { builtinFormRenderers } from "./renderers-form";
 import { builtinSearchRenderers } from "./renderers-search";
@@ -78,6 +81,108 @@ const integerRuleFactory: FieldRuleFactory = (column, message) => [
   }
 ];
 
+/** phone 值 → 号码文本（对象形态取 `.phone`，兼容历史标量） */
+function phoneValueOf(value: unknown): string {
+  if (value && typeof value === "object") {
+    return String((value as { phone?: unknown }).phone ?? "");
+  }
+  return value === undefined || value === null ? "" : String(value);
+}
+
+/** phone 字段校验规则（对象值穿透取 `.phone` 判必填；国际宽松格式口径） */
+const phoneRuleFactory: FieldRuleFactory = (column, message) => [
+  {
+    required: column.required,
+    validator: (
+      rule: unknown,
+      value: unknown,
+      callback: (error?: Error) => void
+    ) => {
+      const phone = phoneValueOf(value);
+      if (!phone) {
+        callback(column.required ? new Error(message) : undefined);
+        return;
+      }
+      if (!isInternationalPhoneNumber(phone)) {
+        callback(new Error(message));
+        return;
+      }
+      callback();
+    },
+    trigger: "blur"
+  }
+];
+
+/** color 字段校验规则（色值正则，空值放行由 required 接管） */
+const colorRuleFactory: FieldRuleFactory = (column, message) => [
+  {
+    required: column.required,
+    validator: (
+      rule: unknown,
+      value: unknown,
+      callback: (error?: Error) => void
+    ) => {
+      if (!value) {
+        callback(column.required ? new Error(message) : undefined);
+        return;
+      }
+      if (!isColorValue(value)) {
+        callback(new Error(message));
+        return;
+      }
+      callback();
+    },
+    trigger: "blur"
+  }
+];
+
+/** DecimalField 校验规则：允许整数与小数（空值放行由 required 接管） */
+const DECIMAL_PATTERN = /^-?\d+(\.\d+)?$/;
+const decimalRuleFactory: FieldRuleFactory = (column, message) => [
+  {
+    required: column.required,
+    validator: (
+      rule: unknown,
+      value: unknown,
+      callback: (error?: Error) => void
+    ) => {
+      if (value === "" || value === null || value === undefined) {
+        callback(column.required ? new Error(message) : undefined);
+        return;
+      }
+      if (!DECIMAL_PATTERN.test(String(value))) {
+        callback(new Error(message));
+        return;
+      }
+      callback();
+    },
+    trigger: "blur"
+  }
+];
+
+/** url 字段校验规则（复用 @/utils/rules/url 的严格口径） */
+const urlRuleFactory: FieldRuleFactory = (column, message) => [
+  {
+    required: column.required,
+    validator: (
+      rule: unknown,
+      value: unknown,
+      callback: (error?: Error) => void
+    ) => {
+      if (!value) {
+        callback(column.required ? new Error(message) : undefined);
+        return;
+      }
+      if (!isUrl(String(value))) {
+        callback(new Error(message));
+        return;
+      }
+      callback();
+    },
+    trigger: "blur"
+  }
+];
+
 /**
  * 字段类型能力清单。
  *
@@ -98,6 +203,7 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
   color: {
     form: builtinFormRenderers.color,
     detail: builtinDetailRenderers.color,
+    rule: colorRuleFactory,
     filterKind: "text"
   },
   date: {
@@ -108,6 +214,11 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
     search: builtinSearchRenderers.datetime,
     form: builtinFormRenderers.datetime,
     filterKind: "datetime"
+  },
+  decimal: {
+    form: builtinFormRenderers.decimal,
+    rule: decimalRuleFactory,
+    filterKind: "number"
   },
   datetimerange: {
     search: builtinSearchRenderers.datetimerange,
@@ -170,7 +281,8 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
   },
   m2m_related_field_image: {
     form: builtinFormRenderers.m2m_related_field_image,
-    detail: builtinDetailRenderers.m2m_related_field_image
+    detail: builtinDetailRenderers.m2m_related_field_image,
+    filterKind: "choice"
   },
   "multiple choice": {
     form: builtinFormRenderers["multiple choice"],
@@ -192,11 +304,24 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
   },
   object_related_field_image: {
     form: builtinFormRenderers.object_related_field_image,
-    detail: builtinDetailRenderers.object_related_field_image
+    detail: builtinDetailRenderers.object_related_field_image,
+    filterKind: "choice"
   },
   phone: {
     form: builtinFormRenderers.phone,
+    detail: builtinDetailRenderers.phone,
+    rule: phoneRuleFactory,
     filterKind: "text"
+  },
+  password: {
+    // 密码强度策略（SECURITY_PASSWORD_*）由具体表单运行时获取，元数据层不复制策略；
+    // 此处仅提供遮蔽输入，空值/必填走通用规则，强度校验由消费方追加
+    form: builtinFormRenderers.password,
+    filterKind: "text"
+  },
+  rich_text: {
+    form: builtinFormRenderers.rich_text,
+    detail: builtinDetailRenderers.rich_text
   },
   select: {
     search: builtinSearchRenderers.select,
@@ -227,10 +352,13 @@ export const FIELD_TYPES: Record<string, FieldTypeSpec> = {
     form: builtinFormRenderers.time,
     filterKind: "time"
   },
+  url: {
+    form: builtinFormRenderers.url,
+    detail: builtinDetailRenderers.url,
+    rule: urlRuleFactory,
+    filterKind: "text"
+  },
   // —— 词表外兼容项（契约词表不含；仅高级筛选形态的历史登记，勿新增）——
-  url: { filterKind: "text" },
-  password: { filterKind: "text" },
-  decimal: { filterKind: "number" },
   switch: { filterKind: "boolean" }
 };
 

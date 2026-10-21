@@ -128,6 +128,20 @@ export async function AesEncrypted(key: string, msg: string): Promise<string> {
   return AesEncryptedLegacy(key, msg);
 }
 
+/**
+ * 登录类凭证加密的唯一入口：以一次性临时 token 为密钥加密明文凭证。
+ *
+ * 账号密码登录（user store）与验证码类登录/注册/重置（loginShared 的载荷拼装）
+ * 此前各自调用 AesEncrypted 并各自做字符串归一，「加密凭证」这件事有两个入口；
+ * 收敛于此，两侧共用（服务端按 verify_token/temp token 解密，双格式自适应）。
+ */
+export function encryptCredential(
+  token: string | undefined,
+  plaintext: string | undefined
+): Promise<string> {
+  return AesEncrypted(String(token ?? ""), String(plaintext ?? ""));
+}
+
 /** 默认解密入口：按 `v2:` 前缀双格式自适应 */
 export async function AesDecrypted(
   key: string,

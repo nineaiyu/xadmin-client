@@ -100,6 +100,9 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
     mode === "dark",
     { timeout: 15_000 }
   );
+  // 重载后动态路由仍在异步注册：等顶栏设置入口重新挂载，避免紧随其后的
+  // hash 跳转被初始化守卫吞掉（表现为 URL 已变、内容仍停在首页）
+  await page.locator(".set-icon").first().waitFor({ timeout: 15_000 });
 }
 
 /**

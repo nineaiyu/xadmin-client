@@ -8,18 +8,20 @@ import { ALIGN_TOLERANCE } from "../src/components/RePlusPage/src/utils/operatio
  * 背景：横向滚动时右侧固定列 sticky 在容器右端，覆盖区左边界若落在数据列
  * 中间，该列表头内容（列名、问号图标）会被切掉一半（"半个字"）。RePlusPage
  * 会把覆盖区左边界对齐到列边界；但对齐只对「初始滚动位置」有效（横向滚动后
- * 裁切位置必然移动），因此只保留小幅修正（加宽 ≤ ALIGN_TOLERANCE），超出时
- * 严格按页面配置宽度渲染——见 operationColumnWidth.ts 的取舍注释。
+ * 裁切位置必然移动），因此只保留小幅修正（比内容宽度多占 ≤ ALIGN_TOLERANCE），
+ * 超出时按内容宽度渲染——见 operationColumnWidth.ts 的取舍注释。
  *
  * 追加口径（按内容收敛）：操作列按钮随权限点与行数据显隐，列宽以内容实测宽度
- * 为下限收敛（例如访问日志页只有图标按钮时 140 → 90）。
+ * 收敛（例如访问日志页只有图标按钮时 140 → 90；用户/部门管理页只剩「管理」
+ * 按钮时 260 → 78）。收敛优先于对齐：对齐代价超过容差时接受初始滚动位置的
+ * 跨界列头，换取操作列不长期占着一大片空白。
  *
  * 断言口径：
  * 1. 所见即配置：操作列渲染宽度不得比页面配置宽度加宽超过容差（1px 舍入）；
  * 2. 对齐生效（确有加宽）时，初始位置不得存在跨过覆盖区左边界的列头；
  * 3. 内容不被裁切：渲染宽度不小于「内容实测宽度与配置宽度的较小者」；
- * 4. 收敛（渲染宽度小于配置宽度）时同样不得存在跨界列头；
- * 5. 内容远小于配置的页面（PAGES 的 maxWidth）确实收敛，守住实测链路的静默失效。
+ * 4. 内容远小于配置的页面（PAGES 的 maxWidth）确实收敛，守住实测链路的静默失效。
+ *    按内容收敛时允许初始位置存在跨界列头——这是「收敛优先于对齐」的既定取舍。
  */
 
 /** 页面清单：opWidth = 页面配置宽度；maxWidth = 收敛后的宽度上限（可选，见列表项注释） */
@@ -67,7 +69,8 @@ const PAGES: Array<{
     name: "role",
     dirs: ["系统管理", "权限管理"],
     path: "/system/role/index",
-    opWidth: 200
+    // 页面配置宽度见 useRoleButtons.ts（编辑/删除/预览三个按钮单行需要 260）
+    opWidth: 260
   }
 ];
 
@@ -197,14 +200,7 @@ for (const viewport of VIEWPORTS) {
           result.opWidth!,
           `操作列被收窄到内容宽度以下（内容 ${result.content} / 实际 ${result.opWidth}）`
         ).toBeGreaterThanOrEqual(Math.min(result.content, spec.opWidth) - 1);
-        // 4) 收敛（宽度小于配置）时同样不得有跨界列头
-        if (result.opWidth! < spec.opWidth - 1) {
-          expect(
-            result.crossing,
-            `收敛后存在跨过固定操作列左边界的列头: ${result.crossing.join(", ")}`
-          ).toEqual([]);
-        }
-        // 5) 内容远小于配置的页面确实发生收敛（守住实测链路的静默失效）
+        // 4) 内容远小于配置的页面确实发生收敛（守住实测链路的静默失效）
         if (spec.maxWidth) {
           expect(
             result.opWidth!,

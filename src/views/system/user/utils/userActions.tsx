@@ -87,6 +87,7 @@ export function buildUserActionGroups({
   auth,
   flags,
   currentUsername,
+  currentUserIsSuperuser,
   handlers
 }: {
   t: TFunction;
@@ -94,8 +95,12 @@ export function buildUserActionGroups({
   flags: UserActionFlags;
   /** 当前登录用户名：模拟动作对「模拟自己」禁用（后端同样拒绝，前端前置提示） */
   currentUsername?: string;
+  /** 当前登录人是否超管：非超管不得操作超管账号（后端同口径拒绝） */
+  currentUserIsSuperuser?: boolean;
   handlers: UserActionHandlers;
 }): UserActionGroup[] {
+  const superuserTargetBlocked = (row: RecordType) =>
+    Boolean(row?.is_superuser) && !currentUserIsSuperuser;
   const groups: UserActionGroup[] = [
     {
       key: "account",
@@ -106,6 +111,7 @@ export function buildUserActionGroups({
           label: t("systemUser.resetPassword"),
           description: t("systemUser.resetPasswordTip"),
           icon: Password,
+          disabled: superuserTargetBlocked,
           run: handlers.resetPassword
         },
         auth.resetMfa && {
@@ -114,6 +120,7 @@ export function buildUserActionGroups({
           description: t("systemUser.resetMfaTip"),
           icon: ShieldKeyhole,
           type: "warning",
+          disabled: superuserTargetBlocked,
           run: handlers.resetMfa
         },
         auth.upload && {
@@ -121,6 +128,7 @@ export function buildUserActionGroups({
           label: t("systemUser.editAvatar"),
           description: t("systemUser.editAvatarTip"),
           icon: Avatar,
+          disabled: superuserTargetBlocked,
           run: handlers.uploadAvatar
         },
         auth.logout && {
@@ -130,7 +138,8 @@ export function buildUserActionGroups({
           icon: Logout,
           type: "danger",
           // 无在线会话时不可用（与行内按钮同一口径）
-          disabled: (row: RecordType) => Number(row?.online_count ?? 0) === 0,
+          disabled: (row: RecordType) =>
+            superuserTargetBlocked(row) || Number(row?.online_count ?? 0) === 0,
           run: handlers.logout
         },
         auth.impersonate && {
@@ -157,6 +166,7 @@ export function buildUserActionGroups({
           label: t("systemUser.assignRoles"),
           description: t("systemUser.assignRolesTip"),
           icon: Role,
+          disabled: superuserTargetBlocked,
           run: handlers.assignRoles
         },
         auth.preview && {
@@ -178,6 +188,7 @@ export function buildUserActionGroups({
           description: t("systemUser.inviteTip"),
           icon: MailSendLine,
           type: "warning",
+          disabled: superuserTargetBlocked,
           run: handlers.invite
         }
       )
@@ -198,6 +209,7 @@ export function buildUserActionGroups({
           label: t("systemUser.imBinding"),
           description: t("systemUser.imBindingTip"),
           icon: Message,
+          disabled: superuserTargetBlocked,
           run: handlers.imBinding
         },
         flags.assignTags && {

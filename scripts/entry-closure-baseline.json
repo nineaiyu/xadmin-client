@@ -21,6 +21,7 @@
     "@/store",
     "@/store/modules/siteConfig",
     "@/utils/auth",
+    "@/utils/bootTheme",
     "@/utils/platform",
     "@/utils/preferences",
     "@/utils/responsive",

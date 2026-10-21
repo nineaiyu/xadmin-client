@@ -14,7 +14,8 @@ import {
 } from "@/api/dataset/datasets";
 import {
   CHART_ACCENT,
-  cssVarColor,
+  chartColorScheme,
+  chartLightColorScheme,
   epColor,
   withAlpha
 } from "@/utils/chartTheme";
@@ -28,11 +29,27 @@ const props = defineProps<{
   card: DashboardCard;
   /** 刷新信号：父组件自增令牌触发原位重拉（不销毁重建实例）；首拉仍走 onMounted */
   refreshToken?: number;
+  /**
+   * 强制深色图表：深色主题大屏 / 投屏用，不跟随站点主题。
+   * 站点为亮色时也按深色基线渲染，避免深色画布上出现白底黑字的图表。
+   */
+  forceDark?: boolean;
+  /**
+   * 强制浅色图表：浅色主题大屏用（站点可能为暗色，EP 变量取到的是深底浅字）。
+   * 优先级 forceDark > forceLight > 跟随站点；配色走固定浅色基线。
+   */
+  forceLight?: boolean;
 }>();
 
 const { t } = useI18n();
 const { isDark } = useDark();
-const theme = computed(() => (isDark.value ? "dark" : "light"));
+const dark = computed(
+  () => Boolean(props.forceDark) || (!props.forceLight && isDark.value)
+);
+const theme = computed(() => (dark.value ? "dark" : "light"));
+/** 取色作用域：卡片自身（大屏根节点内联覆写的主色对后代可见） */
+const rootRef = ref<HTMLElement>();
+const colorScope = computed(() => rootRef.value ?? null);
 
 const chartRef = ref();
 const { loading, runWithLoading } = usePageLoading();
@@ -49,36 +66,57 @@ const { setOptions, resize, getInstance } = useECharts(chartRef, {
 
 /** 分类色板：EP 语义色跟随主题（第 6 色为图表专用强调色，集中定义于 chartTheme）；调用时读取 */
 const palette = () => [
-  epColor("primary"),
-  epColor("success"),
-  epColor("warning"),
-  epColor("danger"),
-  epColor("info"),
+  epColor("primary", colorScope.value),
+  epColor("success", colorScope.value),
+  epColor("warning", colorScope.value),
+  epColor("danger", colorScope.value),
+  epColor("info", colorScope.value),
   CHART_ACCENT
 ];
+
+/** 配色方案：强制浅色走固定浅色基线（站点暗色时也不被污染） */
+const schemeOf = () =>
+  props.forceLight && !props.forceDark
+    ? chartLightColorScheme()
+    : chartColorScheme(dark.value, colorScope.value);
 
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
   const values = result.series.map(item => Number(item.value ?? 0));
-  // tooltip 统一样式：底色/边框/文字取主题变量，暗色卡片上不再出现白底黑字
-  const overlay = cssVarColor("--el-bg-color-overlay", "#ffffff");
+  // tooltip / 坐标轴 / 图例统一取配色方案：亮色跟随 EP 变量，暗色与恒深色大屏
+  // 用固定深色基线（站点亮色时 EP 变量仍是亮色，不能用于深色画布）
+  const scheme = schemeOf();
   const tooltipStyle = {
-    backgroundColor: overlay,
-    borderColor: cssVarColor("--el-border-color-lighter", "#ebeef5"),
-    textStyle: { color: cssVarColor("--el-text-color-primary", "#303133") }
+    backgroundColor: scheme.tooltipBg,
+    borderColor: scheme.tooltipBorder,
+    textStyle: { color: scheme.text },
+    axisPointer: { lineStyle: { color: scheme.textSecondary } }
   };
+  const axisLabelStyle = { color: scheme.textSecondary };
+  const axisLineStyle = { lineStyle: { color: scheme.axisLine } };
   if (props.card.chart_type === "pie") {
     const colors = palette();
     return {
       tooltip: { trigger: "item", ...tooltipStyle },
-      legend: { bottom: 0, icon: "circle" },
+      legend: {
+        bottom: 0,
+        icon: "circle",
+        textStyle: { color: scheme.textSecondary }
+      },
       series: [
         {
           name: props.card.title,
           type: "pie",
           radius: ["38%", "62%"],
           // 扇区间留白 + 圆角：默认相邻扇区紧贴，深底上层次感不足
-          itemStyle: { borderColor: overlay, borderWidth: 2, borderRadius: 4 },
+          itemStyle: {
+            borderColor: scheme.pieBorder,
+            borderWidth: 2,
+            borderRadius: 4
+          },
+          // 标签与引导线显式取配色方案：默认文本色在深色底上不可读
+          label: { color: scheme.textSecondary },
+          labelLine: { lineStyle: { color: scheme.axisLine } },
           data: result.series.map((item, index) => ({
             name: item.name || "-",
             value: Number(item.value ?? 0),
@@ -93,8 +131,19 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   return {
     tooltip: { trigger: "axis", ...tooltipStyle },
     grid: { top: "24px", left: "48px", right: "24px", bottom: "36px" },
-    xAxis: { type: "category", boundaryGap: !isLine, data: names },
-    yAxis: { type: "value" },
+    xAxis: {
+      type: "category",
+      boundaryGap: !isLine,
+      data: names,
+      axisLabel: axisLabelStyle,
+      axisLine: axisLineStyle,
+      axisTick: axisLineStyle
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: axisLabelStyle,
+      splitLine: { lineStyle: { color: scheme.splitLine } }
+    },
     series: [
       {
         name: props.card.title,
@@ -271,8 +320,8 @@ async function renderImage(): Promise<ExportedImage | null> {
   const { renderEchartsImage } = await import("@/utils/imageExport");
   return renderEchartsImage(getInstance() as EChartsLike | null, {
     pixelRatio: 2,
-    // 透明底在深色面板/暗色主题下不可读，取当前主题底色（EP 变量已按暗色重定义）
-    backgroundColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
+    // 透明底在深色面板/暗色主题下不可读：按当前配色方案取不透明底色
+    backgroundColor: schemeOf().exportBg
   });
 }
 
@@ -280,7 +329,15 @@ defineExpose({ loadData, applyData, renderImage });
 </script>
 
 <template>
-  <div class="relative size-full">
+  <div
+    ref="rootRef"
+    class="relative size-full"
+    :class="{
+      'chart-card--force-dark': forceDark,
+      'chart-card--force-light': forceLight && !forceDark
+    }"
+    :data-chart-theme="dark ? 'dark' : 'light'"
+  >
     <div
       v-if="errorMsg"
       class="flex-c size-full flex-col gap-2 text-center"
@@ -327,5 +384,20 @@ defineExpose({ loadData, applyData, renderImage });
 .chart-card-skeleton {
   padding: var(--space-4);
   background: var(--el-card-bg-color, var(--el-bg-color-overlay));
+}
+
+/* 恒深色大屏：骨架同步走深色，避免加载瞬间在深色卡片上闪白 */
+.chart-card--force-dark .chart-card-skeleton {
+  --el-fill-color-light: rgb(255 255 255 / 8%);
+
+  background: #0b1220;
+}
+
+/* 浅色主题大屏：站点可能是暗色，骨架不能跟着变深（浅色卡片上会闪黑块），
+   取大屏浅色档令牌（深色主题下这两支令牌本就是深色，不会误用） */
+.chart-card--force-light .chart-card-skeleton {
+  --el-fill-color-light: var(--screen-surface-strong);
+
+  background: var(--screen-canvas-top);
 }
 </style>

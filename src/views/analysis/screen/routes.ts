@@ -14,7 +14,9 @@ const screenFullscreenRoutes: Array<RouteConfigsTable> = [
     meta: {
       title: $t("menus.dataScreen"),
       showLink: false,
-      rank: 10105
+      rank: 10105,
+      // 展板态：全屏投屏不弹站点级通知/公告浮层（会直接盖住大屏内容）
+      kiosk: true
     }
   },
   {

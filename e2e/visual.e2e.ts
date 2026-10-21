@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login, openMenuPath } from "./helpers";
+import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
 
 /**
  * 视觉回归门禁：核心页基线截图比对，为视觉观感改动提供安全网。
@@ -139,3 +139,35 @@ for (const core of CORE_PAGES) {
     });
   });
 }
+
+/**
+ * 浅色主题投屏基线：示例大屏临时切 `theme=light` 截图后还原（深色档由上面的
+ * `analysis-screen` 覆盖）。手写用例而非并入 CORE_PAGES——它需要改数据再还原。
+ */
+test("视觉基线：analysis-screen-light", async ({ page }) => {
+  test.setTimeout(120_000);
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const patch = (theme: string) =>
+    page.request.patch(`${BACKEND_URL}/api/dataset/screens/${SCREEN_PK}`, {
+      headers,
+      data: { theme }
+    });
+
+  expect((await (await patch("light")).json()).code).toBe(1000);
+  try {
+    await page.goto(`/#/analysis/screen/display?pk=${SCREEN_PK}`);
+    await expect(page.locator(".screen-root")).toBeVisible({
+      timeout: 20_000
+    });
+    await stabilize(page);
+    await expect(page).toHaveScreenshot("core-analysis-screen-light.png", {
+      fullPage: true,
+      animations: "disabled",
+      maxDiffPixelRatio: 0.02
+    });
+  } finally {
+    await patch("dark");
+  }
+});

@@ -17,9 +17,10 @@ import {
  * （不含操作列自身），重算幂等、无循环。
  *
  * **按内容收敛（操作列宽而空）**：列内按钮随权限点与行数据显隐，实测内容宽度
- * （useOperationContentWidth）作为列宽下限，避免「一个按钮占一大片列宽」。
- * 收敛只在无横向滚动（无覆盖）或能落在列边界上（无跨界列）时发生，不会引入
- * 新的「半个字」。
+ * （useOperationContentWidth）作为列宽基准，避免「一个按钮占一大片列宽」。
+ * 有横向滚动时对齐只保留小幅修正（比内容宽度多占 ≤ ALIGN_TOLERANCE）：对齐
+ * 代价过大时按内容宽度渲染，允许初始滚动位置存在跨界列头（见
+ * operationColumnWidth.ts 的取舍说明）。
  *
  * **列首帧隐藏（列表页 CLS 主因）**：el-table 在列挂载后用 rAF 才计算
  * 列宽（EP `requestAnimationFrame(doLayout)`），列挂载后的第一帧仍是浏览器对未定宽列

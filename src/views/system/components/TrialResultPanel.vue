@@ -45,6 +45,18 @@ const kindTexts = computed<Record<string, string>>(() => ({
   deny: t("permissionPreview.kindDeny"),
   none: t("permissionPreview.kindNone")
 }));
+
+/** 本次试算实际使用的数据范围口径 */
+const scopeModeTexts = computed<Record<string, string>>(() => ({
+  exact: t("permissionPreview.scopeModeExact"),
+  list: t("permissionPreview.scopeModeList"),
+  generic: t("permissionPreview.scopeModeGeneric")
+}));
+
+/** 旧后端不返回 selected 时不展示“参与”列，避免误导 */
+const hasSelectionInfo = computed(() =>
+  Boolean(props.result.grants?.some(grant => grant.selected !== undefined))
+);
 </script>
 
 <template>
@@ -54,6 +66,9 @@ const kindTexts = computed<Record<string, string>>(() => ({
         t("permissionPreview.hitCount")
       }}</span>
       <span class="text-xl font-semibold">{{ props.result.count }}</span>
+      <el-tag v-if="props.result.scope_mode" size="small" type="info">
+        {{ scopeModeTexts[props.result.scope_mode] }}
+      </el-tag>
       <el-tag
         v-if="props.showDraft"
         :type="props.result.draft_applied ? 'success' : 'info'"
@@ -144,6 +159,21 @@ const kindTexts = computed<Record<string, string>>(() => ({
             <template #default="{ row }">
               <el-tag :type="kindTagType(row.kind)" size="small">
                 {{ kindTexts[row.kind] ?? row.kind }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="hasSelectionInfo"
+            :label="t('permissionPreview.diagnosisSelected')"
+            width="90"
+          >
+            <template #default="{ row }">
+              <el-tag :type="row.selected ? 'success' : 'info'" size="small">
+                {{
+                  row.selected
+                    ? t("permissionPreview.yes")
+                    : t("permissionPreview.no")
+                }}
               </el-tag>
             </template>
           </el-table-column>

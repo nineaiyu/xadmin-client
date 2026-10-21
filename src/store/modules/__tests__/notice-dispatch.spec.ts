@@ -12,6 +12,7 @@ const wsHolder = vi.hoisted(() => ({
 const mocks = vi.hoisted(() => ({
   openNoticeDetailDialog: vi.fn(),
   push: vi.fn(),
+  currentRoute: { value: { meta: {} as { kiosk?: boolean } } },
   notify: vi.fn(),
   desktopNotify: vi.fn(),
   batchRead: vi.fn(() => Promise.resolve({ code: 1000, data: null }))
@@ -43,7 +44,9 @@ vi.mock("@/utils/websocket", () => ({
   }
 }));
 
-vi.mock("@/router/router", () => ({ router: { push: mocks.push } }));
+vi.mock("@/router/router", () => ({
+  router: { push: mocks.push, currentRoute: mocks.currentRoute }
+}));
 vi.mock("element-plus/es/components/notification/index.mjs", () => ({
   ElNotification: (...args: unknown[]) => mocks.notify(...args)
 }));
@@ -201,5 +204,42 @@ describe("notice store 推送分派", () => {
     };
     expect(desktop.body).toContain("维护窗口");
     expect(desktop.body).not.toContain("**");
+  });
+
+  it("展板态（meta.kiosk）：公告/聊天推送都不弹浮层，未读计数照常累加", () => {
+    mocks.currentRoute.value = { meta: { kiosk: true } };
+    try {
+      const store = deliver(notifyMessageData());
+      expect(store.noticeCount).toBe(1);
+      expect(mocks.notify).not.toHaveBeenCalled();
+      expect(mocks.desktopNotify).not.toHaveBeenCalled();
+
+      // 聊天类推送同样静默（避免 @提醒 盖住投屏画面）
+      deliver({
+        message_type: "chat_private",
+        room_id: 5,
+        title: "私聊",
+        message: "hi",
+        notice_type: { value: 0, label: "聊天室" }
+      });
+      expect(mocks.notify).not.toHaveBeenCalled();
+      expect(mocks.desktopNotify).not.toHaveBeenCalled();
+    } finally {
+      mocks.currentRoute.value = { meta: {} };
+    }
+  });
+
+  it("展板态仍执行登出指令（只屏蔽弹窗，不放行会话指令）", () => {
+    mocks.currentRoute.value = { meta: { kiosk: true } };
+    const onLogout = vi.fn();
+    try {
+      const store = useNoticeStore();
+      store.messageHandler("xadmin", onLogout);
+      wsHolder.instance!.open();
+      wsHolder.instance!.deliver(pushFrame({ message_type: "logout" }));
+      expect(onLogout).toHaveBeenCalledTimes(1);
+    } finally {
+      mocks.currentRoute.value = { meta: {} };
+    }
   });
 });

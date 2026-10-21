@@ -9,6 +9,7 @@ import {
 import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
 import { sanitizeHtml } from "@/utils/sanitize";
+import { isKioskMeta } from "@/utils/kiosk";
 import { resolveMessageFormat } from "@/views/system/notice/utils/noticeFormat";
 import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
@@ -96,6 +97,9 @@ export const useNoticeStore = defineStore("pure-notice", {
           isOutboundMessage<PushMessagePayload>(raw, MessageAction.PUSH_MESSAGE)
         ) {
           const data = raw.data ?? {};
+          // 展板态（大屏投屏等全屏展示页）不弹浮层：公告横幅会直接盖住画面。
+          // 未读计数照常累加、登出指令照常执行（只屏蔽「弹窗」这一层）。
+          const quiet = isKioskMeta(router.currentRoute.value?.meta);
           let message: string | VNode | undefined = data?.message;
           // 推送预览只走纯文本：Markdown 先渲染再取文本（否则通知里出现 ** / #），
           // HTML 保持既有剥标签口径
@@ -111,22 +115,24 @@ export const useNoticeStore = defineStore("pure-notice", {
             data?.message_type === "chat_message" ||
             data?.message_type === "chat_private" ||
             data?.message_type === "chat_group";
-          notifyDesktop({
-            type: isChatPush ? "chat" : "push",
-            title: `${data?.notice_type?.label}-${data?.title}`,
-            body: previewText,
-            tag: data?.pk ? String(data.pk) : undefined,
-            onClick: () => {
-              if (isChatPush) {
-                router.push({
-                  name: "Chat",
-                  query: data?.room_id ? { room: String(data.room_id) } : {}
-                });
-              } else {
-                this.openNoticeDetail(data);
+          if (!quiet) {
+            notifyDesktop({
+              type: isChatPush ? "chat" : "push",
+              title: `${data?.notice_type?.label}-${data?.title}`,
+              body: previewText,
+              tag: data?.pk ? String(data.pk) : undefined,
+              onClick: () => {
+                if (isChatPush) {
+                  router.push({
+                    name: "Chat",
+                    query: data?.room_id ? { room: String(data.room_id) } : {}
+                  });
+                } else {
+                  this.openNoticeDetail(data);
+                }
               }
-            }
-          });
+            });
+          }
           switch (data?.message_type) {
             case "notify_message":
               if (isMarkdownMessage) {
@@ -159,37 +165,39 @@ export const useNoticeStore = defineStore("pure-notice", {
                 // 点击就地弹出通知详情弹窗（与顶栏铃铛一致），不再跳转「我的通知」页
                 onClick: () => this.openNoticeDetail(data)
               };
-              ElNotification(options);
+              if (!quiet) ElNotification(options);
               this.INCR_NOTICECOUNT();
               break;
             case "chat_message":
               // @提及：点击跳聊天室并定位到该会话（服务端下发 room_id）
-              ElNotification({
-                title: `${data?.notice_type?.label}-${data?.title}`,
-                message: h("i", { style: "color: teal" }, message),
-                duration: 3000,
-                onClick: () => {
-                  router.push({
-                    name: "Chat",
-                    query: data?.room_id ? { room: String(data.room_id) } : {}
-                  });
-                }
-              });
+              if (!quiet)
+                ElNotification({
+                  title: `${data?.notice_type?.label}-${data?.title}`,
+                  message: h("i", { style: "color: teal" }, message),
+                  duration: 3000,
+                  onClick: () => {
+                    router.push({
+                      name: "Chat",
+                      query: data?.room_id ? { room: String(data.room_id) } : {}
+                    });
+                  }
+                });
               break;
             case "chat_private":
             case "chat_group":
               // 私聊/群聊提醒（未开聊天室时推送）：点击直达该会话
-              ElNotification({
-                title: `${data?.notice_type?.label}-${data?.title}`,
-                message: h("i", { style: "color: teal" }, message),
-                duration: 5000,
-                onClick: () => {
-                  router.push({
-                    name: "Chat",
-                    query: data?.room_id ? { room: String(data.room_id) } : {}
-                  });
-                }
-              });
+              if (!quiet)
+                ElNotification({
+                  title: `${data?.notice_type?.label}-${data?.title}`,
+                  message: h("i", { style: "color: teal" }, message),
+                  duration: 5000,
+                  onClick: () => {
+                    router.push({
+                      name: "Chat",
+                      query: data?.room_id ? { room: String(data.room_id) } : {}
+                    });
+                  }
+                });
               break;
             case "logout":
               onLogout();

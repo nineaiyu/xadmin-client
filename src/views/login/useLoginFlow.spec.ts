@@ -8,6 +8,7 @@ const {
   setTokenMock,
   messageMock,
   aesEncryptedMock,
+  encryptCredentialMock,
   setIsRememberedMock,
   setLoginDayMock,
   routeQuery
@@ -18,6 +19,9 @@ const {
   setTokenMock: vi.fn(),
   messageMock: vi.fn(),
   aesEncryptedMock: vi.fn(),
+  // 凭证加密入口（与账密登录同源的 encryptCredential）；此处 mock 掉底层
+  // AesEncrypted 的返回值以断言「以 verify_token 为密钥」
+  encryptCredentialMock: vi.fn(),
   setIsRememberedMock: vi.fn(),
   setLoginDayMock: vi.fn(),
   routeQuery: { redirect: undefined as string | undefined }
@@ -54,7 +58,9 @@ vi.mock("@/store/modules/loginPage", () => ({
 }));
 
 vi.mock("@/utils/aes", () => ({
-  AesEncrypted: aesEncryptedMock
+  AesEncrypted: aesEncryptedMock,
+  // 凭证加密统一入口（loginShared 的载荷拼装经此调用）
+  encryptCredential: encryptCredentialMock
 }));
 
 vi.mock("@/utils", () => ({
@@ -226,18 +232,19 @@ describe("useLoginFlow 登录流收敛", () => {
       verify_code: "123456"
     });
     expect("target" in data).toBe(false);
-    expect(aesEncryptedMock).not.toHaveBeenCalled();
+    expect(encryptCredentialMock).not.toHaveBeenCalled();
   });
 
   it("buildVerifyCodePayload 加密时 password 以 verify_token 为密钥，不再携带 target", async () => {
+    encryptCredentialMock.mockResolvedValue("enc(tok:p@ss)");
     const data = await buildVerifyCodePayload(
       { verify_token: "tok", password: "p@ss", verify_code: "123456" },
       { encrypted: true }
     );
 
     expect(data["password"]).toBe("enc(tok:p@ss)");
-    expect(aesEncryptedMock).toHaveBeenCalledTimes(1);
-    expect(aesEncryptedMock).toHaveBeenCalledWith("tok", "p@ss");
+    expect(encryptCredentialMock).toHaveBeenCalledTimes(1);
+    expect(encryptCredentialMock).toHaveBeenCalledWith("tok", "p@ss");
     expect("target" in data).toBe(false);
   });
 });

@@ -47,8 +47,10 @@ const scrollbarRef = ref();
 const activePath = ref("");
 const historyPath = ref("");
 // 全局搜索权限点：无权限时不触发跨实体检索请求（否则用户输入即 403），
-// 菜单检索与命令面板不依赖该权限，不受影响
-const globalSearchAuth = hasAuth("retrieve:SystemGlobalSearch");
+// 菜单检索与命令面板不依赖该权限，不受影响。
+// 必须用 computed：路由/授权异步注册完成前组件可能已挂载，一次性求值会把
+// 「暂时没权限」固化为永久关闭（全局搜索静默失效）。
+const globalSearchAuth = computed(() => hasAuth("retrieve:SystemGlobalSearch"));
 const resultOptions = shallowRef<optionsItem[]>([]);
 const historyOptions = shallowRef<optionsItem[]>([]);
 // 全局搜索：菜单结果之外跨实体检索的分组结果
@@ -175,7 +177,7 @@ async function search() {
 
 /** 全局搜索：跨实体检索，失败静默降级为仅菜单结果 */
 async function fetchGlobalResults() {
-  if (!globalSearchAuth) return;
+  if (!globalSearchAuth.value) return;
   const kw = keyword.value.trim();
   if (!kw) {
     globalGroups.value = [];

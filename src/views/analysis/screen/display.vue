@@ -7,6 +7,7 @@ import type {
   DatasetItem
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import type { ScreenDataPayload } from "@/utils/websocket/protocol";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { ExportedImage } from "@/utils/imageExport";
@@ -14,17 +15,20 @@ import { useScreenDisplay } from "./utils/useScreenDisplay";
 import { useScreenExport } from "./utils/useScreenExport";
 import { useScreenLoader } from "./utils/useScreenLoader";
 import { useFreeStage } from "./utils/useFreeStage";
+import { useDisplayTheme } from "./utils/useDisplayTheme";
 import { visiblePanes } from "./utils/paneVisibility";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { canvasGridVars } from "./utils/layout";
 import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import ScreenPane from "./components/ScreenPane.vue";
+import DisplayThemePanel from "./components/DisplayThemePanel.vue";
 import ScreenFreeStage from "./components/ScreenFreeStage.vue";
 import ReEmpty from "@/components/ReEmpty";
 import PauseIcon from "~icons/ep/video-pause";
 import PlayIcon from "~icons/ep/video-play";
 import FullscreenIcon from "~icons/ep/full-screen";
 import DownloadIcon from "~icons/ep/download";
+import BackIcon from "~icons/ep/back";
 
 defineOptions({
   name: "DataScreenDisplay"
@@ -175,6 +179,30 @@ const toggleFullscreen = () => {
   }
 };
 
+/**
+ * 大屏主题（深色缺省 / 浅色 / 跟随站点）：根节点令牌与图表配色统一由此驱动。
+ * 投屏端允许本机临时切换（不落库），创建者可在面板里「保存为默认」。
+ */
+const themeRoot = ref<HTMLElement>();
+const router = useRouter();
+const {
+  screenDark,
+  theme: displayTheme,
+  themeColor: displayThemeColor,
+  overridden: themeOverridden,
+  saving: themeSaving,
+  canSave: canSaveTheme,
+  onChange: onThemeChange,
+  reset: resetTheme,
+  save: saveThemeAsDefault
+} = useDisplayTheme({ t, screen, root: themeRoot });
+
+/** 返回大屏列表：直达打开（无站内历史）时兜底到列表页 */
+const goBack = () => {
+  if (window.history.state?.back) router.back();
+  else router.push("/analysis/screen/index");
+};
+
 /** 详情装载（失败标记 + 重试入口，实现见 utils/useScreenLoader.ts，行数门禁抽出） */
 const { loadFailed, loadScreen } = useScreenLoader({
   screen,
@@ -191,13 +219,28 @@ onMounted(loadScreen);
 
 <template>
   <div
-    class="screen-root fixed inset-0 overflow-auto text-white"
-    :class="{ 'is-free': isFree }"
+    ref="themeRoot"
+    class="screen-root fixed inset-0 overflow-auto"
+    :class="{
+      'is-free': isFree,
+      'screen-root--light': !screenDark,
+      'text-white': screenDark,
+      'text-(--screen-fg)': !screenDark
+    }"
+    :data-screen-theme="screenDark ? 'dark' : 'light'"
   >
-    <!-- 氛围底：径向光晕 + 纵向渐变（恒深色投屏，不随站点主题） -->
+    <!-- 氛围底：径向光晕 + 纵向渐变（明暗由大屏主题决定，不随站点主题） -->
     <div class="screen-ambient" aria-hidden="true" />
 
     <header class="screen-header">
+      <el-button
+        size="small"
+        :icon="BackIcon"
+        :aria-label="t('dataScreen.backToList')"
+        :title="t('dataScreen.backToList')"
+        data-testid="screen-back"
+        @click="goBack"
+      />
       <div class="flex items-baseline gap-3">
         <!-- 标题内外层保留「大屏名 · 看板名」连读文本（用例按该文本定位），
              视觉层次由内层 span 的字号/透明度表达 -->
@@ -223,6 +266,16 @@ onMounted(loadScreen);
       </el-tag>
       <div class="flex-1" />
       <span class="screen-clock">{{ clock }}</span>
+      <DisplayThemePanel
+        :theme="displayTheme"
+        :theme-color="displayThemeColor"
+        :overridden="themeOverridden"
+        :can-save="canSaveTheme"
+        :saving="themeSaving"
+        @change="onThemeChange"
+        @reset="resetTheme"
+        @save="saveThemeAsDefault"
+      />
       <el-button
         size="small"
         :icon="DownloadIcon"
@@ -325,6 +378,8 @@ onMounted(loadScreen);
             :key="`${currentDashboard?.pk}-${card.id}`"
             :ref="setCardRef(card.id)"
             :card="card"
+            :force-dark="screenDark"
+            :force-light="!screenDark"
           />
         </div>
       </section>
@@ -333,7 +388,9 @@ onMounted(loadScreen);
 </template>
 
 <style lang="scss" scoped>
-/* 恒深色投屏页（刻意不随站点主题）：色值按深色设计基线写定 */
+@use "@/style/screen-carousel";
+
+/* 大屏投屏页：明暗由大屏主题决定（深色缺省 / 浅色成对覆写），色值一律走 --screen-* 令牌 */
 .screen-root {
   background: var(--screen-canvas);
 }
@@ -408,74 +465,7 @@ onMounted(loadScreen);
   color: var(--screen-fg);
 }
 
-.screen-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--space-4);
-  padding: var(--space-1) var(--space-6) var(--space-6);
-}
-
-/* 画布模式栅格：度量走 layout.ts 常量派生的 CSS 变量（与设计器同一份来源），
-   行列步长（行高 + 行距）不一致就会所见非所得 */
-.screen-canvas {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--screen-grid-cols), minmax(0, 1fr));
-  grid-auto-rows: var(--screen-row-height);
-
-  /* 行距/列距是 layout.ts 里两个独立常量，刻意分写不用 gap 合并 */
-  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
-  row-gap: var(--screen-gap-y);
-  column-gap: var(--screen-gap-x);
-  align-content: start;
-  padding: var(--screen-canvas-padding);
-}
-
-.screen-card {
-  position: relative;
-  padding: 12px 14px 14px;
-  background: var(--screen-surface-raised);
-  border: 1px solid var(--screen-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--screen-shadow);
-  backdrop-filter: blur(6px);
-}
-
-.screen-card__title {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  margin-bottom: var(--space-2);
-  font-size: var(--el-font-size-small);
-  color: var(--screen-fg-strong);
-
-  &::before {
-    width: 3px;
-    height: 12px;
-    content: "";
-    background: var(--el-color-primary);
-    border-radius: 2px;
-  }
-}
-
-/* 图表内层用站点主题底色：图表按主题渲染，在深色卡片里保持清晰（画框式层次）；
-   文字取主题文本色，避免浅底上出现白字 */
-.screen-card__body {
-  overflow: hidden;
-  color: var(--el-text-color-primary);
-  background: var(--el-bg-color-overlay);
-  border-radius: var(--radius-lg);
-
-  /* 指标卡（大数字）：不做画框内层，数字直接浮在深色卡上（白色醒目） */
-  &--plain {
-    color: inherit;
-    background: transparent;
-    border-radius: 0;
-  }
-}
-
-/* 恒深色页的空态：插画与图标改取大屏前景色（不随站点主题的深浅） */
+/* 空态：插画与图标改取大屏前景色（不随站点主题的深浅） */
 .screen-root :deep(.el-empty__description p) {
   color: var(--screen-fg-subtle);
 }

@@ -106,28 +106,118 @@ function resolveColorLiteral(raw: string): string | null {
 }
 
 /** 读取当前主题下的任意 CSS 变量色值（图表只接受字面量，不能消费 `var()`）。 */
-export function cssVarColor(name: string, fallback: string): string {
+export function cssVarColor(
+  name: string,
+  fallback: string,
+  scope?: Element | null
+): string {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return fallback;
   }
-  const value = getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
+  // scope 取「消费元素的最近祖先」：大屏根节点内联覆写的主色对后代可见，
+  // 而 documentElement 上的取值不会感知这些局部覆写
+  const target = scope ?? document.documentElement;
+  const value = getComputedStyle(target).getPropertyValue(name).trim();
   if (!value) return fallback;
   return resolveColorLiteral(value) ?? fallback;
 }
 
 /** 读取当前主题下的 EP 语义色（跟随自定义主色/暗色主题）。 */
-export function epColor(name: EpColorName): string {
-  return cssVarColor(`--el-color-${name}`, EP_COLOR_FALLBACK[name]);
+export function epColor(name: EpColorName, scope?: Element | null): string {
+  return cssVarColor(`--el-color-${name}`, EP_COLOR_FALLBACK[name], scope);
 }
 
 /**
  * 读取 EP 语义色的浅色档（tint 底色，图表背景/图标底托用）。
  * 暗色主题下 EP 会把 `-light-N` 重定义为深色适配值，故两者都跟随主题。
  */
-export function epColorLight(name: EpColorName): string {
-  return cssVarColor(`--el-color-${name}-light-9`, EP_LIGHT_FALLBACK[name]);
+export function epColorLight(
+  name: EpColorName,
+  scope?: Element | null
+): string {
+  return cssVarColor(
+    `--el-color-${name}-light-9`,
+    EP_LIGHT_FALLBACK[name],
+    scope
+  );
+}
+
+/** 图表配色方案（坐标轴 / 图例 / tooltip / 导出底色） */
+export interface ChartColorScheme {
+  /** 主要文字：tooltip 正文 */
+  text: string;
+  /** 次要文字：坐标轴标签、图例 */
+  textSecondary: string;
+  /** 坐标轴线与刻度 */
+  axisLine: string;
+  /** 网格分隔线 */
+  splitLine: string;
+  /** tooltip 底色 */
+  tooltipBg: string;
+  /** tooltip 描边 */
+  tooltipBorder: string;
+  /** 饼图扇区描边：亮色用图表底色形成留白，暗色透明露出卡片底色 */
+  pieBorder: string;
+  /** 图片导出底色（透明底在深色面板上不可读） */
+  exportBg: string;
+}
+
+/**
+ * 图表配色方案。
+ *
+ * `dark=true` 用于站点暗色主题与**深色大屏/投屏**（`ChartCard` 的 `forceDark`）。
+ * 后者站点可能仍是亮色，EP 变量取到的是亮色值；若继续走 `cssVarColor`，图表会
+ * 被画成白底黑字，与深色画布割裂。因此暗色分支使用固定深色基线（与 EP 暗色
+ * 主题同值），不读站点变量。
+ *
+ * `scope` 为取色作用域（图表挂载点）：大屏根节点会内联覆写主色，按作用域取色
+ * 才能让图表系列色随大屏主题色；缺省读 `:root`（站点维度），行为与既有相同。
+ */
+export function chartColorScheme(
+  dark: boolean,
+  scope?: Element | null
+): ChartColorScheme {
+  if (dark) {
+    return {
+      text: "#e5eaf3",
+      textSecondary: "#cfd3dc",
+      axisLine: "#4c4d4f",
+      splitLine: "rgba(255, 255, 255, 0.12)",
+      tooltipBg: "#1d1e1f",
+      tooltipBorder: "#4c4d4f",
+      pieBorder: "transparent",
+      exportBg: "#1d1e1f"
+    };
+  }
+  const overlay = cssVarColor("--el-bg-color-overlay", "#ffffff", scope);
+  return {
+    text: cssVarColor("--el-text-color-primary", "#303133", scope),
+    textSecondary: cssVarColor("--el-text-color-regular", "#606266", scope),
+    axisLine: cssVarColor("--el-border-color", "#dcdfe6", scope),
+    splitLine: cssVarColor("--el-border-color-lighter", "#ebeef5", scope),
+    tooltipBg: overlay,
+    tooltipBorder: cssVarColor("--el-border-color-lighter", "#ebeef5", scope),
+    pieBorder: overlay,
+    exportBg: overlay
+  };
+}
+
+/**
+ * 固定浅色基线（大屏浅色主题用）：与暗色基线同思路——站点可能是暗色，
+ * EP 变量取到的是深底浅字，浅色画布上不可读；故不读站点变量。
+ * 取值与 EP 浅色缺省一致，`exportBg` / `pieBorder` 用白（浅色卡片表面）。
+ */
+export function chartLightColorScheme(): ChartColorScheme {
+  return {
+    text: "#303133",
+    textSecondary: "#606266",
+    axisLine: "#dcdfe6",
+    splitLine: "#ebeef5",
+    tooltipBg: "#ffffff",
+    tooltipBorder: "#ebeef5",
+    pieBorder: "#ffffff",
+    exportBg: "#ffffff"
+  };
 }
 
 /**
