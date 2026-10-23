@@ -278,6 +278,12 @@ const getLabel = computed(
     font-size: var(--font-size-lg);
   }
 
+  /* 未读徽标：EP 默认 danger 底 + 白字对比度不足（axe serious），压暗到 dark-3 */
+  :deep(.el-badge__content) {
+    background-color: var(--el-color-danger-dark-3);
+    border-color: var(--el-color-danger-dark-3);
+  }
+
   &:hover {
     .header-notice-icon svg {
       animation: pure-bell-ring 1s both;
