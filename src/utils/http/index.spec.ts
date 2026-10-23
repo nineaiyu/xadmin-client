@@ -59,10 +59,6 @@ vi.mock("@/utils/auth", () => ({
   setToken: vi.fn()
 }));
 
-vi.mock("@/store/modules/user", () => ({
-  useUserStoreHook: vi.fn(() => ({ handRefreshToken: vi.fn() }))
-}));
-
 // 提示统一走项目 message 包装（pure-message 视觉）：断言按包装签名 (text, params)
 vi.mock("@/utils/message", () => ({
   message: elMessageMock

@@ -18,10 +18,9 @@ import {
   getRefreshToken,
   getToken,
   removeToken,
-  setApiLanguage,
-  setToken
+  setApiLanguage
 } from "@/utils/auth";
-import { useUserStoreHook } from "@/store/modules/user";
+import { refreshAccessToken } from "./refreshToken";
 import { message } from "@/utils/message";
 import { announce } from "@/utils/announcer";
 import { downloadByData } from "@pureadmin/utils";
@@ -354,31 +353,26 @@ class PureHttp {
                 if (refresh_token) {
                   if (!PureHttp.isRefreshing) {
                     PureHttp.isRefreshing = true;
-                    // token过期刷新
-                    useUserStoreHook()
-                      .handRefreshToken({ refresh: refresh_token })
-                      .then(res => {
-                        if (isSuccess(res)) {
-                          const token = res.data.access;
-                          setToken(res.data);
+                    // 与 WebSocket 重连共享同一单飞刷新（见 ./refreshToken）
+                    refreshAccessToken()
+                      .then(outcome => {
+                        if (outcome.ok) {
+                          const token = outcome.data.access;
                           config.headers!["Authorization"] = formatToken(token);
                           PureHttp.flushPendingRequests(token);
                         } else {
-                          // 刷新被拒（refresh_token 失效等）：提示一次并让排队请求以失败收尾
-                          message(res.detail, { type: "warning" });
+                          // 刷新被拒 / 网络异常：提示一次并让排队请求以失败收尾
+                          const error = outcome.error;
+                          const detail =
+                            outcome.detail ||
+                            (error instanceof Error
+                              ? error.message
+                              : String(error ?? ""));
+                          if (detail) message(detail, { type: "warning" });
                           PureHttp.flushPendingRequests(null);
                           removeToken();
                           redirectToLogin();
                         }
-                      })
-                      .catch(err => {
-                        // 刷新请求本身异常（网络/超时）：同上，保证队列不悬挂
-                        message(err?.message ?? String(err), {
-                          type: "warning"
-                        });
-                        PureHttp.flushPendingRequests(null);
-                        removeToken();
-                        redirectToLogin();
                       })
                       .finally(() => {
                         PureHttp.isRefreshing = false;
