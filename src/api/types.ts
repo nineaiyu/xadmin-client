@@ -117,8 +117,12 @@ export type ListResult<T = RecordType> = Omit<Envelope, "data"> & {
   data: {
     /** 列表数据 */
     results: Array<T>;
-    /** 总条目数 */
+    /** 总条目数（cursor 模式下可能缺省，由客户端沿用上一页总数） */
     total?: number;
+    /** cursor 深分页：下一页游标（page 模式也会返回，便于顺序翻页切 keyset） */
+    next_cursor?: string | null;
+    /** cursor 深分页：是否还有下一页 */
+    has_more?: boolean;
     /** `?with_meta=1` 时内联的展示字段元数据（同 search-columns 载荷） */
     search_columns?: SearchColumnsResult["data"];
     /** `?with_meta=1` 时内联的查询字段元数据（同 search-fields 载荷） */

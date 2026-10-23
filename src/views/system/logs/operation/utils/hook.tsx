@@ -1,6 +1,7 @@
 import { onMounted, ref, shallowRef } from "vue";
 import { operationLogApi } from "@/api/audit/logs/operation";
 import { defineListPage, type OperationProps } from "@/components/RePlusPage";
+import { withCursorPagination } from "@/utils/cursorPagination";
 import { useOperationLogColumns } from "./operationLogColumns";
 import { fetchOperationLogDetail } from "./operationLogDetail";
 
@@ -9,8 +10,10 @@ import { fetchOperationLogDetail } from "./operationLogDetail";
  * 详情全量兜底见 operationLogDetail.ts。
  */
 export function useOperationLog() {
+  // 审计表百万行级：顺序翻页走 keyset（cursor），跳页/改排序自动回退 page 模式
+  const cursorApi = withCursorPagination(operationLogApi);
   const page = defineListPage({
-    api: operationLogApi,
+    api: cursorApi,
     localeName: "logsOperation",
     buttons: ({ auth }) => ({
       operationButtonsProps: shallowRef<OperationProps>({

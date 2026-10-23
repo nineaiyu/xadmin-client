@@ -38,6 +38,43 @@ test("审计日志：DELETE 操作入日志且可按方法检索", async ({ page
   expect(dictDelete, "DELETE 日志应已落库").toBeTruthy();
 });
 
+test("审计日志：cursor 顺序翻页无重复", async ({ page }) => {
+  await login(page);
+  // 造 3 条可预期的日志（创建 + 删除字典），保证至少两页
+  for (let index = 0; index < 3; index += 1) {
+    const code = `e2e_cursor_${Date.now()}_${index}`;
+    const create = await page.request.post(`${FRONT_URL}/api/system/dict`, {
+      data: { code, label: "cursor 分页用字典" }
+    });
+    const payload = await create.json();
+    expect(payload.code, JSON.stringify(payload)).toBe(1000);
+    await page.request.delete(
+      `${FRONT_URL}/api/system/dict/${payload.data.pk}`
+    );
+  }
+
+  const first = await page.request.get(
+    `${FRONT_URL}/api/audit/logs/operation?size=2`
+  );
+  const firstBody = await first.json();
+  expect(firstBody.code).toBe(1000);
+  expect(firstBody.data.next_cursor).toBeTruthy();
+
+  const second = await page.request.get(
+    `${FRONT_URL}/api/audit/logs/operation?size=2&cursor=${encodeURIComponent(
+      firstBody.data.next_cursor
+    )}`
+  );
+  const secondBody = await second.json();
+  expect(secondBody.code).toBe(1000);
+  expect(secondBody.data.total).toBeUndefined();
+
+  const pks = [...firstBody.data.results, ...secondBody.data.results].map(
+    (row: { pk?: number | string; id?: number | string }) => row.pk ?? row.id
+  );
+  expect(new Set(pks).size).toBe(pks.length);
+});
+
 test("操作日志页面渲染", async ({ page }) => {
   await login(page);
   // 访问日志挂在「系统管理 → 日志管理」目录下
