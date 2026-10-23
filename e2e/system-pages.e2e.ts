@@ -198,6 +198,25 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   ).toHaveCount(0, { timeout: 15_000 });
 });
 
+test("用户管理：部门树选中整行高亮", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  const panel = page.locator(".user-tree-panel");
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  const node = panel.locator(".el-tree-node__content").first();
+  await expect(node).toBeVisible({ timeout: 15_000 });
+  await node.click();
+
+  const current = panel
+    .locator(".el-tree-node.is-current > .el-tree-node__content")
+    .first();
+  await expect(current).toBeVisible({ timeout: 10_000 });
+  const background = await current.evaluate(
+    element => getComputedStyle(element).backgroundColor
+  );
+  expect(background, "选中行应有可见背景").not.toBe("rgba(0, 0, 0, 0)");
+});
+
 test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async ({ page }) => {
   const postName = `E2E岗位${Date.now()}`;
   await login(page);

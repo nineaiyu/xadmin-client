@@ -4,7 +4,7 @@ import ExpandIcon from "../svg/expand.svg?component";
 import UnExpandIcon from "../svg/unexpand.svg?component";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import MoreIcon from "~icons/ep/more-filled?width=18&height=18";
-import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
+import { computed, getCurrentInstance, ref, watch } from "vue";
 import type { TreeInstance, TreeNodeData } from "element-plus";
 import {
   COMPACT_SCROLL_HEIGHT,
@@ -16,7 +16,6 @@ interface Tree {
   id: number;
   pk?: number;
   name?: string;
-  highlight?: boolean;
   children?: Tree[];
 }
 
@@ -39,10 +38,8 @@ const emit = defineEmits(["tree-select"]);
 const treeRef = ref();
 const isExpand = ref(true);
 const searchValue = ref("");
-/** 节点高亮状态（pk → 高亮标记；模板按 pk 读取） */
-const highlightMap = ref<
-  Record<string | number, { id?: number | string; highlight?: boolean }>
->({});
+/** 当前选中的部门 pk；选中态交给 el-tree 的 highlight-current 整行渲染 */
+const selectedPk = ref<string | number | null>(null);
 // 组件 setup 内调用，实例必然存在；proxy 供 $refs 取 el-tree 实例
 const proxy = getCurrentInstance()?.proxy;
 /** el-tree 数据（props 为宽 Array 声明，此处收窄为部门节点树） */
@@ -69,24 +66,10 @@ const filterNode = (value: string, data: TreeNodeData) => {
 
 function nodeClick(value: TreeNodeData) {
   const nodeId = value.pk ?? value.id;
-  highlightMap.value[nodeId] = highlightMap.value[nodeId]?.highlight
-    ? Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
-        highlight: false
-      })
-    : Object.assign({ id: nodeId }, highlightMap.value[nodeId], {
-        highlight: true
-      });
-  Object.values(highlightMap.value).forEach(v => {
-    if (v.id !== nodeId) {
-      v.highlight = false;
-    }
-  });
-  emit(
-    "tree-select",
-    highlightMap.value[nodeId]?.highlight
-      ? Object.assign({ ...value, selected: true })
-      : Object.assign({ ...value, selected: false })
-  );
+  // 再次点击已选部门取消选择（与通讯录的「再点取消」口径一致）
+  const selected = selectedPk.value !== nodeId;
+  selectedPk.value = selected ? nodeId : null;
+  emit("tree-select", { ...value, selected });
 }
 
 /** 递归收集树节点 pk（替代 el-tree 私有 store._getAllNodes） */
@@ -115,7 +98,7 @@ function toggleRowExpansionAll(status: boolean) {
 
 /** 重置部门树状态（选中状态、搜索框值、树初始化） */
 function onTreeReset() {
-  highlightMap.value = {};
+  selectedPk.value = null;
   searchValue.value = "";
   toggleRowExpansionAll(true);
 }
@@ -127,14 +110,16 @@ watch(searchValue, val => {
 });
 watch(
   () => props.pk,
-  () => {
-    nextTick(() => {
-      const pk = props.pk;
-      if (pk) {
-        highlightMap.value[pk] = { highlight: true };
-      }
-    });
-  }
+  pk => {
+    if (!pk) {
+      selectedPk.value = null;
+      return;
+    }
+    // node-key 为数字 pk：URL/父组件传入的字符串需要归一，否则 current-node-key 不命中
+    const numeric = Number(pk);
+    selectedPk.value = Number.isNaN(numeric) ? pk : numeric;
+  },
+  { immediate: true }
 );
 
 defineExpose({ onTreeReset });
@@ -202,39 +187,28 @@ defineExpose({ onTreeReset });
         :props="defaultProps"
         default-expand-all
         node-key="pk"
+        :highlight-current="true"
+        :current-node-key="selectedPk ?? undefined"
         @node-click="nodeClick"
       >
         <template #default="{ node, data }">
-          <span
-            :class="[
-              'rounded-sm',
-              'w-42.5!',
-              'truncate!',
-              'flex',
-              'items-center',
-              'select-none',
-              'hover:text-primary',
-              searchValue.trim().length > 0 &&
-                node.label.includes(searchValue) &&
-                'text-red-500',
-              highlightMap[data.pk]?.highlight ? 'dark:text-primary' : ''
-            ]"
-            :style="{
-              color: highlightMap[data.pk]?.highlight
-                ? 'var(--el-color-primary)'
-                : '',
-              background: highlightMap[data.pk]?.highlight
-                ? 'var(--el-color-primary-light-7)'
-                : 'transparent'
-            }"
-          >
-            {{ node.label }}
+          <span class="user-tree-label">
+            <span
+              :class="[
+                'truncate',
+                searchValue.trim().length > 0 &&
+                  node.label.includes(searchValue) &&
+                  'text-red-500'
+              ]"
+            >
+              {{ node.label }}
+            </span>
             <el-tooltip
               v-if="data.user_count"
               :content="t('systemUser.deptUserCountHint')"
               placement="right"
             >
-              <span class="ml-1">{{ data.user_count }}</span>
+              <span class="user-tree-count">{{ data.user_count }}</span>
             </el-tooltip>
           </span>
         </template>
@@ -257,6 +231,42 @@ defineExpose({ onTreeReset });
 }
 
 :deep(.el-tree) {
-  --el-tree-node-hover-bg-color: transparent;
+  --el-tree-node-hover-bg-color: var(--el-fill-color-light);
+}
+
+/* 选中态与通讯录一致：整行 primary-light-9 底 + 主色文字（不再只染 170px 的标签块） */
+:deep(.el-tree-node__content) {
+  height: 30px;
+  border-radius: var(--radius-sm);
+}
+
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.user-tree-label {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.user-tree-count {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  font-size: var(--font-size-2xs);
+  line-height: 16px;
+  color: var(--el-text-color-secondary);
+  text-align: center;
+  background: var(--el-fill-color-light);
+  border-radius: var(--radius-lg);
 }
 </style>

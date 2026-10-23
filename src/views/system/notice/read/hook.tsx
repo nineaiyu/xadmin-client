@@ -16,14 +16,18 @@ export function useNoticeRead() {
     api: noticeReadApi,
     localeName: "noticeRead",
     extraAuth: ["state", "allRead"],
-    buttons: ({ t, api, auth, tableRef }) => {
+    // 列格式化必须走工厂的 columns 选项：buttons 回调只透传按钮属性，
+    // 在其中返回 listColumnsFormat 会被丢弃，导致 notice_info 退回 JSON 渲染。
+    columns: ({ t, api, auth, tableRef, columns }) => {
       const { listColumnsFormat } = useNoticeReadColumns({
         t,
         api,
         auth,
         tableRef
       });
-
+      return listColumnsFormat(columns);
+    },
+    buttons: ({ t, api, auth, tableRef }) => {
       const removeNoticeRead = createNoticeReadRemove({ t, api, tableRef });
 
       const operationButtonsProps = shallowRef<OperationProps>({
@@ -79,8 +83,7 @@ export function useNoticeRead() {
 
       return {
         tableBarButtonsProps,
-        operationButtonsProps,
-        listColumnsFormat
+        operationButtonsProps
       };
     }
   });
