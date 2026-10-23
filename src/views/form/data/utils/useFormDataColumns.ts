@@ -70,21 +70,26 @@ export function useFormDataColumns({
 
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     const formatted: PageTableColumn[] = [];
+    // 动态列先构建：注入点不依赖 form_name 列是否存在（列设置/字段权限可能移除它）
+    const dynamicColumns = schemaFields.value.map(
+      field =>
+        ({
+          _column: { key: `data.${field.key}` },
+          label: field.label || field.key,
+          minWidth: 140,
+          cellRenderer: ({ row }: { row: RecordType }) =>
+            renderFieldCell(field, asRow(row).data?.[field.key])
+        }) as PageTableColumn
+    );
+    let dynamicInjected = false;
     columns.forEach(column => {
       const key = column._column?.key as string;
       if (key === "form_name") {
         column["minWidth"] = 160;
         formatted.push(column);
-        // 动态列：按所选表单 schema 展开（未选择表单时不生成）
-        schemaFields.value.forEach(field => {
-          formatted.push({
-            _column: { key: `data.${field.key}` },
-            label: field.label || field.key,
-            minWidth: 140,
-            cellRenderer: ({ row }: { row: RecordType }) =>
-              renderFieldCell(field, asRow(row).data?.[field.key])
-          } as PageTableColumn);
-        });
+        // 动态列紧随表单名列；未选择表单时 schemaFields 为空
+        formatted.push(...dynamicColumns);
+        dynamicInjected = true;
         return;
       }
       if (key === "status") {
@@ -96,6 +101,8 @@ export function useFormDataColumns({
         column["width"] = 170;
       formatted.push(column);
     });
+    // form_name 列被移除时，动态列仍追加到末尾
+    if (!dynamicInjected) formatted.push(...dynamicColumns);
     return formatted;
   };
 

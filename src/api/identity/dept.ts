@@ -39,6 +39,8 @@ export interface ManagedDeptItem {
 export interface ManagedScopeResult {
   depts: ManagedDeptItem[];
   dept_count: number;
+  direct_count: number;
+  sub_count: number;
   user_count: number;
 }
 

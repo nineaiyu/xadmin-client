@@ -45,7 +45,15 @@ export function useKnowledgeDialogs({
     // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
     const { beforeSure } = useDialogForm<UploadPayload>({
       formRef: uploadFormRef,
-      submit: payload => knowledgeApi.upload(payload.name, payload),
+      submit: async payload => {
+        // 二进制解析在服务端进行：提交期间显示「解析中」而不只转按钮
+        uploadFormRef.value?.setSubmitting?.(true);
+        try {
+          return await knowledgeApi.upload(payload.name, payload);
+        } finally {
+          uploadFormRef.value?.setSubmitting?.(false);
+        }
+      },
       // 成功文案优先用服务端 detail（上传完成提示含文档信息）
       onSuccess: res => {
         message(String(res.detail ?? t("aiKnowledge.uploadDone")), {

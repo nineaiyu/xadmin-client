@@ -10,6 +10,7 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import { hasAuth } from "@/router/utils";
 import { RANGE_LABEL_KEYS } from "../utils/format";
 
 defineOptions({ name: "MonitorEventPanel" });
@@ -25,9 +26,16 @@ const range = ref("24h");
 const loading = ref(false);
 const errorRows = ref<MonitorErrorEvent[]>([]);
 const taskRows = ref<MonitorTaskEvent[]>([]);
+/** 事件面板独立权限点：无权限时不发请求，也不把 403 伪装成「无异常」 */
+const canReadEvents = hasAuth("events:SystemMonitor");
+const errorFailed = ref(false);
+const taskFailed = ref(false);
 
 const fetchEvents = async () => {
+  if (!canReadEvents) return;
   loading.value = true;
+  errorFailed.value = false;
+  taskFailed.value = false;
   try {
     // 两类事件独立展示，单个接口失败不拖垮另一类
     const results = await Promise.allSettled([
@@ -36,8 +44,10 @@ const fetchEvents = async () => {
     ]);
     if (results[0].status === "fulfilled")
       errorRows.value = results[0].value.data.results;
+    else errorFailed.value = true;
     if (results[1].status === "fulfilled")
       taskRows.value = results[1].value.data.results;
+    else taskFailed.value = true;
   } finally {
     loading.value = false;
   }
@@ -104,14 +114,25 @@ defineExpose({ refresh: fetchEvents });
         </el-button>
       </div>
     </template>
-    <el-tabs v-model="activeKind">
+    <el-alert
+      v-if="!canReadEvents"
+      :title="t('systemMonitor.eventsDenied')"
+      type="warning"
+      :closable="false"
+      show-icon
+    />
+    <el-tabs v-else v-model="activeKind">
       <el-tab-pane :label="t('systemMonitor.errorEvents')" name="error">
         <ReReadonlyTable
           :columns="errorColumns"
           :rows="errorRows"
           :loading="loading"
           size="small"
-          :empty-text="t('systemMonitor.noErrorEvent')"
+          :empty-text="
+            errorFailed
+              ? t('systemMonitor.eventsLoadFailed')
+              : t('systemMonitor.noErrorEvent')
+          "
         >
           <template #status_code="{ row }">
             <el-tag type="danger" size="small">{{ row.status_code }}</el-tag>
@@ -131,7 +152,11 @@ defineExpose({ refresh: fetchEvents });
           :rows="taskRows"
           :loading="loading"
           size="small"
-          :empty-text="t('systemMonitor.taskNoFailures')"
+          :empty-text="
+            taskFailed
+              ? t('systemMonitor.eventsLoadFailed')
+              : t('systemMonitor.taskNoFailures')
+          "
         >
           <template #status="{ row }">
             <el-tag

@@ -119,6 +119,38 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     );
   });
 
+  it("失败消息可重试：原样重发最近一条用户提问", async () => {
+    const wrapper = mountPanel({
+      groups: [
+        {
+          type: "message",
+          key: "u1",
+          item: consoleMessage({
+            id: 1,
+            role: "user",
+            content: "查一下用户"
+          })
+        },
+        {
+          type: "message",
+          key: "a1",
+          item: consoleMessage({
+            id: 2,
+            role: "system",
+            content: "模型调用失败",
+            extra: { error: true }
+          })
+        }
+      ]
+    });
+
+    const retry = wrapper.find('[data-testid="ai-retry"]');
+    expect(retry.exists()).toBe(true);
+    await retry.trigger("click");
+
+    expect(wrapper.emitted("retry")?.[0]).toEqual(["查一下用户"]);
+  });
+
   it("流式进行中：发送按钮切换为停止按钮，点击 emit stop", async () => {
     const wrapper = mountPanel({
       streaming: true,

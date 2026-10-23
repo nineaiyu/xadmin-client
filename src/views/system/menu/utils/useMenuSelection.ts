@@ -14,8 +14,8 @@ interface MenuSelectionDeps {
   rowIndex: Ref<{ byPk: Map<string, MenuRow> }>;
   /** 批量启停（内部含「连同后代」与确认） */
   setRowsActive: (rows: MenuRow[], isActive: boolean) => Promise<boolean>;
-  /** 批量删除（内部含影响面确认） */
-  removeRows: (rows: MenuRow[]) => Promise<boolean>;
+  /** 批量删除（内部含影响面确认；batch=true 固定走 batchDestroy 权限点） */
+  removeRows: (rows: MenuRow[], batch?: boolean) => Promise<boolean>;
 }
 
 export function useMenuSelection({
@@ -68,7 +68,7 @@ export function useMenuSelection({
   };
 
   const batchRemove = async () => {
-    const ok = await removeRows(checkedRows.value);
+    const ok = await removeRows(checkedRows.value, true);
     if (ok) clearSelection();
   };
 

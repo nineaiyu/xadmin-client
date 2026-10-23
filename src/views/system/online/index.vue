@@ -1,16 +1,15 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useUserOnline } from "./utils/hook";
 
 defineOptions({ name: "SystemUserOnline" });
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   listColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useUserOnline(tableRef);
+} = useUserOnline();
 </script>
 <template>
   <RePlusPage

@@ -64,6 +64,16 @@ async function openInstanceCenter(page: Page) {
   );
 }
 
+test("审批中心：操作审批 / 流程审批资源页签可切换", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["审批管理"], "/approval/index");
+  await expect(page.getByRole("tab", { name: "操作审批" })).toBeVisible({
+    timeout: 20_000
+  });
+  await page.getByRole("tab", { name: "流程审批" }).click();
+  await expect(page).toHaveURL(/\/approval\/instance\/index/);
+});
+
 test("流程审批：发起申请 → 两级会签通过 → 我的申请已通过", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);

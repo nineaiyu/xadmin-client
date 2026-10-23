@@ -1,5 +1,5 @@
 import { isSuccess } from "@/api/types";
-import { computed, onMounted, reactive, useSlots, type Ref } from "vue";
+import { computed, onMounted, reactive, ref, useSlots, type Ref } from "vue";
 import type { FormInstance } from "element-plus";
 import {
   getTempTokenApi,
@@ -181,7 +181,11 @@ export const useSendVerifyCode = (
     formData.value.verify_token = undefined;
     useVerifyCode().start(
       formDataRef.value,
-      [formData.value.form_type, "captcha_code"],
+      [
+        formData.value.form_type,
+        "captcha_code",
+        formData.value.form_type === "phone" ? "phone" : "email"
+      ],
       verifyCodeConfig.rate,
       async interval => {
         const data = formatSendData();
@@ -217,7 +221,10 @@ export const useSendVerifyCode = (
     );
   };
 
-  onMounted(() => {
+  /** 配置加载失败：与「服务禁用」区分，页面给出重试而不是静默空白 */
+  const configFailed = ref(false);
+  const loadConfig = () => {
+    configFailed.value = false;
     verifyCodeConfigApi({ category: props.category })
       .then(res => {
         if (isSuccess(res)) {
@@ -236,12 +243,19 @@ export const useSendVerifyCode = (
             }
           }
           initToken();
+        } else {
+          configFailed.value = true;
         }
+      })
+      .catch(() => {
+        configFailed.value = true;
       })
       .finally(() => {
         emit("configReqEnd");
       });
-  });
+  };
+
+  onMounted(loadConfig);
 
   return {
     t,
@@ -250,6 +264,8 @@ export const useSendVerifyCode = (
     formRules,
     isDisabled,
     verifyCodeConfig,
+    configFailed,
+    reloadConfig: loadConfig,
     handleSendCode,
     fetchSuggestions
   };

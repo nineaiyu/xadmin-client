@@ -80,6 +80,41 @@ export function desiredEnabledSet(
   return new Set(allIds.filter(id => !disabled.has(id)));
 }
 
+/** 草稿 vs 当前生效配置的变更摘要（保存确认框用；纯函数便于单测） */
+export function diffModuleDraft({
+  data,
+  draftPreset,
+  draftEnabled,
+  allIds
+}: {
+  data: SystemModulesData | null;
+  draftPreset: string;
+  draftEnabled: Set<string>;
+  allIds: string[];
+}) {
+  if (!data) {
+    return {
+      presetChanged: false,
+      from: "",
+      to: draftPreset,
+      enable: [] as string[],
+      disable: [] as string[]
+    };
+  }
+  const currentEnabled = desiredEnabledSet(data, allIds);
+  return {
+    presetChanged: data.desired.preset !== draftPreset,
+    from: data.desired.preset,
+    to: draftPreset,
+    enable: allIds.filter(
+      id => draftEnabled.has(id) && !currentEnabled.has(id)
+    ),
+    disable: allIds.filter(
+      id => !draftEnabled.has(id) && currentEnabled.has(id)
+    )
+  };
+}
+
 /** 草稿是否偏离当前生效配置（按 config.yml 同语义载荷比对） */
 export function isModuleDraftDirty({
   data,

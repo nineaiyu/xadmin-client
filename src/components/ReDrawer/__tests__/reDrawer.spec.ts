@@ -98,6 +98,31 @@ describe("ReDrawer 抽屉容器", () => {
     expect(drawerStore.value[0]?.visible).toBe(false);
   });
 
+  it("beforeClose：取消按钮先走守卫，done 后才真正关闭", async () => {
+    const beforeClose = vi.fn((_done: () => void) => undefined);
+    mountContainer();
+    addDrawer({
+      title: "编辑",
+      contentRenderer: () => h("div", "正文"),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    const cancel = Array.from(
+      document.querySelectorAll(".el-drawer__footer button")
+    ).find(button => button.textContent?.trim() === "取消");
+    (cancel as HTMLElement | undefined)?.click();
+    await nextTick();
+
+    expect(beforeClose).toHaveBeenCalledTimes(1);
+    expect(drawerStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0]();
+    await nextTick();
+    expect(drawerStore.value[0]?.visible).toBe(false);
+  });
+
   it("收起的抽屉若内容已销毁则不报错（destroyOnClose 关闭态直接出栈）", async () => {
     mountContainer();
     addDrawer({

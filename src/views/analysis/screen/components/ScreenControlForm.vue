@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
@@ -57,7 +57,7 @@ const syncTarget = () => {
   targetPk.value = props.dashboards[state.value.index]?.pk ?? "";
 };
 
-const loadState = async () => {
+const loadState = async (syncTargetOnLoad = true) => {
   // 控制态读取失败不阻塞面板：异常归一为可读失败结果并提示（此前未捕获——请求
   // 异常时抛 unhandled rejection 且面板以默认态静默呈现，用户误判为展示端 auto）
   const res = await getScreenCommandState(props.row.pk).catch(error => ({
@@ -70,7 +70,7 @@ const loadState = async () => {
     return;
   }
   state.value = res.data.state;
-  syncTarget();
+  if (syncTargetOnLoad) syncTarget();
 };
 
 /** 下发指令：成功后原地回写控制态；失败提示但保持弹窗（可重试） */
@@ -112,7 +112,15 @@ const refreshData = () => void apply({ command: "refresh" });
 /** 恢复自动轮播（展示端从当前页继续） */
 const resumeAuto = () => void apply({ command: "auto" });
 
-onMounted(loadState);
+/** 面板打开期间轮询控制态：展示端本地轮播/暂停也会反映到当前页 */
+let pollTimer: ReturnType<typeof setInterval> | undefined;
+onMounted(() => {
+  void loadState();
+  pollTimer = setInterval(() => void loadState(false), 5000);
+});
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer);
+});
 </script>
 
 <template>

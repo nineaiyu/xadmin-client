@@ -69,6 +69,66 @@ export interface SseOptions {
   signal?: AbortSignal;
 }
 
+/** 业务语义事件（聊天室与 AI 助手共用的五类帧）；载荷类型由各端点契约标注 */
+export interface SseStreamEvents<
+  TDone,
+  TMeta = Record<string, unknown>,
+  TError = { detail?: string }
+> {
+  /** meta：请求回执（服务端落库后的正式载荷） */
+  onMeta?: (data: TMeta) => void;
+  /** reasoning：思考增量（思考型模型，实时上屏） */
+  onReasoning?: (delta: string) => void;
+  /** delta：文本增量 */
+  onDelta?: (delta: string) => void;
+  /** done：正式结果载荷，此刻流结束 */
+  onDone?: (data: TDone) => void;
+  /** error：流内失败（响应头已发出，带内下发光） */
+  onError?: (data: TError) => void;
+}
+
+/**
+ * 业务语义化的 SSE：postSse + 解析 `meta/reasoning/delta/done/error` 五类帧。
+ *
+ * 容错口径与调用方原有实现一致：非法 JSON / 空帧静默忽略，增量缺省为空串；
+ * 非 SSE 错误（门禁/参数）仍由 postSse 抛 SseError。
+ */
+export function createSseStream<
+  TDone,
+  TMeta = Record<string, unknown>,
+  TError = { detail?: string }
+>(
+  url: string,
+  body: unknown,
+  events: SseStreamEvents<TDone, TMeta, TError>,
+  signal?: AbortSignal
+): Promise<void> {
+  return postSse(url, body, {
+    signal,
+    onFrame: (frame: SseFrame) => {
+      let payload: unknown = {};
+      try {
+        payload = frame.data ? JSON.parse(frame.data) : {};
+      } catch {
+        return;
+      }
+      if (frame.event === "meta") {
+        events.onMeta?.(payload as TMeta);
+      } else if (frame.event === "reasoning") {
+        events.onReasoning?.(
+          String((payload as { delta?: unknown }).delta ?? "")
+        );
+      } else if (frame.event === "delta") {
+        events.onDelta?.(String((payload as { delta?: unknown }).delta ?? ""));
+      } else if (frame.event === "done") {
+        events.onDone?.(payload as TDone);
+      } else if (frame.event === "error") {
+        events.onError?.(payload as TError);
+      }
+    }
+  });
+}
+
 /** POST + text/event-stream：逐帧回调；失败抛 SseError（业务码/detail）或原生错误 */
 export async function postSse(
   url: string,

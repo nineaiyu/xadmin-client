@@ -31,6 +31,7 @@ const {
       :loader="leaveApi.stats"
       auth-code="stats:SystemLeave"
       :show-avg-duration="false"
+      tip-key="leaveApply.statsTip"
       :labelKeys="{
         submitted: 'leaveApply.statsSubmitted',
         approved: 'leaveApply.statsApproved',

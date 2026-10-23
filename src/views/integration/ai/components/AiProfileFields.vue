@@ -112,7 +112,7 @@ const FIELD_TEST_IDS: Record<string, string> = {
 const FIELD_PLACEHOLDERS: Record<string, string> = {
   base_url: "https://api.deepseek.com/v1",
   model: "deepseek-chat",
-  api_key: "OpenAI 兼容密钥，加密存储、不回显"
+  api_key: t("aiConfig.apiKeyHint")
 };
 
 /**

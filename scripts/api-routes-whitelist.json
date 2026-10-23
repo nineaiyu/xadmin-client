@@ -1,0 +1,21 @@
+{
+  "_instruction": "只登记确认合法但不在 contract/openapi.json 的路径（外部地址、非 DRF 端点等），每条必须写 reason。",
+  "paths": [
+    {
+      "path": "/api/demo/view",
+      "reason": "base.spec.ts 的 ViewBaseApi 单测夹具，未落后端路由，仅验证 URL 拼接"
+    },
+    {
+      "path": "/api/demo/view/search-columns",
+      "reason": "base.spec.ts 的 ViewBaseApi 单测夹具，未落后端路由，仅验证 URL 拼接"
+    },
+    {
+      "path": "/api/system/routes",
+      "reason": "system/urls.py 的 re_path routes 为普通 APIView，dump_openapi 未收录"
+    },
+    {
+      "path": "/api/identity/user/9/avatar",
+      "reason": "apiModules2.spec.ts 为 upload(action) 构造的假动作 URL，不发起真实请求"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { reactive, type Ref } from "vue";
+import { reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { knowledgeApi } from "@/api/ai/knowledge";
@@ -24,7 +24,10 @@ import { useKnowledgeButtons } from "./useKnowledgeButtons";
  * - useKnowledgeColumns  列渲染；
  * - useKnowledgeButtons  工具栏与行操作按钮装配。
  */
-export function useKnowledge(tableRef: Ref) {
+export function useKnowledge(
+  tableRef: Ref,
+  hasSelection: Ref<boolean> = ref(false)
+) {
   const { t } = useI18n();
   const auth = usePageAuth("AiKnowledge");
   auth.create = false;
@@ -51,6 +54,7 @@ export function useKnowledge(tableRef: Ref) {
   const { tableBarButtonsProps, operationButtonsProps } = useKnowledgeButtons({
     t,
     flags: { canCreate, canSync, canBatchToggle, canBuildEmbeddings },
+    hasSelection,
     openUpload,
     syncRepo,
     buildEmbeddings,

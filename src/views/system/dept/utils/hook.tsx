@@ -1,13 +1,12 @@
 import { deptApi } from "@/api/identity/dept";
-import { reactive, shallowRef, type Ref } from "vue";
-import { hasAuth, usePageAuth } from "@/router/utils";
-import { useI18n } from "vue-i18n";
-import type { OperationProps } from "@/components/RePlusPage";
+import { shallowRef } from "vue";
+import { hasAuth } from "@/router/utils";
+import { defineListPage, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Setting from "~icons/ri/settings-3-line";
 import { useDeptRoleRules } from "./useDeptRoleRules";
 import { useDeptManagers } from "./useDeptManagers";
-import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
+import { useActiveBatchUpdate } from "@/views/system/components/useActiveBatchUpdate";
 import { useDeptColumns } from "./deptColumns";
 import { useDeptFormOptions } from "./deptFormOptions";
 import { useDeptPanel } from "./useDeptPanel";
@@ -19,20 +18,18 @@ import { useDeptPanel } from "./useDeptPanel";
  * useDeptPanel（行内「管理」抽屉）；角色授权与管理员任命见 useDeptRoleRules /
  * useDeptManagers，批量更新见 useBatchUpdate（自 utils/hook 拆出，行为不变）。
  */
-export function useDept(tableRef: Ref) {
-  const { t } = useI18n();
-
-  const api = reactive(deptApi);
-
-  const auth = usePageAuth([
-    "empower",
-    "preview",
-    "assignManagers",
-    "changeHistory"
-  ]);
-
+export function useDept() {
   const { listColumnsFormat, onGoDetail } = useDeptColumns();
-  const addOrEditOptions = useDeptFormOptions(tableRef);
+
+  const page = defineListPage({
+    api: deptApi,
+    localeName: "systemDept",
+    extraAuth: ["empower", "preview", "assignManagers", "changeHistory"],
+    columns: ({ columns }) => listColumnsFormat(columns),
+    formOptions: ({ tableRef }) => useDeptFormOptions(tableRef)
+  });
+
+  const { api, auth, tableRef, t } = page;
 
   // 角色授权与管理员任命弹层（列裁剪状态 + 弹窗动作）
   const { baseColumnsFormat, handleRoleRules } = useDeptRoleRules({
@@ -43,17 +40,11 @@ export function useDept(tableRef: Ref) {
   const { openManagers } = useDeptManagers({ t, api, tableRef });
 
   // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
-  const { batchUpdateButton } = useBatchUpdate({
+  const { batchUpdateButton } = useActiveBatchUpdate({
     t,
     api,
     tableRef,
-    fields: [
-      {
-        key: "is_active",
-        label: t("commonLabels.is_active"),
-        input_type: "boolean"
-      }
-    ]
+    canBatch: hasAuth("batchUpdate:SystemDept")
   });
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [batchUpdateButton]
@@ -85,19 +76,20 @@ export function useDept(tableRef: Ref) {
         onClick: ({ row }) => {
           openDeptPanel(row);
         },
-        // 面板内容受各自权限点控制；无任何可看内容时不渲染入口（避免点开空抽屉）
-        show: hasAuth("preview:SystemDept") || hasAuth("list:SystemUser")
+        // 面板内容受各自权限点控制；无任何可看内容时不渲染入口（避免点开空抽屉）。
+        // 授权角色 / 部门管理员同样属于面板内容：只看预览与成员会把「只有授权权」的管理员挡在门外
+        show:
+          hasAuth("preview:SystemDept") ||
+          hasAuth("list:SystemUser") ||
+          hasAuth("empower:SystemDept") ||
+          hasAuth("assignManagers:SystemDept")
       }
     ]
   });
 
   return {
-    t,
-    api,
-    auth,
-    listColumnsFormat,
+    ...page,
     baseColumnsFormat,
-    addOrEditOptions,
     tableBarButtonsProps,
     operationButtonsProps,
     openDeptPanel

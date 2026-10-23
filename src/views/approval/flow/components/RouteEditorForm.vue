@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { CONDITION_OPS, type RouteItem } from "./flowConfig";
+import { CONDITION_OPS, conditionOpLabel, type RouteItem } from "./flowConfig";
 
 /**
  * 节点出口路由编辑（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -17,12 +17,22 @@ const props = defineProps<{
   /** 当前节点序号（1-based）与全部节点数：约束 target 范围与自环 */
   order: number;
   count: number;
+  /** 节点序号 → 名称：目标下拉展示「N. 名称」，避免只看到序号选错 */
+  nodeOptions?: Array<{ order: number; name?: string }>;
   /** 路由副本（编辑中不影响节点，确认后由页面回写） */
   routes: RouteItem[];
 }>();
 
 const { t } = useI18n();
 const routes = ref<RouteItem[]>(props.routes);
+
+/** 目标节点展示名：序号 + 节点名（未命名时只显示序号） */
+const targetLabel = (order: number) => {
+  const name = props.nodeOptions?.find(item => item.order === order)?.name;
+  return name
+    ? `${t("systemApprovalFlow.nodeOrder")} ${order} · ${name}`
+    : `${t("systemApprovalFlow.nodeOrder")} ${order}`;
+};
 
 const addRoute = () => {
   routes.value.push({
@@ -72,7 +82,7 @@ defineExpose({ getRoutes });
             <el-option
               v-for="op in CONDITION_OPS"
               :key="op"
-              :label="op"
+              :label="conditionOpLabel(op, t)"
               :value="op"
             />
           </el-select>
@@ -92,7 +102,7 @@ defineExpose({ getRoutes });
             <el-option
               v-for="nodeOrder in count"
               :key="nodeOrder"
-              :label="`${t('systemApprovalFlow.nodeOrder')} ${nodeOrder}`"
+              :label="targetLabel(nodeOrder)"
               :value="nodeOrder"
               :disabled="nodeOrder === props.order"
             />

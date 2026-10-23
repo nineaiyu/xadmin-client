@@ -36,6 +36,10 @@ vi.mock("@/api/dataset/datasets", () => ({
     (res as { data?: { results?: unknown[] } })?.data?.results ?? []
 }));
 
+vi.mock("@/api/task/export", () => ({
+  exportRecordApi: { retrieve: vi.fn() }
+}));
+
 vi.mock("@/utils/fetchAllRows", () => ({
   fetchAllRows: vi.fn().mockResolvedValue({ code: 1000, data: { results: [] } })
 }));

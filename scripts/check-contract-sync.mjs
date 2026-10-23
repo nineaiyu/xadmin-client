@@ -47,6 +47,16 @@ for (const name of SCHEMA_NAMES) {
   }
 }
 
+const openapiMirror = path.join(mirrorDir, "..", "openapi.json");
+const openapiSource = path.join(sourceDir, "openapi.json");
+if (!existsSync(openapiMirror)) {
+  drifted.push("openapi: 镜像文件缺失（contract/openapi.json）");
+} else if (!existsSync(openapiSource)) {
+  drifted.push("openapi: 服务端契约源缺失（docs/schema/openapi.json）");
+} else if (normalize(openapiMirror) !== normalize(openapiSource)) {
+  drifted.push("openapi: 镜像与服务端契约源不一致");
+}
+
 if (drifted.length) {
   console.error("[fail] 契约镜像已漂移：");
   drifted.forEach(item => console.error(`  - ${item}`));

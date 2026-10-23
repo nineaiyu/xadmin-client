@@ -136,3 +136,29 @@ test("个人中心：绑定授权地址可取（已登录 + 带 state）", async
   expect(String(body.data.url)).toContain("https://");
   expect(String(body.data.state)).toBeTruthy();
 });
+
+test("匿名回跳：/oauth/callback 落地页可达（不被打回登录页）", async ({
+  browser
+}) => {
+  // 纯 OAuth 账号在新会话里回跳：code/state 就是凭据，落地页必须在未登录白名单内
+  const anon = await browser.newContext({ locale: "zh-CN" });
+  try {
+    const page = await anon.newPage();
+    // 不带 code 的非法回跳：守卫放行到落地页，由页面给出可读错误（不白屏、不跳登录）
+    await page.goto(`${FRONT_URL}/#/oauth/callback?provider=feishu`);
+    await expect(page.locator(".oauth-callback")).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(page).toHaveURL(/\/oauth\/callback/);
+    await expect(page.locator(".oauth-callback .el-result")).toContainText(
+      "回调参数不完整",
+      { timeout: 15_000 }
+    );
+
+    // 对照：普通受保护页仍按原口径打回登录（白名单未整体放宽）
+    await page.goto(`${FRONT_URL}/#/system/user`);
+    await expect(page).toHaveURL(/\/login/);
+  } finally {
+    await anon.close();
+  }
+});

@@ -25,6 +25,8 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const rows = ref<Record<string, unknown>[]>([]);
+/** 全量行：limit 变化时只重切展示，不重新请求 */
+const allRows = ref<Record<string, unknown>[]>([]);
 const available = ref<string[]>([]);
 const total = ref(0);
 const loading = ref(false);
@@ -60,7 +62,8 @@ const load = async () => {
     }
     const result = res.data;
     available.value = result?.columns ?? [];
-    rows.value = (result?.rows ?? []).slice(0, props.limit);
+    allRows.value = result?.rows ?? [];
+    rows.value = allRows.value.slice(0, props.limit);
     total.value = result?.total ?? rows.value.length;
   } catch (error) {
     errorMsg.value = String(
@@ -72,7 +75,14 @@ const load = async () => {
 };
 
 onMounted(load);
-// 设计列/行数上限变化只影响展示裁剪，无需重拉；仅数据集切换时重拉
+// 行数上限只影响展示裁剪：从已取全量行重切，无需重拉
+watch(
+  () => props.limit,
+  limit => {
+    rows.value = allRows.value.slice(0, limit);
+  }
+);
+// 仅数据集切换时重拉
 watch(() => props.datasetPk, load);
 
 const notifyFull = () => {

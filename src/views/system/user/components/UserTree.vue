@@ -228,7 +228,14 @@ defineExpose({ onTreeReset });
                 : 'transparent'
             }"
           >
-            {{ node.label }} {{ data.user_count ? data.user_count : "" }}
+            {{ node.label }}
+            <el-tooltip
+              v-if="data.user_count"
+              :content="t('systemUser.deptUserCountHint')"
+              placement="right"
+            >
+              <span class="ml-1">{{ data.user_count }}</span>
+            </el-tooltip>
           </span>
         </template>
       </el-tree>

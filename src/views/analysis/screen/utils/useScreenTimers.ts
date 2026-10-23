@@ -1,4 +1,5 @@
 import { onBeforeUnmount, type Ref } from "vue";
+import { i18n } from "@/plugins/i18n";
 import type { ScreenItem } from "@/api/dataset/analysis";
 import type { DashboardItem } from "@/api/dataset/datasets";
 
@@ -31,7 +32,9 @@ export function useScreenTimers(deps: {
   let clockTimer: number | undefined;
 
   const tickClock = () => {
-    deps.clock.value = new Date().toLocaleTimeString("zh-CN", {
+    const locale = i18n.global.locale;
+    const tag = typeof locale === "string" ? locale : locale.value;
+    deps.clock.value = new Date().toLocaleTimeString(tag, {
       hour12: false
     });
   };

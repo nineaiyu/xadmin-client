@@ -216,6 +216,20 @@ describe("useMenuMutations", () => {
       expect(deps.dropRows).toHaveBeenCalledWith(["1", "2"]);
     });
 
+    it("批量入口只选 1 行也走 batchDestroy（不降级到单删权限点）", async () => {
+      vi.mocked(confirmMenuDelete).mockResolvedValue(true);
+      const deps = makeDeps(
+        fakeApi({ batchDestroy: vi.fn().mockResolvedValue(OK) })
+      );
+      const mutations = useMenuMutations(deps);
+      const ok = await mutations.removeRows([makeRow({ pk: 1 })], true);
+      expect(ok).toBe(true);
+      expect(deps.api.batchDestroy).toHaveBeenCalledWith([1], {
+        impact_confirmed: true
+      });
+      expect(deps.api.destroy).not.toHaveBeenCalled();
+    });
+
     it("多行走 batchDestroy", async () => {
       vi.mocked(confirmMenuDelete).mockResolvedValue(true);
       const deps = makeDeps(

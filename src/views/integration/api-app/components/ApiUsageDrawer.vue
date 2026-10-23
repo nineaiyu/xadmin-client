@@ -62,10 +62,11 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
 <template>
   <el-drawer
     v-model="visible"
+    data-testid="api-usage-drawer"
     :size="drawerSize('md')"
     :title="t('apiApp.usage.title')"
   >
-    <div class="usage-body">
+    <div class="usage-body" data-testid="api-usage-body">
       <!-- 统计窗口切换（1/7/14/30 天）：切换后由父级重拉数据 -->
       <div class="usage-range">
         <span class="usage-range-label">
@@ -86,7 +87,7 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
         </el-radio-group>
       </div>
       <template v-if="data">
-        <div class="usage-row">
+        <div class="usage-row" data-testid="api-usage-summary">
           <div class="usage-card">
             <div class="usage-label">{{ t("apiApp.usage.total") }}</div>
             <div class="usage-value">{{ data.total }}</div>
@@ -141,7 +142,11 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
             {{ t("apiApp.usage.topPaths") }}
           </div>
           <el-table :data="data.top_paths" size="small" max-height="220">
-            <el-table-column prop="path" label="Path" show-overflow-tooltip />
+            <el-table-column
+              prop="path"
+              :label="t('apiApp.usage.path')"
+              show-overflow-tooltip
+            />
             <el-table-column
               prop="total"
               :label="t('apiApp.usage.total')"

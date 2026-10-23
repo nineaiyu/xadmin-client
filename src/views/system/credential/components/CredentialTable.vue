@@ -2,12 +2,18 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { credentialApi, type CredentialEntry } from "@/api/system/credential";
+import { credentialApi } from "@/api/system/credential";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { isSuccess } from "@/api/types";
 import { useConfirm } from "@/hooks/useConfirm";
+import {
+  canOpenChangeEntry,
+  credentialRowKey,
+  credentialStatus,
+  type CredentialRowLike
+} from "../utils/credentialDisplay";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -23,8 +29,6 @@ import {
 defineOptions({ name: "CredentialTable" });
 
 /** 表格行（el-table 的 DefaultRow 宽松形态）：只读取用到的字段 */
-type CredentialRowLike = Partial<CredentialEntry> & { name?: string };
-
 defineProps<{
   columns: ReadonlyColumn[];
   rows?: CredentialRowLike[];
@@ -38,43 +42,27 @@ const router = useRouter();
 const confirm = useConfirm();
 const canRotate = hasAuth("rotate:Credential");
 
-/** 加密状态 → tag 展示（encrypted / plaintext / empty） */
-const statusMeta = (
-  row: CredentialRowLike
-): { type: "success" | "info" | "danger"; text: string } => {
-  if (row.scope === "model_field") {
-    return {
-      type: row.configured ? "success" : "info",
-      text: row.configured ? t("credential.encrypted") : t("credential.empty")
-    };
-  }
-  if (row.plaintext || row.status === "plaintext") {
-    return { type: "danger", text: t("credential.plaintext") };
-  }
-  if (!row.configured) {
-    return { type: "info", text: t("credential.empty") };
-  }
-  return { type: "success", text: t("credential.encrypted") };
-};
+/** 加密状态 → tag 展示（统一口径见 credentialStatus） */
+const statusMeta = (row: CredentialRowLike) => credentialStatus(row, t);
 
 /** 掩码/未配置文案：只表达「是否已配置」，后端不下发任何明文或长度 */
 const maskedText = (row: CredentialRowLike) =>
   row.masked ? row.masked : t("credential.empty");
 
-/** 外部签发凭据：跳转到对应配置页更换（不自造假值） */
+/** 外部签发凭据：目标页无只读权限时不跳转（否则落到 403/空白页） */
 function goChange(row: CredentialRowLike) {
-  if (row.change_entry) router.push(row.change_entry);
+  if (canOpenChangeEntry(row.change_entry)) router.push(row.change_entry!);
 }
 
 /**
  * 原地轮换（仅服务端自生成密钥）：高危操作，二次确认并说明后果。
  * 模型字段级（Webhook / 回调密钥）变更会影响对端验签，必须显式提示。
  */
-/** 轮换进行中（防重复点击 + 按钮 loading）；轮换为 PATCH 类写操作不可并发 */
-const rotating = ref(false);
+/** 轮换进行中的行键（防重复点击 + 行级 loading；轮换为写操作不可并发） */
+const rotatingKey = ref<string | null>(null);
 
 async function handleRotate(row: CredentialRowLike) {
-  if (rotating.value) return;
+  if (rotatingKey.value) return;
   const name = String(row.label || row.name || "");
   const confirmText =
     row.scope === "model_field"
@@ -88,7 +76,7 @@ async function handleRotate(row: CredentialRowLike) {
   ) {
     return;
   }
-  rotating.value = true;
+  rotatingKey.value = credentialRowKey(row);
   try {
     const res = await credentialApi
       .rotate({ key: String(row.name ?? ""), scope: row.scope })
@@ -103,7 +91,7 @@ async function handleRotate(row: CredentialRowLike) {
       );
     }
   } finally {
-    rotating.value = false;
+    rotatingKey.value = null;
   }
 }
 </script>
@@ -143,14 +131,14 @@ async function handleRotate(row: CredentialRowLike) {
         v-if="row.rotatable && canRotate"
         link
         type="primary"
-        :loading="rotating"
-        :disabled="!row.configured || rotating"
+        :loading="rotatingKey === credentialRowKey(row)"
+        :disabled="!row.configured || Boolean(rotatingKey)"
         @click="handleRotate(row)"
       >
         {{ t("credential.rotate") }}
       </el-button>
       <el-button
-        v-else-if="row.change_entry"
+        v-else-if="row.change_entry && canOpenChangeEntry(row.change_entry)"
         link
         type="primary"
         @click="goChange(row)"

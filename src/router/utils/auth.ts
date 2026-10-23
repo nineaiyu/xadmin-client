@@ -32,6 +32,8 @@ type Auths = {
   batchDestroy?: boolean;
   partialUpdate?: boolean;
   recycleList?: boolean;
+  recycleRestore?: boolean;
+  recyclePurge?: boolean;
 };
 
 function getDefaultAuths(
@@ -53,6 +55,8 @@ function getDefaultAuths(
     "batchDestroy",
     "partialUpdate",
     "recycleList",
+    "recycleRestore",
+    "recyclePurge",
     ...auth
   ];
   const auths: Auths = {};

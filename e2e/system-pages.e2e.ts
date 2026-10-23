@@ -44,6 +44,10 @@ test("登录日志：存在当前登录记录", async ({ page }) => {
     "/system/logs/login/index"
   );
   await expect(page.locator(".el-table")).toBeVisible({ timeout: 15_000 });
+  // 强退作用域说明：纯 HTTP 会话需到在线会话页下线（页面必须写明）
+  await expect(page.getByTestId("login-log-logout-hint")).toContainText(
+    "在线会话"
+  );
   // 刚刚的登录应已落库
   await expect(
     page.locator(".el-table").getByText(ADMIN.username).first()
@@ -114,6 +118,12 @@ test("模块管理：保存后台覆盖并展示待重启差异", async ({ page 
   // 切到「仅内核」预设 → 保存（只落库，不重启）
   await page.getByTestId("module-preset").getByText("仅内核").click();
   await page.getByTestId("module-save").click();
+  // 保存前会弹差异确认（列出将停用的模块），确认后才落库
+  await page
+    .locator(".el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
 
   const pending = page.getByTestId("module-pending");
   await expect(pending).toBeVisible({ timeout: 10_000 });
@@ -267,8 +277,8 @@ test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async
  */
 test("系统设置：打开后切其他页面不白屏（单元素根守护）", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/setting/index");
-  await expect(page.getByText("系统设置").first()).toBeVisible({
+  await openMenuPath(page, ["系统设置"], "/settings/ledger/index");
+  await expect(page.getByText("设置台账").first()).toBeVisible({
     timeout: 15_000
   });
 

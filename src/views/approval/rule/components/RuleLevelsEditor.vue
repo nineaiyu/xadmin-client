@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
-import { useAssigneeCandidates } from "@/views/approval/utils/useAssigneeCandidates";
+import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
 import { createLevelRow, type LevelRow } from "../utils/types";
 
 /**
@@ -17,8 +17,22 @@ const levels = defineModel<LevelRow[]>("levels", { required: true });
 
 const { t } = useI18n();
 
-const { userOptions, candidateTruncated, roleOptions, postOptions } =
-  useAssigneeCandidates();
+type ApproverType = "user" | "role" | "post";
+
+function isApproverType(type: string): type is ApproverType {
+  return type === "user" || type === "role" || type === "post";
+}
+
+/** 兜底分支不会走到，仅用于模板取到收窄后的 type */
+function approverTypeOf(type: string): ApproverType {
+  return isApproverType(type) ? type : "user";
+}
+
+const LEVEL_HINT_KEYS: Record<ApproverType, string> = {
+  user: "approvalRule.levelUserTip",
+  role: "approvalRule.levelRoleTip",
+  post: "approvalRule.levelPostTip"
+};
 
 /** 级次行内下拉回写：多选数组 → 逗号串（服务端契约） */
 function updateLevelValue(index: number, value: unknown) {
@@ -57,13 +71,6 @@ function moveLevel(index: number, delta: number) {
 
 <template>
   <div class="w-full">
-    <el-alert
-      v-if="candidateTruncated"
-      type="warning"
-      :closable="false"
-      class="mb-2"
-      :title="t('approval.candidateTruncated')"
-    />
     <p class="mb-2 text-xs text-(--el-text-color-regular)">
       {{ t("approvalRule.levelsTip") }}
     </p>
@@ -75,7 +82,11 @@ function moveLevel(index: number, delta: number) {
       />
       <el-table-column :label="t('approvalRule.levelName')" width="120">
         <template #default="{ row }">
-          <el-input v-model="row.name" size="small" />
+          <el-input
+            v-model="row.name"
+            size="small"
+            :placeholder="t('approvalRule.levelNamePlaceholder')"
+          />
         </template>
       </el-table-column>
       <el-table-column :label="t('approvalRule.approveType')" width="120">
@@ -101,63 +112,16 @@ function moveLevel(index: number, delta: number) {
       </el-table-column>
       <el-table-column :label="t('approvalRule.levelAssignee')" min-width="210">
         <template #default="{ row, $index }">
-          <!-- 指定用户：远程搜索 + 允许直接输入用户名兜底（无搜索结果时回车即录入） -->
-          <el-select
-            v-if="row.assignee_type === 'user'"
+          <!-- 指定用户 / 角色 / 岗位：候选目录多选（用户远程搜索；均可直输 code 兜底） -->
+          <ApproverPicker
+            v-if="isApproverType(row.assignee_type)"
             :model-value="row.assignee_list"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            size="small"
-            :placeholder="t('approvalRule.levelUserTip')"
+            :type="approverTypeOf(row.assignee_type)"
+            show-code
+            truncated-hint
+            :placeholder="t(LEVEL_HINT_KEYS[approverTypeOf(row.assignee_type)])"
             @update:model-value="value => updateLevelValue($index, value)"
-          >
-            <el-option
-              v-for="user in userOptions"
-              :key="user.username"
-              :label="user.label"
-              :value="user.username"
-            />
-          </el-select>
-          <!-- 角色：下拉选择（值=角色 code，可直接输入 code 兜底） -->
-          <el-select
-            v-else-if="row.assignee_type === 'role'"
-            :model-value="row.assignee_list"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            size="small"
-            :placeholder="t('approvalRule.levelRoleTip')"
-            @update:model-value="value => updateLevelValue($index, value)"
-          >
-            <el-option
-              v-for="role in roleOptions"
-              :key="role.code"
-              :label="`${role.name}(${role.code})`"
-              :value="role.code"
-            />
-          </el-select>
-          <!-- 岗位：下拉选择（值=岗位 code，仅启用岗位的在岗用户参与解析） -->
-          <el-select
-            v-else-if="row.assignee_type === 'post'"
-            :model-value="row.assignee_list"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            size="small"
-            :placeholder="t('approvalRule.levelPostTip')"
-            @update:model-value="value => updateLevelValue($index, value)"
-          >
-            <el-option
-              v-for="post in postOptions"
-              :key="post.code"
-              :label="`${post.name}(${post.code})`"
-              :value="post.code"
-            />
-          </el-select>
+          />
           <!-- 未知/历史类型兜底：纯文本输入 -->
           <el-input
             v-else

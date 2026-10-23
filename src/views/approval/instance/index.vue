@@ -3,8 +3,10 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { hasAuth } from "@/router/utils";
+import RePage from "@/components/RePage";
 import { refreshApprovalBadge, useApprovalBadge } from "@/utils/approvalBadge";
 import InstancePanel from "./components/InstancePanel.vue";
+import ApprovalResourceTabs from "../components/ApprovalResourceTabs.vue";
 import ApprovalStats from "../components/ApprovalStats.vue";
 
 defineOptions({
@@ -68,16 +70,21 @@ function handleStarted() {
 }
 </script>
 <template>
-  <div class="pr-[1%]">
-    <!-- 单根包裹 + 去掉手写 ml/mx：由 layout 注入的 main-content（24px）统一提供边距；
-         pr-[1%] 与 RePlusPage 的 w-99/100 等效 -->
+  <RePage>
+    <!-- 页面边距由 layout 的 main-content 统一提供；资源页签 / 统计条 / 列表页签
+         分别落在骨架的 toolbar / stats / 内容区，不再手写 pr-[1%] 模拟宽度 -->
+    <template #toolbar>
+      <ApprovalResourceTabs />
+    </template>
     <!-- 近 30 天统计（复用轻量审批的统计卡组件，实例口径无「平均审批时长」指标） -->
-    <ApprovalStats
-      ref="statsRef"
-      :loader="approvalInstanceApi.stats"
-      auth-code="stats:SystemApprovalInstance"
-      :show-avg-duration="false"
-    />
+    <template #stats>
+      <ApprovalStats
+        ref="statsRef"
+        :loader="approvalInstanceApi.stats"
+        auth-code="stats:SystemApprovalInstance"
+        :show-avg-duration="false"
+      />
+    </template>
     <el-tabs v-model="activeTab">
       <el-tab-pane name="pending">
         <template #label>
@@ -124,5 +131,5 @@ function handleStarted() {
         />
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </RePage>
 </template>

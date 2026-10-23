@@ -2,11 +2,13 @@
 // 顶栏「国际化」（弹层类组件：固定在顶栏，不收进「更多」下拉）
 import { useNav } from "@/layout/hooks/useNav";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
+import { LOCALE_OPTIONS } from "@/constants/localeOptions";
 import GlobalizationIcon from "@/assets/svg/globalization.svg?component";
 import Check from "~icons/ep/check";
 
 const { t, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
+const [zhOption, enOption] = LOCALE_OPTIONS;
 </script>
 
 <template>
@@ -31,7 +33,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
             class="check-zh"
             :icon="Check"
           />
-          简体中文
+          {{ zhOption.label }}
         </el-dropdown-item>
         <el-dropdown-item
           :style="getDropdownItemStyle(locale, 'en')"
@@ -41,7 +43,7 @@ const { locale, translationCh, translationEn } = useTranslationLang();
           <span v-show="locale === 'en'" class="check-en">
             <IconifyIconOffline :icon="Check" />
           </span>
-          English
+          {{ enOption.label }}
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>

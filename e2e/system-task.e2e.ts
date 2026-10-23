@@ -437,9 +437,11 @@ test("间隔调度页：新增间隔 → 周期任务引用后列表显示可读
     .first()
     .click();
   await expect(dialog).not.toBeVisible({ timeout: 15_000 });
-  // 列表按主键正序且 E2E 库每次重置（行数远小于分页大小），新行必在首页
+  // 列表按主键正序且 E2E 库每次重置（行数远小于分页大小），新行必在首页。
+  // every 列已由「下次约 …」预览渲染取代，不能再按原始数值定位；具体新增由下一步
+  // API 按 every 反查确认。
   await expect(
-    page.locator(".el-table__row", { hasText: String(every) }).first()
+    page.locator(".el-table__row", { hasText: "下次约" }).first()
   ).toBeVisible({ timeout: 15_000 });
 
   // 2) 新建的间隔可直接挂到周期任务（任务表单「执行间隔」下拉即来自该表）

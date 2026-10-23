@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import OAuthEntry from "./OauthEntry.vue";
+import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
+import { message } from "@/utils/message";
 import RememberLogin from "./RememberLogin.vue";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -64,6 +66,11 @@ const formData = ref({
 });
 
 const onLogin = async () => {
+  // 验证码组件未渲染（sms/email 均关闭或配置失败）时没有 token，直接提交只会 400
+  if (!formData.value.verify_token) {
+    message(t("login.verifyCodeRequired"), { type: "warning" });
+    return;
+  }
   loading.value = true;
   const data = await buildVerifyCodePayload(formData.value, authInfo.value);
 
@@ -177,6 +184,9 @@ const onBack = backToBasicPage;
             {{ t("login.back") }}
           </el-button>
         </el-form-item>
+      </Motion>
+      <Motion :delay="450">
+        <LoginPrivacyNotice />
       </Motion>
     </template>
   </div>

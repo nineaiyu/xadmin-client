@@ -1,6 +1,6 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
-import { postSse, type SseFrame } from "@/utils/sse";
+import { createSseStream, type SseStreamEvents } from "@/utils/sse";
 
 /** AI 使用/二开助手 */
 export type AiStatus = {
@@ -114,13 +114,7 @@ export const aiConfigApi = new ViewBaseApi("/api/ai/assistant/config");
  * - `onDelta`：正式回答增量；
  * - `onError`：流内失败（响应头已发出，带下发光；门禁类错误由 postSse 抛 SseError）。
  */
-export interface AiStreamEvents<TDone> {
-  onMeta?: (data: Record<string, unknown>) => void;
-  onReasoning?: (delta: string) => void;
-  onDelta?: (delta: string) => void;
-  onDone?: (data: TDone) => void;
-  onError?: (data: { detail: string }) => void;
-}
+export type AiStreamEvents<TDone> = SseStreamEvents<TDone>;
 
 /** 通用 AI 流式请求：POST + SSE 逐帧分发（助手页文档问答 / NL 查数解释共用）。 */
 function streamRequest<TDone>(
@@ -129,30 +123,7 @@ function streamRequest<TDone>(
   events: AiStreamEvents<TDone>,
   signal?: AbortSignal
 ): Promise<void> {
-  return postSse(url, body, {
-    signal,
-    onFrame: (frame: SseFrame) => {
-      let payload: unknown = {};
-      try {
-        payload = frame.data ? JSON.parse(frame.data) : {};
-      } catch {
-        return;
-      }
-      if (frame.event === "meta") {
-        events.onMeta?.(payload as Record<string, unknown>);
-      } else if (frame.event === "reasoning") {
-        events.onReasoning?.(
-          String((payload as { delta?: unknown }).delta ?? "")
-        );
-      } else if (frame.event === "delta") {
-        events.onDelta?.(String((payload as { delta?: unknown }).delta ?? ""));
-      } else if (frame.event === "done") {
-        events.onDone?.(payload as TDone);
-      } else if (frame.event === "error") {
-        events.onError?.(payload as { detail: string });
-      }
-    }
-  });
+  return createSseStream<TDone>(url, body, events, signal);
 }
 
 /** AI 配置档案：多套凭据 + 采样/行为参数，激活唯一 */

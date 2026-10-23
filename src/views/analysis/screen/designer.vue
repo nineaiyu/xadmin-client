@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { hasAuth } from "@/router/utils";
 import { choiceValue } from "@/utils/dict";
 import {
   screenApi,
@@ -22,6 +23,7 @@ import PaneInspector from "./components/PaneInspector.vue";
 import MultiSelectInspector from "./components/MultiSelectInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
 import { useScreenPersistence } from "./utils/useScreenPersistence";
+import { formatScreenClock } from "./utils/screenClock";
 import { usePaneHistory } from "./utils/history";
 import {
   createGridEditor,
@@ -32,7 +34,7 @@ import { useScreenShortcuts } from "./utils/shortcuts";
 import { onPaletteDragStart } from "./utils/dnd";
 import { loadScreenReferenceData } from "./utils/referenceData";
 import { useScreenTheme, type ScreenTheme } from "./utils/screenTheme";
-import { useUnsavedGuard } from "./utils/useUnsavedGuard";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 
 defineOptions({ name: "DataScreenDesigner" });
 
@@ -51,7 +53,7 @@ defineOptions({ name: "DataScreenDesigner" });
  */
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
@@ -68,7 +70,9 @@ const freeBoardRef = ref<InstanceType<typeof FreeCanvasBoard> | null>(null);
 
 /** 只读态：非创建者记录后端会拒绝写入（1003），前端进入即置只读，
  *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
-const readonly = computed(() => screen.value?.is_owner === false);
+const readonly = computed(
+  () => !hasAuth("partialUpdate:DataScreen") || screen.value?.is_owner === false
+);
 const locked = computed(() => preview.value || readonly.value);
 const isFree = computed(() => mode.value === "free");
 
@@ -170,6 +174,7 @@ const { save, clearCanvas } = useScreenPersistence({
   saving,
   dirty,
   readonly,
+  preview,
   isFree,
   activePanes,
   gridPanes,
@@ -288,9 +293,9 @@ onMounted(async () => {
   dashboards.value = reference.dashboards ?? [];
   datasets.value = reference.datasets ?? [];
   loading.value = false;
-  clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+  clock.value = formatScreenClock(locale.value);
   clockTimer = window.setInterval(() => {
-    clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    clock.value = formatScreenClock(locale.value);
   }, 1000);
 });
 
@@ -298,8 +303,8 @@ onBeforeUnmount(() => {
   window.clearInterval(clockTimer);
 });
 
-/* ---------------- 未保存守卫（关闭刷新 / 路由离开，实现见 useUnsavedGuard） ---------------- */
-useUnsavedGuard({ dirty, t });
+/* ---------------- 未保存守卫（关闭刷新 / 路由离开，实现见 useDesignerGuard） ---------------- */
+useDesignerGuard({ dirty, namespace: "dataScreen" });
 
 /* ---------------- 保存 / 清空 / 预览 ---------------- */
 const paneRefs = ref<Record<string, InstanceType<typeof ScreenPane> | null>>(
@@ -373,6 +378,7 @@ const back = () => {
         free.saveCurrentToServer($event.name, $event.visibility, $event.group)
       "
       @paste-cloud="free.pasteFromCloud"
+      @clear-cloud="free.clearCloud"
       @rollback-template="free.rollbackTemplate($event.id, $event.version)"
       @import-template="free.importTemplateJson($event.raw, $event.mode)"
       @apply-template="free.applyTemplate($event.id, $event.mode)"

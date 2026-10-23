@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
@@ -12,8 +12,7 @@ import { isSuccess } from "@/api/types";
 import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
-import ReSliderTranslateCaptcha from "@/components/ReSliderTranslateCaptcha";
-import puzzleSrc from "@/assets/captcha/puzzle.svg";
+import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 
 defineOptions({
   name: "InviteAccept"
@@ -23,32 +22,57 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const token = computed(() => String(route.query.token ?? ""));
-const state = ref<"loading" | "pending" | "accepted" | "invalid">("loading");
+const token = ref(String(route.query.token ?? ""));
+const state = ref<"loading" | "pending" | "accepted" | "invalid" | "error">(
+  "loading"
+);
 const form = reactive({ password: "", confirm: "" });
 const submitting = ref(false);
-/**
- * 人机校验（拼图）：匿名激活入口按「一次提交一次校验」放行——
- * 本地密码规则通过后仍需对齐拼图，提交收尾即复位（成功跳登录、失败要求重新验证）。
- */
-const captchaPassed = ref(false);
+/** 服务端图形验证码：key 由图片接口下发，code 由用户输入，激活时一并提交 */
+const captchaKey = ref("");
+const captchaCode = ref("");
 /** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
 const passwordRules = ref<PasswordRule[]>([]);
+const rulesLoadFailed = ref(false);
 /** 传输加密开关：预检下发，开启时激活提交的 password 为令牌作密钥的密文 */
 const encrypted = ref(false);
 
-onMounted(async () => {
+/** 令牌不再留在地址栏（Referer/历史记录/日志不落凭据）；页面内仍持有原文 */
+function stripTokenFromAddressBar() {
+  if (!location.hash.includes("token=")) return;
+  const [path, query = ""] = location.hash.replace(/^#/, "").split("?");
+  const params = new URLSearchParams(query);
+  if (!params.has("token")) return;
+  params.delete("token");
+  const search = params.toString();
+  history.replaceState(
+    history.state,
+    "",
+    `${location.pathname}${location.search}#${path}${search ? `?${search}` : ""}`
+  );
+}
+
+const load = async () => {
   if (!token.value) {
     state.value = "invalid";
     return;
   }
+  state.value = "loading";
+  rulesLoadFailed.value = false;
   // 规则拉取与令牌预检相互独立：规则失败不阻塞激活流程（后端仍是最终校验方）
   rulesPasswordApi()
     .then(res => {
       passwordRules.value = res?.data?.password_rules ?? [];
     })
-    .catch(() => undefined);
+    .catch(() => {
+      rulesLoadFailed.value = true;
+    });
   const res = await inviteValidateApi({ token: token.value }).catch(() => null);
+  if (!res) {
+    // 网络/5xx 与「链接无效」分开：给重试而不是误导用户邀请已失效
+    state.value = "error";
+    return;
+  }
   encrypted.value = Boolean(res?.data?.encrypted);
   const next = res?.data?.state;
   state.value =
@@ -57,6 +81,11 @@ onMounted(async () => {
       : next === "accepted"
         ? "accepted"
         : "invalid";
+};
+
+onMounted(() => {
+  stripTokenFromAddressBar();
+  void load();
 });
 
 async function submit() {
@@ -78,7 +107,7 @@ async function submit() {
     message(msg, { type: "warning" });
     return;
   }
-  if (!captchaPassed.value) {
+  if (!captchaKey.value || !captchaCode.value.trim()) {
     message(t("invite.captchaRequired"), { type: "warning" });
     return;
   }
@@ -94,7 +123,9 @@ async function submit() {
     // http 层失败已统一提示，归一为 null 后直接收尾，避免重复弹错
     const res = await inviteAcceptApi({
       token: token.value,
-      password
+      password,
+      captcha_key: captchaKey.value,
+      captcha_code: captchaCode.value.trim()
     }).catch(() => null);
     if (!res) return;
     if (isSuccess(res)) {
@@ -107,7 +138,7 @@ async function submit() {
     message(String(res.detail || t("results.failed")), { type: "error" });
   } finally {
     submitting.value = false;
-    captchaPassed.value = false;
+    captchaCode.value = "";
   }
 }
 </script>
@@ -125,11 +156,31 @@ async function submit() {
       <!-- 预检令牌期间的占位（v-loading 已全局注册，避免为单页引入 ElSkeleton 组件体积） -->
       <div v-if="state === 'loading'" v-loading="true" class="h-24" />
 
+      <template v-else-if="state === 'error'">
+        <el-alert
+          :title="t('invite.validateNetworkFailed')"
+          type="error"
+          :closable="false"
+          show-icon
+        />
+        <el-button class="mt-4 w-full" type="primary" @click="load">
+          {{ t("buttons.reload") }}
+        </el-button>
+      </template>
+
       <el-form
         v-else-if="state === 'pending'"
         label-position="top"
         @submit.prevent="submit"
       >
+        <el-alert
+          v-if="rulesLoadFailed"
+          class="mb-3"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="t('invite.rulesLoadFailed')"
+        />
         <el-form-item :label="t('invite.password')">
           <el-input
             v-model="form.password"
@@ -149,11 +200,17 @@ async function submit() {
             @keyup.enter="submit"
           />
         </el-form-item>
-        <ReSliderTranslateCaptcha
-          v-model="captchaPassed"
-          :src="puzzleSrc"
-          class="mb-4"
-        />
+        <el-form-item :label="t('invite.captcha')">
+          <div class="flex w-full items-center gap-2">
+            <el-input
+              v-model="captchaCode"
+              :placeholder="t('invite.captchaPlaceholder')"
+              maxlength="8"
+              data-testid="invite-captcha"
+            />
+            <ReImageVerify v-model="captchaKey" />
+          </div>
+        </el-form-item>
         <el-button
           class="w-full"
           type="primary"
@@ -174,8 +231,11 @@ async function submit() {
           :closable="false"
           show-icon
         />
+        <p class="mt-3 text-xs text-(--el-text-color-secondary)">
+          {{ t("invite.contactInviter") }}
+        </p>
         <el-button
-          class="mt-4 w-full"
+          class="mt-2 w-full"
           type="primary"
           @click="router.push('/login')"
         >

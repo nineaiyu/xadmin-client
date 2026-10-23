@@ -24,9 +24,14 @@ vi.mock("@/api/audit/logs/operation", () => ({
   }
 }));
 // 仅列格式化为本测试无关项，替换整包引入（避免拉起 plugins/i18n 初始化）
-vi.mock("@/components/RePlusPage", () => ({
-  formatPageColumns: (columns: unknown) => columns
-}));
+vi.mock("@/components/RePlusPage", async () => {
+  const { defineListPage } =
+    await import("@/components/RePlusPage/src/utils/defineListPage");
+  return {
+    defineListPage,
+    formatPageColumns: (columns: unknown) => columns
+  };
+});
 vi.mock("@/router/utils", () => ({
   usePageAuth: () => ({ list: true, retrieve: true })
 }));

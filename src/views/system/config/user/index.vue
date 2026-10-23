@@ -1,20 +1,18 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useUserConfig } from "./utils/hook";
 
 defineOptions({
   name: "UserConfig"
 });
 
-const tableRef = ref();
-
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   listColumnsFormat,
   operationButtonsProps
-} = useUserConfig(tableRef);
+} = useUserConfig();
 </script>
 
 <template>

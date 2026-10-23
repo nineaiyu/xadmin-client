@@ -154,6 +154,14 @@ export function useOperationLogColumns({
             );
           };
           break;
+        case "method":
+          // 列表把 method 合并进 path；详情保持独立列时用标签展示，避免裸串
+          column.render = (value: unknown) => (
+            <el-tag size="small" effect="plain">
+              {String(value ?? "—")}
+            </el-tag>
+          );
+          break;
       }
     });
     return columns;

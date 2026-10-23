@@ -26,6 +26,7 @@ import {
   isOneOfArray
 } from "./utils";
 import remainingRouter from "./modules/remaining";
+import { isGuestOnlyRoutePath, isPublicRoutePath } from "./publicRoutes";
 import type { Router, RouteRecordRaw } from "vue-router";
 import {
   removeToken,
@@ -77,8 +78,8 @@ export function resetRouter() {
   resetLoadedPaths();
 }
 
-/** 路由白名单（未登录可达；邀请激活页令牌即凭据） */
-const whiteList = ["/login", "/invite/accept"];
+// 路由白名单见 router/publicRoutes.ts：未登录可达（含 OAuth 回跳）与「已登录保持原页」
+// 是两张清单，混用会让绑定回跳被守卫吃掉或让登录回跳丢 code。
 
 const { VITE_HIDE_HOME } = import.meta.env;
 
@@ -140,7 +141,7 @@ router.beforeEach((to: ToRouteType, _from) => {
       return (to?.query?.redirect as string) ?? "/";
     }
     // 按 path 判断（白名单页面可能带 query，如邀请激活 token）
-    return whiteList.includes(to.path) ? _from.fullPath : undefined;
+    return isGuestOnlyRoutePath(to.path) ? _from.fullPath : undefined;
   }
 
   if (Cookies.get(multipleTabsKey) && refresh) {
@@ -217,7 +218,7 @@ router.beforeEach((to: ToRouteType, _from) => {
     }
   } else {
     if (to.path !== "/login") {
-      if (whiteList.indexOf(to.path) !== -1) {
+      if (isPublicRoutePath(to.path)) {
         return true;
       } else {
         removeToken();

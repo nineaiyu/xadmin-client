@@ -4,9 +4,20 @@ import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { useDialogForm } from "@/hooks/useDialogForm";
+import { tagApi } from "@/api/system/tag";
 import type { RecordType } from "plus-pro-components";
 import TagAssignPanel from "./TagAssignPanel.vue";
-import { submitTagAssign, submitTagBatchAssign } from "./tagAssignSubmit";
+import { submitTagBatchAssign } from "./tagAssignSubmit";
+
+/** 打标面板载荷（与 TagAssignPanel.getPayload 契约一致） */
+type TagAssignPayload = {
+  resource: string;
+  pk: string;
+  pks: string[];
+  tags: string[];
+  mode: "add" | "remove" | "replace";
+};
 
 /**
  * 通用打标弹窗编排：行操作（单对象）与工具栏（批量 + 选中行）共用。
@@ -35,6 +46,26 @@ export function useTagAssign(tableRef?: Ref) {
     if (!row?.pk && !isBatch) return;
 
     let childRef: InstanceType<typeof TagAssignPanel> | undefined;
+
+    /** 读取并校验载荷：未选标签时点名提示（批量/单对象同口径） */
+    const readPayload = (): TagAssignPayload | null => {
+      const payload = childRef?.getPayload?.();
+      if (!payload) return null;
+      if (!payload.tags.length && payload.mode !== "replace") {
+        message(t("tag.selectRequired"), { type: "warning" });
+        return null;
+      }
+      return payload;
+    };
+
+    const { beforeSure: submitSingle } = useDialogForm<TagAssignPayload>({
+      readPayload,
+      submit: payload =>
+        tagApi.assign({ resource, pk: payload.pk, tags: payload.tags }),
+      successText: t("tag.assignDone"),
+      onSuccess: () => tableRef?.value?.handleGetData()
+    });
+
     addDialog({
       title: isBatch ? t("tag.batchAssignTitle") : t("tag.assignTitle"),
       width: dialogSize("sm"),
@@ -53,38 +84,26 @@ export function useTagAssign(tableRef?: Ref) {
           showMode: isBatch,
           canCreate: hasAuth("create:Tag")
         }),
-      beforeSure: async (done, { closeLoading }) => {
-        const payload = childRef?.getPayload?.();
+      beforeSure: async (done, ctx) => {
+        // 单对象打标走统一提交底座；批量按对象聚合结果，保留专用编排
+        if (!isBatch) {
+          await submitSingle(done, ctx);
+          return;
+        }
+        const payload = readPayload();
         if (!payload) {
-          closeLoading();
+          ctx.closeLoading();
           return;
         }
-        if (!payload.tags.length && payload.mode !== "replace") {
-          message(t("tag.selectRequired"), { type: "warning" });
-          closeLoading();
-          return;
-        }
-        if (isBatch) {
-          await submitTagBatchAssign({
-            t,
-            tableRef,
-            resource,
-            pks: payload.pks,
-            tags: payload.tags,
-            mode: payload.mode,
-            done,
-            closeLoading
-          });
-          return;
-        }
-        await submitTagAssign({
+        await submitTagBatchAssign({
           t,
           tableRef,
           resource,
-          pk: payload.pk,
+          pks: payload.pks,
           tags: payload.tags,
+          mode: payload.mode,
           done,
-          closeLoading
+          closeLoading: ctx.closeLoading
         });
       }
     });

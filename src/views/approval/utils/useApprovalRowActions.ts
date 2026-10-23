@@ -15,10 +15,11 @@ import { approvalRowButtons } from "./approvalRowButtons";
 import Document from "~icons/ep/document";
 
 import { dialogSize } from "@/components/ReDialog/size";
+
 /**
  * 审批面板行内操作：通过/驳回（待我审批）与撤回（我发起的），及互跳操作日志。
  * 自 useApprovalPanel 拆出（行为不变）：多级链按服务端 can_act 收口
- * （见 approvalRowRules.ts），按钮数组见 approvalRowButtons.ts。
+ * （见 approvalHelpers.ts），按钮数组与操作日志互跳同在本文件。
  */
 export function useApprovalRowActions({
   scope,

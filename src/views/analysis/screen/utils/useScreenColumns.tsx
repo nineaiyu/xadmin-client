@@ -48,6 +48,19 @@ export function useScreenColumns({
 
   const listColumnsFormat = (columns: PageTableColumn[]) =>
     formatPageColumns(columns, {
+      render_mode: column => {
+        column["width"] = 110;
+        column["cellRenderer"] = ({ row }) => {
+          const mode = String((row as ScreenItem).render_mode ?? "carousel");
+          const labelKey =
+            mode === "canvas-free"
+              ? "dataScreen.modeFree"
+              : mode === "canvas-grid"
+                ? "dataScreen.modeGrid"
+                : "dataScreen.modeCarousel";
+          return h(ElTag, { size: "small", type: "info" }, () => t(labelKey));
+        };
+      },
       dashboards: column => {
         column["minWidth"] = 220;
         column["cellRenderer"] = ({ row }) => {

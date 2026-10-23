@@ -1,25 +1,29 @@
 import { onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
-import { filterByKeyword } from "@/utils/keywordFilter";
 
 /** 用户候选项（值=用户名；label 形如「昵称(用户名)」） */
 export type AssigneeCandidateUser = { username: string; label: string };
 /** 角色/岗位候选项（值=code） */
 export type AssigneeCandidateOption = { code: string; name: string };
+export type CandidateFetcher = (params?: {
+  keyword?: string;
+  limit?: number;
+}) => Promise<{ code?: number; data?: unknown }>;
+
+/** 远程搜索单次返回条数：避免 1000 人上限导致后段用户永远选不到 */
+const REMOTE_SEARCH_LIMIT = 50;
 
 /**
  * 审批人候选目录（流程节点编辑器与审批规则表单共用）。
  *
- * 数据来自审批模块自带的 candidate-options 端点（不依赖可独立裁剪的全局搜索模块）：
- * 单次拉全量 + 前端本地过滤；被服务端截断时置 candidateTruncated，页面据此提示
- * 「细化搜索」。用户下拉允许直接输入兜底（allow-create），已选用户经
- * ensureUserOption 并回选项，避免未搜索时看不到已选人员。
+ * 初次加载拉取前 1000 个用户 + 角色/岗位；用户输入关键字时走远程搜索，
+ * 不再只在本地前 1000 条里过滤。fetcher 由调用方注入：规则页走规则端点，
+ * 流程设计器走流程端点（各自与页面 list 权限同口径，避免 403）。
  */
-export function useAssigneeCandidates() {
-  /** 候选用户全量（本地过滤的数据源） */
-  const allUsers = ref<AssigneeCandidateUser[]>([]);
-  /** 下拉当前展示项（初始=全量；搜索后=命中项 + 已选未命中项） */
+export function useAssigneeCandidates(
+  fetcher: CandidateFetcher = approvalRuleApi.candidateOptions
+) {
   const userOptions = ref<AssigneeCandidateUser[]>([]);
   const userLoading = ref(false);
   const candidateTruncated = ref(false);
@@ -34,14 +38,28 @@ export function useAssigneeCandidates() {
     }
   }
 
-  /** 本地过滤（下拉远程搜索回调）：命中用户名或昵称；未命中的已选项保留在列表里 */
-  function searchUsers(query: string) {
+  const mapUsers = (rows: Array<{ username: string; nickname?: string }>) =>
+    rows.map(user => ({
+      username: user.username,
+      label: user.nickname
+        ? `${user.nickname}(${user.username})`
+        : user.username
+    }));
+
+  /** 远程搜索（下拉 remote-method）：命中项 + 已选未命中项保留 */
+  async function searchUsers(query: string) {
     userLoading.value = true;
     try {
-      const matched = filterByKeyword(allUsers.value, query, item => [
-        item.username,
-        item.label
-      ]);
+      const res = await fetcher({
+        keyword: query,
+        limit: REMOTE_SEARCH_LIMIT
+      }).catch(() => null);
+      if (!(res && isSuccess(res) && res.data)) return;
+      const matched = mapUsers(
+        ((
+          res.data as { users?: Array<{ username: string; nickname?: string }> }
+        ).users ?? []) as Array<{ username: string; nickname?: string }>
+      );
       const matchedNames = new Set(matched.map(item => item.username));
       userOptions.value = [
         ...matched,
@@ -53,7 +71,7 @@ export function useAssigneeCandidates() {
   }
 
   onMounted(async () => {
-    const res = await approvalRuleApi.candidateOptions().catch(() => null);
+    const res = await fetcher().catch(() => null);
     if (!(res && isSuccess(res) && res.data)) return;
     const data = res.data as {
       users?: Array<{ username: string; nickname?: string }>;
@@ -62,13 +80,7 @@ export function useAssigneeCandidates() {
       truncated?: boolean;
     };
     candidateTruncated.value = Boolean(data.truncated);
-    allUsers.value = (data.users ?? []).map(user => ({
-      username: user.username,
-      label: user.nickname
-        ? `${user.nickname}(${user.username})`
-        : user.username
-    }));
-    userOptions.value = allUsers.value;
+    userOptions.value = mapUsers(data.users ?? []);
     roleOptions.value = (data.roles ?? []).map(role => ({
       code: role.code,
       name: role.name

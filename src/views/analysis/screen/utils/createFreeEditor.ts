@@ -1,5 +1,6 @@
 import { computed, ref, type Ref } from "vue";
 import { message } from "@/utils/message";
+import { hasAuth } from "@/router/utils";
 import { mergeUnique } from "@/utils/unique";
 import type {
   ScreenFreeLayout,
@@ -30,7 +31,8 @@ import {
   writeClipboard
 } from "./freeClipboard";
 import { createPaneInserter } from "./freeInserter";
-import { fetchCloudClipboard, saveCloudClipboard } from "./serverTemplates";
+import { saveCloudClipboard } from "./serverTemplates";
+import { createFreeCloudClipboard } from "./freeCloudClipboard";
 import { createFreeTemplates } from "./createFreeTemplates";
 import { nudgeCoalesceKey } from "./history";
 import type { PaneBox } from "./layout";
@@ -401,16 +403,21 @@ export function createFreeEditor(deps: {
       message(deps.t("dataScreen.clipboardBlocked"), { type: "warning" });
     }
     hasClipboard.value = true;
-    // 双写云端：失败只警告不阻断——本地剪贴板仍然可用
-    void saveCloudClipboard({
-      design_w: payload.design.design_w,
-      design_h: payload.design.design_h,
-      panes: payload.panes
-    }).then(ok => {
-      if (!ok) {
-        message(deps.t("dataScreen.clipboardCloudFailed"), { type: "warning" });
-      }
-    });
+    // 双写云端：无 create 权限的角色直接跳过（避免每次复制都弹一次失败提示）；
+    // 有权限时失败只警告不阻断——本地剪贴板仍然可用
+    if (hasAuth("create:ScreenClipboard")) {
+      void saveCloudClipboard({
+        design_w: payload.design.design_w,
+        design_h: payload.design.design_h,
+        panes: payload.panes
+      }).then(ok => {
+        if (!ok) {
+          message(deps.t("dataScreen.clipboardCloudFailed"), {
+            type: "warning"
+          });
+        }
+      });
+    }
     message(deps.t("dataScreen.copyDone", { n: payload.panes.length }), {
       type: "success"
     });
@@ -423,16 +430,10 @@ export function createFreeEditor(deps: {
     return inserter.insert(payload.panes);
   }
 
-  /** 从云端粘贴（跨设备）：读服务端槽位 → 走插入链路；空槽位给可读提示 */
-  async function pasteFromCloud(): Promise<number> {
-    const slot = await fetchCloudClipboard();
-    const payload = readFreeLayout(slot?.free_layout ?? null);
-    if (payload.panes.length === 0) {
-      message(deps.t("dataScreen.clipboardCloudEmpty"), { type: "warning" });
-      return 0;
-    }
-    return inserter.insert(payload.panes);
-  }
+  const { pasteFromCloud, clearCloud } = createFreeCloudClipboard({
+    t: deps.t,
+    insert: payload => inserter.insert(payload)
+  });
 
   return {
     design,
@@ -469,6 +470,7 @@ export function createFreeEditor(deps: {
     copy,
     paste,
     pasteFromCloud,
+    clearCloud,
     templates: templateApi.templates,
     serverTemplates: templateApi.serverTemplates,
     refreshTemplates: templateApi.refresh,

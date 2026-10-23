@@ -2,7 +2,7 @@ import { BaseRequest } from "@/api/base";
 import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 import { http } from "@/utils/http";
 import type { PureHttpRequestConfig } from "@/utils/http/types";
-import { postSse, type SseFrame } from "@/utils/sse";
+import { createSseStream, type SseStreamEvents } from "@/utils/sse";
 
 /**
  * 聊天室 REST（服务端 message/views.py）。
@@ -302,13 +302,13 @@ class ChatApi extends BaseRequest {
   };
 }
 
-export interface ChatAiStreamEvents {
+export interface ChatAiStreamEvents extends SseStreamEvents<
+  { mode: string; message: ChatMessageItem },
+  { question: ChatMessageItem },
+  { detail: string; message: ChatMessageItem }
+> {
   /** meta：问题回执（服务端落库后的正式载荷） */
   onMeta?: (data: { question: ChatMessageItem }) => void;
-  /** reasoning：思考增量（思考型模型，实时上屏到思考面板） */
-  onReasoning?: (delta: string) => void;
-  /** delta：文本增量 */
-  onDelta?: (delta: string) => void;
   /** done：AI 回复落库后的正式载荷（mode/message），此刻流结束 */
   onDone?: (data: { mode: string; message: ChatMessageItem }) => void;
   /** error：AI 全程失败（message 为 system 降级消息，detail 为可读原因） */
@@ -326,39 +326,15 @@ export function streamAiMessage(
   events: ChatAiStreamEvents,
   signal?: AbortSignal
 ): Promise<void> {
-  return postSse(
+  return createSseStream<
+    { mode: string; message: ChatMessageItem },
+    { question: ChatMessageItem },
+    { detail: string; message: ChatMessageItem }
+  >(
     `${import.meta.env.VITE_API_DOMAIN ?? ""}/api/chat/ai/stream`,
     data,
-    {
-      signal,
-      onFrame: (frame: SseFrame) => {
-        let payload: unknown = {};
-        try {
-          payload = frame.data ? JSON.parse(frame.data) : {};
-        } catch {
-          return;
-        }
-        if (frame.event === "meta") {
-          events.onMeta?.(payload as { question: ChatMessageItem });
-        } else if (frame.event === "reasoning") {
-          events.onReasoning?.(
-            String((payload as { delta?: unknown }).delta ?? "")
-          );
-        } else if (frame.event === "delta") {
-          events.onDelta?.(
-            String((payload as { delta?: unknown }).delta ?? "")
-          );
-        } else if (frame.event === "done") {
-          events.onDone?.(
-            payload as { mode: string; message: ChatMessageItem }
-          );
-        } else if (frame.event === "error") {
-          events.onError?.(
-            payload as { detail: string; message: ChatMessageItem }
-          );
-        }
-      }
-    }
+    events,
+    signal
   );
 }
 

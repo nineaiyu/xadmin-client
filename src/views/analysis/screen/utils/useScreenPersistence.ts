@@ -25,6 +25,8 @@ export function useScreenPersistence(options: {
   saving: Ref<boolean>;
   dirty: Ref<boolean>;
   readonly: Ref<boolean>;
+  /** 预览态：与只读同锁，禁止清空/保存类破坏动作 */
+  preview: Ref<boolean>;
   isFree: Ref<boolean>;
   activePanes: Ref<ScreenLayoutPane[]>;
   gridPanes: Ref<ScreenLayoutPane[]>;
@@ -72,8 +74,10 @@ export function useScreenPersistence(options: {
 
   /** 清空当前模式的载荷（另一模式的载荷保留，切回即可见） */
   async function clearCanvas() {
-    const { isFree, activePanes, readonly, gridPanes, freePanes } = options;
-    if (activePanes.value.length === 0 || readonly.value) return;
+    const { isFree, activePanes, readonly, preview, gridPanes, freePanes } =
+      options;
+    if (activePanes.value.length === 0 || readonly.value || preview.value)
+      return;
     const prompt = isFree.value
       ? t("dataScreen.freeClearConfirm")
       : t("dataScreen.clearLayoutConfirm");

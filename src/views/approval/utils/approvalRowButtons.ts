@@ -7,7 +7,7 @@ import {
   type OperationButtonsRow
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { canActRow } from "./approvalRowRules";
+import { canActRow } from "./approvalHelpers";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import RefreshLeft from "~icons/ep/refresh-left";

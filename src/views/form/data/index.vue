@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
+import { debounce } from "lodash-es";
 import { useFormData } from "./utils/hook";
 
 defineOptions({
@@ -35,12 +36,15 @@ const {
   searchFilterUsers,
   cascaderOptionsOf
 } = useFormData();
+
+/** 文本筛选输入即触发（300ms 防抖），不再等失焦/回车 */
+const applyFiltersDebounced = debounce(applyFilters, 300);
 </script>
 
 <template>
-  <div class="pr-[1%]">
-    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
-         根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
+  <div>
+    <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
+         不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白 -->
 
     <!-- 选择表单卡片：本页入口（行可见性由后端数据权限编译器收敛） -->
     <el-card shadow="never" class="mb-3">
@@ -65,6 +69,7 @@ const {
         <el-select
           v-model="selectedFormPk"
           class="w-80"
+          filterable
           :placeholder="t('formData.selectPlaceholder')"
           data-testid="form-data-form-select"
         >
@@ -196,7 +201,7 @@ const {
               clearable
               :placeholder="field.label"
               :data-testid="`form-data-filter-${field.key}`"
-              @change="applyFilters"
+              @input="applyFiltersDebounced"
             />
           </div>
           <el-button link type="primary" @click="clearFilters">
@@ -213,6 +218,18 @@ const {
       :key="selectedFormPk"
       data-testid="form-data-table"
     >
+      <el-alert
+        class="mb-2"
+        type="info"
+        :closable="false"
+        show-icon
+        :title="t('formData.dataScopeHint')"
+      >
+        <template #default>
+          <span class="text-xs">{{ t("formData.fieldPermissionHint") }}</span>
+          <div class="text-xs">{{ t("formData.exportFullHint") }}</div>
+        </template>
+      </el-alert>
       <RePlusPage
         ref="tableRef"
         :api="api"

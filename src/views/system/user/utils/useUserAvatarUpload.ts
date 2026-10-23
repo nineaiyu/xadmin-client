@@ -1,21 +1,13 @@
-import { ref } from "vue";
-
-import { addDialog } from "@/components/ReDialog";
-import croppingUpload from "@/components/RePictureUpload";
-import type { CropperPayload } from "@/components/RePictureUpload";
-import { createFormData, deviceDetection } from "@pureadmin/utils";
-import { h } from "vue";
-import { handleOperation } from "@/components/RePlusPage";
-import { picturePng } from "@/views/system/hooks";
 import type { useI18n } from "vue-i18n";
 import type { Ref, UnwrapNestedRefs } from "vue";
-import type { userApi } from "@/api/identity/user";
 import type { RecordType } from "plus-pro-components";
+import type { userApi } from "@/api/identity/user";
+import { useAvatarCropUpload } from "@/hooks/useAvatarCropUpload";
+import { picturePng } from "@/views/system/hooks";
 
-import { dialogSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** 用户视图头像裁剪上传弹窗 */
+/** 用户管理头像裁剪上传弹窗。 */
 export function useUserAvatarUpload({
   t,
   api,
@@ -25,48 +17,11 @@ export function useUserAvatarUpload({
   api: UnwrapNestedRefs<typeof userApi>;
   tableRef: Ref;
 }) {
-  const cropRef = ref();
-  const avatarInfo = ref();
-
-  /** 上传头像 */
-  function handleUpload(row: RecordType) {
-    addDialog({
-      title: t("systemUser.updateAvatar", { user: row.username }),
-      width: dialogSize("sm"),
-      draggable: true,
-      fullscreen: deviceDetection(),
-      closeOnClickModal: false,
-      contentRenderer: () =>
-        h(croppingUpload, {
-          imgSrc: picturePng(row?.avatar) ?? "",
-          onCropper: (info: CropperPayload) => (avatarInfo.value = info),
-          circled: true,
-          quality: 1,
-          ref: cropRef,
-          canvasOption: { width: 512, height: 512 }
-        }),
-      beforeSure: (done, { closeLoading }) => {
-        const formData = createFormData({
-          file: new File([avatarInfo.value.blob], "avatar.png", {
-            type: avatarInfo.value.blob.type,
-            lastModified: Date.now()
-          })
-        });
-        handleOperation({
-          t,
-          apiReq: api.upload(row.pk, formData),
-          success() {
-            tableRef.value.handleGetData();
-            done();
-          },
-          requestEnd() {
-            closeLoading();
-          }
-        });
-      },
-      closeCallBack: () => cropRef.value.hidePopover()
-    });
-  }
-
-  return { cropRef, avatarInfo, handleUpload };
+  return useAvatarCropUpload({
+    title: (row: RecordType) =>
+      t("systemUser.updateAvatar", { user: row.username }),
+    imgSrc: (row: RecordType) => picturePng(row?.avatar) ?? "",
+    upload: (row, formData) => api.upload(row.pk, formData),
+    onSuccess: () => tableRef.value.handleGetData()
+  });
 }

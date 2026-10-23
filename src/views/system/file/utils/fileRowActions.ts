@@ -61,9 +61,16 @@ export function buildFileRowButtons({
       text: t("fileAccess.download"),
       code: "download",
       props: { type: "success", icon: useRenderIcon(Download), link: true },
-      onClick: async ({ row }) => {
+      onClick: async ({ row, loading }) => {
         // 下载走受鉴权端点（服务端记访问审计），不再使用 /media/ 直链
-        await api.download(row?.pk, row?.filename);
+        loading.value = true;
+        try {
+          await api.download(row?.pk, row?.filename);
+        } catch {
+          // 失败提示由 http 拦截器统一处理
+        } finally {
+          loading.value = false;
+        }
       },
       show: hasAuth("download:SystemUploadFile")
     },

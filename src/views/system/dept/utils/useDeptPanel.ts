@@ -3,19 +3,16 @@ import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import type { deptApi } from "@/api/identity/dept";
 import { handleShowChangeHistory } from "@/components/RePlusPage";
-import { addDrawer } from "@/components/ReDrawer";
 import {
   PanelProfile,
   ReActionPanel,
   bindRowGroups,
   openManageDrawer
 } from "@/components/ReActionPanel";
-import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
+import { openPermissionPreview } from "@/components/RePermissionPreview/src/presets";
 import { buildDeptActionGroups, type DeptActionAuth } from "./deptActions";
 import { buildDeptMetaItems, buildDeptProfileData } from "./deptPanel";
 import type { DeptRow } from "./types";
-
-import { drawerSize } from "@/components/ReDialog/size";
 /**
  * 部门抽屉：授权预览与行内「管理」入口（自 utils/hook 拆出，行为不变）。
  *
@@ -38,15 +35,9 @@ export function useDeptPanel({
 }) {
   const { t } = useI18n();
 
-  /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走 ReDrawer） */
+  /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走预览预设表） */
   const openPreview = (row: DeptRow) => {
-    addDrawer({
-      title: t("permissionPreview.deptTitle"),
-      size: drawerSize("xl"),
-      destroyOnClose: true,
-      hideFooter: true,
-      contentRenderer: () => h(DeptPermissionPreview, { row })
-    });
+    openPermissionPreview({ entity: "dept", row, t });
   };
 
   function openDeptPanel(row: DeptRow) {

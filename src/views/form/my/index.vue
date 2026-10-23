@@ -14,6 +14,8 @@ const {
   auth,
   tableRef,
   forms,
+  formsLoadFailed,
+  loadForms,
   listColumnsFormat,
   searchColumnsFormat,
   operationButtonsProps,
@@ -22,9 +24,9 @@ const {
 </script>
 
 <template>
-  <div class="pr-[1%]">
-    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
-         根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
+  <div>
+    <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
+         不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白 -->
 
     <!-- 可填表单卡片：本页填报入口（属于「选择表单」语义，不进表格工具栏） -->
     <el-card shadow="never" class="mb-3">
@@ -32,7 +34,16 @@ const {
         <span class="font-semibold">{{ t("dform.fillTitle") }}</span>
       </template>
       <ReEmpty
-        v-if="forms.length === 0"
+        v-if="formsLoadFailed"
+        :description="t('dform.formsLoadFailed')"
+        :image-size="60"
+      >
+        <el-button type="primary" @click="loadForms">
+          {{ t("dform.retry") }}
+        </el-button>
+      </ReEmpty>
+      <ReEmpty
+        v-else-if="forms.length === 0"
         :description="t('dform.noForms')"
         :image-size="60"
       />
@@ -79,7 +90,7 @@ const {
         :api="api"
         :auth="auth"
         locale-name="dform"
-        :selection="false"
+        :selection="Boolean(auth.batchDestroy)"
         :listColumnsFormat="listColumnsFormat"
         :searchColumnsFormat="searchColumnsFormat"
         :operationButtonsProps="operationButtonsProps"

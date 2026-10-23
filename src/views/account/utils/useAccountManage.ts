@@ -5,6 +5,7 @@ import { AesEncrypted } from "@/utils/aes";
 import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
 import ChangePassword from "../components/ChangePassword.vue";
 import { useApiAuth } from "./useApiAuth";
+import { confirmBindConflict } from "./confirmBindConflict";
 
 /** 账户管理（绑定邮箱/手机、修改密码）；自 utils/hook 拆出，行为不变 */
 export function useAccountManage() {
@@ -45,6 +46,7 @@ export function useAccountManage() {
       props: { category },
       form: BindEmailOrPhone,
       saveCallback: ({ formData, done, closeLoading }) => {
+        if (!confirmBindConflict(formData, t, closeLoading)) return;
         const rawData = {
           verify_token: formData.verify_token,
           verify_code: formData.verify_code

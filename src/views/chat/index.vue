@@ -160,6 +160,7 @@ async function recall(item: ChatMessageItem) {
         @select="selectRoom"
         @open-private="openPrivate"
         @refresh-contacts="chat.roomState.loadContacts()"
+        @created="createdGroup"
       />
     </ReNavDrawer>
 
@@ -176,6 +177,7 @@ async function recall(item: ChatMessageItem) {
       :loading-more="chat.loadingMore.value"
       :streaming="chat.streaming.value"
       :connected="chat.connected.value"
+      :denied="chat.denied.value"
       :pending-count="chat.pendingCount.value"
       :is-narrow="isNarrow"
       :uploading="chat.uploading.value > 0"

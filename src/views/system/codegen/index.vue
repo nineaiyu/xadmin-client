@@ -14,6 +14,7 @@ import { hasAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
 import { downloadByData } from "@pureadmin/utils";
 import { systemCodeGenApi } from "@/api/system/codegen";
+import RePage from "@/components/RePage";
 import type {
   CodegenArtifact,
   CodegenModelItem,
@@ -33,7 +34,7 @@ import {
   removePlan,
   savePlan,
   type SavedPlan
-} from "./utils/plan-storage";
+} from "./utils/plan-service";
 import BaseConfig from "./components/BaseConfig.vue";
 import OptionSwitches from "./components/OptionSwitches.vue";
 import FieldConfigTable from "./components/FieldConfigTable.vue";
@@ -84,6 +85,9 @@ const savedPlans = ref<SavedPlan[]>([]);
 const canPreview = computed(
   () => Boolean(state.model) && hasAuth("preview:SystemCodeGen")
 );
+// 模型清单与字段计划各有独立权限点：缺失时给出明确说明，而不是空下拉/空表
+const canLoadModels = hasAuth("models:SystemCodeGen");
+const canLoadFields = hasAuth("modelFields:SystemCodeGen");
 const canDownload = computed(() =>
   mode.value === "batch" ? batchModels.value.length > 0 : Boolean(state.model)
 );
@@ -92,6 +96,7 @@ const selectedLabel = computed(
 );
 
 async function loadModels() {
+  if (!canLoadModels) return;
   modelsLoading.value = true;
   try {
     // http 层失败已统一提示，归一为 null：模型下拉保持空态
@@ -104,13 +109,13 @@ async function loadModels() {
 
 /** 模型变更 / 载入方案后的计划加载：默认命名 + 字段表重建（或回填方案字段） */
 async function loadPlan(label: string) {
-  if (!label) {
-    planData.value = null;
-    state.fields = [];
-    artifacts.value = [];
-    hasPreviewed.value = false;
-    return;
-  }
+  // 切换模型先清场：请求失败时不再残留上一个模型的字段表与产物
+  planData.value = null;
+  state.fields = [];
+  artifacts.value = [];
+  hasPreviewed.value = false;
+  if (!label) return;
+  if (!canLoadFields) return;
   planLoading.value = true;
   try {
     // http 层失败已统一提示，归一为 null：计划区保持空态
@@ -234,6 +239,25 @@ function onLoadPlan(plan: SavedPlan) {
   message(t("codegen.planLoaded"), { type: "success" });
 }
 
+async function onUpdatePlan(
+  pk: string,
+  patch: { name?: string; is_shared?: boolean }
+) {
+  try {
+    const res = await systemCodeGenApi.planUpdate(pk, patch);
+    if (!res || !isSuccess(res)) {
+      throw new Error(String(res?.detail ?? t("codegen.planOperationFailed")));
+    }
+    await refreshPlans();
+    message(t("codegen.planUpdated"), { type: "success" });
+  } catch (error) {
+    message(
+      `${t("codegen.planUpdateFailed")}：${error instanceof Error ? error.message : error}`,
+      { type: "error" }
+    );
+  }
+}
+
 async function onRemovePlan(pk: string) {
   try {
     savedPlans.value = await removePlan(pk);
@@ -266,7 +290,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-2">
+  <RePage>
     <el-card shadow="never">
       <template #header>
         <div class="flex-bc gap-2 flex-wrap">
@@ -285,6 +309,7 @@ onMounted(() => {
               @save="onSavePlan"
               @load="onLoadPlan"
               @remove="onRemovePlan"
+              @update="onUpdatePlan"
               @import-plans="onImportPlans"
             />
           </div>
@@ -293,6 +318,22 @@ onMounted(() => {
       <el-row :gutter="16">
         <!-- 左：模型与配置 -->
         <el-col :xs="24" :md="10">
+          <el-alert
+            v-if="!canLoadModels"
+            :title="t('codegen.modelsDenied')"
+            type="warning"
+            :closable="false"
+            show-icon
+            class="mb-2!"
+          />
+          <el-alert
+            v-else-if="!canLoadFields"
+            :title="t('codegen.fieldsDenied')"
+            type="warning"
+            :closable="false"
+            show-icon
+            class="mb-2!"
+          />
           <BaseConfig
             v-if="mode === 'single'"
             v-model="stateModel"
@@ -404,5 +445,5 @@ onMounted(() => {
         </el-col>
       </el-row>
     </el-card>
-  </div>
+  </RePage>
 </template>

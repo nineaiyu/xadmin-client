@@ -50,6 +50,9 @@ export function useTrialContext(props: TrialPanelProps) {
     parseFormMode(formValue.value.mode_type)
   );
 
+  /** 编辑态：后端会把草稿追加到该权限组已保存规则上试算，文案需与新增态区分 */
+  const isEdit = computed(() => Boolean(formValue.value.pk));
+
   /** 表单绑定的菜单 pk 列表（多选；草稿只在这些菜单上下文生效） */
   const boundMenuPks = computed<string[]>(() =>
     parseBoundMenuPks(formValue.value.menu)
@@ -67,6 +70,7 @@ export function useTrialContext(props: TrialPanelProps) {
     scope,
     targetUser,
     formMode,
+    isEdit,
     boundMenuPks,
     targetPk,
     menuContext,

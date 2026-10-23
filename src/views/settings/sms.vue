@@ -17,13 +17,15 @@ defineOptions({
   name: "SettingSms"
 });
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const smsBackends = ref<Array<settingsPane>>([]);
 // 静态渠道项与动态后端子项按 settingsPane 契约统一（api 槽位为结构化接口，
 // ViewBaseApi 及其子类实例均可直接赋给）
 const panes = computed<Array<settingsPane>>(() => [
   {
     key: "server",
+    label: t("settingSms.title"),
+    desc: t("settingSms.serverDesc"),
     item: {
       auth: settingAuth("SmsSetting"),
       api: settingsSmsServerApi,
@@ -42,18 +44,22 @@ async function loadBackends() {
   if (!hasAuth("backends:SmsSetting")) return;
   backendsLoading.value = true;
   backendsFailed.value = false;
+  // 重试前清空旧渠道：失败时不能把上一轮页签与 warning 同时展示
+  smsBackends.value = [];
   try {
     const res = await settingsSmsServerApi.backends();
     if (isSuccess(res)) {
       smsBackends.value = [];
       (Array.isArray(res.data) ? res.data : []).forEach((item: RecordType) => {
+        const value = String(item.value || item.label);
+        const i18nKey = `settingSms.backend_${value}`;
         smsBackends.value.push({
-          key: String(item.value || item.label),
-          label: item.label,
+          key: value,
+          label: te(i18nKey) ? t(i18nKey) : item.label,
           item: {
             auth: settingAuth("SmsConfig", true),
             api: settingsSmsConfigApi,
-            queryParams: { category: item.value },
+            queryParams: { category: value },
             localeName: "settingSms"
           }
         });

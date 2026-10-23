@@ -170,6 +170,24 @@ describe("PureHttp.autoDownload", () => {
       "uuid-123"
     );
   });
+
+  it("产物缺失时后端回 200 + JSON 错误信封：提示错误且不落盘假文件", async () => {
+    // 拦截器对 application/json 返回 response.data，故此处 response 直接是 Blob
+    elMessageMock.mockClear();
+    instanceMock.request.mockResolvedValue(
+      new Blob(
+        [JSON.stringify({ code: 1001, detail: "文件不存在或已被清理" })],
+        { type: "application/json" }
+      )
+    );
+    await expect(
+      http.autoDownload("/api/system/export-data", undefined, {})
+    ).rejects.toThrow("文件不存在或已被清理");
+    expect(downloadByDataMock).not.toHaveBeenCalled();
+    expect(elMessageMock).toHaveBeenCalledWith("文件不存在或已被清理", {
+      type: "error"
+    });
+  });
 });
 
 describe("PureHttp 412 敏感操作二次验证拦截", () => {

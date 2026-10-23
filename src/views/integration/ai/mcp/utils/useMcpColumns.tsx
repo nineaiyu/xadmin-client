@@ -44,6 +44,30 @@ export function useMcpColumns({
           );
         };
       },
+      expose_to_ai: column => {
+        column["cellRenderer"] = ({ row, props }) => {
+          const exposed = Boolean((row as McpServerItem).expose_to_ai);
+          return h(
+            ElTag,
+            {
+              type: exposed ? "success" : "info",
+              size: props.size,
+              effect: "plain"
+            },
+            () =>
+              exposed ? t("mcp.actionSurfaceIn") : t("mcp.actionSurfaceOut")
+          );
+        };
+      },
+      tools_count: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const count =
+            (row as McpServerItem).tools_count ??
+            (row as McpServerItem).tools_snapshot?.length ??
+            0;
+          return count ? t("mcp.toolsCount", { count }) : "-";
+        };
+      },
       last_sync_error: column => {
         column["cellRenderer"] = ({ row }) => {
           const detail = String((row as McpServerItem).last_sync_error || "");

@@ -61,9 +61,31 @@ for (const name of unchanged) {
   console.log(`[同步] contract/schema/${name}.schema.json（内容一致）`);
 }
 
+// OpenAPI 全量契约：服务端 dump_openapi 产物 → 客户端镜像
+const openapiSource = path.join(sourceDir, "openapi.json");
+const openapiMirror = path.join(mirrorDir, "..", "openapi.json");
+if (!existsSync(openapiSource)) {
+  console.error(
+    `[fail] 服务端缺少 OpenAPI 契约：${openapiSource}\n` +
+      "       请在服务端运行 `python manage.py dump_openapi` 后重试。"
+  );
+  process.exit(1);
+}
+const openapiChanged =
+  !existsSync(openapiMirror) ||
+  normalize(openapiMirror) !== normalize(openapiSource);
+copyFileSync(openapiSource, openapiMirror);
+console.log(
+  `[${openapiChanged ? "更新" : "同步"}] contract/openapi.json（${
+    openapiChanged ? "内容有变化" : "内容一致"
+  }）`
+);
+
 // 镜像更新后重生成类型（CI 的 regen-diff 门禁要求生成物与镜像同步提交）
 console.log("[生成] pnpm gen:metadata-types");
 execSync("pnpm gen:metadata-types", { stdio: "inherit" });
+console.log("[生成] pnpm gen:openapi-types");
+execSync("pnpm gen:openapi-types", { stdio: "inherit" });
 
 console.log(
   copied.length

@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import ReEmpty from "@/components/ReEmpty";
-import { userApi } from "@/api/identity/user";
 import type { UserPreviewResult } from "@/api/types/permission-preview";
 import { hasAuth } from "@/router/utils";
 import { filterByKeyword } from "@/utils/keywordFilter";
 import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
+import {
+  PREVIEW_FETCHERS,
   PreviewDescriptions,
   PreviewFieldMatrix,
   PreviewMenuTree,
@@ -33,7 +36,7 @@ const { t } = useI18n();
 const canTrial = computed(() => hasAuth("previewTrial:SystemUser"));
 
 const { loading, data: preview } = usePermissionPreview<UserPreviewResult>(
-  async pk => (await userApi.preview(pk)).data,
+  PREVIEW_FETCHERS.user,
   () => props.row.pk
 );
 const keyword = ref("");
@@ -57,6 +60,34 @@ const filteredApiPermissions = computed(() =>
     item.title
   ])
 );
+
+/** API 权限码只读列（方法走 tag 插槽） */
+const apiColumns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "code",
+    label: t("permissionPreview.colCode"),
+    minWidth: 180,
+    showOverflowTooltip: true
+  },
+  {
+    prop: "method",
+    label: t("permissionPreview.colMethod"),
+    width: 90,
+    slot: "method"
+  },
+  {
+    prop: "title",
+    label: t("permissionPreview.colTitle"),
+    minWidth: 150,
+    showOverflowTooltip: true
+  },
+  {
+    prop: "path",
+    label: t("permissionPreview.colPath"),
+    minWidth: 220,
+    showOverflowTooltip: true
+  }
+]);
 </script>
 
 <template>
@@ -124,51 +155,20 @@ const filteredApiPermissions = computed(() =>
           clearable
           class="mb-2 w-70!"
         />
-        <el-table
-          :data="filteredApiPermissions"
+        <ReReadonlyTable
+          :columns="apiColumns"
+          :rows="filteredApiPermissions"
           size="small"
           border
           max-height="320"
+          :empty-text="t('permissionPreview.emptyApis')"
         >
-          <el-table-column
-            prop="code"
-            :label="t('permissionPreview.colCode')"
-            min-width="180"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="method"
-            :label="t('permissionPreview.colMethod')"
-            width="90"
-          >
-            <template #default="{ row }">
-              <el-tag
-                :type="METHOD_TAG_TYPES[row.method] ?? 'info'"
-                size="small"
-              >
-                {{ row.method || "-" }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="title"
-            :label="t('permissionPreview.colTitle')"
-            min-width="150"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="path"
-            :label="t('permissionPreview.colPath')"
-            min-width="220"
-            show-overflow-tooltip
-          />
-          <template #empty>
-            <ReEmpty
-              :description="t('permissionPreview.emptyApis')"
-              :image-size="70"
-            />
+          <template #method="{ row }">
+            <el-tag :type="METHOD_TAG_TYPES[row.method] ?? 'info'" size="small">
+              {{ row.method || "-" }}
+            </el-tag>
           </template>
-        </el-table>
+        </ReReadonlyTable>
       </el-collapse-item>
 
       <!-- 数据权限 -->

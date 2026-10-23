@@ -2,7 +2,12 @@
 import { computed, h, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { addDialog, type DialogOptions } from "@/components/ReDialog";
+import {
+  addDialog,
+  closeDialog,
+  type DialogOptions
+} from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import {
@@ -57,6 +62,8 @@ const props = defineProps<{
   /** AI 流式回答（SSE）：roomId 为归属会话，reasoning/content 为已到达增量 */
   streaming: { roomId: number; content: string; reasoning: string } | null;
   connected: boolean;
+  /** WS 4403：无聊天室权限，停止显示“连接中” */
+  denied?: boolean;
   pendingCount: number;
   isNarrow: boolean;
   /** 附件上传中（禁用重复触发） */
@@ -94,6 +101,8 @@ const desktopOn = ref(desktopNotifyEnabled());
 const isAiRoom = computed(() => props.room?.room_type === "ai");
 const isPublicRoom = computed(() => props.room?.room_type === "public");
 const isGroupRoom = computed(() => props.room?.room_type === "group");
+/** 群成员列表是独立能力：无 members:ChatRoom 时不渲染入口（服务端同样 fail-closed） */
+const canViewMembers = computed(() => hasAuth("members:ChatRoom"));
 const onlineCount = computed(
   () => props.contacts.filter(item => item.online).length
 );
@@ -137,7 +146,11 @@ const mentionQuery = computed(() => {
 
 const mentionCandidates = computed(() => {
   if (mentionQuery.value === null) return [];
-  return props.contacts
+  // 群聊：成员预览并入候选（离线/非最近成员也能被 @），按 pk 去重
+  const pool = new Map<number, ChatPeer>();
+  (props.room?.members ?? []).forEach(peer => pool.set(peer.pk, peer));
+  props.contacts.forEach(peer => pool.set(peer.pk, peer));
+  return [...pool.values()]
     .filter(peer => {
       const name = (peer.username || "").toLowerCase();
       return !mentionQuery.value || name.includes(mentionQuery.value);
@@ -219,10 +232,10 @@ async function toggleDesktopNotify() {
 /** 打开群成员管理面板（弹层体系统一收敛：addDialog + 内容组件） */
 function openMembersDialog() {
   const room = props.room;
-  if (!room) return;
+  if (!room || !canViewMembers.value) return;
   const options: DialogOptions = {
     title: t("chat.groupMembers"),
-    width: "480px",
+    width: dialogSize("md"),
     destroyOnClose: true,
     hideFooter: true,
     closeOnClickModal: false,
@@ -230,7 +243,9 @@ function openMembersDialog() {
       h(ChatGroupMembersPanel, {
         room,
         onRoomChanged: (next: ChatRoomItem) => emit("roomChanged", next),
-        onLeft: (roomId: number) => emit("left", roomId)
+        onLeft: (roomId: number) => emit("left", roomId),
+        // 面板底部自绘「关闭」按钮 emit close；弹窗体系统一由 closeDialog 收口
+        onClose: () => closeDialog(options, 0)
       })
   };
   addDialog(options);
@@ -299,14 +314,17 @@ watch(
       <el-icon v-if="isAiRoom" class="text-(--el-color-primary)">
         <component :is="useRenderIcon(AiIcon)" />
       </el-icon>
-      <el-tag v-if="!connected" size="small" type="warning">
+      <el-tag v-if="denied" size="small" type="danger">
+        {{ t("chat.noPermission") }}
+      </el-tag>
+      <el-tag v-else-if="!connected" size="small" type="warning">
         {{ t("chat.connecting") }}
       </el-tag>
     </template>
 
     <template #actions>
       <el-button
-        v-if="isGroupRoom"
+        v-if="isGroupRoom && canViewMembers"
         link
         data-testid="chat-group-members"
         :aria-label="t('chat.groupMembers')"

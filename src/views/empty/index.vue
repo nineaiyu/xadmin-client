@@ -15,35 +15,34 @@ const canBack = hasInAppHistory(router);
 </script>
 
 <template>
-  <div class="size-full text-center">
-    <h1>{{ t("emptyPage.title") }}</h1>
-    <p>{{ t("emptyPage.description") }}</p>
-    <div
+  <div class="flex-c min-h-full flex-col p-6 text-center">
+    <h1 class="mb-2 text-xl font-medium">{{ t("emptyPage.title") }}</h1>
+    <p class="mb-8 text-(--el-text-color-regular)">
+      {{ t("emptyPage.description") }}
+    </p>
+    <button
+      type="button"
       class="back"
       :title="canBack ? t('emptyPage.back') : t('error.goBack')"
+      :aria-label="canBack ? t('emptyPage.back') : t('error.goBack')"
       @click="goBackOrHome(router)"
     >
       <back class="size-20" />
-    </div>
+    </button>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .back {
-  position: relative;
-  top: 50%;
-  left: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 200px;
-  height: 200px;
+  width: clamp(96px, 30vw, 200px);
+  aspect-ratio: 1;
   cursor: pointer;
-
-  /* 底色/悬浮色取 EP 令牌（暗色下由 EP 重定义）；18px 为设计圆角，无对应令牌 */
   background: var(--el-fill-color-light);
+  border: 0;
   border-radius: var(--radius-xl);
-  transform: translate(-50%, -50%);
 
   &:hover {
     background: var(--el-fill-color);

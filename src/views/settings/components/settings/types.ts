@@ -42,6 +42,8 @@ export interface settingItemProps {
   /** 表单字段白名单（按后端字段名精确匹配）：设置页按渠道拆分页签时各页签只渲染自己的字段；缺省渲染全部 */
   fields?: string[];
   autoSubmit?: boolean;
+  /** 是否允许读取配置（缺省沿用 auth.retrieve；用于 list 权限即代表可读的配置接口） */
+  canRead?: boolean;
   formProps?: object;
   queryParams?: object;
   /** 保存成功后的回调（autoSubmit 请求 code=1000 时触发；失败不回调） */

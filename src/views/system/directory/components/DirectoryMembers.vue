@@ -2,7 +2,7 @@
 import { h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
-import { directoryApi, type DirectoryMember } from "@/api/identity/directory";
+import { listDirectory, type DirectoryMember } from "@/api/identity/directory";
 import { usePagedList } from "@/hooks/usePagedList";
 import { message } from "@/utils/message";
 import { addDrawer } from "@/components/ReDrawer";
@@ -34,6 +34,8 @@ const { t } = useI18n();
 
 const keyword = ref("");
 const viewMode = ref<"card" | "list">("card");
+/** 加载失败态：与「无成员」分开呈现，避免网络/权限失败伪装成空名录 */
+const loadFailed = ref(false);
 
 // 成员名录分页（异常归一与信封判定见 usePagedList；失败点名提示，用户可区分
 // 「无人」与「加载失败」）
@@ -47,7 +49,7 @@ const {
 } = usePagedList<DirectoryMember>({
   pageSize: 20,
   fetch: params =>
-    directoryApi.list({
+    listDirectory({
       ...params,
       dept: props.mode === "dept" ? props.dept : "",
       posts: props.mode === "post" && props.post ? props.post : "",
@@ -56,22 +58,29 @@ const {
     }),
   pickRows: res =>
     (res.data as { results?: DirectoryMember[] } | null)?.results ?? [],
-  onFail: res =>
+  onFail: res => {
+    loadFailed.value = true;
     message(String(res.detail || t("directory.membersLoadFailed")), {
       type: "warning"
-    })
+    });
+  }
 });
 
-onMounted(() => fetchData());
+const loadMembers = async (resetPage = false) => {
+  loadFailed.value = false;
+  return fetchData(resetPage);
+};
+
+onMounted(() => loadMembers());
 
 // 左栏维度/取值变化即刷新（含切换浏览维度）
 watch(
   () => [props.mode, props.dept, props.post],
-  () => fetchData(true)
+  () => loadMembers(true)
 );
 
 function onSearch() {
-  fetchData(true);
+  loadMembers(true);
 }
 
 function initialOf(row: DirectoryMember): string {
@@ -297,7 +306,15 @@ function openDetail(row: DirectoryMember) {
         </div>
 
         <el-empty
-          v-if="!loading && !members.length"
+          v-if="!loading && loadFailed"
+          :description="t('directory.membersLoadFailed')"
+        >
+          <el-button type="primary" @click="loadMembers(true)">
+            {{ t("directory.retry") }}
+          </el-button>
+        </el-empty>
+        <el-empty
+          v-else-if="!loading && !members.length"
           :description="t('directory.empty')"
         />
       </div>
@@ -317,8 +334,8 @@ function openDetail(row: DirectoryMember) {
         "
         :total="total"
         :page-sizes="[10, 20, 50]"
-        @current-change="() => fetchData()"
-        @size-change="() => fetchData(true)"
+        @current-change="() => loadMembers()"
+        @size-change="() => loadMembers(true)"
       />
     </div>
   </div>

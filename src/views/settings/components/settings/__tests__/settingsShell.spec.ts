@@ -60,6 +60,8 @@ describe("设置页骨架（左导航 + 内容纸）", () => {
     expect(tabsOf(wrapper)[0].attributes("aria-controls")).toBe(
       "settings-pane-a"
     );
+    // 未挂载面板不输出悬空 aria-controls
+    expect(tabsOf(wrapper)[1].attributes("aria-controls")).toBeUndefined();
     // 首个面板渲染，未访问的面板不挂载（懒渲染）
     expect(panelsOf(wrapper)).toHaveLength(1);
     expect(panelsOf(wrapper)[0].attributes("id")).toBe("settings-pane-a");
@@ -98,11 +100,12 @@ describe("设置页骨架（左导航 + 内容纸）", () => {
     expect(tabsOf(wrapper)[0].attributes("aria-selected")).toBe("true");
   });
 
-  it("单面板：不渲染导航与面板头，内容纸铺满", () => {
-    const wrapper = mountShell([pane("only")]);
+  it("单面板：不渲染导航，但保留页内标题与说明", () => {
+    const wrapper = mountShell([pane("only", { desc: "说明" })]);
     expect(tabsOf(wrapper)).toHaveLength(0);
     expect(wrapper.find('[role="tablist"]').exists()).toBe(false);
-    expect(wrapper.find("h3").exists()).toBe(false);
+    expect(wrapper.find("h3").text()).toBe("ONLY");
+    expect(wrapper.text()).toContain("说明");
     expect(panelsOf(wrapper)).toHaveLength(1);
   });
 
@@ -120,6 +123,18 @@ describe("设置页骨架（左导航 + 内容纸）", () => {
     await tabsOf(wrapper)[1].trigger("click");
     await nextTick();
     expect(wrapper.find(".stub-item").exists()).toBe(true);
+  });
+
+  it("面板收缩时当前键回落到首个可用项（不留空白内容区）", async () => {
+    const wrapper = mountShell([pane("a"), pane("b")]);
+    await tabsOf(wrapper)[1].trigger("click");
+    await wrapper.setProps({ panes: [pane("a")] });
+
+    const visible = panelsOf(wrapper).filter(
+      el => (el.element as HTMLElement).style.display !== "none"
+    );
+    expect(visible).toHaveLength(1);
+    expect(visible[0].attributes("id")).toBe("settings-pane-a");
   });
 
   it("?tab= 命中时落地该面板，非法值回落首个", () => {
@@ -150,5 +165,59 @@ describe("设置页骨架（左导航 + 内容纸）", () => {
     // 表单型面板不渲染 custom 插槽内容
     expect(wrapper.find('[data-testid="custom-panel"]').exists()).toBe(true);
     expect(panelsOf(wrapper)).toHaveLength(2);
+  });
+});
+
+describe("设置页骨架：面板权限过滤", () => {
+  beforeEach(() => {
+    routeQuery.tab = "";
+    window.history.replaceState(null, "", "#/settings/basic");
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  const withAuth = (key: string, retrieve: boolean): settingsPane =>
+    ({
+      key,
+      label: key.toUpperCase(),
+      item: { localeName: "settingA", auth: { retrieve } }
+    }) as settingsPane;
+
+  it("无 retrieve 权限的表单面板不进导航（不渲染空白表单）", () => {
+    const wrapper = mountShell([
+      withAuth("viewable", true),
+      withAuth("hidden", false)
+    ]);
+
+    // 只剩一个可见面板 → 单面板形态（不渲染导航），面板内容正常挂载
+    expect(tabsOf(wrapper)).toHaveLength(0);
+    expect(panelsOf(wrapper)).toHaveLength(1);
+    expect(wrapper.find(".stub-item").exists()).toBe(true);
+    expect(wrapper.find('[data-testid="setting-no-permission"]').exists()).toBe(
+      false
+    );
+  });
+
+  it("自定义插槽面板（无 item）不受 retrieve 过滤", () => {
+    const wrapper = mountShell([
+      withAuth("viewable", true),
+      { key: "custom", label: "CUSTOM" }
+    ]);
+
+    expect(tabsOf(wrapper).map(tab => tab.text())).toEqual([
+      "VIEWABLE",
+      "CUSTOM"
+    ]);
+  });
+
+  it("全部面板都无权限时给出空态说明", () => {
+    const wrapper = mountShell([withAuth("a", false), withAuth("b", false)]);
+
+    expect(tabsOf(wrapper)).toHaveLength(0);
+    expect(wrapper.find('[data-testid="setting-no-permission"]').exists()).toBe(
+      true
+    );
   });
 });

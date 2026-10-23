@@ -18,6 +18,17 @@ export async function fetchOperationLogDetail({
   t: TFunction;
   row: Record<string, unknown>;
 }) {
+  // 正文按配置（OPERATION_LOG_FIELD_MAX=0）未落库：给可读占位，不按空串当「未截断」
+  if (row.body_dropped || row.response_result_dropped) {
+    const dropped = t("logsOperation.bodyDropped");
+    return {
+      ...row,
+      body: row.body_dropped ? dropped : row.body,
+      response_result: row.response_result_dropped
+        ? dropped
+        : row.response_result
+    };
+  }
   const truncated = Boolean(
     row.body_truncated || row.response_result_truncated
   );

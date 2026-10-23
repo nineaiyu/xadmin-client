@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useTaskExecution } from "./utils/hook";
 
 /**
@@ -12,14 +11,14 @@ defineOptions({
   name: "SystemTaskExecution" // 必须定义，用于菜单自动匹配组件
 });
 
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   listColumnsFormat,
   searchColumnsFormat,
   operationButtonsProps
-} = useTaskExecution(tableRef);
+} = useTaskExecution();
 </script>
 <template>
   <RePlusPage

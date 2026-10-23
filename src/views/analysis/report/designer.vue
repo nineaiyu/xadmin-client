@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
-import { useConfirm } from "@/hooks/useConfirm";
+import { useRoute, useRouter } from "vue-router";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { useSaveShortcut } from "@/hooks/useSaveShortcut";
 import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
@@ -51,8 +51,8 @@ defineOptions({ name: "DataReportDesigner" });
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const confirm = useConfirm();
 const canRun = hasAuth("run:DataReport");
+const canEditDesign = hasAuth("partialUpdate:DataReport");
 
 const report = ref<ReportItem | null>(null);
 const dataset = ref<DatasetItem | null>(null);
@@ -71,7 +71,9 @@ const loading = ref(true);
 
 /** 只读态：非创建者记录后端会拒绝一切写入（含「立即运行」），前端进入即置只读，
  *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
-const readonly = computed(() => report.value?.is_owner === false);
+const readonly = computed(
+  () => !canEditDesign || report.value?.is_owner === false
+);
 
 /** 保存/运行禁用态的悬浮说明：数据集不可见优先于只读提示 */
 const disabledTitle = computed(() =>
@@ -170,11 +172,6 @@ onMounted(async () => {
     }))
   };
   loading.value = false;
-  window.addEventListener("beforeunload", onBeforeUnload);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("beforeunload", onBeforeUnload);
 });
 
 const refreshData = () => {
@@ -238,20 +235,7 @@ async function runNow() {
 }
 
 /* ---------------- 未保存守卫 / 快捷键 ---------------- */
-const onBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (!dirty.value) return;
-  event.preventDefault();
-  event.returnValue = "";
-};
-
-onBeforeRouteLeave(async () => {
-  if (!dirty.value) return true;
-  return confirm(t("dataReport.leaveConfirm"), {
-    title: t("dataReport.unsaved"),
-    confirmButtonText: t("dataReport.leave"),
-    cancelButtonText: t("dataReport.stay")
-  });
-});
+useDesignerGuard({ dirty, namespace: "dataReport" });
 
 // Ctrl/Cmd+S 保存（与大屏设计器共用 composable；页面守卫在 save 内收敛）
 useSaveShortcut(() => void save());
@@ -262,7 +246,7 @@ const back = () => {
 </script>
 
 <template>
-  <div class="designer-root">
+  <div v-loading="loading" class="designer-root">
     <header class="designer-header">
       <span class="designer-title">
         {{ t("dataReport.designer") }}

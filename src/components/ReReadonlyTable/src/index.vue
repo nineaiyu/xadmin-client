@@ -18,6 +18,9 @@ import { syncTableA11y } from "@/utils/tableA11y";
  * 2. 空态：走表格 `#empty` 槽（不再「表格自带暂无数据 + 外层再挂一个 el-empty」双空态）；
  * 3. 尺寸：默认 `default`（与列表页行高一致，页级明细表直接对齐）；卡片内嵌的
  *    密集面板可显式传 `size="small"`（此时密度优先于对齐，需在调用处注明）。
+ *
+ * 分页与展开行：传 `pagination` 时在表下统一渲染分页器并抛出 `page-change`；
+ * 提供 `expand` 具名插槽时自动追加展开列（作用域与 el-table 展开列一致）。
  */
 defineOptions({ name: "ReReadonlyTable" });
 
@@ -34,6 +37,8 @@ const props = withDefaults(
     emptyText?: string;
     /** 可访问名（读屏播报的表格标题）；缺省时用通用词条 */
     label?: string;
+    /** 分页信息：传入即渲染表下分页器（翻页只抛事件，数据仍由父级拉取） */
+    pagination?: { total: number; page: number; pageSize: number };
   }>(),
   {
     rows: () => [],
@@ -44,9 +49,15 @@ const props = withDefaults(
     rowKey: "pk",
     maxHeight: undefined,
     emptyText: "",
-    label: ""
+    label: "",
+    pagination: undefined
   }
 );
+
+/** 具名插槽：列插槽名由 columns[].slot 声明，expand 为展开行内容 */
+defineSlots<Record<string, ((_scope: RecordType) => unknown) | undefined>>();
+
+const emit = defineEmits<{ "page-change": [page: number] }>();
 
 const { t } = useI18n();
 
@@ -65,37 +76,57 @@ watch(() => [props.rows, props.columns, a11yLabel.value], syncA11y, {
 </script>
 
 <template>
-  <el-table
-    ref="tableRef"
-    v-loading="props.loading"
-    :data="props.rows"
-    :size="props.size"
-    :border="props.border"
-    :row-key="props.rowKey"
-    :max-height="props.maxHeight"
-    :header-cell-style="TABLE_HEADER_CELL_STYLE"
-  >
-    <el-table-column
-      v-for="column in props.columns"
-      :key="column.prop ?? column.slot"
-      :prop="column.prop"
-      :label="column.label"
-      :width="column.width"
-      :min-width="column.minWidth"
-      :align="column.align"
-      :show-overflow-tooltip="column.showOverflowTooltip"
-      :fixed="column.fixed"
+  <div class="flex flex-col">
+    <el-table
+      ref="tableRef"
+      v-loading="props.loading"
+      class="flex-1"
+      :data="props.rows"
+      :size="props.size"
+      :border="props.border"
+      :row-key="props.rowKey"
+      :max-height="props.maxHeight"
+      :header-cell-style="TABLE_HEADER_CELL_STYLE"
     >
-      <!-- 复杂单元格（tag/进度/操作）由调用方插槽渲染：作用域与 el-table-column 一致 -->
-      <template v-if="column.slot" #default="scope">
-        <slot :name="column.slot" v-bind="scope" />
+      <!-- 展开行：仅在调用方提供 expand 插槽时出现，作用域与 el-table 展开列一致 -->
+      <el-table-column v-if="$slots.expand" type="expand">
+        <template #default="scope">
+          <slot name="expand" v-bind="scope" />
+        </template>
+      </el-table-column>
+      <el-table-column
+        v-for="column in props.columns"
+        :key="column.prop ?? column.slot"
+        :prop="column.prop"
+        :label="column.label"
+        :width="column.width"
+        :min-width="column.minWidth"
+        :align="column.align"
+        :show-overflow-tooltip="column.showOverflowTooltip"
+        :fixed="column.fixed"
+      >
+        <!-- 复杂单元格（tag/进度/操作）由调用方插槽渲染：作用域与 el-table-column 一致 -->
+        <template v-if="column.slot" #default="scope">
+          <slot :name="column.slot" v-bind="scope" />
+        </template>
+      </el-table-column>
+      <template #empty>
+        <ReEmpty
+          :description="props.emptyText || t('labels.noData')"
+          size="small"
+        />
       </template>
-    </el-table-column>
-    <template #empty>
-      <ReEmpty
-        :description="props.emptyText || t('labels.noData')"
+    </el-table>
+    <!-- 分页器：数据与页码由父级持有，这里只上报翻页意图 -->
+    <div v-if="props.pagination" class="mt-3 flex justify-end">
+      <el-pagination
+        layout="prev, pager, next"
         size="small"
+        :total="props.pagination.total"
+        :page-size="props.pagination.pageSize"
+        :current-page="props.pagination.page"
+        @current-change="page => emit('page-change', page)"
       />
-    </template>
-  </el-table>
+    </div>
+  </div>
 </template>

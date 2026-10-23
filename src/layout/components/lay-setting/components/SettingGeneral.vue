@@ -17,6 +17,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import { resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
+import { LOCALE_OPTIONS } from "@/constants/localeOptions";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import { useSiteWideEdit } from "../hooks/useSiteWideEdit";
 import PrefBlock from "./PrefBlock.vue";
@@ -69,10 +70,7 @@ const language = computed<string>({
   }
 });
 
-const languageOptions = computed(() => [
-  { label: "简体中文", value: "zh" },
-  { label: "English", value: "en" }
-]);
+const languageOptions = LOCALE_OPTIONS;
 
 /** 时区（顶栏时区组件与时钟展示消费同一存储项；空串 = 跟随浏览器） */
 const timezone = computed<string>({

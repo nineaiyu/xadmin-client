@@ -63,11 +63,21 @@ const goAccountBindings = () => {
   });
 };
 
-/** MFA 验证通过：与密码登录成功同一后置链路（写入 token → 初始化路由 → 主页） */
+/**
+ * MFA 验证通过：与密码登录成功同一后置链路（写入 token → 初始化路由 → 主页）。
+ *
+ * `must_change_password` 必须与普通成功分支同口径处理：巡检处置会把账号标记为
+ * 强制改密，若 MFA 分支忽略该标记，用户可借「OAuth + MFA」绕过改密引导直接进主页。
+ */
 const handleMfaSuccess = async (data: TokenInfo) => {
   setToken(data);
   await initRouter(true);
   message(t("login.loginSuccess"), { type: "success" });
+  if (data.must_change_password) {
+    message(t("forcePassword.tip"), { type: "warning", duration: 6000 });
+    await router.push("/settings/basic");
+    return;
+  }
   await router.push("/");
 };
 
@@ -109,7 +119,8 @@ onMounted(async () => {
         res.data.already ? t("oauth.bindAlready") : t("oauth.bindSuccess"),
         { type: "success" }
       );
-      await router.push({
+      // 绑定成功用 replace：callback 已被消费，不应留在历史栈里让「返回」再次命中
+      await router.replace({
         path: "/account-settings",
         query: { tab: "oauthBindings" }
       });
@@ -118,6 +129,11 @@ onMounted(async () => {
     if (res.data && "mfa_required" in res.data) {
       // 密码阶段（IdP 身份校验）已通过：进入登录 MFA 二次验证步骤
       mfaInfo.value = res.data;
+      return;
+    }
+    if (!res.data) {
+      // 200 + 空 data 属契约异常：不能静默停在空白页
+      error.value = t("oauth.emptyCallback");
       return;
     }
     if (res.data) {

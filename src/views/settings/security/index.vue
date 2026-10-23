@@ -138,8 +138,6 @@ const panes = computed<Array<settingsPane>>(() => [
   <setting :panes="panes">
     <template #blockIp>
       <RePlusPage
-        ref="tableRef"
-        :title="t('settingSecurity.blockIp')"
         :api="api"
         :auth="auth"
         locale-name="settingSecurity"

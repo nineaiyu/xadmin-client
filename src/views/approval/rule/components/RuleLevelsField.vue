@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { splitValues } from "@/views/approval/utils/assigneeValues";
 import type { RecordType } from "plus-pro-components";
 import RuleLevelsEditor from "./RuleLevelsEditor.vue";
@@ -49,8 +49,7 @@ function toPayload(rows: LevelRow[]): Record<string, unknown>[] {
 
 const rows = ref<LevelRow[]>(toRows(props.modelValue));
 
-// 首次挂载归一为服务端载荷形状（新建态的行带 assignee_list、无 order）
-onMounted(() => emit("update:modelValue", toPayload(rows.value)));
+// 仅编辑器实际变化时回写；挂载不回写，避免打开弹窗即被判为已修改
 
 // 编辑器就地增删改（不替换数组）也能回写父表单
 watch(rows, value => emit("update:modelValue", toPayload(value)), {

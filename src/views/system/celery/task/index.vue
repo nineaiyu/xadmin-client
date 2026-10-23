@@ -1,18 +1,18 @@
 <script lang="ts" setup>
 import { useTask } from "./utils/hook";
-import { ref } from "vue";
 
 defineOptions({
   name: "SystemTask" // 必须定义，用于菜单自动匹配组件
 });
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   baseColumnsFormat,
+  listColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useTask(tableRef);
+} = useTask();
 </script>
 <template>
   <RePlusPage
@@ -22,6 +22,7 @@ const {
     locale-name="systemTask"
     saved-views
     :base-columns-format="baseColumnsFormat"
+    :list-columns-format="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"
   />

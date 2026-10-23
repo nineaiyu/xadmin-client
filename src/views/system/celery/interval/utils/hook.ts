@@ -1,6 +1,7 @@
 import { intervalScheduleApi } from "@/api/task/task";
-import { reactive } from "vue";
-import { usePageAuth } from "@/router/utils";
+import dayjs from "dayjs";
+import { defineListPage, formatPageColumns } from "@/components/RePlusPage";
+import { useScheduleDelete } from "../../components/useScheduleDelete";
 
 /**
  * 固定间隔调度管理（django_celery_beat IntervalSchedule）。
@@ -9,13 +10,40 @@ import { usePageAuth } from "@/router/utils";
  * 行内值形如 {value:"minutes", label:"分钟"}，由 RePlusPage 内置
  * 渲染器直出可读标签，无需前端二次格式化。
  */
-export function useTaskInterval() {
-  // 权限判断，用于判断是否有该权限
-  const api = reactive(intervalScheduleApi);
-  const auth = usePageAuth();
+const PERIOD_UNITS: Record<string, dayjs.ManipulateType> = {
+  days: "day",
+  hours: "hour",
+  minutes: "minute",
+  seconds: "second",
+  microseconds: "millisecond"
+};
 
-  return {
-    api,
-    auth
-  };
+export function useTaskInterval() {
+  return defineListPage({
+    api: intervalScheduleApi,
+    localeName: "systemTaskInterval",
+    columns: ({ t, columns }) =>
+      formatPageColumns(columns, {
+        every: column => {
+          column["cellRenderer"] = ({ row }) => {
+            const period = String(
+              (row as { period?: { value?: string } }).period?.value ?? ""
+            );
+            const unit = PERIOD_UNITS[period];
+            const every = Number((row as { every?: number }).every ?? 0);
+            if (!unit || !every) return String(every);
+            const next = dayjs().add(every, unit).format("MM-DD HH:mm:ss");
+            return t("systemTaskInterval.nextApprox", { time: next });
+          };
+        }
+      }),
+    buttons: ({ t, api, auth, tableRef }) =>
+      useScheduleDelete({
+        t,
+        api,
+        auth,
+        tableRef,
+        kind: "interval"
+      })
+  });
 }

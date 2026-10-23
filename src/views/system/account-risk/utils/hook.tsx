@@ -1,17 +1,14 @@
-import { computed, reactive, shallowRef, type Ref } from "vue";
-import { useI18n } from "vue-i18n";
+import { computed, type Ref } from "vue";
 import { accountRiskApi } from "@/api/system/security";
-import { usePageAuth } from "@/router/utils";
-import { handleOperation, type OperationProps } from "@/components/RePlusPage";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { defineListPage } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
-import Search from "~icons/ep/search";
-import Edit from "~icons/ep/edit";
-import { normalizeError } from "@/utils/apiError";
 import { useRiskStats } from "./useRiskStats";
 import { useRiskDialogs } from "./useRiskDialogs";
 import { useRiskDetail } from "./useRiskDetail";
 import { useRiskColumns } from "./useRiskColumns";
+import { useRiskQuickFilter } from "./useRiskQuickFilter";
+import { useRiskScan } from "./useRiskScan";
+import { buildRiskPageButtons } from "./riskPageButtons";
 
 // 展示常量与纯函数已下沉 ./display；此处再导出保持既有导入面（单测直接自 ./hook 导入）
 export { metricEntriesOf, metricText } from "./display";
@@ -23,37 +20,38 @@ export { metricEntriesOf, metricText } from "./display";
  * useRiskDetail（详情抽屉）/ useRiskColumns（列渲染）；
  * 本模块只做装配与工具栏按钮。
  */
-export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
-  const { t } = useI18n();
+export function useAccountRisk(selectedRows: Ref<RecordType[]>) {
+  const { listColumnsFormat } = useRiskColumns();
 
-  const api = reactive(accountRiskApi);
-  const auth = usePageAuth(["scan", "handle", "batchHandle", "stats"]);
+  const page = defineListPage({
+    api: accountRiskApi,
+    localeName: "systemAccountRisk",
+    extraAuth: ["scan", "scanStatus", "handle", "batchHandle", "stats"],
+    columns: ({ columns }) => listColumnsFormat(columns)
+  });
+  const { api, auth, tableRef, t } = page;
 
-  const { statsGroups, refreshStats } = useRiskStats({ api, auth });
+  const { stats, statsGroups, statsLoading, statsError, refreshStats } =
+    useRiskStats({ api, auth });
   const { handleDialog } = useRiskDialogs({
     api,
     tableRef,
-    onHandled: refreshStats
+    onHandled: refreshStats,
+    actions: stats.value?.actions
   });
   const { openDetail } = useRiskDetail();
-  const { listColumnsFormat } = useRiskColumns();
   refreshStats();
 
-  /** 同步巡检：后端为同步调用（大库扫描耗时明显），按钮置 loading 防重复触发 */
-  const scan = (loading?: { value: boolean }) => {
-    if (loading) loading.value = true;
-    handleOperation({
-      t,
-      apiReq: api.scan().catch(normalizeError),
-      success() {
-        tableRef.value?.handleGetData?.();
-        refreshStats();
-      },
-      requestEnd() {
-        if (loading) loading.value = false;
-      }
-    });
-  };
+  /** 统计 chip 快捷筛选：按分组映射到对应搜索字段，空对象=清除筛选 */
+  const { beforeSearchSubmit, onStatsChip } = useRiskQuickFilter(tableRef);
+
+  /** 异步巡检：投递后轮询进度，终态刷新列表与统计 */
+  const {
+    scan,
+    scanning,
+    progress: scanProgress,
+    stage: scanStage
+  } = useRiskScan({ t, api, tableRef, refreshStats });
 
   /** 批量处置按钮显隐：由 selection-change 驱动的响应式选中态决定（点击时仍以
    * getSelectPks 实时取 pk，两处口径一致）；每行渲染回调查询选中数会随表格
@@ -62,55 +60,29 @@ export function useAccountRisk(tableRef: Ref, selectedRows: Ref<RecordType[]>) {
     Boolean(auth.batchHandle && selectedRows.value.length)
   );
 
-  const tableBarButtonsProps = shallowRef<OperationProps>({
-    buttons: [
-      {
-        text: t("accountRisk.scan"),
-        code: "scan",
-        props: { type: "primary", icon: useRenderIcon(Search) },
-        onClick: ({ loading }) => scan(loading),
-        show: auth.scan
-      },
-      {
-        text: t("accountRisk.batchHandle"),
-        code: "batchHandle",
-        props: { type: "warning", plain: true, icon: useRenderIcon(Edit) },
-        onClick: () => {
-          const pks = tableRef.value?.getSelectPks?.() ?? [];
-          if (!pks.length) return;
-          handleDialog(pks);
-        },
-        show: canBatchHandle
-      }
-    ]
-  });
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 180,
-    buttons: [
-      {
-        text: t("accountRisk.detail"),
-        code: "detail",
-        props: { type: "primary", link: true },
-        onClick: ({ row }) => openDetail(row),
-        show: true
-      },
-      {
-        text: t("accountRisk.handle"),
-        code: "handle",
-        props: { type: "warning", link: true },
-        onClick: ({ row }) => handleDialog([row.pk]),
-        show: auth.handle
-      }
-    ]
+  const { tableBarButtonsProps, operationButtonsProps } = buildRiskPageButtons({
+    t,
+    auth,
+    tableRef,
+    canBatchHandle,
+    scan,
+    handleDialog,
+    openDetail
   });
 
   return {
-    api,
-    auth,
+    ...page,
+    stats,
     statsGroups,
+    statsLoading,
+    statsError,
+    refreshStats,
+    beforeSearchSubmit,
+    onStatsChip,
     tableBarButtonsProps,
     operationButtonsProps,
-    listColumnsFormat
+    scanning,
+    scanProgress,
+    scanStage
   };
 }

@@ -119,6 +119,32 @@ describe("ReDialog 弹层容器", () => {
     expect(dialogStore.value[0]?.visible).toBe(false);
   });
 
+  it("beforeClose：取消按钮先走守卫，done 后才真正关闭", async () => {
+    const beforeClose = vi.fn((_done: () => void) => undefined);
+    mountContainer();
+    addDialog({
+      title: "编辑",
+      contentRenderer: () => h("div", "正文"),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    const cancel = footerButtons().find(
+      button => button.textContent?.trim() === "取消"
+    );
+    (cancel as HTMLElement | undefined)?.click();
+    await nextTick();
+
+    expect(beforeClose).toHaveBeenCalledTimes(1);
+    // 守卫未 done：弹层保持打开
+    expect(dialogStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0]();
+    await nextTick();
+    expect(dialogStore.value[0]?.visible).toBe(false);
+  });
+
   it("多弹层并存：全屏状态按弹层隔离，互不串扰且可独立退出", async () => {
     mountContainer();
     addDialog({

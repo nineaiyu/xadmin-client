@@ -1,20 +1,17 @@
-import { reactive, shallowRef, type Ref } from "vue";
+import { reactive, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
-import { buildScopeIndex } from "@/utils/scopeDisplay";
-import { isSuccess } from "@/api/types";
-import {
-  apiApplicationApi,
-  loadScopeCatalog,
-  type ApiApplicationItem
-} from "@/api/identity/open";
+import { apiApplicationApi } from "@/api/identity/open";
 import { useApiAppCredential } from "./useApiAppCredential";
 import { useApiAppActions } from "./useApiAppActions";
 import { useApiAppUsage } from "./useApiAppUsage";
 import { useApiApplicationFormOptions } from "./useApiApplicationFormOptions";
 import { useApiAppPanel } from "./useApiAppPanel";
+import { useApiAppGrantsDialog } from "./useApiAppGrantsDialog";
 import { useApiAppColumns } from "./useApiAppColumns";
 import { useApiAppButtons } from "./useApiAppButtons";
+import { useApiAppScopeIndex } from "./useApiAppScopeIndex";
+import { useApiAppOpenDialog } from "./useApiAppOpenDialog";
 
 /**
  * API 应用（开放平台）：CRUD + 重置密钥 + 回调测试 + 统一「管理」抽屉。
@@ -27,18 +24,20 @@ import { useApiAppButtons } from "./useApiAppButtons";
  *   并把「资源授权」注入为扩展字段（独立端点 + 全量替换 + 加载失败跳过保存）；
  * - 一次性明文密钥弹窗为只读展示场景（既定保留手写），状态在本 hook 内维护，
  *   由页面模板渲染；
- * - 删除按钮保持关闭（现状页面不提供删除入口，迁移不改行为）；
+ * - 删除入口按 destroy:IntegrationApiApp 显示（带二次确认；删除会级联失效凭证）；
  * - is_active 自定义开关渲染：页面接管启停的唯一入口，失败回滚行内值。
  */
 export function useApiApplication(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(apiApplicationApi);
   const auth = usePageAuth("IntegrationApiApp");
-  auth.destroy = false;
   const canEdit = hasAuth("partialUpdate:IntegrationApiApp");
   const canRegenerate = hasAuth("regenerateSecret:IntegrationApiApp");
   const canTestCallback = hasAuth("testCallback:IntegrationApiApp");
   const canStats = hasAuth("stats:IntegrationApiApp");
+  const canManageGrants =
+    hasAuth("listGrants:IntegrationApiApp") &&
+    hasAuth("updateGrants:IntegrationApiApp");
 
   const refresh = () => tableRef.value?.handleGetData();
 
@@ -63,21 +62,11 @@ export function useApiApplication(tableRef: Ref) {
     setUsageDays
   } = useApiAppUsage();
 
-  /** 抽屉内「编辑」与工具栏默认「新增」共用框架表单入口 */
-  const openDialog = (row: ApiApplicationItem | null) => {
-    if (row) tableRef.value?.handleAddOrEdit?.(false, row);
-    else tableRef.value?.handleAddOrEdit?.(true);
-  };
+  const { openDialog } = useApiAppOpenDialog(tableRef);
 
-  /* ---------------- 接口范围展示 ---------------- */
-  // 目录只用于「把锚定正则还原成人可读路径」：拉取失败仅退回条目原文，不影响列表
-  const scopeIndex = shallowRef(buildScopeIndex());
-  loadScopeCatalog()
-    .then(res => {
-      if (!isSuccess(res)) return;
-      scopeIndex.value = buildScopeIndex(res.data?.groups);
-    })
-    .catch(() => undefined);
+  const { openGrants } = useApiAppGrantsDialog({ t, refresh });
+
+  const { scopeIndex } = useApiAppScopeIndex();
 
   const { openApiAppPanel } = useApiAppPanel({
     t,
@@ -87,7 +76,14 @@ export function useApiApplication(tableRef: Ref) {
     confirmRegenerate,
     runCallbackProbe,
     openDialog,
-    flags: { canStats, canRegenerate, canTestCallback, canEdit }
+    openGrants,
+    flags: {
+      canStats,
+      canRegenerate,
+      canTestCallback,
+      canEdit,
+      canManageGrants
+    }
   });
 
   const { listColumnsFormat } = useApiAppColumns({

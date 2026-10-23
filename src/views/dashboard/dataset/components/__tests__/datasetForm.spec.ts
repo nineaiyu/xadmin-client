@@ -7,9 +7,8 @@ import type { DatasetItem, DatasetMeta } from "@/api/dataset/datasets";
 /**
  * 数据集表单（DatasetForm）单测。
  *
- * 核心回归：`op=in` 过滤的 value 按逗号拆分为数组提交——后端强制 in 的 value
- * 为 list/tuple，字符串原样提交必 400（输入框按逗号串展示，placeholder 已
- * 暗示该用法）；编辑回显时数组 join 回逗号串（双向可逆）。
+ * 核心回归：`op=in` 过滤的 value 以数组/tag 输入提交——值本身可包含逗号，
+ * 不再做 join/split 往返（旧实现会拆散含逗号的值）。
  */
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -69,7 +68,7 @@ const payloadOf = (wrapper: ReturnType<typeof mountForm>) =>
   ).getPayload();
 
 describe("DatasetForm op=in 过滤值", () => {
-  it("编辑回显：数组 value 以逗号串展示，提交拆回数组（双向可逆）", () => {
+  it("编辑回显：数组 value 原样保留（不 join）", () => {
     const wrapper = mountForm(ROW);
     const filters = payloadOf(wrapper)!.filters as Array<{
       field: string;
@@ -89,16 +88,16 @@ describe("DatasetForm op=in 过滤值", () => {
     });
   });
 
-  it("用户手输逗号串：拆分、去空白、丢弃空段", () => {
+  it("含逗号的值保持完整，不做字符串拆分", () => {
     const row: DatasetItem = {
       ...ROW,
-      filters: [{ field: "username", op: "in", value: "a, b ,,c" }]
+      filters: [{ field: "username", op: "in", value: ["a,b", "c"] }]
     };
     const wrapper = mountForm(row);
     const filters = payloadOf(wrapper)!.filters as Array<{
       value: unknown;
     }>;
-    expect(filters[0].value).toEqual(["a", "b", "c"]);
+    expect(filters[0].value).toEqual(["a,b", "c"]);
   });
 
   it("新建未填必填项：getPayload 返回 null（调用方保持弹窗打开）", () => {

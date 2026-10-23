@@ -13,7 +13,7 @@ import type { useI18n } from "vue-i18n";
 type TFunction = ReturnType<typeof useI18n>["t"];
 type TaskApiLike = Pick<
   typeof periodicTaskApi,
-  "batchRun" | "batchEnable" | "batchUpdate"
+  "batchRun" | "batchEnable" | "batchDisable"
 >;
 type TaskAuth = {
   [key: string]: boolean | undefined;
@@ -27,15 +27,12 @@ export function buildTaskToolbarButtons({
   t,
   api,
   auth,
-  tableRef,
-  batchUpdateButton
+  tableRef
 }: {
   t: TFunction;
   api: TaskApiLike;
   auth: TaskAuth;
   tableRef: Ref;
-  /** 批量更新按钮（由 useBatchUpdate 装配，字段白名单：启用状态） */
-  batchUpdateButton: OperationButtonsRow;
 }): OperationButtonsRow[] {
   /** 空勾选时提示并返回，否则进入 loading 并发起标准请求（成功后刷新列表） */
   const runBatch = (
@@ -91,7 +88,7 @@ export function buildTaskToolbarButtons({
       },
       onClick: ({ loading }) => {
         const pks = tableRef.value?.getSelectPks("pk") ?? [];
-        runBatch(pks, api.batchEnable(pks, true), loading);
+        runBatch(pks, api.batchEnable(pks), loading);
       },
       show: auth.batchEnable
     },
@@ -108,11 +105,10 @@ export function buildTaskToolbarButtons({
       },
       onClick: ({ loading }) => {
         const pks = tableRef.value?.getSelectPks("pk") ?? [];
-        runBatch(pks, api.batchEnable(pks, false), loading);
+        runBatch(pks, api.batchDisable(pks), loading);
       },
       index: 3,
       show: auth.batchDisable
-    },
-    batchUpdateButton
+    }
   ];
 }

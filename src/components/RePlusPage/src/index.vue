@@ -238,10 +238,13 @@ function getTableRef() {
 }
 
 // 内建回收站入口（计算属性见 utils/useRecycleBin）
-const { recycleBinEnabled, recycleBinColumns, recycleBinApi } = useRecycleBin(
-  props,
-  listColumns
-);
+const {
+  recycleBinEnabled,
+  recycleBinColumns,
+  recycleBinApi,
+  canRestore: canRecycleRestore,
+  canPurge: canRecyclePurge
+} = useRecycleBin(props, listColumns);
 
 defineExpose({
   dataList,
@@ -381,6 +384,8 @@ defineExpose({
                 :api="recycleBinApi"
                 :locale-name="localeName"
                 :columns="recycleBinColumns"
+                :can-restore="canRecycleRestore"
+                :can-purge="canRecyclePurge"
                 @changed="handleGetData"
               />
               <slot name="barButtons" />

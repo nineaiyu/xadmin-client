@@ -51,15 +51,15 @@ describe("createAiProfileForm", () => {
     expect(form).toEqual({ ...AI_PROFILE_DEFAULTS });
   });
 
-  it("编辑历史档案时 null 采样参数回填默认值，且不回显密钥", () => {
+  it("编辑历史档案时保留 null 采样参数（不悄悄写回推荐值），且不回显密钥", () => {
     const form = createAiProfileForm(row({ purpose: "embedding" }));
 
     expect(form.api_key).toBe("");
-    expect(form.temperature).toBe(0.2);
-    expect(form.max_tokens).toBe(2048);
-    expect(form.top_p).toBe(1);
-    expect(form.frequency_penalty).toBe(0);
-    expect(form.presence_penalty).toBe(0);
+    expect(form.temperature).toBeNull();
+    expect(form.max_tokens).toBeNull();
+    expect(form.top_p).toBeNull();
+    expect(form.frequency_penalty).toBeNull();
+    expect(form.presence_penalty).toBeNull();
     expect(form.purpose).toBe("embedding");
   });
 
@@ -123,5 +123,15 @@ describe("buildAiProfilePayload", () => {
 
     form.api_key = "sk-new";
     expect(buildAiProfilePayload(form, true).api_key).toBe("sk-new");
+  });
+
+  it("编辑提交原样保留未配置的采样参数（null）", () => {
+    const payload = buildAiProfilePayload(createAiProfileForm(row()), true);
+
+    expect(payload.temperature).toBeNull();
+    expect(payload.max_tokens).toBeNull();
+    expect(payload.top_p).toBeNull();
+    expect(payload.frequency_penalty).toBeNull();
+    expect(payload.presence_penalty).toBeNull();
   });
 });

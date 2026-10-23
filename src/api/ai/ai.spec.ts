@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { requestMock, postSseMock } = vi.hoisted(() => ({
+const { requestMock, createSseStreamMock } = vi.hoisted(() => ({
   requestMock: vi.fn(),
-  postSseMock: vi.fn()
+  createSseStreamMock: vi.fn()
 }));
 
 vi.mock("@/utils/http", () => ({
@@ -15,20 +15,21 @@ vi.mock("@/utils/http", () => ({
 }));
 
 vi.mock("@/utils/sse", () => ({
-  postSse: postSseMock
+  createSseStream: createSseStreamMock
 }));
 
 import { aiAssistantApi, aiProfileApi, listAiProfileRows } from "./ai";
 
 /**
  * api/ai 薄封装契约测试：逐方法断言「方法 + URL + 载荷」，SSE 流断言
- * 「URL + 请求体 + 帧分发」——URL 拼错 / 载荷形态漂移时在构建期变红。
+ * 「URL + 请求体 + 事件透传」——URL 拼错 / 载荷形态漂移时在构建期变红；
+ * 语义帧分发由 utils/sse.spec 统一覆盖。
  */
 
 describe("aiProfileApi 档案管理", () => {
   beforeEach(() => {
     requestMock.mockClear();
-    postSseMock.mockClear();
+    createSseStreamMock.mockClear();
   });
 
   it("activate / deactivate / test 均为 POST 动作端点", () => {
@@ -76,7 +77,7 @@ describe("aiProfileApi 档案管理", () => {
 describe("aiAssistantApi 助手端点", () => {
   beforeEach(() => {
     requestMock.mockClear();
-    postSseMock.mockClear();
+    createSseStreamMock.mockClear();
   });
 
   it("status / tools 无参 GET", () => {
@@ -217,10 +218,10 @@ describe("aiAssistantApi 助手端点", () => {
   });
 });
 
-describe("AI SSE 流式契约（统一帧分发）", () => {
+describe("AI SSE 流式端点契约", () => {
   beforeEach(() => {
     requestMock.mockClear();
-    postSseMock.mockClear();
+    createSseStreamMock.mockClear();
   });
 
   function sseEvents() {
@@ -233,84 +234,34 @@ describe("AI SSE 流式契约（统一帧分发）", () => {
     };
   }
 
-  function emitFrame(
-    postSseMock: ReturnType<typeof vi.fn>,
-    frame: {
-      event: string;
-      data: string;
-    }
-  ) {
-    const options = postSseMock.mock.calls[0][2];
-    options.onFrame(frame);
-  }
-
-  it("askStream POST SSE 端点携带 question，并按事件分发帧", () => {
+  it("askStream POST SSE 端点携带 question，并透传事件与 signal", () => {
     const events = sseEvents();
-    aiAssistantApi.askStream("你好", events);
-    expect(postSseMock).toHaveBeenCalledTimes(1);
-    const [url, body] = postSseMock.mock.calls[0];
-    expect(url).toBe("/api/ai/assistant/ask/stream");
-    expect(body).toEqual({ question: "你好" });
+    const controller = new AbortController();
+    aiAssistantApi.askStream("你好", events, controller.signal);
 
-    emitFrame(postSseMock, {
-      event: "meta",
-      data: JSON.stringify({ feature: "docs" })
-    });
-    emitFrame(postSseMock, {
-      event: "reasoning",
-      data: JSON.stringify({ delta: "思考中" })
-    });
-    emitFrame(postSseMock, {
-      event: "delta",
-      data: JSON.stringify({ delta: "答案" })
-    });
-    emitFrame(postSseMock, {
-      event: "done",
-      data: JSON.stringify({ answer: "答案", sources: [] })
-    });
-    expect(events.onMeta).toHaveBeenCalledWith({ feature: "docs" });
-    expect(events.onReasoning).toHaveBeenCalledWith("思考中");
-    expect(events.onDelta).toHaveBeenCalledWith("答案");
-    expect(events.onDone).toHaveBeenCalledWith({ answer: "答案", sources: [] });
-    expect(events.onError).not.toHaveBeenCalled();
-  });
-
-  it("error 帧分发 onError；reasoning/delta 缺 delta 时回退空串", () => {
-    const events = sseEvents();
-    aiAssistantApi.askStream("q", events);
-    emitFrame(postSseMock, {
-      event: "error",
-      data: JSON.stringify({ detail: "配额用尽" })
-    });
-    emitFrame(postSseMock, { event: "reasoning", data: "{}" });
-    emitFrame(postSseMock, { event: "delta", data: "{}" });
-    expect(events.onError).toHaveBeenCalledWith({ detail: "配额用尽" });
-    expect(events.onReasoning).toHaveBeenCalledWith("");
-    expect(events.onDelta).toHaveBeenCalledWith("");
-  });
-
-  it("非 JSON 帧静默忽略；空 data 帧按空载荷分发（delta 回退空串）", () => {
-    const events = sseEvents();
-    aiAssistantApi.askStream("q", events);
-    emitFrame(postSseMock, { event: "delta", data: "not-json{" });
-    expect(events.onDelta).not.toHaveBeenCalled(); // 解析失败直接忽略
-    emitFrame(postSseMock, { event: "delta", data: "" });
-    expect(events.onDelta).toHaveBeenCalledWith(""); // 空载荷 = {}，delta 缺省回退空串
+    expect(createSseStreamMock).toHaveBeenCalledWith(
+      "/api/ai/assistant/ask/stream",
+      { question: "你好" },
+      events,
+      controller.signal
+    );
   });
 
   it("nlInterpretStream / actionInterpretStream 端点与载荷", () => {
     const events = sseEvents();
     aiAssistantApi.nlInterpretStream("近 7 天登录", events);
-    expect(postSseMock.mock.calls[0][0]).toBe(
+    expect(createSseStreamMock.mock.calls[0][0]).toBe(
       "/api/ai/assistant/nl-query/interpret/stream"
     );
-    expect(postSseMock.mock.calls[0][1]).toEqual({ question: "近 7 天登录" });
+    expect(createSseStreamMock.mock.calls[0][1]).toEqual({
+      question: "近 7 天登录"
+    });
 
     aiAssistantApi.actionInterpretStream("帮我把用户 a 禁用", events);
-    expect(postSseMock.mock.calls[1][0]).toBe(
+    expect(createSseStreamMock.mock.calls[1][0]).toBe(
       "/api/ai/assistant/action/interpret/stream"
     );
-    expect(postSseMock.mock.calls[1][1]).toEqual({
+    expect(createSseStreamMock.mock.calls[1][1]).toEqual({
       message: "帮我把用户 a 禁用"
     });
   });

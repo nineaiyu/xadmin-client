@@ -96,7 +96,7 @@ export interface WSOptions {
   /**
    * 关闭连接回调
    */
-  closeCallback?: (socket: WebSocket) => void;
+  closeCallback?: (socket: WebSocket, event?: CloseEvent) => void;
   /**
    * 连接异常回调
    */
@@ -230,10 +230,12 @@ class WS {
           this.errorCallback(socket);
         }
       };
-      socket.onclose = () => {
+      socket.onclose = (event: CloseEvent) => {
         if (this.closeCallback) {
-          this.closeCallback(socket);
+          this.closeCallback(socket, event);
         }
+        // 4403 = 服务端权限拒绝：重连也不会成功，停止退避循环
+        if (event?.code === 4403) return;
         // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
         const backoff = Math.min(
           timeout * 2 ** this.reconnectCount,

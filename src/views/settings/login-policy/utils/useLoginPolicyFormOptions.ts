@@ -1,12 +1,17 @@
-import { ref, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 import type { useI18n } from "vue-i18n";
 import { buildLoginPolicyRules } from "./loginPolicyFormRules";
+import { targetValueColumn, weekdayColumn } from "./loginPolicyColumns";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
+/** LabeledChoiceField 原始值可能是 {value,label} 或裸字符串 */
+const choiceValue = (raw: unknown): string =>
+  typeof raw === "object" && raw !== null
+    ? String((raw as { value?: string }).value ?? "all")
+    : String(raw ?? "all");
 
 /**
  * 登录访问策略表单的元数据微调。
@@ -22,6 +27,10 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 export function useLoginPolicyFormOptions({ t }: { t: TFunction }) {
   /** 弹层实时表单快照（跨字段规则的输入） */
   const liveForm = ref<RecordType>({});
+  /** target_value 的渲染形态跟随 target_type（避免「全部用户」还显示目标输入框） */
+  const targetType = computed(
+    () => choiceValue(liveForm.value.target_type) as "all" | "user" | "role"
+  );
 
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
@@ -38,41 +47,27 @@ export function useLoginPolicyFormOptions({ t }: { t: TFunction }) {
       // 新建态默认选中项（模型默认值 Action.REJECT / TargetType.ALL）；
       // 编辑态沿用行数据里的 {value,label} 对象
       row: {
-        target_type: ({ rawRow }: { rawRow?: RecordType }) =>
-          rawRow?.target_type ?? { value: "all" },
+        target_type: ({ rawRow }: { rawRow?: RecordType }) => {
+          const value = rawRow?.target_type ?? {
+            value: "all",
+            label: t("loginPolicy.targetAll")
+          };
+          liveForm.value = { ...liveForm.value, target_type: value };
+          return value;
+        },
         action: ({ rawRow }: { rawRow?: RecordType }) =>
-          rawRow?.action ?? { value: "reject" }
+          rawRow?.action ?? {
+            value: "reject",
+            label: t("loginPolicy.actionReject")
+          }
       },
       columns: {
         target_type: ({ column }) => {
           column.label = t("loginPolicy.targetType");
           return column;
         },
-        target_value: ({ column }) => {
-          column.label = t("loginPolicy.targetValue");
-          column.fieldProps = {
-            ...column.fieldProps,
-            placeholder: t("loginPolicy.targetValuePlaceholder")
-          };
-          return column;
-        },
-        weekdays: ({ column }) => {
-          // JSON 编辑器让位给多选：renderField 优先级高于 valueType，需先清空
-          delete column.renderField;
-          column.label = t("loginPolicy.weekdays");
-          column.valueType = "select";
-          column.fieldProps = {
-            ...column.fieldProps,
-            multiple: true,
-            collapseTags: true,
-            clearable: true
-          };
-          column.options = WEEKDAYS.map(value => ({
-            value,
-            label: t(`loginPolicy.weekday${value}`)
-          }));
-          return column;
-        },
+        target_value: targetValueColumn(t, targetType),
+        weekdays: weekdayColumn(t),
         ip_ranges: ({ column }) => {
           column.label = t("loginPolicy.ipRanges");
           column.valueType = "textarea";
@@ -106,7 +101,11 @@ export function useLoginPolicyFormOptions({ t }: { t: TFunction }) {
         // time-picker 清空给空串，后端 TimeField 只接受 null 或 HH:mm:ss
         formData.start_time = formData.start_time || null;
         formData.end_time = formData.end_time || null;
-        formData.target_value = String(formData.target_value ?? "").trim();
+        if (choiceValue(formData.target_type) === "all") {
+          formData.target_value = "";
+        } else {
+          formData.target_value = String(formData.target_value ?? "").trim();
+        }
         formData.weekdays = Array.isArray(formData.weekdays)
           ? formData.weekdays.map(Number)
           : [];

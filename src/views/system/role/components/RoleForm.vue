@@ -5,12 +5,12 @@ import { isSuccess } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import MenuPermissionTree from "./MenuPermissionTree.vue";
-import { menuFieldKey } from "../utils/treeKeys";
+import MenuPermissionTree from "@/components/ReMenuPermissionTree";
+import { menuFieldKey } from "@/components/ReMenuPermissionTree";
 import type {
   PermissionSubmitPayload,
   PermissionTreeNode
-} from "../utils/permissionTree";
+} from "@/components/ReMenuPermissionTree";
 import type { BaseApi } from "@/api/base";
 import type { Auths } from "@/router/utils";
 

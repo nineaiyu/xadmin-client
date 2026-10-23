@@ -17,19 +17,26 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  * 走 router.replace 会整页重挂载、把刚打开的详情弹窗卸载。
  */
 function stripPkFromAddressBar() {
+  const pageParams = new URLSearchParams(location.search);
+  const pageHadPk = pageParams.has("pk");
+  if (pageHadPk) pageParams.delete("pk");
   const hash = location.hash;
   const queryIndex = hash.indexOf("?");
-  if (queryIndex === -1) return;
-  const params = new URLSearchParams(hash.slice(queryIndex + 1));
-  if (!params.has("pk")) return;
-  params.delete("pk");
-  const search = params.toString();
+  const hashParams =
+    queryIndex === -1
+      ? new URLSearchParams()
+      : new URLSearchParams(hash.slice(queryIndex + 1));
+  const hashHadPk = hashParams.has("pk");
+  if (hashHadPk) hashParams.delete("pk");
+  if (!pageHadPk && !hashHadPk) return;
+  const pageSearch = pageParams.toString();
+  const hashSearch = hashParams.toString();
   history.replaceState(
     history.state,
     "",
-    `${location.pathname}${location.search}${hash.slice(0, queryIndex)}${
-      search ? `?${search}` : ""
-    }`
+    `${location.pathname}${pageSearch ? `?${pageSearch}` : ""}${
+      queryIndex === -1 ? hash : hash.slice(0, queryIndex)
+    }${hashSearch ? `?${hashSearch}` : ""}`
   );
 }
 
@@ -39,18 +46,21 @@ function stripPkFromAddressBar() {
 export function createUserNoticeDialog({
   t,
   api,
-  tableRef
+  tableRef,
+  canBatchRead
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userNoticeReadApi>;
   tableRef: Ref;
+  /** 无 batchRead 权限：打开详情不自动标记已读（避免点开必 403） */
+  canBatchRead: boolean;
 }) {
   return (
     row: RecordType,
     routeParams: RecordType | null = null,
     searchFields: Ref<RecordType> | null = null
   ) => {
-    if (row.unread) {
+    if (row.unread && canBatchRead) {
       // 行内就地已读：失败不阻断弹窗（关闭时列表会刷新）；业务码失败点名提示，
       // HTTP 层异常交由拦截器
       api

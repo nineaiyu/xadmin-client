@@ -38,6 +38,5 @@ defineExpose({
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
-    :allowAsyncExport="false"
   />
 </template>

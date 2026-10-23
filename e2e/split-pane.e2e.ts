@@ -153,6 +153,8 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
     .poll(() => leftPanePercent(page), { timeout: PANEL_ACTION_TIMEOUT })
     .toBeLessThan(25);
   const strayDrawer = page.locator(".el-drawer:visible").first();
+  // 第二次 click 命中用户名后抽屉异步打开：给一个短落位窗口再判断/关闭
+  await page.waitForTimeout(300);
   if (await strayDrawer.count()) {
     await page.keyboard.press("Escape");
     await expect(strayDrawer).toBeHidden({ timeout: 5_000 });
@@ -160,6 +162,14 @@ test("分栏拖拽持久化、刷新保持与重置", async ({ page }) => {
 
   // ---- 中央重置按钮：单击（无位移）触发重置 ----
   await dragResizer(page, 0.6);
+  // 抽屉遮罩仍可能吞掉拖拽（首次判断后异步打开）：关闭后重试一次
+  if ((await leftPanePercent(page)) < 30) {
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".el-drawer:visible")).toHaveCount(0, {
+      timeout: 5_000
+    });
+    await dragResizer(page, 0.6);
+  }
   expect(await leftPanePercent(page)).toBeGreaterThan(55);
   // 单击重置：点击可能落在重排瞬间（未命中分隔条）或重置链路在高负载下变慢，
   // 以「点击 → 复测」的轮询替代单次点击（首次即生效时不再补点）

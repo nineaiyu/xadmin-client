@@ -40,6 +40,8 @@ const matchOptions = defineModel<FieldLookupItem[]>("matchOptions", {
 const { t } = useI18n();
 
 const fieldMeta = ref<Record<string, unknown> | null>(null);
+/** 匹配符候选加载失败：静默留空会让用户误以为字段不支持匹配 */
+const lookupError = ref("");
 
 const table = computed(() => {
   const list = path.value ?? [];
@@ -94,13 +96,23 @@ const fieldMetaText = computed(() => {
 async function loadMatchOptions() {
   matchOptions.value = [];
   fieldMeta.value = null;
+  lookupError.value = "";
   // 通配字段（全部字段）没有具体类型，读取侧固定 match=all，无需候选
   if (!table.value || !field.value || field.value === "*") return;
   if (!hasAuth("lookups:SystemModelLabelField")) return;
   const res = await modelLabelFieldApi
     .lookups({ table: table.value, field: field.value })
     .catch(() => null);
-  if (!res || !isSuccess(res)) return;
+  if (!res) {
+    lookupError.value = t("systemPermission.editor.lookupFailed");
+    return;
+  }
+  if (!isSuccess(res)) {
+    lookupError.value = String(
+      res.detail || t("systemPermission.editor.lookupFailed")
+    );
+    return;
+  }
   matchOptions.value = res.data as FieldLookupItem[];
   fieldMeta.value =
     (res as { field_meta?: Record<string, unknown> }).field_meta ?? null;
@@ -153,6 +165,9 @@ function handlePathChange(value: unknown) {
       </template>
     </el-cascader>
     <span v-if="error" class="rule-edit-error">{{ error }}</span>
+    <span v-else-if="lookupError" class="rule-edit-error">{{
+      lookupError
+    }}</span>
     <span v-else-if="field === '*'" class="rule-edit-meta">{{
       t("systemPermission.editor.scopeAllTip")
     }}</span>

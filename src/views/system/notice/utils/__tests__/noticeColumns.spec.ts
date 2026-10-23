@@ -11,6 +11,16 @@ const mocks = vi.hoisted(() => ({
 vi.mock("element-plus", () => ({
   ElMessageBox: { confirm: mocks.confirm }
 }));
+vi.mock("@/hooks/useConfirm", () => ({
+  useConfirm: () => async () => {
+    try {
+      await mocks.confirm();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}));
 vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 vi.mock("@/components/RePlusPage/src/components/WangEditor.vue", () => ({
   default: { name: "WangEditor", render: () => null }

@@ -34,6 +34,13 @@ export function createOnlineButtons({
       {
         text: t("systemUser.logout"),
         code: "delete",
+        // 单会话下线的确认文案（默认「确定删除？」与语义不符）
+        confirm: {
+          title: row =>
+            t("systemOnline.logoutConfirm", {
+              name: row?.creator?.username ?? row?.creator?.pk ?? ""
+            })
+        },
         props: (row, button) => {
           return {
             ...button?._?.props,

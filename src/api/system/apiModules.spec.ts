@@ -92,8 +92,8 @@ describe("userOnlineApi 在线用户", () => {
     userOnlineApi.forceLogout(5);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/identity/online/5/force-logout",
-      { params: {}, data: {} },
+      "/api/identity/online/force-logout",
+      { params: {}, data: { user_pk: 5 } },
       {}
     );
 

@@ -57,7 +57,9 @@ const auth = ref({
   backends: hasAuth("backends:SystemMsgSubscription"),
   // 消息模板注册表端点（/api/notifications/message-templates）的权限点挂在
   // 本页面（SettingMessage）名下，与订阅面板的模型级权限码来源不同
-  templateList: hasAuth("list:SettingMessage")
+  templateList: hasAuth("list:SettingMessage"),
+  // 订阅面板「发送测试」的独立权限点（编辑接收人复用 partialUpdate）
+  test: hasAuth("test:SystemMsgSubscription")
 });
 
 const panes = computed<Array<settingsPane>>(() => [

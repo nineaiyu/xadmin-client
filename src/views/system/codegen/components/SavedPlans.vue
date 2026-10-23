@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
+import { downloadBlob } from "@/utils/download";
 import { useConfirm } from "@/hooks/useConfirm";
-import { exportPlan, type SavedPlan } from "../utils/plan-storage";
+import { useUserStoreHook } from "@/store/modules/user";
+import { exportPlan, type SavedPlan } from "../utils/plan-service";
 
 defineOptions({ name: "CodegenSavedPlans" });
 
@@ -16,14 +18,33 @@ const emit = defineEmits<{
   load: [plan: SavedPlan];
   remove: [pk: string];
   save: [name: string, isShared: boolean];
+  update: [pk: string, patch: { name?: string; is_shared?: boolean }];
   importPlans: [json: string];
 }>();
 
 const { t } = useI18n();
 const confirm = useConfirm();
+const currentUsername = useUserStoreHook().username;
 
 /** 当前选中项（按主键，允许本人与共享方案同名共存） */
 const selected = ref("");
+/** 共享方案仅创建者可删除；本人方案始终可删 */
+const canRemoveSelected = computed(() => {
+  const plan = props.plans.find(item => item.pk === selected.value);
+  if (!plan) return false;
+  return !plan.isShared || plan.creatorName === currentUsername;
+});
+/** 当前选中方案（编辑/共享动作的目标） */
+const selectedPlan = computed(() =>
+  props.plans.find(item => item.pk === selected.value)
+);
+/** 只有本人方案可改名/切换共享 */
+const canEditSelected = computed(
+  () =>
+    Boolean(selectedPlan.value) &&
+    (!selectedPlan.value!.isShared ||
+      selectedPlan.value!.creatorName === currentUsername)
+);
 /** 保存时是否共享给同页用户 */
 const sharedOnSave = ref(false);
 const fileInput = ref<HTMLInputElement>();
@@ -39,6 +60,41 @@ async function onSave() {
   } catch {
     // 用户取消
   }
+}
+
+async function onRename() {
+  const plan = selectedPlan.value;
+  if (!plan) return notifyEmpty();
+  try {
+    const { value } = await ElMessageBox.prompt(
+      t("codegen.planRenamePrompt"),
+      t("codegen.planRename"),
+      {
+        inputValue: plan.name,
+        inputPattern: /\S+/,
+        inputErrorMessage: t("codegen.planNameRequired")
+      }
+    );
+    emit("update", plan.pk, { name: value.trim() });
+  } catch {
+    // 用户取消
+  }
+}
+
+async function onToggleShared() {
+  const plan = selectedPlan.value;
+  if (!plan) return notifyEmpty();
+  if (
+    !(await confirm(
+      plan.isShared
+        ? t("codegen.planUnshareConfirm")
+        : t("codegen.planShareConfirm"),
+      { title: t("codegen.planShare") }
+    ))
+  ) {
+    return;
+  }
+  emit("update", plan.pk, { is_shared: !plan.isShared });
 }
 
 function onLoad(pk: string) {
@@ -63,12 +119,7 @@ function onExport() {
   const blob = new Blob([exportPlan(plan)], {
     type: "application/json"
   });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `codegen-plan-${plan.name}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(`codegen-plan-${plan.name}.json`, blob);
 }
 
 function onImportClick() {
@@ -134,6 +185,26 @@ function notifyEmpty() {
     >
       {{ t("codegen.planLoad") }}
     </el-button>
+    <el-button
+      size="small"
+      data-testid="codegen-plan-rename"
+      :disabled="!canEditSelected"
+      @click="onRename"
+    >
+      {{ t("codegen.planRename") }}
+    </el-button>
+    <el-button
+      size="small"
+      data-testid="codegen-plan-share"
+      :disabled="!canEditSelected"
+      @click="onToggleShared"
+    >
+      {{
+        selectedPlan?.isShared
+          ? t("codegen.planUnshare")
+          : t("codegen.planShare")
+      }}
+    </el-button>
     <el-button size="small" :disabled="!selected" @click="onExport">
       {{ t("codegen.planExport") }}
     </el-button>
@@ -142,7 +213,12 @@ function notifyEmpty() {
       type="danger"
       plain
       data-testid="codegen-plan-delete"
-      :disabled="!selected"
+      :disabled="!selected || !canRemoveSelected"
+      :title="
+        selected && !canRemoveSelected
+          ? t('codegen.planSharedDeleteDenied')
+          : ''
+      "
       @click="selected ? onRemove(selected) : notifyEmpty()"
     >
       {{ t("codegen.planDelete") }}

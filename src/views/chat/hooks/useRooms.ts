@@ -43,8 +43,8 @@ export function useRooms() {
   async function loadRooms() {
     loadingRooms.value = true;
     try {
-      const res = await chatApi.roomList();
-      if (isSuccess(res)) {
+      const res = await chatApi.roomList().catch(() => null);
+      if (res && isSuccess(res)) {
         const data = res.data;
         rooms.value = data?.rooms ?? [];
         aiEnabled.value = !!data?.ai_enabled;
@@ -62,8 +62,8 @@ export function useRooms() {
   async function loadContacts() {
     loadingContacts.value = true;
     try {
-      const res = await chatApi.contacts();
-      if (isSuccess(res)) contacts.value = res.data?.results ?? [];
+      const res = await chatApi.contacts().catch(() => null);
+      if (res && isSuccess(res)) contacts.value = res.data?.results ?? [];
     } finally {
       loadingContacts.value = false;
     }

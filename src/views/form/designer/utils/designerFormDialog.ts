@@ -1,5 +1,6 @@
-import { h, ref } from "vue";
+import { computed, h, ref } from "vue";
 import { addDialog } from "@/components/ReDialog";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { dialogSize } from "@/components/ReDialog/size";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
@@ -31,6 +32,11 @@ export function createFormDialogOpener({
   tableRef: Ref;
 }) {
   const formRef = ref<InstanceType<typeof DynamicFormForm>>();
+  const { confirmLeave } = useDesignerGuard({
+    dirty: computed(() => Boolean(formRef.value?.isDirty)),
+    namespace: "dform",
+    mode: "dialog"
+  });
 
   return async (
     row: DynamicFormItem | null,
@@ -71,7 +77,13 @@ export function createFormDialogOpener({
       sureBtnLoading: true,
       contentRenderer: () =>
         h(DynamicFormForm, { ref: formRef, row: source, prefill }),
-      beforeSure
+      beforeSure,
+      beforeClose: done => {
+        if (!formRef.value?.isDirty) return done();
+        void confirmLeave().then(ok => {
+          if (ok) done();
+        });
+      }
     });
   };
 }

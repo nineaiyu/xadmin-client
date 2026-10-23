@@ -11,6 +11,8 @@
  */
 
 import { createMenuNodeSaver } from "./menuDrawerSave";
+import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import {
   openMenuClone,
   openMenuCreate,
@@ -84,7 +86,13 @@ export function useMenuDrawer({
     dirty: core.dirty,
     openCreate: (parent?: MenuRow | null) =>
       openMenuCreate({ t, open: core.open, parent }),
-    openEdit: (row: MenuRow) => openMenuEdit({ t, open: core.open, row }),
+    openEdit: async (row: MenuRow) => {
+      // 编辑前取一次详情：列表行是快照，可能已被其他管理员改动；
+      // 失败（无 retrieve 权限 / 网络异常）回退行快照，不阻断编辑。
+      const res = await api.detail(row.pk as string).catch(normalizeError);
+      const fresh = isSuccess(res) && res.data ? { ...row, ...res.data } : row;
+      openMenuEdit({ t, open: core.open, row: fresh as MenuRow });
+    },
     openClone: (row: MenuRow) =>
       openMenuClone({ t, open: core.open, rowIndex, row }),
     openRename,

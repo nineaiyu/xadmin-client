@@ -131,7 +131,8 @@ const refreshVisible = () => {
 const applyScreenData: ApplyScreenData = frame => {
   if (isStage.value) {
     for (const entry of [...frame.cards, ...frame.errors.map(toErrorEntry)]) {
-      Object.values(paneRefs.value).some(handle =>
+      // 同一仪表盘可能放在多个窗格：逐窗格应用，不能 .some 短路只喂第一个
+      Object.values(paneRefs.value).forEach(handle =>
         handle?.applyCardData?.(entry.card, entry)
       );
     }

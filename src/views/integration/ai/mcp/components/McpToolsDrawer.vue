@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import {
@@ -11,6 +11,10 @@ import {
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { hasAuth } from "@/router/utils";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * 外部 MCP 服务器抽屉：资料卡 + 工具快照清单 + 调用测试（白名单内）。
@@ -33,11 +37,51 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const tools = ref<McpToolSnapshot[]>([...(props.row.tools_snapshot ?? [])]);
+/** 抽屉资料以详情为准（列表行是快照，同步后 last_synced_time/error 会过期） */
+const server = ref<McpServerItem>({ ...props.row });
 const syncing = ref(false);
 const calling = ref(false);
 const callTool = ref("");
 const callArguments = ref("{}");
 const callResult = ref<McpCallResult | null>(null);
+
+const loadDetail = async () => {
+  if (!hasAuth("retrieve:AiMcpServers")) return;
+  if (typeof mcpServerApi.retrieve !== "function") return;
+  const res = await mcpServerApi.retrieve(props.row.pk).catch(normalizeError);
+  if (isSuccess(res) && res.data) {
+    const detail = res.data as McpServerItem;
+    server.value = detail;
+    tools.value = [...(detail.tools_snapshot ?? [])];
+  }
+};
+
+onMounted(loadDetail);
+
+/** 工具快照只读列（调用列按权限出现） */
+const columns = computed<ReadonlyColumn[]>(() => {
+  const cols: ReadonlyColumn[] = [
+    { prop: "name", label: t("mcp.toolName"), minWidth: 140 },
+    {
+      prop: "description",
+      label: t("mcp.toolDescription"),
+      minWidth: 200,
+      showOverflowTooltip: true
+    },
+    { label: t("mcp.toolReadOnly"), width: 90, slot: "readOnly" },
+    { label: t("mcp.toolParams"), minWidth: 140, slot: "params" },
+    { label: t("mcp.toolActionSurface"), width: 100, slot: "actionSurface" }
+  ];
+  if (hasAuth("call:AiMcpServers")) {
+    cols.push({
+      label: t("mcp.toolCall"),
+      width: 90,
+      fixed: "right",
+      slot: "call"
+    });
+  }
+  return cols;
+});
 
 const runSync = async () => {
   syncing.value = true;
@@ -49,6 +93,8 @@ const runSync = async () => {
       message(t("mcp.syncDone", { count: tools.value.length }), {
         type: "success"
       });
+      // 同步更新 last_synced_time / last_sync_error，避免抽屉停留在旧快照
+      await loadDetail();
       props.onSynced?.();
     } else {
       message(String(res.detail ?? t("results.failed")), { type: "warning" });
@@ -71,9 +117,9 @@ const inActionSurface = (raw: unknown) => {
   const tool = raw as McpToolSnapshot;
   if (typeof tool.callable === "boolean") return tool.callable;
   return Boolean(
-    props.row.enabled &&
-    props.row.expose_to_ai &&
-    (props.row.allowed_tools ?? []).includes(tool.name) &&
+    server.value.enabled &&
+    server.value.expose_to_ai &&
+    (server.value.allowed_tools ?? []).includes(tool.name) &&
     tool.input_schema &&
     Object.keys(tool.input_schema).length > 0
   );
@@ -114,31 +160,33 @@ const runCall = async () => {
   <div>
     <el-descriptions :column="2" border size="small" class="mb-3">
       <el-descriptions-item :label="t('mcp.panelUrl')">
-        {{ row.url }}
+        {{ server.url }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelAuth')">
-        <el-tag :type="row.auth_token_set ? 'success' : 'info'" size="small">
+        <el-tag :type="server.auth_token_set ? 'success' : 'info'" size="small">
           {{
-            row.auth_token_set ? t("mcp.panelAuthSet") : t("mcp.panelAuthUnset")
+            server.auth_token_set
+              ? t("mcp.panelAuthSet")
+              : t("mcp.panelAuthUnset")
           }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelTimeout')">
-        {{ row.timeout }}
+        {{ server.timeout }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelAllowed')">
         {{
-          row.allowed_tools?.length
-            ? row.allowed_tools.join("、")
+          server.allowed_tools?.length
+            ? server.allowed_tools.join("、")
             : t("mcp.panelAllowedEmpty")
         }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelLastSync')">
-        {{ row.last_synced_time || "-" }}
+        {{ server.last_synced_time || "-" }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelSyncError')">
-        <span :class="row.last_sync_error ? 'text-(--el-color-danger)' : ''">
-          {{ row.last_sync_error || "-" }}
+        <span :class="server.last_sync_error ? 'text-(--el-color-danger)' : ''">
+          {{ server.last_sync_error || "-" }}
         </span>
       </el-descriptions-item>
     </el-descriptions>
@@ -155,59 +203,51 @@ const runCall = async () => {
         {{ t("mcp.sync") }}
       </el-button>
     </div>
-    <el-table :data="tools" size="small" data-testid="mcp-tools-table">
-      <el-table-column prop="name" :label="t('mcp.toolName')" min-width="140" />
-      <el-table-column
-        prop="description"
-        :label="t('mcp.toolDescription')"
-        min-width="200"
-        show-overflow-tooltip
-      />
-      <el-table-column :label="t('mcp.toolReadOnly')" width="90">
-        <template #default="{ row: tool }">
-          <el-tag
-            :type="tool.read_only ? 'success' : 'warning'"
-            size="small"
-            effect="plain"
-          >
-            {{ tool.read_only ? t("mcp.readOnlyYes") : t("mcp.readOnlyNo") }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('mcp.toolParams')" min-width="140">
-        <template #default="{ row: tool }">
-          {{ (tool.params ?? []).join("、") || "-" }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('mcp.toolActionSurface')" width="100">
-        <template #default="{ row: tool }">
-          <el-tag
-            :type="inActionSurface(tool) ? 'success' : 'info'"
-            size="small"
-            effect="plain"
-          >
-            {{
-              inActionSurface(tool)
-                ? t("mcp.actionSurfaceIn")
-                : t("mcp.actionSurfaceOut")
-            }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="hasAuth('call:AiMcpServers')"
-        :label="t('mcp.toolCall')"
-        width="90"
-        fixed="right"
-      >
-        <template #default="{ row: tool }">
-          <el-button link type="primary" size="small" @click="pickTool(tool)">
-            {{ t("mcp.toolCall") }}
-          </el-button>
-        </template>
-      </el-table-column>
-      <template #empty>{{ t("mcp.empty") }}</template>
-    </el-table>
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="tools"
+      size="small"
+      data-testid="mcp-tools-table"
+      :empty-text="t('mcp.empty')"
+    >
+      <template #readOnly="{ row: tool }">
+        <el-tag
+          :type="tool.read_only ? 'success' : 'warning'"
+          size="small"
+          effect="plain"
+        >
+          {{ tool.read_only ? t("mcp.readOnlyYes") : t("mcp.readOnlyNo") }}
+        </el-tag>
+      </template>
+      <template #params="{ row: tool }">
+        {{ (tool.params ?? []).join("、") || "-" }}
+      </template>
+      <template #actionSurface="{ row: tool }">
+        <el-tag
+          :type="inActionSurface(tool) ? 'success' : 'info'"
+          size="small"
+          effect="plain"
+        >
+          {{
+            inActionSurface(tool)
+              ? t("mcp.actionSurfaceIn")
+              : t("mcp.actionSurfaceOut")
+          }}
+        </el-tag>
+      </template>
+      <template #call="{ row: tool }">
+        <el-button
+          link
+          type="primary"
+          size="small"
+          :disabled="!inActionSurface(tool)"
+          :title="inActionSurface(tool) ? '' : t('mcp.toolCallUnavailable')"
+          @click="pickTool(tool)"
+        >
+          {{ t("mcp.toolCall") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
 
     <div v-if="hasAuth('call:AiMcpServers')" class="mt-4">
       <div class="mb-2 font-medium">

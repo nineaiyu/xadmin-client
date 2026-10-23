@@ -1,14 +1,17 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import {
   SystemMsgSubscriptionApi,
   type MsgBackendItem,
   type MsgSubscriptionCategory
 } from "@/api/system/notifications";
+import { isSuccess } from "@/api/types";
+import { notificationActionVisibility } from "./notificationPermissions";
 import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useI18n } from "vue-i18n";
+import { mergeBackendChecks } from "./messageNotifications";
 import SearchDialog from "@/views/system/components/SearchDialog.vue";
 import type { RecordType } from "plus-pro-components";
 import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
@@ -26,6 +29,7 @@ interface NotificationsProps {
     list: boolean;
     partialUpdate: boolean;
     backends: boolean;
+    test?: boolean;
   };
   hasReceivers?: boolean;
   hasOperations?: boolean;
@@ -36,7 +40,8 @@ const props = withDefaults(defineProps<NotificationsProps>(), {
   auth: () => ({
     list: false,
     partialUpdate: false,
-    backends: false
+    backends: false,
+    test: false
   }),
   hasReceivers: false,
   hasOperations: false
@@ -61,6 +66,11 @@ const { t } = useI18n();
 const tableData = ref<SubscriptionCategory[]>([]);
 const receiveBackends = ref<MsgBackendItem[]>([]);
 const loading = ref(false);
+/** 列表加载失败（业务码或网络）：给出可见失败态与重试，而不是一张空表 */
+const loadFailed = ref(false);
+const visibility = computed(() =>
+  notificationActionVisibility(props.auth ?? {}, props.hasOperations)
+);
 
 const formatCategory = (subscriptions: MsgSubscriptionCategory[]) => {
   tableData.value = [];
@@ -73,11 +83,12 @@ const formatCategory = (subscriptions: MsgSubscriptionCategory[]) => {
     };
 
     for (const item of category["children"]) {
-      const backendsChecked: Record<string, boolean> = {};
-      receiveBackends.value.forEach(backend => {
-        backendsChecked[backend.value] =
-          item["receive_backends"].indexOf(backend.value) > -1;
-      });
+      // 停用渠道不在 backends 清单里，但历史订阅必须保留，
+      // 否则下次勾选其它渠道时会被当作未订阅而静默清掉
+      const backendsChecked = mergeBackendChecks(
+        item["receive_backends"],
+        receiveBackends.value.map(backend => backend.value)
+      );
 
       const subItem: SubscriptionItem = {
         pk: item["message_type"],
@@ -96,7 +107,8 @@ const getInitData = () => {
     props.api
       ?.backends()
       .then(res => {
-        receiveBackends.value = res.data;
+        // 200 + 业务码失败同样是失败：不能把 undefined 渠道清单当成功渲染
+        if (isSuccess(res)) receiveBackends.value = res.data ?? [];
       })
       .catch(() => {
         // http 层已统一提示；渠道列缺失属于可见的降级态，这里收尾防止 unhandled rejection
@@ -104,13 +116,21 @@ const getInitData = () => {
   }
   if (props.auth.list) {
     loading.value = true;
+    loadFailed.value = false;
     props.api
       ?.list()
       .then(res => {
-        formatCategory(res.data);
+        // 200 信封里的业务失败（如字段权限/数据权限拒绝）必须走失败态，
+        // 否则 formatCategory(undefined) 抛错、页面只剩空表且没有原因
+        if (isSuccess(res)) {
+          formatCategory(res.data ?? []);
+        } else {
+          loadFailed.value = true;
+        }
       })
       .catch(() => {
         // http 层已统一提示，列表保持空态
+        loadFailed.value = true;
       })
       .finally(() => {
         loading.value = false;
@@ -190,6 +210,16 @@ const receiverLabels = (row: DefaultRow) => {
 </script>
 
 <template>
+  <div v-if="loadFailed" class="mb-2" data-testid="notifications-load-failed">
+    <el-alert type="warning" :closable="false" show-icon>
+      <template #title>
+        <span>{{ t("setting.loadFailed") }}</span>
+        <el-button link type="primary" class="ml-2" @click="getInitData">
+          {{ t("buttons.reload") }}
+        </el-button>
+      </template>
+    </el-alert>
+  </div>
   <el-table
     v-loading="loading"
     :data="tableData"
@@ -237,7 +267,7 @@ const receiverLabels = (row: DefaultRow) => {
     </el-table-column>
     <!-- 操作列：与列表页操作列同口径的链接按钮，同一行排布（宽度按两枚按钮的自然宽收住） -->
     <el-table-column
-      v-if="auth.partialUpdate || auth.list"
+      v-if="visibility.column"
       :label="t('commonLabels.operation')"
       width="250"
     >
@@ -245,11 +275,16 @@ const receiverLabels = (row: DefaultRow) => {
         <template v-if="!row.children">
           <div class="notification-actions">
             <!-- 发送测试：按订阅行真实下发一条测试消息（系统订阅发超管 / 个人订阅发自己） -->
-            <el-button link type="primary" @click="handleSendTestMsg(row)">
+            <el-button
+              v-if="visibility.test"
+              link
+              type="primary"
+              @click="handleSendTestMsg(row)"
+            >
               {{ t("messageNotifications.sendTestMessage") }}
             </el-button>
             <el-button
-              v-if="hasOperations"
+              v-if="visibility.receivers"
               link
               type="primary"
               @click="handleSaveReceivers(row)"

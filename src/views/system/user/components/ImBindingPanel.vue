@@ -12,6 +12,7 @@ import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
 import { userApi } from "@/api/identity/user";
+import { hasAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 
@@ -25,6 +26,8 @@ const props = defineProps<{ row: RecordType; done?: () => void }>();
 const { t } = useI18n();
 
 const PROVIDERS = ["dingtalk", "wecom", "feishu"];
+/** 解绑是独立权限点：只有 imBinding 而没有 imUnbind 的角色不应看到按钮（否则点开必 403） */
+const canUnbind = hasAuth("imUnbind:SystemUser");
 const form = ref({ provider: "dingtalk", subject: "", nickname: "" });
 const bindings = ref<
   Array<{
@@ -99,31 +102,36 @@ onMounted(load);
       <el-form-item :label="t('imBinding.nickname')">
         <el-input v-model="form.nickname" />
       </el-form-item>
+      <el-form-item :label="t('imBinding.current')">
+        <div
+          v-if="bindings.length === 0"
+          class="text-(--el-text-color-secondary)"
+        >
+          {{ t("imBinding.empty") }}
+        </div>
+        <div
+          v-for="item in bindings"
+          :key="item.pk"
+          class="flex items-center gap-2 mb-1"
+        >
+          <el-tag>{{ item.provider }}</el-tag>
+          <span>{{ item.subject }}</span>
+          <el-button
+            v-if="canUnbind"
+            link
+            type="danger"
+            @click="unbind(item.provider)"
+          >
+            {{ t("imBinding.unbind") }}
+          </el-button>
+        </div>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" :loading="loading" @click="save">
           {{ t("buttons.confirm") }}
         </el-button>
       </el-form-item>
     </el-form>
-    <el-form-item :label="t('imBinding.current')">
-      <div
-        v-if="bindings.length === 0"
-        class="text-(--el-text-color-secondary)"
-      >
-        {{ t("imBinding.empty") }}
-      </div>
-      <div
-        v-for="item in bindings"
-        :key="item.pk"
-        class="flex items-center gap-2 mb-1"
-      >
-        <el-tag>{{ item.provider }}</el-tag>
-        <span>{{ item.subject }}</span>
-        <el-button link type="danger" @click="unbind(item.provider)">
-          {{ t("imBinding.unbind") }}
-        </el-button>
-      </div>
-    </el-form-item>
   </div>
 </template>
 

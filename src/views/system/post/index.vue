@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { usePosts } from "./utils/hook";
 
 defineOptions({
   name: "SystemPost" // 必须定义，用于菜单自动匹配组件
 });
 
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   listColumnsFormat,
-  operationButtonsProps
-} = usePosts(tableRef);
+  operationButtonsProps,
+  tableBarButtonsProps
+} = usePosts();
 </script>
 
 <template>
@@ -25,5 +25,7 @@ const {
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :tableBarButtonsProps="tableBarButtonsProps"
+    recycleBin
   />
 </template>

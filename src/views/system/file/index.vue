@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, ref } from "vue";
+import { h } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDrawer, type DrawerOptions } from "@/components/ReDrawer";
 import { drawerSize } from "@/components/ReDialog/size";
@@ -12,11 +12,11 @@ defineOptions({
 });
 
 const { t } = useI18n();
-const tableRef = ref();
 
 const {
   api,
   auth,
+  tableRef,
   stats,
   searchColumnsFormat,
   listColumnsFormat,
@@ -24,7 +24,7 @@ const {
   tableBarButtonsProps,
   operationButtonsProps,
   selectionChange
-} = useSystemUploadFile(tableRef);
+} = useSystemUploadFile();
 
 /**
  * 统计详情走抽屉：分类分布/上传趋势等重型图表常驻顶部会把文件列表挤出首屏，

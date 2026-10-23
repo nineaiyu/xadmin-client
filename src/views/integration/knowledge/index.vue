@@ -7,13 +7,18 @@ defineOptions({
 });
 
 const tableRef = ref();
+/** 勾选态驱动批量启停按钮显隐（与框架批量删除同口径） */
+const hasSelection = ref(false);
+const onSelectionChange = (rows: unknown[]) => {
+  hasSelection.value = rows.length > 0;
+};
 const {
   api,
   auth,
   listColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useKnowledge(tableRef);
+} = useKnowledge(tableRef, hasSelection);
 </script>
 <template>
   <RePlusPage
@@ -24,5 +29,6 @@ const {
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"
+    @selection-change="onSelectionChange"
   />
 </template>

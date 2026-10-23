@@ -52,4 +52,41 @@ describe("RePage 通用页面骨架", () => {
     expect(content.classes()).toContain("is-auto");
     expect(content.attributes("style")).toContain("margin-bottom: 48px");
   });
+
+  it("padded 默认关闭（不叠加 layout 留白），开启后挂 is-padded", () => {
+    expect(mountPage({}).classes()).not.toContain("is-padded");
+    expect(mountPage({ padded: true }).classes()).toContain("is-padded");
+  });
+
+  it("stats / toolbar 插槽按「页头 → 统计 → 工具栏 → 内容」顺序渲染", () => {
+    const wrapper = mountPage(
+      { title: "概览" },
+      {
+        stats: "<div class='stats' />",
+        toolbar: "<div class='toolbar' />",
+        default: "<div class='body' />"
+      }
+    );
+    const regions = wrapper
+      .findAll(
+        ".re-page__header, .re-page__stats, .re-page__toolbar, .re-page__content"
+      )
+      .map(node => node.classes()[0]);
+    expect(regions).toEqual([
+      "re-page__header",
+      "re-page__stats",
+      "re-page__toolbar",
+      "re-page__content"
+    ]);
+    expect(wrapper.find(".re-page__content .body").exists()).toBe(true);
+  });
+
+  it("empty 开启时以 #empty 插槽替代默认内容", () => {
+    const wrapper = mountPage(
+      { empty: true },
+      { default: "<div class='body' />", empty: "<div class='nothing' />" }
+    );
+    expect(wrapper.find(".nothing").exists()).toBe(true);
+    expect(wrapper.find(".body").exists()).toBe(false);
+  });
 });

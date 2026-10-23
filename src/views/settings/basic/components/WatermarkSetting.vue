@@ -7,6 +7,7 @@ import { useDebounceFn } from "@vueuse/core";
 import { useWatermark } from "@pureadmin/utils";
 import { onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import type { FieldValues } from "plus-pro-components";
 import type { SiteWatermarkResultConfig } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -15,6 +16,7 @@ import type { settingItemProps } from "@/views/settings/components/settings/type
 import {
   buildWatermarkRenderOptions,
   formatWatermarkTime,
+  isWatermarkPath,
   renderWatermarkText,
   toSiteWatermarkConfig
 } from "@/utils/watermark";
@@ -29,14 +31,25 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const route = useRoute();
 const userStore = useUserStoreHook();
 const previewEl = ref<HTMLElement | null>(null);
+/** 预览提示：关闭 / 当前页不在路径范围（两者都不应让管理员误以为配置已生效） */
+const previewNote = ref<"" | "disabled" | "outOfScope">("");
 const { setWatermark, clear } = useWatermark(previewEl);
 
 function applyPreview(values: FieldValues) {
   if (!previewEl.value) return;
   // 表单字段名与 userinfo config 键一致，直接复用解析器（含非法值夹紧）
   const config = toSiteWatermarkConfig(values as SiteWatermarkResultConfig);
+  if (!config.enabled) {
+    previewNote.value = "disabled";
+    clear();
+    return;
+  }
+  previewNote.value = isWatermarkPath(route.path, config.paths)
+    ? ""
+    : "outOfScope";
   const text = renderWatermarkText(config.template, {
     username: userStore.username,
     nickname: userStore.nickname,
@@ -61,6 +74,17 @@ onBeforeUnmount(() => clear());
       {{ t("settingWatermark.preview") }}
     </p>
     <div ref="previewEl" class="watermark-preview__stage" />
+    <p
+      v-if="previewNote"
+      class="watermark-preview__tip watermark-preview__tip--note"
+      data-testid="watermark-preview-note"
+    >
+      {{
+        previewNote === "disabled"
+          ? t("settingWatermark.previewDisabled")
+          : t("settingWatermark.previewOutOfScope")
+      }}
+    </p>
     <p class="watermark-preview__tip">
       {{ t("settingWatermark.previewTip") }}
     </p>

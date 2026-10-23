@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
@@ -21,6 +21,15 @@ const form = reactive({ username: "", ip: "", when: "" });
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 const result = ref<LoginPolicyPreview | null>(null);
+/** 无时区输入按浏览器所在时区解释（与后端 timezone.make_aware 同语义） */
+const timezone = computed(
+  () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+);
+
+// 输入变化即失效上次结果：避免「改了样例但看到的是上一次结论」
+watch(form, () => {
+  result.value = null;
+});
 
 /** 动作裸值 → 可读文案 */
 const ACTION_KEYS: Record<string, string> = {
@@ -123,6 +132,13 @@ const echoLine = (data: LoginPolicyPreview) =>
 
 <template>
   <div>
+    <el-alert
+      class="mb-2"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="t('loginPolicy.previewHint')"
+    />
     <el-form
       ref="formRef"
       :inline="true"
@@ -159,6 +175,9 @@ const echoLine = (data: LoginPolicyPreview) =>
         <el-button type="primary" :loading="loading" @click="runPreview">
           {{ t("loginPolicy.previewRun") }}
         </el-button>
+        <span class="ml-2 text-xs text-(--el-text-color-secondary)">
+          {{ t("loginPolicy.previewTimezone", { zone: timezone }) }}
+        </span>
       </el-form-item>
     </el-form>
 

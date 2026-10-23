@@ -69,12 +69,18 @@ const props = withDefaults(
     title?: string;
     /** 入口按钮是否隐藏（调用方按 auth 控制） */
     disabled?: boolean;
+    /** 是否可恢复（recycleRestore 权限；独立使用时缺省允许） */
+    canRestore?: boolean;
+    /** 是否可清除（recyclePurge 权限；独立使用时缺省允许） */
+    canPurge?: boolean;
   }>(),
   {
     columns: () => [],
     localeName: "",
     title: "",
-    disabled: false
+    disabled: false,
+    canRestore: true,
+    canPurge: true
   }
 );
 
@@ -190,8 +196,9 @@ defineExpose({ open });
     destroy-on-close
     class="recycle-bin-drawer"
   >
-    <div class="mb-3 flex flex-wrap gap-2">
+    <div v-if="canRestore || canPurge" class="mb-3 flex flex-wrap gap-2">
       <el-popconfirm
+        v-if="canRestore"
         :title="t('recycleBin.restoreConfirm', { count: selectedPks.length })"
         :disabled="selectedPks.length === 0"
         @confirm="handleRestore(selectedPks)"
@@ -208,32 +215,34 @@ defineExpose({ open });
           </el-button>
         </template>
       </el-popconfirm>
-      <el-popconfirm
-        :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
-        :disabled="selectedPks.length === 0"
-        @confirm="handlePurge(selectedPks)"
-      >
-        <template #reference>
-          <el-button
-            type="danger"
-            plain
-            :disabled="selectedPks.length === 0 || submitting"
-            :icon="useRenderIcon(Delete)"
-          >
-            {{ t("recycleBin.purge") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
-      <el-popconfirm
-        :title="t('recycleBin.purgeExpiredConfirm')"
-        @confirm="handlePurge()"
-      >
-        <template #reference>
-          <el-button type="warning" plain :disabled="submitting">
-            {{ t("recycleBin.purgeExpired") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
+      <template v-if="canPurge">
+        <el-popconfirm
+          :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
+          :disabled="selectedPks.length === 0"
+          @confirm="handlePurge(selectedPks)"
+        >
+          <template #reference>
+            <el-button
+              type="danger"
+              plain
+              :disabled="selectedPks.length === 0 || submitting"
+              :icon="useRenderIcon(Delete)"
+            >
+              {{ t("recycleBin.purge") }}
+            </el-button>
+          </template>
+        </el-popconfirm>
+        <el-popconfirm
+          :title="t('recycleBin.purgeExpiredConfirm')"
+          @confirm="handlePurge()"
+        >
+          <template #reference>
+            <el-button type="warning" plain :disabled="submitting">
+              {{ t("recycleBin.purgeExpired") }}
+            </el-button>
+          </template>
+        </el-popconfirm>
+      </template>
     </div>
 
     <el-table
@@ -257,6 +266,7 @@ defineExpose({ open });
         </template>
       </el-table-column>
       <el-table-column
+        v-if="canRestore"
         :label="t('recycleBin.actions')"
         width="90"
         fixed="right"

@@ -1,5 +1,6 @@
 import { buildRoleRulesColumns } from "@/views/system/hooks";
 import { ref, type Ref } from "vue";
+import { fetchFreshRow } from "./freshRow";
 import {
   handleOperation,
   openDialogDrawer,
@@ -40,7 +41,9 @@ export function useUserRoleRules({
     });
   };
 
-  function handleRoleRules(row: RecordType) {
+  async function handleRoleRules(rawRow: RecordType) {
+    // 授权前取详情：行快照可能不含最新角色/规则，避免把旧值回写。
+    const row = await fetchFreshRow(api, rawRow);
     openDialogDrawer({
       t,
       isAdd: false,

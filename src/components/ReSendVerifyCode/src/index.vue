@@ -57,6 +57,8 @@ const {
   formRules,
   isDisabled,
   verifyCodeConfig,
+  configFailed,
+  reloadConfig,
   handleSendCode,
   fetchSuggestions
 } = useSendVerifyCode(formDataRef, captchaRef, formData, props, emit);
@@ -70,8 +72,19 @@ const phone = ref({ code: "+86", phone: "" });
 </script>
 
 <template>
+  <el-result
+    v-if="configFailed"
+    icon="error"
+    :title="t('login.configLoadFailed')"
+  >
+    <template #extra>
+      <el-button type="primary" @click="reloadConfig">
+        {{ t("buttons.reload") }}
+      </el-button>
+    </template>
+  </el-result>
   <el-form
-    v-if="access"
+    v-else-if="access"
     ref="formDataRef"
     :model="formData"
     :rules="formRules"

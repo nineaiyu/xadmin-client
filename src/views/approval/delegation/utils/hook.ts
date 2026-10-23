@@ -1,12 +1,20 @@
 import { approvalDelegationApi } from "@/api/approval/approvalDelegation";
-import { approvalFlowApi } from "@/api/approval/approvalFlow";
-import { listRows } from "@/api/base";
 import { ElTag } from "element-plus";
-import { computed, h, onMounted, reactive, ref, type Ref } from "vue";
+import { h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { usePageAuth } from "@/router/utils";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import type { PageColumn, PageTableColumn } from "@/components/RePlusPage";
+import { hasAuth, usePageAuth } from "@/router/utils";
+import { useUserStoreHook } from "@/store/modules/user";
+import {
+  formatPageColumns,
+  renderSwitch,
+  usePublicHooks,
+  type PageTableColumn,
+  type RePlusPageProps
+} from "@/components/RePlusPage";
+import { useDelegationFlowOptions } from "./useDelegationFlowOptions";
+import { buildDelegationFormColumns } from "./delegationFormColumns";
+import { buildDelegationStatusColumn } from "./delegationStatusColumn";
+import { createDelegationToggleGuard } from "./delegationToggle";
 
 /**
  * 审批委托管理。
@@ -14,61 +22,57 @@ import type { PageColumn, PageTableColumn } from "@/components/RePlusPage";
  * 列表与表单由服务端元数据驱动：delegator/delegate 为用户外键（用户搜索选择器）、
  * start_time/end_time 为 datetime、flow_codes 为流程 code 列表（空 = 全部流程）。
  * 解析语义：生效委托用代理人替换原审批人（不递归、期外回落、申请人剔除）。
- *
- * flow_codes 列渲染为流程名标签（code→name 映射，缺失回落原码）；写入侧码的
- * 合法性由服务端 fail-closed 校验（错码委托会静默不生效）。
  */
 export function useApprovalDelegation() {
   const api = reactive(approvalDelegationApi);
   const auth = usePageAuth();
   const { t } = useI18n();
+  const userStore = useUserStoreHook();
 
-  /** 流程 code → 名称映射（列表渲染用；拉取失败退化为原 code） */
-  const flowNames = ref<Record<string, string>>({});
-  /** 流程多选选项（表单用，值=流程 code；与列表渲染同一次拉取） */
-  const flowOptions = ref<Array<{ label: string; value: string }>>([]);
-  onMounted(async () => {
-    const res = await fetchAllRows(approvalFlowApi.list).catch(() => null);
-    if (!res) return;
-    const rows = listRows<{ code: string; name: string }>(res as never);
-    flowNames.value = Object.fromEntries(rows.map(row => [row.code, row.name]));
-    flowOptions.value = rows.map(row => ({
-      label: row.name,
-      value: row.code
-    }));
+  /** 非超管只能以本人名义委托：新增时预填并锁定委托人，避免选错后 400 */
+  const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
+    props: {
+      row: userStore.is_superuser
+        ? {}
+        : {
+            delegator: {
+              pk: userStore.pk,
+              username: userStore.username,
+              nickname: userStore.nickname
+            }
+          }
+    }
   });
 
-  /**
-   * 表单列定制：flow_codes 后端是 JSONField，默认渲染为 jsoneditor（手填 code 易错）。
-   * 改为流程多选（选项与列表渲染同源），空 = 全部流程；写入侧码的合法性仍由服务端
-   * fail-closed 校验（错码委托静默不生效）。
-   */
-  const baseColumnsFormat = ({
-    addOrEditColumns
-  }: {
-    addOrEditColumns: Ref<PageColumn[]>;
-  }) => {
-    const flowCol = addOrEditColumns.value.find(
-      (column: PageColumn) => column._column.key === "flow_codes"
-    );
-    if (flowCol) {
-      // 元数据按 JSONField 下发的 json 渲染器走 renderField（优先于 valueType），
-      // 必须先清掉，否则仍是 jsoneditor 手填
-      flowCol.renderField = undefined;
-      flowCol.valueType = "select";
-      flowCol.options = computed(() => flowOptions.value);
-      flowCol.fieldProps = {
-        multiple: true,
-        filterable: true,
-        collapseTags: true,
-        collapseTagsTooltip: true
-      };
-    }
-  };
+  const { flowNames, flowOptions } = useDelegationFlowOptions(t);
+  const baseColumnsFormat = buildDelegationFormColumns({
+    flowOptions,
+    isSuperuser: Boolean(userStore.is_superuser)
+  });
 
-  /** 「流程范围（空 = 全部流程）」标题较长：默认 120px 列宽会折行抬高表头 */
+  const switchLoadMap = ref({});
+  const { switchStyle } = usePublicHooks();
+  const canImpact = hasAuth("impact:SystemApprovalDelegation");
+
+  const guardedPartialUpdate = createDelegationToggleGuard({
+    t,
+    api,
+    canImpact
+  });
+
   const listColumnsFormat = (columns: PageTableColumn[]) => {
-    columns.forEach(column => {
+    const formatted = formatPageColumns(columns, {
+      is_active: column => {
+        column["cellRenderer"] = renderSwitch({
+          t,
+          updateApi: guardedPartialUpdate,
+          switchLoadMap,
+          switchStyle,
+          field: "is_active"
+        });
+      }
+    });
+    formatted.forEach(column => {
       if (column._column?.key === "flow_codes") {
         column["minWidth"] = 200;
         column["cellRenderer"] = ({ row }) => {
@@ -93,12 +97,21 @@ export function useApprovalDelegation() {
         };
       }
     });
-    return columns;
+    const endIndex = formatted.findIndex(
+      column => column._column?.key === "end_time"
+    );
+    formatted.splice(
+      endIndex >= 0 ? endIndex + 1 : formatted.length,
+      0,
+      buildDelegationStatusColumn(t)
+    );
+    return formatted;
   };
 
   return {
     api,
     auth,
+    addOrEditOptions,
     baseColumnsFormat,
     listColumnsFormat
   };

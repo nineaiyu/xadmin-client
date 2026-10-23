@@ -17,7 +17,8 @@ import {
   removeServerTemplate,
   renameServerTemplate,
   rollbackTemplate,
-  saveServerTemplate
+  saveServerTemplate,
+  templateWriteError
 } from "./serverTemplates";
 import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
 import { exportTemplateJson, parseTemplateJson } from "./templateJson";
@@ -83,11 +84,9 @@ export function createFreeTemplates(deps: {
       visibility
     });
     message(
-      deps.t(
-        ok
-          ? "dataScreen.templateServerSaved"
-          : "dataScreen.templateServerFailed"
-      ),
+      ok
+        ? deps.t("dataScreen.templateServerSaved")
+        : templateWriteError() || deps.t("dataScreen.templateServerFailed"),
       { type: ok ? "success" : "warning" }
     );
     if (ok) await refreshServer();
@@ -97,11 +96,10 @@ export function createFreeTemplates(deps: {
   async function renameServer(id: string, name: string): Promise<boolean> {
     const ok = await renameServerTemplate(id, name.trim().slice(0, 40));
     message(
-      deps.t(
-        ok
-          ? "dataScreen.templateRenamed"
-          : "dataScreen.templateServerWriteDenied"
-      ),
+      ok
+        ? deps.t("dataScreen.templateRenamed")
+        : templateWriteError() ||
+            deps.t("dataScreen.templateServerWriteDenied"),
       { type: ok ? "success" : "warning" }
     );
     if (ok) await refreshServer();

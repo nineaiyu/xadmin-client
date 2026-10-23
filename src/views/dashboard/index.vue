@@ -4,12 +4,11 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { Download, Setting } from "@element-plus/icons-vue";
+import { ArrowDown, ArrowUp, Download, Setting } from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
-import { useConfirm } from "@/hooks/useConfirm";
 import { useSortable } from "@/hooks/useSortable";
 import {
   dashboardApi,
@@ -23,10 +22,11 @@ import { cardRenderHeight } from "@/utils/cardHeight";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
+import { useDashboardDelete } from "./utils/useDashboardDelete";
+import { moveCardInList } from "./utils/dashboardActions";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
 import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
-import { normalizeError } from "@/utils/apiError";
 
 defineOptions({
   name: "DataDashboard"
@@ -35,9 +35,11 @@ defineOptions({
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
-const confirm = useConfirm();
 const canEdit = hasAuth("partialUpdate:DataDashboard");
 const canCreate = hasAuth("create:DataDashboard");
+const canDestroy = hasAuth("destroy:DataDashboard");
+/** 展板路由（meta.kiosk）：隐藏全部编辑/选择工具栏，只读自动刷新 */
+const kiosk = computed(() => route.meta?.kiosk === true);
 
 const dashboards = ref<DashboardItem[]>([]);
 const current = ref<DashboardItem | null>(null);
@@ -109,6 +111,8 @@ const loadDashboards = async () => {
       current.value =
         dashboards.value.find(item => item.pk === sharedPk) ??
         dashboards.value[0];
+      // 首次落地即写回地址栏，分享时无需依赖异步 replace 完成
+      syncDashboardQuery();
     }
   } finally {
     loading.value = false;
@@ -141,11 +145,15 @@ const syncDashboardQuery = () => {
 /** 复制当前仪表盘视图链接（同角色内有权限者打开即定位到该仪表盘） */
 const shareDashboard = async () => {
   if (!current.value) return;
+  // 直接构造带 pk 的完整 URL：router.replace 是异步的，首次分享不能依赖地址栏已更新
+  const [base] = window.location.href.split("#");
+  const query = new URLSearchParams({
+    ...route.query,
+    pk: current.value.pk
+  } as Record<string, string>);
+  const shareUrl = `${base}#${route.path}?${query.toString()}`;
   syncDashboardQuery();
-  // 剪贴板不可用（非 https/权限受限）时降级展示链接供手动复制
-  await copyText(window.location.href, {
-    failureFallbackText: String(window.location.href)
-  });
+  await copyText(shareUrl, { failureFallbackText: shareUrl });
 };
 
 const toggleEdit = () => {
@@ -220,6 +228,12 @@ const removeCard = (id: string) => {
   draftLayout.value = draftLayout.value.filter(card => card.id !== id);
 };
 
+/** 编辑态键盘可用的卡片排序（拖拽手柄之外的替代入口） */
+const moveCard = (id: string, offset: number) => {
+  const next = moveCardInList(draftLayout.value, id, offset);
+  if (next !== draftLayout.value) draftLayout.value = next;
+};
+
 const datasetName = (pk: string) =>
   datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
@@ -241,29 +255,11 @@ const { openCreateDashboard, openDashboardSettings } = useDashboardDialogs({
   syncQuery: syncDashboardQuery
 });
 
-const removeDashboard = async () => {
-  if (!current.value) return;
-  if (
-    !(await confirm(
-      t("dashboard.removeConfirm", { name: current.value.name }),
-      { danger: true, draggable: true }
-    ))
-  ) {
-    return;
-  }
-  // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
-  const res = await dashboardApi
-    .destroy(current.value.pk)
-    .catch(normalizeError);
-  if (isSuccess(res)) {
-    current.value = null;
-    await loadDashboards();
-    syncDashboardQuery();
-    return;
-  }
-  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-  if (res.detail) message(String(res.detail), { type: "error" });
-};
+const { removeDashboard } = useDashboardDelete({
+  current,
+  reload: loadDashboards,
+  syncQuery: syncDashboardQuery
+});
 
 const goDatasetPage = () => {
   // 护栏：URL 命名空间 /analysis/dataset/index ≠ 组件目录
@@ -279,10 +275,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-loading="loading" class="pr-[1%]">
-    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
+  <div v-loading="loading">
+    <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
+         不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白；
          根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
-    <el-card shadow="never" class="mb-3">
+    <el-card v-if="!kiosk" shadow="never" class="mb-3">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-semibold">{{ t("dashboard.title") }}</span>
         <el-select
@@ -321,7 +318,12 @@ onMounted(async () => {
         >
           {{ t("dashboard.saveLayout") }}
         </el-button>
-        <el-button v-if="editing" type="danger" plain @click="removeDashboard">
+        <el-button
+          v-if="editing && canDestroy"
+          type="danger"
+          plain
+          @click="removeDashboard"
+        >
           {{ t("dashboard.remove") }}
         </el-button>
         <el-button
@@ -413,6 +415,24 @@ onMounted(async () => {
                   :loading="exportingCard === card.id"
                   data-testid="card-export-image"
                   @click="exportCardImage(card)"
+                />
+                <el-button
+                  v-if="editing"
+                  link
+                  type="primary"
+                  :icon="ArrowUp"
+                  :title="t('dashboard.moveUp')"
+                  :aria-label="t('dashboard.moveUp')"
+                  @click="moveCard(card.id, -1)"
+                />
+                <el-button
+                  v-if="editing"
+                  link
+                  type="primary"
+                  :icon="ArrowDown"
+                  :title="t('dashboard.moveDown')"
+                  :aria-label="t('dashboard.moveDown')"
+                  @click="moveCard(card.id, 1)"
                 />
                 <el-button
                   v-if="editing"

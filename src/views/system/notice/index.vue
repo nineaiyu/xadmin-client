@@ -1,21 +1,20 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useNotice } from "./utils/hook";
 
 defineOptions({
   name: "SystemNotice"
 });
 
-const tableRef = ref();
-
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   listColumnsFormat,
   operationButtonsProps,
+  detailRowFetch,
   searchComplete
-} = useNotice(tableRef);
+} = useNotice();
 </script>
 <template>
   <RePlusPage
@@ -26,6 +25,7 @@ const {
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :detailRowFetch="detailRowFetch"
     recycleBin
     viewed-row
     @searchComplete="searchComplete"

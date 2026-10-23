@@ -1,6 +1,6 @@
 import { useI18n } from "vue-i18n";
 import type { Ref } from "vue";
-import { message } from "@/utils/message";
+import { buildStreamHandlers } from "@/hooks/useStreamFrames";
 import { isAbortError, SseError } from "@/utils/sse";
 import { streamAiMessage, type ChatMessageItem } from "@/api/chat";
 
@@ -27,6 +27,22 @@ export function useChatStreaming(options: {
 }) {
   const { t } = useI18n();
   let streamAbort: AbortController | null = null;
+  const handlers = buildStreamHandlers<
+    NonNullable<ChatStreaming>,
+    ChatMessageItem
+  >({
+    streaming: options.streaming,
+    atBottom: options.atBottom,
+    scrollToBottom: options.scrollToBottom,
+    upsertMessage: options.upsertMessage,
+    // 问题回执 / 正式回复 / 失败降级消息都带服务端正式载荷
+    metaIncoming: data =>
+      (data as { question?: ChatMessageItem } | undefined)?.question,
+    doneIncoming: data =>
+      (data as { message?: ChatMessageItem } | undefined)?.message,
+    errorIncoming: data =>
+      (data as { message?: ChatMessageItem } | undefined)?.message
+  });
 
   /**
    * AI 流式提问（SSE）：思考增量与回答增量分别写入 streaming 气泡；
@@ -44,29 +60,7 @@ export function useChatStreaming(options: {
     try {
       await streamAiMessage(
         { room_id: roomId, content: text, client_msg_id: clientMsgId },
-        {
-          onMeta: data => {
-            // 问题回执：以服务端正式载荷对齐乐观上屏（id/created_time）
-            if (data?.question) options.upsertMessage(data.question);
-          },
-          onReasoning: delta => {
-            if (!options.streaming.value) return;
-            options.streaming.value.reasoning += delta;
-            if (options.atBottom.value) options.scrollToBottom();
-          },
-          onDelta: delta => {
-            if (!options.streaming.value) return;
-            options.streaming.value.content += delta;
-            if (options.atBottom.value) options.scrollToBottom();
-          },
-          onDone: data => {
-            if (data?.message) options.upsertMessage(data.message);
-          },
-          onError: data => {
-            if (data?.message) options.upsertMessage(data.message);
-            if (data?.detail) message(String(data.detail), { type: "warning" });
-          }
-        },
+        handlers,
         streamAbort.signal
       );
     } catch (error) {

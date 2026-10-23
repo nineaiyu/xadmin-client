@@ -42,6 +42,16 @@ class ApprovalFlowApi extends BaseApi {
       `${this.baseApi}/${pk}/rollback`
     );
   };
+
+  /** 审批人候选目录（流程设计器）：与流程 list 权限同口径，支持关键字搜索 */
+  candidateOptions = (params?: { keyword?: string; limit?: number }) => {
+    return this.request<DetailResult>(
+      "get",
+      params ?? {},
+      {},
+      `${this.baseApi}/candidate-options`
+    );
+  };
 }
 
 export const approvalFlowApi = new ApprovalFlowApi(

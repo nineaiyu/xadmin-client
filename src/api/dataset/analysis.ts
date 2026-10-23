@@ -111,6 +111,8 @@ export type ScreenItem = {
   layout_mode?: ScreenChoiceValue;
   /** 自由画布载荷（空对象 = 未启用） */
   free_layout?: Partial<ScreenFreeLayout>;
+  /** 列表形态派生：canvas-grid / canvas-free / carousel */
+  render_mode?: string;
   interval: number;
   refresh: number;
   visibility: "personal" | "shared";

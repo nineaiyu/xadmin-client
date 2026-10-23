@@ -10,16 +10,28 @@ const {
   auth,
   addOrEditOptions,
   listColumnsFormat,
-  operationButtonsProps
+  operationButtonsProps,
+  lookupAlert
 } = useDataPermission();
 </script>
 <template>
-  <RePlusPage
-    :api="api"
-    :auth="auth"
-    locale-name="systemPermission"
-    :addOrEditOptions="addOrEditOptions"
-    :listColumnsFormat="listColumnsFormat"
-    :operationButtonsProps="operationButtonsProps"
-  />
+  <div>
+    <!-- 依赖的菜单/字段注册表不可用：说明缺少的权限点，新增/编辑已由 hook 禁用 -->
+    <el-alert
+      v-if="lookupAlert"
+      class="mb-2"
+      type="warning"
+      :closable="false"
+      show-icon
+      :title="lookupAlert"
+    />
+    <RePlusPage
+      :api="api"
+      :auth="auth"
+      locale-name="systemPermission"
+      :addOrEditOptions="addOrEditOptions"
+      :listColumnsFormat="listColumnsFormat"
+      :operationButtonsProps="operationButtonsProps"
+    />
+  </div>
 </template>

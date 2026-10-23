@@ -1,15 +1,18 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useNoticeRead } from "./hook";
 
 defineOptions({
   name: "SystemNoticeRead"
 });
 
-const tableRef = ref();
-
-const { api, auth, listColumnsFormat, operationButtonsProps } =
-  useNoticeRead(tableRef);
+const {
+  api,
+  auth,
+  tableRef,
+  listColumnsFormat,
+  operationButtonsProps,
+  tableBarButtonsProps
+} = useNoticeRead();
 </script>
 
 <template>
@@ -20,5 +23,6 @@ const { api, auth, listColumnsFormat, operationButtonsProps } =
     locale-name="noticeRead"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :tableBarButtonsProps="tableBarButtonsProps"
   />
 </template>

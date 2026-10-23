@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router";
 import type { Component } from "vue";
+import { goBackOrHome } from "@/router/utils";
 import { ReText } from "@/components/ReText";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useI18n } from "vue-i18n";
@@ -32,7 +33,7 @@ const { t } = useI18n();
 
 <template>
   <el-menu :default-active="currentPane" class="pure-account-settings-menu">
-    <div class="account-sidebar__back" @click="router.go(-1)">
+    <div class="account-sidebar__back" @click="goBackOrHome(router)">
       <IconifyIconOffline :icon="leftLine" />
       <span class="ml-2">{{ t("account.back") }}</span>
     </div>
@@ -46,6 +47,14 @@ const { t } = useI18n();
           {{ userinfoStore.username }}
         </ReText>
       </div>
+    </div>
+    <div class="account-sidebar__actions">
+      <el-button link type="primary" @click="router.push('/welcome')">
+        {{ t("menus.home") }}
+      </el-button>
+      <el-button link type="danger" @click="userinfoStore.logOut()">
+        {{ t("account.logout") }}
+      </el-button>
     </div>
     <el-menu-item
       v-for="item in panes.filter(item => item.auth)"
@@ -78,6 +87,12 @@ const { t } = useI18n();
 
 .account-sidebar__back:hover {
   color: var(--pure-theme-menu-title-hover);
+}
+
+.account-sidebar__actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: 0 var(--el-menu-base-level-padding) var(--space-2);
 }
 
 .account-sidebar__profile {

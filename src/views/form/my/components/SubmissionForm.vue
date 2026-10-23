@@ -2,12 +2,10 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDebounceFn } from "@vueuse/core";
-import UploadFiles from "@/components/RePlusPage/src/components/UploadFiles.vue";
 import { getDictItems, type DictItem } from "@/utils/dict";
 import {
   submissionApi,
   type FillableFormItem,
-  type FormCascaderOption,
   type FormField,
   type FormUserOption,
   type SubmissionItem
@@ -21,6 +19,8 @@ import {
   evaluateFormulaFields,
   formatFormulaValue
 } from "@/views/form/utils/formulaEval";
+import { useHiddenStash } from "../composables/useHiddenStash";
+import SubmissionFieldControl from "./SubmissionFieldControl.vue";
 
 /**
  * 动态填报表单（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -70,16 +70,8 @@ const shownFields = computed(() =>
 );
 const requiredOf = (field: FormField) => isFieldRequired(field, controls.value);
 
-// 被联动隐藏的字段清空取值：与后端「隐藏即不落库」同口径，避免脏值随载荷提交
-watch(
-  controls,
-  value => {
-    for (const [key, control] of Object.entries(value)) {
-      if (control.hidden) delete formData[key];
-    }
-  },
-  { immediate: true }
-);
+// 被联动隐藏的字段暂存取值：提交载荷仍不含隐藏值，但切回显示时恢复用户输入
+useHiddenStash(controls, formData as Record<string, unknown>);
 
 // 明细子表行数组在渲染前初始化（渲染路径只读，不在渲染期写 formData）：
 // 被联动隐藏又恢复的字段其行数组可能被清理，新增行时按需重建后写回
@@ -112,9 +104,6 @@ const removeRow = (field: FormField, index: number) => {
 /** 选人控件候选缓存：key → 候选列表（远程搜索与编辑回显共用） */
 const userOptionCache = reactive<Record<string, FormUserOption[]>>({});
 const userOptionsOf = (field: FormField) => userOptionCache[field.key] ?? [];
-const userLabel = (user: FormUserOption) =>
-  user.nickname ? `${user.username}-${user.nickname}` : user.username;
-
 /** 选人远程搜索（300ms 防抖）：避免逐键打请求；空关键字立即清空候选 */
 const searchUsers = useDebounceFn((field: FormField, keyword: string) => {
   const value = (keyword ?? "").trim();
@@ -150,12 +139,6 @@ const loadPickedUsers = () => {
   }
 };
 onMounted(loadPickedUsers);
-
-/** 级联控件的树形选项（平铺字符串项忽略） */
-const cascaderOptionsOf = (field: FormField): FormCascaderOption[] =>
-  (field.options ?? []).filter(
-    (item): item is FormCascaderOption => typeof item !== "string"
-  );
 
 /** 平铺控件的字符串选项（select/radio/checkbox；忽略树形节点等非字符串项） */
 const flatOptionsOf = (field: FormField): string[] =>
@@ -194,12 +177,6 @@ const loadDictOptions = () => {
   }
 };
 onMounted(loadDictOptions);
-
-/** 字典字段占位：字典为空时给出提示（提交会被后端 fail-closed 拒绝） */
-const dictPlaceholder = (field: FormField) =>
-  field.dict && !(dictItemCache[field.key] ?? []).length
-    ? t("dform.dictEmpty")
-    : t("dform.selectPlaceholder");
 
 /**
  * 公式字段计算值（只读派生：不写入 formData，避免被当作用户输入）。
@@ -296,203 +273,23 @@ defineExpose({ getPayload, validateRequired });
         :required="requiredOf(field)"
         :error="missingFieldKey === field.key ? t('dform.requiredItemTip') : ''"
       >
-        <el-input
-          v-if="field.type === 'input'"
-          v-model="formData[field.key] as string"
-          :maxlength="field.max_length"
-          :placeholder="field.placeholder"
+        <SubmissionFieldControl
+          :field="field"
+          :model-value="formData[field.key]"
+          :formula-text="formatFormula(field)"
+          :user-options="userOptionsOf(field)"
+          :option-entries="optionEntries(field)"
+          :dict-empty="
+            Boolean(field.dict && !(dictItemCache[field.key] ?? []).length)
+          "
+          :rows="rowsOf(field)"
+          @update:model-value="
+            (value: unknown) => (formData[field.key] = value)
+          "
+          @search-users="(keyword: string) => searchUsers(field, keyword)"
+          @add-row="addRow(field)"
+          @remove-row="(index: number) => removeRow(field, index)"
         />
-        <el-input
-          v-else-if="field.type === 'textarea'"
-          v-model="formData[field.key] as string"
-          type="textarea"
-          :rows="3"
-          :maxlength="field.max_length"
-        />
-        <el-input-number
-          v-else-if="field.type === 'number'"
-          v-model="formData[field.key] as number"
-          :min="field.min"
-          :max="field.max"
-        />
-        <el-input-number
-          v-else-if="field.type === 'amount'"
-          v-model="formData[field.key] as number"
-          :min="field.min"
-          :max="field.max"
-          :precision="field.precision"
-        />
-        <div
-          v-else-if="field.type === 'formula'"
-          class="font-medium text-(--el-text-color-primary)"
-          data-testid="dform-formula-value"
-        >
-          {{ formatFormula(field) || "—" }}
-        </div>
-        <el-select
-          v-else-if="field.type === 'user'"
-          v-model="formData[field.key] as number | number[]"
-          class="w-full"
-          :multiple="field.multiple === true"
-          filterable
-          remote
-          reserve-keyword
-          clearable
-          :remote-method="(keyword: string) => searchUsers(field, keyword)"
-          :placeholder="t('dform.userSearchPlaceholder')"
-        >
-          <el-option
-            v-for="user in userOptionsOf(field)"
-            :key="user.pk"
-            :value="user.pk"
-            :label="userLabel(user)"
-          />
-        </el-select>
-        <el-cascader
-          v-else-if="field.type === 'cascader'"
-          v-model="formData[field.key] as (string | number)[]"
-          class="w-full"
-          :options="cascaderOptionsOf(field)"
-          clearable
-        />
-        <el-select
-          v-else-if="field.type === 'select'"
-          v-model="formData[field.key] as string"
-          class="w-full"
-          clearable
-          :placeholder="dictPlaceholder(field)"
-        >
-          <el-option
-            v-for="option in optionEntries(field)"
-            :key="option.value"
-            :value="option.value"
-            :label="option.label"
-          />
-        </el-select>
-        <el-radio-group
-          v-else-if="field.type === 'radio'"
-          v-model="formData[field.key] as string"
-        >
-          <el-radio
-            v-for="option in optionEntries(field)"
-            :key="option.value"
-            :value="option.value"
-            >{{ option.label }}</el-radio
-          >
-        </el-radio-group>
-        <el-checkbox-group
-          v-else-if="field.type === 'checkbox'"
-          v-model="formData[field.key] as string[]"
-        >
-          <el-checkbox
-            v-for="option in optionEntries(field)"
-            :key="option.value"
-            :value="option.value"
-            >{{ option.label }}</el-checkbox
-          >
-        </el-checkbox-group>
-        <el-date-picker
-          v-else-if="field.type === 'date'"
-          v-model="formData[field.key] as string"
-          type="date"
-          value-format="YYYY-MM-DD"
-        />
-        <el-date-picker
-          v-else-if="field.type === 'daterange'"
-          v-model="formData[field.key] as string[]"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          :start-placeholder="t('dform.rangeStart')"
-          :end-placeholder="t('dform.rangeEnd')"
-        />
-        <UploadFiles
-          v-else-if="field.type === 'upload'"
-          v-model="formData[field.key] as Record<string, unknown>[]"
-          multiple
-        />
-        <div v-else-if="field.type === 'table'" class="w-full">
-          <el-table :data="rowsOf(field)" size="small" border>
-            <el-table-column
-              v-for="column in field.columns ?? []"
-              :key="column.key"
-              :label="column.label"
-              min-width="120"
-            >
-              <template #default="{ row }">
-                <el-input-number
-                  v-if="column.type === 'number'"
-                  v-model="
-                    (row as Record<string, unknown>)[column.key] as number
-                  "
-                  size="small"
-                  controls-position="right"
-                />
-                <el-select
-                  v-else-if="column.type === 'select'"
-                  v-model="
-                    (row as Record<string, unknown>)[column.key] as string
-                  "
-                  size="small"
-                  clearable
-                >
-                  <el-option
-                    v-for="option in column.options ?? []"
-                    :key="option"
-                    :value="option"
-                    :label="option"
-                  />
-                </el-select>
-                <el-date-picker
-                  v-else-if="column.type === 'date'"
-                  v-model="
-                    (row as Record<string, unknown>)[column.key] as string
-                  "
-                  type="date"
-                  value-format="YYYY-MM-DD"
-                  size="small"
-                />
-                <el-input
-                  v-else
-                  v-model="
-                    (row as Record<string, unknown>)[column.key] as string
-                  "
-                  size="small"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column :label="t('dform.actions')" width="70">
-              <template #default="{ $index }">
-                <el-button
-                  link
-                  type="danger"
-                  size="small"
-                  @click="removeRow(field, $index)"
-                >
-                  {{ t("dform.delete") }}
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <el-button
-            class="mt-1"
-            size="small"
-            type="primary"
-            plain
-            data-testid="dform-add-row"
-            @click="addRow(field)"
-          >
-            {{ t("dform.addRow") }}
-          </el-button>
-        </div>
-        <el-switch
-          v-else-if="field.type === 'switch'"
-          v-model="formData[field.key] as boolean"
-        />
-        <!-- 未知字段类型兜底：schema 演进出新 type 时显式提示，不静默渲染空白
-             （空白既让填报人漏填，也让运维无从感知表单定义问题） -->
-        <span v-else class="text-(--el-color-danger)">
-          {{ t("dform.unsupportedFieldType", { type: field.type }) }}
-        </span>
       </el-form-item>
     </el-form>
   </div>

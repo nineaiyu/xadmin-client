@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { loginRules } from "../utils/rule";
@@ -24,6 +24,7 @@ import { cloneDeep } from "@pureadmin/utils";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
 import RememberLogin from "./RememberLogin.vue";
+import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
 import type { RecordType } from "plus-pro-components";
 import {
   useAuthInfo,
@@ -49,6 +50,9 @@ const {
 } = useRememberLogin();
 
 const { authInfo, configLoading, onConfig } = useAuthInfo();
+
+/** 账号密码登录开关：配置未返回前按开启处理，避免首帧误报「已关闭」 */
+const basicLoginEnabled = computed(() => authInfo.value.basic !== false);
 
 const ruleForm = reactive({
   username: "",
@@ -105,7 +109,7 @@ const {
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
+  if (!formEl || !basicLoginEnabled.value) return;
   await formEl.validate(async valid => {
     if (!valid) {
       loading.value = false;
@@ -160,8 +164,11 @@ const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 /** 回车提交（随组件卸载自动移除监听） */
 useEnterSubmit(() => onLogin(ruleFormRef.value));
 
-onMounted(() => {
+/** 登录配置失败：与「管理员禁用登录」区分，给重试入口 */
+const configFailed = ref(false);
+const loadLoginConfig = () => {
   configLoading.value = true;
+  configFailed.value = false;
   loginAuthApi()
     .then(res => {
       if (isSuccess(res)) {
@@ -170,10 +177,17 @@ onMounted(() => {
         loginDay.value = authInfo.value.lifetime ?? 1;
         formatLoginDayOptions();
         syncRememberToStore();
+      } else {
+        configFailed.value = true;
       }
     })
+    .catch(() => {
+      configFailed.value = true;
+    })
     .finally(() => (configLoading.value = false));
-});
+};
+
+onMounted(loadLoginConfig);
 </script>
 
 <template>
@@ -192,7 +206,7 @@ onMounted(() => {
         :rules="loginRules"
         size="large"
       >
-        <div v-if="authInfo.basic">
+        <div v-if="basicLoginEnabled">
           <Motion :delay="100">
             <el-form-item prop="username">
               <el-input
@@ -234,7 +248,9 @@ onMounted(() => {
             </el-form-item>
           </Motion>
         </div>
-        <Motion :delay="250">
+        <!-- 账号密码登录被关闭：给出可读说明，隐藏无字段可填的提交按钮；
+             验证码/第三方入口仍在下方渲染，不把用户困在空表单里 -->
+        <Motion v-if="basicLoginEnabled" :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
               <RememberLogin
@@ -267,12 +283,29 @@ onMounted(() => {
             </el-button>
           </el-form-item>
         </Motion>
+        <Motion v-else :delay="250">
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            :title="t('login.basicDisabled')"
+          />
+        </Motion>
         <!-- 第三方登录入口：读取后端已启用 provider，
              替换原静态装饰图标（不接后端、不可点击的死 UI） -->
         <Motion :delay="350">
           <OAuthEntry />
         </Motion>
       </el-form>
+      <Motion v-else-if="configFailed" :delay="300">
+        <el-result icon="error" :title="t('login.configLoadFailed')">
+          <template #extra>
+            <el-button type="primary" @click="loadLoginConfig">
+              {{ t("buttons.reload") }}
+            </el-button>
+          </template>
+        </el-result>
+      </Motion>
       <Motion v-else :delay="300">
         <el-result icon="error" :title="t('login.serverForbidden')" />
       </Motion>
@@ -290,6 +323,9 @@ onMounted(() => {
             </el-button>
           </div>
         </el-form-item>
+      </Motion>
+      <Motion :delay="450">
+        <LoginPrivacyNotice />
       </Motion>
     </template>
   </div>

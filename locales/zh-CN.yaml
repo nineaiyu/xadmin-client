@@ -153,6 +153,7 @@ messageTemplate:
   resetConfirm: 确认重置「{name}」为代码默认模板？
   saveSuccess: 模板已保存
   resetSuccess: 已重置为默认模板
+  loadFailed: 模板注册表加载失败，可能无权访问或服务异常
   syntaxHint: "变量以 {'{{'}名称{'}}'} 形式插入；留空表示沿用代码默认内容"
   previewUnsupported: 该消息类型未提供样例数据，暂不支持预览
   defaultContent: 代码默认内容
@@ -172,15 +173,26 @@ approvalDiscussion:
   empty: 暂无评论
   deleteConfirm: 确认删除这条评论？
   submitted: 评论已发表
+  readonly: 你没有发表评论的权限
   cc: 抄送人
   ccPlaceholder: 选择抄送人（可多选）
 
 accountRisk:
+  noPermission: 当前账号没有账号安全风险的查看权限，请联系管理员授权
   scan: 立即巡检
+  scanRunning: 巡检进行中，请稍候…
+  scanDone: 巡检完成：共发现 {total} 项风险
+  scanFailed: 巡检失败，请稍后重试
+  scanStatusFailed: 巡检进度查询失败
+  scanTimeout: 巡检等待超时，可稍后在任务中心查看进度
   batchHandle: 批量处置
   handle: 处置
   detail: 详情
   detailTitle: 风险详情 - {name}
+  handledBy: 处置人
+  handledAt: 处置时间
+  statsLoadFailed: 风险统计加载失败
+  retry: 重试
   handleTitle: 风险处置（已选 {count} 项）
   action: 处置动作
   remark: 处置备注
@@ -227,7 +239,8 @@ loginPolicy:
   targetRole: 指定角色
   targetUser: 指定用户
   targetValue: 对象值
-  targetValuePlaceholder: 目标对象为「全部用户」时忽略；角色编码或用户名（多个用逗号分隔）
+  targetValuePlaceholder: 选择用户或角色（可多选）；目标对象为「全部用户」时不适用
+  targetAllUsers: 全部用户（无需选择）
   rolePlaceholder: 角色编码（多个用逗号分隔）
   userPlaceholder: 用户名（多个用逗号分隔）
   weekdays: 生效星期
@@ -257,6 +270,8 @@ loginPolicy:
   previewIpTip: 留空表示当前来源 IP
   previewWhen: 样例时间
   previewWhenTip: 留空表示当前时间
+  previewHint: 三项样例均可留空：用户=当前登录用户，IP=当前来源 IP，时间=当前时间（按浏览器时区解释）
+  previewTimezone: 时间按 {zone} 解释
   previewRun: 预演
   previewResult: 命中「{policy}」→ {action}
   previewEcho: 实际预演样例——用户 {username} / IP {ip} / 时间 {when}
@@ -354,6 +369,9 @@ collapseParams:
 reState:
   empty: 暂无数据
   error: 加载失败
+
+reStat:
+  empty: 暂无统计数据
 
 tableAction:
   confirmTitle: 确定执行该操作吗？
@@ -755,6 +773,9 @@ error:
   moduleDisabled: 功能模块已停用
   moduleDisabledTip: 该功能对应的模块已被停用，如需使用请联系管理员开启
   back: 返回上一页
+  copied: 已复制诊断信息
+  copyFailed: 复制失败，请手动选择
+  copyDiagnostics: 复制诊断信息
 
 password:
   veryWeak: 很弱
@@ -929,6 +950,7 @@ post:
   disabled: 已停用
   members: 成员
   memberHint: 移除已有成员或搜索添加新成员（保存后生效）
+  memberTruncated: 共 {total} 人，仅显示前 {shown} 人；请到用户管理按岗位筛选
   memberEmpty: 暂无成员
   memberPlaceholder: 搜索用户名/昵称添加成员
   memberNoChange: 未检测到成员变更
@@ -939,6 +961,9 @@ post:
 
 directory:
   membersLoadFailed: 成员加载失败，请稍后重试
+  noPermission: 无通讯录查看权限
+  noPermissionHint: 联系管理员授予 list:SystemDirectory 权限后可见
+  retry: 重试
   title: 通讯录
   viewByDept: 按部门
   viewByPost: 按岗位
@@ -955,6 +980,10 @@ directory:
   empty: 暂无成员
   emptyDept: 暂无可浏览的部门
   emptyPosts: 暂无可用岗位
+  noDeptPermission: 无部门数据查看权限，请联系管理员授权
+  noPostPermission: 无岗位数据查看权限，请联系管理员授权
+  deptLoadFailed: 部门数据加载失败，请稍后重试
+  postLoadFailed: 岗位数据加载失败，请稍后重试
   deptTreeTruncated: 部门数量超过单次加载上限，部门树已截断、可能不完整
   postListTruncated: 岗位数量超过单次加载上限，岗位清单已截断、可能不完整
   noPost: 未分配岗位
@@ -972,6 +1001,7 @@ directory:
   dateJoined: 加入日期
 
 tag:
+  usageHint: 打标入口在用户/文件页；本页的 assign/batchAssign/resources/objects 权限点供那些页面的标签选择器使用，不是本页按钮。
   title: 标签
   create: 新建标签
   edit: 编辑标签
@@ -1020,10 +1050,16 @@ invite:
   invalid: 邀请链接无效或已过期，请联系管理员重新发送邀请
   accepted: 账号已激活，请直接登录
   toLogin: 去登录
-  captchaRequired: 请先完成拼图验证
+  captcha: 图形验证码
+  captchaPlaceholder: 输入图片中的字符
+  captchaRequired: 请先完成图形验证码
+  validateNetworkFailed: 邀请链接校验失败（网络或服务异常），请重试
+  rulesLoadFailed: 密码规则加载失败，仍可提交由服务端校验
+  contactInviter: 如非本人操作或链接已过期，请联系邀请人重新发送邀请
 
 oauth:
   title: 第三方登录
+  emptyCallback: 登录服务返回了空结果，请返回登录页重试
   tabTitle: 第三方账号
   bindTip: 绑定第三方账号后可直接用它登录本系统；解绑需验证登录密码，且不会解掉你最后一种可用的登录方式。
   bound: 已绑定
@@ -1054,6 +1090,7 @@ plus:
   detailBlankTip: 若已开启字段权限，请为当前菜单配置字段白名单（未配置白名单的模型字段会被裁剪为空）
 
 results:
+  batchPartial: "{n} 条未处理：{detail}"
   copySuccess: 复制成功
   copyFailed: 复制失败
   operateSuccess: 操作成功
@@ -1133,6 +1170,7 @@ menus:
   messageSettings: 消息通知
   smsSettings: 短信设置
   ldapSettings: LDAP 目录
+  openPlatformSettings: 开放平台
   dataAnalysis: 数据分析
   dataDashboard: 仪表盘
   dataDataset: 数据集
@@ -1200,7 +1238,8 @@ menus:
   loginPolicy: 登录策略
   dataMaskRule: 脱敏规则
   approval: 审批管理
-  approvalCenter: 审批中心
+  approvalCenter: 操作审批
+  settingLedger: 设置台账
   approvalFlow: 流程定义
   approvalInstance: 流程审批
   approvalDelegation: 审批委托
@@ -1213,6 +1252,10 @@ impact:
   title: 影响面预览
   affected: 该操作会影响以下关联数据
   confirmDelete: 确认删除
+  preflightUnavailableTitle: 无法预检影响面
+  preflightUnavailable: 当前角色没有该资源的影响面预检权限（impact:*），无法确认是否仍有关联数据。
+  preflightUnavailableHint: 继续删除可能影响关联数据且无法撤销；建议先在角色授权中补授 impact 权限，或确认无关联后再继续。
+  continueDelete: 仍然删除
 
 credential:
   title: 凭据与密钥
@@ -1246,6 +1289,10 @@ credential:
   modelFieldsHint: 模型字段级凭据按行值级加密（AESCipherV3），此处仅展示已配置数量，不展示密钥内容
   noPermission: 无凭据查看权限
   noPermissionHint: 联系管理员授予「凭据与密钥」的查看权限后可见
+  loadFailed: 凭据清单加载失败
+  retry: 重试
+  searchPlaceholder: 按名称 / 使用方 / 分类筛选
+  noMatch: 无匹配凭据
 
 approval:
   pendingTab: 待我审批
@@ -1291,6 +1338,8 @@ approval:
   pendingApprover: 待审批
   progressTitle: 审批进度 - {no}
   progressTip: 按配置顺序逐级审批：当前级通过后自动通知下一级，全部通过才算审批通过
+  requestParams: 申请内容（脱敏请求体）
+  requestParamsTip: 以下为提交审批时记录的脱敏请求参数快照，仅用于核对审批内容
   target: 目标对象
   targetChanges: 变更对照（变更前 → 变更后）
   targetNoChanges: 未记录字段变更（删除类操作仅展示目标对象）
@@ -1303,6 +1352,22 @@ approval:
   progressLoadFailed: 审批进度加载失败，请稍后重试
 
 approvalRule:
+  impactTitle: "在途审批影响面"
+  impactHint: "按当前表单中的路径/方法/优先级/启用状态，实时检查在途审批单的命中情况；规则改动只影响之后新建的审批单。"
+  impactPreview: "检查在途命中"
+  impactTotal: "共 {total} 条在途审批单会命中"
+  impactTruncated: "仅显示前 {count} 条"
+  impactWins: "当前优先级会使本规则生效"
+  impactOutranked: "存在同优先级或更高优规则，本规则可能不生效"
+  impactNoRule: "当前无匹配规则"
+  impactInactive: "规则未启用，不会命中任何审批单"
+  impactNote: "仅统计在途（PENDING）审批单；历史单已按建单快照推进，不受规则改动影响。"
+  impactFailed: "影响面预览失败，请稍后重试"
+  impactNoPermission: "没有影响面预览权限（impact:SystemApprovalRule）"
+  pathCatalogLoadFailed: 接口路径目录加载失败，可在下方直接填写自定义路径正则
+  pathCatalogEmpty: 当前账号没有可选的接口路径，可在下方填写自定义路径正则
+  retry: 重试
+  levelNamePlaceholder: 可选，如：直属主管
   createTitle: 新增审批规则
   editTitle: 编辑审批规则
   name: 规则名称
@@ -1355,6 +1420,19 @@ approvalRule:
   levelCount: "{n} 级"
 
 systemApprovalFlow:
+  unsavedConfirm: 当前流程配置有未保存变更，确认关闭并丢弃？
+  removeNodeConfirm: 确认删除该审批节点？节点出口路由会同步重映射
+  conditionOpEq: 等于
+  conditionOpNe: 不等于
+  conditionOpIn: 属于
+  conditionOpNotIn: 不属于
+  conditionOpGt: 大于
+  conditionOpGte: 大于等于
+  conditionOpLt: 小于
+  conditionOpLte: 小于等于
+  conditionOpContains: 包含
+  conditionOpIsEmpty: 为空
+  conditionOpNotEmpty: 不为空
   versionsLoadFailed: 版本列表加载失败，请稍后重试
   createTitle: 新增流程
   editTitle: 编辑配置
@@ -1435,6 +1513,7 @@ systemApprovalFlow:
   routeInvalidDropped: 已忽略无效分支（需填写条件字段，且目标不能是当前节点）
 
 systemApprovalInstance:
+  commentsNoPermission: 缺少 comments:SystemApprovalInstance 权限，无法查看讨论区
   start: 发起申请
   startTitle: 发起申请
   pendingTab: 待我审批
@@ -1478,8 +1557,8 @@ systemApprovalInstance:
   batchReject: 批量驳回
   batchApproveConfirm: 确定批量通过选中的申请吗？
   batchRejectTitle: 批量驳回 {n} 条申请
-  batchRejectPartial: "{n} 条未处理：{detail}"
-  batchApprovePartial: "{n} 条未通过：{detail}"
+  batchRejectPartial: "{succeeded} 条成功，{n} 条未处理：{detail}"
+  batchApprovePartial: "{succeeded} 条成功，{n} 条未通过：{detail}"
   cancelConfirm: 确定撤回申请「{title}」吗？
   submit: 提交申请
   submitSuccess: 申请已提交
@@ -1511,7 +1590,7 @@ systemApprovalInstance:
   transferOk: 已转交，等待对方处理
   batchTransfer: 批量转交
   batchTransferTitle: 批量转交 {n} 条待办
-  batchTransferPartial: "{n} 条转交失败：{detail}"
+  batchTransferPartial: "{succeeded} 条成功，{n} 条转交失败：{detail}"
   nodeProgress: 节点进度
   progressCount: "已通过 {approved} / 需 {required} 人（候选 {total}）"
   progressRatioHint: "比例会签：通过数达到 {ratio}% 即通过（加签会抬高达标线）"
@@ -1536,6 +1615,8 @@ systemApprovalInstance:
   flowUnavailable: 原流程已停用或不可发起，请选择其他流程
 
 userinfo:
+  confirmUnbind: 我已知晓并确认解绑原账号
+  confirmUnbindRequired: 请先勾选确认解绑原账号
   userinfo: 个人信息
   edit: 修改个人信息
   basicInfo: 基本资料
@@ -1548,6 +1629,7 @@ userinfo:
   verifyOldPassword: 请输入旧密码
   verifyNewPassword: 请输入新密码
   surePassword: 确认密码
+  confirmPasswordRequired: 请再次输入新密码
   username: 用户名
   nickname: 昵称
   phone: 手机
@@ -1568,6 +1650,7 @@ userinfo:
 
 # MFA / 敏感操作二次验证
 mfa:
+  statusLoadFailed: MFA 状态加载失败，无法确认绑定状态；请重试
   tabTitle: MFA 安全
   confirmTitle: 敏感操作确认
   confirmTip: 该操作需要先完成身份二次验证，请选择验证方式
@@ -1614,6 +1697,9 @@ mfa:
   recoverySaved: 我已保存
 
 account:
+  home: 首页
+  logout: 退出登录
+  tabUnavailable: 原页签不可用或无权访问，已回到个人信息
   profile: 个人信息
   preference: 偏好设置
   prefCrossHint: 这里的开关控制实时提醒是否弹出（全局维度）；订阅哪些消息类型见「消息订阅」。
@@ -1636,6 +1722,7 @@ systemUser:
   inviteConfirm: 将向该用户发送邀请邮件（重置为待激活，原密码立即失效；已激活账号需重新激活），确认继续？
   invitePending: 待接受邀请
   inviteAccepted: 已激活
+  deptUserCountHint: 直属在册成员数，可能与按数据权限过滤后的列表总数不一致
   avatarAlt: 用户头像
   user: 用户
   resetMfa: 重置MFA
@@ -1698,6 +1785,7 @@ systemUser:
   changeHistoryTip: 查看该用户字段级变更记录
 
 systemDept:
+  hardDeleteHint: 部门删除为物理删除且不可恢复；存在下级部门或成员时会被拒绝，请先调整归属
   dept: 部门
   name: 部门名称
   code: 部门标识
@@ -1737,6 +1825,10 @@ systemMyScope:
   subCount: 下级部门
   hint: 数据范围随「部门管理员」任命实时生效；点开部门可预览成员，跳转用户管理可继续操作
   empty: 暂无管辖部门（由管理员在部门页任命）
+  noPermissionTitle: 无权访问「我的管辖」
+  noPermission: 缺少 managed:SystemDept 权限点，无法读取管辖部门；请联系管理员在角色授权中授予
+  loadFailed: 管辖部门加载失败
+  retry: 重试
   direct: 直接管辖
   members: 成员 { count } 人
   searchPlaceholder: 搜索部门名称 / 编码
@@ -1759,9 +1851,15 @@ systemMyScope:
   active: 在用
   disabled: 停用
   loadMore: 加载更多（剩余 {count} 个）
+  visibleCount: 已显示 {shown}/{total} 个部门
 
 systemPermission:
   permission: 数据权限
+  trial: 试算
+  trialTitle: "试算：{name}"
+  trialReadonlyHint: 列表页试算按该权限组已保存的规则执行；修改草稿请进入编辑
+  lookupMissing: 缺少依赖权限（{permissions}），生效范围与规则字段候选不可用，已禁用新增与编辑
+  lookupLoadFailed: 数据权限依赖数据加载失败，已禁用新增与编辑，请刷新页面重试
   name: 权限名称
   mode_type: 权限模式
   modeTypeTip: 权限模式, 且模式表示数据需要同时满足规则列表中的每条规则，或模式即满足任意一条规则即可
@@ -1836,6 +1934,7 @@ systemPermission:
     matchPlaceholder: 选择匹配条件
     matchRequired: 请选择匹配条件
     matchFixedTip: 该取值方式由系统固定匹配条件，无需选择
+    lookupFailed: 匹配条件加载失败，请检查字段是否已同步或稍后重试
     value: 取值
     valueRequired: 请填写或选择取值
     jsonPlaceholder: 请输入 JSON（保存时会校验格式）
@@ -1879,6 +1978,8 @@ systemRole:
   menuTitle: 请输入菜单标题
   menu: 菜单权限
   preview: 授权预览
+  menuTreeDenied: 缺少菜单列表权限（list:SystemMenu），授权树不可用，已禁用新增与编辑，避免保存后清空角色权限
+  menuTreeLoadFailed: 菜单列表加载失败，授权树不可用，已禁用新增与编辑，请刷新页面重试
 
 # 角色菜单权限配置树
 rolePermission:
@@ -1941,6 +2042,7 @@ permissionPreview:
   noGrantAtLevel: 该部门层无授权
   dataDisabled: 数据权限未启用，过滤不生效
   boundMenus: 绑定菜单
+  moreTitles: "{shown} 等 {count} 个"
   generalGrant: 通用授权（未绑定菜单）
   modeOr: 或模式
   modeAnd: 且模式
@@ -1989,6 +2091,8 @@ permissionPreview:
   noRoles: 该部门未挂载任何角色
   dataGrant: 部门数据权限
   trialDraft: 即时试算（未保存的规则）
+  trialDraftMerged: 即时试算（草稿 + 已保存规则）
+  trialHintMerged: 编辑态会把当前草稿追加到该权限组已保存的规则上一起试算；结果包含既有规则的影响
   draftEmpty: 请先添加规则，再试算
   draftApplied: 已应用当前规则草稿
   draftSkipped: 草稿未生效（菜单上下文不匹配）
@@ -2194,6 +2298,7 @@ systemMenu:
     missing: 权限缺口
     orphan: 游离权限点
     duplicate: 重复权限码
+    customAction: 页面自定义动作（命名约定 动作:组件）
     fieldUnconfigured: 角色未配置字段权限
     role: 角色
     locate: 定位菜单
@@ -2201,19 +2306,22 @@ systemMenu:
     summary: "已扫描路由 { routes } 条 / 权限点 { permissions } 个 · 问题 { total } 处"
     suggest:
       generate: 执行权限同步或「自动批量添加权限」补齐
-      verify: 确认端点是否已下线，必要时删除该权限点
+      verify: 确认端点/自定义动作是否仍在使用，下线后删除该权限点
       merge: 合并重复权限码或确认是否有意为之
       configure: 去角色页勾选该权限点的字段白名单（未配置时接口输出空对象）
     empty:
       missing: 未发现缺口
       orphan: 未发现游离权限点
       duplicate: 未发现重复权限码
+      customAction: 未发现页面自定义权限点
       fieldUnconfigured: 未发现未配置字段权限的角色
   empty:
     noMatch: 无匹配菜单，试试清空筛选条件
     noData: 暂无菜单数据
 
 logsOperation:
+  bodyDropped: 正文未记录（OPERATION_LOG_FIELD_MAX=0）
+  exportBodyHint: 导出包含请求/响应正文，单字段按 OPERATION_LOG_FIELD_MAX（默认 4096 字）截断；敏感字段已脱敏
   creator_id: 用户ID
   module: 模块
   ipaddress: IP地址
@@ -2238,6 +2346,12 @@ logsOperation:
   request_uuid: 请求ID
 
 logsLogin:
+  sessionManage: 会话管理
+  forceLogoutConfirm: 确认强制下线用户「{user}」的在线会话？
+  policyReject: 拒绝登录
+  policyRecord: 仅记录
+  policyRequireMfa: 要求 MFA
+  logoutHint: 「强退」仅对已建立实时连接的会话生效；纯 HTTP 会话请在「在线会话」页按用户下线。
   creator_id: 用户ID
   login_type: 登录方式
   ipaddress: IP地址
@@ -2247,6 +2361,8 @@ logsLogin:
   creator: 用户
 
 configSystem:
+  unregisteredKeyTip: 未注册键不会生效；自定义键建议使用大写蛇形命名，并以代码注册为准
+  registeredKeysLoadFailed: 注册键清单加载失败，自动补全暂不可用
   configSystem: 系统配置
   key: 配置名称
   value: 配置数值
@@ -2272,7 +2388,8 @@ configUser:
   username: 用户名
   access: 接口访问
   owner_id: 用户ID
-  config_user: 用户ID
+  config_user: 用户（可多选）
+  lockedTip: 用户归属创建后不可修改
   owner: 用户信息
   cache_value: 缓存数值
   invalidCache: 缓存失效
@@ -2332,6 +2449,8 @@ systemNotice:
 
 noticeRead:
   owner_id: 用户ID
+  allRead: 全部已读
+  allReadConfirm: 将当前筛选结果中的未读私信全部标记为已读？公告类消息不会被移除。
   notice_id: 公告ID
   message: 内容
   title: 标题
@@ -2342,6 +2461,8 @@ noticeRead:
   notice_info: 通知标题
   readDate: 已读时间
   showSystemNotice: 查看通知公告
+  remove: 移除
+  removeConfirm: 移除后该公告会从你的通知列表消失（不影响公告本身与其他接收人），确定移除吗？
 
 userNotice:
   readFailed: 标记已读失败，请稍后重试
@@ -2392,6 +2513,8 @@ status:
   hsLoad: 加载中...
 
 chat:
+  noPermission: 无聊天室访问权限
+  removeMemberConfirm: 确定将 {name} 移出群聊吗？
   groupNameRequired: 请输入群名称
   membersRequired: 请选择群成员
   inputLabel: 请输入：
@@ -2502,6 +2625,12 @@ chat:
   emptyMembers: 暂无成员
 
 login:
+  confirm: 确定
+  captchaImage: 图形验证码
+  captchaRefresh: 点击刷新图形验证码
+  verifyCodeRequired: 请先获取验证码
+  configLoadFailed: 登录配置加载失败，请重试
+  privacyPrefix: 登录即表示同意
   logoutSuccess: 登出成功
   thirdPartyLogin: 第三方登录
   serverForbidden: 当前服务器不允许登录
@@ -2523,7 +2652,10 @@ login:
   back: 返回
   definite: 确定
   loginSuccess: 登录成功
+  basicDisabled: 账号密码登录已关闭，请使用验证码或第三方登录
+  resetUnavailable: 当前未开放自助重置密码，请联系管理员
   registerSuccess: 注册成功
+  registerFailed: 注册失败，请检查账号或密码规则
   tickPrivacy: 请勾选隐私政策
   readAccept: 我已仔细阅读并接受
   privacyPolicy: 《隐私政策》
@@ -2547,6 +2679,8 @@ login:
   smsVerify: 短信验证
 
 welcome:
+  loadFailed: 首页数据加载失败，部分卡片可能显示 0
+  dataScopeLimited: 部分统计因缺少数据权限显示为 0，请联系管理员配置数据范围
   operateLog: 操作日志
   userAnalysis: 用户分析概览
   registerUser: 注册人数
@@ -2617,6 +2751,10 @@ apiApp:
   enforceDailyQuotaTip: 开启后超过每日配额的请求返回 429（关闭时只告警不阻断）
   grant:
     title: 资源授权
+    manage: 调整资源授权
+    manageDesc: 单独调整模型 / 动作 / 字段 / 行级规则，无需重新保存应用主表单
+    manageTitle: "资源授权 - {name}"
+    saved: 资源授权已保存
     hint: 未配置 = 沿用 owner 权限与接口范围；配置任意一条即白名单模式（模型 / 动作 / 字段 / 行四级收敛，只收紧不放宽）
     add: 添加规则
     remove: 删除
@@ -2637,12 +2775,23 @@ apiApp:
     loadFailed: 资源授权未加载成功：本次保存跳过授权规则（不会清空已有规则）
     saveFailed: 资源授权保存失败
     matchExact: 等于
+    matchIExact: 等于（忽略大小写）
     matchContains: 包含
+    matchIContains: 包含（忽略大小写）
+    matchStartsWith: 以…开头
+    matchIStartsWith: 以…开头（忽略大小写）
+    matchEndsWith: 以…结尾
+    matchIEndsWith: 以…结尾（忽略大小写）
     matchIn: 属于（逗号分隔）
     matchGt: 大于
     matchGte: 大于等于
     matchLt: 小于
     matchLte: 小于等于
+    matchRegex: 正则匹配
+    matchM2m: 多对多包含
+    matchM2mAll: 多对多全包含
+    matchAll: 全部
+    matchIpIn: IP 属于网段
   usage:
     title: 用量
     range: 统计窗口
@@ -2655,6 +2804,7 @@ apiApp:
     daily: 按天明细
     date: 日期
     topPaths: 高频路径
+    path: 路径
     statusCodes: 业务码分布
     statusCode: 业务码
     empty: 暂无调用数据
@@ -2671,9 +2821,11 @@ apiScope:
     /api/identity/user
     /api/task/exports
 setting:
-  name: 配置名称
-  value: 配置数值
-  category: 分类
+  name: 设置项名称
+  noPermission: 没有可查看的设置项（缺少查看权限）
+  loadFailed: 设置项加载失败，请稍后重试
+  value: 设置值
+  category: 设置分类
   is_active: 启用状态
   encrypted: 加密存储
 
@@ -2684,6 +2836,8 @@ settingWatermark:
   title: 水印设置
   preview: 实时预览
   previewTip: 预览使用当前登录用户的真实信息解析占位符，样式与实际水印一致；颜色留空为默认灰
+  previewDisabled: 水印总开关已关闭，预览不会显示；开启后实际页面才生效
+  previewOutOfScope: 当前设置页不在「生效页面」范围内，实际页面不会显示；以下样式仅供预览
 
 settingMessage:
   mailTitle: 邮件服务器
@@ -2694,6 +2848,7 @@ settingMessage:
 
 settingLdap:
   title: LDAP 目录
+  desc: 配置目录连接、用户/部门同步与组角色映射；「测试连接」只验证连接与搜索，不写入用户
 
 settingSecurity:
   code: 验证码安全配置
@@ -2719,7 +2874,9 @@ settingPassword:
 
 settingSms:
   title: 短信设置
+  serverDesc: 配置短信总开关与服务商默认参数；测试会发送一条验证码短信
   backendsLoadFailed: 短信渠道子页签加载失败
+  backend_alibaba: 阿里云短信
 
 demoBook:
   book: 书籍
@@ -2740,6 +2897,7 @@ demoBook:
   publisherExample3: 科学出版社
 
 systemTask:
+  registeredLoadFailed: 可执行任务清单加载失败，请重试
   name: 任务名称
   task: 任务路径
   crontab: cron 表达式
@@ -2777,8 +2935,20 @@ systemTask:
   noExecution: 该任务暂无执行记录
   logTitle: 日志
   noLogOutput: 暂无日志输出
+  logAuthExpired: 登录状态已失效，请重新登录后查看日志
+  logForbidden: 没有该任务日志的查看权限
+  logLoadFailed: 日志加载失败
+  logRetry: 重试
+  logPolling: 实时通道不可用，已切换为轮询
+  scheduleDeleteConfirm: 确认删除该调度？被周期任务引用时会被拒绝
+  scheduleReferencesTitle: 存在引用，无法删除
+  scheduleReferencesHint: 仍有 {count} 个周期任务引用该调度：
+  scheduleReferencesTruncated: 仅显示前 {count} 条
+  scheduleReferencesAction: 请先在任务列表中调整或删除引用任务后再删除
+  openTaskList: 在任务列表中查看
 
 systemTaskExecution:
+  deleteConfirmLog: 确认删除该执行记录？关联的日志文件会一并物理删除，且不可恢复
   name: 任务名称
   product_type: 记录类型
   product_progress: 进度
@@ -2897,6 +3067,8 @@ systemTaskCrontab:
   month_of_year: 月
   timezone: 时区
   cronEveryWeek: 每周
+  cronEveryNWeeks: 每 {n} 周
+  cronFromWeekdayStep: "{day} 起每 {step} 周"
   cronWeekday0: 周日
   cronWeekday1: 周一
   cronWeekday2: 周二
@@ -2904,8 +3076,21 @@ systemTaskCrontab:
   cronWeekday4: 周四
   cronWeekday5: 周五
   cronWeekday6: 周六
+  expression: Cron 表达式
+  timezonePlaceholder: 选择或输入 IANA 时区
+  expressionHint: "当前表达式：{expression}（{weekday}）"
+  nextRuns: 未来 5 次触发
+  previewFailed: 触发时间预览失败，请检查表达式与时区
+  previewEmpty: 暂无触发时间
+  previewRequired: 填满五个字段后显示预览
+  previewHint: 预览按声明时区推算，实际执行以 beat 调度为准
+  preset_every5: 每 5 分钟
+  preset_hourly: 每小时
+  preset_daily2: 每天 02:00
+  preset_workday9: 工作日 09:00
 
 systemTaskInterval:
+  nextApprox: 下次约 {time}
   every: 周期数
   period: 间隔周期
 
@@ -2923,6 +3108,14 @@ imBinding:
   unbound: 已解绑
 
 systemApprovalDelegation:
+  impactTitle: "停用委托前确认"
+  impactConfirm: "该委托相关在途待办共 {count} 条（委托人 {delegator} 条 / 代理人 {delegate} 条）。停用后既有待办归属不变，仅后续新进节点恢复为原审批人。确认停用？"
+  effectiveStatus: 生效状态
+  status_active: 生效中
+  status_notStarted: 未开始
+  status_expired: 已过期
+  status_disabled: 已停用
+  flowOptionsLoadFailed: 流程目录加载失败，暂时只能选择「全部流程」
   allFlows: 全部流程
   delegator: 委托人
   delegator_name: 委托人
@@ -2950,6 +3143,9 @@ recycleBin:
   purgeDone: 清除完成
 
 systemMonitor:
+  thresholdNoPermission: 缺少 thresholds:SystemMonitor 权限，无法查看阈值配置
+  eventsDenied: 缺少 events:SystemMonitor 权限，无法查看事件
+  eventsLoadFailed: 事件加载失败，请重试
   worker: Worker
   active: Active
   reserved: Reserved
@@ -3008,6 +3204,9 @@ systemMonitor:
   healthHealthy: 运行良好
   healthWarning: 存在告警
   healthCritical: 严重异常
+  healthUnknown: 未知（数据未获取）
+  valueUnavailable: 未获取
+  dataUnavailable: 监控数据加载失败或无权查看，当前数值不可用
   itemWarning: 超阈值
   itemCritical: 严重超限
   itemUnknown: 未探测
@@ -3081,8 +3280,11 @@ systemOnline:
   forceLogoutNoUser: 该行缺少用户信息，无法执行强制下线
   batchForceLogout: 批量强制下线
   batchForceLogoutConfirm: 确认对选中用户执行强制下线？其全部会话将立即失效
+  logoutConfirm: 确认让 { name } 退出当前会话？
 
 dataDict:
+  parentType: 上级类型
+  refreshTypeCache: 刷新本类型缓存
   dictType: 字典类型
   parent: 所属类型
   parent_code: 类型编码
@@ -3108,6 +3310,8 @@ dataDict:
   addChild: 新增子项
 
 mask:
+  disableRiskHint: 停用脱敏规则会立即对所有非超管查看者还原明文；请确认合规影响后再操作
+  previewInvalidPattern: 自定义正则非法，该规则未生效，预览结果为原值
   model: 所属模型
   field: 字段
   mask_type: 掩码类型
@@ -3140,6 +3344,8 @@ mask:
   maskTypeCustom: 自定义正则
 
 dashboard:
+  moveUp: 上移卡片
+  moveDown: 下移卡片
   datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   exportImage: 导出图片
   exportNoChart: 指标卡没有可导出的图表
@@ -3187,6 +3393,7 @@ dashboard:
   removeConfirm: 确定删除仪表盘「{name}」吗？布局与卡片将一并移除，引用它的大屏将失去此页
   valueField: 度量字段
   valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
+  lineRequiresDate: 该数据集没有日期字段，折线趋势不可用；请换柱状/饼图或先在数据集配置时间字段
   valueFieldRequired: 请选择度量字段
   loadFailed: 数据加载失败
   retry: 重试
@@ -3202,6 +3409,8 @@ dashboard:
   share: 分享
   shareCopied: 仪表盘链接已复制
 dataDataset:
+  previewNetworkFailed: 预览请求失败（网络或服务异常），请稍后重试
+  inValuesPlaceholder: 输入值后回车添加；值可包含逗号
   metaLoadFailed: 数据集元数据加载失败，编辑与字段选项暂不可用
   previewFailed: 预览执行失败，请检查数据集配置或稍后重试
   title: 数据集
@@ -3251,6 +3460,11 @@ dataDataset:
   aggregateEmpty: 设置聚合方式后点「聚合」查看结果
 
 dataScreen:
+  templateDetail: 查看详情
+  templateDetailFailed: 详情加载失败
+  clearCloud: 清空云端剪贴板
+  clipboardCloudCleared: 云端剪贴板已清空
+  clipboardCloudClearFailed: 清空云端剪贴板失败
   dashboardHidden: 不可见仪表盘
   designer: 设计
   designerTitle: 大屏画布设计器
@@ -3294,6 +3508,7 @@ dataScreen:
   gridHint: 栅格 12 列 × 60 行；位置与尺寸为列/行下标
   modeGrid: 栅格
   modeFree: 自由画布
+  modeCarousel: 轮播
   theme: 主题
   themeDark: 深色
   themeLight: 浅色
@@ -3559,6 +3774,7 @@ dataReport:
   stay: 留在编辑器
   runDirty: 有未保存改动，请先保存再运行
   cronInvalid: Cron 表达式需为 5 段（分 时 日 月 周）
+  imRecipientsRequired: 已勾选 IM 渠道，请至少选择一个 IM 收件人
   recipientsRequired: 勾选邮件渠道时必须填写邮件接收人
   recipientsInvalid: 邮件接收人格式不正确：{value}
   monthDayHint: 每月几号投递（1~28）
@@ -3581,6 +3797,9 @@ dataReport:
   edit: 编辑
   delete: 删除
   run: 立即运行
+  runDone: 报表运行完成，产物已进入下载中心
+  runFailed: 报表运行失败
+  runPollTimeout: 报表仍在运行，请稍后到下载中心查看结果
   runOk: 已派发执行，产物稍后进入下载中心
   name: 名称
   dataset: 数据集
@@ -3640,11 +3859,23 @@ webhook:
   secret: 签名密钥
   secretKeep: 留空沿用原密钥
   secretHint: 用于 HMAC-SHA256 签名
+  hasSecret: 密钥状态
+  secretConfigured: 已配置
+  secretMissing: 未配置
+  rotateSecret: 轮换密钥
+  rotateSecretConfirm: 轮换后旧密钥立即失效，订阅方需同步更新；确定轮换吗？
+  rotateSecretTitle: 新签名密钥
+  rotateSecretHint: "新密钥仅显示一次，请立即复制并更新订阅方："
+  rotateSecretOk: 密钥已轮换
+  viewRequest: 查看请求
+  payload: 请求体
+  requestHeaders: 签名头
+  requestTitle: 请求体与签名头
   events: 订阅事件
-  isActive: 启用
+  is_active: 启用
   on: 启用
   off: 停用
-  lastFailure: 最近失败
+  last_failure: 最近失败
   description: 描述
   actions: 操作
   cancel: 取消
@@ -3667,6 +3898,10 @@ webhook:
   attempt: 次数
   responseCode: 响应码
   responseBody: 响应内容
+  responseTitle: 完整响应体
+  responseTruncated: 已截断
+  responseEmpty: （空响应）
+  viewResponse: 查看完整
   duration: 耗时(秒)
 
 ai:
@@ -3686,6 +3921,7 @@ ai:
   emptyMessages: 还没有与{name}的对话，开始提问吧
   persistHint: 对话与操作记录已保存在服务端，刷新后可回看
   partialHint: 回答未完成
+  latestOnlyHint: 仅最新一条回答可执行操作，历史消息仅供回看
   streamInterrupted: 回答流已中断，已保留部分内容
   resultRows: "共 {count} 条，显示前 {shown} 条"
   resultName: 指标
@@ -3731,10 +3967,18 @@ ai:
   stopGenerating: 停止生成
   askFailed: 文档问答失败，请重试或更换模型
   nlFailed: 数据查询失败，请重试或更换模型
+  toolCatalog: 工具目录（{count}）
+  toolCatalogTitle: AI 工具目录
+  toolCatalogEmpty: 当前没有可用的 AI 工具
+  toolParams: 参数
+  statusDegraded: 控制台状态不可用，问答功能仍可使用
   statusLoadFailed: AI 控制台状态加载失败
   retry: 重试
 
 aiConfig:
+  statusUnknown: 全局开关状态未知
+  statusUnknownHint: 缺少 AI 配置查看权限或加载失败，无法确认是否已启用；请刷新重试或联系管理员授权
+  retry: 重试
   title: AI 配置
   globalTitle: 全局开关
   sectionSwitch: 功能开关
@@ -3892,10 +4136,22 @@ aiConfig:
   capabilities: 能力画像
   probed_at: 探测时间
 dform:
+  editOptions: "编辑选项"
+  optionsEditorTitle: "编辑复杂选项"
+  optionValue: "选项值"
+  addOption: "添加选项"
+  cascaderPathPlaceholder: "叶子路径，段以 / 分隔，如：华东/江苏/南京"
+  addPath: "添加路径"
+  addColumn: "添加列"
+  flowOptionsLoadFailed: 审批流程目录加载失败，暂时无法选择绑定流程
   detailFallback: 详情加载失败，当前展示列表数据
   noApprovalNeeded: 无需审批
   designerTitle: 表单设计
   fillTitle: 可填表单
+  withdraw: 撤回
+  withdrawConfirm: 确定撤回「{name}」的审批申请吗？撤回后需重新提交
+  withdrawOk: 已撤回
+  withdrawNoInstance: 该填报没有关联审批实例，无法撤回
   mySubmissions: 我的提交
   exportCsv: 导出 CSV
   create: 新建表单
@@ -3919,13 +4175,21 @@ dform:
   fieldOptions: 选项
   optionsHint: 逗号分隔
   fieldRequired: 必填
+  fieldSensitive: 敏感字段
+  fieldSensitiveTip: 列表、详情与导出对非超管统一显示 ******；仅超管可查看原值
   fieldFilterable: 可筛选
   fieldFilterableTip: 勾选后该字段取值随提交物化，可在「表单数据」页按该字段筛选
   fieldFormula: 公式表达式
   fieldFormulaPlaceholder: "如 {'{'}price{'}'} * {'{'}qty{'}'}、SUM({'{'}items.amount{'}'})"
   fieldFormulaTip: 支持 + - * / 与括号；{'{'}price{'}'} 形式引用数值字段，SUM/AVG/MIN/MAX 聚合明细列，另有 ROUND/ABS 函数；点击下方标签插入引用
   noForms: 暂无可填表单
+  submitConfirm: 确认提交「{name}」的草稿？提交后将进入审批流程
+  resubmitConfirm: 确认重新提交「{name}」？将重新发起审批流程
+  formsLoadFailed: 可填表单加载失败，请重试
+  retry: 重试
   noDescription: 无描述
+  formEnabled: 启用表单
+  formEnabledTip: 停用后不再出现在「可填报表单」，已有提交不受影响
   approvalRequired: 提交审批
   approvalOn: 需审批
   approvalOff: 直接提交
@@ -4074,8 +4338,15 @@ dform:
   historyRollbackConfirm: 确定回滚到版本 v{version} 吗？将应用该版本的字段与联动配置并生成新版本
   historyRollbackDone: 已回滚到版本 v{version}
   historyLoadFailed: 版本历史加载失败
+  unsaved: 有未保存的设计改动
+  leaveConfirm: 表单设计有未保存改动，关闭后将丢失，确认关闭？
+  leave: 直接关闭
+  stay: 留在此处
 
 formData:
+  exportFullHint: 导出包含表单全部字段，不受当前列设置/隐藏列影响
+  dataScopeHint: 列表为空时请确认已在「数据权限」中授予表单数据模型（dataset.dynamicformsubmission）的查看范围
+  fieldPermissionHint: 动态表单以 JSON 存储，字段级权限不适用于动态字段；含敏感信息的字段请在表单设计中避免收集，或仅向授权角色开放本页与导出
   selectTitle: 选择表单
   selectPlaceholder: 请选择表单
   noForms: 暂无可查看的表单
@@ -4088,6 +4359,8 @@ formData:
   formsLoadFailed: 表单清单加载失败
   retry: 重试
 leaveApply:
+  statsTip: "请假统计口径：最近 {n} 天"
+  saveAndSubmit: 保存并提交审批
   leave_type: 请假类型
   start_date: 开始日期
   end_date: 结束日期
@@ -4134,7 +4407,7 @@ mcp:
   formAuthTokenLeave: 留空保持不变
   formTimeout: 超时（秒）
   formAllowedTools: 允许调用的工具
-  formAllowedToolsTip: 逗号分隔（如 echo, search）；为空则不允许调用任何工具（同步后可按快照维护）
+  formAllowedToolsTip: 从已同步工具中勾选，也可输入未同步的工具名；为空则不允许调用任何工具
   formEnabled: 启用
   formExposeToAi: 接入 AI 动作面
   formExposeToAiTip: 开启后，白名单内工具将进入 AI 助手动作目录（助手确认后可调用；默认关闭）
@@ -4176,6 +4449,10 @@ mcp:
   disabled: 已停用
   actionSurfaceIn: 已接入
   actionSurfaceOut: 未接入
+  expose_to_ai: 接入动作面
+  tools_count: 工具数
+  toolsCount: "{count} 个工具"
+  toolCallUnavailable: 仅白名单内且已接入动作面的工具可调用
 aiKnowledge:
   upload: 上传文档
   uploadTitle: 上传文档
@@ -4200,6 +4477,7 @@ aiKnowledge:
   chooseFile: 选择本地文件
   chooseFileTip: 支持 .md/.markdown/.txt/.pdf/.docx；文本可编辑，pdf/docx 解析后入库
   content: 文档内容
+  parsingHint: 文档解析与上传中，请稍候…
   contentPlaceholder: 粘贴或编辑 Markdown 文本
   contentTitle: 原文
   chunksTitle: 知识分块（问答检索命中的最小单元）
@@ -4231,6 +4509,7 @@ aiKnowledge:
   buildAlreadyRunning: 已有构建任务在运行，正在跟踪其进度
   buildProgress: 向量构建中… {percent}%
   buildPollTimeout: 构建耗时较长，已停止进度跟踪；稍后刷新向量状态查看结果
+  vectorStatusDenied: 无法读取向量通道状态：缺少知识库查看权限，请联系管理员授权
   vectorDisabled: 未配置「用途 = 文本向量化」的激活档案，请先在 AI 配置页添加并激活
   panelTitle: "管理文档 {title}"
   enabled: 已启用
@@ -4254,6 +4533,12 @@ oauthAuthorize:
   invalidRequest: 请求参数不完整（缺少 client_id / redirect_uri）
   loadFailed: 授权请求加载失败
   invalidRedirect: 授权已完成，但应用登记的回调地址无效，无法跳转；请联系应用提供方修正 redirect_uri
+  invalidRedirectEffective: 授权已在服务端生效，但无法解析回跳地址；请返回应用重试（无需重复授权）
+  emptyInfo: 授权信息为空，请返回应用重新发起授权
+  redirectHost: "授权后将返回：{host}"
+  riskyScopes: "包含 {count} 个写操作权限，请确认应用可信"
+  pkceRequired: 该应用要求 PKCE，授权码将绑定本次挑战
+  pkceOptional: 该应用未强制 PKCE
 
 systemModule:
   currentPreset: 当前生效预设
@@ -4279,6 +4564,7 @@ systemModule:
   depends: 依赖
   note: 说明
   loadFailed: 加载模块清单失败
+  loadFailedHint: 请检查网络或 apply:SystemModule 权限后重试
   desiredPreset: 待生效预设
   overrideActive: 已启用后台覆盖
   baseline: 部署基线
@@ -4300,6 +4586,12 @@ systemModule:
   saved: 已保存，重启后生效
   saveFailed: 保存失败
   noChange: 没有需要保存的改动
+  retry: 重试
+  applyRequired: 当前角色缺少 apply:SystemModule 权限，预设与开关仅可查看
+  saveConfirm: "即将变更：{changes}。保存后需重启进程生效，确认保存？"
+  saveDiffPreset: "预设 {from} → {to}"
+  saveDiffEnable: "启用 {modules}"
+  saveDiffDisable: "停用 {modules}"
   reset: 恢复部署配置
   resetConfirm: 确认清除后台覆盖，恢复为部署基线（config.yml / 环境变量）？
   resetDone: 已恢复为部署配置，重启后生效
@@ -4310,7 +4602,7 @@ about:
   platformInfo: 平台信息
   prodDeps: 生产环境依赖
   devDeps: 开发环境依赖
-  version: 当前版本
+  version: 前端版本
   buildTime: 构建时间
   nodeVersion: Node 版本
   pnpmVersion: pnpm 版本
@@ -4335,6 +4627,16 @@ emptyPage:
   back: 返回上一页
 
 codegen:
+  planRename: 重命名方案
+  planRenamePrompt: 输入新的方案名称
+  planShare: 共享方案
+  planUnshare: 取消共享
+  planShareConfirm: 确认共享该方案给同页用户？
+  planUnshareConfirm: 确认取消共享？
+  planUpdated: 方案已更新
+  planUpdateFailed: 方案更新失败
+  modelsDenied: 缺少 models:SystemCodeGen 权限，模型清单不可用
+  fieldsDenied: 缺少 modelFields:SystemCodeGen 权限，字段配置不可用
   model: 目标模型
   modelPlaceholder: 搜索并选择模型（app.Model）
   ordering: 列表排序
@@ -4419,6 +4721,9 @@ codegen:
   planShared: 共享
   planShareOnSave: 共享给同页用户
   planNameRequired: 方案名称不能为空
+  planOperationFailed: 方案操作失败
+  planImportEmpty: 导入文件中没有有效方案
+  planSharedDeleteDenied: 仅方案创建者可删除共享方案
   planLoad: 载入
   planDelete: 删除
   planDeleteConfirm: 确认删除该方案？
@@ -4431,3 +4736,92 @@ codegen:
   planDeleteFailed: 删除失败
   planImported: 方案已导入
   planImportFailed: 导入失败
+
+reAnimateSelector:
+  placeholder: 选择过渡动画
+
+settingOpenPlatform:
+  title: 开放平台
+  scim: SCIM 目录同步
+  scimDesc: IdP 通过 SCIM 2.0 主动同步用户与用户组；平台侧无需外连。
+  oauth: 第三方登录
+  oauthDesc: 配置 OAuth2 / OIDC / 企业 IM 扫码登录；密钥加密存储，留空表示沿用已存值。
+  authorized: 已授权应用
+  authorizedDesc: 管理员审计视角：按应用聚合全部用户的 OAuth 授权，可撤销该应用的全部授权。
+settingScim:
+  rotateToken: 生成/轮换令牌
+  rotateHint: 轮换后旧令牌立即失效，新令牌只展示一次。
+  rotateTitle: SCIM 令牌
+  tokenOnce: 请立即复制并配置到 IdP；关闭后无法再次查看。
+  rotateFailed: 令牌轮换失败
+  syncStatus: 最近同步记录
+  syncTotal: 共 {total} 条
+  syncTime: 时间
+  syncModule: 操作
+  syncMethod: 方法
+  syncPath: 路径
+  syncResult: 结果
+  syncIp: IP
+oauthProvider:
+  desc: 支持 OAuth2、OIDC 与企业 IM 扫码登录；密钥加密存储，留空表示沿用已存值。
+  add: 添加提供商
+  rawMode: 原始 JSON
+  rawHint: 编辑完整 provider 数组；应用后仍需点击保存才会生效。
+  rawApply: 应用
+  rawMustBeArray: JSON 必须是 provider 数组
+  rawInvalid: JSON 格式不正确
+  saved: 第三方登录配置已保存
+  saveFailed: 保存失败
+  testFailed: discovery 测试失败
+  testOk: discovery 结果
+  empty: 尚未配置第三方登录提供商
+  unnamed: 未命名提供商
+  name: 名称
+  key: 唯一标识
+  keyPlaceholder: 例如 corp-sso
+  flavor: 类型
+  clientId: Client ID
+  clientSecret: Client Secret
+  secretConfigured: 已配置，留空保持不变
+  scope: Scope
+  subjectField: 用户标识字段
+  autoCreate: 首次登录自动创建用户
+  advanced: 高级配置
+  issuer: Issuer
+  discoveryUrl: Discovery URL
+  discoveryPlaceholder: 留空则按 issuer 推导
+  authorizeUrl: 授权地址
+  tokenUrl: 换码地址
+  userinfoUrl: 用户信息地址
+  jwksUri: JWKS 地址
+  groupsField: 组字段
+  nicknameClaim: 昵称 Claim
+  emailClaim: 邮箱 Claim
+  phoneClaim: 手机 Claim
+  agentId: Agent ID
+  groupRoleMap: 组到角色映射
+  groupRoleMapPlaceholder: 组名 -> 角色编码
+  groupMapInvalid: 组映射必须是 JSON 对象
+  testDiscovery: 测试 discovery
+  remove: 删除
+  removeConfirm: 确定删除提供商「{name}」？
+authorizedApps:
+  title: 已授权应用
+  desc: 这些应用已获得访问你账号的权限；撤销后其刷新/访问令牌立即失效。
+  userCount: 授权用户
+  revokeAllConfirm: 确定撤销「{name}」的全部用户授权？该应用的所有 OAuth 令牌将立即失效。
+  revokedAll: 应用授权已全部撤销
+  application: 应用
+  scopes: 授权范围
+  noScopes: 不限范围
+  authorizedTime: 授权时间
+  lastUsed: 最近使用
+  status: 状态
+  actions: 操作
+  revoke: 撤销授权
+  revokeConfirm: 确定撤销对「{name}」的授权？该应用的令牌将立即失效。
+  revoked: 授权已撤销
+  empty: 暂无已授权应用
+  status_active: 生效中
+  status_disabled: 应用已停用
+  status_expired: 已过期

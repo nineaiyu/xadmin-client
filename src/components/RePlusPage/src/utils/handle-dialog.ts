@@ -173,6 +173,8 @@ export interface formDialogDrawerOptions {
   row?: DynamicSpec;
   /** 弹窗的title */
   title: string;
+  /** 确定按钮文案覆盖（默认 buttons.save） */
+  sureBtnText?: string;
   /** 表单值（未传时由 `rawRow`/`row` 的解析结果初始化） */
   formValue?: Ref;
   /** 默认数据或者更新的数据 */

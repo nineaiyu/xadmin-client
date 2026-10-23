@@ -20,6 +20,8 @@ export type ApiNode = {
   layout?: { x?: number; y?: number };
   timeout_hours?: number;
   timeout_action?: string;
+  /** 节点级默认抄送人（用户名数组）；实例发起时由后端解析为实例级快照 */
+  cc_users?: string[];
 };
 export type FlowRow = {
   pk: string;
@@ -53,6 +55,8 @@ export type NodeRow = {
   timeout_hours: number;
   /** 超时自动动作（none/approve/reject/transfer_up；仅在 timeout_hours>0 时生效） */
   timeout_action: string;
+  /** 节点级默认抄送人：编辑回显 + 保存回传（缺省会清空既有配置） */
+  cc_users: string[];
 };
 export type FieldRow = {
   label: string;
@@ -76,6 +80,27 @@ export const CONDITION_OPS = [
   "is_empty",
   "not_empty"
 ];
+/** 条件运算符可读文案（与审批类型/超时动作同走 i18n，避免表单中英混排） */
+const CONDITION_OP_KEYS: Record<string, string> = {
+  eq: "conditionOpEq",
+  ne: "conditionOpNe",
+  in: "conditionOpIn",
+  not_in: "conditionOpNotIn",
+  gt: "conditionOpGt",
+  gte: "conditionOpGte",
+  lt: "conditionOpLt",
+  lte: "conditionOpLte",
+  contains: "conditionOpContains",
+  is_empty: "conditionOpIsEmpty",
+  not_empty: "conditionOpNotEmpty"
+};
+export function conditionOpLabel(
+  op: string,
+  t: (key: string) => string
+): string {
+  const key = CONDITION_OP_KEYS[op];
+  return key ? t(`systemApprovalFlow.${key}`) : op;
+}
 export const FIELD_TYPES = ["text", "textarea", "number", "date", "select"];
 /** 超时自动动作（与后端 ApprovalFlowNode.TimeoutAction 同枚举） */
 export const TIMEOUT_ACTIONS = ["none", "approve", "reject", "transfer_up"];
@@ -135,8 +160,59 @@ export function createEmptyNode(): NodeRow {
     routes: [],
     layout: {},
     timeout_hours: 0,
-    timeout_action: "none"
+    timeout_action: "none",
+    cc_users: []
   };
+}
+
+/** 接口节点 → 编辑态行（含节点抄送人回显，避免保存时被清空） */
+export function toNodeRow(node: ApiNode): NodeRow {
+  return {
+    name: node.name ?? "",
+    approve_type: pickValue(node.approve_type, "OR"),
+    approve_ratio: node.approve_ratio ?? 100,
+    assignee_type: pickValue(node.assignee_type, "role"),
+    assignee_value: node.assignee_value ?? "",
+    condition_field: node.condition?.field ?? "",
+    condition_op: node.condition?.op ?? "eq",
+    condition_value: formatConditionValue(node.condition?.value),
+    routes: (node.routes ?? []).map(route => ({
+      condition: {
+        field: route.condition?.field ?? "",
+        op: route.condition?.op ?? "eq",
+        value: route.condition?.value ?? ""
+      },
+      target: Number(route.target)
+    })),
+    layout: { ...(node.layout ?? {}) },
+    timeout_hours: node.timeout_hours ?? 0,
+    timeout_action: node.timeout_action ?? "none",
+    cc_users: Array.isArray(node.cc_users)
+      ? node.cc_users.map(item => String(item).trim()).filter(Boolean)
+      : []
+  };
+}
+
+/**
+ * 节点重排 / 删除后重映射出口路由 target（target 语义是「目标节点当前 order」）。
+ *
+ * ``previousOrder`` 是变更前的节点引用快照：按旧 order 找到目标节点，再换算成它的
+ * 新 order；目标已被删除或会形成自环时丢弃该路由（保留会指向错误节点或死循环）。
+ */
+export function remapRouteTargets(
+  nodes: NodeRow[],
+  previousOrder: NodeRow[]
+): void {
+  for (const node of nodes) {
+    const selfOrder = nodes.indexOf(node) + 1;
+    node.routes = (node.routes || []).flatMap(route => {
+      const targetNode = previousOrder[Number(route.target) - 1];
+      if (!targetNode) return [];
+      const newTarget = nodes.indexOf(targetNode) + 1;
+      if (!newTarget || newTarget === selfOrder) return [];
+      return [{ ...route, target: newTarget }];
+    });
+  }
 }
 
 /** 数值运算符的条件值是否可转数值（空串同样不合格）；in/not_in 为字符串集合比较，不在此列 */
@@ -241,6 +317,10 @@ export function buildFlowPayload(
             value: parseConditionValue(node.condition_op, node.condition_value)
           }
         : {},
+      // 节点级抄送：缺省空数组（旧行为是整字段丢失 → 编辑任意流程会清空既有抄送）
+      cc_users: (node.cc_users ?? [])
+        .map(item => String(item).trim())
+        .filter(Boolean),
       // 出口路由：条件值按 op 规范化后提交；layout 为画布坐标
       routes: (node.routes || []).map(route => ({
         condition: route.condition?.field?.trim()

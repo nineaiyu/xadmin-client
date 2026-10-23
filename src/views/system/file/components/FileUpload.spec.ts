@@ -70,8 +70,8 @@ describe("FileUpload 上传大小配置回退", () => {
     await mountUpload();
     expect(mocks.message).toHaveBeenCalledTimes(1);
 
-    // 提示后仍按默认 1MB 限制拦截超大文件（tip 文案可感知）
+    // 提示后仍按默认 10MB 限制拦截超大文件（tip 文案可感知）
     const wrapper = await mountUpload();
-    expect(wrapper.text()).toContain("1 MB");
+    expect(wrapper.text()).toContain("10 MB");
   });
 });

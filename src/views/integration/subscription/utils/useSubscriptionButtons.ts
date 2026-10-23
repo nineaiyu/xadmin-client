@@ -14,11 +14,15 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 export function useSubscriptionButtons({
   t,
   canTest,
-  testSubscription
+  canRotate,
+  testSubscription,
+  rotateSecret
 }: {
   t: TFunction;
   canTest: boolean;
+  canRotate: boolean;
   testSubscription: (row: WebhookSubscriptionItem) => Promise<void>;
+  rotateSecret: (row: WebhookSubscriptionItem) => Promise<void>;
 }) {
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 200,
@@ -33,6 +37,14 @@ export function useSubscriptionButtons({
         onClick: ({ row }) => testSubscription(row as WebhookSubscriptionItem),
         index: 10,
         show: canTest
+      },
+      {
+        text: t("webhook.rotateSecret"),
+        code: "rotateSecret",
+        props: { type: "warning", link: true },
+        onClick: ({ row }) => rotateSecret(row as WebhookSubscriptionItem),
+        index: 20,
+        show: canRotate
       }
     ]
   });

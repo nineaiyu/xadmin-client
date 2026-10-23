@@ -5,16 +5,32 @@ defineOptions({
   name: "SystemTag" // 必须定义，用于菜单自动匹配组件
 });
 
-const { api, auth, addOrEditOptions, listColumnsFormat } = useTags();
+const {
+  api,
+  auth,
+  addOrEditOptions,
+  listColumnsFormat,
+  operationButtonsProps
+} = useTags();
 </script>
 
 <template>
-  <RePlusPage
-    :api="api"
-    :auth="auth"
-    locale-name="tag"
-    :selection="false"
-    :addOrEditOptions="addOrEditOptions"
-    :listColumnsFormat="listColumnsFormat"
-  />
+  <div>
+    <el-alert
+      class="mb-2"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="$t('tag.usageHint')"
+    />
+    <RePlusPage
+      :api="api"
+      :auth="auth"
+      locale-name="tag"
+      :selection="false"
+      :addOrEditOptions="addOrEditOptions"
+      :listColumnsFormat="listColumnsFormat"
+      :operationButtonsProps="operationButtonsProps"
+    />
+  </div>
 </template>

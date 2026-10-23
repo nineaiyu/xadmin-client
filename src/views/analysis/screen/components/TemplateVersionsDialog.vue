@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
 import { fetchTemplateVersions } from "../utils/serverTemplates";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 import { dialogSize } from "@/components/ReDialog/size";
 defineOptions({ name: "ScreenTemplateVersionsDialog" });
@@ -63,6 +67,19 @@ async function onRollback(version: number) {
 
 const formatTime = (value?: string) =>
   value ? value.replace("T", " ").slice(0, 19) : "";
+
+/** 版本历史只读列（时间与回滚动作用具名插槽） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { prop: "version", label: t("dataScreen.templateVersionColumn"), width: 80 },
+  { prop: "name", label: t("dataScreen.templateName") },
+  { prop: "group", label: t("dataScreen.templateGroup") },
+  {
+    label: t("dataScreen.updatedTime"),
+    width: 160,
+    slot: "updatedTime"
+  },
+  { label: t("dataScreen.templateRollback"), width: 110, slot: "actions" }
+]);
 </script>
 
 <template>
@@ -79,31 +96,26 @@ const formatTime = (value?: string) =>
     <div v-else-if="versions.length === 0" class="versions__hint">
       {{ t("dataScreen.templateVersionEmpty") }}
     </div>
-    <el-table v-else :data="versions" size="small" max-height="320">
-      <el-table-column
-        prop="version"
-        :label="t('dataScreen.templateVersionColumn')"
-        width="80"
-      />
-      <el-table-column prop="name" :label="t('dataScreen.templateName')" />
-      <el-table-column prop="group" :label="t('dataScreen.templateGroup')" />
-      <el-table-column :label="t('dataScreen.updatedTime')" width="160">
-        <template #default="{ row }">{{
-          formatTime(row.created_time)
-        }}</template>
-      </el-table-column>
-      <el-table-column :label="t('dataScreen.templateRollback')" width="110">
-        <template #default="{ row }">
-          <el-button
-            size="small"
-            :data-testid="`version-rollback-${row.version}`"
-            @click="onRollback(row.version)"
-          >
-            {{ t("dataScreen.templateRollback") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <ReReadonlyTable
+      v-else
+      :columns="columns"
+      :rows="versions"
+      size="small"
+      max-height="320"
+    >
+      <template #updatedTime="{ row }">{{
+        formatTime(row.created_time)
+      }}</template>
+      <template #actions="{ row }">
+        <el-button
+          size="small"
+          :data-testid="`version-rollback-${row.version}`"
+          @click="onRollback(row.version)"
+        >
+          {{ t("dataScreen.templateRollback") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
   </el-dialog>
 </template>
 

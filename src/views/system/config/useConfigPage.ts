@@ -1,6 +1,5 @@
 import { shallowRef, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import { usePageAuth } from "@/router/utils";
 import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { ApiResult } from "@/api/types";
@@ -15,8 +14,8 @@ interface ConfigCacheApi {
 
 /**
  * 配置页共用壳：系统配置与用户配置两页 hook 结构高度一致，差异仅在权限后缀
- * （由调用页组件名 SystemConfig / UserConfig 推导）与文案；此壳收敛权限表装配
- * 与「清除缓存」行内按钮（确认 / loading / 成功后刷新口径）。
+ * （由调用页工厂按组件名推导）与文案；此壳消费页面权限表并装配「清除缓存」
+ * 行内按钮（确认 / loading / 成功后刷新口径）。
  *
  * 页面专有装配仍留在各自 hook：系统配置的注册键候选提示、用户配置的 owner
  * 跳转列与用户维度编辑项。
@@ -24,13 +23,12 @@ interface ConfigCacheApi {
 export function useConfigPage(options: {
   t: TFunction;
   api: ConfigCacheApi;
+  auth: { [key: string]: boolean | undefined; invalid?: boolean };
   tableRef: Ref;
   invalidText: string;
   invalidConfirmTitle: string;
 }) {
-  const { t, api, tableRef } = options;
-  // 权限后缀取当前页组件名，invalid 位随之推导（invalid:SystemConfig / invalid:UserConfig）
-  const auth = usePageAuth(["invalid"]);
+  const { t, api, auth, tableRef } = options;
 
   const operationButtonsProps = shallowRef<OperationProps>({
     width: 250,

@@ -75,9 +75,10 @@ export function useMenuMeta({ api }: { api: Reactive<typeof menuApi> }) {
   const loadViews = () => {
     if (viewsLoading) return;
     viewsLoading = true;
-    const files = import.meta.glob<{ default: { name?: string } }>(
-      "@/views/**/*.vue"
-    );
+    const files = import.meta.glob<{ default: { name?: string } }>([
+      "@/views/**/*.vue",
+      "@/extensions/**/*.vue"
+    ]);
     Object.keys(files).forEach((file: string) => {
       // components 目录为依赖组件而非页面组件，不入候选
       if (/\/components\//.test(file)) return;
@@ -89,7 +90,10 @@ export function useMenuMeta({ api }: { api: Reactive<typeof menuApi> }) {
           return;
         }
         viewList.value[
-          file.replace(/(\.\/|\.vue)/g, "").replace("/src/views/", "")
+          file
+            .replace(/(\.\/|\.vue)/g, "")
+            .replace("/src/views/", "")
+            .replace("/src/extensions/", "extensions/")
         ] = data?.default?.name as string;
       });
     });

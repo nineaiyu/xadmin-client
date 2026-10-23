@@ -13,19 +13,22 @@ type RegisteredTask = {
   verbose_name: string;
 };
 
+/** 任务日志增量块（WS 帧与 HTTP log 接口同形状，见 task/utils/task_log.py） */
+export type TaskLogChunk = {
+  offset: number;
+  content: string;
+  finished: boolean;
+};
+
 /** 定时任务管理（django_celery_beat） */
 class PeriodicTaskApi extends BaseApi {
-  /** 批量更新：对选中行统一写入同组字段值 */
-  batchUpdate = (
-    pks: Array<number | string>,
-    fields: Record<string, unknown>,
-    marker = "batchUpdate"
-  ) => {
-    return this.request<BaseResult>(
-      "post",
+  /** 启停单条任务（专用动作，不走通用布尔开关） */
+  enable = (pk: number | string, enabled: boolean) => {
+    return this.request<DetailResult>(
+      "patch",
       {},
-      { pks, fields, _write_marker: marker },
-      `${this.baseApi}/batch-update`
+      { enabled },
+      `${this.baseApi}/${pk}/enable`
     );
   };
   /** 立即执行一次任务 */
@@ -46,13 +49,22 @@ class PeriodicTaskApi extends BaseApi {
       `${this.baseApi}/batch-run`
     );
   };
-  /** 批量启用/停用任务（enabled 省略时按各任务当前状态取反） */
-  batchEnable = (pks: Array<number | string>, enabled?: boolean) => {
+  /** 批量启用任务（独立路由与权限点） */
+  batchEnable = (pks: Array<number | string>) => {
     return this.request<BaseResult>(
       "post",
       {},
-      { pks: [...pks], enabled },
+      { pks: [...pks] },
       `${this.baseApi}/batch-enable`
+    );
+  };
+  /** 批量停用任务（独立路由与权限点） */
+  batchDisable = (pks: Array<number | string>) => {
+    return this.request<BaseResult>(
+      "post",
+      {},
+      { pks: [...pks] },
+      `${this.baseApi}/batch-disable`
     );
   };
   /** 克隆任务（复制计划与参数，克隆体默认停用） */
@@ -76,8 +88,54 @@ class PeriodicTaskApi extends BaseApi {
 }
 
 export const periodicTaskApi = new PeriodicTaskApi("/api/task/periodic");
-export const crontabScheduleApi = new BaseApi("/api/task/crontab");
-export const intervalScheduleApi = new BaseApi("/api/task/interval");
+
+/** crontab 未来触发预览（按声明时区换算） */
+export type CrontabPreview = {
+  expression: string;
+  timezone: string;
+  next_runs: string[];
+};
+
+/** 调度被引用任务明细（删除前预览 / 删除被拒时定位） */
+export type ScheduleReference = {
+  total: number;
+  tasks: Array<{ pk: string; name: string }>;
+  truncated: boolean;
+};
+
+/** 调度基础能力：引用任务清单（crontab / interval 共用） */
+class ScheduleApi extends BaseApi {
+  references = (pk: number | string) => {
+    return this.request<DetailResult<ScheduleReference>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/${pk}/references`
+    );
+  };
+}
+
+/** cron 表达式管理（额外提供未来 5 次触发预览） */
+class CrontabScheduleApi extends ScheduleApi {
+  preview = (data: {
+    minute: string;
+    hour: string;
+    day_of_month: string;
+    month_of_year: string;
+    day_of_week: string;
+    timezone?: string;
+  }) => {
+    return this.request<DetailResult<CrontabPreview>>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/preview`
+    );
+  };
+}
+
+export const crontabScheduleApi = new CrontabScheduleApi("/api/task/crontab");
+export const intervalScheduleApi = new ScheduleApi("/api/task/interval");
 
 /** 任务执行历史（日志经 WebSocket 增量推送，见 TaskLogDialog.vue） */
 class TaskExecutionApi extends BaseApi {
@@ -88,6 +146,20 @@ class TaskExecutionApi extends BaseApi {
       {},
       {},
       `${this.baseApi}/stats`
+    );
+  };
+  /**
+   * 增量读取执行日志（HTTP 兜底通道）。
+   *
+   * 主通道是 `ws/tasks/log/<pk>` 的 WebSocket 推送；代理不支持升级、连接假活
+   * 等场景按 offset 轮询本接口，两路读的是同一份 celery 日志文件。
+   */
+  log = (pk: string | number, offset = 0) => {
+    return this.request<DetailResult<TaskLogChunk>>(
+      "get",
+      { offset },
+      {},
+      `${this.baseApi}/${pk}/log`
     );
   };
 }

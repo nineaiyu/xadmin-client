@@ -14,9 +14,7 @@ describe("animate.css 按需子集", () => {
     readFileSync(resolve(process.cwd(), path), "utf-8");
   const subsetPath = resolve(process.cwd(), "src/style/animate-subset.css");
 
-  const animateTs = read(
-    "src/views/system/menu/components/ReAnimateSelector/src/animate.ts"
-  );
+  const animateTs = read("src/components/ReAnimateSelector/src/animate.ts");
   /** 选择器可选动画清单（animates 数组的字符串字面量） */
   const listNames = [...animateTs.matchAll(/"([A-Za-z0-9]+)"/g)].map(m => m[1]);
 

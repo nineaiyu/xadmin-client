@@ -41,6 +41,7 @@ export function useAiProfiles(tableRef: Ref) {
   const canDeactivate = hasAuth("deactivate:AiProfile");
   const canTest = hasAuth("test:AiProfile");
   const canProbe = hasAuth("probe:AiProfile");
+  const canRetrieve = hasAuth("retrieve:AiProfile");
   const canEdit = hasAuth("partialUpdate:AiProfile");
   const canDestroy = hasAuth("destroy:AiProfile");
 
@@ -53,7 +54,7 @@ export function useAiProfiles(tableRef: Ref) {
 
   const { openProfilePanel } = useAiProfileManage({
     t,
-    flags: { canProbe, canEdit, canDestroy },
+    flags: { canProbe, canEdit, canDestroy, canRetrieve },
     probeProfile,
     openDialog,
     removeProfile

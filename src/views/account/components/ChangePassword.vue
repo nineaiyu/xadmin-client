@@ -33,7 +33,7 @@ defineExpose({ getRef });
 interface FormPasswordProps {
   old_password: string;
   new_password: string;
-  sure_password?: string;
+  sure_password: string;
 }
 
 interface AddOrEditFormProps {
@@ -90,12 +90,15 @@ const formPasswordRules = reactive<FormRules>({
     }
   ],
   sure_password: [
-    // 一致性校验与登录/注册/重置密码页同源（@/utils/rules/confirmPassword）；
-    // 本页非必填（仅比对），空值放行
+    // 一致性校验与登录/注册/重置密码页同源（@/utils/rules/confirmPassword）。
+    // 必填：本栏就是提交给后端的「新密码」（见上方字段口径说明），空值会让
+    // 请求带着空口令到达服务端，只在后端才报错，用户无法从表单看出原因。
     {
       validator: buildRepeatPasswordValidator({
         getPassword: () => password.value.new_password,
-        mismatchMessage: t("login.passwordDifferentReg")
+        mismatchMessage: t("login.passwordDifferentReg"),
+        required: true,
+        requiredMessage: t("userinfo.confirmPasswordRequired")
       }),
       trigger: "blur"
     }

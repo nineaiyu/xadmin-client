@@ -61,6 +61,10 @@ const selectedDataset = computed(
   () => props.datasets.find(item => item.pk === form.dataset) ?? null
 );
 const datasetColumns = computed(() => selectedDataset.value?.columns ?? []);
+/** 折线趋势必须有日期列：无 date_field 的数据集不能保存 line 卡 */
+const lineDateField = computed(
+  () => selectedDataset.value?.config?.date_field ?? ""
+);
 
 /** sum/avg 的数值字段候选（后端聚合要求数值列且在白名单内；无元数据时回落全列） */
 const numericColumns = computed(() => {
@@ -129,6 +133,10 @@ const getPayload = (): DashboardCard | null => {
     message(t("dashboard.valueFieldRequired"), { type: "warning" });
     return null;
   }
+  if (form.chart_type === "line" && !lineDateField.value) {
+    message(t("dashboard.lineRequiresDate"), { type: "warning" });
+    return null;
+  }
   return { ...form };
 };
 
@@ -181,7 +189,11 @@ defineExpose({ getPayload });
       >
         <el-option value="number" :label="t('dashboard.chartNumber')" />
         <el-option value="metric" :label="t('dashboard.chartMetric')" />
-        <el-option value="line" :label="t('dashboard.chartLine')" />
+        <el-option
+          value="line"
+          :label="t('dashboard.chartLine')"
+          :disabled="!lineDateField"
+        />
         <el-option value="bar" :label="t('dashboard.chartBar')" />
         <el-option value="pie" :label="t('dashboard.chartPie')" />
       </el-select>
@@ -196,6 +208,14 @@ defineExpose({ getPayload });
         />
       </el-select>
     </el-form-item>
+    <el-alert
+      v-if="form.chart_type === 'line' && !lineDateField"
+      class="mb-2"
+      type="warning"
+      :closable="false"
+      show-icon
+      :title="t('dashboard.lineRequiresDate')"
+    />
     <el-form-item
       v-if="form.chart_type === 'line'"
       :label="t('dashboard.dateTrunc')"

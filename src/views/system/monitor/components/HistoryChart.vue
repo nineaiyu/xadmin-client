@@ -6,6 +6,8 @@ import type { UtilsEChartsOption } from "@pureadmin/utils";
 import type { MonitorHistory, MonitorMetric } from "@/api/system/monitor";
 import { CHART_ACCENT, cssVarColor, epColor } from "@/utils/chartTheme";
 import { waitChartSized } from "@/utils/chart";
+import { downloadBlob } from "@/utils/download";
+import { dataUrlToBytes } from "@/utils/imageExport";
 import {
   METRIC_META,
   buildSeries,
@@ -145,10 +147,8 @@ const exportImage = () => {
     // 透明底在暗色面板/暗色主题下不可读，取当前主题底色（EP 变量已按暗色重定义）
     backgroundColor: cssVarColor("--el-bg-color-overlay", "#ffffff")
   });
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `monitor-trend-${Date.now()}.png`;
-  link.click();
+  const blob = new Blob([dataUrlToBytes(url)], { type: "image/png" });
+  downloadBlob(`monitor-trend-${Date.now()}.png`, blob);
   return true;
 };
 

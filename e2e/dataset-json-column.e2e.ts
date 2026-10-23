@@ -102,7 +102,9 @@ test("数据集 JSON 路径列：设计器输入 → 保存 → 预览出列", a
     await expect(
       previewDialog.getByRole("columnheader", { name: "data.deadline|date" })
     ).toBeVisible();
-    await expect(previewDialog.getByRole("row", { name: /乙/ })).toBeVisible();
+    await expect(
+      previewDialog.getByRole("row", { name: /乙/ }).first()
+    ).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(previewDialog).not.toBeVisible();
   } finally {

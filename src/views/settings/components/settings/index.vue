@@ -40,8 +40,22 @@ const route = useRoute();
 /** 当前面板键：可受控（v-model:active），缺省内部管理并落在首个面板 */
 const active = defineModel<string>("active", { default: "" });
 
-const paneList = computed(() => props.panes ?? []);
-const currentKey = computed(() => active.value || paneList.value[0]?.key || "");
+/**
+ * 可见面板：表单型面板缺 `retrieve` 权限时不进导航（否则渲染一张空白表单，用户
+ * 以为「配置是空的」）；自定义插槽面板没有 item，是否可见由页面自行判断。
+ */
+const paneList = computed(() =>
+  (props.panes ?? []).filter(
+    // 表单型面板显式判定为无 retrieve 时不进导航（未配置 auth 的自定义面板保持可见）
+    pane => !pane.item?.auth || pane.item.auth.retrieve !== false
+  )
+);
+const hasPanes = computed(() => paneList.value.length > 0);
+/** 当前键必须仍存在于 paneList：动态渠道收缩时回落到首项，避免空白内容区 */
+const currentKey = computed(() => {
+  const keys = paneList.value.map(pane => pane.key);
+  return keys.includes(active.value) ? active.value : (keys[0] ?? "");
+});
 const multiPane = computed(() => paneList.value.length > 1);
 const isNarrow = useMediaQuery(`(width <= ${BREAKPOINTS.md}px)`);
 
@@ -71,6 +85,7 @@ watch(
 /** 导航与面板标题：显式 label 优先，其次按 item 的 localeName/title 推导 */
 function paneLabel(pane: settingsPane) {
   if (pane.label) return pane.label;
+  if (pane.item?.label) return pane.item.label;
   if (pane.item?.localeName) {
     return t(`${pane.item.localeName}.${pane.item.title ?? "title"}`);
   }
@@ -132,7 +147,9 @@ function onKeydown(event: KeyboardEvent, key: string) {
         class="setting-page__tab"
         :class="{ 'is-active': pane.key === currentKey }"
         :aria-selected="pane.key === currentKey"
-        :aria-controls="`settings-pane-${pane.key}`"
+        :aria-controls="
+          visited.has(pane.key) ? `settings-pane-${pane.key}` : undefined
+        "
         :tabindex="pane.key === currentKey ? 0 : -1"
         @click="select(pane.key)"
         @keydown="onKeydown($event, pane.key)"
@@ -146,17 +163,27 @@ function onKeydown(event: KeyboardEvent, key: string) {
       </button>
     </nav>
     <div class="setting-page__body">
+      <!-- 无任何可查看面板：明确说明缺少权限，而不是给一片空白 -->
+      <el-empty
+        v-if="!hasPanes"
+        data-testid="setting-no-permission"
+        :description="t('setting.noPermission')"
+      />
       <template v-for="pane in paneList" :key="pane.key">
         <section
           v-if="visited.has(pane.key)"
           v-show="pane.key === currentKey"
           :id="`settings-pane-${pane.key}`"
           role="tabpanel"
-          :aria-labelledby="`settings-tab-${pane.key}`"
+          :aria-labelledby="multiPane ? `settings-tab-${pane.key}` : undefined"
+          :aria-label="multiPane ? undefined : paneLabel(pane)"
           class="setting-page__panel"
           tabindex="0"
         >
-          <header v-if="multiPane" class="setting-page__panel-head">
+          <header
+            v-if="multiPane || pane.label || pane.item?.label || pane.desc"
+            class="setting-page__panel-head"
+          >
             <h3 class="setting-page__panel-title">{{ paneLabel(pane) }}</h3>
             <p v-if="pane.desc" class="setting-page__panel-desc">
               {{ pane.desc }}

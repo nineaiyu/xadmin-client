@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
 import { useConfirm } from "@/hooks/useConfirm";
+import { hasAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
 import {
   chatApi,
@@ -43,8 +44,13 @@ const searchingMembers = ref(false);
 const savingMembers = ref(false);
 let memberSearchTimer: number | undefined;
 
-/** 仅群主可改名 / 增删成员；所有成员均可退出群聊 */
+/** 仅群主可改名 / 增删成员；所有成员均可退出群聊。权限点与所有权同时满足才给入口 */
 const isOwner = computed(() => !!props.room?.is_owner);
+const canRename = computed(() => isOwner.value && hasAuth("rename:ChatRoom"));
+const canManageMembers = computed(
+  () => isOwner.value && hasAuth("members:ChatRoom")
+);
+const canLeave = computed(() => hasAuth("leave:ChatRoom"));
 
 function memberLabel(user: ChatUserOption) {
   return user.nickname ? `${user.username}-${user.nickname}` : user.username;
@@ -119,6 +125,14 @@ async function submitAddMembers() {
 
 async function removeMember(peer: ChatPeer) {
   if (!props.room) return;
+  if (
+    !(await confirm(
+      t("chat.removeMemberConfirm", { name: peer.nickname || peer.username }),
+      { title: t("chat.removeMember") }
+    ))
+  ) {
+    return;
+  }
   savingMembers.value = true;
   try {
     const res = await chatApi.updateGroupMembers(props.room.id, {
@@ -186,7 +200,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
 
 <template>
   <div v-loading="membersLoading">
-    <div v-if="isOwner" class="mb-3 flex items-center gap-2">
+    <div v-if="canRename" class="mb-3 flex items-center gap-2">
       <el-input
         v-model="renameValue"
         maxlength="64"
@@ -203,7 +217,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
       </el-button>
     </div>
 
-    <div v-if="isOwner" class="mb-3 flex items-center gap-2">
+    <div v-if="canManageMembers" class="mb-3 flex items-center gap-2">
       <el-select
         v-model="addMemberPks"
         class="grow"
@@ -251,7 +265,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
         {{ t("chat.groupOwner") }}
       </el-tag>
       <el-button
-        v-if="isOwner && member.pk !== room?.owner_pk"
+        v-if="canManageMembers && member.pk !== room?.owner_pk"
         link
         type="danger"
         size="small"
@@ -268,7 +282,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
     />
 
     <div class="mt-4 flex justify-end gap-2">
-      <el-button type="danger" plain @click="leaveGroup">
+      <el-button v-if="canLeave" type="danger" plain @click="leaveGroup">
         {{ t("chat.leaveGroup") }}
       </el-button>
       <el-button @click="emit('close')">

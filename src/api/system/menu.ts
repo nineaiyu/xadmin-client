@@ -25,7 +25,7 @@ export interface MenuPermissionPayload {
 
 /** 权限检测问题类型：正向缺口 / 游离权限点 / 重复权限码 */
 export type MenuPermissionAuditProblem =
-  "missing" | "orphan" | "duplicate" | "field_unconfigured";
+  "missing" | "orphan" | "duplicate" | "custom_action" | "field_unconfigured";
 
 /** 权限检测条目（后端计算，前端只读渲染；suggestion 映射本地化建议文案） */
 export interface MenuPermissionAuditItem {
@@ -50,6 +50,7 @@ export interface MenuPermissionAuditResult {
     missing: number;
     orphan: number;
     duplicate: number;
+    custom_action: number;
     field_unconfigured: number;
     total: number;
     routes: number;
@@ -58,6 +59,7 @@ export interface MenuPermissionAuditResult {
   missing: MenuPermissionAuditItem[];
   orphan: MenuPermissionAuditItem[];
   duplicate: MenuPermissionAuditItem[];
+  custom_action: MenuPermissionAuditItem[];
   field_unconfigured: MenuPermissionAuditItem[];
 }
 

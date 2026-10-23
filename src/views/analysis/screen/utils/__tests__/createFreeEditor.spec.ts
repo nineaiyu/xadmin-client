@@ -4,6 +4,7 @@ import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
+vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 vi.mock("../serverTemplates", () => ({
   fetchServerTemplates: vi.fn(async () => []),
   saveServerTemplate: vi.fn(async () => true),

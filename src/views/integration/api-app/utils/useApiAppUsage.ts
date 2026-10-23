@@ -1,5 +1,5 @@
 import { isSuccess } from "@/api/types";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { message } from "@/utils/message";
 import {
   apiApplicationApi,
@@ -47,8 +47,18 @@ export function useApiAppUsage() {
     usageRow.value = row;
     usage.value = null;
     usageDays.value = 7;
+    // 抽屉可见性必须在这里置真：拉数据不等于打开抽屉（漏掉这行时界面毫无反应）
+    usageVisible.value = true;
     await fetchUsage();
   };
+
+  // 关闭即清场：下次打开不会先渲染上一次应用的数据（也避免切换窗口请求回填旧行）
+  watch(usageVisible, visible => {
+    if (visible) return;
+    usageSeq += 1;
+    usage.value = null;
+    usageRow.value = null;
+  });
 
   /** 切换统计窗口（抽屉头部选项）：重拉当前应用的用量 */
   const setUsageDays = async (days: number) => {

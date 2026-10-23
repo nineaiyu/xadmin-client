@@ -8,6 +8,7 @@ import { message } from "@/utils/message";
 import { reportApi, runReport, type ReportItem } from "@/api/dataset/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
 import { normalizeError } from "@/utils/apiError";
+import { pollReportRun } from "./reportRunPolling";
 import { useReportColumns } from "./useReportColumns";
 import { useReportDialogs } from "./useReportDialogs";
 import { useReportButtons } from "./useReportButtons";
@@ -56,6 +57,16 @@ export function useReport(tableRef: Ref) {
     if (isSuccess(res)) {
       message(t("dataReport.runOk"), { type: "success" });
       tableRef.value?.handleGetData();
+      const taskId = String(
+        (res.data as { task_id?: string } | null)?.task_id ?? ""
+      );
+      if (taskId) {
+        void pollReportRun({
+          taskId,
+          t,
+          onFinished: () => tableRef.value?.handleGetData()
+        });
+      }
       return;
     }
     if (res.detail) message(String(res.detail), { type: "warning" });

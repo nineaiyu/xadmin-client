@@ -1,6 +1,6 @@
 import { reactive, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { usePageAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRuleColumns } from "./ruleColumns";
@@ -19,7 +19,8 @@ export function useApprovalRule() {
   const { t } = useI18n();
   const api = reactive(approvalRuleApi);
   const auth = usePageAuth("SystemApprovalRule");
-  const { addOrEditOptions } = useRuleFormOptions({ t });
+  const canPreview = hasAuth("impact:SystemApprovalRule");
+  const { addOrEditOptions } = useRuleFormOptions({ t, canPreview });
 
   /** 行内：框架默认「编辑 / 删除」；详情不在原入口内，保持关闭 */
   const operationButtonsProps = shallowRef<OperationProps>({

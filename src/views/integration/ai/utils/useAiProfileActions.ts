@@ -58,7 +58,8 @@ export function useAiProfileActions({
     );
 
   const testProfile = async (row: AiProfileItem) => {
-    const res = await aiProfileApi.test(row.pk);
+    // 异常归一为可读失败结果：网络/HTTP 异常不应产生未处理的 Promise 拒绝
+    const res = await aiProfileApi.test(row.pk).catch(normalizeError);
     if (isSuccess(res)) {
       message(String(res.detail ?? t("aiConfig.testOk")), { type: "success" });
     } else if (res.detail) {

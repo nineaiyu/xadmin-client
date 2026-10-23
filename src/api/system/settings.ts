@@ -21,6 +21,42 @@ export const settingsEmailApi = new ViewBaseApi("/api/settings/email");
 // LDAP 目录配置
 export const settingsLdapApi = new ViewBaseApi("/api/settings/ldap");
 
+// SCIM 目录同步配置（SystemConfig typed 设置）
+class SettingsScimApi extends ViewBaseApi {
+  rotateToken = () => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/rotate-token`
+    );
+  };
+  syncStatus = () => {
+    return this.request<DetailResult>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/sync-status`
+    );
+  };
+}
+export const settingsScimApi = new SettingsScimApi("/api/settings/scim");
+
+// 第三方登录 Provider 配置（结构化编辑 + discovery 测试）
+class SettingsOAuthProviderApi extends ViewBaseApi {
+  testProvider = (provider: object) => {
+    return this.request<DetailResult>(
+      "post",
+      {},
+      { provider },
+      `${this.baseApi}/test`
+    );
+  };
+}
+export const settingsOAuthProviderApi = new SettingsOAuthProviderApi(
+  "/api/settings/oauth/providers"
+);
+
 // 企业 IM 通知渠道配置
 export const settingsNotifyImApi = new ViewBaseApi("/api/settings/notify/im");
 // 注册配置

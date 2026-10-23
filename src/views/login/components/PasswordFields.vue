@@ -3,7 +3,6 @@ import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Lock from "~icons/ri/lock-fill";
-import type { FormRules } from "element-plus";
 
 defineOptions({
   name: "PasswordFields"
@@ -19,7 +18,6 @@ const { t } = useI18n();
 defineProps<{
   password: string;
   repeatPassword: string;
-  rules?: FormRules;
   passwordDelay?: number;
   repeatDelay?: number;
 }>();

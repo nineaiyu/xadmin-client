@@ -6,7 +6,7 @@
  * 也不参与 `?tab=` 直达解析（非法 / 无权限 key 回落个人信息）。
  */
 
-import type { Component } from "vue";
+import { defineAsyncComponent, type Component } from "vue";
 import MessageIcon from "~icons/ep/message";
 import ProfileIcon from "~icons/ri/user-3-line";
 import PreferencesIcon from "~icons/ri/settings-3-line";
@@ -16,15 +16,27 @@ import ShieldKeyholeIcon from "~icons/ri/shield-keyhole-line";
 import FingerprintIcon from "~icons/ri/fingerprint-line";
 import LinksIcon from "~icons/ri/links-line";
 import KeyIcon from "~icons/ri/key-2-line";
+import ConnectionIcon from "~icons/ep/connection";
+
+// 高频页签（资料/设置）静态加载；低频重面板（PAT 列表、OAuth、登录日志）按需加载
+const SecurityLog = defineAsyncComponent(
+  () => import("../components/SecurityLog.vue")
+);
+const OAuthBindings = defineAsyncComponent(
+  () => import("../components/OAuthBindings.vue")
+);
+const AccessToken = defineAsyncComponent(
+  () => import("../components/AccessToken.vue")
+);
+const AuthorizedApps = defineAsyncComponent(
+  () => import("../components/AuthorizedApps.vue")
+);
 import Profile from "../components/Profile.vue";
 import Preferences from "../components/Preferences.vue";
-import SecurityLog from "../components/SecurityLog.vue";
 import Notifications from "../components/Notifications.vue";
 import AccountManagement from "../components/AccountManagement.vue";
 import MfaSecurity from "../components/MfaSecurity.vue";
 import PasskeySecurity from "../components/PasskeySecurity.vue";
-import OAuthBindings from "../components/OAuthBindings.vue";
-import AccessToken from "../components/AccessToken.vue";
 
 export interface AccountPane {
   key: string;
@@ -84,6 +96,13 @@ export function createAccountPanes(
       auth: true
     },
     {
+      key: "authorizedApps",
+      label: t("authorizedApps.title"),
+      icon: ConnectionIcon,
+      component: AuthorizedApps,
+      auth: true
+    },
+    {
       key: "preferences",
       label: t("account.preference"),
       icon: PreferencesIcon,
@@ -91,7 +110,7 @@ export function createAccountPanes(
       auth: true
     },
     {
-      key: "Notifications",
+      key: "notifications",
       label: t("account.notifications"),
       icon: MessageIcon,
       component: Notifications,

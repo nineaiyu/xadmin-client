@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { isSuccess } from "@/api/types";
@@ -24,6 +24,19 @@ const loading = ref(true);
 const submitting = ref(false);
 const info = ref<OAuthAuthorizeInfo | null>(null);
 const errorText = ref("");
+const redirectHost = computed(() => {
+  try {
+    return new URL(readQuery().redirect_uri).host;
+  } catch {
+    return "";
+  }
+});
+/** scope 文本若包含写方法，二次确认区域升级为 warning */
+const riskyScopes = computed(() =>
+  (info.value?.scopes ?? []).filter(scope =>
+    /(^|\s)(POST|PUT|PATCH|DELETE)(\s|$)/i.test(scope)
+  )
+);
 
 const readQuery = () => {
   const q = route.query as Record<string, string | undefined>;
@@ -49,6 +62,9 @@ onMounted(async () => {
   loading.value = false;
   if (isSuccess(res) && res.data) {
     info.value = res.data;
+  } else if (isSuccess(res)) {
+    // 200 + 空 data：明确报错，不渲染只有表头的空白卡片
+    errorText.value = t("oauthAuthorize.emptyInfo");
   } else {
     errorText.value = String(res.detail ?? t("oauthAuthorize.loadFailed"));
   }
@@ -73,8 +89,8 @@ const decide = async (approved: boolean) => {
     if (state) target.searchParams.set("state", state);
     window.location.href = target.toString();
   } catch {
-    // 同意已在服务端生效但回调地址不可解析：留在本页给出可读失败，而非静默无跳转
-    errorText.value = t("oauthAuthorize.invalidRedirect");
+    // 同意已在服务端生效但回调地址不可解析：明确告知授权已生效，避免用户重复授权
+    errorText.value = t("oauthAuthorize.invalidRedirectEffective");
   }
 };
 </script>
@@ -101,6 +117,9 @@ const decide = async (approved: boolean) => {
         <div class="oauth-user">
           {{ t("oauthAuthorize.user") }}：{{ info.user.username }}
         </div>
+        <div v-if="redirectHost" class="oauth-user">
+          {{ t("oauthAuthorize.redirectHost", { host: redirectHost }) }}
+        </div>
 
         <div class="oauth-section-title">
           {{ t("oauthAuthorize.scopesTitle") }}
@@ -113,6 +132,27 @@ const decide = async (approved: boolean) => {
         <div v-else class="oauth-empty-scope">
           {{ t("oauthAuthorize.scopesEmpty") }}
         </div>
+        <el-alert
+          v-if="riskyScopes.length"
+          class="mt-3"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="
+            t('oauthAuthorize.riskyScopes', { count: riskyScopes.length })
+          "
+        />
+        <el-alert
+          class="mt-3"
+          :title="
+            info.code_challenge_required
+              ? t('oauthAuthorize.pkceRequired')
+              : t('oauthAuthorize.pkceOptional')
+          "
+          type="info"
+          :closable="false"
+          show-icon
+        />
 
         <el-alert
           class="mt-3"

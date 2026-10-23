@@ -16,8 +16,14 @@ defineExpose({ getImgCode });
   <el-image
     v-loading="loading"
     :src="imgUrl"
+    :alt="$t('login.captchaImage')"
+    role="button"
+    tabindex="0"
+    :aria-label="$t('login.captchaRefresh')"
     class="cursor-pointer"
     style="width: 120px; height: 40px"
     @click="getImgCode"
+    @keydown.enter.prevent="getImgCode"
+    @keydown.space.prevent="getImgCode"
   />
 </template>

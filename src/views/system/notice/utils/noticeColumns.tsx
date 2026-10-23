@@ -1,7 +1,7 @@
 import { computed, h, type Ref, type VNode } from "vue";
-import { ElMessageBox } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 import { NoticeChoices } from "@/views/system/constants";
 import NoticeMessageEditor from "@/views/system/notice/components/NoticeMessageEditor.vue";
 import {
@@ -36,6 +36,7 @@ type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown>;
  * 接收对象列显隐（映射见 NOTICE_TARGET_AUTH）、富文本消息渲染。
  */
 export function buildNoticeFormColumns({ t }: { t: TFunction }) {
+  const confirm = useConfirm();
   /** 接收对象列显隐：通知类型匹配且具备对应搜索权限 */
   const noticeTargetColumn = (target: number): ColumnHandler => {
     return ({ column, formValue }) => {
@@ -82,7 +83,8 @@ export function buildNoticeFormColumns({ t }: { t: TFunction }) {
       if (
         noticeTypeOptionLocked(
           option.value?.value,
-          hasAuth("announcement:SystemNotice")
+          hasAuth("announcement:SystemNotice"),
+          hasAuth("create:SystemNotice")
         )
       ) {
         fieldItemProps.disabled = true;
@@ -110,17 +112,13 @@ export function buildNoticeFormColumns({ t }: { t: TFunction }) {
       const next = resolveMessageFormat(value);
       if (next === previous) return;
       if (noticeMessageHasContent(formValue?.value?.message)) {
-        try {
-          await ElMessageBox.confirm(
-            t("systemNotice.formatSwitchConfirm"),
-            t("systemNotice.formatSwitchTitle"),
-            {
-              type: "warning",
-              confirmButtonText: t("buttons.confirm"),
-              cancelButtonText: t("buttons.cancel")
-            }
-          );
-        } catch {
+        if (
+          !(await confirm(t("systemNotice.formatSwitchConfirm"), {
+            title: t("systemNotice.formatSwitchTitle"),
+            type: "warning",
+            confirmButtonText: t("buttons.confirm")
+          }))
+        ) {
           // 取消切换：恢复原选项，正文保持不变
           if (formValue?.value) {
             formValue.value.message_format = previousValue;

@@ -1,5 +1,6 @@
 import { h } from "vue";
 import { handleShowChangeHistory } from "@/components/RePlusPage";
+import { fetchFreshRow } from "./freshRow";
 import {
   PanelProfile,
   ReActionPanel,
@@ -56,7 +57,9 @@ export function useUserPanel({
   handleImBinding,
   getHandleRoleRules
 }: UserPanelDeps) {
-  function openUserPanel(row: RecordType) {
+  async function openUserPanel(rawRow: RecordType) {
+    // 「管理」抽屉原用行快照；先取详情合并，避免展示过期角色/状态。
+    const row = await fetchFreshRow(api, rawRow);
     openManageDrawer({
       title: t("systemUser.manageUser", { user: row.username }),
       render: ({ withClosed }) =>

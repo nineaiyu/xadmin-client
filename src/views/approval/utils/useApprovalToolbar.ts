@@ -6,7 +6,7 @@ import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import { openRejectReasonDialog } from "./dialogs";
-import { batchFailedDetail } from "./approvalTexts";
+import { batchFailedDetail } from "./approvalHelpers";
 import Check from "~icons/ep/check";
 import Close from "~icons/ep/close";
 import type { Ref } from "vue";

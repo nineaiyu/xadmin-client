@@ -63,24 +63,3 @@ export async function submitTagBatchAssign({
   if (res.detail) message(String(res.detail), { type: "warning" });
   closeLoading();
 }
-
-/** 单对象打标提交：先关弹窗再刷新列表，避免刷新耗时导致弹窗滞留 */
-export async function submitTagAssign({
-  t,
-  tableRef,
-  resource,
-  pk,
-  tags,
-  done,
-  closeLoading
-}: TagAssignSubmitDeps & { pk: string }) {
-  const res = await tagApi.assign({ resource, pk, tags }).catch(normalizeError);
-  if (isSuccess(res)) {
-    message(t("tag.assignDone"), { type: "success" });
-    done();
-    tableRef?.value?.handleGetData();
-    return;
-  }
-  if (res.detail) message(String(res.detail), { type: "warning" });
-  closeLoading();
-}

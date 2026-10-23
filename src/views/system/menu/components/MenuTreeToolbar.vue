@@ -275,6 +275,8 @@ const onMoreCommand = (command: string) => {
         :api="menuApi"
         locale-name="systemMenu"
         :columns="recycleColumns"
+        :can-restore="!!auth.recycleRestore"
+        :can-purge="!!auth.recyclePurge"
         @changed="emit('refresh')"
       />
 
@@ -342,8 +344,10 @@ const onMoreCommand = (command: string) => {
       {{ t("buttons.unSelectAll") }}
     </el-button>
     <el-divider direction="vertical" />
+    <!-- 批量启停走 batch-update（白名单只有 is_active）：只看 batchUpdate 权限点，
+         旧条件把 partialUpdate 也算进来，只有单行编辑权的角色点开必 403 -->
     <el-button
-      v-if="auth.batchUpdate || auth.partialUpdate"
+      v-if="auth.batchUpdate"
       size="small"
       type="primary"
       plain
@@ -353,7 +357,7 @@ const onMoreCommand = (command: string) => {
       {{ t("systemMenu.action.batchEnable") }}
     </el-button>
     <el-button
-      v-if="auth.batchUpdate || auth.partialUpdate"
+      v-if="auth.batchUpdate"
       size="small"
       type="warning"
       plain

@@ -3,7 +3,7 @@ import { getKeyList } from "@pureadmin/utils";
 import type { roleApi } from "@/api/identity/role";
 import menuFieldForm from "../components/RoleForm.vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
-import type { PermissionTreeNode } from "./permissionTree";
+import type { PermissionTreeNode } from "@/components/ReMenuPermissionTree/utils/permissionTree";
 import type { RecordType } from "plus-pro-components";
 import { roleFieldFormValue } from "./roleFormValues";
 import type { Ref } from "vue";

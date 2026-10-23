@@ -4,6 +4,8 @@ import {
   buildFlowPayload,
   createEmptyNode,
   isNumericConditionValue,
+  remapRouteTargets,
+  toNodeRow,
   validateFlowConfig
 } from "../flowConfig";
 
@@ -104,5 +106,86 @@ describe("buildFlowPayload", () => {
       op: "gte",
       value: 3
     });
+  });
+});
+
+describe("节点抄送人（cc_users）", () => {
+  it("编辑回显保留抄送人，保存载荷原样回传", () => {
+    const row = toNodeRow({
+      name: "会签",
+      order: 1,
+      cc_users: ["alice", " bob ", ""]
+    });
+
+    expect(row.cc_users).toEqual(["alice", "bob"]);
+
+    const payload = buildFlowPayload(basic, [field], [row]);
+    expect(payload.nodes[0].cc_users).toEqual(["alice", "bob"]);
+  });
+
+  it("接口缺 cc_users 时按空数组回显与提交（不产生 undefined 字段）", () => {
+    const row = toNodeRow({ name: "初审", order: 1 });
+    expect(row.cc_users).toEqual([]);
+    expect(buildFlowPayload(basic, [field], [row]).nodes[0].cc_users).toEqual(
+      []
+    );
+  });
+
+  it("新建节点默认无抄送", () => {
+    expect(createEmptyNode().cc_users).toEqual([]);
+  });
+});
+
+describe("remapRouteTargets（顺序变更）", () => {
+  const buildNodes = () => [
+    node({ name: "A", routes: [{ condition: {}, target: 2 }] }),
+    node({ name: "B", routes: [{ condition: {}, target: 1 }] }),
+    node({ name: "C", routes: [] })
+  ];
+
+  it("上移/下移后 target 指向同一业务节点", () => {
+    const nodes = buildNodes();
+    const previous = nodes.slice();
+    // A 下移一位：A↔B
+    [nodes[0], nodes[1]] = [nodes[1], nodes[0]];
+    remapRouteTargets(nodes, previous);
+
+    // A 原本指向 B（旧 order 2）；B 现在 order 1 → A.target 应为 1
+    expect(nodes[1].name).toBe("A");
+    expect(nodes[1].routes[0].target).toBe(1);
+    // B 原本指向 A（旧 order 1）；A 现在 order 2 → B.target 应为 2
+    expect(nodes[0].name).toBe("B");
+    expect(nodes[0].routes[0].target).toBe(2);
+  });
+
+  it("删除目标节点后指向它的路由被丢弃", () => {
+    const nodes = buildNodes();
+    const previous = nodes.slice();
+    // 删除 B（index 1）：A 的 target=2 指向 B，应被丢弃
+    nodes.splice(1, 1);
+    remapRouteTargets(nodes, previous);
+
+    expect(nodes.map(item => item.name)).toEqual(["A", "C"]);
+    expect(nodes[0].routes).toEqual([]);
+  });
+
+  it("重映射后形成自环的路由丢弃", () => {
+    const nodes = [
+      node({ name: "A", routes: [{ condition: {}, target: 2 }] }),
+      node({ name: "B" })
+    ];
+    const previous = nodes.slice();
+    // 删除 B：A 唯一的路由目标消失 → 空
+    nodes.splice(1, 1);
+    remapRouteTargets(nodes, previous);
+    expect(nodes[0].routes).toEqual([]);
+  });
+
+  it("合法目标保持原顺序语义（未变更时不改动）", () => {
+    const nodes = buildNodes();
+    const previous = nodes.slice();
+    remapRouteTargets(nodes, previous);
+    expect(nodes[0].routes[0].target).toBe(2);
+    expect(nodes[1].routes[0].target).toBe(1);
   });
 });

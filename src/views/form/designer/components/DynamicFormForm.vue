@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import { h, reactive, ref } from "vue";
+import { computed, h, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { approvalFlowApi } from "@/api/approval/approvalFlow";
+import { isSuccess } from "@/api/types";
+import { message } from "@/utils/message";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { addDialog } from "@/components/ReDialog";
 import ReApiSelect from "@/components/ReApiSelect";
 import { dialogSize } from "@/components/ReDialog/size";
-import { fetchAllRows } from "@/utils/fetchAllRows";
 import type {
   DynamicFormItem,
   FormField,
   FormLinkage,
   FormSchema
 } from "@/api/dataset/dform";
-import { message } from "@/utils/message";
 import { assertFormulaAcyclic, FormulaError } from "@/views/form/utils/formula";
 import FormFieldDialog from "./FormFieldDialog.vue";
 import FormFieldTable from "./FormFieldTable.vue";
@@ -65,12 +65,33 @@ const linkages = ref<FormLinkage[]>(
   )
 );
 
+/** 设计器脏状态：弹窗关闭前据此决定是否二次确认（保存成功后弹窗直接关闭） */
+const initialSnapshot = JSON.stringify({
+  form,
+  fields: fields.value,
+  linkages: linkages.value
+});
+const isDirty = computed(
+  () =>
+    JSON.stringify({ form, fields: fields.value, linkages: linkages.value }) !==
+    initialSnapshot
+);
+
 /**
- * 可绑定的审批流程取数（ReApiSelect 的 api）：逐页拉全——固定 size 会在流程数
- * 超过接口分页上限时静默截断；拉取失败由取数层降级为空选项，不阻断表单定义。
+ * 可绑定的审批流程取数：走 available-flows 轻量目录（无需流程定义 list 权限），
+ * 失败时给出可读提示，不再静默空下拉。
  */
-const loadFlowOptions = (params?: Record<string, unknown>) =>
-  fetchAllRows(approvalFlowApi.list, { is_active: true, ...(params ?? {}) });
+const flowOptionsFailed = ref(false);
+const loadFlowOptions = async () => {
+  const res = await approvalInstanceApi.availableFlows().catch(() => null);
+  if (res && isSuccess(res) && Array.isArray(res.data)) {
+    flowOptionsFailed.value = false;
+    return res.data;
+  }
+  flowOptionsFailed.value = true;
+  message(t("dform.flowOptionsLoadFailed"), { type: "warning" });
+  return [];
+};
 
 const addField = () => {
   // 快速连点会命中同一毫秒时间戳：与既有 key 冲突时追加递增序号防撞
@@ -181,11 +202,13 @@ const getPayload = (): Record<string, unknown> | null => {
     approval_required: form.approval_required,
     // 绑定流程后提交进入流程引擎，操作审批开关被忽略
     approval_flow: form.approval_flow || null,
+    // 乐观锁基线：编辑时带上打开抽屉的 updated_time，并发后写被服务端拒绝
+    ...(props.row ? { base_updated_time: props.row.updated_time } : {}),
     schema
   };
 };
 
-defineExpose({ getPayload });
+defineExpose({ getPayload, isDirty });
 </script>
 
 <template>
@@ -209,6 +232,20 @@ defineExpose({ getPayload });
         />
         <div class="text-xs text-(--el-text-color-regular)">
           {{ t("dform.approvalFlowTip") }}
+        </div>
+        <div v-if="flowOptionsFailed" class="text-xs text-(--el-color-warning)">
+          {{ t("dform.flowOptionsLoadFailed") }}
+        </div>
+      </el-form-item>
+      <el-form-item :label="t('dform.formEnabled')">
+        <div class="flex items-center gap-2">
+          <el-switch
+            v-model="form.is_active"
+            data-testid="form-active-switch"
+          />
+          <span class="text-xs text-(--el-text-color-regular)">{{
+            t("dform.formEnabledTip")
+          }}</span>
         </div>
       </el-form-item>
       <el-form-item :label="t('dform.approvalRequired')">

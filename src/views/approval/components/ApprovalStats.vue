@@ -4,6 +4,7 @@ import { computed, onActivated, onMounted, onUnmounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { approvalApi } from "@/api/approval/approval";
+import { StatGrid, type StatItem } from "@/components/ReStat";
 import { registerApprovalStatsRefresh } from "@/utils/approvalStats";
 
 defineOptions({ name: "ApprovalStats" });
@@ -44,17 +45,21 @@ const props = withDefaults(
       rejected?: string;
       pending?: string;
     };
+    /** 统计口径提示文案 key 覆盖（默认 approval.statsTip） */
+    tipKey?: string;
   }>(),
   {
     loader: undefined,
     authCode: "stats:SystemApprovalRequest",
     showAvgDuration: true,
-    labelKeys: undefined
+    labelKeys: undefined,
+    tipKey: "approval.statsTip"
   }
 );
 
 const { t } = useI18n();
-const allowed = hasAuth(props.authCode);
+// 权限表是响应式 pinia 状态：用 computed 跟随角色切换/权限刷新
+const allowed = computed(() => hasAuth(props.authCode));
 const loading = ref(false);
 const stats = ref<ApprovalStatsData | null>(null);
 
@@ -74,8 +79,43 @@ const avgDuration = computed(() => {
   return `${(seconds / 3600).toFixed(1)}h`;
 });
 
+/** 统计卡条目：实例统计无「平均审批时长」指标，按 showAvgDuration 收口 */
+const statItems = computed<StatItem[]>(() => {
+  const data = stats.value;
+  const items: StatItem[] = [
+    {
+      key: "submitted",
+      label: t(labels.value.submitted),
+      value: data?.submitted ?? 0
+    },
+    {
+      key: "approved",
+      label: t(labels.value.approved),
+      value: data?.approved ?? 0
+    },
+    {
+      key: "rejected",
+      label: t(labels.value.rejected),
+      value: data?.rejected ?? 0
+    },
+    {
+      key: "pending",
+      label: t(labels.value.pending),
+      value: data?.pending ?? 0
+    }
+  ];
+  if (props.showAvgDuration) {
+    items.push({
+      key: "avg",
+      label: t("approval.statsAvgDuration"),
+      text: avgDuration.value
+    });
+  }
+  return items;
+});
+
 function fetchStats() {
-  if (!allowed) return;
+  if (!allowed.value) return;
   loading.value = true;
   const load = props.loader ?? approvalApi.stats;
   load()
@@ -110,43 +150,20 @@ defineExpose({ refresh: fetchStats });
 </script>
 
 <template>
-  <el-card
-    v-if="allowed"
-    v-loading="loading"
-    shadow="never"
-    class="mb-2 w-99/100"
-  >
+  <el-card v-if="allowed" v-loading="loading" shadow="never" class="mb-2">
     <!-- 白底卡片与页面其余区域（搜索/表格区）观感一致，避免统计数字裸在灰底上；
-         w-99/100 与 RePlusPage 的搜索/表格卡同宽，右边缘对齐（两者均为容器 99%） -->
+         宽度由页面骨架统一提供，不再自带 w-99/100 模拟 -->
     <el-alert
       type="info"
       :closable="false"
-      :title="t('approval.statsTip', { n: stats?.days ?? 30 })"
+      :title="t(tipKey, { n: stats?.days ?? 30 })"
       class="mb-2"
     />
-    <!-- 统计卡等分：el-col 的整数跨度无法均分 24（4,4,4,4,6 会留 2/24 空档），
-         改 grid 等分（窄屏 2 列回退），卡面与下方列表卡等宽 -->
-    <div
-      class="grid grid-cols-2 gap-3 sm:grid-cols-3"
-      :class="showAvgDuration ? 'md:grid-cols-5' : 'md:grid-cols-4'"
-    >
-      <el-statistic
-        :title="t(labels.submitted)"
-        :value="stats?.submitted ?? 0"
-      />
-      <el-statistic :title="t(labels.approved)" :value="stats?.approved ?? 0" />
-      <el-statistic :title="t(labels.rejected)" :value="stats?.rejected ?? 0" />
-      <el-statistic :title="t(labels.pending)">
-        <template #default>
-          <span>{{ stats?.pending ?? 0 }}</span>
-        </template>
-      </el-statistic>
-      <el-statistic
-        v-if="showAvgDuration"
-        :title="t('approval.statsAvgDuration')"
-      >
-        <template #default>{{ avgDuration }}</template>
-      </el-statistic>
-    </div>
+    <!-- 统计卡等分：grid 等分（窄屏 2 列、sm 3 列回退），卡面与下方列表卡等宽 -->
+    <StatGrid
+      :items="statItems"
+      :columns="showAvgDuration ? 5 : 4"
+      :sm-columns="3"
+    />
   </el-card>
 </template>

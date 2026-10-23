@@ -4,6 +4,7 @@ import { isSuccess } from "@/api/types";
 import { screenApi, type ScreenItem } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 import { loadScreenReferenceData } from "./referenceData";
+import { referencedDashboardIds } from "./screenReferences";
 
 /**
  * 投屏页详情装载（自 display.vue 抽出，行数门禁）。
@@ -39,7 +40,8 @@ export function useScreenLoader(deps: {
       return;
     }
     const all = reference.dashboards;
-    deps.dashboards.value = (deps.screen.value.dashboards ?? [])
+    // 清单 ∪ 画布窗格引用：只按清单装载会让「窗格引用了未进清单的仪表盘」整格不渲染
+    deps.dashboards.value = referencedDashboardIds(deps.screen.value)
       .map((id: string) => all.find((item: DashboardItem) => item.pk === id))
       .filter((item): item is DashboardItem => Boolean(item));
     // 指标卡窗格按可见数据集过滤（同仪表盘窗格口径）

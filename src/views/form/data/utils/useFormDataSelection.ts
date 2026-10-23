@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
+import { message } from "@/utils/message";
 import type {
   FormDataApi,
   FormDataFormOption,
@@ -38,6 +39,8 @@ export function useFormDataSelection({
     }
     formsLoadFailed.value = false;
     forms.value = (res.data ?? []) as FormDataFormOption[];
+    // 服务端截断提示（表单数量超过单次加载上限）不能静默丢弃
+    if (res.detail) message(String(res.detail), { type: "warning" });
     if (!selectedFormPk.value && forms.value.length) {
       selectedFormPk.value = forms.value[0].pk;
     }

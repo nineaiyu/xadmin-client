@@ -29,7 +29,11 @@ const {
   userLoginList,
   operateLogList,
   userActiveList,
-  userRegisterList
+  userRegisterList,
+  scopeLimited,
+  loading,
+  loadFailed,
+  reload
 } = useDashboard();
 let curWeek = ref(1);
 
@@ -49,6 +53,26 @@ const timelineIcons = timelineTones.map(tone =>
 
 <template>
   <div>
+    <el-alert
+      v-if="loadFailed"
+      type="error"
+      :closable="false"
+      show-icon
+      class="mb-4"
+      :title="t('welcome.loadFailed')"
+    >
+      <el-button link type="primary" size="small" @click="reload">
+        {{ t("buttons.reload") }}
+      </el-button>
+    </el-alert>
+    <el-alert
+      v-if="scopeLimited"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="mb-4"
+      :title="t('welcome.dataScopeLimited')"
+    />
     <el-row :gutter="24" justify="space-around">
       <re-col
         v-for="(item, index) in chartData"
@@ -91,11 +115,13 @@ const timelineIcons = timelineTones.map(tone =>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
               <p class="font-medium text-(--el-color-success)">
                 {{ item.percent }}
               </p>
@@ -170,7 +196,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :duration="item.duration"
                 :endVal="item.value[1]"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
               <p class="text-sm font-medium text-(--el-color-success-dark-2)">
                 {{ t("welcome.registerUser") }}
@@ -181,7 +207,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :duration="item.duration"
                 :endVal="item.value[2]"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
               <p class="text-sm font-medium text-(--el-color-primary-dark-2)">
                 {{ t("welcome.activeUser") }}
@@ -254,7 +280,7 @@ const timelineIcons = timelineTones.map(tone =>
             <el-timeline>
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
-                :key="index"
+                :key="item.pk ?? item.id ?? index"
                 :icon="timelineIcons[index % timelineIcons.length]"
                 :timestamp="
                   dayjs(item.created_time).format('YYYY-MM-DD HH:mm:ss')
@@ -262,9 +288,12 @@ const timelineIcons = timelineTones.map(tone =>
                 center
                 placement="top"
               >
-                <p class="text-fg-muted text-sm">
+                <p
+                  class="truncate text-sm text-fg-muted"
+                  :title="`${item?.creator?.username ?? ''} ${item.method} ${item.module} ${item.system} ${item?.browser ?? ''}`"
+                >
                   {{
-                    `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser}`
+                    `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser ?? ""}`
                   }}
                 </p>
               </el-timeline-item>

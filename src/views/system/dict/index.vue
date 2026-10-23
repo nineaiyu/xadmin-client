@@ -1,21 +1,21 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useDataDict } from "./utils/hook";
 
 defineOptions({
   name: "SystemDataDict" // 必须定义，用于菜单自动匹配组件
 });
-const tableRef = ref();
 
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   beforeSearchSubmit,
+  searchColumnsFormat,
   listColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useDataDict(tableRef);
+} = useDataDict();
 </script>
 
 <template>
@@ -26,6 +26,7 @@ const {
     :isTree="true"
     :addOrEditOptions="addOrEditOptions"
     :beforeSearchSubmit="beforeSearchSubmit"
+    :search-columns-format="searchColumnsFormat"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"
     :operationButtonsProps="operationButtonsProps"

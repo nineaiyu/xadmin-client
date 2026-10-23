@@ -1,10 +1,10 @@
-import { reactive, type Ref } from "vue";
-import { useI18n } from "vue-i18n";
 import { taskExecutionApi } from "@/api/task/task";
-import { hasAuth, usePageAuth } from "@/router/utils";
+import { hasAuth } from "@/router/utils";
+import { defineListPage } from "@/components/RePlusPage";
 import { buildTaskExecutionColumns } from "./taskExecutionColumns";
 import { createTaskExecutionActions } from "./taskExecutionActions";
 import { useTaskExecutionButtons } from "./useTaskExecutionButtons";
+import { useExecutionAutoRefresh } from "./useExecutionAutoRefresh";
 import { PERM_CANCEL, PERM_RERUN } from "./taskExecutionTypes";
 
 /**
@@ -17,33 +17,32 @@ import { PERM_CANCEL, PERM_RERUN } from "./taskExecutionTypes";
  * 职责拆分：列渲染 taskExecutionColumns.tsx、行级动作 taskExecutionActions.ts、
  * 行操作按钮 useTaskExecutionButtons.ts、行字段口径 taskExecutionTypes.ts。
  */
-export function useTaskExecution(tableRef?: Ref) {
-  const api = reactive(taskExecutionApi);
-  const auth = usePageAuth(["log"]);
-  const { t } = useI18n();
-
+export function useTaskExecution() {
   // 取消 / 重跑走聚合端点（/api/task/unified/{cancel,rerun}），权限点
   // 挂执行历史菜单下，直接按权限点判定（框架默认清单只覆盖组件名同源 action）
   const canCancel = hasAuth(PERM_CANCEL);
   const canRerun = hasAuth(PERM_RERUN);
 
-  const actions = createTaskExecutionActions({ t, tableRef });
-  const { listColumnsFormat, searchColumnsFormat } = buildTaskExecutionColumns({
-    t
+  const page = defineListPage({
+    api: taskExecutionApi,
+    localeName: "systemTaskExecution",
+    extraAuth: ["log"],
+    columns: ({ t, columns }) =>
+      buildTaskExecutionColumns({ t }).listColumnsFormat(columns),
+    buttons: ({ t, auth, tableRef }) => {
+      const actions = createTaskExecutionActions({ t, tableRef });
+      return useTaskExecutionButtons({ t, auth, canCancel, canRerun, actions });
+    }
   });
-  const { operationButtonsProps } = useTaskExecutionButtons({
-    t,
-    auth,
-    canCancel,
-    canRerun,
-    actions
-  });
+  const { t, tableRef } = page;
+
+  const { searchColumnsFormat } = buildTaskExecutionColumns({ t });
+
+  // 进行中的执行记录自动刷新（取消/重跑后不必手动点刷新）
+  useExecutionAutoRefresh(tableRef);
 
   return {
-    api,
-    auth,
-    listColumnsFormat,
-    searchColumnsFormat,
-    operationButtonsProps
+    ...page,
+    searchColumnsFormat
   };
 }

@@ -1,32 +1,45 @@
-import { onMounted, reactive, ref, shallowRef } from "vue";
-import { useI18n } from "vue-i18n";
+import { onMounted, ref, shallowRef } from "vue";
 import { operationLogApi } from "@/api/audit/logs/operation";
-import { usePageAuth } from "@/router/utils";
+import { defineListPage, type OperationProps } from "@/components/RePlusPage";
 import { useOperationLogColumns } from "./operationLogColumns";
 import { fetchOperationLogDetail } from "./operationLogDetail";
-import type { OperationProps } from "@/components/RePlusPage";
 
 /**
  * 操作日志：列渲染见 operationLogColumns.tsx（列表列与详情抽屉列），
  * 详情全量兜底见 operationLogDetail.ts。
  */
 export function useOperationLog() {
-  const { t } = useI18n();
-  const api = reactive(operationLogApi);
+  const page = defineListPage({
+    api: operationLogApi,
+    localeName: "logsOperation",
+    buttons: ({ auth }) => ({
+      operationButtonsProps: shallowRef<OperationProps>({
+        width: 140,
+        buttons: [
+          {
+            // 全量正文需要 retrieve：仅 list 权限时隐藏详情入口，避免点了 403
+            code: "detail",
+            update: true,
+            show: () => Boolean(auth.retrieve)
+          }
+        ]
+      })
+    })
+  });
+  const { t, api } = page;
+
+  // 审计日志只读：删除/批量删除端点已下线（留存的收敛由服务端归档命令统一执行），
+  // 关闭框架默认入口，避免按钮打了 405
+  page.auth.destroy = false;
+  page.auth.batchDestroy = false;
 
   /** 慢请求标红阈值：优先后端自持阈值端点（与操作日志列表同权限，
    *  无监控权限也能拿到），接口异常时回退默认 1 秒 */
   const slowThreshold = ref(1);
 
-  const auth = usePageAuth();
-  // 审计日志只读：删除/批量删除端点已下线（留存的收敛由服务端归档命令统一执行），
-  // 关闭框架默认入口，避免按钮打了 405
-  auth.destroy = false;
-  auth.batchDestroy = false;
-
   onMounted(async () => {
     try {
-      const res = await operationLogApi.slowThreshold();
+      const res = await api.slowThreshold();
       const threshold = res?.data?.threshold;
       if (typeof threshold === "number") {
         slowThreshold.value = threshold;
@@ -34,10 +47,6 @@ export function useOperationLog() {
     } catch {
       // 接口异常时沿用默认阈值
     }
-  });
-
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 140
   });
 
   const { listColumnsFormat, detailColumnsFormat } = useOperationLogColumns({
@@ -49,11 +58,9 @@ export function useOperationLog() {
     fetchOperationLogDetail({ t, row });
 
   return {
-    api,
-    auth,
+    ...page,
     listColumnsFormat,
     detailColumnsFormat,
-    detailRowFetch,
-    operationButtonsProps
+    detailRowFetch
   };
 }

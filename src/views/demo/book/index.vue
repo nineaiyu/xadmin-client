@@ -1,20 +1,19 @@
 <script lang="ts" setup>
 import { useDemoBook } from "./utils/hook";
-import { ref } from "vue";
 
 defineOptions({
   name: "DemoBook" // 必须定义，用于菜单自动匹配组件
 });
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   listColumnsFormat,
   searchColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useDemoBook(tableRef);
+} = useDemoBook();
 </script>
 <template>
   <RePlusPage

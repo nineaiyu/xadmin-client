@@ -1,42 +1,21 @@
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { reactive, shallowRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElTag } from "element-plus";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import {
-  handleOperation,
-  type OperationProps,
-  type PageTableColumn,
-  formatPageColumns
-} from "@/components/RePlusPage";
+import { handleOperation, type OperationProps } from "@/components/RePlusPage";
 import {
   webhookDeliveryApi,
   type WebhookDeliveryItem
 } from "@/api/task/webhook";
-import {
-  choiceValue,
-  statusTagProps,
-  type StatusTagType,
-  type StatusValue
-} from "@/utils/dict";
-
-/** 投递状态兜底配色（字典未接入时的本地映射，与模型 Status 取值一致） */
-const DELIVERY_STATUS_TAG: Record<string, StatusTagType> = {
-  pending: "info",
-  success: "success",
-  failed: "warning",
-  exhausted: "danger"
-};
-
-/** 状态字段归一取值：{value,label} 对象与历史标量两种形态兼容 */
-const statusValue = (status: WebhookDeliveryItem["status"]) =>
-  choiceValue(status as StatusValue);
+import { useSubscriptionEvents } from "../../subscription/utils/useSubscriptionEvents";
+import { showDeliveryRequest, statusValue } from "./deliveryAudit";
+import { useDeliveryColumns } from "./useDeliveryColumns";
 
 /**
  * 投递审计：只读 + 重试。
  *
  * - 详情走框架默认按钮（行数据本地渲染，不请求 retrieve，无权限点缺口）；
- * - 新增/编辑/删除按钮因无对应权限点自然不显示；
+ * - 新增/编辑入口不存在；删除入口显式关闭（审计记录不可删）；
  * - status 为 LabeledChoiceField（{value,label}）：label 优先渲染中文，
  *   配色走 statusTagProps（字典色优先、本地映射兜底）；
  * - 状态过滤（status/event/subscription）由后端 DeliveryFilter 元数据驱动。
@@ -45,32 +24,19 @@ export function useWebhookDelivery(tableRef: Ref) {
   const { t } = useI18n();
   const api = reactive(webhookDeliveryApi);
   const auth = usePageAuth("WebhookDelivery");
+  // 审计记录不可删：后端已不注册 destroy / batch-destroy 路由，页面同步关闭
+  // 框架默认删除入口（种子里残留的旧权限点也不再产生按钮）。
+  auth.destroy = false;
+  auth.batchDestroy = false;
   const canRetry = hasAuth("retry:WebhookDelivery");
+  const canReadEvents = hasAuth("events:WebhookSubscription");
 
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      status: column => {
-        column["cellRenderer"] = ({ row }) => {
-          const status = (row as WebhookDeliveryItem).status;
-          const value = statusValue(status);
-          const label =
-            typeof status === "object" && status !== null
-              ? (status.label ?? value)
-              : value;
-          return h(
-            ElTag,
-            {
-              size: "small",
-              ...statusTagProps(status as StatusValue, DELIVERY_STATUS_TAG)
-            },
-            () => label
-          );
-        };
-      },
-      response_body: column => {
-        column["minWidth"] = 200;
-      }
-    });
+  // 事件筛选与订阅页共用同一份目录；无目录权限时保留手输文本框
+  const { events } = useSubscriptionEvents({ t, enabled: canReadEvents });
+  const { listColumnsFormat, searchColumnsFormat } = useDeliveryColumns({
+    t,
+    events
+  });
 
   const retry = (row: WebhookDeliveryItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;
@@ -88,8 +54,16 @@ export function useWebhookDelivery(tableRef: Ref) {
   };
 
   const operationButtonsProps = shallowRef<OperationProps>({
-    width: 180,
+    width: 220,
     buttons: [
+      {
+        text: t("webhook.viewRequest"),
+        code: "viewRequest",
+        props: { type: "info", link: true },
+        onClick: ({ row }) =>
+          showDeliveryRequest(t, row as WebhookDeliveryItem),
+        index: 5
+      },
       {
         text: t("webhook.retry"),
         code: "retry",
@@ -107,5 +81,11 @@ export function useWebhookDelivery(tableRef: Ref) {
     ]
   });
 
-  return { api, auth, listColumnsFormat, operationButtonsProps };
+  return {
+    api,
+    auth,
+    listColumnsFormat,
+    searchColumnsFormat,
+    operationButtonsProps
+  };
 }

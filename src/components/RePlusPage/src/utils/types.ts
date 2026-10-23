@@ -150,6 +150,8 @@ interface ApiAuthProps {
   fields?: string | boolean | null | BaseApi["fields"];
   batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
   recycleList?: string | boolean | null | BaseApi["recycleList"];
+  recycleRestore?: string | boolean | null | BaseApi["recycleRestore"];
+  recyclePurge?: string | boolean | null | BaseApi["recyclePurge"];
   /** 行级「变更历史」：页面在 getDefaultAuths 声明 + 菜单授权后显示 */
   changeHistory?: string | boolean | null;
 }

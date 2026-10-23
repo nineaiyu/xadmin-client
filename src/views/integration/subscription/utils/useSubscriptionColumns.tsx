@@ -11,12 +11,17 @@ import type { WebhookSubscriptionItem } from "@/api/task/webhook";
  * is_active 行内开关（乐观更新逻辑在装配层，失败回滚行内值）。
  */
 export function useSubscriptionColumns({
+  t,
   canEdit,
   eventLabel,
+  toggling,
   toggleActive
 }: {
+  t: (key: string) => string;
   canEdit: boolean;
   eventLabel: (key: string) => string;
+  /** 启停 PATCH 进行中的行主键（开关 loading + 禁点） */
+  toggling: Set<string>;
   toggleActive: (row: WebhookSubscriptionItem, value: boolean) => Promise<void>;
 }) {
   const listColumnsFormat = (columns: PageTableColumn[]) =>
@@ -35,14 +40,34 @@ export function useSubscriptionColumns({
           );
         };
       },
-      is_active: column => {
+      has_secret: column => {
         column["cellRenderer"] = ({ row }) =>
-          h(ElSwitch, {
-            modelValue: (row as WebhookSubscriptionItem).is_active,
-            disabled: !canEdit,
+          h(
+            ElTag,
+            {
+              size: "small",
+              type: (row as WebhookSubscriptionItem).has_secret
+                ? "success"
+                : "info"
+            },
+            () =>
+              (row as WebhookSubscriptionItem).has_secret
+                ? t("webhook.secretConfigured")
+                : t("webhook.secretMissing")
+          );
+      },
+      is_active: column => {
+        column["cellRenderer"] = ({ row }) => {
+          const item = row as WebhookSubscriptionItem;
+          const pending = toggling.has(item.pk);
+          return h(ElSwitch, {
+            modelValue: item.is_active,
+            loading: pending,
+            disabled: !canEdit || pending,
             "onUpdate:modelValue": (value: string | number | boolean) =>
-              toggleActive(row as WebhookSubscriptionItem, value as boolean)
+              toggleActive(item, value as boolean)
           });
+        };
       },
       url: column => {
         column["minWidth"] = 220;

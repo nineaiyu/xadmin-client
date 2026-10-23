@@ -40,9 +40,14 @@ vi.mock("@/views/system/components/taskLogDialog", () => ({
 }));
 
 // 列格式化透传（本 spec 只关注操作按钮的下载链路）；组件库整体替换避免拖入 SFC 依赖链
-vi.mock("@/components/RePlusPage", () => ({
-  formatPageColumns: (cols: unknown) => cols
-}));
+vi.mock("@/components/RePlusPage", async () => {
+  const { defineListPage } =
+    await import("@/components/RePlusPage/src/utils/defineListPage");
+  return {
+    defineListPage,
+    formatPageColumns: (cols: unknown) => cols
+  };
+});
 
 vi.mock("@/utils/dict", () => ({
   statusTagProps: () => ({})
@@ -57,7 +62,8 @@ type Button = {
 
 const getDownloadButton = (): Button => {
   const { operationButtonsProps } = useTaskExecution();
-  const buttons = operationButtonsProps.value.buttons as Button[];
+  const buttons = (operationButtonsProps as { value: { buttons?: Button[] } })
+    .value.buttons as Button[];
   const button = buttons.find(item => item.code === "download");
   expect(button, "下载按钮应存在").toBeTruthy();
   return button as Button;

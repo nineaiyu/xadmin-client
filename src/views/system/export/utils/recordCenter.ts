@@ -1,9 +1,13 @@
 import { h, onScopeDispose, reactive, shallowRef, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElProgress, ElTag } from "element-plus";
+import { ElProgress, ElTag, ElTooltip } from "element-plus";
 // 文件大小格式化统一走框架工具（与文件管理页同一实现，避免两套口径）
 import { formatBytes } from "@pureadmin/utils";
-import { usePageAuth } from "@/router/utils";
+import { hasAuth, usePageAuth } from "@/router/utils";
+import { isSuccess } from "@/api/types";
+import { taskCenterApi, type TaskCenterKind } from "@/api/task/task";
+import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
@@ -37,6 +41,8 @@ interface RecordCenterApi {
 
 /** 进行中的任务状态：存在这些状态的行时列表需要轮询驱动进度（其余为终态） */
 const IN_FLIGHT_STATUSES = new Set(["RUNNING", "PENDING"]);
+/** 可重跑的终态：失败 / 已撤销（重跑由任务中心统一白名单校验） */
+const RERUNNABLE_STATUSES = new Set(["FAILURE", "FAILED", "REVOKED"]);
 /** 轮询间隔（任务中心无记录状态变更的 WS 广播，列表进度以轮询刷新驱动） */
 const PROGRESS_POLL_INTERVAL = 5000;
 
@@ -66,6 +72,10 @@ export function useRecordCenter(options: RecordCenterOptions) {
   const api = reactive(options.api);
   const auth = usePageAuth(componentName, ["download", "log"]);
   const { t, te } = useI18n();
+  /** 重跑走任务中心聚合端点：类型按当前记录页签推导 */
+  const taskKind: TaskCenterKind =
+    localePrefix === "systemImportRecord" ? "import" : "export";
+  const canRerun = hasAuth("rerun:SystemTaskExecution");
 
   /** 打开任务日志弹窗（复用任务执行日志的 WS 增量消费组件） */
   const openLog = (pk: string | number, name: string) => {
@@ -146,6 +156,26 @@ export function useRecordCenter(options: RecordCenterOptions) {
     width: 280,
     buttons: [
       {
+        text: t("taskCenter.rerun"),
+        code: "rerun",
+        props: { type: "warning", link: true },
+        show: row => canRerun && RERUNNABLE_STATUSES.has(statusOf(row)),
+        onClick: async ({ row }) => {
+          const res = await taskCenterApi
+            .rerun(taskKind, String(row?.pk ?? row?.id ?? ""))
+            .catch(normalizeError);
+          if (isSuccess(res)) {
+            message(t("taskCenter.rerunDone"), { type: "success" });
+            tableRef?.value?.handleGetData?.();
+          } else {
+            message(String(res.detail || t("results.failed")), {
+              type: "error"
+            });
+          }
+        },
+        index: 3
+      },
+      {
         text: t(`${localePrefix}.download`),
         code: "download",
         props: {
@@ -212,6 +242,16 @@ export function useRecordCenter(options: RecordCenterOptions) {
           break;
         case "progress":
           column.cellRenderer = ({ row }) => renderProgress(row);
+          break;
+        case "error":
+          // 失败原因直接进列表（截断 + tooltip），排障不必再打开详情
+          column.cellRenderer = ({ row }) => {
+            const detail = String(row.error ?? "");
+            if (!detail) return h("span", "—");
+            return h(ElTooltip, { content: detail, placement: "top" }, () =>
+              h("span", { class: "block truncate" }, detail)
+            );
+          };
           break;
         case sizeKey:
           column.cellRenderer = ({ row }) => {

@@ -22,6 +22,7 @@ export function useFormMyColumns({
   canDestroy,
   canResubmit,
   canSubmit,
+  canCancel,
   actions
 }: {
   t: TFunction;
@@ -29,12 +30,14 @@ export function useFormMyColumns({
   canDestroy: boolean;
   canResubmit: boolean;
   canSubmit: boolean;
+  canCancel: boolean;
   actions: {
     openDetail: (row: SubmissionItem) => void;
     openEdit: (row: SubmissionItem) => void;
     submitDraft: (row: SubmissionItem) => void;
     resubmit: (row: SubmissionItem) => void;
     remove: (row: SubmissionItem) => void;
+    cancel: (row: SubmissionItem) => void;
   };
 }) {
   /** 状态列：字典色优先、缺省按状态语义兜底；无状态（无需审批）不留空 */
@@ -95,7 +98,7 @@ export function useFormMyColumns({
 
   const { operationButtonsProps } = useFormMyRowButtons({
     t,
-    flags: { canEdit, canDestroy, canResubmit, canSubmit },
+    flags: { canEdit, canDestroy, canResubmit, canSubmit, canCancel },
     actions
   });
 

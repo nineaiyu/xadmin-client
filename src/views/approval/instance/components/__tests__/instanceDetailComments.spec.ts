@@ -16,7 +16,8 @@ const state = vi.hoisted(() => ({
   retrieveMock: vi.fn(),
   commentsMock: vi.fn(),
   confirmMock: vi.fn(async () => true),
-  deleteCommentMock: vi.fn()
+  deleteCommentMock: vi.fn(),
+  hasAuthMock: vi.fn((_code: string) => true)
 }));
 
 vi.mock("@/api/approval/approvalFlow", () => ({
@@ -42,6 +43,7 @@ vi.mock("@/components/ReEmpty", () => ({
   }
 }));
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
+vi.mock("@/router/utils", () => ({ hasAuth: state.hasAuthMock }));
 
 /** 讨论区数据：c1 作者为 7 号用户，c2 为 8 号用户 */
 const commentRows = [
@@ -67,6 +69,7 @@ const mountDetail = async () => {
   const wrapper = mount(InstanceDetail, {
     props: { pk: "i1" },
     global: {
+      directives: { loading: {} },
       stubs: {
         "el-descriptions": { template: "<div><slot /></div>" },
         "el-descriptions-item": { template: "<div><slot /></div>" },
@@ -89,6 +92,7 @@ const deleteButtons = (wrapper: Awaited<ReturnType<typeof mountDetail>>) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  state.hasAuthMock.mockImplementation(() => true);
   state.retrieveMock.mockResolvedValue({
     code: 1000,
     detail: "ok",
@@ -120,5 +124,24 @@ describe("InstanceDetail 评论删除入口显隐", () => {
     useUserStoreHook().$patch({ pk: 9, is_superuser: undefined });
     const wrapper = await mountDetail();
     expect(deleteButtons(wrapper).length).toBe(0);
+  });
+
+  it("无 deleteComment 权限点时不渲染删除入口（即使是作者/超管）", async () => {
+    state.hasAuthMock.mockImplementation(
+      (code: string) => code !== "deleteComment:SystemApprovalInstance"
+    );
+    useUserStoreHook().$patch({ pk: 9, is_superuser: true });
+    const wrapper = await mountDetail();
+    expect(deleteButtons(wrapper).length).toBe(0);
+  });
+
+  it("无 addComment 权限点时给出只读说明而不渲染提交入口", async () => {
+    state.hasAuthMock.mockImplementation(
+      (code: string) => code !== "addComment:SystemApprovalInstance"
+    );
+    const wrapper = await mountDetail();
+    expect(wrapper.find('[data-testid="comment-readonly-hint"]').exists()).toBe(
+      true
+    );
   });
 });

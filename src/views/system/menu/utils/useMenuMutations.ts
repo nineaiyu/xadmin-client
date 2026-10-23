@@ -89,8 +89,8 @@ export function useMenuMutations({
   };
 
   /** 删除（含级联说明与影响面预检，见 menuMutationBatch） */
-  const removeRows = (rows: MenuRow[]) =>
-    removeMenuRows({ api, t, rows, dropRows });
+  const removeRows = (rows: MenuRow[], batch = rows.length > 1) =>
+    removeMenuRows({ api, t, rows, dropRows, batch });
 
   /** 批量启停（见 menuMutationBatch） */
   const setRowsActive = (rows: MenuRow[], isActive: boolean) =>

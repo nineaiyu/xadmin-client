@@ -3,6 +3,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { createSubmissionFormOpener } from "./formMyFormDialog";
 import { createSubmissionActions } from "./formMySubmissionActions";
+import { submissionApi } from "@/api/dataset/dform";
 import type { FillableFormItem, SubmissionItem } from "@/api/dataset/dform";
 import type { useI18n } from "vue-i18n";
 
@@ -29,19 +30,33 @@ export function useFormMyActions({
 
   const openFill = (form: FillableFormItem) => openForm(form, null);
 
-  const openEdit = (row: SubmissionItem) => {
-    const form = forms.value.find(item => item.pk === row.form);
+  const openEdit = async (row: SubmissionItem) => {
+    let form = forms.value.find(item => item.pk === row.form);
     if (!form) {
-      // 表单不在「可填清单」里：多为表单已停用被过滤，点击编辑必须给出反馈
+      // 表单停用后不在可填清单：按提交详情取 schema 快照，历史 DRAFT/REJECTED 仍可编辑
+      const res = await submissionApi.retrieve(row.pk).catch(() => null);
+      const detail = res?.data as SubmissionItem | null;
+      if (detail?.form_schema) {
+        form = {
+          pk: detail.form,
+          name: detail.form_name,
+          description: "",
+          schema: { fields: detail.form_schema },
+          approval_required: false,
+          approval_flow: null,
+          approval_flow_pk: null
+        };
+      }
+    }
+    if (!form) {
       message(t("dform.formUnavailable"), { type: "warning" });
       return;
     }
     openForm(form, row);
   };
 
-  const { openDetail, remove, submitDraft, resubmit } = createSubmissionActions(
-    { t, refresh, confirm }
-  );
+  const { openDetail, remove, submitDraft, resubmit, cancel } =
+    createSubmissionActions({ t, refresh, confirm });
 
   return {
     openFill,
@@ -49,6 +64,7 @@ export function useFormMyActions({
     openDetail,
     remove,
     submitDraft,
-    resubmit
+    resubmit,
+    cancel
   };
 }

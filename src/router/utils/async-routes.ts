@@ -17,7 +17,10 @@ import { ascending, formatFlatteningRoutes } from "./route-tree";
 
 const IFrame = () => import("@/layout/frame.vue");
 // https://cn.vitejs.dev/guide/features.html#glob-import
-const modulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
+const modulesRoutes = import.meta.glob([
+  "/src/views/**/*.{vue,tsx}",
+  "/src/extensions/**/*.{vue,tsx}"
+]);
 
 function addPathMatch() {
   // 动态路由就绪后，用 redirect 版本替换 router/index.ts 中预注册的无组件兜底
@@ -217,10 +220,10 @@ function addAsyncRoutes(
       // 挂着 system/notify/index），两种情况都不是「组件漏配」，开发态不报错
       const hasChildren = Boolean(v.children?.length);
       if (index === -1 && import.meta.env.DEV && !hasChildren) {
-        // 开发态显式报错：叶子菜单 component 与 src/views 下文件路径未匹配（运行期表现为空白路由）
+        // 开发态显式报错：叶子菜单 component 与页面目录未匹配（运行期表现为空白路由）
         console.error(
           `[xadmin] 动态路由组件未匹配：component=${String(rawComponent ?? "")} path=${String(v.path ?? "")}——` +
-            "请确认 src/views 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
+            "请确认 src/views 或 src/extensions 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
         );
       }
       v.component =

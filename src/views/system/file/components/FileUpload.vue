@@ -18,6 +18,7 @@ import { systemUploadFileApi } from "@/api/file/file";
 import {
   DEFAULT_CHUNK_SIZE as CHUNK_UPLOAD_THRESHOLD,
   ChunkUploadBusinessError,
+  abortChunkSession,
   uploadFileChunked,
   type ChunkUploadResult
 } from "@/utils/upload/chunked";
@@ -55,8 +56,13 @@ defineOptions({ name: "UploadFile" });
 
 const { t } = useI18n();
 const fileList = ref([]);
-/** 上传大小默认限制：配置端点不可读（无权限/拉取失败）时的回退值 */
-const DEFAULT_FILE_UPLOAD_SIZE = 1048576;
+/** 分片上传的取消句柄：uid → AbortController / 服务端会话 */
+const uploadAborters = new Map<string, AbortController>();
+const uploadSessions = new Map<string, string>();
+const uploadKey = (file: UploadRawFile | UploadFile) =>
+  String((file as UploadRawFile).uid ?? file.name);
+/** 上传大小默认限制：配置端点不可读（无权限/拉取失败）时的回退值（与后端默认 10MB 对齐） */
+const DEFAULT_FILE_UPLOAD_SIZE = 10 * 1024 * 1024;
 const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
 
 const warnDefaultUploadSize = () => {
@@ -104,7 +110,13 @@ const uploadRequest = async (option: UploadRequestOptions) => {
     return systemUploadFileApi.upload(data, { onUploadProgress: onProgress });
   }
   try {
+    const key = uploadKey(option.file);
+    const controller = new AbortController();
+    uploadAborters.set(key, controller);
+    uploadSessions.delete(key);
     const result = await uploadFileChunked(option.file, {
+      signal: controller.signal,
+      onSession: session => uploadSessions.set(key, session),
       onProgress: percent =>
         onProgress({
           percent,
@@ -128,11 +140,24 @@ const uploadRequest = async (option: UploadRequestOptions) => {
       });
     }
     throw error;
+  } finally {
+    const key = uploadKey(option.file);
+    uploadAborters.delete(key);
+    uploadSessions.delete(key);
   }
 };
 const uploadError = (_error: unknown, uploadFile: UploadFile) => {
   // http 层已按错误策略提示；这里仅回填 el-upload 状态
   uploadFile.status = "fail";
+};
+/** 用户移除/取消上传项：中止在途分片并 best-effort 关闭服务端会话 */
+const onRemoveUpload = (file: UploadFile) => {
+  const key = uploadKey(file);
+  uploadAborters.get(key)?.abort();
+  const session = uploadSessions.get(key);
+  if (session) abortChunkSession(session);
+  uploadAborters.delete(key);
+  uploadSessions.delete(key);
 };
 const refreshData = throttle(() => props.tableRef?.handleGetData?.(), 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
@@ -169,6 +194,7 @@ const beforeUpload = (rawFile: UploadRawFile) => {
       :http-request="uploadRequest"
       :on-success="uploadSuccess"
       :on-error="uploadError"
+      :on-remove="onRemoveUpload"
       :before-upload="beforeUpload"
       class="p-2"
       drag

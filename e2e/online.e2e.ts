@@ -62,9 +62,13 @@ test("强制下线：服务端令牌立即失效且可重新登录", async ({ pa
   const plainPk = (await meResp.json()).data.pk;
 
   // 管理员强制下线（显式 Bearer，避免 plain 登录覆盖 Cookie 后越权误判）
+  // 契约：POST online/force-logout + body user_pk（用户维度踢全部会话，不在会话资源下）
   const logoutResp = await page.request.post(
-    `${FRONT_URL}/api/identity/online/${plainPk}/force-logout`,
-    { headers: authz(adminToken) }
+    `${FRONT_URL}/api/identity/online/force-logout`,
+    {
+      headers: authz(adminToken),
+      data: { user_pk: plainPk }
+    }
   );
   expect((await logoutResp.json()).code).toBe(1000);
 

@@ -25,7 +25,10 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { announce } from "@/utils/announcer";
 import { downloadByData } from "@pureadmin/utils";
-import { resolveDownloadFilename } from "@/utils/download";
+import {
+  parseDownloadEnvelopeError,
+  resolveDownloadFilename
+} from "@/utils/download";
 import {
   approvalKey,
   clearPendingApprovals,
@@ -271,13 +274,25 @@ class PureHttp {
     config?: PureHttpRequestConfig
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.download<AxiosResponse<Blob>>(url, params, config)
-        .then((response: AxiosResponse<Blob>) => {
+      // JSON 响应走拦截器的 response.data 分支（此时返回的是 Blob，没有 headers），
+      // 二进制文件则是完整 AxiosResponse；两种形状都要能落盘/报错
+      this.download<AxiosResponse<Blob> | Blob>(url, params, config)
+        .then(async (response: AxiosResponse<Blob> | Blob) => {
           try {
-            const { data } = response;
+            // 产物缺失时后端仍回 200 + 错误信封，必须先识别，
+            // 否则错误 JSON 会被当成文件存成随机 UUID 的「假文件」。
+            const data = response instanceof Blob ? response : response.data;
+            const envelopeError = await parseDownloadEnvelopeError(data);
+            if (envelopeError !== null) {
+              // 后端错误信封通常带 detail；缺失时给一句可读兜底，避免空提示
+              const text = envelopeError || "download failed";
+              message(text, { type: "error" });
+              announce(text);
+              throw new Error(text);
+            }
             // 文件名解析规则（RFC 5987 优先等）见 utils/download.ts
             const finalFilename = resolveDownloadFilename(
-              response.headers,
+              response instanceof Blob ? undefined : response.headers,
               (params as { type?: string } | undefined)?.type
             );
             downloadByData(data, filename ?? finalFilename);

@@ -6,9 +6,9 @@ export type AiProfilePurpose = "chat" | "structured" | "embedding";
 /**
  * 档案表单模型：字段与后端 AiProfile 一一对应。
  *
- * 采样参数统一给出推荐默认值（而非 null）：新建档案开箱即用，
- * 编辑历史档案时 null 也按推荐值回填，避免「未配置」在表单里不可见。
- * seed 例外：null 表示随机，保持「留空 = 随机」语义。
+ * 采样参数统一给出推荐默认值（而非 null）：新建档案开箱即用。
+ * 编辑历史档案时保留库内 null（面板显示「未设置」），避免仅打开编辑就
+ * 把「未配置」悄悄写成推荐值、改变模型实际行为。
  */
 export type AiProfileFormModel = {
   name: string;
@@ -64,27 +64,27 @@ const positiveOr = (
  * 行数据 → 表单模型。
  *
  * - 编辑时 api_key 永远留空（后端不回传明文，留空 = 沿用原密钥）；
- * - 历史行里的 null 采样参数回填推荐值，避免表单出现不可编辑的「未配置」；
+ * - 可空采样参数保持库内 null（不写回推荐值），保存载荷原样提交 null；
  * - 0 值按字段语义处理：temperature / penalty 的 0 合法保留，
- *   max_tokens / timeout / context_limit 的 0 视为未配置。
+ *   timeout / context_limit 的 0 视为未配置（模型层非空字段）。
  */
 export function createAiProfileForm(
   row?: AiProfileItem | null
 ): AiProfileFormModel {
   if (!row) return { ...AI_PROFILE_DEFAULTS };
 
+  const maxTokens = row.max_tokens;
   return {
     name: row.name ?? "",
     base_url: row.base_url ?? "",
     api_key: "",
     model: row.model ?? "",
-    temperature: row.temperature ?? AI_PROFILE_DEFAULTS.temperature,
-    max_tokens: positiveOr(row.max_tokens, 2048, 1),
-    top_p: row.top_p ?? AI_PROFILE_DEFAULTS.top_p,
-    frequency_penalty:
-      row.frequency_penalty ?? AI_PROFILE_DEFAULTS.frequency_penalty,
-    presence_penalty:
-      row.presence_penalty ?? AI_PROFILE_DEFAULTS.presence_penalty,
+    temperature: row.temperature ?? null,
+    max_tokens:
+      typeof maxTokens === "number" ? positiveOr(maxTokens, 2048, 1) : null,
+    top_p: row.top_p ?? null,
+    frequency_penalty: row.frequency_penalty ?? null,
+    presence_penalty: row.presence_penalty ?? null,
     stop: row.stop ?? "",
     seed: row.seed ?? null,
     timeout: positiveOr(row.timeout, AI_PROFILE_DEFAULTS.timeout, 5),

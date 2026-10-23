@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import { h, ref } from "vue";
+import { computed, h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import type { FormField, FormLinkage } from "@/api/dataset/dform";
 import FormLinkageDialog from "./FormLinkageDialog.vue";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import {
   LINKAGE_EFFECTS,
   LINKAGE_OPS,
@@ -96,6 +100,14 @@ const remove = (index: number) => {
   next.splice(index, 1);
   emit("update:modelValue", next);
 };
+
+/** 联动规则只读列（条件/目标/效果/动作走具名插槽） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { label: t("dform.linkageCond"), minWidth: 220, slot: "cond" },
+  { label: t("dform.linkageTarget"), minWidth: 160, slot: "target" },
+  { label: t("dform.linkageEffect"), width: 100, slot: "effect" },
+  { label: t("dform.actions"), width: 120, slot: "actions" }
+]);
 </script>
 
 <template>
@@ -116,52 +128,45 @@ const remove = (index: number) => {
         {{ t("dform.linkageAdd") }}
       </el-button>
     </div>
-    <el-table
-      :data="modelValue"
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="modelValue"
       size="small"
       max-height="220"
       :empty-text="t('dform.linkageNone')"
     >
-      <el-table-column :label="t('dform.linkageCond')" min-width="220">
-        <template #default="{ row }">
-          <span class="text-xs">{{ condText(row as FormLinkage) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.linkageTarget')" min-width="160">
-        <template #default="{ row }">
-          <span class="text-xs">{{
-            linkageFieldLabel(fields, (row as FormLinkage).target)
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.linkageEffect')" width="100">
-        <template #default="{ row }">
-          <el-tag
-            size="small"
-            effect="plain"
-            :type="effectTagType((row as FormLinkage).effect)"
-          >
-            {{ effectLabel((row as FormLinkage).effect) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.actions')" width="120">
-        <template #default="{ $index }">
-          <el-button
-            link
-            type="primary"
-            size="small"
-            data-testid="linkage-edit"
-            @click="openDialog($index)"
-          >
-            {{ t("dform.edit") }}
-          </el-button>
-          <el-button link type="danger" size="small" @click="remove($index)">
-            {{ t("dform.delete") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <template #cond="{ row }">
+        <span class="text-xs">{{ condText(row as FormLinkage) }}</span>
+      </template>
+      <template #target="{ row }">
+        <span class="text-xs">{{
+          linkageFieldLabel(fields, (row as FormLinkage).target)
+        }}</span>
+      </template>
+      <template #effect="{ row }">
+        <el-tag
+          size="small"
+          effect="plain"
+          :type="effectTagType((row as FormLinkage).effect)"
+        >
+          {{ effectLabel((row as FormLinkage).effect) }}
+        </el-tag>
+      </template>
+      <template #actions="{ $index }">
+        <el-button
+          link
+          type="primary"
+          size="small"
+          data-testid="linkage-edit"
+          @click="openDialog($index)"
+        >
+          {{ t("dform.edit") }}
+        </el-button>
+        <el-button link type="danger" size="small" @click="remove($index)">
+          {{ t("dform.delete") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
     <div class="mt-1 text-xs text-(--el-text-color-secondary)">
       {{ t("dform.linkageHint") }}
     </div>

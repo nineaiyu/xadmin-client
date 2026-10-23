@@ -9,16 +9,12 @@ defineOptions({
   name: "SystemUser"
 });
 
-const tableRef = ref();
 const treeRef = ref();
-
-const treePk = computed(() => {
-  return tableRef.value?.searchFields?.dept;
-});
 
 const {
   api,
   auth,
+  tableRef,
   treeData,
   treeLoading,
   addOrEditOptions,
@@ -29,7 +25,11 @@ const {
   deviceDetection,
   listColumnsFormat,
   baseColumnsFormat
-} = useUser(tableRef);
+} = useUser();
+
+const treePk = computed(() => {
+  return tableRef.value?.searchFields?.dept;
+});
 
 // 左栏宽度持久化（默认 20%，约等于原 250px 固定宽；双击分隔条或点悬浮按钮重置）
 const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {

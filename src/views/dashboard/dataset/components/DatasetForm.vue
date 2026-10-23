@@ -39,7 +39,7 @@ const opOptions = [
   "isnull"
 ];
 
-// 编辑回显：`in` 过滤的 value 在载荷里是数组，输入框按逗号串展示（提交再拆回）
+// 编辑回显：`in` 过滤的 value 保持数组（tag 输入），含逗号的值不再被拆散
 // `_id` 为行稳定标识（动态增删时作 v-for key，避免 index key 导致的控件内部状态错位；
 // 仅本地使用，getPayload 按字段显式重建，不会提交给后端）
 const initialFilters = (
@@ -48,8 +48,8 @@ const initialFilters = (
 let filterRowSeq = 0;
 initialFilters.forEach(item => {
   item._id = ++filterRowSeq;
-  if (item.op === "in" && Array.isArray(item.value)) {
-    item.value = item.value.join(",");
+  if (item.op === "in") {
+    item.value = Array.isArray(item.value) ? item.value.map(String) : [];
   }
 });
 
@@ -119,11 +119,9 @@ const getPayload = (): Record<string, unknown> | null => {
       if (item.op === "isnull") {
         value = Boolean(item.value);
       } else if (item.op === "in") {
-        // 后端强制 in 的 value 为 list/tuple，字符串原样提交必 400：
-        // 输入框按逗号拆分为数组（placeholder 已暗示该用法）
-        value = String(item.value ?? "")
-          .split(",")
-          .map(part => part.trim())
+        // tag 输入直接提交数组：值本身可含逗号，不做字符串拆分
+        value = (Array.isArray(item.value) ? item.value : [])
+          .map(part => String(part).trim())
           .filter(part => part !== "");
       }
       return { field: item.field, op: item.op, value };
@@ -205,9 +203,20 @@ defineExpose({ getPayload });
               :label="op"
             />
           </el-select>
+          <el-select
+            v-if="item.op === 'in'"
+            :model-value="item.value as string[]"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            class="flex-1"
+            :placeholder="t('dataDataset.inValuesPlaceholder')"
+            @update:model-value="value => (item.value = value)"
+          />
           <!-- isnull 无自由值：以开关表达真/假（提交为布尔），空串会被归一为假 -->
           <el-switch
-            v-if="item.op === 'isnull'"
+            v-else-if="item.op === 'isnull'"
             v-model="item.value as boolean"
             class="flex-1"
             :active-text="t('dataDataset.isNullTrue')"
@@ -217,11 +226,7 @@ defineExpose({ getPayload });
             v-else
             v-model="item.value as string"
             class="flex-1"
-            :placeholder="
-              item.op === 'in'
-                ? t('dataDataset.inHint')
-                : t('dataDataset.value')
-            "
+            :placeholder="t('dataDataset.value')"
           />
           <el-button
             link

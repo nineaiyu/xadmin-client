@@ -12,6 +12,7 @@ import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
+import { hasAuth } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 
 /**
@@ -121,6 +122,11 @@ async function load() {
 
 /** 讨论区：参与人（申请人 / 处理人 / 抄送人）可评论，@用户名 会提醒相关人 */
 const comments = ref<InstanceComment[]>([]);
+/** 讨论区有独立读权限点：无权限时不请求、也不显示成「暂无评论」 */
+const canViewComments = hasAuth("comments:SystemApprovalInstance");
+// 发表 / 删除各有独立权限点：按钮显隐按权限位收口（后端按参与人与作者/超管复核）
+const canAddComment = hasAuth("addComment:SystemApprovalInstance");
+const canDeleteCommentByPerm = hasAuth("deleteComment:SystemApprovalInstance");
 const commentText = ref("");
 const commentLoading = ref(false);
 
@@ -130,11 +136,13 @@ const commentLoading = ref(false);
  * 旧持久化副本可能缺该字段，按非超管处理（行为与仅作者可见一致）。
  */
 const canDeleteComment = (item: InstanceComment) =>
-  (item.creator != null &&
+  canDeleteCommentByPerm &&
+  ((item.creator != null &&
     String(item.creator) === String(userStore.pk ?? "")) ||
-  Boolean(userStore.is_superuser);
+    Boolean(userStore.is_superuser));
 
 async function loadComments() {
+  if (!canViewComments) return;
   try {
     const res = await approvalInstanceApi.comments(props.pk);
     if (isSuccess(res)) {
@@ -419,7 +427,15 @@ onMounted(() => {
     <el-divider content-position="left">
       {{ t("approvalDiscussion.title") }}
     </el-divider>
-    <div data-testid="instance-comments">
+    <el-alert
+      v-if="!canViewComments"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="t('systemApprovalInstance.commentsNoPermission')"
+      data-testid="instance-comments-denied"
+    />
+    <div v-else data-testid="instance-comments">
       <div v-if="comments.length">
         <div
           v-for="item in comments"
@@ -448,23 +464,33 @@ onMounted(() => {
       <div v-else class="mb-2 text-xs text-(--el-text-color-secondary)">
         {{ t("approvalDiscussion.empty") }}
       </div>
-      <el-input
-        v-model="commentText"
-        type="textarea"
-        :rows="3"
-        maxlength="2000"
-        show-word-limit
-        :placeholder="t('approvalDiscussion.placeholder')"
-      />
-      <div class="mt-2 text-right">
-        <el-button
-          type="primary"
-          size="small"
-          :loading="commentLoading"
-          @click="submitComment"
-        >
-          {{ t("approvalDiscussion.submit") }}
-        </el-button>
+      <template v-if="canAddComment">
+        <el-input
+          v-model="commentText"
+          type="textarea"
+          :rows="3"
+          maxlength="2000"
+          show-word-limit
+          :placeholder="t('approvalDiscussion.placeholder')"
+        />
+        <div class="mt-2 text-right">
+          <el-button
+            type="primary"
+            size="small"
+            :loading="commentLoading"
+            @click="submitComment"
+          >
+            {{ t("approvalDiscussion.submit") }}
+          </el-button>
+        </div>
+      </template>
+      <!-- 无发表权限时给出说明，而不是留下一个提交必 403 的输入框 -->
+      <div
+        v-else
+        class="text-xs text-(--el-text-color-secondary)"
+        data-testid="comment-readonly-hint"
+      >
+        {{ t("approvalDiscussion.readonly") }}
       </div>
     </div>
   </div>

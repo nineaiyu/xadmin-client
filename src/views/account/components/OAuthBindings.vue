@@ -9,6 +9,8 @@ import {
   type OAuthProvider
 } from "@/api/identity/oauth";
 import { message } from "@/utils/message";
+import { AesEncrypted } from "@/utils/aes";
+import { useUserStoreHook } from "@/store/modules/user";
 import { ElMessageBox } from "element-plus";
 import AccountPanel from "./AccountPanel.vue";
 
@@ -32,6 +34,7 @@ type BindingRow = {
 };
 
 const { t } = useI18n();
+const userinfoStore = useUserStoreHook();
 const rows = ref<BindingRow[]>([]);
 const providers = ref<OAuthProvider[]>([]);
 const loading = ref(false);
@@ -85,7 +88,16 @@ const unbind = (row: BindingRow) => {
     // prompt 模式焦点本就在输入框，不存在回车误确认问题）
     confirmButtonClass: "el-button--danger"
   })
-    .then(({ value }) => oauthApi.unbind(row.pk, String(value)))
+    // 与改密同口径：口令按 AESCipherV2(username) 加密后提交，不落明文
+    .then(async ({ value }) =>
+      oauthApi.unbind(
+        row.pk,
+        await AesEncrypted(
+          userinfoStore.username as string,
+          String(value ?? "")
+        )
+      )
+    )
     .then(res => {
       if (isSuccess(res)) {
         message(t("oauth.unbindSuccess"), { type: "success" });

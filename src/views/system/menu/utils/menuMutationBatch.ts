@@ -23,20 +23,22 @@ export async function removeMenuRows({
   api,
   t,
   rows,
-  dropRows
+  dropRows,
+  batch = false
 }: {
   api: MenuMutationApi;
   t: TFunction;
   rows: MenuRow[];
   dropRows: (pks: Array<string | number>) => void;
+  /** 批量入口固定走 batchDestroy：只选 1 行时也不能降级成单删权限点 */
+  batch?: boolean;
 }): Promise<boolean> {
   if (!rows.length) return false;
   if (!(await confirmMenuDelete(api, rows, t))) return false;
   const pks = rows.map(row => row.pk);
-  const res =
-    pks.length > 1
-      ? await api.batchDestroy(pks, { impact_confirmed: true })
-      : await api.destroy(pks[0] as number, { impact_confirmed: true });
+  const res = batch
+    ? await api.batchDestroy(pks, { impact_confirmed: true })
+    : await api.destroy(pks[0] as number, { impact_confirmed: true });
   if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;

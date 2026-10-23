@@ -169,6 +169,10 @@ test("表单绑定审批流程：提交进入流程 → 驳回重提 → 审批�
       .getByRole("row", { name: formName })
       .getByTestId("submission-resubmit")
       .click();
+    await page
+      .locator(".el-message-box")
+      .getByRole("button", { name: "确定" })
+      .click();
     await expect(
       page
         .getByTestId("my-submission-table")

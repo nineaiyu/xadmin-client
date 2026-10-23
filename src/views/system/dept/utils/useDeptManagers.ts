@@ -38,7 +38,7 @@ export function useDeptManagers({
     });
     addDialog({
       title: `${t("systemDept.managers")}：${row.name}`,
-      width: dialogSize("sm"),
+      width: dialogSize("md"),
       draggable: true,
       destroyOnClose: true,
       closeOnClickModal: false,

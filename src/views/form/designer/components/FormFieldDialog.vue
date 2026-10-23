@@ -271,6 +271,15 @@ defineExpose({ getField });
     <el-form-item v-if="!isFormula" :label="t('dform.fieldRequired')">
       <el-switch v-model="form.required as boolean" />
     </el-form-item>
+    <el-form-item :label="t('dform.fieldSensitive')">
+      <el-switch
+        v-model="form.sensitive as boolean"
+        data-testid="field-prop-sensitive"
+      />
+      <div class="text-xs text-(--el-text-color-regular)">
+        {{ t("dform.fieldSensitiveTip") }}
+      </div>
+    </el-form-item>
     <el-form-item v-if="isFilterable" :label="t('dform.fieldFilterable')">
       <el-switch
         v-model="form.filterable as boolean"

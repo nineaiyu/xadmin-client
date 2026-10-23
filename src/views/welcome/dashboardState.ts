@@ -69,13 +69,21 @@ export function createDashboardState(t: TFunction) {
   const userRegisterList = ref<DashboardTrendItem[]>([]);
   const operateLogList = ref<RecordType[]>([]);
   const userActiveList = ref<UserActiveCardItem[]>([]);
+  /** 任一统计接口因缺少数据权限返回空集：页面顶部提示，避免把 0 当成真实值 */
+  const scopeLimited = ref(false);
+  /** 首屏取数进行中 / 任一卡片失败（页面统一提示并可重试） */
+  const loading = ref(true);
+  const loadFailed = ref(false);
 
   return {
     chartData,
     userLoginList,
     userRegisterList,
     operateLogList,
-    userActiveList
+    userActiveList,
+    scopeLimited,
+    loading,
+    loadFailed
   };
 }
 

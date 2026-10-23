@@ -3,7 +3,7 @@ import { computed, defineAsyncComponent, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { AiUsageDimensionStat } from "@/api/ai/ai";
 import { loadEcharts } from "@/plugins/echarts";
-import { ReNormalCountTo } from "@/components/ReCountTo";
+import { StatGrid, type StatItem } from "@/components/ReStat";
 import { useAiUsage } from "../hooks/useAiUsage";
 
 /**
@@ -42,7 +42,7 @@ onMounted(async () => {
 
 const hasUsageData = computed(() => (usage.value?.total_calls ?? 0) > 0);
 
-const statCards = computed(() => {
+const statCards = computed<StatItem[]>(() => {
   const data = usage.value;
   const quotaStreams = data?.quota?.concurrent_streams || "∞";
   return [
@@ -139,18 +139,13 @@ const dimensionPercent = (
 
     <template v-if="hasUsageData">
       <!-- 统计卡等分（el-statistic + grid，对齐 ApprovalStats；窄屏 2 列回退） -->
-      <div class="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4 mb-5">
-        <el-statistic
-          v-for="card in statCards"
-          :key="card.key"
-          :title="card.label"
-        >
-          <template #default>
-            <span v-if="card.text !== undefined">{{ card.text }}</span>
-            <ReNormalCountTo v-else :duration="600" :endVal="card.value ?? 0" />
-          </template>
-        </el-statistic>
-      </div>
+      <StatGrid
+        :items="statCards"
+        :columns="4"
+        :sm-columns="4"
+        animate
+        class="mb-5 gap-y-4!"
+      />
 
       <p v-if="p95Hint" class="text-xs text-(--el-text-color-secondary) mb-3">
         {{ p95Hint }}

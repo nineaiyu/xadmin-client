@@ -12,12 +12,18 @@
 
 type Loader = () => Promise<unknown>;
 
-const modules = import.meta.glob("/src/views/**/*.{vue,tsx}");
+const modules = import.meta.glob([
+  "/src/views/**/*.{vue,tsx}",
+  "/src/extensions/**/*.{vue,tsx}"
+]);
 
 /** 视图路径 → 懒加载函数（精确优先：`.vue` → `.tsx` → `index.vue` → `index.tsx`） */
 export function resolveViewLoader(path: string): Loader | null {
   if (!path) return null;
-  const base = `/src/views${path}`.replace(/\/+$/, "");
+  const normalized = path.replace(/^@\//, "").replace(/^\/+/, "");
+  const base = normalized.startsWith("extensions/")
+    ? `/src/${normalized}`.replace(/\/+$/, "")
+    : `/src/views${path}`.replace(/\/+$/, "");
   const candidates = [
     `${base}.vue`,
     `${base}.tsx`,

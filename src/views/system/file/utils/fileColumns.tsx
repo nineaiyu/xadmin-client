@@ -1,4 +1,4 @@
-import { h } from "vue";
+import { h, ref } from "vue";
 import { ElButton, ElIcon, ElLink, ElText } from "element-plus";
 import { Link } from "@element-plus/icons-vue";
 import { formatBytes } from "@pureadmin/utils";
@@ -12,6 +12,7 @@ import { renderTagsCell } from "@/utils/tagTone";
 import { openPreviewDrawer } from "../components/previewDrawer";
 import type { useI18n } from "vue-i18n";
 import type { usePublicHooks } from "@/views/system/hooks";
+import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type TagStyle = ReturnType<typeof usePublicHooks>["tagStyle"];
@@ -19,16 +20,26 @@ type TagStyle = ReturnType<typeof usePublicHooks>["tagStyle"];
 /**
  * 文件列表列渲染（自 hook.tsx 抽出）：访问链接、上传/临时标记、行内预览入口、
  * 文件大小与标签列。
+ *
+ * `access_url` 对上传文件不再渲染 `/media/` 直链（该路径只校验登录态，
+ * 不校验文件行级数据权限、也不记 FileAccessLog），改为复用受鉴权下载动作；
+ * 只有外链登记行（`is_upload=false`）保留直接打开——地址本身就在外部。
  */
 export function buildFileColumns({
   t,
   tagStyle,
-  canPreview
+  canPreview,
+  canDownload,
+  onDownload
 }: {
   t: TFunction;
   tagStyle: TagStyle;
   canPreview?: boolean;
+  canDownload?: boolean;
+  onDownload?: (row: RecordType) => void | Promise<void>;
 }) {
+  /** 下载中的行键：避免重复点击，并给按钮 loading 反馈 */
+  const downloadingKey = ref("");
   const formatYesNoColumn = (column: PageTableColumn) => {
     column["cellRenderer"] = renderBooleanTag({
       t,
@@ -42,21 +53,45 @@ export function buildFileColumns({
     formatPageColumns(columns, {
       access_url: column => {
         column["cellRenderer"] = scope => {
+          const { row } = scope;
+          const url = row?.[column._column?.key as string];
           // 回收站只读：不提供下载入口，降级为纯文本地址
           if (isReadonlyCell(scope)) {
-            return h("span", scope.row[column._column?.key as string] ?? "");
+            return h("span", url ?? "");
           }
+          // 外链登记行：地址本身即外部 URL，保持直接打开
+          if (!row?.is_upload) {
+            if (!url) return h("span", "-");
+            return h(
+              ElLink,
+              { type: "success", href: url, target: "_blank" },
+              {
+                icon: () => h(ElIcon, null, () => h(Link)),
+                default: () => t("systemUploadFile.fileLink")
+              }
+            );
+          }
+          // 上传文件：/media/ 直链只校验登录态，不记访问审计；
+          // 统一复用受鉴权下载动作（数据权限 + FileAccessLog）
+          if (!canDownload) return h("span", "-");
           return h(
-            ElLink,
+            ElButton,
             {
+              link: true,
               type: "success",
-              href: scope.row[column._column?.key as string],
-              target: "_blank"
+              loading: downloadingKey.value === String(row?.pk ?? ""),
+              onClick: async () => {
+                const key = String(row?.pk ?? "");
+                if (downloadingKey.value === key) return;
+                downloadingKey.value = key;
+                try {
+                  await onDownload?.(row as RecordType);
+                } finally {
+                  downloadingKey.value = "";
+                }
+              }
             },
-            {
-              icon: () => h(ElIcon, null, () => h(Link)),
-              default: () => t("systemUploadFile.fileLink")
-            }
+            () => t("fileAccess.download")
           );
         };
       },

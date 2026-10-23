@@ -7,15 +7,14 @@ import {
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { statusTagProps } from "@/utils/dict";
-import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
-import { approverText } from "./approvalTexts";
+import { APPROVAL_STATUS_TAG_TYPE, approverText } from "./approvalHelpers";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 审批中心列表列渲染（自 hook.tsx 抽出，行数门禁）：状态列（字典驱动
  * approval_status，字典未配置回退页面 i18n）与审批人列（文案规则见
- * approvalTexts.ts，点击查看审批详情）。
+ * approvalHelpers.ts，点击查看审批详情）。
  */
 export function useApprovalColumns({
   t,

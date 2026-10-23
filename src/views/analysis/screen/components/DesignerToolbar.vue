@@ -135,7 +135,7 @@ const locked = () => props.preview || props.readonly;
     <el-button
       size="small"
       data-testid="designer-clear"
-      :disabled="panesEmpty || readonly"
+      :disabled="panesEmpty || locked()"
       @click="emit('clear')"
     >
       {{ t("dataScreen.clearLayout") }}

@@ -8,8 +8,7 @@ import { message } from "@/utils/message";
 import {
   buildFlowPayload,
   createEmptyNode,
-  formatConditionValue,
-  pickValue,
+  toNodeRow,
   validateFlowConfig,
   type FieldRow,
   type FlowRow,
@@ -53,6 +52,8 @@ const editMode = ref<"list" | "canvas">("list");
 // 画布懒挂载：首次切到画布时才渲染 FlowCanvas。抽屉打开时画布容器 display:none（v-show），
 // 尺寸为 0，若此时挂载会触发 "[Vue Flow]: Viewport not initialized yet" 且 fit-view 失效
 const canvasMounted = ref(false);
+/** 打开时的表单快照：关闭前据此判断是否有未保存变更 */
+const initialSnapshot = ref("");
 
 watch(editMode, mode => {
   if (mode === "canvas") canvasMounted.value = true;
@@ -73,27 +74,7 @@ function initFromFlow() {
   nodes.value = (flow?.nodes ?? [])
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map(node => ({
-      name: node.name ?? "",
-      approve_type: pickValue(node.approve_type, "OR"),
-      approve_ratio: node.approve_ratio ?? 100,
-      assignee_type: pickValue(node.assignee_type, "role"),
-      assignee_value: node.assignee_value ?? "",
-      condition_field: node.condition?.field ?? "",
-      condition_op: node.condition?.op ?? "eq",
-      condition_value: formatConditionValue(node.condition?.value),
-      routes: (node.routes ?? []).map(route => ({
-        condition: {
-          field: route.condition?.field ?? "",
-          op: route.condition?.op ?? "eq",
-          value: route.condition?.value ?? ""
-        },
-        target: Number(route.target)
-      })),
-      layout: { ...(node.layout ?? {}) },
-      timeout_hours: node.timeout_hours ?? 0,
-      timeout_action: node.timeout_action ?? "none"
-    }));
+    .map(toNodeRow);
   if (!nodes.value.length) nodes.value.push(createEmptyNode());
 }
 
@@ -134,6 +115,19 @@ async function save() {
 }
 
 onMounted(initFromFlow);
+onMounted(() => {
+  initialSnapshot.value = JSON.stringify({
+    basic,
+    fields: fields.value,
+    nodes: nodes.value
+  });
+});
+
+/** 关闭前未保存变更判定（供 ReDrawer beforeClose 使用） */
+const isDirty = () =>
+  JSON.stringify({ basic, fields: fields.value, nodes: nodes.value }) !==
+  initialSnapshot.value;
+defineExpose({ isDirty });
 </script>
 <template>
   <div class="flow-config">

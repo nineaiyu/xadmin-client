@@ -16,6 +16,7 @@ import { avatar, bg, illustration } from "./utils/static";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { SITE_LINKS } from "@/config/site";
+import { LOCALE_OPTIONS } from "@/constants/localeOptions";
 import { useI18n } from "vue-i18n";
 
 import dayIcon from "@/assets/svg/day.svg?component";
@@ -43,6 +44,7 @@ const handleDataThemeChange = (value: string | number | boolean) => {
 };
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
+const [zhOption, enOption] = LOCALE_OPTIONS;
 const { t } = useI18n();
 
 /** 认证页外壳形态（设置面板 →「通用」→「登录页」）：panel-left / panel-center / panel-right */
@@ -100,7 +102,7 @@ watch(
                 :icon="Check"
                 class="check-zh"
               />
-              简体中文
+              {{ zhOption.label }}
             </el-dropdown-item>
             <el-dropdown-item
               :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
@@ -110,7 +112,7 @@ watch(
               <span v-show="locale === 'en'" class="check-en">
                 <IconifyIconOffline :icon="Check" />
               </span>
-              English
+              {{ enOption.label }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>

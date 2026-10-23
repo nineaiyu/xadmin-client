@@ -77,6 +77,7 @@ onMounted(() => (configLoading.value = true));
       @configReqSuccess="configReqSuccess"
       @configReqEnd="configLoading = false"
     />
+    <!-- 未开放自助重置：保留可读说明与返回入口，不渲染空白页 -->
     <el-form
       v-if="authInfo.access"
       ref="formDataRef"
@@ -88,7 +89,6 @@ onMounted(() => (configLoading.value = true));
         <PasswordFields
           v-model:password="formData.password"
           v-model:repeat-password="formData.repeatPassword"
-          :rules="formRules"
           :password-delay="150"
           :repeat-delay="200"
         />
@@ -114,5 +114,12 @@ onMounted(() => (configLoading.value = true));
         </el-form-item>
       </Motion>
     </el-form>
+    <el-result v-else icon="info" :title="t('login.resetUnavailable')">
+      <template #extra>
+        <el-button size="default" @click="onBack">
+          {{ t("login.back") }}
+        </el-button>
+      </template>
+    </el-result>
   </div>
 </template>

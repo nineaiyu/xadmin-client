@@ -40,6 +40,7 @@ const props = withDefaults(defineProps<settingItemProps>(), {
   title: undefined,
   localeName: "",
   autoSubmit: true,
+  canRead: undefined,
   formProps: () => ({}),
   queryParams: () => ({}),
   onSaved: undefined,
@@ -54,6 +55,8 @@ const props = withDefaults(defineProps<settingItemProps>(), {
 const { t } = useI18n();
 const isNarrow = useMediaQuery(`(width <= ${BREAKPOINTS.md}px)`);
 const loading = ref(false);
+/** 列元数据请求失败：表单渲染不出字段，给可重试的失败态而不是永久 loading */
+const loadFailed = ref(false);
 const submitLoading = ref(false);
 const testLoading = ref(false);
 const { getColumnData } = useBaseColumns(props.localeName);
@@ -95,13 +98,15 @@ const keepField = (key: string) =>
   !props.fields?.length || props.fields.includes(key);
 
 const getData = () => {
-  if (props.auth.retrieve) {
+  if (props.canRead ?? props.auth.retrieve) {
     loading.value = true;
+    loadFailed.value = false;
     // 首载并行：列元数据与当前配置同时发起（原先在列回调里串行补发 retrieve，
     // 两段 RTT 叠加拖慢首屏）；retrieve 异常归一为 null——网络层失败已有统一
     // 提示，此处不重复弹错，表单按列默认值兜底渲染
     const retrieveRes = props.api.retrieve(props.queryParams).catch(() => null);
-    getColumnData(
+    // 列请求必须自带收尾：失败时回调不会执行，loading 会永久挂在表单上
+    void getColumnData(
       props.api.columns,
       undefined,
       ({ addOrEditRules, addOrEditColumns, addOrEditDefaultValue }) => {
@@ -141,7 +146,10 @@ const getData = () => {
       },
       undefined,
       props.queryParams
-    );
+    ).catch(() => {
+      loadFailed.value = true;
+      loading.value = false;
+    });
   }
 };
 
@@ -157,7 +165,13 @@ const handleSubmitSettings = (data: FieldValues) => {
       t,
       apiReq: props.api.partialUpdate(props.queryParams, data),
       success: res => {
-        addOrEditData.value.defaultData = res?.data ?? {};
+        const response = res?.data ?? {};
+        addOrEditData.value.defaultData = response;
+        // 消费服务端响应整形（如短信手机号归一为 {code, phone}），表单回显与库内一致
+        addOrEditData.value.formData = {
+          ...addOrEditData.value.formData,
+          ...response
+        };
         // 保存成功后回调（如：水印配置变更后即时刷新当前会话的水印状态）
         void props.onSaved?.(data);
       },
@@ -182,6 +196,21 @@ const handleTest = () => {
 </script>
 
 <template>
+  <el-empty
+    v-if="!auth.retrieve"
+    data-testid="setting-item-no-permission"
+    :description="t('setting.noPermission')"
+  />
+  <div
+    v-else-if="loadFailed"
+    class="setting-load-failed"
+    data-testid="setting-load-failed"
+  >
+    <el-empty :description="t('setting.loadFailed')" />
+    <el-button type="primary" plain @click="getData">
+      {{ t("buttons.reload") }}
+    </el-button>
+  </div>
   <PlusForm
     ref="addFormRef"
     v-model="addOrEditData.formData"

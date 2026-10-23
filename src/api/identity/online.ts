@@ -14,13 +14,13 @@ type BatchForceLogoutResult = {
 
 /** 在线用户（WS 会话）管理 */
 class UserOnlineApi extends BaseApi {
-  /** 强制下线该用户全部会话（服务端令牌失效 + WS 踢线） */
-  forceLogout = (pk: number | string) => {
+  /** 强制下线该用户全部会话（显式 user_pk；服务端令牌失效 + WS 踢线） */
+  forceLogout = (userPk: number | string) => {
     return this.request<ForceLogoutResult>(
       "post",
       {},
-      {},
-      `${this.baseApi}/${pk}/force-logout`
+      { user_pk: userPk },
+      `${this.baseApi}/force-logout`
     );
   };
 

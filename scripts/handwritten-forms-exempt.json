@@ -47,5 +47,6 @@
   "src/views/system/menu/components/MenuFormNav.vue": "菜单树主编辑界面：导航结构编辑，形态上不适合表格弹窗",
   "src/views/system/menu/components/MenuFormPermission.vue": "菜单树主编辑界面：权限点挂载表单分片，形态上不适合表格弹窗",
   "src/views/system/menu/components/MenuPermissionDialog.vue": "权限点树选择器：树形勾选交互，非模型 CRUD 表单",
-  "src/views/system/user/components/ImBindingPanel.vue": "IM 绑定面板：账号绑定动作（验证码/扫码），非模型字段 CRUD"
+  "src/views/system/user/components/ImBindingPanel.vue": "IM 绑定面板：账号绑定动作（验证码/扫码），非模型字段 CRUD",
+  "src/views/settings/open-platform/components/OAuthProviderCard.vue": "第三方登录 provider 列表：单个 provider 为嵌套配置对象（含组映射 JSON），元数据表单只能表达单对象字段，无法表达数组项增删与逐项编辑"
 }

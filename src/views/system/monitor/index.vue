@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { computed, h, onMounted, ref, watch } from "vue";
+import RePage from "@/components/RePage";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
-import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { hasAuth } from "@/router/utils";
@@ -20,8 +18,8 @@ import MonitorSlowRequests from "./components/MonitorSlowRequests.vue";
 import MonitorStatusPanels from "./components/MonitorStatusPanels.vue";
 import MonitorToolbar from "./components/MonitorToolbar.vue";
 import TaskHealthCard from "./components/TaskHealthCard.vue";
-import ThresholdForm from "./components/ThresholdForm.vue";
 import { useMonitor } from "./utils/hook";
+import { useThresholdDialog } from "./utils/useThresholdDialog";
 import {
   DEFAULT_METRICS,
   INTERVAL_LABEL_KEYS,
@@ -68,6 +66,7 @@ const {
   thresholds,
   alerts,
   alertCounts,
+  sectionErrors,
   fetchAll,
   fetchHistory,
   fetchThresholds,
@@ -126,37 +125,14 @@ watch(
 const alertStatus = ref<"" | "firing" | "resolved">("");
 watch(alertStatus, status => fetchAlerts({ status }));
 
-const thresholdFormRef = ref<InstanceType<typeof ThresholdForm>>();
-const openThresholdDialog = () => {
-  if (!thresholds.value?.items?.length) {
-    message(t("systemMonitor.thresholdUnavailable"), { type: "warning" });
-    return;
-  }
-  thresholdFormRef.value = undefined;
-  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
-  const { beforeSure } = useDialogForm<Record<string, number>>({
-    formRef: thresholdFormRef,
-    submit: payload => saveThresholds(payload),
-    successText: t("systemMonitor.thresholdSaved"),
-    failType: "error",
-    // 先关弹窗再刷新（刷新慢时不滞留弹窗）；useDialogForm 内 done 先于回调
-    onSuccess: () => fetchThresholds()
-  });
-  addDialog({
-    title: t("systemMonitor.thresholdSettings"),
-    width: dialogSize("sm"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    sureBtnLoading: true,
-    contentRenderer: () =>
-      h(ThresholdForm, {
-        ref: thresholdFormRef,
-        items: thresholds.value?.items ?? []
-      }),
-    beforeSure
-  });
-};
+const { openThresholdDialog } = useThresholdDialog({
+  t,
+  thresholds,
+  saveThresholds,
+  fetchThresholds,
+  fetchAlerts,
+  alertStatus
+});
 
 // ---- 报表导出 / 分享 ----
 const exporting = ref(false);
@@ -209,25 +185,26 @@ const currentMetrics = computed(
 
 const resourceCards = computed(() => {
   const current = currentMetrics.value;
+  // 缺失即未知：不能用 0 兜底，否则「接口失败」会被画成「CPU 0%」的确定结论
   return [
     {
       key: "cpu",
       label: t("systemMonitor.cpu"),
-      value: current?.cpu_percent ?? 0,
+      value: current?.cpu_percent ?? null,
       suffix: "%",
       ring: true
     },
     {
       key: "memory",
       label: t("systemMonitor.memory"),
-      value: current?.memory_used ?? 0,
+      value: current?.memory_used ?? null,
       suffix: "%",
       ring: true
     },
     {
       key: "disk",
       label: t("systemMonitor.disk"),
-      value: current?.disk_used ?? 0,
+      value: current?.disk_used ?? null,
       suffix: "%",
       ring: true
     },
@@ -236,7 +213,7 @@ const resourceCards = computed(() => {
       // 成空环配原始数字，改用纯数字展示
       key: "load",
       label: t("systemMonitor.load"),
-      value: current?.cpu_load ?? 0,
+      value: current?.cpu_load ?? null,
       suffix: "",
       ring: false
     }
@@ -278,19 +255,19 @@ const serviceItems = computed(() => {
     {
       key: "db",
       label: t("systemMonitor.db"),
-      ok: items?.db.status ?? false,
+      ok: items?.db?.status ?? null,
       cost: items?.db.cost
     },
     {
       key: "redis",
       label: t("systemMonitor.redis"),
-      ok: items?.redis.status ?? false,
+      ok: items?.redis?.status ?? null,
       cost: items?.redis.cost
     },
     {
       key: "celery",
       label: t("systemMonitor.celery"),
-      ok: items?.celery.status ?? false,
+      ok: items?.celery?.status ?? null,
       cost: items?.celery.cost
     }
   ];
@@ -329,6 +306,8 @@ const eventPanelRef = ref<InstanceType<typeof EventPanel>>();
 
 const refreshAll = async () => {
   await fetchAll(true);
+  // fetchAll 内的告警请求不带筛选，刷新后按当前告警状态再收口一次
+  await fetchAlerts({ status: alertStatus.value || undefined });
   loadHistory();
   eventPanelRef.value?.refresh();
 };
@@ -343,8 +322,31 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main">
-    <health-banner :health="overview.health" />
+  <RePage>
+    <health-banner
+      :health="overview.health"
+      :unavailable="Boolean(sectionErrors.overview)"
+    />
+
+    <div
+      v-if="sectionErrors.overview || sectionErrors.services"
+      class="mb-4 flex items-center gap-3"
+      data-testid="monitor-unavailable"
+    >
+      <el-alert
+        class="flex-1"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('systemMonitor.dataUnavailable')"
+        :description="
+          sectionErrors.overview || sectionErrors.services || undefined
+        "
+      />
+      <el-button size="small" @click="refreshAll">
+        {{ t("systemMonitor.refresh") }}
+      </el-button>
+    </div>
 
     <MonitorToolbar
       v-model:auto-refresh="autoRefresh"
@@ -469,9 +471,7 @@ onMounted(() => {
     />
 
     <event-panel ref="eventPanelRef" class="mb-4" />
-
     <task-health-card :health="taskHealth" />
-
     <MonitorSlowRequests :rows="slowRows" :threshold="slow.threshold" />
-  </div>
+  </RePage>
 </template>

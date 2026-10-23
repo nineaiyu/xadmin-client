@@ -80,6 +80,8 @@ export type FormField = {
    * 管理端列表可按该字段筛选（物化列 + GIN 索引，见后端 dataset/utils/dform_filter.py）
    */
   filterable?: boolean;
+  /** 敏感字段：列表/详情/导出对非超管统一掩码（schema 级标记，不改变存储） */
+  sensitive?: boolean;
 };
 
 /** 联动规则操作符：eq/ne 标量比较；in/notin 集合包含；empty/notempty 空值判定 */
@@ -123,6 +125,8 @@ export type DynamicFormItem = {
   is_template?: boolean;
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
+  /** 最近更新时间：编辑保存的乐观锁基线 */
+  updated_time?: string;
 };
 
 /** 可填报表单（available-forms 返回结构：流程字段给名称与主键，不回传整个定义） */

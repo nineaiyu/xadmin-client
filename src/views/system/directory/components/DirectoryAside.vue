@@ -76,7 +76,7 @@ function loadDeptTree() {
         deptTree.value = handleTree(res.data.results);
       }
     })
-    .catch(() => undefined)
+    .catch(() => message(t("directory.deptLoadFailed"), { type: "warning" }))
     .finally(() => (deptLoading.value = false));
 }
 
@@ -97,7 +97,7 @@ function loadPosts() {
         postOptions.value = res.data.results;
       }
     })
-    .catch(() => undefined)
+    .catch(() => message(t("directory.postLoadFailed"), { type: "warning" }))
     .finally(() => (postLoading.value = false));
 }
 
@@ -230,7 +230,11 @@ function postTitle(item: DirectoryPostOption) {
           </el-tree>
           <el-empty
             v-else
-            :description="t('directory.emptyDept')"
+            :description="
+              canUseDept
+                ? t('directory.emptyDept')
+                : t('directory.noDeptPermission')
+            "
             :image-size="60"
           />
         </template>
@@ -261,8 +265,12 @@ function postTitle(item: DirectoryPostOption) {
             </span>
           </button>
           <el-empty
-            v-if="!postLoading && !filteredPosts.length"
-            :description="t('directory.emptyPosts')"
+            v-if="!postLoading && (!canUsePost || !filteredPosts.length)"
+            :description="
+              canUsePost
+                ? t('directory.emptyPosts')
+                : t('directory.noPostPermission')
+            "
             :image-size="60"
           />
         </template>

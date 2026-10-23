@@ -2,6 +2,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-circle-line";
 import ArrowUp from "~icons/ep/arrow-up-bold";
 import ArrowDown from "~icons/ep/arrow-down-bold";
+import Refresh from "~icons/ep/refresh";
 import { isDictTypeRow } from "./dictColumnRules";
 import type { OperationButtonsRow } from "@/components/RePlusPage";
 import type { useI18n } from "vue-i18n";
@@ -14,16 +15,18 @@ export function buildDictRowButtons({
   t,
   auth,
   onAddChild,
-  onMove
+  onMove,
+  onRefreshCache
 }: {
   t: TFunction;
-  auth: { create?: boolean; move?: boolean };
+  auth: { create?: boolean; move?: boolean; refreshCache?: boolean };
   onAddChild: (row: RecordType) => void;
   onMove: (
     row: RecordType,
     direction: "up" | "down",
     loading: { value: boolean }
   ) => void;
+  onRefreshCache: (row: RecordType) => void;
 }): OperationButtonsRow[] {
   return [
     {
@@ -49,6 +52,14 @@ export function buildDictRowButtons({
       onClick: ({ row, loading }) => onMove(row, "down", loading),
       show: auth.move,
       index: 3
+    },
+    {
+      text: t("dataDict.refreshTypeCache"),
+      code: "refreshTypeCache",
+      props: { type: "info", icon: useRenderIcon(Refresh), link: true },
+      onClick: ({ row }) => onRefreshCache(row),
+      show: row => Boolean(auth.refreshCache && isDictTypeRow(row)),
+      index: 4
     }
   ];
 }

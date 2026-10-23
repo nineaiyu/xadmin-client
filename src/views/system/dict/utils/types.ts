@@ -3,6 +3,7 @@
 /** 数据字典行：parent 为空 = 字典类型，非空 = 字典项（模型只支持两级） */
 export type DictRow = {
   pk?: string | number;
+  code?: string | null;
   label?: string;
   color?: string | null;
   parent_code?: string | null;
@@ -18,4 +19,7 @@ export type DictCellRow = {
   parent_code?: string | null;
   parent?: { label?: string } | null;
   is_locked?: boolean;
+  usage_count?: number | null;
+  last_used_at?: string | null;
+  load_failure_count?: number | null;
 };

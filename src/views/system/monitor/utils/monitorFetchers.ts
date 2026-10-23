@@ -1,12 +1,24 @@
 import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
 import { monitorApi } from "@/api/system/monitor";
-import { ALERT_RANGE } from "./monitorState";
+import { ALERT_RANGE, readSectionError } from "./monitorState";
 import type {
   MonitorEventsParams,
   MonitorHistoryParams
 } from "@/api/system/monitor";
-import type { MonitorState } from "./monitorState";
+import type { MonitorSection, MonitorState } from "./monitorState";
+
+/** 区块顺序必须与 fetchAll 的 allSettled 数组一致（失败原因按位回填） */
+const SECTIONS: MonitorSection[] = [
+  "overview",
+  "services",
+  "redis",
+  "celery",
+  "slow",
+  "taskHealth",
+  "thresholds",
+  "alerts"
+];
 
 /**
  * 监控面板数据拉取（自 hook.ts 抽出）：全量面板（含 fresh 穿透短缓存）、
@@ -29,6 +41,15 @@ export function createMonitorFetchers(state: MonitorState) {
         monitorApi.thresholds(),
         monitorApi.events({ kind: "alert", range: ALERT_RANGE })
       ]);
+      // 失败区块留痕（成功则清标记）：页面据此把「未知」与真实 0% / 异常区分开
+      SECTIONS.forEach((section, index) => {
+        const result = results[index];
+        if (result.status === "rejected") {
+          state.sectionErrors.value[section] = readSectionError(result.reason);
+        } else {
+          delete state.sectionErrors.value[section];
+        }
+      });
       if (results[0].status === "fulfilled")
         state.overview.value = results[0].value.data;
       if (results[1].status === "fulfilled")

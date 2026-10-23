@@ -1,3 +1,5 @@
+import { downloadBlob as baseDownloadBlob } from "@/utils/download";
+
 /**
  * 图表图片导出与极简 ZIP 打包（零新依赖）。
  *
@@ -104,13 +106,9 @@ export function downloadDataUrl(dataUrl: string, filename: string): void {
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  try {
-    downloadDataUrl(url, filename);
-  } finally {
-    // 下载为浏览器异步行为，延迟释放，避免 Safari 立即 revoke 导致空文件
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }
+  // 图片导出保留「(blob, filename)」专用入口，底层复用通用下载单点；
+  // 下载为浏览器异步行为，延迟释放避免 Safari 立即 revoke 导致空文件
+  baseDownloadBlob(filename, blob, 10_000);
 }
 
 /**

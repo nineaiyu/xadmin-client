@@ -29,7 +29,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SOURCE = join(ROOT, "node_modules/animate.css/animate.css");
 const ANIMATES_TS = join(
   ROOT,
-  "src/views/system/menu/components/ReAnimateSelector/src/animate.ts"
+  "src/components/ReAnimateSelector/src/animate.ts"
 );
 const OUT = join(ROOT, "src/style/animate-subset.css");
 const reportOnly = process.argv.includes("--report");

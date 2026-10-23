@@ -1,6 +1,6 @@
 import type { CSSProperties, VNode, Component } from "vue";
 
-type DoneFn = (cancel?: boolean) => void;
+export type DoneFn = (cancel?: boolean) => void;
 type EventType =
   "open" | "close" | "openAutoFocus" | "closeAutoFocus" | "fullscreenCallBack";
 type ArgsType = {
@@ -216,6 +216,8 @@ interface DialogOptions<T = Record<string, unknown>> extends DialogProps {
   popconfirm?: Popconfirm;
   /** 点击确定按钮后是否开启 `loading` 加载动画 */
   sureBtnLoading?: boolean;
+  /** 确定按钮文案覆盖（默认 buttons.save）；用于「保存并提交」等语义更强的动作 */
+  sureBtnText?: string;
   /**
    * @description 自定义对话框标题的内容渲染器
    * @see {@link https://element-plus.org/zh-CN/component/dialog.html#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%A4%B4%E9%83%A8}

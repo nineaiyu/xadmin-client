@@ -14,6 +14,10 @@ import { isSuccess } from "@/api/types";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
 import { normalizeError } from "@/utils/apiError";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * schema 版本历史（行级入口）：查看历史版本配置 / 回滚到指定版本。
@@ -105,6 +109,21 @@ const rollback = (item: SchemaHistoryItem) => {
 };
 
 const currentVersion = computed(() => data.value.current ?? 1);
+
+/** 历史版本只读列（字段/联动数、时间、操作由插槽渲染；展开行展示明细） */
+const columns = computed<ReadonlyColumn[]>(() => {
+  const cols: ReadonlyColumn[] = [
+    { label: t("dform.historyVersion"), width: 90, slot: "version" },
+    { label: t("dform.historyFields"), width: 90, slot: "fields" },
+    { label: t("dform.historyLinkages"), width: 90, slot: "linkages" },
+    { label: t("dform.historyUpdated"), minWidth: 160, slot: "updated" },
+    { label: t("dform.historyBy"), width: 120, slot: "updatedBy" }
+  ];
+  if (props.canRollback) {
+    cols.push({ label: t("dform.actions"), width: 90, slot: "actions" });
+  }
+  return cols;
+});
 </script>
 
 <template>
@@ -121,94 +140,72 @@ const currentVersion = computed(() => data.value.current ?? 1);
         {{ data.updated_time }}
       </span>
     </div>
-    <el-table :data="data.history" size="small" max-height="420">
-      <el-table-column type="expand">
-        <template #default="{ row }">
-          <div class="px-2 py-1">
-            <div class="mb-1 text-xs font-medium">
-              {{ t("dform.historySchema") }}
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="data.history"
+      size="small"
+      max-height="420"
+      :empty-text="t('dform.historyEmpty')"
+    >
+      <template #expand="{ row }">
+        <div class="px-2 py-1">
+          <div class="mb-1 text-xs font-medium">
+            {{ t("dform.historySchema") }}
+          </div>
+          <div
+            v-for="field in fieldsOf(row as SchemaHistoryItem)"
+            :key="field.key"
+            class="text-xs text-(--el-text-color-regular)"
+          >
+            · {{ field.label }}（{{ field.key }}）·
+            {{ t(fieldTypeLabelKey(field.type)) }}
+            <span v-if="field.required">· {{ t("dform.fieldRequired") }}</span>
+          </div>
+          <template v-if="linkageSummary(row as SchemaHistoryItem).length">
+            <div class="mt-2 mb-1 text-xs font-medium">
+              {{ t("dform.linkage") }}
             </div>
             <div
-              v-for="field in fieldsOf(row as SchemaHistoryItem)"
-              :key="field.key"
+              v-for="(text, index) in linkageSummary(row as SchemaHistoryItem)"
+              :key="index"
               class="text-xs text-(--el-text-color-regular)"
             >
-              · {{ field.label }}（{{ field.key }}）·
-              {{ t(fieldTypeLabelKey(field.type)) }}
-              <span v-if="field.required"
-                >· {{ t("dform.fieldRequired") }}</span
-              >
+              · {{ text }}
             </div>
-            <template v-if="linkageSummary(row as SchemaHistoryItem).length">
-              <div class="mt-2 mb-1 text-xs font-medium">
-                {{ t("dform.linkage") }}
-              </div>
-              <div
-                v-for="(text, index) in linkageSummary(
-                  row as SchemaHistoryItem
-                )"
-                :key="index"
-                class="text-xs text-(--el-text-color-regular)"
-              >
-                · {{ text }}
-              </div>
-            </template>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.historyVersion')" width="90">
-        <template #default="{ row }">
-          <span>v{{ (row as SchemaHistoryItem).version }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.historyFields')" width="90">
-        <template #default="{ row }">
-          {{ fieldsOf(row as SchemaHistoryItem).length }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.historyLinkages')" width="90">
-        <template #default="{ row }">
-          {{ (row as SchemaHistoryItem).schema?.linkages?.length ?? 0 }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.historyUpdated')" min-width="160">
-        <template #default="{ row }">
-          <span class="text-xs">
-            {{ (row as SchemaHistoryItem).updated_time || "-" }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.historyBy')" width="120">
-        <template #default="{ row }">
-          <span class="text-xs">{{
-            (row as SchemaHistoryItem).updated_by || "-"
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="canRollback"
-        :label="t('dform.actions')"
-        width="90"
-      >
-        <template #default="{ row }">
-          <el-button
-            link
-            type="primary"
-            size="small"
-            :disabled="submitting"
-            data-testid="schema-rollback"
-            @click="rollback(row as SchemaHistoryItem)"
-          >
-            {{ t("dform.historyRollback") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div
-      v-if="!loading && !data.history.length"
-      class="mt-2 text-xs text-(--el-text-color-secondary)"
-    >
-      {{ t("dform.historyEmpty") }}
-    </div>
+          </template>
+        </div>
+      </template>
+      <template #version="{ row }">
+        <span>v{{ (row as SchemaHistoryItem).version }}</span>
+      </template>
+      <template #fields="{ row }">
+        {{ fieldsOf(row as SchemaHistoryItem).length }}
+      </template>
+      <template #linkages="{ row }">
+        {{ (row as SchemaHistoryItem).schema?.linkages?.length ?? 0 }}
+      </template>
+      <template #updated="{ row }">
+        <span class="text-xs">
+          {{ (row as SchemaHistoryItem).updated_time || "-" }}
+        </span>
+      </template>
+      <template #updatedBy="{ row }">
+        <span class="text-xs">{{
+          (row as SchemaHistoryItem).updated_by || "-"
+        }}</span>
+      </template>
+      <template #actions="{ row }">
+        <el-button
+          link
+          type="primary"
+          size="small"
+          :disabled="submitting"
+          data-testid="schema-rollback"
+          @click="rollback(row as SchemaHistoryItem)"
+        >
+          {{ t("dform.historyRollback") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>

@@ -21,6 +21,7 @@ import {
   MIN_CHUNK_SIZE,
   uploadFileChunked
 } from "@/utils/upload/chunked";
+import { computeFileHash } from "@/utils/upload/contentHash";
 
 const OK = (data: unknown) => ({ code: 1000, data, detail: "" });
 const FAIL = (code: number, detail: string) => ({
@@ -61,7 +62,9 @@ describe("uploadFileChunked", () => {
         filename: "big.bin",
         filesize: 3 * MIN_CHUNK_SIZE,
         total_chunks: 3,
-        chunk_size: MIN_CHUNK_SIZE
+        chunk_size: MIN_CHUNK_SIZE,
+        // 断点续传会话键：整文件 SHA-256（同名同大小但内容不同不能命中同一会话）
+        content_hash: await computeFileHash(file)
       })
     );
     expect(chunkPart).toHaveBeenCalledTimes(3);

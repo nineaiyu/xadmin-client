@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { useConfirm } from "@/hooks/useConfirm";
 import { groupTemplates, type FreeTemplate } from "../utils/freeTemplates";
+import { showServerTemplateDetail } from "../utils/freeTemplateDetail";
 import {
   FREE_GRID_DEFAULT_STEP,
   FREE_GRID_STEPS,
@@ -63,6 +64,7 @@ const emit = defineEmits<{
   rollbackTemplate: [payload: { id: string; version: number }];
   /** 从云端粘贴（跨设备剪贴板） */
   pasteCloud: [];
+  clearCloud: [];
 }>();
 
 const { t } = useI18n();
@@ -126,16 +128,12 @@ async function onSaveServerTemplate() {
     t("dataScreen.templateGroup"),
     t("dataScreen.templateGroupPrompt")
   );
-  const shared = await ElMessageBox.confirm(
-    t("dataScreen.templateVisibilityHint"),
-    t("dataScreen.templateSaveServer"),
-    {
-      confirmButtonText: t("dataScreen.templateVisibilityShared"),
-      cancelButtonText: t("dataScreen.templateVisibilityPersonal")
-    }
-  )
-    .then(() => true)
-    .catch(() => false);
+  const shared = await confirm(t("dataScreen.templateVisibilityHint"), {
+    type: "",
+    title: t("dataScreen.templateSaveServer"),
+    confirmButtonText: t("dataScreen.templateVisibilityShared"),
+    cancelButtonText: t("dataScreen.templateVisibilityPersonal")
+  });
   emit("saveServerTemplate", {
     name,
     group: group ?? "",
@@ -157,16 +155,12 @@ async function onFilePicked(event: Event) {
   if (!file) return;
   const raw = await file.text().catch(() => "");
   if (!raw) return;
-  const replace = await ElMessageBox.confirm(
-    t("dataScreen.templateImportModeHint"),
-    t("dataScreen.templateImport"),
-    {
-      confirmButtonText: t("dataScreen.templateApplyReplace"),
-      cancelButtonText: t("dataScreen.templateApplyAppend")
-    }
-  )
-    .then(() => true)
-    .catch(() => false);
+  const replace = await confirm(t("dataScreen.templateImportModeHint"), {
+    type: "",
+    title: t("dataScreen.templateImport"),
+    confirmButtonText: t("dataScreen.templateApplyReplace"),
+    cancelButtonText: t("dataScreen.templateApplyAppend")
+  });
   emit("importTemplate", { raw, mode: replace ? "replace" : "append" });
 }
 
@@ -225,6 +219,10 @@ async function onCommand(command: string) {
   if (action === "versions") {
     const target = serverTemplates.value.find(item => item.id === id);
     openVersions(id, target?.name ?? "");
+    return;
+  }
+  if (action === "server-detail") {
+    await showServerTemplateDetail(id, t);
     return;
   }
   if (action === "export") emit("exportTemplate", id);
@@ -289,6 +287,13 @@ async function onCommand(command: string) {
       @click="emit('pasteCloud')"
     >
       {{ t("dataScreen.pasteCloud") }}
+    </el-button>
+    <el-button
+      size="small"
+      data-testid="free-clear-cloud"
+      @click="emit('clearCloud')"
+    >
+      {{ t("dataScreen.clearCloud") }}
     </el-button>
 
     <el-divider direction="vertical" />
@@ -431,6 +436,9 @@ async function onCommand(command: string) {
             <template v-if="item.is_owner !== false">
               <el-dropdown-item :command="`versions:${item.id}`" divided>
                 {{ t("dataScreen.templateVersions") }} · {{ item.name }}
+              </el-dropdown-item>
+              <el-dropdown-item :command="`server-detail:${item.id}`">
+                {{ t("dataScreen.templateDetail") }} · {{ item.name }}
               </el-dropdown-item>
               <el-dropdown-item :command="`export:${item.id}`">
                 {{ t("dataScreen.templateExport") }} · {{ item.name }}

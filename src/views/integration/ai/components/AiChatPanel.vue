@@ -53,6 +53,7 @@ const emit = defineEmits<{
   scroller: [HTMLElement | null];
   toggleNav: [];
   runNl: [dsl: object];
+  retry: [text: string];
 }>();
 
 const { t } = useI18n();
@@ -82,6 +83,21 @@ function submit() {
   if (!content) return;
   draft.value = "";
   emit("send", content);
+}
+
+/** 重试中断/失败回答：向上找最近一条用户提问原样重发（历史消息无本地请求上下文） */
+function retryMessage(item: AiConsoleMessage) {
+  if (props.streaming) return;
+  const flat = props.groups
+    .filter(row => row.type === "message")
+    .map(row => row.item);
+  const index = flat.findIndex(message => message.id === item.id);
+  for (let i = index - 1; i >= 0; i--) {
+    if (flat[i].role === "user") {
+      emit("retry", flat[i].content);
+      return;
+    }
+  }
 }
 
 /** 新增消息的进入动画标记：仅「尾部追加」播一次（整批替换 / 加载更早不播） */
@@ -128,7 +144,9 @@ defineExpose({ scrollEl });
         :nl-running="nlRunning"
         :action-executor="actionExecutor"
         :fresh="isFresh(row.key)"
+        :retry-disabled="streaming"
         @run-nl="dsl => emit('runNl', dsl)"
+        @retry="retryMessage(row.item)"
       />
     </template>
 

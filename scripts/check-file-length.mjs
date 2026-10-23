@@ -25,16 +25,14 @@ const THRESHOLD = 500;
 
 // 数据文件豁免（不计入源码行数口径）
 const EXEMPT = {
-  "src/components/ReIcon/data.ts": "图标数据集（数据文件）"
+  "src/components/ReIcon/data.ts": "图标数据集（数据文件）",
+  "src/api/types/openapi.d.ts":
+    "OpenAPI 全量契约类型（dump_openapi 生成，禁止手改）"
 };
 
 // 存量基线：相对路径 -> 基线行数（只减不增；降到阈值内即可从此表移除）
 // 2026-09-17：存量巨型文件已全部拆分清零（历史 4 处 → 0），保留空表以承接未来回归
-const BASELINE = {
-  // 权限规则编辑表单：值控件类型分派、数据范围与试算逻辑内聚一处，
-  // 无权限降级提示加入后越线 10 行；拆分会切断元数据驱动的上下文，暂登记保留
-  "src/views/system/permission/components/RuleEditForm.vue": 510
-};
+const BASELINE = {};
 
 function walk(dir) {
   const rows = [];

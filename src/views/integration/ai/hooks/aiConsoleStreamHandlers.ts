@@ -7,9 +7,10 @@ import {
 } from "@/api/ai/ai";
 import {
   buildStreamHandlers,
-  type StreamHandlers,
-  type StreamState
-} from "./useAiConsoleFrames";
+  type StreamHandlers
+} from "@/hooks/useStreamFrames";
+import type { StreamState } from "./useAiConsoleFrames";
+import { toIncoming } from "./useAiConsoleMessages";
 
 /** 三入口端点分派（文档问答 / 数据查询 / 指令执行） */
 export function runConsoleEntry(
@@ -49,7 +50,17 @@ export function buildSettledHandlers(
   },
   onSettled: () => void
 ): StreamHandlers {
-  const base = buildStreamHandlers(options);
+  const base = buildStreamHandlers<StreamState, AiConsoleMessage>({
+    ...options,
+    metaIncoming: data =>
+      toIncoming(
+        (data as { user_message?: unknown } | undefined)?.user_message
+      ),
+    doneIncoming: data =>
+      toIncoming((data as { message?: unknown } | undefined)?.message),
+    errorIncoming: data =>
+      toIncoming((data as { message?: unknown } | undefined)?.message)
+  });
   return {
     ...base,
     onDone: data => {

@@ -7,6 +7,12 @@ vi.mock("vue-i18n", () => ({
     t: (key: string) => key
   })
 }));
+vi.mock(
+  "@/views/settings/login-policy/components/LoginPolicyTargetSelect.vue",
+  () => ({
+    default: { name: "LoginPolicyTargetSelect", render: () => null }
+  })
+);
 
 type Column = Record<string, unknown> & {
   label?: string;
@@ -138,6 +144,7 @@ describe("登录策略元数据表单微调", () => {
       formData: {
         start_time: "",
         end_time: null,
+        target_type: { value: "role" },
         target_value: "  ops  ",
         weekdays: ["1", "3"]
       }

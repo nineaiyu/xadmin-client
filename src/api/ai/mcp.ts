@@ -31,6 +31,8 @@ export type McpServerItem = {
   /** 白名单内工具是否接入 AI 动作目录（默认 false，fail-closed） */
   expose_to_ai?: boolean;
   tools_snapshot: McpToolSnapshot[];
+  /** 工具快照数量（列表派生列） */
+  tools_count?: number;
   last_synced_time: string | null;
   last_sync_error: string;
   remark: string;

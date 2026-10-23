@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
 // 失败态提示与重试按钮需要 i18n 的 t（key 直出即可）
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({ t: (key: string) => key, te: () => false })
+}));
 vi.mock("@/api/system/settings", () => ({
   settingsSmsServerApi: { backends: mocks.backends },
   settingsSmsConfigApi: { marker: "sms-config-api" }
@@ -87,7 +89,7 @@ describe("SettingSms 渠道面板装配", () => {
 
     const items = settingHostItems(wrapper);
     expect(items).toHaveLength(3);
-    expect(items[0].label).toBeUndefined(); // 静态渠道项：标题走 i18n 推导
+    expect(items[0].label).toBe("settingSms.title");
     expect(items[1]).toMatchObject({
       key: "alibaba",
       label: "Aliyun",

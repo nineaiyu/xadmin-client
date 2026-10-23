@@ -49,3 +49,42 @@ export const dictLockedCellRenderer =
         fallback: "—"
       });
   };
+
+/** 消费次数：类型行显示计数，字典项行/未消费显示占位 */
+export const dictUsageCellRenderer = (column: PageTableColumn) => {
+  column.cellRenderer = scope => {
+    const count = asCellRow(scope).usage_count;
+    if (count == null) return h("span", "—");
+    return h(
+      ElTag,
+      { size: "small", type: count > 0 ? "primary" : "info", effect: "plain" },
+      () => String(count)
+    );
+  };
+};
+
+/** 最近消费时间：ISO 字符串转本地可读展示 */
+export const dictLastUsedCellRenderer = (column: PageTableColumn) => {
+  column.cellRenderer = scope => {
+    const value = asCellRow(scope).last_used_at;
+    if (!value) return h("span", "—");
+    return h("span", String(value).replace("T", " ").slice(0, 19));
+  };
+};
+
+/** 消费加载失败次数：大于 0 用 danger tag 显式暴露（默认—） */
+export const dictFailureCellRenderer = (column: PageTableColumn) => {
+  column.cellRenderer = scope => {
+    const count = asCellRow(scope).load_failure_count;
+    if (count == null) return h("span", "—");
+    return h(
+      ElTag,
+      {
+        size: "small",
+        type: count > 0 ? "danger" : "success",
+        effect: "plain"
+      },
+      () => String(count)
+    );
+  };
+};

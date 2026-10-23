@@ -285,6 +285,10 @@ test("我的填报：数据字典字段 + 草稿保存/提交 + 详情展示", a
 
     // 提交草稿：严格校验通过后直接生效（状态标签消失）
     await row.getByTestId("submission-submit-draft").click();
+    await page
+      .locator(".el-message-box")
+      .getByRole("button", { name: "确定" })
+      .click();
     await expect(row.getByTestId("submission-status-tag")).toHaveCount(0, {
       timeout: 15_000
     });

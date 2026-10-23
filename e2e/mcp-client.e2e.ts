@@ -163,6 +163,15 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
     await nameInput.fill(name);
     await formItem("服务地址").locator("input").fill(stub.url);
     await formItem("允许调用的工具").locator("input").fill("echo");
+    const toolOption = page
+      .locator(".el-select-dropdown__item")
+      .filter({ hasText: "echo" })
+      .first();
+    await expect(toolOption).toBeVisible({ timeout: 10_000 });
+    await toolOption.click();
+    // EP 多选下拉选中后常以可见态残留并遮挡下方单选组：点弹窗标题强制收起
+    await dialog.locator(".el-dialog__header").click();
+    await formItem("接入动作面").getByText("启用", { exact: true }).click();
     await dialog.getByRole("button", { name: "保存" }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10_000 });
 

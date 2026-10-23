@@ -90,6 +90,10 @@ export function useNoticeListColumns({
           if (isReadonlyCell(scope)) {
             return <span>{content}</span>;
           }
+          // 无接收记录查看权限时降级为纯文本，避免点击无反应的死链
+          if (!hasAuth("list:SystemNoticeRead")) {
+            return <span>{content}</span>;
+          }
           return (
             <el-link
               type={row.level?.value}
