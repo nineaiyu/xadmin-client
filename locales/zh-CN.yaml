@@ -232,17 +232,12 @@ loginPolicy:
   editTitle: 编辑登录策略
   name: 策略名称
   priority: 优先级
-  priorityTip: 数字越小越先匹配，首个命中的策略生效
   isActive: 启用
   targetType: 目标对象
   targetAll: 全部用户
-  targetRole: 指定角色
-  targetUser: 指定用户
   targetValue: 对象值
   targetValuePlaceholder: 选择用户或角色（可多选）；目标对象为「全部用户」时不适用
   targetAllUsers: 全部用户（无需选择）
-  rolePlaceholder: 角色编码（多个用逗号分隔）
-  userPlaceholder: 用户名（多个用逗号分隔）
   weekdays: 生效星期
   weekday1: 周一
   weekday2: 周二
@@ -251,9 +246,6 @@ loginPolicy:
   weekday5: 周五
   weekday6: 周六
   weekday7: 周日
-  timeRange: 生效时段
-  startTime: 开始时间
-  endTime: 结束时间
   ipRanges: 限制网段
   ipPlaceholder: 每行一个 CIDR 或区间，例如 192.168.0.0/24
   action: 命中动作

@@ -232,17 +232,12 @@ loginPolicy:
   editTitle: Edit Login Policy
   name: Policy Name
   priority: Priority
-  priorityTip: Lower number matches first; the first match takes effect
   isActive: Active
   targetType: Target
   targetAll: All Users
-  targetRole: Roles
-  targetUser: Users
   targetValue: Target Value
   targetValuePlaceholder: Select users or roles (multi-select); not applicable when the target is all users
   targetAllUsers: All users (no selection needed)
-  rolePlaceholder: Role codes separated by commas
-  userPlaceholder: Usernames separated by commas
   weekdays: Weekdays
   weekday1: Monday
   weekday2: Tuesday
@@ -251,9 +246,6 @@ loginPolicy:
   weekday5: Friday
   weekday6: Saturday
   weekday7: Sunday
-  timeRange: Time Range
-  startTime: Start Time
-  endTime: End Time
   ipRanges: IP Ranges
   ipPlaceholder: One CIDR or range per line, e.g. 192.168.0.0/24
   action: Action
