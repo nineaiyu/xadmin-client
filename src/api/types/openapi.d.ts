@@ -17572,6 +17572,8 @@ export interface components {
         PaginatedLoginLogList: {
             code?: number;
             data?: {
+                has_more?: boolean;
+                next_cursor?: string;
                 results?: components["schemas"]["LoginLog"][];
                 total?: number;
             };
@@ -17628,6 +17630,8 @@ export interface components {
         PaginatedOperationLogListList: {
             code?: number;
             data?: {
+                has_more?: boolean;
+                next_cursor?: string;
                 results?: components["schemas"]["OperationLogList"][];
                 total?: number;
             };
@@ -17804,6 +17808,8 @@ export interface components {
         PaginatedUserLoginLogList: {
             code?: number;
             data?: {
+                has_more?: boolean;
+                next_cursor?: string;
                 results?: components["schemas"]["UserLoginLog"][];
                 total?: number;
             };
