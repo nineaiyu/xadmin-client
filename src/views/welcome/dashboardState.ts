@@ -68,7 +68,16 @@ export function createDashboardState(t: TFunction) {
   const userLoginList = ref<DashboardTrendItem[]>([]);
   const userRegisterList = ref<DashboardTrendItem[]>([]);
   const operateLogList = ref<RecordType[]>([]);
-  const userActiveList = ref<UserActiveCardItem[]>([]);
+  // 活跃用户固定四档（1/3/7/30 天）：先占位再回填，避免数据到达时行高从 0 撑开
+  // 把下方图表/操作日志整行推下去（首屏 CLS）。
+  const activeDays = [1, 3, 7, 30];
+  const userActiveList = ref<UserActiveCardItem[]>(
+    activeDays.map(days => ({
+      name: days === 1 ? t("welcome.today") : `${days}${t("welcome.days")}`,
+      value: [days, 0, 0],
+      duration: 2200
+    }))
+  );
   /** 任一统计接口因缺少数据权限返回空集：页面顶部提示，避免把 0 当成真实值 */
   const scopeLimited = ref(false);
   /** 首屏取数进行中 / 任一卡片失败（页面统一提示并可重试） */

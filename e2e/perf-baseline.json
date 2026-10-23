@@ -171,16 +171,17 @@
     "darwin-local": {
       "welcome": {
         "ttfb": 1,
-        "fcp": 160,
-        "lcp": 760,
-        "dcl": 45,
-        "load": 45,
+        "fcp": 180,
+        "lcp": 260,
+        "lcpElement": "p.truncate.text-sm.text-fg-muted size=4080 text=xadmin POST 用户名密码登录 Other Other",
+        "dcl": 55,
+        "load": 55,
         "tbt": 0,
         "longTaskCount": 1,
         "longTasks": [
           {
-            "start": 83,
-            "duration": 67,
+            "start": 98,
+            "duration": 74,
             "name": "self",
             "attribution": "window"
           }
@@ -189,32 +190,32 @@
           {
             "type": "Document",
             "count": 1,
-            "kb": 9.6,
-            "lastEnd": 115437451
+            "kb": 11.1,
+            "lastEnd": 1131108164
           },
           {
             "type": "Script",
-            "count": 167,
-            "kb": 4201.4,
-            "lastEnd": 115437647
+            "count": 187,
+            "kb": 4506.1,
+            "lastEnd": 1131108429
           },
           {
             "type": "Stylesheet",
-            "count": 12,
-            "kb": 530.7,
-            "lastEnd": 115437536
+            "count": 14,
+            "kb": 639.5,
+            "lastEnd": 1131108265
           },
           {
             "type": "XHR",
-            "count": 18,
-            "kb": 100,
-            "lastEnd": 115438221
+            "count": 17,
+            "kb": 121.6,
+            "lastEnd": 1131108381
           },
           {
             "type": "Image",
             "count": 2,
             "kb": 54.4,
-            "lastEnd": 115437595
+            "lastEnd": 1131108329
           }
         ],
         "heaviest": [
@@ -222,161 +223,161 @@
             "type": "Script",
             "kb": 1062,
             "status": 200,
-            "start": 115437587,
-            "end": 115437589,
+            "start": 1131108321,
+            "end": 1131108322,
             "url": "/static/js/echarts-B9fyCTzo.js"
           },
           {
             "type": "Script",
             "kb": 750.5,
             "status": 200,
-            "start": 115437593,
-            "end": 115437595,
+            "start": 1131108328,
+            "end": 1131108330,
             "url": "/static/js/ri-CD0mozfh.js"
           },
           {
             "type": "Stylesheet",
-            "kb": 459.6,
+            "kb": 571.1,
             "status": 200,
-            "start": 115437454,
-            "end": 115437460,
-            "url": "/static/css/index-BKGhViTC.css"
+            "start": 1131108168,
+            "end": 1131108176,
+            "url": "/static/css/index-Bsy2ECr1.css"
           },
           {
             "type": "Script",
-            "kb": 302,
+            "kb": 351.8,
             "status": 200,
-            "start": 115437511,
-            "end": 115437512,
-            "url": "/static/js/layout-B7dCy6fI.js"
+            "start": 1131108238,
+            "end": 1131108244,
+            "url": "/static/js/layout-B1msCUUu.js"
           },
           {
             "type": "Script",
-            "kb": 277,
+            "kb": 298.2,
             "status": 200,
-            "start": 115437454,
-            "end": 115437475,
-            "url": "/static/js/i18n-BH_lzwcr.js"
+            "start": 1131108167,
+            "end": 1131108190,
+            "url": "/static/js/i18n-CxZlZo-e.js"
           },
           {
             "type": "Script",
-            "kb": 276.4,
+            "kb": 248.9,
             "status": 200,
-            "start": 115437454,
-            "end": 115437476,
-            "url": "/static/js/user-DG0JhigT.js"
+            "start": 1131108166,
+            "end": 1131108174,
+            "url": "/static/js/vue-core-ZbKKN-aw.js"
           },
           {
             "type": "Script",
-            "kb": 249.8,
+            "kb": 238.3,
             "status": 200,
-            "start": 115437452,
-            "end": 115437458,
-            "url": "/static/js/index-B-52gqON.js"
+            "start": 1131108167,
+            "end": 1131108196,
+            "url": "/static/js/utils-CdVaZ5yd.js"
           },
           {
             "type": "Script",
-            "kb": 243.3,
+            "kb": 219.9,
             "status": 200,
-            "start": 115437452,
-            "end": 115437459,
-            "url": "/static/js/vue-core-aIBBXfoF.js"
+            "start": 1131108166,
+            "end": 1131108174,
+            "url": "/static/js/index-DGRK3iG1.js"
           },
           {
             "type": "Script",
             "kb": 167.7,
             "status": 200,
-            "start": 115437512,
-            "end": 115437520,
+            "start": 1131108239,
+            "end": 1131108249,
             "url": "/static/js/match-DEleq841.js"
           },
           {
             "type": "Script",
             "kb": 125.4,
             "status": 200,
-            "start": 115437535,
-            "end": 115437536,
+            "start": 1131108264,
+            "end": 1131108265,
             "url": "/static/js/version-rocket-CXA30qTC.js"
           },
           {
             "type": "Script",
             "kb": 111.1,
             "status": 200,
-            "start": 115437593,
-            "end": 115437595,
+            "start": 1131108328,
+            "end": 1131108329,
             "url": "/static/js/ep-CDSuG8qG.js"
           },
           {
             "type": "XHR",
-            "kb": 58.2,
+            "kb": 69.6,
             "status": 200,
-            "start": 115437511,
-            "end": 115437519,
+            "start": 1131108238,
+            "end": 1131108247,
             "url": "/api/system/routes"
+          },
+          {
+            "type": "Script",
+            "kb": 63,
+            "status": 200,
+            "start": 1131108167,
+            "end": 1131108194,
+            "url": "/static/js/http-Q5KqSIH1.js"
+          },
+          {
+            "type": "Script",
+            "kb": 53.6,
+            "status": 200,
+            "start": 1131108167,
+            "end": 1131108190,
+            "url": "/static/js/config-D0XLhLnU.js"
           },
           {
             "type": "Image",
             "kb": 53.2,
             "status": 200,
-            "start": 115437594,
-            "end": 115437595,
+            "start": 1131108328,
+            "end": 1131108329,
             "url": "/static/png/avatar-Cntrmew0.png"
           },
           {
             "type": "Script",
-            "kb": 45.3,
+            "kb": 50,
             "status": 200,
-            "start": 115437512,
-            "end": 115437514,
-            "url": "/static/js/sortable.esm-zDiP0CaJ.js"
+            "start": 1131108240,
+            "end": 1131108255,
+            "url": "/static/js/vue-tippy.esm-browser-D1-6huo_.js"
           },
           {
             "type": "Stylesheet",
-            "kb": 40.5,
+            "kb": 45.2,
             "status": 200,
-            "start": 115437514,
-            "end": 115437517,
-            "url": "/static/css/layout-BFlK6hZI.css"
+            "start": 1131108240,
+            "end": 1131108246,
+            "url": "/static/css/layout-CcvQpLzm.css"
           },
           {
             "type": "Script",
-            "kb": 40.2,
+            "kb": 45.2,
             "status": 200,
-            "start": 115437453,
-            "end": 115437469,
-            "url": "/static/js/tooltip-ENzFHuaH.js"
+            "start": 1131108331,
+            "end": 1131108332,
+            "url": "/static/js/sortable.esm-BHPl7TZw.js"
           },
           {
             "type": "Script",
-            "kb": 34.8,
+            "kb": 44.2,
             "status": 200,
-            "start": 115437453,
-            "end": 115437473,
-            "url": "/static/js/directive-CmsHi5gB.js"
+            "start": 1131108167,
+            "end": 1131108191,
+            "url": "/static/js/websocket-DAoZ21OC.js"
           },
           {
             "type": "Script",
-            "kb": 32.4,
+            "kb": 41.7,
             "status": 200,
-            "start": 115437453,
-            "end": 115437470,
-            "url": "/static/js/select-B438h9dc.js"
-          },
-          {
-            "type": "Script",
-            "kb": 27.4,
-            "status": 200,
-            "start": 115437513,
-            "end": 115437522,
-            "url": "/static/js/sanitize-CKwMs9PL.js"
-          },
-          {
-            "type": "Script",
-            "kb": 24.6,
-            "status": 200,
-            "start": 115437453,
-            "end": 115437464,
-            "url": "/static/js/dist-Cn74Gzyu.js"
+            "start": 1131108239,
+            "end": 1131108244,
+            "url": "/static/js/catalog-4pZhKWgV.js"
           }
         ]
       },

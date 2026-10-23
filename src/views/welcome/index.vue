@@ -73,22 +73,11 @@ const timelineIcons = timelineTones.map(tone =>
       class="mb-4"
       :title="t('welcome.dataScopeLimited')"
     />
+    <!-- 首屏不使用入场动画：内容首帧可见（LCP），位移动画也不计入布局位移（CLS） -->
     <el-row :gutter="24" justify="space-around">
       <re-col
         v-for="(item, index) in chartData"
         :key="index"
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * (index + 1)
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
         :md="12"
         :sm="12"
         :value="6"
@@ -138,25 +127,7 @@ const timelineIcons = timelineTones.map(tone =>
           </div>
         </el-card>
       </re-col>
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * 4
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :md="12"
-        :sm="12"
-        :value="6"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :md="12" :sm="12" :value="6" :xs="24" class="mb-4.5">
         <el-card
           :body-style="{ padding: '0' }"
           class="app-card line-card"
@@ -168,18 +139,6 @@ const timelineIcons = timelineTones.map(tone =>
       <re-col
         v-for="(item, index) in userActiveList"
         :key="index"
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * (index + 1)
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
         :md="12"
         :sm="12"
         :value="6"
@@ -193,22 +152,26 @@ const timelineIcons = timelineTones.map(tone =>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[1]"
                 :fontSize="'1.6em'"
                 :startVal="0"
               />
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
               <p class="text-sm font-medium text-(--el-color-success-dark-2)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[2]"
                 :fontSize="'1.6em'"
                 :startVal="0"
               />
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
               <p class="text-sm font-medium text-(--el-color-primary-dark-2)">
                 {{ t("welcome.activeUser") }}
               </p>
@@ -217,23 +180,7 @@ const timelineIcons = timelineTones.map(tone =>
         </el-card>
       </re-col>
 
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 400
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :value="16"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :value="16" :xs="24" class="mb-4.5">
         <el-card class="app-card bar-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{
@@ -253,23 +200,7 @@ const timelineIcons = timelineTones.map(tone =>
         </el-card>
       </re-col>
 
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 640
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :value="8"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :value="8" :xs="24" class="mb-4.5">
         <el-card class="app-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{

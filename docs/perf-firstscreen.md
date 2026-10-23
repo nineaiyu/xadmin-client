@@ -130,6 +130,37 @@ E2E_BASE_URL=http://127.0.0.1:18899 node scripts/firstscreen-profile.mjs --updat
 在双浏览器全部失败且重试同挂——**稳定失败即真回归**，不是 flaky；定位靠失败快照里
 `el-descriptions` 渲染出「table + 空 rowgroup」这一特征形态。
 
-**非图表页实测**（darwin-local，生产产物 + `csp-page-server` 口径，同 §二 环境）：
+**非图表页实测**（darwin-local，生产产物 + `csp-page-server` 口径，同 §二 环境，2026-10-23 复测）：
 
-<MEASURE_PLACEHOLDER>
+| 页面    | TTFB | FCP    | LCP    | DCL   | TBT  | Long Task | LCP 元素         |
+| ------- | ---- | ------ | ------ | ----- | ---- | --------- | ---------------- |
+| welcome | 1 ms | 172 ms | 244 ms | 49 ms | 0 ms | 1         | 操作日志时间线行 |
+| login   | 4 ms | 120 ms | 120 ms | 51 ms | 0 ms | 0         | 登录页波浪背景图 |
+
+## 六、首屏 LCP 收口（2026-10-23）
+
+**现象**：生产产物 welcome 页 LCP **792 ms**（FCP 172 ms、TBT 0），LCP 元素是操作日志时间线的一行；
+XHR 在 ~210 ms 已全部结束，说明瓶颈不在网络。
+
+**根因**：两组渲染时序叠加——
+
+1. 卡片 `v-motion` 入场初始 `opacity: 0` 且错峰延迟最高 640 ms，LCP 元素要等动画开始才可见；
+2. 活跃用户卡片初始为空数组，数据到达后一次性插入 4 张卡，把下方图表/操作日志整行推下 140 px。
+
+**改动**：
+
+- welcome 卡片移除入场动画（内容首帧可见，不再用 opacity/位移动画）；
+- `createDashboardState` 预分配 4 张活跃用户卡（1/3/7/30 天）占位，数值加载态用骨架；
+- `firstscreen-profile.mjs` 增加 LCP 元素记录（`lcpElement`），基线同步更新。
+
+**结果**（darwin-local，生产产物，多次复测）：
+
+| 指标 | 改动前     | 改动后        | 变化            |
+| ---- | ---------- | ------------- | --------------- |
+| LCP  | 792 ms     | 244–280 ms    | **-65% ~ -69%** |
+| FCP  | 172–184 ms | 172–180 ms    | 持平            |
+| CLS  | 0.0095     | 0.0088–0.0095 | 无回退          |
+| TBT  | 0 ms       | 0 ms          | 持平            |
+
+**复跑**：`pnpm build` + `E2E_BASE_URL=http://127.0.0.1:18899 node scripts/firstscreen-profile.mjs`；
+基线用 `--update` 回写。`perf.e2e.ts` 的 dev 链路数字受登录快路径影响，不作为首屏结论。
