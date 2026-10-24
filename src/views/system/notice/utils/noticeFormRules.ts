@@ -4,7 +4,7 @@
  * 不持有 Vue 状态、不发起请求；装配流程见同目录 useNoticeFormOptions.ts。
  */
 
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 
 /**
  * 通知类型选项禁用判定：通知公告（SYSTEM）恒禁用（走公告接口另行发布）；

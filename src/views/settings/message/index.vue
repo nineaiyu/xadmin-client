@@ -5,7 +5,7 @@ import { hasAuth } from "@/router/utils";
 import { settingsPane } from "@/views/settings/components/settings/types";
 import Setting from "@/views/settings/components/settings/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
-import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
+import MessageNotifications from "@/components/ReMessageNotifications";
 import MessageTemplatePanel from "./components/MessageTemplatePanel.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import { useI18n } from "vue-i18n";

@@ -2,6 +2,8 @@
 // 对外 API 由本文件统一再导出，导入路径保持 "@/router/utils" 不变。
 export {
   type Auths,
+  DEFAULT_AUTH_ACTIONS,
+  authCodesLoaded,
   getAuths,
   hasAuth,
   getDefaultAuths,

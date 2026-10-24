@@ -62,6 +62,8 @@ const { t } = useI18n();
 const allowed = computed(() => hasAuth(props.authCode));
 const loading = ref(false);
 const stats = ref<ApprovalStatsData | null>(null);
+// 统计获取失败时不能把 0 当成真实指标展示（会误读为「没有待办」）
+const loadFailed = ref(false);
 
 const labels = computed(() => ({
   submitted: props.labelKeys?.submitted ?? "approval.statsSubmitted",
@@ -86,22 +88,22 @@ const statItems = computed<StatItem[]>(() => {
     {
       key: "submitted",
       label: t(labels.value.submitted),
-      value: data?.submitted ?? 0
+      value: loadFailed.value ? "—" : (data?.submitted ?? 0)
     },
     {
       key: "approved",
       label: t(labels.value.approved),
-      value: data?.approved ?? 0
+      value: loadFailed.value ? "—" : (data?.approved ?? 0)
     },
     {
       key: "rejected",
       label: t(labels.value.rejected),
-      value: data?.rejected ?? 0
+      value: loadFailed.value ? "—" : (data?.rejected ?? 0)
     },
     {
       key: "pending",
       label: t(labels.value.pending),
-      value: data?.pending ?? 0
+      value: loadFailed.value ? "—" : (data?.pending ?? 0)
     }
   ];
   if (props.showAvgDuration) {
@@ -122,10 +124,14 @@ function fetchStats() {
     .then(res => {
       if (isSuccess(res) && res.data) {
         stats.value = res.data as ApprovalStatsData;
+        loadFailed.value = false;
+      } else {
+        loadFailed.value = true;
       }
     })
     .catch(() => {
-      // 统计属附加信息：失败保持空态，不打断列表
+      // 统计属附加信息：失败不打断列表，但展示占位而非 0
+      loadFailed.value = true;
     })
     .finally(() => {
       loading.value = false;

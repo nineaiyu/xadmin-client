@@ -67,8 +67,9 @@ const sendCodeReqSuccess = ({ extra }: { extra?: Record<string, unknown> }) => {
     />
     <div v-if="data.username">
       <el-divider />
+      <!-- 占满内容区但不超过 500px：窄屏弹窗内随容器收缩（原 min-w-[500px] 会横向溢出） -->
       <plus-descriptions
-        class="min-w-[500px]"
+        class="w-full max-w-[500px]"
         :columns="columns"
         :data="data"
         :column="1"

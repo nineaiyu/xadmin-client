@@ -30,6 +30,9 @@ const PATTERN = /\bas\s+unknown\s+as\b/g;
 // 测试替身改 Reflect 反射桥接与包装函数），基线清空。
 // 此后任何 `as unknown as` 出现即门禁失败；新代码请用具体类型收窄、
 // 显式转换函数或 Reflect 系列 API。
+// 基线口径：仅测试替身（Mock 结构与源类型不充分重叠）登记，业务代码不得新增
+// 2026-10-24：chatFrames.spec.ts 唯一登记项清零——测试替身显式补全 RoomsState
+// 全量成员（未消费成员以 vi.fn 占位），与源类型严格重叠，无需双重断言。
 const BASELINE = {};
 
 function walk(dir) {

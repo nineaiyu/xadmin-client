@@ -1,17 +1,17 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
-import { useConfirm } from "@/hooks/useConfirm";
 import { groupTemplates, type FreeTemplate } from "../utils/freeTemplates";
-import { showServerTemplateDetail } from "../utils/freeTemplateDetail";
 import {
   FREE_GRID_DEFAULT_STEP,
   FREE_GRID_STEPS,
   type FreeGridSnap
 } from "../utils/freeSnap";
 import { ZOOM_STEPS } from "../utils/viewport";
-import type { TemplateApplyMode } from "../utils/createFreeEditor";
+import {
+  useTemplateToolbarCommands,
+  type FreeCanvasToolbarEmits
+} from "../utils/templateToolbar";
 import TemplateVersionsDialog from "./TemplateVersionsDialog.vue";
 
 defineOptions({ name: "ScreenFreeCanvasToolbar" });
@@ -20,10 +20,8 @@ defineOptions({ name: "ScreenFreeCanvasToolbar" });
  * 自由画布工具条（模式内第二行）：显示缩放 + 复制粘贴 + 网格吸附 + 模板（内置 /
  * 我的 / 团队 + JSON 导入导出）。
  *
- * 弹窗类交互（命名 / 可见性 / 替换确认 / 文件选择）留在本组件，数据效果一律交给
- * 组合层（`createFreeEditor`）执行——工具条只收集意图并上抛，不碰窗格数据。
- * 「二选一」的弹窗（可见性、导入方式）统一用「确认 = 前者 / 取消 = 后者」，
- * 语义写进各自的标题文案，避免多写一层自绘对话框。
+ * 弹窗类交互与命令分发在 utils/templateToolbar.ts（行数门禁抽出），数据效果
+ * 一律交给组合层（`createFreeEditor`）执行——工具条只收集意图并上抛，不碰窗格数据。
  */
 const props = defineProps<{
   zoom: number;
@@ -38,37 +36,9 @@ const props = defineProps<{
   gridSnap?: FreeGridSnap;
 }>();
 
-const emit = defineEmits<{
-  zoom: [value: number];
-  fit: [];
-  copy: [];
-  paste: [];
-  grid: [value: FreeGridSnap];
-  saveTemplate: [name: string];
-  saveServerTemplate: [
-    payload: {
-      name: string;
-      /** 分组名（可空 = 未分组） */
-      group: string;
-      visibility: "personal" | "shared";
-    }
-  ];
-  applyTemplate: [payload: { id: string; mode: TemplateApplyMode }];
-  renameTemplate: [payload: { id: string; name: string }];
-  removeTemplate: [id: string];
-  exportTemplate: [id: string];
-  renameServerTemplate: [payload: { id: string; name: string }];
-  removeServerTemplate: [id: string];
-  importTemplate: [payload: { raw: string; mode: TemplateApplyMode }];
-  /** 模板回滚（版本历史弹窗触发） */
-  rollbackTemplate: [payload: { id: string; version: number }];
-  /** 从云端粘贴（跨设备剪贴板） */
-  pasteCloud: [];
-  clearCloud: [];
-}>();
+const emit = defineEmits<FreeCanvasToolbarEmits>();
 
 const { t } = useI18n();
-const confirm = useConfirm();
 
 const zoomLabel = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -76,157 +46,22 @@ const serverTemplates = computed(() => props.serverTemplates ?? []);
 /** 团队模板按分组聚合（空分组排最后并归到「未分组」；排序口径在纯函数里，可单测） */
 const serverGroups = computed(() => groupTemplates(serverTemplates.value));
 
-/* 版本历史弹窗（自管拉取，回滚经组合层执行） */
-const versionsVisible = ref(false);
-const versionsId = ref("");
-const versionsName = ref("");
-function openVersions(id: string, name: string) {
-  versionsId.value = id;
-  versionsName.value = name;
-  versionsVisible.value = true;
-}
 const gridSnap = computed<FreeGridSnap>(
   () => props.gridSnap ?? { enabled: false, step: FREE_GRID_DEFAULT_STEP }
 );
 
-/** 命名输入（保存 / 重命名共用）：取消返回 null，输入为空由 inputValidator 拦住 */
-async function askName(title: string, initial = ""): Promise<string | null> {
-  const answer = await ElMessageBox.prompt(
-    t("dataScreen.templateNamePrompt"),
-    title,
-    {
-      inputValue: initial,
-      confirmButtonText: t("dataScreen.templateSave"),
-      cancelButtonText: t("dataScreen.cancel"),
-      inputValidator: value =>
-        Boolean(value?.trim()) || t("dataScreen.templateNameRequired")
-    }
-  ).catch(() => null);
-  const value = (answer as { value?: string } | null)?.value;
-  return value?.trim() ? value.trim() : null;
-}
-
-/** 可选文本（取消 = 空串）：用于「分组名」这类可留空的输入 */
-async function askOptionalText(title: string, prompt: string): Promise<string> {
-  const answer = await ElMessageBox.prompt(prompt, title, {
-    confirmButtonText: t("dataScreen.templateSave"),
-    cancelButtonText: t("dataScreen.cancel")
-  }).catch(() => null);
-  return String((answer as { value?: string } | null)?.value ?? "").trim();
-}
-
-async function onSaveTemplate() {
-  const name = await askName(t("dataScreen.templateSave"));
-  if (name) emit("saveTemplate", name);
-}
-
-/** 另存为团队模板：名称 + 可见性（确认 = 团队共享，取消 = 仅自己可见） */
-async function onSaveServerTemplate() {
-  const name = await askName(t("dataScreen.templateSaveServer"));
-  if (!name) return;
-  const group = await askOptionalText(
-    t("dataScreen.templateGroup"),
-    t("dataScreen.templateGroupPrompt")
-  );
-  const shared = await confirm(t("dataScreen.templateVisibilityHint"), {
-    type: "",
-    title: t("dataScreen.templateSaveServer"),
-    confirmButtonText: t("dataScreen.templateVisibilityShared"),
-    cancelButtonText: t("dataScreen.templateVisibilityPersonal")
-  });
-  emit("saveServerTemplate", {
-    name,
-    group: group ?? "",
-    visibility: shared ? "shared" : "personal"
-  });
-}
-
-const fileInput = ref<HTMLInputElement>();
-
-function onImportClick() {
-  fileInput.value?.click();
-}
-
-/** 导入：读文件 → 选方式（确认 = 替换当前画布，取消 = 追加） */
-async function onFilePicked(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = "";
-  if (!file) return;
-  const raw = await file.text().catch(() => "");
-  if (!raw) return;
-  const replace = await confirm(t("dataScreen.templateImportModeHint"), {
-    type: "",
-    title: t("dataScreen.templateImport"),
-    confirmButtonText: t("dataScreen.templateApplyReplace"),
-    cancelButtonText: t("dataScreen.templateApplyAppend")
-  });
-  emit("importTemplate", { raw, mode: replace ? "replace" : "append" });
-}
-
-async function onCommand(command: string) {
-  const [action, id] = command.split(":");
-  if (!id) return;
-  if (action === "append") {
-    emit("applyTemplate", { id, mode: "append" });
-    return;
-  }
-  if (action === "replace") {
-    // 替换会覆盖当前画布内容：危险色确认 + 焦点不落确认钮（防回车误触）
-    if (
-      await confirm(t("dataScreen.templateReplaceConfirm"), {
-        title: t("dataScreen.templateMenu"),
-        confirmButtonText: t("dataScreen.templateApplyReplace"),
-        danger: true
-      })
-    ) {
-      emit("applyTemplate", { id, mode: "replace" });
-    }
-    return;
-  }
-  if (action === "rename") {
-    const name = await askName(t("dataScreen.templateRename"));
-    if (name) emit("renameTemplate", { id, name });
-    return;
-  }
-  if (action === "remove") {
-    if (
-      await confirm(t("dataScreen.templateDeleteConfirm"), {
-        title: t("dataScreen.templateDelete"),
-        danger: true
-      })
-    ) {
-      emit("removeTemplate", id);
-    }
-    return;
-  }
-  if (action === "server-rename") {
-    const name = await askName(t("dataScreen.templateRename"));
-    if (name) emit("renameServerTemplate", { id, name });
-    return;
-  }
-  if (action === "server-remove") {
-    if (
-      await confirm(t("dataScreen.templateDeleteConfirm"), {
-        title: t("dataScreen.templateDelete"),
-        danger: true
-      })
-    ) {
-      emit("removeServerTemplate", id);
-    }
-    return;
-  }
-  if (action === "versions") {
-    const target = serverTemplates.value.find(item => item.id === id);
-    openVersions(id, target?.name ?? "");
-    return;
-  }
-  if (action === "server-detail") {
-    await showServerTemplateDetail(id, t);
-    return;
-  }
-  if (action === "export") emit("exportTemplate", id);
-}
+/** 模板命令交互（命名 / 确认 / 导入 / 版本历史状态，见 utils/templateToolbar.ts） */
+const {
+  versionsVisible,
+  versionsId,
+  versionsName,
+  fileInput,
+  onSaveTemplate,
+  onSaveServerTemplate,
+  onImportClick,
+  onFilePicked,
+  onCommand
+} = useTemplateToolbarCommands({ t, emit, serverTemplates });
 </script>
 
 <template>

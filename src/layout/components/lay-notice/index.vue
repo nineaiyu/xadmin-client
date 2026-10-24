@@ -14,7 +14,7 @@ import { useNoticeStoreHook } from "@/store/modules/notice";
 import { refreshApprovalBadge, useApprovalBadge } from "@/utils/approvalBadge";
 import { refreshTaskCenter, useTaskCenter } from "@/utils/taskCenter";
 import { buildBadgeSources, sumBadgeSources } from "./badgeSources";
-import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
+import { openTaskCenterDrawer } from "@/components/ReTaskCenterDrawer/taskCenterDrawer";
 
 const { t } = useI18n();
 

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import {
   computed,
   onBeforeUnmount,
@@ -381,7 +382,7 @@ onMounted(() => {
               :plan="planData"
               :dict-types="planData?.dict_types ?? []"
             />
-            <el-empty
+            <ReEmpty
               v-if="!planData && !planLoading"
               :description="t('codegen.planEmpty')"
               :image-size="60"
@@ -439,9 +440,9 @@ onMounted(() => {
               :artifacts="artifacts"
               :loading="previewLoading"
             />
-            <el-empty v-else :description="t('codegen.previewEmptyTip')" />
+            <ReEmpty v-else :description="t('codegen.previewEmptyTip')" />
           </template>
-          <el-empty v-else :description="t('codegen.batchPreviewEmpty')" />
+          <ReEmpty v-else :description="t('codegen.batchPreviewEmpty')" />
         </el-col>
       </el-row>
     </el-card>

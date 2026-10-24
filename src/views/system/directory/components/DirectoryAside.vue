@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
@@ -228,7 +229,7 @@ function postTitle(item: DirectoryPostOption) {
               </span>
             </template>
           </el-tree>
-          <el-empty
+          <ReEmpty
             v-else
             :description="
               canUseDept
@@ -264,7 +265,7 @@ function postTitle(item: DirectoryPostOption) {
               {{ item.user_count }}
             </span>
           </button>
-          <el-empty
+          <ReEmpty
             v-if="!postLoading && (!canUsePost || !filteredPosts.length)"
             :description="
               canUsePost

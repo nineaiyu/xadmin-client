@@ -2,7 +2,7 @@ import { shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import type { noticeApi } from "@/api/system/notice";
 import { hasAuth } from "@/router/utils";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 import type { RePlusPageProps } from "@/components/RePlusPage";
 import { buildNoticeFormColumns } from "./noticeColumns";
 import type { RecordType } from "plus-pro-components";

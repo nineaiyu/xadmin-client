@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, defineAsyncComponent, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { AiUsageDimensionStat } from "@/api/ai/ai";
@@ -237,6 +238,6 @@ const dimensionPercent = (
       </div>
     </template>
 
-    <el-empty v-else :description="t('aiConfig.dashboardEmpty')" />
+    <ReEmpty v-else :description="t('aiConfig.dashboardEmpty')" />
   </div>
 </template>

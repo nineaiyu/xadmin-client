@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -13,23 +14,19 @@ import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import {
   deptApi,
   type ManagedDeptItem,
-  type ManagedScopeResult,
-  type ManagedUserRef
+  type ManagedScopeResult
 } from "@/api/identity/dept";
 import { handleTree } from "@/utils/tree";
-import { ReNormalCountTo } from "@/components/ReCountTo";
 import RePage from "@/components/RePage";
 import Segmented from "@/components/ReSegmented";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import DeptIcon from "~icons/ep/office-building";
-import DirectIcon from "~icons/ep/star";
-import SubIcon from "~icons/ep/share";
-import MembersIcon from "~icons/ep/user-filled";
-import ViewIcon from "~icons/ep/view";
-import UserIcon from "~icons/ep/user";
 import SearchIcon from "~icons/ep/search";
 import RefreshIcon from "~icons/ep/refresh-right";
+import ViewIcon from "~icons/ep/view";
+import UserIcon from "~icons/ep/user";
 import MemberDrawer from "./components/MemberDrawer.vue";
+import ScopeStatsCard from "./components/ScopeStatsCard.vue";
+import DeptCardList from "./components/DeptCardList.vue";
 import { resolveMyScopeState } from "./utils/myScopeState";
 
 /**
@@ -93,18 +90,6 @@ const nameById = computed(() => {
 });
 
 const canListUsers = computed(() => hasAuth("list:SystemUser"));
-
-const userLabel = (user: ManagedUserRef) =>
-  user.nickname ? `${user.nickname}(${user.username})` : user.username;
-
-/** 管理员清单折叠展示：超出 2 人收敛为「+N」（悬浮提示全量） */
-const foldUsers = (users: ManagedUserRef[]) => {
-  const shown = users.slice(0, 2).map(userLabel);
-  if (users.length > 2) {
-    shown.push(`+${users.length - 2}`);
-  }
-  return shown.join("、");
-};
 
 // —— 关键字检索：卡片视图走内存过滤（超量收敛为「加载更多」），层级视图走树过滤 ——
 const keyword = ref("");
@@ -200,77 +185,13 @@ onMounted(loadScope);
 <template>
   <RePage v-loading="loading">
     <!-- 统计总览：仅 ready 态渲染（无权限/失败时显示 0 会误导） -->
-    <el-card v-if="viewState === 'ready'" shadow="never" class="mb-3">
-      <div class="flex flex-wrap items-center gap-x-10 gap-y-4">
-        <div class="flex items-center gap-3">
-          <el-icon :size="28" class="text-(--el-color-primary)">
-            <DeptIcon />
-          </el-icon>
-          <div>
-            <div class="text-sm opacity-70">
-              {{ t("systemMyScope.deptCount") }}
-            </div>
-            <ReNormalCountTo
-              :endVal="scope?.dept_count ?? 0"
-              :duration="800"
-              font-size="1.4em"
-              class="font-semibold"
-            />
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <el-icon :size="28" class="text-(--el-color-warning)">
-            <DirectIcon />
-          </el-icon>
-          <div>
-            <div class="text-sm opacity-70">
-              {{ t("systemMyScope.directCount") }}
-            </div>
-            <ReNormalCountTo
-              :endVal="directCount"
-              :duration="800"
-              font-size="1.4em"
-              class="font-semibold"
-            />
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <el-icon :size="28" class="text-(--el-color-success)">
-            <SubIcon />
-          </el-icon>
-          <div>
-            <div class="text-sm opacity-70">
-              {{ t("systemMyScope.subCount") }}
-            </div>
-            <ReNormalCountTo
-              :endVal="subCount"
-              :duration="800"
-              font-size="1.4em"
-              class="font-semibold"
-            />
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <el-icon :size="28" class="text-(--el-color-danger)">
-            <MembersIcon />
-          </el-icon>
-          <div>
-            <div class="text-sm opacity-70">
-              {{ t("systemMyScope.userCount") }}
-            </div>
-            <ReNormalCountTo
-              :endVal="scope?.user_count ?? 0"
-              :duration="800"
-              font-size="1.4em"
-              class="font-semibold"
-            />
-          </div>
-        </div>
-        <span class="text-xs text-(--el-text-color-secondary)">
-          {{ t("systemMyScope.hint") }}
-        </span>
-      </div>
-    </el-card>
+    <ScopeStatsCard
+      v-if="viewState === 'ready'"
+      :dept-count="scope?.dept_count ?? 0"
+      :direct-count="directCount"
+      :sub-count="subCount"
+      :user-count="scope?.user_count ?? 0"
+    />
 
     <!-- 工具栏：检索 / 视图切换 / 刷新 -->
     <el-card
@@ -320,16 +241,16 @@ onMounted(loadScope);
         </el-button>
       </template>
     </el-result>
-    <el-empty
+    <ReEmpty
       v-else-if="viewState === 'empty'"
       :description="t('systemMyScope.empty')"
     />
-    <el-empty
+    <ReEmpty
       v-else-if="!isTreeView && !filteredDepts.length"
       :description="t('systemMyScope.searchEmpty')"
     />
 
-    <!-- 卡片视图（渲染上限 + 加载更多） -->
+    <!-- 卡片视图（渲染上限 + 加载更多；卡片本体见 DeptCardList，行数门禁拆分） -->
     <template v-else-if="!isTreeView">
       <div
         class="mb-2 text-xs text-(--el-text-color-secondary)"
@@ -342,83 +263,15 @@ onMounted(loadScope);
           })
         }}
       </div>
-      <div class="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
-        <el-card
-          v-for="dept in visibleDepts"
-          :key="dept.pk"
-          shadow="hover"
-          data-testid="my-scope-dept"
-        >
-          <div class="flex-bc gap-2">
-            <span class="font-medium truncate">{{ dept.name }}</span>
-            <el-tag v-if="dept.is_direct" size="small" type="primary">
-              {{ t("systemMyScope.direct") }}
-            </el-tag>
-          </div>
-          <div class="mt-1 text-xs opacity-60">{{ dept.code }}</div>
-          <div
-            v-if="dept.parent_id && nameById.get(dept.parent_id)"
-            class="mt-1 text-xs opacity-60"
-          >
-            {{ t("systemMyScope.parentDept") }}:
-            {{ nameById.get(dept.parent_id) }}
-          </div>
-
-          <el-divider class="my-2!" />
-
-          <div class="flex items-center gap-1 text-xs">
-            <span class="opacity-60 shrink-0">
-              {{ t("systemMyScope.leader") }}
-            </span>
-            <span class="truncate">
-              {{ dept.leader ? userLabel(dept.leader) : "-" }}
-            </span>
-          </div>
-          <div class="flex items-center gap-1 text-xs mt-1">
-            <span class="opacity-60 shrink-0">
-              {{ t("systemMyScope.managers") }}
-            </span>
-            <span
-              v-if="dept.managers.length"
-              class="truncate"
-              :title="dept.managers.map(userLabel).join('、')"
-            >
-              {{ foldUsers(dept.managers) }}
-            </span>
-            <span v-else>-</span>
-          </div>
-
-          <div class="flex-bc mt-3">
-            <el-link
-              :disabled="!canListUsers"
-              underline="never"
-              data-testid="my-scope-members"
-              @click="openMembers(dept)"
-            >
-              {{ t("systemMyScope.members", { count: dept.user_count }) }}
-            </el-link>
-            <el-button
-              link
-              type="primary"
-              :disabled="!canListUsers"
-              :title="t('systemMyScope.viewInUserPage')"
-              @click="goDeptUsers(dept.pk)"
-            >
-              {{ t("systemMyScope.manageMembers") }}
-            </el-button>
-          </div>
-        </el-card>
-      </div>
-      <div v-if="remainingCount > 0" class="mt-3 text-center">
-        <el-button
-          link
-          type="primary"
-          data-testid="my-scope-load-more"
-          @click="loadMore"
-        >
-          {{ t("systemMyScope.loadMore", { count: remainingCount }) }}
-        </el-button>
-      </div>
+      <DeptCardList
+        :depts="visibleDepts"
+        :parent-names="nameById"
+        :can-list-users="canListUsers"
+        :remaining-count="remainingCount"
+        @open-members="openMembers"
+        @go-dept-users="goDeptUsers"
+        @load-more="loadMore"
+      />
     </template>
 
     <!-- 层级视图：虚拟树（tree-v2），高度按视口实测 -->

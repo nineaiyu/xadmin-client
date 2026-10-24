@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import { h, onMounted, ref } from "vue";
+import { computed, h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElAlert, ElButton, ElMessageBox } from "element-plus";
 import { isSuccess } from "@/api/types";
 import { settingsScimApi } from "@/api/system/settings";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import { copyText } from "@/utils/clipboard";
@@ -111,6 +115,20 @@ const loadSyncStatus = async () => {
   }
 };
 
+const syncColumns = computed<ReadonlyColumn[]>(() => [
+  { slot: "createdTime", label: t("settingScim.syncTime"), minWidth: 170 },
+  { prop: "module", label: t("settingScim.syncModule"), minWidth: 140 },
+  { prop: "method", label: t("settingScim.syncMethod"), width: 90 },
+  {
+    prop: "path",
+    label: t("settingScim.syncPath"),
+    minWidth: 220,
+    showOverflowTooltip: true
+  },
+  { prop: "status_code", label: t("settingScim.syncResult"), width: 100 },
+  { prop: "ipaddress", label: t("settingScim.syncIp"), minWidth: 130 }
+]);
+
 onMounted(loadSyncStatus);
 </script>
 
@@ -135,44 +153,19 @@ onMounted(loadSyncStatus);
             {{ t("settingScim.syncTotal", { total: syncTotal }) }}
           </span>
         </div>
-        <el-table
-          v-loading="syncLoading"
-          :data="syncRows"
+        <!-- size=small：设置面板内嵌的密集明细（密度优先于与列表页对齐） -->
+        <ReReadonlyTable
+          :columns="syncColumns"
+          :rows="syncRows"
+          :loading="syncLoading"
           size="small"
+          :label="t('settingScim.syncStatus')"
           data-testid="scim-sync-status"
         >
-          <el-table-column :label="t('settingScim.syncTime')" min-width="170">
-            <template #default="{ row }">
-              {{ formatDateTime(row.created_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="module"
-            :label="t('settingScim.syncModule')"
-            min-width="140"
-          />
-          <el-table-column
-            prop="method"
-            :label="t('settingScim.syncMethod')"
-            width="90"
-          />
-          <el-table-column
-            prop="path"
-            :label="t('settingScim.syncPath')"
-            min-width="220"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="status_code"
-            :label="t('settingScim.syncResult')"
-            width="100"
-          />
-          <el-table-column
-            prop="ipaddress"
-            :label="t('settingScim.syncIp')"
-            min-width="130"
-          />
-        </el-table>
+          <template #createdTime="{ row }">
+            {{ formatDateTime(row.created_time) }}
+          </template>
+        </ReReadonlyTable>
       </template>
     </div>
   </div>

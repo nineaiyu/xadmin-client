@@ -12,7 +12,7 @@ import { handleOperation, openDialogDrawer } from "@/components/RePlusPage";
 import { dialogSize } from "@/components/ReDialog/size";
 import { useI18n } from "vue-i18n";
 import { mergeBackendChecks } from "./messageNotifications";
-import SearchDialog from "@/views/system/components/SearchDialog.vue";
+import SearchDialog from "./SearchDialog.vue";
 import type { RecordType } from "plus-pro-components";
 import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
 

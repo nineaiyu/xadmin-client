@@ -36,6 +36,18 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
   defaultPercent: 20,
   minPercent: 10
 });
+
+/** 列表页配置：桌面分栏与移动堆叠两分支共用同一份（避免双份维护漂移） */
+const plusPageProps = {
+  api,
+  auth,
+  addOrEditOptions,
+  baseColumnsFormat,
+  listColumnsFormat,
+  localeName: "systemUser",
+  operationButtonsProps,
+  tableBarButtonsProps
+};
 </script>
 
 <template>
@@ -59,14 +71,7 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
       <template #paneR>
         <RePlusPage
           ref="tableRef"
-          :api="api"
-          :auth="auth"
-          :addOrEditOptions="addOrEditOptions"
-          :baseColumnsFormat="baseColumnsFormat"
-          :listColumnsFormat="listColumnsFormat"
-          locale-name="systemUser"
-          :operationButtonsProps="operationButtonsProps"
-          :tableBarButtonsProps="tableBarButtonsProps"
+          v-bind="plusPageProps"
           saved-views
           advanced-filter
           recycleBin
@@ -87,15 +92,8 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
       />
       <RePlusPage
         ref="tableRef"
-        :api="api"
-        :auth="auth"
+        v-bind="plusPageProps"
         :class="['w-full', 'mt-2']"
-        :addOrEditOptions="addOrEditOptions"
-        :baseColumnsFormat="baseColumnsFormat"
-        :listColumnsFormat="listColumnsFormat"
-        locale-name="systemUser"
-        :operationButtonsProps="operationButtonsProps"
-        :tableBarButtonsProps="tableBarButtonsProps"
         saved-views
         advanced-filter
         recycleBin

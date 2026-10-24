@@ -16,10 +16,17 @@ export function useApiAppCredential() {
     credentialDialog.value = true;
   };
 
+  /** 关闭即丢弃一次性明文：避免密钥常驻内存、可被再次打开。 */
+  const closeCredential = () => {
+    credentialDialog.value = false;
+    credential.value = null;
+  };
+
   return {
     credentialDialog,
     credential,
     openCredential,
+    closeCredential,
     copyText
   };
 }

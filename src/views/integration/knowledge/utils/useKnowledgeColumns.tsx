@@ -33,6 +33,37 @@ export function useKnowledgeColumns({
           );
         };
       },
+      ingest_status: column => {
+        // 上传文档走后台摄取：队列中/处理中/失败即时可见（失败原因悬浮在 tag 上）
+        column["cellRenderer"] = ({ row, props }) => {
+          const item = row as { ingest_status?: string; ingest_error?: string };
+          const status = String(item.ingest_status || "SUCCESS");
+          const conf: Record<
+            string,
+            { type: "success" | "warning" | "danger" | "info"; key: string }
+          > = {
+            PENDING: { type: "info", key: "aiKnowledge.ingestPending" },
+            PROCESSING: {
+              type: "warning",
+              key: "aiKnowledge.ingestProcessing"
+            },
+            SUCCESS: { type: "success", key: "aiKnowledge.ingestDone" },
+            FAILED: { type: "danger", key: "aiKnowledge.ingestFailed" }
+          };
+          const resolved = conf[status] ?? conf.SUCCESS;
+          return h(
+            ElTag,
+            {
+              type: resolved.type,
+              size: props.size,
+              effect: "plain",
+              title:
+                status === "FAILED" ? item.ingest_error || undefined : undefined
+            },
+            () => t(resolved.key)
+          );
+        };
+      },
       is_active: column => {
         // 只读状态标签：启停入口唯一收敛到抽屉（避免与禁用开关并存）
         column["cellRenderer"] = ({ row, props }) => {

@@ -27,7 +27,7 @@ vi.mock("@/views/settings/components/settings/index.vue", () => ({
     </div>`
   }
 }));
-vi.mock("@/views/system/components/MessageNotifications.vue", () => ({
+vi.mock("@/components/ReMessageNotifications", () => ({
   default: {
     name: "MessageNotifications",
     template: "<div data-testid='subscription-panel' />"

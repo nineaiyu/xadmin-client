@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDataset } from "./utils/hook";
@@ -183,7 +184,7 @@ const {
             min-width="120"
           />
         </el-table>
-        <el-empty
+        <ReEmpty
           v-else
           :description="t('dataDataset.aggregateEmpty')"
           :image-size="72"

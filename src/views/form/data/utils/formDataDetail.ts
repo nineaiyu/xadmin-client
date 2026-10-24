@@ -34,7 +34,8 @@ export function createFormDataDetailOpener({
       destroyOnClose: true,
       closeOnClickModal: true,
       hideFooter: true,
-      props: { row: detail },
+      // 已由 form-data 端点取全量（含掩码口径）：组件不再二次请求
+      props: { row: detail, fetchDetail: false },
       contentRenderer: () => h(SubmissionDetail)
     });
   };

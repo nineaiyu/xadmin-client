@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
@@ -305,15 +306,15 @@ function openDetail(row: DirectoryMember) {
           </button>
         </div>
 
-        <el-empty
+        <ReEmpty
           v-if="!loading && loadFailed"
           :description="t('directory.membersLoadFailed')"
         >
           <el-button type="primary" @click="loadMembers(true)">
             {{ t("directory.retry") }}
           </el-button>
-        </el-empty>
-        <el-empty
+        </ReEmpty>
+        <ReEmpty
           v-else-if="!loading && !members.length"
           :description="t('directory.empty')"
         />

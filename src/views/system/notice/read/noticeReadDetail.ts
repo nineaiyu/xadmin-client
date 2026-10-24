@@ -1,7 +1,7 @@
 import { h } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import NoticeShowForm from "@/components/ReNoticeShow";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 

@@ -8,12 +8,10 @@ import type {
 } from "@/api/dataset/datasets";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import type { ScreenDataPayload } from "@/utils/websocket/protocol";
-// 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
-import type { ExportedImage } from "@/utils/imageExport";
 import { useScreenDisplay } from "./utils/useScreenDisplay";
 import { useScreenExport } from "./utils/useScreenExport";
 import { useScreenLoader } from "./utils/useScreenLoader";
+import { useScreenCards } from "./utils/useScreenCards";
 import { useFreeStage } from "./utils/useFreeStage";
 import { useDisplayTheme } from "./utils/useDisplayTheme";
 import { visiblePanes } from "./utils/paneVisibility";
@@ -52,35 +50,6 @@ const dashboards = ref<DashboardItem[]>([]);
 /** 可见数据集（服务端按浏览者过滤）：指标卡窗格按此口径过滤，与仪表盘窗格一致 */
 const datasets = ref<DatasetItem[]>([]);
 
-/** 卡片组件句柄：模板 ref 收集 ChartCard（loadData 刷新 + applyData 注入 + renderImage 图片导出） */
-type CardHandle = {
-  loadData?: () => void;
-  applyData?: (_entry: CardDataEntry) => Promise<void> | void;
-  renderImage?: () => Promise<ExportedImage | null>;
-};
-const cardRefs = ref<Record<string, CardHandle | undefined>>({});
-const setCardRef = (cardId: string) => (el: unknown) => {
-  const handle = el as CardHandle | null;
-  if (handle) cardRefs.value[cardId] = handle;
-};
-
-/** screen_data 帧的卡片级条目（cards[] 原样 / errors[] 转错误提示口径） */
-type CardDataEntry = {
-  card: string;
-  kind?: string;
-  data?: unknown;
-  detail?: string;
-};
-type ApplyScreenData = (_frame: ScreenDataPayload) => void;
-/** 服务端逐卡错误 → 与卡片同一条注入通道（ChartCard 按 detail 渲染错误态） */
-const toErrorEntry = (error: {
-  card: string;
-  detail: string;
-}): CardDataEntry => ({
-  card: error.card,
-  detail: error.detail
-});
-
 /**
  * 形态判定（与服务端同序）：自由画布（自由载荷窗格非空）> 栅格画布（`layout` 非空）
  * > 轮播。两种画布与轮播同一可见性口径：窗格引用的仪表盘 / 数据集对浏览者不可见时
@@ -105,51 +74,15 @@ const paneCards = (pane: { dashboard?: string }) =>
 const paneTitle = (pane: { dashboard?: string }) =>
   dashboards.value.find(item => item.pk === pane.dashboard)?.name ?? "";
 
-/** 画布模式下的窗格句柄（刷新与导出共用同一接口，实现见 ScreenPane） */
-const paneRefs = ref<Record<string, InstanceType<typeof ScreenPane> | null>>(
-  {}
-);
-const setPaneRef = (pk: string) => (el: unknown) => {
-  paneRefs.value[pk] = el as InstanceType<typeof ScreenPane> | null;
-};
-
-const refreshVisible = () => {
-  if (isStage.value) {
-    Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
-    return;
-  }
-  for (const card of currentCards.value) {
-    cardRefs.value[card.id]?.loadData?.();
-  }
-};
-
-/**
- * 应用服务端聚合数据帧（screen_data）：按 card id 免拉直渲。
- * 轮播模式帧按仪表盘分发（dashboard 与当前页不一致的帧不应用——其卡片未渲染）；
- * 画布模式单帧 dashboard=null，逐窗格路由（窗格持有该卡才应用）。
- */
-const applyScreenData: ApplyScreenData = frame => {
-  if (isStage.value) {
-    for (const entry of [...frame.cards, ...frame.errors.map(toErrorEntry)]) {
-      // 同一仪表盘可能放在多个窗格：逐窗格应用，不能 .some 短路只喂第一个
-      Object.values(paneRefs.value).forEach(handle =>
-        handle?.applyCardData?.(entry.card, entry)
-      );
-    }
-    return;
-  }
-  if (frame.dashboard && frame.dashboard !== currentDashboard.value?.pk) return;
-  for (const entry of frame.cards) {
-    cardRefs.value[entry.card]?.applyData?.(entry);
-  }
-  for (const error of frame.errors) {
-    cardRefs.value[error.card]?.applyData?.(toErrorEntry(error));
-  }
-};
-
-/** 轮播 / 数据刷新 / 时钟定时器 + 远程控制通道（实现见 utils/useScreenDisplay.ts） */
+/** 轮播 / 数据刷新 / 时钟定时器 + 远程控制通道（实现见 utils/useScreenDisplay.ts）；
+ *  句柄收集与数据帧应用见 utils/useScreenCards.ts（两处回调按调用期解析） */
 const { pageIndex, paused, clock, controlMode, startTimers, startWs } =
-  useScreenDisplay({ screen, dashboards, refreshVisible, applyScreenData });
+  useScreenDisplay({
+    screen,
+    dashboards,
+    refreshVisible: () => screenCards.refreshVisible(),
+    applyScreenData: frame => screenCards.applyScreenData(frame)
+  });
 
 const currentDashboard = computed(
   () => dashboards.value[pageIndex.value] ?? null
@@ -157,6 +90,10 @@ const currentDashboard = computed(
 const currentCards = computed<DashboardCard[]>(
   () => currentDashboard.value?.layout ?? []
 );
+
+/** 卡片/窗格句柄收集 + 数据帧应用 + 可见刷新（实现见 utils/useScreenCards.ts，行数门禁抽出） */
+const screenCards = useScreenCards({ isStage, currentCards, currentDashboard });
+const { cardRefs, setCardRef, paneRefs, setPaneRef } = screenCards;
 
 /** 导出当前屏：逐卡渲染图片并按 ZIP 打包（实现见 utils/useScreenExport.ts，行数门禁抽出） */
 const { exporting, exportScreen } = useScreenExport({

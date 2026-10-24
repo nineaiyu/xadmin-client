@@ -1,11 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { isReactive, isRef, reactive } from "vue";
 
-const { usePageAuthMock } = vi.hoisted(() => ({
-  usePageAuthMock: vi.fn()
-}));
+const { usePageAuthMock, hasAuthMock, authCodesLoadedMock } = vi.hoisted(
+  () => ({
+    usePageAuthMock: vi.fn(),
+    hasAuthMock: vi.fn(),
+    authCodesLoadedMock: vi.fn()
+  })
+);
 
-vi.mock("@/router/utils", () => ({ usePageAuth: usePageAuthMock }));
+// DEFAULT_AUTH_ACTIONS 用测试专用的最小清单：组件契约只依赖「默认按钮位清单」
+// 本身，真实清单的演进由 auth.ts 侧测试与类型共同约束，此处不复制第二份。
+vi.mock("@/router/utils", () => ({
+  usePageAuth: usePageAuthMock,
+  hasAuth: hasAuthMock,
+  authCodesLoaded: authCodesLoadedMock,
+  DEFAULT_AUTH_ACTIONS: ["list", "create"]
+}));
 vi.mock("vue-i18n", () => ({
   useI18n: () => ({
     t: (key: string) => key,
@@ -30,7 +41,17 @@ type CtxProbe = {
 type ColumnsCtxProbe = CtxProbe & { columns: PageTableColumn[] };
 
 describe("defineListPage", () => {
+  let consoleError: ReturnType<typeof vi.spyOn>;
+  let consoleWarn: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
+    // 开发态守护在 vitest（DEV=true）下会直接输出，静默并侦听供用例断言
+    const silence = () => undefined;
+    consoleError = vi.spyOn(console, "error").mockImplementation(silence);
+    consoleWarn = vi.spyOn(console, "warn").mockImplementation(silence);
+    // 默认「权限码字典未装载」：既有装配用例不触发缺码告警
+    authCodesLoadedMock.mockReturnValue(false);
+    hasAuthMock.mockReturnValue(false);
     usePageAuthMock.mockImplementation(
       (nameOrKeys?: string | string[], extraKeys: string[] = []) => {
         const keys =
@@ -41,6 +62,12 @@ describe("defineListPage", () => {
         });
       }
     );
+  });
+
+  afterEach(() => {
+    consoleError.mockRestore();
+    consoleWarn.mockRestore();
+    vi.unstubAllEnvs();
   });
 
   it("最小配置只返回 api / auth / tableRef / t，api 为 reactive 包装", () => {
@@ -152,5 +179,58 @@ describe("defineListPage", () => {
     expect(page).not.toHaveProperty("tableBarButtonsProps");
     expect(page).not.toHaveProperty("addOrEditOptions");
     expect(page).not.toHaveProperty("listColumnsFormat");
+  });
+
+  describe("开发态权限守护（authSuffix 必填校验 + 缺码告警）", () => {
+    it("后缀无法解析（无组件实例且未显式指定）时报错并说明修复方式", () => {
+      // 直接函数调用：getCurrentInstance() 为空，模拟组件未声明 name / 脱离 setup 调用
+      defineListPage({ api: {}, localeName: "post" });
+
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      expect(consoleError.mock.calls[0]![0]).toContain("authSuffix");
+      // 后缀缺失时不再叠加缺码告警（无从判定）
+      expect(consoleWarn).not.toHaveBeenCalled();
+    });
+
+    it("权限码全部未命中时告警，并带上后缀与对齐建议", () => {
+      authCodesLoadedMock.mockReturnValue(true);
+      hasAuthMock.mockReturnValue(false);
+
+      defineListPage({ api: {}, localeName: "tag", authSuffix: "Tag" });
+
+      expect(consoleWarn).toHaveBeenCalledTimes(1);
+      const message = String(consoleWarn.mock.calls[0]![0]);
+      expect(message).toContain("*:Tag");
+      expect(message).toContain("authSuffix");
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("任一默认按钮位命中即不告警", () => {
+      authCodesLoadedMock.mockReturnValue(true);
+      hasAuthMock.mockImplementation((code: string) => code === "list:Tag");
+
+      defineListPage({ api: {}, localeName: "tag", authSuffix: "Tag" });
+
+      expect(consoleWarn).not.toHaveBeenCalled();
+      expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it("权限码字典未装载（守卫未完成/测试桩）时跳过缺码判定", () => {
+      authCodesLoadedMock.mockReturnValue(false);
+
+      defineListPage({ api: {}, localeName: "tag", authSuffix: "Tag" });
+
+      expect(consoleWarn).not.toHaveBeenCalled();
+    });
+
+    it("生产构建（import.meta.env.DEV=false）零输出", () => {
+      vi.stubEnv("DEV", false);
+      authCodesLoadedMock.mockReturnValue(true);
+
+      defineListPage({ api: {}, localeName: "post" });
+
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(consoleWarn).not.toHaveBeenCalled();
+    });
   });
 });

@@ -30,7 +30,7 @@ vi.mock("../taskLogFeed", () => ({
   }
 }));
 
-import TaskLogDialog from "../TaskLogDialog.vue";
+import TaskLogDialog from "../index.vue";
 
 const mountDialog = () =>
   mount(TaskLogDialog, {

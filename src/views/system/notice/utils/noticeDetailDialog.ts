@@ -1,9 +1,7 @@
-import { h } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
+import { openDialog } from "@/components/ReDialog/openDialog";
 import { i18n } from "@/plugins/i18n";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import NoticeShowForm from "@/components/ReNoticeShow";
 import type { Composer } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
@@ -18,18 +16,15 @@ import type { RecordType } from "plus-pro-components";
 export function openNoticeDetailDialog(row: RecordType) {
   // legacy: false 下 global 收窄为 Composer（I18n 类型的 global 是联合）
   const title = (i18n.global as Composer).t("userNotice.showSystemNotice");
-  addDialog({
+  openDialog({
     title,
+    component: NoticeShowForm,
     props: {
       formInline: { ...row },
       hasPublish: false
     },
-    width: dialogSize("xl"),
-    draggable: true,
-    fullscreen: deviceDetection(),
-    fullscreenIcon: true,
-    closeOnClickModal: false,
+    size: "xl",
     hideFooter: true,
-    contentRenderer: () => h(NoticeShowForm)
+    fullscreen: deviceDetection()
   });
 }

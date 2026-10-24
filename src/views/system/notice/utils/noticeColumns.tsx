@@ -2,14 +2,14 @@ import { computed, h, type Ref, type VNode } from "vue";
 import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { useConfirm } from "@/hooks/useConfirm";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 import NoticeMessageEditor from "@/views/system/notice/components/NoticeMessageEditor.vue";
 import {
   NOTICE_TARGET_AUTH,
   noticeMessageHasContent,
   noticeTypeOptionLocked
 } from "./noticeFormRules";
-import { resolveMessageFormat } from "./noticeFormat";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
 import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];

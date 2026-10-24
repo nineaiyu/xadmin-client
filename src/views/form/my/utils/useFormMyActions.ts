@@ -52,6 +52,8 @@ export function useFormMyActions({
       message(t("dform.formUnavailable"), { type: "warning" });
       return;
     }
+    // 编辑既有提交按提交时的 schema 快照渲染（服务端同样按快照校验）；
+    // 表单定义不可用时保留表单自身 schema，仍由后端兜底校验
     openForm(form, row);
   };
 

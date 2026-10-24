@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -164,7 +165,7 @@ function onKeydown(event: KeyboardEvent, key: string) {
     </nav>
     <div class="setting-page__body">
       <!-- 无任何可查看面板：明确说明缺少权限，而不是给一片空白 -->
-      <el-empty
+      <ReEmpty
         v-if="!hasPanes"
         data-testid="setting-no-permission"
         :description="t('setting.noPermission')"

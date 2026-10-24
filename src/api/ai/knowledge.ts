@@ -10,6 +10,9 @@ export type KnowledgeDocumentItem = {
   source_type: KnowledgeSourceType;
   path: string;
   chunk_count: number;
+  /** 分块摄取状态（上传文档走后台任务；仓库/存量文档恒为 SUCCESS） */
+  ingest_status?: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED";
+  ingest_error?: string;
   is_active: boolean;
   creator?: { pk?: string; username?: string } | null;
   synced_at: string;

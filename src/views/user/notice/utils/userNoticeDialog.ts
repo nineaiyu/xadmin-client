@@ -1,10 +1,8 @@
-import { h } from "vue";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
+import { openDialog } from "@/components/ReDialog/openDialog";
 import { deviceDetection } from "@pureadmin/utils";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import NoticeShowForm from "@/components/ReNoticeShow";
 import type { userNoticeReadApi } from "@/api/user/notice";
 import type { Ref, UnwrapNestedRefs } from "vue";
 import type { RecordType } from "plus-pro-components";
@@ -79,29 +77,28 @@ export function createUserNoticeDialog({
       // 铃铛未读点击已改为就地弹窗（不产生 ?pk=），此路径仅兼容历史书签与旧页签。
       stripPkFromAddressBar();
     }
-    addDialog({
+    openDialog({
       title: t("userNotice.showSystemNotice"),
+      component: NoticeShowForm,
       props: {
         formInline: { ...row },
         hasPublish: false
       },
       // 通知为长文本查看：走弹窗尺寸档位最大档（尺寸治理收敛，不再用百分比散值）
-      width: dialogSize("xl"),
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
+      size: "xl",
       hideFooter: true,
-      contentRenderer: () => h(NoticeShowForm),
-      closeCallBack: () => {
-        if (routeParams?.pk && searchFields) {
-          // 深链进入时列表被 pk 过滤为单条：关闭后清除过滤并重取完整列表
-          searchFields.value.pk = "";
-          tableRef.value.handleGetData();
-          return;
-        }
-        if (row.unread) {
-          tableRef.value.handleGetData();
+      fullscreen: deviceDetection(),
+      extra: {
+        closeCallBack: () => {
+          if (routeParams?.pk && searchFields) {
+            // 深链进入时列表被 pk 过滤为单条：关闭后清除过滤并重取完整列表
+            searchFields.value.pk = "";
+            tableRef.value.handleGetData();
+            return;
+          }
+          if (row.unread) {
+            tableRef.value.handleGetData();
+          }
         }
       }
     });

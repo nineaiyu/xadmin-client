@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReStateContainer from "@/components/ReStateContainer";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
@@ -78,9 +79,10 @@ const {
     />
   </div>
   <!-- 无列表权限时给出明确说明，而不是整页空白 -->
-  <el-empty
+  <ReStateContainer
     v-else
+    state="denied"
     data-testid="account-risk-no-permission"
-    :description="t('accountRisk.noPermission')"
+    :denied-text="t('accountRisk.noPermission')"
   />
 </template>

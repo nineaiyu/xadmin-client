@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDebounceFn } from "@vueuse/core";
@@ -183,7 +184,7 @@ const displayRun = (value: string) => value.replace("T", " ").slice(0, 19);
         type="warning"
         :title="t('systemTaskCrontab.previewFailed')"
       />
-      <el-empty
+      <ReEmpty
         v-else-if="!previewLoading && !nextRuns.length"
         :image-size="48"
         :description="

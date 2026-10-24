@@ -4,6 +4,7 @@ import {
   MessageAction,
   type ChatReactionUpdatePayload,
   type ChatRecallPayload,
+  type ChatRoomChangedPayload,
   type ChatRoomMessage,
   type ChatUnreadPayload,
   type UserinfoPayload
@@ -86,5 +87,14 @@ export function dispatchChatFrame(raw: unknown, ctx: ChatFrameContext) {
     raw.data
   ) {
     ctx.roomState.applyUnread(raw.data.room_id, raw.data.unread_count);
+    return;
+  }
+  if (
+    isOutboundMessage<ChatRoomChangedPayload>(raw, MessageAction.CHAT_ROOM) &&
+    raw.data
+  ) {
+    // 群成员/名称变化：帧只带 room_id（变更类型仅作提示），重拉会话列表
+    // 同步人数与名称；操作者本地已先行更新，重复拉取幂等。
+    ctx.roomState.loadRooms();
   }
 }

@@ -38,7 +38,7 @@ export function useDashboardDelete({
       syncQuery();
       return;
     }
-    if (res.detail) message(String(res.detail), { type: "error" });
+    message(String(res.detail || t("results.failed")), { type: "error" });
   };
 
   return { removeDashboard };

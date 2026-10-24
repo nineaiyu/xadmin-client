@@ -273,7 +273,8 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
         {
           flow: String(flowPk),
           title: row.title,
-          formData: (row.form_data ?? {}) as Record<string, unknown>
+          formData: (row.form_data ?? {}) as Record<string, unknown>,
+          sourceInstance: row.pk ? String(row.pk) : undefined
         }
       );
     },

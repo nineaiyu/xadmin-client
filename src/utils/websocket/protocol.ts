@@ -65,6 +65,8 @@ export const MessageAction = {
   CHAT_READ: "chat_read",
   /** 未读红点推送（下行，ws/chat/） */
   CHAT_UNREAD: "chat_unread",
+  /** 群资料变更（成员/名称；下行，ws/chat/，客户端重拉会话列表） */
+  CHAT_ROOM: "chat_room",
   /** 任务执行日志增量推送 */
   TASK_LOG: "task_log",
   /** 监控面板指标推送（system/ws_monitor.py） */
@@ -252,6 +254,12 @@ export interface ChatReadPayload {
 export interface ChatUnreadPayload {
   room_id: number;
   unread_count: number;
+}
+
+/** 群资料变更帧（chat_room） */
+export interface ChatRoomChangedPayload {
+  room_id: number;
+  change?: string;
 }
 
 /** 当前登录用户信息帧（userinfo） */

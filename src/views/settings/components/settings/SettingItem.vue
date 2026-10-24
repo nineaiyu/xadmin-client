@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import {
@@ -196,7 +197,7 @@ const handleTest = () => {
 </script>
 
 <template>
-  <el-empty
+  <ReEmpty
     v-if="!auth.retrieve"
     data-testid="setting-item-no-permission"
     :description="t('setting.noPermission')"
@@ -206,7 +207,7 @@ const handleTest = () => {
     class="setting-load-failed"
     data-testid="setting-load-failed"
   >
-    <el-empty :description="t('setting.loadFailed')" />
+    <ReEmpty :description="t('setting.loadFailed')" />
     <el-button type="primary" plain @click="getData">
       {{ t("buttons.reload") }}
     </el-button>

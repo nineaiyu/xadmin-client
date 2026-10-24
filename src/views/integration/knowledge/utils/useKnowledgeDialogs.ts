@@ -28,7 +28,8 @@ export function useKnowledgeDialogs({
   t,
   refresh,
   flags: { canUpdate, canDestroy },
-  document: { toggleActive, confirmRemove }
+  document: { toggleActive, confirmRemove },
+  afterUpload
 }: {
   t: TFunction;
   refresh: () => void;
@@ -37,6 +38,8 @@ export function useKnowledgeDialogs({
     toggleActive: (row: KnowledgeRow) => Promise<void>;
     confirmRemove: (row: KnowledgeRow) => void;
   };
+  /** 上传成功后的回调（用于启动摄取状态轮询） */
+  afterUpload?: () => void;
 }) {
   const uploadFormRef = ref<InstanceType<typeof KnowledgeUploadDialog>>();
 
@@ -61,6 +64,7 @@ export function useKnowledgeDialogs({
         });
         // 先关弹窗再刷新列表（useDialogForm 内 done 先于回调）
         refresh();
+        afterUpload?.();
       },
       onFail: res =>
         message(`${t("results.failed")}，${String(res.detail)}`, {

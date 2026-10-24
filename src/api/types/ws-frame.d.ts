@@ -18,6 +18,7 @@ export type Action =
   | "chat_reaction"
   | "chat_read"
   | "chat_unread"
+  | "chat_room"
   | "task_log"
   | "monitor"
   | "screen_command"

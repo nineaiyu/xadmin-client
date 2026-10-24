@@ -3,7 +3,7 @@ import type { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import type { useI18n } from "vue-i18n";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 import {
   formatPageColumns,
   isReadonlyCell,

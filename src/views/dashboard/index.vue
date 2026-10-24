@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowDown, ArrowUp, Download, Setting } from "@element-plus/icons-vue";
@@ -10,6 +10,10 @@ import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
 import { copyText } from "@/utils/clipboard";
 import { useSortable } from "@/hooks/useSortable";
+import {
+  AUTO_REFRESH_OPTIONS,
+  useDashboardAutoRefresh
+} from "./utils/useDashboardAutoRefresh";
 import {
   dashboardApi,
   datasetApi,
@@ -57,31 +61,11 @@ const refreshCards = () => {
 };
 
 /* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
-const AUTO_REFRESH_OPTIONS = [
-  { value: 0, labelKey: "dashboard.autoRefreshOff" },
-  { value: 10, labelKey: "dashboard.autoRefresh10s" },
-  { value: 30, labelKey: "dashboard.autoRefresh30s" },
-  { value: 60, labelKey: "dashboard.autoRefresh60s" },
-  { value: 300, labelKey: "dashboard.autoRefresh5m" }
-];
-const autoRefreshSeconds = ref(0);
-let autoRefreshTimer: number | undefined;
-
-const stopAutoRefresh = () => {
-  if (autoRefreshTimer) {
-    window.clearInterval(autoRefreshTimer);
-    autoRefreshTimer = undefined;
-  }
-};
-
-watch(autoRefreshSeconds, seconds => {
-  stopAutoRefresh();
-  if (seconds > 0) {
-    autoRefreshTimer = window.setInterval(refreshCards, seconds * 1000);
-  }
+const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
+  kiosk,
+  requestedSeconds: route.query.refresh,
+  refresh: refreshCards
 });
-
-onBeforeUnmount(stopAutoRefresh);
 
 const layout = computed<DashboardCard[]>(() =>
   editing.value ? draftLayout.value : (current.value?.layout ?? [])

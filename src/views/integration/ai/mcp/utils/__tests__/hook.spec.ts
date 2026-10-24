@@ -30,6 +30,10 @@ vi.mock("@/api/ai/mcp", () => ({
   }
 }));
 vi.mock("@/utils/message", () => ({ message: mocks.message }));
+// 抽屉组件静态引入 useConfirm → 会初始化 i18n 插件；本用例只测列表 hook，桩掉即可
+vi.mock("@/hooks/useConfirm", () => ({
+  useConfirm: () => vi.fn(async () => true)
+}));
 vi.mock("@/components/ReDialog", () => ({ addDialog: mocks.addDialog }));
 vi.mock("@/components/ReDialog/size", () => ({
   dialogSize: () => "500px"

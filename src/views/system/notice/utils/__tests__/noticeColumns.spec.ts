@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 
 import { buildNoticeFormColumns } from "../noticeColumns";
-import { resolveMessageFormat } from "../noticeFormat";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
 
 const mocks = vi.hoisted(() => ({
   confirm: vi.fn()

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import DataTable from "@/components/DataTable";
+import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
@@ -73,10 +75,11 @@ onMounted(load);
     :title="t('authorizedApps.title')"
     :description="t('authorizedApps.desc')"
   >
-    <el-table
+    <DataTable
       v-loading="loading"
       :data="rows"
       data-testid="authorized-apps-table"
+      :label="t('authorizedApps.title')"
     >
       <el-table-column :label="t('authorizedApps.application')" min-width="200">
         <template #default="{ row }">
@@ -140,8 +143,8 @@ onMounted(load);
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
-    <el-empty
+    </DataTable>
+    <ReEmpty
       v-if="!loading && rows.length === 0"
       :description="t('authorizedApps.empty')"
     />

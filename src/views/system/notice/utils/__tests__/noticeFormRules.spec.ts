@@ -6,7 +6,7 @@ import {
   noticeTypeOptionLocked,
   parseNoticeUserParam
 } from "../noticeFormRules";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 
 describe("noticeMessageHasContent", () => {
   it("treats empty editor markup as empty", () => {

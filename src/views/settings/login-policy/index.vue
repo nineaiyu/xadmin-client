@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { useLoginPolicy } from "./utils/hook";
 
@@ -23,7 +24,7 @@ const { api, auth, addOrEditOptions, tableBarButtonsProps } = useLoginPolicy();
     />
   </div>
   <!-- 无列表权限时给出明确说明，而不是整页空白 -->
-  <el-empty
+  <ReEmpty
     v-else
     data-testid="login-policy-no-permission"
     :description="t('setting.noPermission')"

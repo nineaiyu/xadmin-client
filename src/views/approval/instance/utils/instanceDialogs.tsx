@@ -15,6 +15,8 @@ export type StartInstanceInitial = {
   flow: string;
   title?: string;
   formData?: Record<string, unknown>;
+  /** 驳回重提：被驳回的原实例 pk（后端校验同申请人 + 同流程后建立关联） */
+  sourceInstance?: string;
 };
 
 /**

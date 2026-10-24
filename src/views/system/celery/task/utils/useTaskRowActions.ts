@@ -2,7 +2,7 @@ import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { type periodicTaskApi, taskExecutionApi } from "@/api/task/task";
-import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
+import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 import { buildTaskRowButtons } from "./taskRowButtons";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { Ref } from "vue";

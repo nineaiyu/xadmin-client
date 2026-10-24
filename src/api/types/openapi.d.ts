@@ -12336,6 +12336,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/permission/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 获取{cls}的影响面预览 */
+        post: operations["api_system_permission_impact_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/permission/import-async": {
         parameters: {
             query?: never;
@@ -12416,6 +12433,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/permission/recycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}回收站列表 */
+        get: operations["api_system_permission_recycle_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/permission/recycle/purge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * @description 物理清除{cls}回收站数据
+         *
+         *     不传 pks 时清除全部超过保留期的数据
+         */
+        delete: operations["api_system_permission_recycle_purge_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/permission/recycle/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description 从回收站恢复{cls}数据 */
+        patch: operations["api_system_permission_recycle_restore_partial_update"];
+        trace?: never;
+    };
     "/api/system/permission/search-columns": {
         parameters: {
             query?: never;
@@ -12462,7 +12534,11 @@ export interface paths {
         /** @description 整体更新{cls}信息 */
         put: operations["api_system_permission_update"];
         post?: never;
-        /** @description 删除{cls}数据 */
+        /**
+         * @description 删除{cls}数据
+         *
+         *     高危：行为变更立即影响被授权用户可见数据，可经 APPROVAL_REQUIRED_PATHS 纳入审批。
+         */
         delete: operations["api_system_permission_destroy"];
         options?: never;
         head?: never;
@@ -14212,6 +14288,15 @@ export interface components {
             readonly created_time: string | null;
             /** 创建人 */
             readonly creator: string | null;
+            readonly ingest_error: string;
+            /**
+             * Ingest status
+             * @description null
+             */
+            readonly ingest_status: {
+                label?: string;
+                value?: string;
+            };
             /**
              * 启用
              * @default true
@@ -15181,7 +15266,10 @@ export interface components {
         ChangePassword: {
             /** 旧密码 */
             old_password: string;
-            /** 确认密码 */
+            /**
+             * 确认密码
+             * @description Legacy contract name: this field carries the NEW password itself (not a repeat/confirm value)
+             */
             sure_password: string;
         };
         /** @description AI 助手提问（room_id 缺省时用当前用户的 AI 会话）。 */
@@ -18004,6 +18092,15 @@ export interface components {
             readonly created_time?: string | null;
             /** 创建人 */
             readonly creator?: string | null;
+            readonly ingest_error?: string;
+            /**
+             * Ingest status
+             * @description null
+             */
+            readonly ingest_status?: {
+                label?: string;
+                value?: string;
+            };
             /**
              * 启用
              * @default true
@@ -51098,6 +51195,48 @@ export interface operations {
             };
         };
     };
+    api_system_permission_impact_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    pks?: string[];
+                };
+                "application/x-www-form-urlencoded": {
+                    pks?: string[];
+                };
+                "multipart/form-data": {
+                    pks?: string[];
+                };
+                "text/csv": {
+                    pks?: string[];
+                };
+                "text/xlsx": {
+                    pks?: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
     api_system_permission_import_async_create: {
         parameters: {
             query?: never;
@@ -51229,6 +51368,96 @@ export interface operations {
                         timestamp?: string;
                         total?: number;
                         valid_count?: number;
+                    };
+                };
+            };
+        };
+    };
+    api_system_permission_recycle_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_system_permission_recycle_purge_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_system_permission_recycle_restore_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    pks?: string[];
+                };
+                "application/x-www-form-urlencoded": {
+                    pks?: string[];
+                };
+                "multipart/form-data": {
+                    pks?: string[];
+                };
+                "text/csv": {
+                    pks?: string[];
+                };
+                "text/xlsx": {
+                    pks?: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
                     };
                 };
             };

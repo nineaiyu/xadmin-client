@@ -2,7 +2,7 @@ import { h } from "vue";
 import { addDrawer } from "@/components/ReDrawer";
 import { transformI18n } from "@/plugins/i18n";
 
-import TaskCenterDrawer from "./TaskCenterDrawer.vue";
+import TaskCenterDrawer from "./index.vue";
 
 import { drawerSize } from "@/components/ReDialog/size";
 /**

@@ -22,9 +22,9 @@ const Editor = defineAsyncComponent(async () => {
 const MarkdownView = defineAsyncComponent(
   () => import("@/components/MarkdownView")
 );
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 import { sanitizeHtml } from "@/utils/sanitize";
-import { resolveMessageFormat } from "@/views/system/notice/utils/noticeFormat";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
 
 interface FormItemProps {
   pk?: number;

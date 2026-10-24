@@ -31,10 +31,21 @@ import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus"
  */
 defineOptions({ name: "FormSubmissionDetail" });
 
-const props = defineProps<{
-  /** 列表行（初值；详情字段以 retrieve 全量为准） */
-  row: SubmissionItem;
-}>();
+// Boolean 类型 prop 缺省会被 Vue 转成 false：必须显式默认 true，
+// 否则「我的填报」详情也会跳过 retrieve（列表行已瘦身，无 schema/轨迹）。
+const props = withDefaults(
+  defineProps<{
+    /** 列表行（初值；详情字段以 retrieve 全量为准） */
+    row: SubmissionItem;
+    /**
+     * 是否在挂载后再拉一次详情：调用方已取全量（管理端详情先用 form-data 端点
+     * retrieve，含掩码口径）时传 false，避免二次请求与跨端点覆盖（我的填报端点
+     * 不做敏感字段掩码，会把管理端已掩码的明文重新带出来）。
+     */
+    fetchDetail?: boolean;
+  }>(),
+  { fetchDetail: true }
+);
 
 const { t } = useI18n();
 
@@ -176,10 +187,13 @@ const prepareFieldMetadata = () => {
 
 onMounted(async () => {
   // 列表行已瘦身（无 form_schema/approval_trail）：拉取 retrieve 全量
-  // 后再准备字段展示辅助数据；请求失败时保留列表行初值（data 摘要仍可渲染）
-  const res = await submissionApi.retrieve(props.row.pk).catch(() => null);
-  if (res && isSuccess(res) && res.data) {
-    row.value = { ...props.row, ...(res.data as SubmissionItem) };
+  // 后再准备字段展示辅助数据；请求失败时保留列表行初值（data 摘要仍可渲染）。
+  // 调用方已取全量（管理端详情）时跳过，避免二次请求与掩码口径被覆盖。
+  if (props.fetchDetail) {
+    const res = await submissionApi.retrieve(props.row.pk).catch(() => null);
+    if (res && isSuccess(res) && res.data) {
+      row.value = { ...props.row, ...(res.data as SubmissionItem) };
+    }
   }
   prepareFieldMetadata();
 });

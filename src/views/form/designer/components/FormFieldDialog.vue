@@ -5,6 +5,7 @@ import { getDictTypes } from "@/utils/dict";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 import { FIELD_KEY_RE } from "../utils/fieldValidate";
+import { convergeFieldAttributes } from "../utils/fieldConverge";
 import { FIELD_TYPE_OPTIONS as TYPE_OPTIONS } from "../utils/schemaMeta";
 import {
   FormulaError,
@@ -100,15 +101,7 @@ const getField = (): FormField | null => {
     return null;
   }
   const next: FormField = { ...form, key, label: form.label.trim() };
-  // 类型切换后的属性收敛：不相关属性一律清除，避免提交 schema 携带无效键
-  if (!isText.value) delete next.max_length;
-  if (!isNumber.value) {
-    delete next.min;
-    delete next.max;
-  }
-  if (!["amount", "formula"].includes(form.type)) delete next.precision;
-  if (form.type !== "user") delete next.multiple;
-  // 计算字段：表达式语法 + 引用合法性（与服务端同口径）；不能设为必填
+  // 计算字段：表达式语法 + 引用合法性（与服务端同口径）
   if (isFormula.value) {
     const expression = (form.formula ?? "").trim();
     try {
@@ -120,26 +113,10 @@ const getField = (): FormField | null => {
       return null;
     }
     next.formula = expression;
-    delete next.required;
-    if (next.precision === undefined) next.precision = 2;
-  } else {
-    delete next.formula;
   }
-  // 不可筛选的控件类型不携带该标记（服务端同口径校验）
-  if (!isFilterable.value || !next.filterable) delete next.filterable;
-  if (isOptioned.value) {
-    const dict = (form.dict ?? "").trim();
-    if (dict) {
-      // 字典与内联选项互斥（后端同口径）：绑定字典时清空内联选项
-      next.dict = dict;
-      next.options = [];
-    } else {
-      delete next.dict;
-    }
-  } else {
-    delete next.dict;
-  }
-  return next;
+  // 类型切换后的属性收敛（与字段表行内改类型同源）：不相关属性一律清除，
+  // 避免提交 schema 携带无效键
+  return convergeFieldAttributes(next);
 };
 
 defineExpose({ getField });

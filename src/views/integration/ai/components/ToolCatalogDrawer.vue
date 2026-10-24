@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import type { AiToolItem } from "@/api/ai/ai";
 
@@ -12,7 +13,7 @@ const { t } = useI18n();
 
 <template>
   <div data-testid="ai-tool-catalog">
-    <el-empty v-if="!tools.length" :description="t('ai.toolCatalogEmpty')" />
+    <ReEmpty v-if="!tools.length" :description="t('ai.toolCatalogEmpty')" />
     <div v-else class="space-y-4">
       <div v-for="tool in tools" :key="tool.name">
         <div class="font-medium">{{ tool.name }}</div>

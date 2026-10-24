@@ -4,7 +4,6 @@ import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import {
   mcpServerApi,
-  type McpCallResult,
   type McpServerItem,
   type McpToolSnapshot
 } from "@/api/ai/mcp";
@@ -15,13 +14,14 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import McpCallPanel from "./McpCallPanel.vue";
 
 /**
  * 外部 MCP 服务器抽屉：资料卡 + 工具快照清单 + 调用测试（白名单内）。
  *
  * - 「同步」拉取最新 tools/list（更新服务器快照，列表刷新由页面侧负责）；
  * - 「调用」仅白名单工具可用（服务端 fail-closed，未列出的工具被拒并落审计）；
- * - 参数按 JSON 对象填写，结果文本截断展示。
+ * - 调用表单与结果展示在 McpCallPanel（按 input_schema 派生控件）。
  *
  * 同步与调用各挂独立权限点（sync / call:AiMcpServers）：无授权时不渲染对应
  * 入口，避免点击后服务端 403。
@@ -40,10 +40,7 @@ const tools = ref<McpToolSnapshot[]>([...(props.row.tools_snapshot ?? [])]);
 /** 抽屉资料以详情为准（列表行是快照，同步后 last_synced_time/error 会过期） */
 const server = ref<McpServerItem>({ ...props.row });
 const syncing = ref(false);
-const calling = ref(false);
 const callTool = ref("");
-const callArguments = ref("{}");
-const callResult = ref<McpCallResult | null>(null);
 
 const loadDetail = async () => {
   if (!hasAuth("retrieve:AiMcpServers")) return;
@@ -107,8 +104,6 @@ const runSync = async () => {
 const pickTool = (raw: unknown) => {
   const tool = raw as McpToolSnapshot;
   callTool.value = tool.name;
-  callArguments.value = "{}";
-  callResult.value = null;
 };
 
 /** 工具是否已接入 AI 动作面：后端快照条目带 callable 标记（列表时按调用准入
@@ -123,36 +118,6 @@ const inActionSurface = (raw: unknown) => {
     tool.input_schema &&
     Object.keys(tool.input_schema).length > 0
   );
-};
-
-const runCall = async () => {
-  let args: Record<string, unknown>;
-  try {
-    const parsed = JSON.parse(callArguments.value || "{}");
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
-      throw new Error("not an object");
-    args = parsed as Record<string, unknown>;
-  } catch {
-    message(t("mcp.callInvalidJson"), { type: "warning" });
-    return;
-  }
-  calling.value = true;
-  try {
-    const res = await mcpServerApi
-      .call(props.row.pk, callTool.value, args)
-      .catch(normalizeError);
-    if (isSuccess(res)) {
-      callResult.value = res.data as McpCallResult;
-    } else {
-      callResult.value = {
-        tool: callTool.value,
-        is_error: true,
-        text: String(res.detail ?? "")
-      };
-    }
-  } finally {
-    calling.value = false;
-  }
 };
 </script>
 
@@ -249,47 +214,12 @@ const runCall = async () => {
       </template>
     </ReReadonlyTable>
 
-    <div v-if="hasAuth('call:AiMcpServers')" class="mt-4">
-      <div class="mb-2 font-medium">
-        {{ t("mcp.callTitle", { name: callTool || "-" }) }}
-      </div>
-      <el-input
-        v-model="callArguments"
-        type="textarea"
-        :rows="3"
-        data-testid="mcp-call-arguments"
-        :placeholder="t('mcp.callArgumentsTip')"
-      />
-      <div class="mt-2 flex items-center gap-2">
-        <el-button
-          type="primary"
-          size="small"
-          :disabled="!callTool"
-          :loading="calling"
-          data-testid="mcp-call-run"
-          @click="runCall"
-        >
-          {{ t("mcp.callRun") }}
-        </el-button>
-        <span class="text-xs text-(--el-text-color-regular)">
-          {{ t("mcp.whitelistTip") }}
-        </span>
-      </div>
-      <div v-if="callResult" class="mt-3" data-testid="mcp-call-result">
-        <div
-          class="mb-1 text-xs"
-          :class="
-            callResult.is_error
-              ? 'text-(--el-color-danger)'
-              : 'text-(--el-color-success)'
-          "
-        >
-          {{ callResult.is_error ? t("mcp.callFailed") : t("mcp.callSuccess") }}
-        </div>
-        <pre
-          class="max-h-60 overflow-auto rounded bg-(--el-fill-color-light) p-2 text-xs break-all whitespace-pre-wrap"
-          >{{ callResult.text || "-" }}</pre>
-      </div>
-    </div>
+    <McpCallPanel
+      v-if="hasAuth('call:AiMcpServers')"
+      class="mt-4"
+      :server="server"
+      :tools="tools"
+      :tool-name="callTool"
+    />
   </div>
 </template>

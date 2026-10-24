@@ -1,6 +1,7 @@
 import { h } from "vue";
-import { ElLink } from "element-plus";
+import { ElLink, ElTag } from "element-plus";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import {
   formatPageColumns,
@@ -14,9 +15,21 @@ import {
  */
 export function useRoleColumns() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const listColumnsFormat = (columns: PageTableColumn[]) =>
     formatPageColumns(columns, {
+      // 内置角色标记：布尔列默认会被框架渲染成可切换开关（内置角色不可停用），
+      // 这里改为只读标签，避免「点了没反应/报错」的误导性交互。
+      builtin: column => {
+        column["width"] = 90;
+        column["cellRenderer"] = ({ row }) =>
+          row.builtin
+            ? h(ElTag, { type: "info", size: "small" }, () =>
+                t("systemRole.builtin")
+              )
+            : "-";
+      },
       user_count: column => {
         column["minWidth"] = 90;
         // 跳转需用户列表权限：无权限时退化为纯文本（此前恒渲染链接，点击被 403 拦，

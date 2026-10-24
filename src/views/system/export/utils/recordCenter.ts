@@ -12,7 +12,7 @@ import { statusTagProps, type StatusTagType } from "@/utils/dict";
 import type { OperationProps, PageTableColumn } from "@/components/RePlusPage";
 import type { RecordType } from "plus-pro-components";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
+import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 import ArrowDown from "~icons/ri/arrow-down-line";
 import FileList from "~icons/ri/file-list-3-line";
 

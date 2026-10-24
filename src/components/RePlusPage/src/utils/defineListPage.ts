@@ -1,6 +1,18 @@
-import { reactive, ref, type Ref, type UnwrapNestedRefs } from "vue";
+import {
+  getCurrentInstance,
+  reactive,
+  ref,
+  type Ref,
+  type UnwrapNestedRefs
+} from "vue";
 import { useI18n } from "vue-i18n";
-import { usePageAuth, type Auths } from "@/router/utils";
+import {
+  DEFAULT_AUTH_ACTIONS,
+  authCodesLoaded,
+  hasAuth,
+  usePageAuth,
+  type Auths
+} from "@/router/utils";
 import type { OperationProps } from "../components/ButtonOperation";
 import type { PageTableColumn, RePlusPageProps } from "./types";
 
@@ -42,7 +54,10 @@ interface DefineListPageOptions<TApi extends object, K extends string = never> {
   localeName: string;
   /** 页面专用权限位（默认按钮位由 usePageAuth 统一扫描） */
   extraAuth?: K[];
-  /** 显式权限码后缀（默认按当前组件名推导；历史命名如 `*:Tag` 时使用） */
+  /** 显式权限码后缀（默认按当前组件名推导；历史命名如 `*:Tag` 时使用）。
+   * 开发态守护：后缀无法解析（组件无名且未显式指定）直接报错；权限码全部
+   * 未命中（后缀与后端菜单 name 错位）时给出对齐告警——两者都会让按钮位
+   * 静默恒 false（「按钮不出现」类问题的前端根因）。 */
   authSuffix?: string;
   /** 列格式化：返回 undefined 时保留入参列（与既有 hook 契约一致） */
   columns?: (
@@ -65,6 +80,30 @@ interface DefineListPageResult<TApi extends object, K extends string = never> {
   operationButtonsProps?: MaybeRefOperationProps;
 }
 
+/** 开发态守护：权限码后缀无法解析——组件无名且未显式传 authSuffix，
+ * 本页所有按钮权限位将恒 false（按钮/入口静默消失）。 */
+function devReportMissingSuffix(): void {
+  console.error(
+    "[defineListPage] 权限码后缀无法解析：未显式传 authSuffix，且当前组件实例没有 name" +
+      "（需在页面 setup 内调用并声明 defineOptions({ name })），本页按钮权限位将恒为 false。"
+  );
+}
+
+/** 开发态守护：默认按钮位全部未命中——后缀与后端菜单 name 错位
+ * （或当前角色未授予该页面任何按钮位）；权限码字典未装载时不可信，跳过。 */
+function devReportAllAuthMissed(suffix: string): void {
+  if (!authCodesLoaded()) return;
+  const missed = DEFAULT_AUTH_ACTIONS.filter(
+    action => !hasAuth(`${action}:${suffix}`)
+  );
+  if (missed.length === DEFAULT_AUTH_ACTIONS.length) {
+    console.warn(
+      `[defineListPage] 页面权限码 *:${suffix} 全部未命中（${missed.length} 个默认按钮位均为 false）。` +
+        `请检查：① 组件 name 与后端菜单 name 不一致时显式传 authSuffix；② 当前角色是否授予了该页面的按钮权限。`
+    );
+  }
+}
+
 /**
  * 列表页装配工厂：收敛 `useI18n + reactive(api) + usePageAuth + 列/按钮/表单
  * 接线 + return` 的重复样板。
@@ -72,6 +111,9 @@ interface DefineListPageResult<TApi extends object, K extends string = never> {
  * 必须在页面 `setup` 内同步调用：`usePageAuth` 依据当前组件实例推导权限后缀
  * （`getCurrentInstance().type.name`），因此本工厂不接受组件名参数；权限码与
  * 菜单授权口径保持页面 `defineOptions({ name })` 不变。
+ *
+ * 开发态守护（仅 `import.meta.env.DEV`）：后缀无法解析直接报错；默认按钮位
+ * 全部未命中时告警并给出对齐建议——生产环境零开销、零输出。
  *
  * 页面专属副作用（轮询、watch、自定义 ref）与额外返回值仍留在各页 hook，
  * 工厂只负责标准接线；`tableRef` 由工厂创建并返回，页面用它绑定 `RePlusPage`。
@@ -81,6 +123,14 @@ export function defineListPage<TApi extends object, K extends string = never>(
 ): DefineListPageResult<TApi, K> {
   const { api: rawApi, localeName, extraAuth = [], authSuffix } = options;
   const api = reactive(rawApi) as UnwrapNestedRefs<TApi>;
+  const resolvedSuffix = authSuffix ?? getCurrentInstance()?.type?.name ?? "";
+  if (import.meta.env.DEV) {
+    if (resolvedSuffix) {
+      devReportAllAuthMissed(resolvedSuffix);
+    } else {
+      devReportMissingSuffix();
+    }
+  }
   const auth = authSuffix
     ? usePageAuth(authSuffix, extraAuth)
     : usePageAuth(extraAuth);

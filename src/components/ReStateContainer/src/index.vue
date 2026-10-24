@@ -18,7 +18,7 @@ defineOptions({ name: "ReStateContainer" });
 const props = withDefaults(
   defineProps<{
     /** 当前状态 */
-    state?: "loading" | "empty" | "error" | "ready";
+    state?: "loading" | "empty" | "denied" | "error" | "ready";
     /** 加载态形态：骨架屏（默认）或转圈 */
     loadingVariant?: "skeleton" | "spinner";
     /** 加载态文案（仅 spinner 形态展示） */
@@ -31,6 +31,8 @@ const props = withDefaults(
     emptyHint?: string;
     /** 空态图标（离线图标集可用名）；留空使用 ReEmpty 内置插画 */
     emptyIcon?: string;
+    /** 无权限提示文案 */
+    deniedText?: string;
     /** 错误态标题 */
     errorText?: string;
     /** 错误态描述 */
@@ -51,6 +53,7 @@ const props = withDefaults(
     skeletonFill: false,
     emptyHint: "",
     emptyIcon: "",
+    deniedText: "",
     errorText: "",
     errorDetail: "",
     minHeight: 0,
@@ -99,6 +102,9 @@ const rootStyle = computed(() =>
 );
 
 const emptyText = computed(() => props.emptyHint || t("reState.empty"));
+const deniedDescription = computed(
+  () => props.deniedText || t("reState.denied")
+);
 const errorTitle = computed(() => props.errorText || t("reState.error"));
 </script>
 
@@ -130,6 +136,12 @@ const errorTitle = computed(() => props.errorText || t("reState.error"));
     <template v-else-if="state === 'empty'">
       <slot name="empty">
         <ReEmpty :description="emptyText" :icon="emptyIcon" />
+      </slot>
+    </template>
+
+    <template v-else-if="state === 'denied'">
+      <slot name="denied">
+        <ReEmpty :description="deniedDescription" icon="ri/lock-2-line" />
       </slot>
     </template>
 

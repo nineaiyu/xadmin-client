@@ -1,5 +1,9 @@
 <script lang="ts" setup>
 import ReStateContainer from "@/components/ReStateContainer";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type {
@@ -57,6 +61,22 @@ const quotaStatus = computed(() => {
 });
 
 const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
+
+/** 三个明细小表（抽屉内密集面板）：列少只读，统一走 ReReadonlyTable */
+const dailyColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "date", label: t("apiApp.usage.date") },
+  { prop: "total", label: t("apiApp.usage.total") },
+  { prop: "failed", label: t("apiApp.usage.failed") },
+  { label: t("apiApp.usage.avgDuration"), slot: "avg_duration" }
+]);
+const topPathsColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "path", label: t("apiApp.usage.path"), showOverflowTooltip: true },
+  { prop: "total", label: t("apiApp.usage.total"), width: 90 }
+]);
+const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
+  { prop: "status_code", label: t("apiApp.usage.statusCode") },
+  { prop: "total", label: t("apiApp.usage.total"), width: 90 }
+]);
 </script>
 
 <template>
@@ -126,50 +146,43 @@ const durationText = (value: number) => `${(value * 1000).toFixed(1)} ms`;
           <div class="usage-section-title">
             {{ t("apiApp.usage.daily") }}
           </div>
-          <el-table :data="data.daily" size="small" max-height="220">
-            <el-table-column prop="date" :label="t('apiApp.usage.date')" />
-            <el-table-column prop="total" :label="t('apiApp.usage.total')" />
-            <el-table-column prop="failed" :label="t('apiApp.usage.failed')" />
-            <el-table-column
-              :label="t('apiApp.usage.avgDuration')"
-              :formatter="row => durationText(row.avg_duration)"
-            />
-          </el-table>
+          <ReReadonlyTable
+            :columns="dailyColumns"
+            :rows="data.daily"
+            size="small"
+            max-height="220"
+            :label="t('apiApp.usage.daily')"
+          >
+            <template #avg_duration="{ row }">
+              {{ durationText(row.avg_duration) }}
+            </template>
+          </ReReadonlyTable>
         </div>
 
         <div class="usage-section">
           <div class="usage-section-title">
             {{ t("apiApp.usage.topPaths") }}
           </div>
-          <el-table :data="data.top_paths" size="small" max-height="220">
-            <el-table-column
-              prop="path"
-              :label="t('apiApp.usage.path')"
-              show-overflow-tooltip
-            />
-            <el-table-column
-              prop="total"
-              :label="t('apiApp.usage.total')"
-              width="90"
-            />
-          </el-table>
+          <ReReadonlyTable
+            :columns="topPathsColumns"
+            :rows="data.top_paths"
+            size="small"
+            max-height="220"
+            :label="t('apiApp.usage.topPaths')"
+          />
         </div>
 
         <div class="usage-section">
           <div class="usage-section-title">
             {{ t("apiApp.usage.statusCodes") }}
           </div>
-          <el-table :data="data.status_codes" size="small" max-height="200">
-            <el-table-column
-              prop="status_code"
-              :label="t('apiApp.usage.statusCode')"
-            />
-            <el-table-column
-              prop="total"
-              :label="t('apiApp.usage.total')"
-              width="90"
-            />
-          </el-table>
+          <ReReadonlyTable
+            :columns="statusCodesColumns"
+            :rows="data.status_codes"
+            size="small"
+            max-height="200"
+            :label="t('apiApp.usage.statusCodes')"
+          />
         </div>
       </template>
       <ReStateContainer

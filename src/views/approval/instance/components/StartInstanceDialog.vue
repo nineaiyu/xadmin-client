@@ -37,6 +37,8 @@ const props = defineProps<{
     flow?: string;
     title?: string;
     formData?: Record<string, unknown>;
+    /** 驳回重提的原实例 pk（随创建请求提交，用于追溯迭代链） */
+    sourceInstance?: string;
   } | null;
 }>();
 
@@ -237,7 +239,8 @@ async function submit() {
       title: form.title,
       form_data: formData,
       // 抄送人：与流程节点级默认抄送合并（后端去重、不含申请人）
-      cc_users: form.ccUsers
+      cc_users: form.ccUsers,
+      source_instance: props.initial?.sourceInstance
     });
     if (isSuccess(res)) {
       message(t("systemApprovalInstance.submitSuccess"), { type: "success" });

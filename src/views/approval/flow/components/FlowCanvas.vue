@@ -16,7 +16,22 @@ import type { NodeRow } from "./flowConfig";
  */
 const props = defineProps<{ nodes: NodeRow[] }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+
+/** 枚举转显名：与节点编辑器（FlowNodesEditor）同一套词条，未知值回退原值 */
+const labelOf = (key: string, fallback: string) =>
+  te(key) ? t(key) : fallback;
+
+const approveTypeLabel = (row: NodeRow) =>
+  row.approve_type === "RATIO"
+    ? `${t("systemApprovalFlow.approveTypeRATIO")} ${row.approve_ratio ?? ""}%`
+    : labelOf(
+        `systemApprovalFlow.approveType${row.approve_type}`,
+        row.approve_type
+      );
+
+const assigneeTypeLabel = (type: string) =>
+  labelOf(`systemApprovalFlow.assigneeType_${type}`, type);
 
 const flowNodes = computed(() =>
   props.nodes.map((row, index) => ({
@@ -27,7 +42,7 @@ const flowNodes = computed(() =>
     },
     data: {
       label: `${index + 1}. ${row.name || t("systemApprovalFlow.nodeName")}`,
-      meta: `${row.approve_type === "RATIO" ? `RATIO ${row.approve_ratio}%` : row.approve_type} · ${row.assignee_type}: ${
+      meta: `${approveTypeLabel(row)} · ${assigneeTypeLabel(row.assignee_type)}: ${
         row.assignee_value || "-"
       }`
     }

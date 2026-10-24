@@ -359,6 +359,7 @@ collapseParams:
   fold: 收起
 
 reState:
+  denied: 无权限访问
   empty: 暂无数据
   error: 加载失败
 
@@ -1151,6 +1152,7 @@ buttons:
   changeHistory: 变更历史
 
 menus:
+  pluginDemo: 插件示例便签
   searchData: 数据查询
   userOnline: 在线用户
   apiApp: API 应用
@@ -1511,11 +1513,14 @@ systemApprovalInstance:
   pendingTab: 待我审批
   mineTab: 我的申请
   doneTab: 已办
+  ccTab: 抄送我
   ongoingTab: 全部在途
   formTitle: 申请标题
   formFlow: 审批流程
   formStatus: 状态
   formApplicant: 申请人
+  formCcUsers: 抄送人
+  sourceInstance: 原申请
   formCurrentNode: 当前节点
   formCreatedTime: 提交时间
   formReason: 驳回/结束说明
@@ -1963,6 +1968,7 @@ systemPermission:
     scopeApis: "{count} 个接口"
 
 systemRole:
+  builtin: 内置
   role: 角色
   name: 角色名称
   code: 角色标识
@@ -4429,10 +4435,15 @@ mcp:
   callTitle: "调用测试 - {name}"
   callArguments: 参数（JSON）
   callArgumentsTip: 按工具参数填写 JSON 对象（键为参数名，如 text 参数填 "hello"）
+  writeConfirmTitle: 确认调用可写工具
+  writeConfirm: 工具「{name}」标记为可写，可能修改外部系统数据，确认继续？
   callRun: 执行调用
   callSuccess: 调用成功
   callFailed: 调用失败
   callInvalidJson: 参数不是合法的 JSON 对象
+  argsJsonTip: 参数为对象/数组时请填写 JSON
+  argRequired: 请填写参数：{name}
+  argInvalidNumber: 参数 {name} 需为数字
   whitelistTip: 仅白名单内工具可调用，调用会被审计
   empty: 暂无工具快照，请先「同步工具」
   readOnlyYes: 只读
@@ -4446,6 +4457,10 @@ mcp:
   toolsCount: "{count} 个工具"
   toolCallUnavailable: 仅白名单内且已接入动作面的工具可调用
 aiKnowledge:
+  ingestPending: 排队中
+  ingestProcessing: 解析中
+  ingestDone: 已就绪
+  ingestFailed: 解析失败
   upload: 上传文档
   uploadTitle: 上传文档
   syncRepo: 同步仓库文档
@@ -4817,3 +4832,12 @@ authorizedApps:
   status_active: 生效中
   status_disabled: 应用已停用
   status_expired: 已过期
+
+# 插件示例（src/extensions/demo-plugin，配套 xadmin-demo-plugin 后端插件）
+pluginNote:
+  title: 标题
+  content: 内容
+  is_active: 是否启用
+  creator: 创建人
+  created_time: 创建时间
+  updated_time: 更新时间

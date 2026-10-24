@@ -60,7 +60,8 @@ const IMPACT_SUPPORTED = new Set([
   "/api/approval/approval-flows",
   "/api/dataset/dynamic-forms",
   "/api/dataset/screens",
-  "/api/system/menu"
+  "/api/system/menu",
+  "/api/system/permission"
 ]);
 
 /** 运行期探测失败的资源（404/405 后不再请求，兜底防御） */

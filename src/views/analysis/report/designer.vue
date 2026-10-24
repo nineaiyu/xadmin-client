@@ -1,18 +1,13 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import ReEmpty from "@/components/ReEmpty";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { useSaveShortcut } from "@/hooks/useSaveShortcut";
-import { isSuccess } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
-import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
+import type { DatasetItem } from "@/api/dataset/datasets";
 import {
-  relatedPk,
-  reportApi,
-  runReport,
   type ReportDesign,
   type ReportDesignComponent,
   type ReportItem
@@ -25,11 +20,11 @@ import {
   REPORT_TABLE_LIMIT,
   designColumns,
   designTableLimit,
-  normalizeDesign,
   componentToCard
 } from "./utils/design";
 import { useDesignMutations } from "./utils/useDesignMutations";
-import { normalizeError } from "@/utils/apiError";
+import { useReportBootstrap } from "./utils/useReportBootstrap";
+import { useReportPersistence } from "./utils/useReportPersistence";
 
 defineOptions({ name: "DataReportDesigner" });
 
@@ -48,7 +43,6 @@ defineOptions({ name: "DataReportDesigner" });
  * 「立即运行」按**已保存**的设计投递执行，有未保存改动时先提示保存。
  * 只读态（非创建者记录）：编辑面板隐藏、保存/运行禁用（写权威在后端，此处为 UX 守卫）。
  */
-const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const canRun = hasAuth("run:DataReport");
@@ -131,47 +125,14 @@ const componentCard = (component: ReportDesignComponent) =>
     componentTitle(component)
   );
 
-onMounted(async () => {
-  const pk = String(route.query.pk ?? "");
-  if (!pk) {
-    message(t("dataReport.pickReportFirst"), { type: "warning" });
-    router.replace("/analysis/report/index");
-    return;
-  }
-  const res = await reportApi.retrieve(pk).catch(() => null);
-  if (!res || !isSuccess(res) || !res.data) {
-    message(t("dataReport.loadFailed"), { type: "warning" });
-    router.replace("/analysis/report/index");
-    return;
-  }
-  report.value = res.data as ReportItem;
-  const datasetPk = relatedPk(report.value.dataset);
-  // 数据集清单装载失败与「清单里没有该数据集」是两种语义：前者提示后可继续看
-  // 设计（取数入口按空数据集降级），后者才是「不可见/已删除」的业务降级——此前
-  // 未捕获异常会让 loading 永久悬挂、设计器空白且用户无感知
-  const datasetRows = await fetchAllRows(datasetApi.list).catch(() => null);
-  if (!datasetRows) {
-    message(t("dataReport.datasetsLoadFailed"), { type: "warning" });
-  } else {
-    dataset.value =
-      listRows<DatasetItem>(datasetRows as never).find(
-        item => item.pk === datasetPk
-      ) ?? null;
-    // 数据集对当前用户不可见（personal/已删除）→ 显式降级：提示 + 禁保存/运行，
-    // 侧栏与组件卡不以空数据集取数（明细表预览对空 pk 自身即跳过）
-    if (!dataset.value) {
-      datasetMissing.value = true;
-      message(t("dataReport.datasetUnavailable"), { type: "error" });
-    }
-  }
-  design.value = {
-    columns: [...(report.value.design?.columns ?? [])],
-    table_limit: designTableLimit(report.value.design),
-    components: (report.value.design?.components ?? []).map(item => ({
-      ...item
-    }))
-  };
-  loading.value = false;
+/** 装载时序（进场校验 / 详情与数据集清单 / design 回填，见 utils/useReportBootstrap.ts） */
+useReportBootstrap({
+  t,
+  report,
+  dataset,
+  datasetMissing,
+  design,
+  loading
 });
 
 const refreshData = () => {
@@ -179,60 +140,19 @@ const refreshData = () => {
   Object.values(cardRefs.value).forEach(handle => handle?.loadData?.());
 };
 
-/* ---------------- 保存 / 返回 ---------------- */
-async function save() {
-  if (!report.value || saving.value || readonly.value || datasetMissing.value)
-    return;
-  if (columns.value.length === 0) {
-    message(t("dataReport.columnsRequired"), { type: "warning" });
-    return;
-  }
-  const missingGroup = components.value.find(
-    item => item.type !== "number" && !item.group_by
-  );
-  if (missingGroup) {
-    message(t("dataReport.groupByRequired"), { type: "warning" });
-    return;
-  }
-  saving.value = true;
-  try {
-    const payload = normalizeDesign(design.value, dataset.value);
-    const res = await reportApi
-      .partialUpdate(report.value.pk, { design: payload })
-      .catch(normalizeError);
-    if (isSuccess(res)) {
-      design.value = payload;
-      dirty.value = false;
-      message(t("dataReport.designSaved"), { type: "success" });
-      return;
-    }
-    if (res.detail) message(String(res.detail), { type: "warning" });
-  } finally {
-    saving.value = false;
-  }
-}
-
-/** 立即运行：按已保存的设计投递执行（未保存改动先提示，避免产出与所见不一致） */
-const running = ref(false);
-async function runNow() {
-  if (!report.value || running.value || readonly.value || datasetMissing.value)
-    return;
-  if (dirty.value) {
-    message(t("dataReport.runDirty"), { type: "warning" });
-    return;
-  }
-  running.value = true;
-  try {
-    const res = await runReport(report.value.pk).catch(normalizeError);
-    if (isSuccess(res)) {
-      message(t("dataReport.runOk"), { type: "success" });
-      return;
-    }
-    if (res.detail) message(String(res.detail), { type: "warning" });
-  } finally {
-    running.value = false;
-  }
-}
+/** 保存 / 立即运行（校验与落库口径见 utils/useReportPersistence.ts，行数门禁抽出） */
+const { save, running, runNow } = useReportPersistence({
+  t,
+  report,
+  dataset,
+  design,
+  saving,
+  dirty,
+  readonly,
+  datasetMissing,
+  columns,
+  components
+});
 
 /* ---------------- 未保存守卫 / 快捷键 ---------------- */
 useDesignerGuard({ dirty, namespace: "dataReport" });
@@ -321,7 +241,7 @@ const back = () => {
 
       <main class="designer-canvas" data-testid="designer-canvas">
         <!-- 数据集不可见/已删除：显式空态，组件卡不再以空数据集取数 -->
-        <el-empty
+        <ReEmpty
           v-if="datasetMissing"
           data-testid="designer-dataset-missing"
           :description="t('dataReport.datasetUnavailable')"
@@ -362,7 +282,7 @@ const back = () => {
               </div>
             </section>
           </div>
-          <el-empty
+          <ReEmpty
             v-else
             :description="t('dataReport.noComponent')"
             :image-size="72"

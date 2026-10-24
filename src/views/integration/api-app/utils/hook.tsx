@@ -41,8 +41,8 @@ export function useApiApplication(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  const { credentialDialog, credential, openCredential, copyText } =
-    useApiAppCredential();
+  const credentialState = useApiAppCredential();
+  const { openCredential, copyText } = credentialState;
 
   const { addOrEditOptions } = useApiApplicationFormOptions({
     t,
@@ -102,9 +102,7 @@ export function useApiApplication(tableRef: Ref) {
     addOrEditOptions,
     listColumnsFormat,
     operationButtonsProps,
-    credentialDialog,
-    credential,
-    copyText,
+    ...credentialState,
     usageVisible,
     usageLoading,
     usageRow,

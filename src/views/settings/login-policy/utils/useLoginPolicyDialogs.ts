@@ -1,7 +1,5 @@
-import { h } from "vue";
 import type { useI18n } from "vue-i18n";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
+import { openDialog } from "@/components/ReDialog/openDialog";
 import PolicyPreviewPanel from "../components/PolicyPreviewPanel.vue";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -14,14 +12,12 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  */
 export function useLoginPolicyDialogs({ t }: { t: TFunction }) {
   const openPreview = () => {
-    addDialog({
+    openDialog({
       title: t("loginPolicy.previewTitle"),
-      width: dialogSize("lg"),
-      draggable: true,
-      destroyOnClose: true,
-      closeOnClickModal: false,
+      component: PolicyPreviewPanel,
+      size: "lg",
       hideFooter: true,
-      contentRenderer: () => h(PolicyPreviewPanel)
+      extra: { destroyOnClose: true }
     });
   };
 

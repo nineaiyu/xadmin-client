@@ -5,6 +5,7 @@ import { ElTag } from "element-plus";
 import { useSortable } from "@/hooks/useSortable";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { FIELD_TYPE_OPTIONS } from "../utils/schemaMeta";
+import { convergeFieldAttributes } from "../utils/fieldConverge";
 import { fieldRowErrorOf } from "../utils/fieldValidate";
 import FormFieldOptionsDialog from "./FormFieldOptionsDialog.vue";
 
@@ -37,6 +38,13 @@ const needsOptionsEditor = (field: FormField) =>
   needsOptions(field.type) ||
   field.type === "table" ||
   field.type === "cascader";
+
+/* 行内改类型与属性弹窗共用同一份属性收敛（见 fieldConverge），改完即清残留键，
+   避免 select→input 残留 options 被后端拒绝、弹窗无法保存 */
+const onTypeChange = (field: FormField, type: FormFieldType) => {
+  field.type = type;
+  convergeFieldAttributes(field);
+};
 
 /* ---------------- 行内编辑的非法态即时反馈（校验规则与保存兜底同源） ---------------- */
 /** 标识非法（格式错误或整表重复） */
@@ -135,7 +143,14 @@ const move = (index: number, offset: -1 | 1) => {
     </el-table-column>
     <el-table-column :label="t('dform.fieldType')" width="120">
       <template #default="{ row }">
-        <el-select v-model="(row as FormField).type" size="small">
+        <el-select
+          :model-value="(row as FormField).type"
+          size="small"
+          data-testid="field-type-select"
+          @change="
+            (type: FormFieldType) => onTypeChange(row as FormField, type)
+          "
+        >
           <el-option
             v-for="item in typeOptions"
             :key="item.value"

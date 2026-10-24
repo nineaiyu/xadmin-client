@@ -25,7 +25,7 @@ vi.mock("@/views/settings/components/settings/index.vue", () => ({
   }
 }));
 
-import sms from "./sms.vue";
+import sms from "./index.vue";
 
 const SUCCESS_CODE = 1000;
 

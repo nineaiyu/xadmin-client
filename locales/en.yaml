@@ -359,6 +359,7 @@ collapseParams:
   fold: Fold
 
 reState:
+  denied: No permission
   empty: No data
   error: Failed to load
 
@@ -1151,6 +1152,7 @@ buttons:
   changeHistory: Change history
 
 menus:
+  pluginDemo: Plugin note (demo plugin)
   searchData: Data search
   userOnline: Online users
   apiApp: API applications
@@ -1511,11 +1513,14 @@ systemApprovalInstance:
   pendingTab: Pending My Approval
   mineTab: My Applications
   doneTab: Processed
+  ccTab: CC to me
   ongoingTab: All in progress
   formTitle: Title
   formFlow: Flow
   formStatus: Status
   formApplicant: Applicant
+  formCcUsers: CC users
+  sourceInstance: Source request
   formCurrentNode: Current Node
   formCreatedTime: Submitted At
   formReason: Rejection / Result Note
@@ -1963,6 +1968,7 @@ systemPermission:
     scopeApis: "{count} APIs"
 
 systemRole:
+  builtin: Built-in
   role: Role
   name: RoleName
   code: RoleCode
@@ -4431,10 +4437,17 @@ mcp:
   callTitle: "Call test - {name}"
   callArguments: Arguments (JSON)
   callArgumentsTip: Fill a JSON object keyed by tool params (e.g. text=hello)
+  writeConfirmTitle: Confirm write-capable tool
+  writeConfirm: Tool "{name}" is marked writable and may modify external data. Continue?
+
   callRun: Run
   callSuccess: Call succeeded
   callFailed: Call failed
   callInvalidJson: Arguments must be a valid JSON object
+  argsJsonTip: Enter JSON for object/array arguments
+  argRequired: "Missing required argument: {name}"
+  argInvalidNumber: "Argument {name} must be a number"
+
   whitelistTip: Only whitelisted tools can be called; every call is audited
   empty: No tool snapshot yet, sync tools first
   readOnlyYes: Read-only
@@ -4448,6 +4461,10 @@ mcp:
   toolsCount: "{count} tools"
   toolCallUnavailable: Only tools in the allowlist and exposed to AI actions can be called
 aiKnowledge:
+  ingestPending: Pending
+  ingestProcessing: Processing
+  ingestDone: Ready
+  ingestFailed: Failed
   upload: Upload document
   uploadTitle: Upload document
   syncRepo: Sync repository docs
@@ -4749,7 +4766,7 @@ settingScim:
   tokenOnce: Copy it and configure it in the IdP now; it cannot be viewed again after closing.
   rotateFailed: Token rotation failed
   syncStatus: Recent Sync Records
-  syncTotal: '{total} records'
+  syncTotal: "{total} records"
   syncTime: Time
   syncModule: Operation
   syncMethod: Method
@@ -4819,3 +4836,12 @@ authorizedApps:
   status_active: Active
   status_disabled: Application disabled
   status_expired: Expired
+
+# 插件示例（src/extensions/demo-plugin，配套 xadmin-demo-plugin 后端插件）
+pluginNote:
+  title: Title
+  content: Content
+  is_active: Active
+  creator: Creator
+  created_time: Created time
+  updated_time: Updated time

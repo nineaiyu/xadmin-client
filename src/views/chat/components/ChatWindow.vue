@@ -21,8 +21,6 @@ import AiIcon from "~icons/ep/cpu";
 import BellIcon from "~icons/ep/bell";
 import BellFilledIcon from "~icons/ep/bell-filled";
 import GroupIcon from "~icons/ep/user-filled";
-import PictureIcon from "~icons/ep/picture";
-import PaperclipIcon from "~icons/ep/paperclip";
 import {
   type ChatAttachmentKind,
   type ChatMessageItem,
@@ -33,8 +31,9 @@ import MessageThreadPanel from "@/components/MessageThreadPanel";
 import MessageTimeDivider from "@/components/MessageTimeDivider";
 import AiStreamingBubble from "@/components/AiStreamingBubble";
 import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
+import { useChatMention } from "../hooks/useChatMention";
 import MessageBubble from "./MessageBubble.vue";
-import ChatEmojiPanel from "./ChatEmojiPanel.vue";
+import ChatComposerToolbar from "./ChatComposerToolbar.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
 
 /**
@@ -137,30 +136,12 @@ const placeholder = computed(() => {
   return t("chat.inputPlaceholder");
 });
 
-/** 输入末尾的 `@片段`：用于弹出在线成员联想 */
-const mentionQuery = computed(() => {
-  if (isAiRoom.value) return null;
-  const matched = /@([\w.\-]*)$/.exec(draft.value);
-  return matched ? matched[1].toLowerCase() : null;
+/** `@` 成员联想（候选口径与选中替换见 hooks/useChatMention.ts，行数门禁抽出） */
+const { mentionCandidates, insertMention } = useChatMention({
+  draft,
+  room: computed(() => props.room),
+  contacts: computed(() => props.contacts)
 });
-
-const mentionCandidates = computed(() => {
-  if (mentionQuery.value === null) return [];
-  // 群聊：成员预览并入候选（离线/非最近成员也能被 @），按 pk 去重
-  const pool = new Map<number, ChatPeer>();
-  (props.room?.members ?? []).forEach(peer => pool.set(peer.pk, peer));
-  props.contacts.forEach(peer => pool.set(peer.pk, peer));
-  return [...pool.values()]
-    .filter(peer => {
-      const name = (peer.username || "").toLowerCase();
-      return !mentionQuery.value || name.includes(mentionQuery.value);
-    })
-    .slice(0, 6);
-});
-
-function insertMention(peer: ChatPeer) {
-  draft.value = draft.value.replace(/@([\w.\-]*)$/, `@${peer.username} `);
-}
 
 /** 表情包：在光标处插入（无选区时追加末尾），插入后恢复焦点与光标位置 */
 function insertEmoji(emoji: string) {
@@ -176,38 +157,9 @@ function insertEmoji(emoji: string) {
   });
 }
 
-/* ---------------- 附件消息（图片 / 文件） ---------------- */
-
-const imageInput = ref<HTMLInputElement | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
-/** 附件入口按权限点收敛（上传走文件中心策略，服务端同样 fail-closed） */
+/** 附件入口按权限点收敛（上传走文件中心策略，服务端同样 fail-closed）；
+ *  入口与隐藏选择器见 ChatComposerToolbar（行数门禁抽出） */
 const canUploadAttachment = computed(() => hasAuth("upload:ChatMessage"));
-
-/** 唤起系统选择器（隐藏 input 作为唯一入口，避免额外弹层组件） */
-function pickAttachment(kind: "image" | "file") {
-  if (!props.room || props.uploading) return;
-  (kind === "image" ? imageInput.value : fileInput.value)?.click();
-}
-
-function onAttachmentChange(event: Event, kind: "image" | "file") {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  // 清空 value：允许连续选择同一文件（否则 change 不再触发）
-  input.value = "";
-  if (file) emit("sendAttachment", file, detectAttachmentKind(file, kind));
-}
-
-/** 上传种类按 MIME 分流（音视频消息）：图片入口保持原判定，文件入口按 MIME 细分
- * （video/audio 走对应消息类型，其余为文件下载语义；与服务端 MIME 判定同口径） */
-function detectAttachmentKind(
-  file: File,
-  fallback: "image" | "file"
-): ChatAttachmentKind {
-  if (fallback === "image") return "image";
-  if (file.type.startsWith("video/")) return "video";
-  if (file.type.startsWith("audio/")) return "audio";
-  return "file";
-}
 
 /** 桌面通知开关（全站生效）：开启时按需申请权限，拒绝则保持关闭并提示 */
 async function toggleDesktopNotify() {
@@ -400,43 +352,12 @@ watch(
 
       <!-- data-testid 挂原生 div：Element Plus 的 el-input（textarea 形态）不保证属性透传到内部 textarea -->
       <div ref="inputWrap" data-testid="chat-input">
-        <div class="flex items-center gap-1 pb-1">
-          <ChatEmojiPanel @select="insertEmoji" />
-          <el-button
-            v-if="canUploadAttachment"
-            text
-            :disabled="!room || uploading"
-            :icon="useRenderIcon(PictureIcon)"
-            :title="t('chat.attachImage')"
-            data-testid="chat-attach-image"
-            @click="pickAttachment('image')"
-          />
-          <el-button
-            v-if="canUploadAttachment"
-            text
-            :disabled="!room || uploading"
-            :icon="useRenderIcon(PaperclipIcon)"
-            :title="t('chat.attachFile')"
-            data-testid="chat-attach-file"
-            @click="pickAttachment('file')"
-          />
-          <!-- 隐藏文件选择器：图片限 image/*；文件不限制（扩展名策略由服务端 fail-closed 把关） -->
-          <input
-            ref="imageInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            data-testid="chat-image-input"
-            @change="onAttachmentChange($event, 'image')"
-          />
-          <input
-            ref="fileInput"
-            type="file"
-            class="hidden"
-            data-testid="chat-file-input"
-            @change="onAttachmentChange($event, 'file')"
-          />
-        </div>
+        <ChatComposerToolbar
+          :can-upload="canUploadAttachment"
+          :disabled="!room || uploading"
+          @emoji="insertEmoji"
+          @send-attachment="(file, kind) => emit('sendAttachment', file, kind)"
+        />
         <el-input
           v-model="draft"
           type="textarea"

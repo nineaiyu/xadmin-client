@@ -309,7 +309,8 @@ onMounted(loadLoginConfig);
       <Motion v-else :delay="300">
         <el-result icon="error" :title="t('login.serverForbidden')" />
       </Motion>
-      <Motion :delay="300">
+      <!-- 服务整体禁用（authInfo.access=false）时隐藏登录方式切换：目标页同样是「服务已禁止」，保留即成死循环点击面 -->
+      <Motion v-if="authInfo.access" :delay="300">
         <el-form-item>
           <div class="w-full h-5 flex-bc">
             <el-button

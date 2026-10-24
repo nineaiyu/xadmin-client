@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import DataTable from "@/components/DataTable";
+import ReEmpty from "@/components/ReEmpty";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
@@ -67,16 +69,17 @@ onMounted(load);
 </script>
 
 <template>
-  <el-empty
+  <ReEmpty
     v-if="!canRead"
     data-testid="authorized-admin-no-permission"
     :description="t('setting.noPermission')"
   />
   <div v-else class="space-y-3">
-    <el-table
+    <DataTable
       v-loading="loading"
       :data="rows"
       data-testid="authorized-admin-table"
+      :label="t('settingOpenPlatform.authorized')"
     >
       <el-table-column :label="t('authorizedApps.application')" min-width="200">
         <template #default="{ row }">
@@ -156,8 +159,8 @@ onMounted(load);
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
-    <el-empty
+    </DataTable>
+    <ReEmpty
       v-if="!loading && rows.length === 0"
       :description="t('authorizedApps.empty')"
     />

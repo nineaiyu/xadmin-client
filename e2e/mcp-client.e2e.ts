@@ -205,7 +205,10 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
       .getByRole("row", { name: /echo/ })
       .getByRole("button", { name: "调用" })
       .click();
-    await drawer.getByTestId("mcp-call-arguments").fill('{"text": "hello"}');
+    // echo 带 inputSchema：按 schema 生成单字段表单（不再手填 JSON 文本）
+    await expect(drawer.getByTestId("mcp-call-form")).toBeVisible();
+    // ElInput 把 $attrs 透传到内部 input，data-testid 直接落在输入框上
+    await drawer.getByTestId("mcp-arg-text").fill("hello");
     await drawer.getByTestId("mcp-call-run").click();
     await expect(drawer.getByTestId("mcp-call-result")).toContainText(
       "echo: hello",

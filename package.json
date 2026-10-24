@@ -38,6 +38,7 @@
     "check:api-routes": "node scripts/check-api-routes.mjs",
     "check:contract-usage": "node scripts/check-contract-usage.mjs",
     "check:menu-permissions": "node scripts/check-menu-permissions.mjs",
+    "check:menu-components": "node scripts/check-menu-components.mjs",
     "check:ledger-ids": "node scripts/check-ledger-ids.mjs",
     "check:version": "node scripts/check-version-sync.mjs",
     "svgo": "svgo -f . -r",

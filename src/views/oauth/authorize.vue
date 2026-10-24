@@ -25,8 +25,11 @@ const submitting = ref(false);
 const info = ref<OAuthAuthorizeInfo | null>(null);
 const errorText = ref("");
 const redirectHost = computed(() => {
+  // 展示域必须取服务端校验通过的 redirect_uri（info），不能用地址栏 query：
+  // query 可被任意构造，用于展示伪造域名（钓鱼面）。
+  const target = info.value?.redirect_uri || readQuery().redirect_uri;
   try {
-    return new URL(readQuery().redirect_uri).host;
+    return new URL(target).host;
   } catch {
     return "";
   }

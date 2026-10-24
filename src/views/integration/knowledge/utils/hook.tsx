@@ -1,4 +1,4 @@
-import { reactive, ref, type Ref } from "vue";
+import { onUnmounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { knowledgeApi } from "@/api/ai/knowledge";
@@ -44,8 +44,27 @@ export function useKnowledge(
 
   const refresh = () => tableRef.value?.handleGetData();
 
+  /** 摄取轮询：上传后任务在后台重建分块，短暂轮询列表同步状态 */
+  let ingestPollTimer: number | undefined;
+  let ingestPollCount = 0;
+  const scheduleIngestPoll = () => {
+    ingestPollCount = 0;
+    if (ingestPollTimer) window.clearInterval(ingestPollTimer);
+    ingestPollTimer = window.setInterval(() => {
+      ingestPollCount += 1;
+      refresh();
+      if (ingestPollCount >= 10 && ingestPollTimer) {
+        window.clearInterval(ingestPollTimer);
+        ingestPollTimer = undefined;
+      }
+    }, 2000);
+  };
+  onUnmounted(() => {
+    if (ingestPollTimer) window.clearInterval(ingestPollTimer);
+  });
+
   const { openUpload, openKnowledgePanel, syncRepo, batchToggle } =
-    useKnowledgeActions({ t, tableRef });
+    useKnowledgeActions({ t, tableRef, afterUpload: scheduleIngestPoll });
 
   const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 

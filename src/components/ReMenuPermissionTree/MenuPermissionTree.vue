@@ -8,25 +8,20 @@ import { isAllEmpty } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import PermissionNodeLabel from "./PermissionNodeLabel.vue";
 import PermissionTreeToolbar from "./PermissionTreeToolbar.vue";
-import { isSyntheticKey, parseMenuFieldKey } from "./utils/treeKeys";
 import {
   buildPermissionTreeIndex,
   cascadeSelection,
-  collectSelectionPayload,
-  computeNodeStatusMap,
-  computeSelectionStats,
-  countFieldSelection,
-  foldFullMenuSelection,
   invertSelection,
   matchPermissionNode,
-  menuAncestors,
   nodeKey,
-  nodeKind,
   toggleMenuSelection,
-  type PermissionNodeStatus,
   type PermissionSubmitPayload,
   type PermissionTreeNode
 } from "./utils/permissionTree";
+import { isSyntheticKey } from "./utils/treeKeys";
+import { useTreeExpansion } from "./utils/useTreeExpansion";
+import { useTreeSync } from "./utils/useTreeSync";
+import { useTreeSelectionMeta } from "./utils/useTreeSelectionMeta";
 import type { TreeInstance } from "element-plus";
 
 defineOptions({ name: "MenuPermissionTree" });
@@ -49,112 +44,104 @@ const emit = defineEmits<{
 
 const { locale, t } = useI18n();
 
-/** el-tree 节点实例：经公开的 getNode 取得（展开态批量控制在其公开方法上操作） */
-type ElTreeNode = ReturnType<TreeInstance["getNode"]>;
-
 const treeRef = ref<TreeInstance>();
 
 const keyword = ref("");
 /** 父子联动：勾选父级自动勾选子级，取消后按剩余子级回算父级 */
 const linked = ref(true);
-const expandedAll = ref(false);
-/** 当前勾选（含字段合成键） */
-const selection = ref<Set<string>>(new Set());
-/** 打开弹窗时的初始勾选（重置回到此处） */
-const baseline = ref<string[]>([]);
-/** 待应用的初始勾选（树数据异步到达时缓冲） */
-const pendingKeys = ref<string[] | null>(null);
-/** 搜索前的展开快照（清空搜索后恢复） */
-const expansionSnapshot = ref<Set<string> | null>(null);
 /** 当前搜索命中的节点键 */
 const keywordMatched = ref<Set<string>>(new Set());
 
-/** 回写 el-tree 期间抑制 @check（setCheckedKeys 不派发 check，此处为双保险） */
-let syncing = false;
 /** 树数据首次就绪标记（仅首次自动展开顶层） */
 let initialized = false;
 
 const treeData = computed<PermissionTreeNode[]>(() => unref(props.data) ?? []);
 const index = computed(() => buildPermissionTreeIndex(treeData.value));
-const statuses = computed(() =>
-  computeNodeStatusMap(index.value, selection.value)
-);
-const stats = computed(() =>
-  computeSelectionStats(index.value, selection.value)
-);
+
+const {
+  expandedAll,
+  expansionSnapshot,
+  snapshotExpansion,
+  restoreExpansion,
+  expandAncestors,
+  expandTopLevel,
+  toggleExpandAll
+} = useTreeExpansion({ treeRef, treeData, index });
+
+const {
+  selection,
+  baseline,
+  syncing,
+  readTreeSelection,
+  emitSelection,
+  applySelection,
+  applyPending,
+  setCheckedKeys
+} = useTreeSync({
+  treeRef,
+  treeData,
+  index,
+  onChange: payload => emit("change", payload),
+  expandAncestors
+});
+
+const { stats, hasFolded, fieldStats, statusOf } = useTreeSelectionMeta({
+  index,
+  selection
+});
+
+/* ---------------- 勾选动作（联动勾选 / 全选 / 反选 / 行级子树 / 重置） ---------------- */
+
+function onCheck(data: PermissionTreeNode) {
+  if (syncing()) return;
+  const current = readTreeSelection();
+  const key = nodeKey(data);
+  // 字段合成节点独立勾选；独立模式下不做任何传播
+  if (isSyntheticKey(key) || !linked.value) {
+    selection.value = current;
+    emitSelection();
+    return;
+  }
+  const next = cascadeSelection(index.value, key, current.has(key), current);
+  applySelection(next);
+}
+
+const toggleAll = (checked: boolean) =>
+  applySelection(toggleMenuSelection(index.value, checked, selection.value));
+
+/** 反选：搜索态只作用于命中节点及其后代（与其交互范围一致） */
+const invert = () => {
+  const scope =
+    keyword.value.trim() && keywordMatched.value.size
+      ? [...keywordMatched.value]
+      : index.value.menuKeys;
+  applySelection(invertSelection(index.value, selection.value, scope));
+};
+
+/** 节点行内「选择全部/取消」：字段分组作用于字段，目录作用于整棵子树 */
+function onSubtreeAction(node: PermissionTreeNode, checked: boolean) {
+  const key = nodeKey(node);
+  if (isSyntheticKey(key)) {
+    const next = new Set(selection.value);
+    (node.children ?? []).forEach(child => {
+      const childKey = nodeKey(child);
+      if (!childKey) return;
+      if (checked) next.add(childKey);
+      else next.delete(childKey);
+    });
+    applySelection(next);
+    return;
+  }
+  applySelection(cascadeSelection(index.value, key, checked, selection.value));
+}
+
+/** 重置到打开弹窗时的勾选（搜索清空与展开恢复由调用方处理） */
+const resetSelection = () => applySelection(new Set(baseline.value));
 
 /** 搜索命中的节点数（含合成节点） */
 const matchedCount = computed(() =>
   keyword.value.trim() ? keywordMatched.value.size : 0
 );
-
-/** 深度优先遍历渲染树：逐节点经公开的 getNode 取树内实例（键即 node-key「pk」） */
-function eachTreeNode(callback: (_node: ElTreeNode) => void) {
-  const walk = (nodes: PermissionTreeNode[]) => {
-    nodes.forEach(item => {
-      const node =
-        item.pk === undefined ? undefined : treeRef.value?.getNode(item.pk);
-      if (node) callback(node);
-      if (item.children?.length) walk(item.children);
-    });
-  };
-  walk(treeData.value);
-}
-
-const treeNodeKey = (node: ElTreeNode) =>
-  String(node.key ?? node.data?.pk ?? "");
-
-function snapshotExpansion() {
-  const snapshot = new Set<string>();
-  eachTreeNode(node => {
-    if (node.expanded) snapshot.add(treeNodeKey(node));
-  });
-  expansionSnapshot.value = snapshot;
-}
-
-function setNodesExpanded(keys: Set<string>, status: boolean) {
-  eachTreeNode(node => {
-    if (!keys.has(treeNodeKey(node))) return;
-    if (status) node.expand();
-    else node.collapse();
-  });
-}
-
-function restoreExpansion() {
-  const snapshot = expansionSnapshot.value;
-  expansionSnapshot.value = null;
-  if (!snapshot) return;
-  const collapse = new Set<string>();
-  eachTreeNode(node => {
-    const key = treeNodeKey(node);
-    if (!snapshot.has(key)) collapse.add(key);
-  });
-  setNodesExpanded(snapshot, true);
-  setNodesExpanded(collapse, false);
-}
-
-/** 展开勾选节点的祖先链（回显时直接看到已授权位置） */
-function expandAncestors(keys: Iterable<string>) {
-  const targets = new Set<string>();
-  for (const key of keys) {
-    const parsed = parseMenuFieldKey(key);
-    const menuKey = parsed ? parsed[0] : key;
-    if (!menuKey || isSyntheticKey(menuKey)) continue;
-    if (index.value.parentMap.has(menuKey)) targets.add(menuKey);
-    menuAncestors(index.value, menuKey).forEach(item => targets.add(item));
-  }
-  if (targets.size) setNodesExpanded(targets, true);
-}
-
-function expandTopLevel() {
-  const targets = new Set<string>();
-  eachTreeNode(node => {
-    if (node.level <= 1) {
-      targets.add(treeNodeKey(node));
-    }
-  });
-  setNodesExpanded(targets, true);
-}
 
 function nodeTitle(node: PermissionTreeNode): string {
   const raw = node?.meta?.title;
@@ -180,145 +167,12 @@ function collectMatched(nodes: PermissionTreeNode[], matched: Set<string>) {
   });
 }
 
-function readTreeSelection(): Set<string> {
-  const keys = treeRef.value?.getCheckedKeys(false) ?? [];
-  return new Set(keys.map(key => String(key)));
-}
-
-function emitSelection() {
-  emit("change", collectSelectionPayload(selection.value));
-}
-
-/** 统一回写：内部状态 → el-tree 勾选 → 上抛表单 */
-function applySelection(next: Set<string>) {
-  selection.value = next;
-  syncing = true;
-  treeRef.value?.setCheckedKeys([...next], false);
-  syncing = false;
-  emitSelection();
-}
-
-/** 是否存在折叠态节点（页面在选且其直接子级全部未选；用于提示文案） */
-const hasFolded = computed(() => {
-  for (const key of index.value.menuKeys) {
-    if (!selection.value.has(key)) continue;
-    const children = index.value.childrenMap.get(key) ?? [];
-    if (
-      children.length &&
-      !children.some(child => selection.value.has(child))
-    ) {
-      return true;
-    }
-  }
-  return false;
-});
-
-/**
- * 应用缓冲的初始勾选（树数据到达前调用则等待数据就绪）。
- * 树由 v-if 按数据就绪挂载：el-tree 实例尚未就绪时保留缓冲并直接返回，
- * 待 treeRef 就绪的监听补应用——否则 setCheckedKeys 落空、勾选态静默丢失
- * （内部 selection 已有键，但树勾选框停留在未选）。
- */
-function applyPending() {
-  if (!pendingKeys.value || !treeData.value.length) return;
-  const keys = pendingKeys.value;
-  // 回显折叠：拥有页面全部后代时呈现为页面级勾选（保存提交页面键，后端再展开为权限点）
-  const folded = [...foldFullMenuSelection(index.value, keys)];
-  baseline.value = folded;
-  selection.value = new Set(folded);
-  // 等 el-tree 完成 setData（其内部 watch 与本次同批执行）后再回显勾选
-  nextTick(() => {
-    if (!treeRef.value || pendingKeys.value !== keys) return;
-    pendingKeys.value = null;
-    treeRef.value.setCheckedKeys(folded, false);
-    expandAncestors(folded);
-  });
-}
-
-/**
- * 外部设置勾选（角色详情异步返回后回显）。
- * 树数据未就绪时缓冲，待数据到达后应用。
- */
-function setCheckedKeys(keys: Array<string | number>) {
-  pendingKeys.value = keys.map(String);
-  applyPending();
-}
-
-function onCheck(data: PermissionTreeNode) {
-  if (syncing) return;
-  const current = readTreeSelection();
-  const key = nodeKey(data);
-  // 字段合成节点独立勾选；独立模式下不做任何传播
-  if (isSyntheticKey(key) || !linked.value) {
-    selection.value = current;
-    emitSelection();
-    return;
-  }
-  const next = cascadeSelection(index.value, key, current.has(key), current);
-  applySelection(next);
-}
-
-function toggleAll(checked: boolean) {
-  applySelection(toggleMenuSelection(index.value, checked, selection.value));
-}
-
-/** 反选：搜索态只作用于命中节点及其后代（与其交互范围一致） */
-function invert() {
-  const scope =
-    keyword.value.trim() && keywordMatched.value.size
-      ? [...keywordMatched.value]
-      : index.value.menuKeys;
-  applySelection(invertSelection(index.value, selection.value, scope));
-}
-
-function setFieldSubtree(node: PermissionTreeNode, checked: boolean) {
-  const next = new Set(selection.value);
-  (node.children ?? []).forEach(child => {
-    const key = nodeKey(child);
-    if (!key) return;
-    if (checked) next.add(key);
-    else next.delete(key);
-  });
-  applySelection(next);
-}
-
-/** 节点行内「选择全部/取消」：字段分组作用于字段，目录作用于整棵子树 */
-function onSubtreeAction(node: PermissionTreeNode, checked: boolean) {
-  const key = nodeKey(node);
-  if (isSyntheticKey(key)) {
-    setFieldSubtree(node, checked);
-    return;
-  }
-  applySelection(cascadeSelection(index.value, key, checked, selection.value));
-}
-
-function toggleExpandAll(status: boolean) {
-  expandedAll.value = status;
-  const targets = new Set<string>();
-  eachTreeNode(node => {
-    const kind = nodeKind(node.data ?? {});
-    if (kind === "fieldGroup" || kind === "field") return;
-    targets.add(treeNodeKey(node));
-  });
-  setNodesExpanded(targets, status);
-}
-
 /** 重置：清空搜索、恢复打开弹窗时的勾选与展开态 */
 function reset() {
   keyword.value = "";
   expandedAll.value = false;
   expandAncestors(baseline.value);
-  applySelection(new Set(baseline.value));
-}
-
-function fieldStats(node: PermissionTreeNode) {
-  return nodeKind(node) === "fieldGroup"
-    ? countFieldSelection(node, selection.value)
-    : undefined;
-}
-
-function statusOf(node: PermissionTreeNode): PermissionNodeStatus | undefined {
-  return statuses.value.get(nodeKey(node));
+  resetSelection();
 }
 
 watch(keyword, value => {
@@ -335,15 +189,13 @@ watch(treeData, () => {
   applyPending();
   if (!initialized && treeData.value.length) {
     initialized = true;
+    // 等 el-tree 完成 setData（其内部 watch 与本次同批执行）后再展开
     nextTick(() => {
       expandTopLevel();
       expandAncestors(selection.value);
     });
   }
 });
-
-// el-tree 经 v-if 按数据就绪延迟挂载：实例就绪时补应用缓冲的初始勾选
-watch(treeRef, () => applyPending());
 
 onMounted(() => {
   // 数据早于挂载到达（同步 props）时 watch 不会触发

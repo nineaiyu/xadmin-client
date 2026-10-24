@@ -12,7 +12,7 @@ import { importRecordApi } from "@/api/task/import";
 import { taskExecutionApi } from "@/api/task/task";
 import { statusTagProps, type StatusValue } from "@/utils/dict";
 import type { ListResult } from "@/api/types";
-import { openTaskLogDialog } from "./taskLogDialog";
+import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 
 /**
  * 任务中心聚合抽屉：审批待办 / 进行中任务 / 最近导出 / 最近导入四段。

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ReEmpty from "@/components/ReEmpty";
 import { computed, h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
@@ -86,17 +87,17 @@ onMounted(load);
 </script>
 
 <template>
-  <el-empty
+  <ReEmpty
     v-if="!canRead"
     data-testid="oauth-no-permission"
     :description="t('setting.noPermission')"
   />
   <div v-else v-loading="loading" class="space-y-3">
-    <el-empty v-if="loadFailed" :description="t('setting.loadFailed')">
+    <ReEmpty v-if="loadFailed" :description="t('setting.loadFailed')">
       <el-button type="primary" plain @click="load">
         {{ t("buttons.reload") }}
       </el-button>
-    </el-empty>
+    </ReEmpty>
     <template v-else>
       <div class="flex-bc flex-wrap gap-2">
         <p class="text-sm text-(--el-text-color-secondary)">
@@ -119,7 +120,7 @@ onMounted(load);
           </el-button>
         </div>
       </div>
-      <el-empty
+      <ReEmpty
         v-if="providers.length === 0"
         :description="t('oauthProvider.empty')"
       />

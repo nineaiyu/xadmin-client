@@ -3,7 +3,7 @@ import { computed, type Ref } from "vue";
 
 import WangEditor from "@/components/RePlusPage/src/components/WangEditor.vue";
 import MarkdownEditor from "./MarkdownEditor.vue";
-import { resolveMessageFormat } from "../utils/noticeFormat";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
 
 /**
  * 公告正文编辑器：按 `message_format` 切换富文本 / Markdown。

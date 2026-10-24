@@ -19,6 +19,7 @@ const activeTab = ref("pending");
 const pendingPanel = ref();
 const minePanel = ref();
 const donePanel = ref();
+const ccPanel = ref();
 const ongoingPanel = ref();
 const statsRef = ref<{ refresh: () => void } | null>(null);
 
@@ -27,6 +28,7 @@ const panelByName: Record<string, typeof pendingPanel> = {
   pending: pendingPanel,
   mine: minePanel,
   done: donePanel,
+  cc: ccPanel,
   ongoing: ongoingPanel
 };
 /** 已挂载过的页签（pending 首屏即挂载）：首次激活由面板挂载自行拉取 */
@@ -116,6 +118,9 @@ function handleStarted() {
         lazy
       >
         <InstancePanel ref="donePanel" scope="done" :on-start="handleStarted" />
+      </el-tab-pane>
+      <el-tab-pane :label="t('systemApprovalInstance.ccTab')" name="cc" lazy>
+        <InstancePanel ref="ccPanel" scope="cc" :on-start="handleStarted" />
       </el-tab-pane>
       <!-- 管理视角：全部审批中的申请（巡看 / 催办），按 ongoing 权限点显示 -->
       <el-tab-pane

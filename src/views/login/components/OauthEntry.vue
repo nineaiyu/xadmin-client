@@ -40,8 +40,10 @@ const goAuthorize = (key: string) => {
         // 避免回调失败页被旧标记误导出「返回账户设置」出口
         sessionStorage.removeItem(OAUTH_BIND_FLAG);
         window.location.href = String(res.data.url);
-      } else if (res.detail) {
-        message(res.detail, { type: "warning" });
+      } else {
+        message(String(res.detail || t("results.failed")), {
+          type: "warning"
+        });
       }
     })
     .catch(() => undefined);

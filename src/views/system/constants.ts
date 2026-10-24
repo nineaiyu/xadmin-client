@@ -1,12 +1,3 @@
-export const NoticeChoices = {
-  SYSTEM: 0,
-  NOTICE: 1,
-  USER: 2,
-  DEPT: 3,
-  ROLE: 4,
-  POST: 5
-};
-
 export const MethodChoices = {
   GET: "GET",
   POST: "POST",

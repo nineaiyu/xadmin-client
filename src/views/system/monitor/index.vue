@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
 import RePage from "@/components/RePage";
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
@@ -19,6 +19,7 @@ import MonitorStatusPanels from "./components/MonitorStatusPanels.vue";
 import MonitorToolbar from "./components/MonitorToolbar.vue";
 import TaskHealthCard from "./components/TaskHealthCard.vue";
 import { useMonitor } from "./utils/hook";
+import { useMonitorView } from "./utils/useMonitorView";
 import { useThresholdDialog } from "./utils/useThresholdDialog";
 import {
   DEFAULT_METRICS,
@@ -27,10 +28,6 @@ import {
   METRIC_OPTIONS,
   RANGE_LABEL_KEYS,
   buildShareQuery,
-  formatComparePercent,
-  formatMetricValue,
-  metricLabelKey,
-  metricStat,
   parseShareQuery
 } from "./utils/format";
 
@@ -51,20 +48,18 @@ onMounted(async () => {
   echartsReady.value = true;
 });
 
+const monitorState = useMonitor();
 const {
   loading,
   autoRefresh,
   wsConnected,
   overview,
-  services,
-  redisInfo,
   celery,
   slow,
   taskHealth,
   history,
   historyLoading,
   thresholds,
-  alerts,
   alertCounts,
   sectionErrors,
   fetchAll,
@@ -74,7 +69,7 @@ const {
   fetchAlerts,
   toggleAuto,
   start
-} = useMonitor();
+} = monitorState;
 
 // ---- 趋势筛选（分享链接可复现：query 与筛选双向同步） ----
 const shared = parseShareQuery((route.query ?? {}) as Record<string, unknown>);
@@ -178,129 +173,19 @@ const exportChartImage = () => {
   if (!ok) message(t("systemMonitor.trendEmpty"), { type: "warning" });
 };
 
-// ---- 实时卡片 ----
-const currentMetrics = computed(
-  () => overview.value.live ?? overview.value.latest
-);
-
-const resourceCards = computed(() => {
-  const current = currentMetrics.value;
-  // 缺失即未知：不能用 0 兜底，否则「接口失败」会被画成「CPU 0%」的确定结论
-  return [
-    {
-      key: "cpu",
-      label: t("systemMonitor.cpu"),
-      value: current?.cpu_percent ?? null,
-      suffix: "%",
-      ring: true
-    },
-    {
-      key: "memory",
-      label: t("systemMonitor.memory"),
-      value: current?.memory_used ?? null,
-      suffix: "%",
-      ring: true
-    },
-    {
-      key: "disk",
-      label: t("systemMonitor.disk"),
-      value: current?.disk_used ?? null,
-      suffix: "%",
-      ring: true
-    },
-    {
-      // cpu_load 是负载均值（如 0.14），不是百分比：进度环会被 Math.round 归零
-      // 成空环配原始数字，改用纯数字展示
-      key: "load",
-      label: t("systemMonitor.load"),
-      value: current?.cpu_load ?? null,
-      suffix: "",
-      ring: false
-    }
-  ];
-});
-
-const netRates = computed(() => ({
-  sent: overview.value.live?.net_sent_rate,
-  recv: overview.value.live?.net_recv_rate,
-  sentTotal: overview.value.live?.net_sent_mb,
-  recvTotal: overview.value.live?.net_recv_mb
-}));
-
-const runtimeItems = computed(() => {
-  const live = overview.value.live;
-  if (!live) return [];
-  return [
-    {
-      key: "cores",
-      label: t("systemMonitor.cores"),
-      value: String(live.cpu_count ?? "—")
-    },
-    {
-      key: "processes",
-      label: t("systemMonitor.processes"),
-      value: String(live.process_count ?? "—")
-    },
-    {
-      key: "swap",
-      label: t("systemMonitor.swap"),
-      value: `${live.swap_percent ?? 0}%`
-    }
-  ];
-});
-
-const serviceItems = computed(() => {
-  const items = services.value;
-  return [
-    {
-      key: "db",
-      label: t("systemMonitor.db"),
-      ok: items?.db?.status ?? null,
-      cost: items?.db.cost
-    },
-    {
-      key: "redis",
-      label: t("systemMonitor.redis"),
-      ok: items?.redis?.status ?? null,
-      cost: items?.redis.cost
-    },
-    {
-      key: "celery",
-      label: t("systemMonitor.celery"),
-      ok: items?.celery?.status ?? null,
-      cost: items?.celery.cost
-    }
-  ];
-});
-
-const redis = computed(() => redisInfo.value.redis ?? {});
-const queues = computed(
-  () =>
-    Object.entries(redisInfo.value.queues ?? {}).filter(
-      entry => typeof entry[1] === "number"
-    ) as [string, number][]
-);
-const slowRows = computed(() => slow.value.results ?? []);
-const alertRows = computed(() => alerts.value);
-
-/** 趋势摘要（平均 / 峰值 / 环比），逐指标 chips 展示 */
-const metricSummaries = computed(() =>
-  metrics.value.map(metric => {
-    const stat = metricStat(history.value, metric);
-    const compare = history.value?.compare?.[metric];
-    return {
-      metric,
-      label: t(metricLabelKey(metric)),
-      avg: formatMetricValue(metric, stat.avg),
-      max: formatMetricValue(metric, stat.max),
-      min: formatMetricValue(metric, stat.min),
-      percent: formatComparePercent(compare?.percent),
-      rising: (compare?.percent ?? 0) > 0
-    };
-  })
-);
-
-const metricLabel = (metric: MonitorMetric) => t(metricLabelKey(metric));
+// ---- 实时卡片（视图模型派生见 utils/useMonitorView.ts，行数门禁抽出） ----
+const {
+  resourceCards,
+  netRates,
+  runtimeItems,
+  serviceItems,
+  redis,
+  queues,
+  slowRows,
+  alertRows,
+  metricSummaries,
+  metricLabel
+} = useMonitorView({ t, monitor: monitorState, metrics });
 
 const eventPanelRef = ref<InstanceType<typeof EventPanel>>();
 

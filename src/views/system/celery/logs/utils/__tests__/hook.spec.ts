@@ -35,7 +35,7 @@ vi.mock("@/components/ReIcon/src/hooks", () => ({
   useRenderIcon: (icon: unknown) => icon
 }));
 
-vi.mock("@/views/system/components/taskLogDialog", () => ({
+vi.mock("@/components/ReTaskLogDialog/taskLogDialog", () => ({
   openTaskLogDialog: vi.fn()
 }));
 

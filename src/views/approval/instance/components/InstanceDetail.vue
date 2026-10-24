@@ -1,22 +1,18 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
+import InstanceSummary from "./InstanceSummary.vue";
+import InstanceDiscussion from "./InstanceDiscussion.vue";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
-import type {
-  InstanceComment,
-  NodeProgress
-} from "@/api/approval/approvalFlow";
+import type { NodeProgress } from "@/api/approval/approvalFlow";
 import { isSuccess } from "@/api/types";
-import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useUserStoreHook } from "@/store/modules/user";
-import { hasAuth } from "@/router/utils";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
 
 /**
- * 流程实例详情抽屉：基本信息 + 表单数据（按 form_schema 渲染 label）+ 审批轨迹。
+ * 流程实例详情抽屉：基本信息 + 表单数据（按 form_schema 渲染 label）+ 审批轨迹
+ * + 讨论区（见 InstanceDiscussion，行数门禁拆分）。
  * 只读展示，不提供操作（操作在列表行内按钮完成）。
  */
 
@@ -72,6 +68,10 @@ type InstanceDetailData = {
   tasks?: TaskRow[];
   /** 关联业务对象当前状态（白名单渲染；无关联为 null） */
   related_object?: RelatedObject | null;
+  /** 抄送人（详情专属；列表不下发） */
+  cc_users?: RelatedUser[];
+  /** 驳回重提的原单（不存在/跨流程/非本人时为 null） */
+  source_instance?: { pk: string; label?: string } | null;
 };
 
 const FLOW_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
@@ -83,8 +83,6 @@ const FLOW_STATUS_TAG_TYPE: Record<string, StatusTagType> = {
 
 const props = defineProps<{ pk: string | number }>();
 const { t } = useI18n();
-const confirm = useConfirm();
-const userStore = useUserStoreHook();
 
 const loading = ref(true);
 const detail = ref<InstanceDetailData | null>(null);
@@ -110,89 +108,25 @@ const formRows = computed(() => {
   }));
 });
 
+const loadError = ref("");
+
 async function load() {
+  loading.value = true;
+  loadError.value = "";
   try {
-    // http 层失败已统一提示，归一为 null：详情区保持空态
+    // http 层失败已统一提示；这里再把失败转成可见的错误态 + 重试入口，
+    // 避免详情缺失时只剩一个空白抽屉（用户无法判断是加载中还是失败）。
     const res = await approvalInstanceApi.retrieve(props.pk).catch(() => null);
-    detail.value = (res?.data ?? null) as InstanceDetailData | null;
+    if (res && isSuccess(res) && res.data) {
+      detail.value = res.data as InstanceDetailData;
+    } else {
+      detail.value = null;
+      loadError.value = String(res?.detail || t("results.failed"));
+    }
   } finally {
     loading.value = false;
   }
 }
-
-/** 讨论区：参与人（申请人 / 处理人 / 抄送人）可评论，@用户名 会提醒相关人 */
-const comments = ref<InstanceComment[]>([]);
-/** 讨论区有独立读权限点：无权限时不请求、也不显示成「暂无评论」 */
-const canViewComments = hasAuth("comments:SystemApprovalInstance");
-// 发表 / 删除各有独立权限点：按钮显隐按权限位收口（后端按参与人与作者/超管复核）
-const canAddComment = hasAuth("addComment:SystemApprovalInstance");
-const canDeleteCommentByPerm = hasAuth("deleteComment:SystemApprovalInstance");
-const commentText = ref("");
-const commentLoading = ref(false);
-
-/**
- * 删除入口与后端 delete_comment 的放行口径对齐：评论作者或平台超管。
- * creator 为 string|number，统一转字符串比对；is_superuser 随 userinfo 下发，
- * 旧持久化副本可能缺该字段，按非超管处理（行为与仅作者可见一致）。
- */
-const canDeleteComment = (item: InstanceComment) =>
-  canDeleteCommentByPerm &&
-  ((item.creator != null &&
-    String(item.creator) === String(userStore.pk ?? "")) ||
-    Boolean(userStore.is_superuser));
-
-async function loadComments() {
-  if (!canViewComments) return;
-  try {
-    const res = await approvalInstanceApi.comments(props.pk);
-    if (isSuccess(res)) {
-      comments.value = res.data ?? [];
-    }
-  } catch {
-    // 讨论区不可用时不影响详情主体展示
-  }
-}
-
-async function submitComment() {
-  const content = commentText.value.trim();
-  if (!content) return;
-  commentLoading.value = true;
-  try {
-    // 异常经 normalizeError 归一为失败信封，与业务失败同走一套 code/detail 分支；
-    // detail 缺失回退通用文案，避免提示里渲染出字面 "undefined"
-    const res = await approvalInstanceApi
-      .addComment(props.pk, content)
-      .catch(normalizeError);
-    if (isSuccess(res)) {
-      message(t("approvalDiscussion.submitted"), { type: "success" });
-      commentText.value = "";
-      await loadComments();
-    } else {
-      message(res.detail || t("results.failed"), { type: "warning" });
-    }
-  } finally {
-    commentLoading.value = false;
-  }
-}
-
-async function removeComment(item: InstanceComment) {
-  if (!(await confirm(t("approvalDiscussion.deleteConfirm")))) return;
-  // http 层失败已统一提示，归一为 null 后直接收尾，避免重复弹错
-  const res = await approvalInstanceApi
-    .deleteComment(props.pk, item.pk)
-    .catch(() => null);
-  if (!res) return;
-  if (isSuccess(res)) {
-    await loadComments();
-  } else {
-    // 业务失败信封 detail 缺失时回退通用文案（不渲染字面 "undefined"）
-    message(res.detail || t("results.failed"), { type: "warning" });
-  }
-}
-
-/** 评论时间展示（ISO → yyyy-MM-dd HH:mm:ss） */
-const commentTime = (value?: string) =>
-  value ? String(value).replace("T", " ").slice(0, 19) : "-";
 
 const statusOf = (value?: DictValue) =>
   typeof value === "object" && value !== null ? value : undefined;
@@ -236,74 +170,17 @@ const progressHint = computed(() => {
 
 onMounted(() => {
   void load();
-  void loadComments();
 });
 </script>
 <template>
   <div v-loading="loading">
     <template v-if="detail">
-      <el-descriptions :column="2" border class="mb-3">
-        <el-descriptions-item :label="t('systemApprovalInstance.formTitle')">
-          {{ detail.title }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('systemApprovalInstance.formFlow')">
-          {{ detail.flow_name }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('systemApprovalInstance.formStatus')">
-          <el-tag
-            v-bind="statusTagProps(detail.status, FLOW_STATUS_TAG_TYPE)"
-            :key="String(statusOf(detail.status)?.value ?? detail.status)"
-          >
-            {{
-              statusOf(detail.status)?.label ??
-              t(
-                `systemApprovalInstance.status${statusOf(detail.status)?.value}`
-              )
-            }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item
-          :label="t('systemApprovalInstance.formApplicant')"
-        >
-          {{ detail.creator?.label ?? "-" }}
-        </el-descriptions-item>
-        <el-descriptions-item
-          :label="t('systemApprovalInstance.formCurrentNode')"
-        >
-          {{ detail.current_node_name || "-" }}
-        </el-descriptions-item>
-        <el-descriptions-item
-          :label="t('systemApprovalInstance.formCreatedTime')"
-        >
-          {{ detail.created_time ?? "-" }}
-        </el-descriptions-item>
-        <el-descriptions-item
-          v-if="nodeProgress"
-          :label="t('systemApprovalInstance.nodeProgress')"
-          :span="2"
-        >
-          <div class="flex items-center gap-2">
-            <el-tag
-              :type="nodeProgress.reached ? 'success' : 'warning'"
-              size="small"
-              data-testid="node-progress-tag"
-            >
-              {{ progressCount }}
-            </el-tag>
-            <span
-              class="text-(length:--font-size-sm) text-(--el-text-color-regular)"
-              >{{ progressHint }}</span
-            >
-          </div>
-        </el-descriptions-item>
-        <el-descriptions-item
-          v-if="detail.reason"
-          :label="t('systemApprovalInstance.formReason')"
-          :span="2"
-        >
-          {{ detail.reason }}
-        </el-descriptions-item>
-      </el-descriptions>
+      <InstanceSummary
+        :detail="detail"
+        :node-progress="nodeProgress"
+        :progress-count="progressCount"
+        :progress-hint="progressHint"
+      />
 
       <template v-if="related">
         <el-divider content-position="left">
@@ -422,76 +299,30 @@ onMounted(() => {
         </el-timeline-item>
       </el-timeline>
     </template>
-
-    <!-- 讨论区：与审批轨迹同页，评论支持 @用户名 提醒 -->
-    <el-divider content-position="left">
-      {{ t("approvalDiscussion.title") }}
-    </el-divider>
-    <el-alert
-      v-if="!canViewComments"
-      type="info"
-      :closable="false"
-      show-icon
-      :title="t('systemApprovalInstance.commentsNoPermission')"
-      data-testid="instance-comments-denied"
-    />
-    <div v-else data-testid="instance-comments">
-      <div v-if="comments.length">
-        <div
-          v-for="item in comments"
-          :key="item.pk"
-          class="mb-2 rounded bg-gray-50 p-2 dark:bg-gray-800"
-        >
-          <div class="flex-bc text-xs text-(--el-text-color-regular)">
-            <span>
-              {{ item.author_display || "-" }} ·
-              {{ commentTime(item.created_time) }}
-            </span>
-            <el-button
-              v-if="canDeleteComment(item)"
-              link
-              type="danger"
-              size="small"
-              data-testid="comment-delete"
-              @click="removeComment(item)"
-            >
-              {{ t("buttons.delete") }}
-            </el-button>
-          </div>
-          <div class="mt-1 text-sm whitespace-pre-wrap">{{ item.content }}</div>
-        </div>
-      </div>
-      <div v-else class="mb-2 text-xs text-(--el-text-color-secondary)">
-        {{ t("approvalDiscussion.empty") }}
-      </div>
-      <template v-if="canAddComment">
-        <el-input
-          v-model="commentText"
-          type="textarea"
-          :rows="3"
-          maxlength="2000"
-          show-word-limit
-          :placeholder="t('approvalDiscussion.placeholder')"
+    <ReStateContainer
+      v-else-if="loadError"
+      state="error"
+      :error-text="t('reState.error')"
+      :error-detail="loadError"
+    >
+      <template #error>
+        <el-alert
+          type="error"
+          :closable="false"
+          show-icon
+          :title="t('reState.error')"
+          :description="loadError"
         />
-        <div class="mt-2 text-right">
-          <el-button
-            type="primary"
-            size="small"
-            :loading="commentLoading"
-            @click="submitComment"
-          >
-            {{ t("approvalDiscussion.submit") }}
+        <div class="mt-3 text-center">
+          <el-button type="primary" data-testid="instance-retry" @click="load">
+            {{ t("buttons.reload") }}
           </el-button>
         </div>
       </template>
-      <!-- 无发表权限时给出说明，而不是留下一个提交必 403 的输入框 -->
-      <div
-        v-else
-        class="text-xs text-(--el-text-color-secondary)"
-        data-testid="comment-readonly-hint"
-      >
-        {{ t("approvalDiscussion.readonly") }}
-      </div>
-    </div>
+    </ReStateContainer>
+    <ReEmpty v-else-if="!loading" :description="t('reState.empty')" />
+
+    <!-- 讨论区：权限口径与评论链路见 InstanceDiscussion（行数门禁拆分） -->
+    <InstanceDiscussion :pk="pk" />
   </div>
 </template>

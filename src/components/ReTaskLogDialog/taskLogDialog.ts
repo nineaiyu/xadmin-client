@@ -1,7 +1,7 @@
 import { h } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import TaskLogDialog from "./TaskLogDialog.vue";
+import TaskLogDialog from "./index.vue";
 
 /**
  * 打开任务/执行记录的实时日志弹窗（WebSocket 增量推送）。
