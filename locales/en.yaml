@@ -3445,6 +3445,7 @@ dashboard:
   settings: Settings
   refresh: Refresh
   autoRefreshOff: Off
+  autoRefreshRealtime: Realtime (push)
   autoRefresh10s: Every 10s
   autoRefresh30s: Every 30s
   autoRefresh60s: Every minute

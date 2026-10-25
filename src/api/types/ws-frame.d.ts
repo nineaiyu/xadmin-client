@@ -23,7 +23,8 @@ export type Action =
   | "monitor"
   | "screen_command"
   | "screen_data"
-  | "screen_page_state";
+  | "screen_page_state"
+  | "dashboard_data";
 
 /**
  * 客户端 → 服务端帧（客户端受控，键集合封闭）

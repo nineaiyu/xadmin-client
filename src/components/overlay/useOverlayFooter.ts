@@ -13,10 +13,9 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 弹层页脚共享逻辑：默认「取消 / 保存」按钮、`sureBtnLoading` 状态键、
- * 关闭前守卫 `beforeClose` 与取消/保存回调编排。
- *
- * ReDialog / ReDrawer 只传各自的 store 操作与状态清理函数，页脚行为保持同源。
- * 自定义 `footerButtons` 仍原样透传（调用方可完全接管按钮区）。
+ * 关闭前守卫 `beforeClose` 与取消/保存回调编排。ReDialog / ReDrawer 只传
+ * 各自的 store 操作与状态清理函数，页脚行为保持同源；自定义 `footerButtons`
+ * 仍原样透传（调用方可完全接管按钮区）。
  */
 export function useOverlayFooter<
   TOptions extends OverlayBaseOptions<TOptions>
@@ -92,12 +91,11 @@ export function useOverlayFooter<
             // 以弹层唯一标识（回退下标）作为状态键，避免多弹层并存时下标漂移串状态
             const uid = getUid(target) ?? index;
             if (target.sureBtnLoading) {
-              sureBtnMap.value[uid] = Object.assign({}, sureBtnMap.value[uid], {
-                loading: true
-              });
+              const prev = sureBtnMap.value[uid];
+              sureBtnMap.value[uid] = { ...prev, loading: true };
             }
+            // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用）
             const closeLoading = () => {
-              // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用）
               if (target.sureBtnLoading && sureBtnMap.value[uid]) {
                 sureBtnMap.value[uid].loading = false;
               }

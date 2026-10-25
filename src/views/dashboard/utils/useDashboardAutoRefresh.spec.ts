@@ -2,7 +2,10 @@ import { mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, ref, type Ref } from "vue";
 
-import { useDashboardAutoRefresh } from "./useDashboardAutoRefresh";
+import {
+  REALTIME_REFRESH_SECONDS,
+  useDashboardAutoRefresh
+} from "./useDashboardAutoRefresh";
 
 function mountAutoRefresh(options: {
   kiosk: boolean;
@@ -67,5 +70,33 @@ describe("useDashboardAutoRefresh 挂屏自动刷新", () => {
     wrapper.unmount();
     await vi.advanceTimersByTimeAsync(120_000);
     expect(refresh).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useDashboardAutoRefresh 实时档", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("实时档（-1）不开本机定时器，数据帧由推送通道驱动", async () => {
+    const { refresh, seconds } = mountAutoRefresh({
+      kiosk: true,
+      requestedSeconds: "-1"
+    });
+    expect(seconds.value).toBe(REALTIME_REFRESH_SECONDS);
+
+    await vi.advanceTimersByTimeAsync(300_000);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("普通模式也可切到实时档：切档不创建定时器", async () => {
+    const { refresh, seconds } = mountAutoRefresh({ kiosk: false });
+    seconds.value = REALTIME_REFRESH_SECONDS;
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

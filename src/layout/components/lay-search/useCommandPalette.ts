@@ -11,10 +11,8 @@ export type { CommandPaletteOptions } from "./commandPaletteTypes";
 
 /**
  * 命令面板：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航。
- *
  * 与顶栏搜索合流（不新建重复组件）：无关键字时「快捷动作」参与 ↑↓/Enter，
  * 有候选时菜单结果与全局搜索分组按同一导航指针串联，鼠标点击仍走原有高亮逻辑。
- *
  * 动作注册表见 commandPaletteRegistry.ts，键盘导航见 commandPaletteNav.ts。
  */
 export function useCommandPalette(options: CommandPaletteOptions) {

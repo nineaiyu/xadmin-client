@@ -1,8 +1,15 @@
 import { onBeforeUnmount, ref, watch, type Ref } from "vue";
 
-/** 自动刷新档位（0 = 关闭）；模板与解析共用同一份清单 */
+/** 实时档位值：不开本机定时器，由 ws/dashboard/<pk> 推送通道驱动数据帧 */
+export const REALTIME_REFRESH_SECONDS = -1;
+
+/** 自动刷新档位（0 = 关闭，-1 = 实时推送）；模板与解析共用同一份清单 */
 export const AUTO_REFRESH_OPTIONS = [
   { value: 0, labelKey: "dashboard.autoRefreshOff" },
+  {
+    value: REALTIME_REFRESH_SECONDS,
+    labelKey: "dashboard.autoRefreshRealtime"
+  },
   { value: 10, labelKey: "dashboard.autoRefresh10s" },
   { value: 30, labelKey: "dashboard.autoRefresh30s" },
   { value: 60, labelKey: "dashboard.autoRefresh60s" },
@@ -17,6 +24,7 @@ const KIOSK_DEFAULT_REFRESH_SECONDS = 60;
  *
  * - 普通模式默认关闭；
  * - kiosk 模式默认 60s（可用 `?refresh=` 覆盖，仅接受选项内档位）；
+ * - 实时档（-1）：不开本机定时器，数据帧由 ws/dashboard/<pk> 推送通道驱动；
  * - 切档立即重建定时器，卸载时清理。
  */
 export function useDashboardAutoRefresh({

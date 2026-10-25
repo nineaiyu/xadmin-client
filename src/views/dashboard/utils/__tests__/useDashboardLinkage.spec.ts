@@ -11,10 +11,26 @@ import { useDashboardLinkage } from "../useDashboardLinkage";
  * - 无分组 / 趋势序列（无 raw）点击不改变联动。
  */
 
+/** 最小数据集夹具：联动判定只消费 pk 与 columns */
+function makeDataset(pk: string, columns: string[]): DatasetItem {
+  return {
+    pk,
+    name: pk,
+    description: "",
+    bound_model: "",
+    columns,
+    filters: [],
+    ordering: "",
+    row_limit: 1000,
+    config: {},
+    visibility: "shared"
+  };
+}
+
 const DATASETS = ref<DatasetItem[]>([
-  { pk: "ds-a", columns: ["category", "name"] },
-  { pk: "ds-b", columns: ["name"] }
-] as unknown as DatasetItem[]);
+  makeDataset("ds-a", ["category", "name"]),
+  makeDataset("ds-b", ["name"])
+]);
 
 const SOURCE: DashboardCard = {
   id: "card-1",

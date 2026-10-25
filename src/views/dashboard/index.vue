@@ -5,7 +5,14 @@ import { useRoute, useRouter } from "vue-router";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import type { DashboardCard } from "@/api/dataset/datasets";
-import { useDashboardAutoRefresh } from "./utils/useDashboardAutoRefresh";
+import {
+  REALTIME_REFRESH_SECONDS,
+  useDashboardAutoRefresh
+} from "./utils/useDashboardAutoRefresh";
+import {
+  applyDashboardFrame,
+  useDashboardChannel
+} from "./utils/useDashboardChannel";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useDashboardSnapshot } from "./utils/useDashboardSnapshot";
 import { useCardDialog } from "./utils/useCardDialog";
@@ -80,6 +87,17 @@ const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
 const { cardRefs, setCardRef, exportingCard, exportCardImage } =
   useCardImageExport(t);
+
+/* ---------------- 实时推送（ws/dashboard/<pk>）：自动刷新「实时」档的取数替代 ---------------- */
+useDashboardChannel({
+  // 编辑态预览不吃推送（草稿卡片与线上布局不同）；切盘由通道 watch 重连
+  enabled: computed(
+    () =>
+      autoRefreshSeconds.value === REALTIME_REFRESH_SECONDS && !editing.value
+  ),
+  dashboardPk: computed(() => current.value?.pk ?? null),
+  applyFrame: frame => applyDashboardFrame(frame, cardRefs.value)
+});
 
 /** 快照导出：整盘卡片按页面布局合成单张 PNG（标题/时间戳/水印叠加） */
 const { exporting: exportingSnapshot, exportDashboardSnapshot } =

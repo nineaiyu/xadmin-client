@@ -695,3 +695,118 @@ test("仪表盘卡片联动：点击维度值反向过滤其他卡片，chip 可
     }
   }
 });
+
+test("仪表盘实时推送：实时档建立 ws/dashboard 连接并收到首帧", async ({
+  page
+}) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E推送集-${suffix}`;
+  const dashboardName = `E2E推送板-${suffix}`;
+  let datasetPk = "";
+  let dashboardPk = "";
+
+  try {
+    const dsRes = await page.request.post(
+      `${BACKEND_URL}/api/dataset/datasets`,
+      {
+        headers,
+        data: {
+          name: datasetName,
+          bound_model: "identity.userinfo",
+          columns: ["username"],
+          row_limit: 100,
+          visibility: "shared"
+        }
+      }
+    );
+    expect(dsRes.ok(), await dsRes.text()).toBeTruthy();
+    datasetPk = (await dsRes.json()).data.pk;
+
+    const dbRes = await page.request.post(
+      `${BACKEND_URL}/api/dataset/dashboards`,
+      {
+        headers,
+        data: {
+          name: dashboardName,
+          visibility: "shared",
+          layout: [
+            {
+              id: `e2e-rt-num-${suffix}`,
+              dataset: datasetPk,
+              title: `推送数卡-${suffix}`,
+              chart_type: "number"
+            }
+          ]
+        }
+      }
+    );
+    expect(dbRes.ok(), await dbRes.text()).toBeTruthy();
+    dashboardPk = (await dbRes.json()).data.pk;
+
+    await page.goto(`${FRONT_URL}/#/analysis/dashboard/index`);
+    await page
+      .locator(".el-card")
+      .first()
+      .locator(".el-select")
+      .first()
+      .click();
+    await page
+      .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+        hasText: dashboardName
+      })
+      .first()
+      .click();
+
+    // 切到「实时（推送）」档：页面应建立 ws/dashboard/<pk> 连接（服务端按观察者
+    // 权限聚合，连接即自推首帧——权限语义与逐卡 HTTP 重拉等价）
+    const wsPromise = page.waitForEvent("websocket", ws =>
+      ws.url().includes("/ws/dashboard/")
+    );
+    await page.getByTestId("dashboard-auto-refresh").click();
+    await page
+      .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+        hasText: "实时"
+      })
+      .first()
+      .click();
+    const ws = await wsPromise;
+
+    const framePromise = new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("no dashboard_data frame in 15s")),
+        15_000
+      );
+      ws.on("framereceived", frame => {
+        const payload =
+          typeof frame.payload === "string"
+            ? frame.payload
+            : String(frame.payload ?? "");
+        if (payload.includes("dashboard_data")) {
+          clearTimeout(timer);
+          resolve(payload);
+        }
+      });
+    });
+    const payload = await framePromise;
+    expect(payload).toContain('"dashboard"');
+    expect(payload).toContain('"cards"');
+  } finally {
+    if (dashboardPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/dataset/dashboards/${dashboardPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+    if (datasetPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/dataset/datasets/${datasetPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+  }
+});
