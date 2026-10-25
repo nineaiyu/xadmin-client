@@ -41,8 +41,11 @@ const emit = defineEmits<{
   goDatasets: [];
 }>();
 
-/** 自动刷新间隔（v-model：父级 useDashboardAutoRefresh 持有状态） */
-const autoRefreshSeconds = defineModel<number>({ default: 0 });
+/** 自动刷新间隔（具名 v-model：auto-refresh-seconds，父级 useDashboardAutoRefresh 持有状态；
+ *  无名 defineModel 会绑到 modelValue，与父级 v-model:auto-refresh-seconds 错位——档位永远同步不回父级） */
+const autoRefreshSeconds = defineModel<number>("autoRefreshSeconds", {
+  default: 0
+});
 
 const { t } = useI18n();
 </script>

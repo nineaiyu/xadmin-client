@@ -776,7 +776,7 @@ layout:
   resetSiteWide: 恢复站点默认
   resetSiteWideConfirm: 将站点标题 / Logo 品牌位 / 登录页布局恢复为平台默认值，并对全部用户与登录页立即生效，是否继续？
   resetSiteWideSuccess: 站点级外观已恢复默认
-  panelMoreTip: 更多操作：恢复站点默认 / 复制偏好 / 清空缓存并返回登录页
+  panelMoreTip: 更多操作：恢复站点默认 / 复制偏好 / 外观包导出导入 / 清空缓存并返回登录页
 
 error:
   error403: 抱歉，你无权访问该页面

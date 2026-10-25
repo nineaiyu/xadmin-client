@@ -17,8 +17,6 @@ defineOptions({ name: "McpCallLogsDrawer" });
 
 const props = defineProps<{ server: McpServerItem | null }>();
 
-const visible = defineModel<boolean>({ default: false });
-
 const { t } = useI18n();
 
 const loading = ref(false);
@@ -52,16 +50,14 @@ const load = async () => {
   }
 };
 
+// 纯内容形态（宿主 addDrawer 提供抽屉壳）：挂载即首拉，服务器行切换时重置分页重拉
 watch(
-  () => [visible.value, props.server?.pk],
-  ([opened]) => {
-    if (opened) {
-      page.value = 1;
-      outcome.value = "all";
-      void load();
-    }
+  () => props.server?.pk,
+  () => {
+    page.value = 1;
+    outcome.value = "all";
+    void load();
   },
-  // immediate：挂载时已打开（测试/复用场景）也能首拉
   { immediate: true }
 );
 
@@ -77,12 +73,7 @@ const handleOutcome = () => {
 </script>
 
 <template>
-  <el-drawer
-    v-model="visible"
-    :title="`${t('mcp.logs')} · ${server?.name ?? ''}`"
-    size="640px"
-    data-testid="mcp-call-logs-drawer"
-  >
+  <div data-testid="mcp-call-logs-drawer">
     <div class="mb-2 flex items-center gap-2">
       <el-radio-group v-model="outcome" size="small" @change="handleOutcome">
         <el-radio-button value="all">
@@ -151,5 +142,5 @@ const handleOutcome = () => {
       :current-page="page"
       @current-change="handlePage"
     />
-  </el-drawer>
+  </div>
 </template>

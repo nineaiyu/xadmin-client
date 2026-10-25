@@ -57,7 +57,7 @@ const row = (overrides: Record<string, unknown>) =>
 
 const mountDrawer = async () => {
   const wrapper = mount(McpCallLogsDrawer, {
-    props: { server, modelValue: true },
+    props: { server },
     global: {
       components: {
         ElButton,

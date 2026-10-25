@@ -776,7 +776,7 @@ layout:
   resetSiteWide: Restore site defaults
   resetSiteWideConfirm: This restores the site title / logo / login page layout to the platform defaults and takes effect immediately for all users and the login page. Continue?
   resetSiteWideSuccess: Site appearance restored to defaults
-  panelMoreTip: "More actions: restore site defaults / copy preferences / clear cache and return to login page"
+  panelMoreTip: "More actions: restore site defaults / copy preferences / appearance pack export & import / clear cache and return to login page"
 
 error:
   error403: Sorry, you are not authorized to access this page
