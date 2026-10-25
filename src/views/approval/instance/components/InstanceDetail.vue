@@ -142,6 +142,29 @@ const handlerText = (task: TaskRow) =>
   task.assignee?.label ||
   "-";
 
+/**
+ * 讨论区 @ 联想候选（实例参与人）：申请人 + 各节点处理人/代理人/实际处理者 +
+ * 抄送人，按 pk 去重。label 即 username（DisplayRelatedField 的 label_builder
+ * 口径）；后端解析对任意启用用户生效，这里只收敛「联想提示面」，不构成限制。
+ */
+const discussionParticipants = computed(() => {
+  const data = detail.value;
+  if (!data) return [];
+  const pool = new Map<string, { pk: string; username: string }>();
+  const add = (user?: { pk?: number | string; label?: string }) => {
+    if (user?.pk == null || !user.label) return;
+    pool.set(String(user.pk), { pk: String(user.pk), username: user.label });
+  };
+  add(data.creator);
+  (data.tasks ?? []).forEach(task => {
+    add(task.assignee);
+    add(task.delegate_from);
+    add(task.actor);
+  });
+  (data.cc_users ?? []).forEach(add);
+  return [...pool.values()];
+});
+
 /** 节点进度（比例会签达标线预览）：审批中且有当前节点时由服务端下发 */
 const nodeProgress = computed(() => detail.value?.node_progress ?? null);
 /** 进度计数文案：已通过 X / 需 Y 人（候选 Z） */
@@ -323,6 +346,6 @@ onMounted(() => {
     <ReEmpty v-else-if="!loading" :description="t('reState.empty')" />
 
     <!-- 讨论区：权限口径与评论链路见 InstanceDiscussion（行数门禁拆分） -->
-    <InstanceDiscussion :pk="pk" />
+    <InstanceDiscussion :pk="pk" :participants="discussionParticipants" />
   </div>
 </template>

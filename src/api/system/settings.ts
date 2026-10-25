@@ -59,6 +59,10 @@ export const settingsOAuthProviderApi = new SettingsOAuthProviderApi(
 
 // 企业 IM 通知渠道配置
 export const settingsNotifyImApi = new ViewBaseApi("/api/settings/notify/im");
+// Webhook 通知渠道配置（站点级转发端点）
+export const settingsNotifyWebhookApi = new ViewBaseApi(
+  "/api/settings/notify/webhook"
+);
 // 注册配置
 export const settingsRegisterAuthApi = new ViewBaseApi(
   "/api/settings/register/auth"

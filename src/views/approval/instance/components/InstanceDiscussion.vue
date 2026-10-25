@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import type { InstanceComment } from "@/api/approval/approvalFlow";
@@ -9,6 +9,11 @@ import { normalizeError } from "@/utils/apiError";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
 import { hasAuth } from "@/router/utils";
+import {
+  splitMentionSegments,
+  useMentionSuggest,
+  type MentionUser
+} from "../utils/mention";
 
 /**
  * 流程实例讨论区（自 InstanceDetail 拆分，行数门禁）：与审批轨迹同页，
@@ -17,10 +22,18 @@ import { hasAuth } from "@/router/utils";
  * 读 / 发表 / 删除各有独立权限点：无读权限时提示且不请求；无发表权限时给
  * 只读说明而不是留下一个提交必 403 的输入框；删除口径与后端对齐（评论作者
  * 或平台超管）。
+ *
+ * @ 联想（2026-10 增量）：候选 = 父组件传入的实例参与人（后端解析对任意
+ * 启用用户生效，联想只收敛提示面）；选中插入 `@username `；评论正文按
+ * `@用户名` 分段高亮（文本节点直出，不走 v-html）。
  */
 defineOptions({ name: "SystemApprovalInstanceDiscussion" });
 
-const props = defineProps<{ pk: string | number }>();
+const props = defineProps<{
+  pk: string | number;
+  /** @ 联想候选（实例参与人：申请人/处理人/抄送人，label 即 username） */
+  participants?: MentionUser[];
+}>();
 const { t } = useI18n();
 const confirm = useConfirm();
 const userStore = useUserStoreHook();
@@ -33,6 +46,17 @@ const canAddComment = hasAuth("addComment:SystemApprovalInstance");
 const canDeleteCommentByPerm = hasAuth("deleteComment:SystemApprovalInstance");
 const commentText = ref("");
 const commentLoading = ref(false);
+
+/** 联想候选：父组件参与人里排除自己（后端解析同口径，@自己不产生提醒） */
+const mentionPool = computed(() =>
+  (props.participants ?? []).filter(
+    peer => String(peer.pk) !== String(userStore.pk ?? "")
+  )
+);
+const { mentionQuery, mentionCandidates, insertMention } = useMentionSuggest({
+  draft: commentText,
+  candidates: mentionPool
+});
 
 /**
  * 删除入口与后端 delete_comment 的放行口径对齐：评论作者或平台超管。
@@ -136,13 +160,48 @@ onMounted(loadComments);
             {{ t("buttons.delete") }}
           </el-button>
         </div>
-        <div class="mt-1 text-sm whitespace-pre-wrap">{{ item.content }}</div>
+        <div
+          class="mt-1 text-sm whitespace-pre-wrap"
+          :data-testid="`comment-content-${item.pk}`"
+        >
+          <template
+            v-for="(seg, i) in splitMentionSegments(item.content)"
+            :key="i"
+          >
+            <span
+              v-if="seg.mention"
+              class="font-medium text-(--el-color-primary)"
+            >
+              {{ seg.text }}
+            </span>
+            <template v-else>{{ seg.text }}</template>
+          </template>
+        </div>
       </div>
     </div>
     <div v-else class="mb-2 text-xs text-(--el-text-color-secondary)">
       {{ t("approvalDiscussion.empty") }}
     </div>
     <template v-if="canAddComment">
+      <!-- @ 联想候选：输入末尾 `@片段` 触发（与聊天室同款点击式列表）；候选为空
+           但已触发时提示无匹配，避免「输入 @ 毫无反应」的静默 -->
+      <div
+        v-if="mentionCandidates.length"
+        class="mb-2 rounded border border-solid border-(--el-border-color) p-1"
+        data-testid="mention-candidates"
+        :aria-label="t('approvalDiscussion.mentionTitle')"
+      >
+        <button
+          v-for="peer in mentionCandidates"
+          :key="peer.pk"
+          type="button"
+          class="block w-full cursor-pointer rounded px-2 py-1 text-left text-sm hover:bg-(--el-fill-color-light)"
+          :data-testid="`mention-option-${peer.username}`"
+          @click="insertMention(peer)"
+        >
+          @{{ peer.username }}
+        </button>
+      </div>
       <el-input
         v-model="commentText"
         type="textarea"
@@ -151,6 +210,13 @@ onMounted(loadComments);
         show-word-limit
         :placeholder="t('approvalDiscussion.placeholder')"
       />
+      <div
+        v-if="mentionQuery !== null && !mentionCandidates.length"
+        class="text-xs text-(--el-text-color-secondary)"
+        data-testid="mention-empty"
+      >
+        {{ t("approvalDiscussion.mentionEmpty") }}
+      </div>
       <div class="mt-2 text-right">
         <el-button
           type="primary"

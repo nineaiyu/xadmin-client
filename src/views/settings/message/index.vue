@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { settingsEmailApi, settingsNotifyImApi } from "@/api/system/settings";
+import {
+  settingsEmailApi,
+  settingsNotifyImApi,
+  settingsNotifyWebhookApi
+} from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { settingsPane } from "@/views/settings/components/settings-shell/types";
@@ -83,6 +87,17 @@ const panes = computed<Array<settingsPane>>(() => [
       queryParams: { channel: item.channel }
     }
   })),
+  // Webhook 转发渠道：站点级端点（无 channel 作用域，ViewSet 即单渠道字段面）
+  {
+    key: "webhook",
+    item: {
+      auth: settingAuth("WebhookNotifySetting", true),
+      api: settingsNotifyWebhookApi,
+      localeName: "settingMessage",
+      title: "webhookTitle",
+      fields: ["WEBHOOK_ENABLED", "WEBHOOK_URL", "WEBHOOK_SECRET"]
+    }
+  },
   // 消息通知订阅（列表型自定义面板）与消息模板：无对应权限时不并入导航
   ...(auth.value.list
     ? [{ key: "notifications", label: t("settingMessage.messageTitle") }]

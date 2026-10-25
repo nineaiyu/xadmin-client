@@ -9,7 +9,8 @@ vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
 vi.mock("@/api/system/settings", () => ({
   settingsEmailApi: {},
-  settingsNotifyImApi: {}
+  settingsNotifyImApi: {},
+  settingsNotifyWebhookApi: {}
 }));
 vi.mock("@/api/system/notifications", () => ({
   systemMsgSubscriptionApi: {}
@@ -63,5 +64,35 @@ describe("SettingMessage 面板权限位", () => {
       true
     );
     expect(wrapper.find('[data-testid="template-panel"]').exists()).toBe(false);
+  });
+
+  it("webhook 渠道页签的权限位接线正确（retrieve 缺失时由骨架过滤，不进导航）", () => {
+    mocks.hasAuth.mockReturnValue(true);
+    const enabled = mountPage();
+    const webhookPane = (
+      enabled.findComponent({ name: "Setting" }).props("panes") as Array<{
+        key: string;
+        item?: { auth?: { retrieve?: boolean; test?: boolean } };
+      }>
+    ).find(pane => pane.key === "webhook");
+    // 权限齐：页签进入 panes 且读写/测试位都亮（骨架按 retrieve !== false 收进导航）
+    expect(webhookPane?.item?.auth).toMatchObject({
+      retrieve: true,
+      partialUpdate: true,
+      test: true
+    });
+
+    mocks.hasAuth.mockImplementation(
+      code => !code.includes("WebhookNotifySetting")
+    );
+    const disabled = mountPage();
+    const deniedPane = (
+      disabled.findComponent({ name: "Setting" }).props("panes") as Array<{
+        key: string;
+        item?: { auth?: { retrieve?: boolean } };
+      }>
+    ).find(pane => pane.key === "webhook");
+    // 权限缺：retrieve=false —— 骨架过滤规则（index.vue:50）会把它挡在导航外
+    expect(deniedPane?.item?.auth?.retrieve).toBe(false);
   });
 });

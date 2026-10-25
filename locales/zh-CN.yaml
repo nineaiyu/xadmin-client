@@ -174,6 +174,8 @@ approvalDiscussion:
   deleteConfirm: 确认删除这条评论？
   submitted: 评论已发表
   readonly: 你没有发表评论的权限
+  mentionTitle: 提及成员
+  mentionEmpty: 无匹配成员
   cc: 抄送人
   ccPlaceholder: 选择抄送人（可多选）
 
@@ -2852,6 +2854,7 @@ settingMessage:
   dingtalkTitle: 钉钉
   wecomTitle: 企业微信
   feishuTitle: 飞书
+  webhookTitle: Webhook 通知
 
 settingLdap:
   title: LDAP 目录

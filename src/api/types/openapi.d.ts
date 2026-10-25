@@ -9855,6 +9855,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/notify/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的详情 */
+        get: operations["api_settings_notify_webhook_retrieve"];
+        /** @description 整体更新{cls}信息 */
+        put: operations["api_settings_notify_webhook_update"];
+        /** @description 测试{cls} */
+        post: operations["api_settings_notify_webhook_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description 部分更新{cls}信息 */
+        patch: operations["api_settings_notify_webhook_partial_update"];
+        trace?: never;
+    };
+    "/api/settings/notify/webhook/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_settings_notify_webhook_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/oauth/providers": {
         parameters: {
             query?: never;
@@ -21482,6 +21519,26 @@ export interface components {
             /** 配置数值 */
             value?: unknown;
         };
+        /** @description Webhook 转发端点：URL + 签名密钥 */
+        PatchedWebhookNotifySetting: {
+            /**
+             * Webhook 通知
+             * @description 将通知转发到配置的 Webhook 端点
+             * @default false
+             */
+            WEBHOOK_ENABLED: boolean;
+            /**
+             * Webhook 签名密钥
+             * @description HMAC-SHA256 签名密钥；落库加密且接口不回显
+             */
+            WEBHOOK_SECRET?: string;
+            /**
+             * Webhook 地址
+             * Format: uri
+             * @description 接收通知载荷的 HTTPS 端点
+             */
+            WEBHOOK_URL?: string;
+        };
         PatchedWebhookSubscription: {
             /**
              * 创建时间
@@ -23645,6 +23702,26 @@ export interface components {
             };
             /** 订阅 */
             readonly subscription_name: string;
+        };
+        /** @description Webhook 转发端点：URL + 签名密钥 */
+        WebhookNotifySetting: {
+            /**
+             * Webhook 通知
+             * @description 将通知转发到配置的 Webhook 端点
+             * @default false
+             */
+            WEBHOOK_ENABLED: boolean;
+            /**
+             * Webhook 签名密钥
+             * @description HMAC-SHA256 签名密钥；落库加密且接口不回显
+             */
+            WEBHOOK_SECRET?: string;
+            /**
+             * Webhook 地址
+             * Format: uri
+             * @description 接收通知载荷的 HTTPS 端点
+             */
+            WEBHOOK_URL: string;
         };
         WebhookSubscription: {
             /**
@@ -45799,6 +45876,154 @@ export interface operations {
         };
     };
     api_settings_notify_im_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_settings_notify_webhook_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotifySetting"];
+                };
+            };
+        };
+    };
+    api_settings_notify_webhook_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookNotifySetting"];
+                "application/x-www-form-urlencoded": components["schemas"]["WebhookNotifySetting"];
+                "multipart/form-data": components["schemas"]["WebhookNotifySetting"];
+                "text/csv": components["schemas"]["WebhookNotifySetting"];
+                "text/xlsx": components["schemas"]["WebhookNotifySetting"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotifySetting"];
+                };
+            };
+        };
+    };
+    api_settings_notify_webhook_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookNotifySetting"];
+                "application/x-www-form-urlencoded": components["schemas"]["WebhookNotifySetting"];
+                "multipart/form-data": components["schemas"]["WebhookNotifySetting"];
+                "text/csv": components["schemas"]["WebhookNotifySetting"];
+                "text/xlsx": components["schemas"]["WebhookNotifySetting"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotifySetting"];
+                };
+            };
+        };
+    };
+    api_settings_notify_webhook_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedWebhookNotifySetting"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedWebhookNotifySetting"];
+                "multipart/form-data": components["schemas"]["PatchedWebhookNotifySetting"];
+                "text/csv": components["schemas"]["PatchedWebhookNotifySetting"];
+                "text/xlsx": components["schemas"]["PatchedWebhookNotifySetting"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookNotifySetting"];
+                };
+            };
+        };
+    };
+    api_settings_notify_webhook_search_columns_retrieve: {
         parameters: {
             query?: never;
             header?: never;
