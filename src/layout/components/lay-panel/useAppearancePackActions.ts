@@ -13,43 +13,27 @@ import { downloadBlob } from "@/utils/download";
 import { isSuccess } from "@/api/types";
 import { systemConfigApi } from "@/api/system/config/system";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
+import { packErrorMessage } from "./appearancePackMessages";
 
 // 站点配置键：外观包导入的写回目标（系统配置行的 value 即站点默认）
 const SITE_CONFIG_KEY = "WEB_SITE_CONFIG";
 
-/** 校验失败原因 → 词条键（code 与 appearancePack.ts 对齐；unknown-keys/bad-value 带参数） */
-const PACK_ERROR_KEY_BY_CODE: Record<string, string> = {
-  "invalid-json": "layout.appearancePackBadJson",
-  "wrong-type": "layout.appearancePackWrongType",
-  "wrong-version": "layout.appearancePackWrongVersion",
-  "empty-config": "layout.appearancePackEmpty",
-  "unknown-keys": "layout.appearancePackUnknownKeys",
-  "bad-value": "layout.appearancePackBadValue"
+/** 系统配置行（外观包导入的定位与写回目标） */
+type SiteConfigRow = {
+  pk: string;
+  key: string;
+  value: Record<string, unknown>;
 };
 
 /**
  * 站点级外观包动作（自 usePanelActions 抽出，行数门禁）：偏好面板「更多」菜单的
- * 导出 / 导入入口。导出落文件；导入（仅管理员语义，菜单门控）校验从严后合并写回
- * 系统配置行，再失效缓存、重同步站点配置并重挂载面板组件。
+ * 导出 / 导入入口。导出落文件；导入（仅管理员语义，菜单门控）校验从严后合并
+ * 写回系统配置行，再失效缓存、重同步站点配置并重挂载面板组件。
  */
 export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
   const { t } = useI18n();
   const confirm = useConfirm();
   const siteConfig = useSiteConfigStoreHook();
-
-  /** 校验失败原因 → 本地化文案（词条键映射统一出参，unknown-keys/bad-value 带参数） */
-  const packErrorMessage = (
-    code: string,
-    detail?: { keys?: string[]; key?: string }
-  ): string => {
-    const params =
-      code === "unknown-keys"
-        ? { keys: detail?.keys?.join(", ") ?? "" }
-        : code === "bad-value"
-          ? { key: detail?.key ?? "" }
-          : {};
-    return t(PACK_ERROR_KEY_BY_CODE[code], params);
-  };
 
   /** 导出外观包：当前界面偏好落 JSON 文件（带类型信封），供导入其他环境 */
   const exportAppearancePack = () => {
@@ -79,7 +63,7 @@ export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
     const parsed = parseAppearancePack(await file.text());
     if (!parsed.ok) {
       const detail = "keys" in parsed || "key" in parsed ? parsed : undefined;
-      message(packErrorMessage(parsed.code, detail), { type: "error" });
+      message(packErrorMessage(t, parsed.code, detail), { type: "error" });
       return;
     }
     const count = Object.keys(parsed.config).length;
@@ -89,9 +73,7 @@ export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
     );
     if (!confirmed) return;
     const listRes = await systemConfigApi
-      .list<{ pk: string; key: string; value: Record<string, unknown> }>({
-        key: SITE_CONFIG_KEY
-      })
+      .list<SiteConfigRow>({ key: SITE_CONFIG_KEY })
       .catch(error => ({ code: -1, data: null, detail: String(error) }));
     const row = listRes.data?.results?.find(
       item => item.key === SITE_CONFIG_KEY

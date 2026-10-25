@@ -36,6 +36,16 @@ export function useScreenExport(deps: {
   const { t } = useI18n();
   const exporting = ref(false);
 
+  const collect = () =>
+    collectScreenImages({
+      isCanvas: deps.isCanvas.value,
+      currentCards: deps.currentCards.value,
+      cardRefs: deps.cardRefs.value,
+      paneRefs: deps.paneRefs.value,
+      layoutPanes: deps.layoutPanes.value,
+      paneCards: deps.paneCards
+    });
+
   /** 导出当前屏：逐卡渲染图片并按 ZIP 打包（一次下载，规避浏览器对连续下载的拦截） */
   const exportScreen = async () => {
     if (exporting.value) return;
@@ -43,14 +53,7 @@ export function useScreenExport(deps: {
     try {
       const { buildZipStore, downloadBlob } =
         await import("@/utils/imageExport");
-      const { images, total } = await collectScreenImages({
-        isCanvas: deps.isCanvas.value,
-        currentCards: deps.currentCards.value,
-        cardRefs: deps.cardRefs.value,
-        paneRefs: deps.paneRefs.value,
-        layoutPanes: deps.layoutPanes.value,
-        paneCards: deps.paneCards
-      });
+      const { images, total } = await collect();
       if (images.length === 0) {
         message(t("dataScreen.exportNoChart"), { type: "warning" });
         return;
@@ -75,14 +78,7 @@ export function useScreenExport(deps: {
     if (exporting.value) return;
     exporting.value = true;
     try {
-      const { images } = await collectScreenImages({
-        isCanvas: deps.isCanvas.value,
-        currentCards: deps.currentCards.value,
-        cardRefs: deps.cardRefs.value,
-        paneRefs: deps.paneRefs.value,
-        layoutPanes: deps.layoutPanes.value,
-        paneCards: deps.paneCards
-      });
+      const { images } = await collect();
       if (images.length === 0) {
         message(t("dataScreen.exportNoChart"), { type: "warning" });
         return;
