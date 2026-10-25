@@ -687,6 +687,20 @@ layout:
   copyPreferences: Copy preferences
   copyPreferencesTip: Copy the complete platform config (all fields) to overwrite platform-config.json as a whole, or paste it as the site config item value in System Config
   copyPreferencesSuccess: Platform config copied (ready to overwrite platform-config.json)
+  exportAppearancePack: Export appearance pack
+  exportAppearancePackSuccess: Appearance pack exported (import it into another environment as site defaults)
+  appearancePackExportFailed: Failed to export the appearance pack (download not supported)
+  importAppearancePack: Import appearance pack
+  appearancePackImportConfirm: This will overwrite site-wide UI defaults ({count} items). Personal overrides are kept. Import anyway?
+  appearancePackImported: Appearance pack imported and applied
+  appearancePackImportFailed: Failed to import the appearance pack, please try again later
+  appearancePackRowMissing: Site config row (WEB_SITE_CONFIG) not found. Initialize it in System Config first
+  appearancePackBadJson: The file is not valid JSON
+  appearancePackWrongType: Not an appearance pack file (type marker mismatch)
+  appearancePackWrongVersion: The appearance pack is from a newer version. Upgrade the system first
+  appearancePackEmpty: The appearance pack contains no config items
+  appearancePackUnknownKeys: The appearance pack contains unknown config items: {keys}
+  appearancePackBadValue: The value type of config item {key} does not match this system
   enableCopyPreferences: Show copy-preferences button
   enableCopyPreferencesTip: Show a copy entry in the panel footer "More" menu for the complete platform config
   cleanOut: Clear the cache and return the login page

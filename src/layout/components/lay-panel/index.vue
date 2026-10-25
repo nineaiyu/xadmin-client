@@ -232,6 +232,18 @@ onBeforeUnmount(() => {
                 {{ t("layout.copyPreferences") }}
               </el-dropdown-item>
               <el-dropdown-item
+                v-if="copyPreferencesEnabled"
+                command="exportAppearancePack"
+              >
+                {{ t("layout.exportAppearancePack") }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-if="siteWideEditable"
+                command="importAppearancePack"
+              >
+                {{ t("layout.importAppearancePack") }}
+              </el-dropdown-item>
+              <el-dropdown-item
                 command="clearCache"
                 divided
                 class="lay-panel__more-danger"

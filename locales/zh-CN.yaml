@@ -686,6 +686,20 @@ layout:
   copyPreferences: 复制偏好
   copyPreferencesTip: 复制完整的平台配置（含全部字段），可整文件覆盖 platform-config.json，或整段粘贴为「系统配置」站点配置项的值
   copyPreferencesSuccess: 平台配置已复制（可整文件覆盖 platform-config.json）
+  exportAppearancePack: 导出外观包
+  exportAppearancePackSuccess: 外观包已导出（可导入其他环境作为站点默认）
+  appearancePackExportFailed: 外观包导出失败（浏览器不支持下载）
+  importAppearancePack: 导入外观包
+  appearancePackImportConfirm: 即将覆盖站点级界面默认（共 {count} 项），个人已自定义的偏好不受影响，确定导入？
+  appearancePackImported: 外观包已导入并生效
+  appearancePackImportFailed: 外观包导入失败，请稍后重试
+  appearancePackRowMissing: 未找到站点配置行（WEB_SITE_CONFIG），请先在「系统配置」中初始化
+  appearancePackBadJson: 文件不是有效的 JSON
+  appearancePackWrongType: 不是外观包文件（类型标识不匹配）
+  appearancePackWrongVersion: 外观包版本过新，请先升级系统再导入
+  appearancePackEmpty: 外观包不包含任何配置项
+  appearancePackUnknownKeys: 外观包包含未知配置项：{keys}
+  appearancePackBadValue: 配置项 {key} 的值类型与当前系统不符
   enableCopyPreferences: 显示复制偏好按钮
   enableCopyPreferencesTip: 面板底部「更多」菜单提供一键复制完整平台配置的入口
   cleanOut: 清空缓存并返回登录页
