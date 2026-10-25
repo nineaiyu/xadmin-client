@@ -92,7 +92,7 @@ const visit = (link?: string) => {
     </div>
     <p
       v-if="summaryState === 'ready'"
-      class="mt-3 text-sm leading-6 wrap-break-word"
+      class="mt-3 text-sm/6 wrap-break-word"
       data-testid="ai-daily-report-summary"
     >
       {{ report.summary }}
