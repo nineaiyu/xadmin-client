@@ -159,6 +159,75 @@ describe("ChartCard 数字卡 count_only", () => {
 });
 
 /**
+ * 卡片联动：linkageFilter 非空时请求级 filters 随 execute / aggregate 下发
+ * （字段能力判定在父级，卡片只负责透传；刷新仍走 refreshToken 令牌）。
+ */
+describe("ChartCard 联动过滤", () => {
+  it("number 卡：execute 携带请求级 filters", async () => {
+    mountCard(NUMBER_CARD, { linkageFilter: { field: "category", value: 0 } });
+    await flushPromises();
+
+    expect(state.executeMock).toHaveBeenCalledWith("ds-1", {
+      count_only: true,
+      filters: [{ field: "category", op: "exact", value: 0 }]
+    });
+  });
+
+  it("metric count 卡同样携带 filters", async () => {
+    mountCard(METRIC_COUNT_CARD, {
+      linkageFilter: { field: "category", value: 0 }
+    });
+    await flushPromises();
+
+    expect(state.executeMock).toHaveBeenCalledWith("ds-1", {
+      count_only: true,
+      filters: [{ field: "category", op: "exact", value: 0 }]
+    });
+  });
+
+  it("metric sum 卡：aggregate 携带 filters（无分组纯聚合）", async () => {
+    mountCard(
+      {
+        ...NUMBER_CARD,
+        chart_type: "metric",
+        metric: "sum",
+        value_field: "price"
+      },
+      { linkageFilter: { field: "category", value: 1 } }
+    );
+    await flushPromises();
+
+    expect(state.aggregateMock).toHaveBeenCalledWith("ds-1", {
+      group_by: "",
+      metric: "sum",
+      value_field: "price",
+      filters: [{ field: "category", op: "exact", value: 1 }]
+    });
+  });
+
+  it("图表卡：aggregate 携带 filters", async () => {
+    mountCard(BAR_CARD, { linkageFilter: { field: "category", value: 1 } });
+    await flushPromises();
+
+    expect(state.aggregateMock).toHaveBeenCalledWith("ds-1", {
+      group_by: "gender",
+      metric: "count",
+      date_trunc: undefined,
+      value_field: undefined,
+      filters: [{ field: "category", op: "exact", value: 1 }]
+    });
+  });
+
+  it("无联动：payload 不带 filters 值", async () => {
+    mountCard(BAR_CARD);
+    await flushPromises();
+
+    const payload = state.aggregateMock.mock.calls[0][1];
+    expect(payload.filters).toBeUndefined();
+  });
+});
+
+/**
  * 恒深色大屏 / 投屏：站点可能是亮色，图表必须按 forceDark 强制深色渲染，
  * 否则深色卡片里会嵌一块白底黑字（投屏页「黑白混排」现场）。
  */

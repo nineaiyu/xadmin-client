@@ -44,6 +44,12 @@ const props = defineProps<{
    * 打开明细抽屉。默认关闭（大屏/投屏展示场景不接下钻）。
    */
   drillable?: boolean;
+  /**
+   * 卡片联动过滤（父级按数据集字段能力判定后下发）：非空时本次取数带
+   * 请求级 filters（与数据集定义 filters 叠加，服务端 validate_filters 再校验）。
+   * 刷新仍走 refreshToken 令牌，本组件不自行监听该 prop。
+   */
+  linkageFilter?: { field: string; value: unknown } | null;
 }>();
 
 const emit = defineEmits<{
@@ -89,6 +95,19 @@ const schemeOf = () =>
   props.forceLight && !props.forceDark
     ? chartLightColorScheme()
     : chartColorScheme(dark.value, colorScope.value);
+
+/** 联动过滤载荷：请求级 filters（字段能力判定在父级，服务端 validate_filters 兜底） */
+const activeFilters = computed(() =>
+  props.linkageFilter
+    ? [
+        {
+          field: props.linkageFilter.field,
+          op: "exact",
+          value: props.linkageFilter.value
+        }
+      ]
+    : undefined
+);
 
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
@@ -205,7 +224,8 @@ const loadData = () =>
       if (card.chart_type === "number") {
         // count_only：数字卡只读 total，服务端跳过全量行物化
         const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
-          count_only: true
+          count_only: true,
+          filters: activeFilters.value
         });
         if (!fresh()) return;
         if (isSuccess(res)) {
@@ -219,7 +239,8 @@ const loadData = () =>
         // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
         if ((card.metric ?? "count") === "count") {
           const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
-            count_only: true
+            count_only: true,
+            filters: activeFilters.value
           });
           if (!fresh()) return;
           if (isSuccess(res)) {
@@ -232,7 +253,8 @@ const loadData = () =>
         const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
           group_by: "",
           metric: card.metric ?? "count",
-          value_field: card.value_field
+          value_field: card.value_field,
+          filters: activeFilters.value
         });
         if (!fresh()) return;
         if (isSuccess(res)) {
@@ -247,7 +269,8 @@ const loadData = () =>
         metric: card.metric ?? "count",
         date_trunc:
           card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
-        value_field: card.value_field
+        value_field: card.value_field,
+        filters: activeFilters.value
       });
       if (!fresh()) return;
       if (isSuccess(res)) {

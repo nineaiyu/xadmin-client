@@ -3454,6 +3454,9 @@ export interface paths {
          * @description 聚合序列
          *
          *     图表数据源：group_by + metric(+value_field) + date_trunc
+         *
+         *     ``filters``：请求级行过滤（卡片联动），与数据集定义 filters 叠加，
+         *     校验口径同 ``execute``（``validate_filters``：字段白名单 + op 白名单 + 类型）。
          */
         post: operations["api_dataset_datasets_aggregate_create"];
         delete?: never;

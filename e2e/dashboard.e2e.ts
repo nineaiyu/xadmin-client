@@ -524,3 +524,174 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
     }
   }
 });
+
+test("仪表盘卡片联动：点击维度值反向过滤其他卡片，chip 可清除", async ({
+  page
+}) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const datasetName = `E2E联动集-${suffix}`;
+  const dashboardName = `E2E联动板-${suffix}`;
+  let datasetPk = "";
+  let dashboardPk = "";
+  const bookPks: string[] = [];
+
+  try {
+    // 与下钻用例同口径：自建两本书（category 0=小说 / 1=文学）保证过滤可断言
+    const meRes = await page.request.get(
+      `${BACKEND_URL}/api/identity/user?username=xadmin`,
+      { headers }
+    );
+    const adminPk = (await meRes.json()).data.results[0].pk;
+    for (const [name, category] of [
+      [`E2E联动小说-${suffix}`, 0],
+      [`E2E联动文学-${suffix}`, 1]
+    ] as const) {
+      const res = await page.request.post(`${BACKEND_URL}/api/demo/book`, {
+        headers,
+        data: {
+          name,
+          category,
+          admin: adminPk,
+          admin2: adminPk,
+          isbn: `ISBN-${suffix}-${category}`,
+          author: "E2E",
+          managers: [adminPk]
+        }
+      });
+      expect(res.ok(), await res.text()).toBeTruthy();
+      bookPks.push((await res.json()).data.pk);
+    }
+
+    const dsRes = await page.request.post(
+      `${BACKEND_URL}/api/dataset/datasets`,
+      {
+        headers,
+        data: {
+          name: datasetName,
+          bound_model: "demo.book",
+          columns: ["name", "category"],
+          row_limit: 100,
+          visibility: "shared"
+        }
+      }
+    );
+    expect(dsRes.ok(), await dsRes.text()).toBeTruthy();
+    datasetPk = (await dsRes.json()).data.pk;
+
+    // 两张卡绑同一数据集：柱卡（来源）+ 数字卡（联动目标）
+    const dbRes = await page.request.post(
+      `${BACKEND_URL}/api/dataset/dashboards`,
+      {
+        headers,
+        data: {
+          name: dashboardName,
+          visibility: "shared",
+          layout: [
+            {
+              id: `e2e-link-bar-${suffix}`,
+              dataset: datasetPk,
+              title: `联动柱卡-${suffix}`,
+              chart_type: "bar",
+              group_by: "category",
+              metric: "count"
+            },
+            {
+              id: `e2e-link-num-${suffix}`,
+              dataset: datasetPk,
+              title: `联动数卡-${suffix}`,
+              chart_type: "number"
+            }
+          ]
+        }
+      }
+    );
+    expect(dbRes.ok(), await dbRes.text()).toBeTruthy();
+    dashboardPk = (await dbRes.json()).data.pk;
+
+    await page.goto(`${FRONT_URL}/#/analysis/dashboard/index`);
+    await page
+      .locator(".el-card")
+      .first()
+      .locator(".el-select")
+      .first()
+      .click();
+    await page
+      .locator(".el-select-dropdown:visible .el-select-dropdown__item", {
+        hasText: dashboardName
+      })
+      .first()
+      .click();
+
+    const numberCard = page
+      .locator(".el-card")
+      .filter({ hasText: `联动数卡-${suffix}` });
+    const barCard = page
+      .locator(".el-card")
+      .filter({ hasText: `联动柱卡-${suffix}` });
+    await expect(barCard.locator("svg").last()).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(numberCard.locator(".text-3xl")).toHaveText("2", {
+      timeout: 15_000
+    });
+
+    // 点击柱体：伴生下钻抽屉先出现；Esc 关闭后验证联动面（chip + 数字卡收敛到 1）
+    const barPoint = await barCard
+      .locator("svg")
+      .last()
+      .evaluate((svg: SVGElement) => {
+        const bars = Array.from(
+          svg.querySelectorAll('path[fill]:not([fill="none"])')
+        ).filter(element => {
+          const box = element.getBoundingClientRect();
+          return box.width > 20 && box.height > 20;
+        });
+        const box = bars[0].getBoundingClientRect();
+        return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      });
+    await page.mouse.click(barPoint.x, barPoint.y);
+    const drawer = page.locator(".el-drawer:visible").first();
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByTestId("dashboard-linkage-chip")).toBeVisible();
+    await expect(numberCard.locator(".text-3xl")).toHaveText("1", {
+      timeout: 15_000
+    });
+
+    // 清除联动：数字卡回到全量 2，chip 消失
+    await page
+      .getByTestId("dashboard-linkage-chip")
+      .locator(".el-tag__close")
+      .click();
+    await expect(page.getByTestId("dashboard-linkage-chip")).toHaveCount(0, {
+      timeout: 15_000
+    });
+    await expect(numberCard.locator(".text-3xl")).toHaveText("2", {
+      timeout: 15_000
+    });
+  } finally {
+    for (const pk of bookPks) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/demo/book/${pk}`, { headers })
+        .catch(() => undefined);
+    }
+    if (dashboardPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/dataset/dashboards/${dashboardPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+    if (datasetPk) {
+      await page.request
+        .delete(`${BACKEND_URL}/api/dataset/datasets/${datasetPk}`, {
+          headers
+        })
+        .catch(() => undefined);
+    }
+  }
+});

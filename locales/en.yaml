@@ -699,7 +699,7 @@ layout:
   appearancePackWrongType: Not an appearance pack file (type marker mismatch)
   appearancePackWrongVersion: The appearance pack is from a newer version. Upgrade the system first
   appearancePackEmpty: The appearance pack contains no config items
-  appearancePackUnknownKeys: The appearance pack contains unknown config items: {keys}
+  appearancePackUnknownKeys: "The appearance pack contains unknown config items: {keys}"
   appearancePackBadValue: The value type of config item {key} does not match this system
   enableCopyPreferences: Show copy-preferences button
   enableCopyPreferencesTip: Show a copy entry in the panel footer "More" menu for the complete platform config
@@ -2855,8 +2855,8 @@ setting:
   name: Setting name
   noPermission: No settings available (missing view permission)
   loadFailed: Failed to load settings, please try again later
-  effectiveOk: "\"{name}\" is currently in effect"
-  effectiveBlocked: "\"{name}\" is not in effect"
+  effectiveOk: '"{name}" is currently in effect'
+  effectiveBlocked: '"{name}" is not in effect'
   value: Setting value
   category: Setting category
   is_active: Is active
@@ -3394,6 +3394,8 @@ dashboard:
   exportNoChart: Metric cards have no chart to export
   title: Dashboards
   pickDashboard: Pick a dashboard
+  linkageActive: "Card linkage: {name} = {value}"
+  linkageTip: Other cards are cross-filtered by this dimension value (source card stays unfiltered). Close to clear
   create: New Dashboard
   edit: Edit Layout
   cancelEdit: Exit Edit

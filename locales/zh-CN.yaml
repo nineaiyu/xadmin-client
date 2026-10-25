@@ -3394,6 +3394,8 @@ dashboard:
   exportNoChart: 指标卡没有可导出的图表
   title: 仪表盘
   pickDashboard: 选择仪表盘
+  linkageActive: 卡片联动：{name} = {value}
+  linkageTip: 其他卡片已按该维度值联动过滤（来源卡保持全量），点击关闭清除
   create: 新建仪表盘
   edit: 编辑布局
   cancelEdit: 退出编辑

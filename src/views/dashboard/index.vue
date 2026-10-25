@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
+import type { DashboardCard } from "@/api/dataset/datasets";
 import { useDashboardAutoRefresh } from "./utils/useDashboardAutoRefresh";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useDashboardSnapshot } from "./utils/useDashboardSnapshot";
@@ -13,6 +14,7 @@ import { useDashboardDelete } from "./utils/useDashboardDelete";
 import { useDashboardEditing } from "./utils/useDashboardEditing";
 import { useDashboardView } from "./utils/useDashboardView";
 import { useCardDrill } from "./utils/useCardDrill";
+import { useDashboardLinkage } from "./utils/useDashboardLinkage";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { syncSelectInputsA11y } from "@/utils/tableA11y";
@@ -121,6 +123,40 @@ const goDatasetPage = () => {
 /* ---------------- 卡片下钻：图表点击 / 查看明细 → 数据集明细抽屉 ---------------- */
 const { drillVisible, drillCard, openDrill, drillFilter } = useCardDrill();
 
+/* ---------------- 卡片联动：点击维度值反向过滤同盘其他卡片（来源卡除外） ---------------- */
+const {
+  linkage,
+  applyFromPoint,
+  clear: clearLinkage,
+  payloadFor
+} = useDashboardLinkage({
+  datasets
+});
+
+/** 卡片点击：下钻抽屉 + 同步联动（带维度原值时）；联动变化即整盘刷新 */
+const onCardPoint = (
+  card: DashboardCard,
+  point: { name: string; raw?: unknown } | null
+) => {
+  openDrill(card, point);
+  if (applyFromPoint(card, point)) refreshCards();
+};
+
+/** 清除联动并复位到全量视图（chip 关闭按钮） */
+const onClearLinkage = () => {
+  clearLinkage();
+  refreshCards();
+};
+
+// 编辑态预览不受浏览态过滤影响；切换仪表盘联动复位（卡片属于另一份布局）
+watch(editing, value => {
+  if (value) clearLinkage();
+});
+watch(
+  () => current.value?.pk,
+  () => clearLinkage()
+);
+
 onMounted(async () => {
   await Promise.all([loadDashboards(), loadDatasets()]);
   // 自动刷新下拉的可访问名（EP el-select 无 props 入口，渲染后补名；
@@ -170,6 +206,28 @@ onMounted(async () => {
       icon="ep/data-line"
     />
     <template v-else>
+      <!-- 联动过滤提示条：当前联动来源卡与维度值，可一键清除回到全量 -->
+      <div
+        v-if="linkage && !editing"
+        class="mb-3"
+        data-testid="dashboard-linkage-bar"
+      >
+        <el-tag
+          closable
+          type="primary"
+          size="large"
+          :title="t('dashboard.linkageTip')"
+          data-testid="dashboard-linkage-chip"
+          @close="onClearLinkage"
+        >
+          {{
+            t("dashboard.linkageActive", {
+              name: linkage.sourceTitle,
+              value: linkage.label
+            })
+          }}
+        </el-tag>
+      </div>
       <el-row ref="rowRef" :gutter="12" data-testid="dashboard-cards">
         <!-- 栅格：窄屏最多两列（xs 全宽 / sm、md 半宽上限）；lg 起回到用户档位。
              EP 断点类为 min-width 语义，必须显式给 lg，否则大屏仍命中 md 的半宽值 -->
@@ -216,7 +274,8 @@ onMounted(async () => {
               :card="card"
               :refresh-token="refreshKey"
               :drillable="!editing"
-              @drill="point => openDrill(card, point)"
+              :linkage-filter="payloadFor(card)"
+              @drill="point => onCardPoint(card, point)"
             />
           </el-card>
         </el-col>
