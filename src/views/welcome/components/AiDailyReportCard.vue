@@ -48,7 +48,7 @@ const chips = computed<DailyChip[]>(() => [
   {
     key: "task_failed_24h",
     label: t("welcome.aiDailyTasks"),
-    link: "",
+    link: props.report.links?.tasks,
     anomaly: true
   },
   {

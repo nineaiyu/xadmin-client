@@ -26,6 +26,7 @@ vi.mock("@/utils/message", () => ({
   message: vi.fn()
 }));
 
+import { message } from "@/utils/message";
 import AiDraftDialog from "../AiDraftDialog.vue";
 
 const draftResult = {
@@ -113,5 +114,21 @@ describe("AiDraftDialog", () => {
     expect(
       wrapper.find('[data-testid="ai-draft-apply"]').attributes("disabled")
     ).toBeDefined();
+  });
+
+  it("业务失败（开关关闭/未配置/配额）：显式提示 detail", async () => {
+    api.aiDraft.mockResolvedValue({ code: 1001, detail: "AI 字段草案未启用" });
+    const wrapper = await mountDialog();
+    await fillDescription(wrapper, "书籍页");
+    expect(message).toHaveBeenCalledWith("AI 字段草案未启用", {
+      type: "error"
+    });
+  });
+
+  it("网络异常：归一为可读提示（不再静默）", async () => {
+    api.aiDraft.mockRejectedValue(new Error("Network Error"));
+    const wrapper = await mountDialog();
+    await fillDescription(wrapper, "书籍页");
+    expect(message).toHaveBeenCalledWith("Network Error", { type: "error" });
   });
 });

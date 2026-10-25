@@ -21,9 +21,11 @@ vi.mock("vue-i18n", () => ({
       args ? `${key}:${JSON.stringify(args)}` : key
   })
 }));
+vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 
 import dayjs from "dayjs";
 import type { McpServerItem } from "@/api/ai/mcp";
+import { message } from "@/utils/message";
 import McpCallLogsDrawer from "./McpCallLogsDrawer.vue";
 
 const server: McpServerItem = {
@@ -101,8 +103,9 @@ describe("McpCallLogsDrawer", () => {
       .at(2)!;
     await failed.setValue(true);
     await flushPromises();
+    // 服务端 ok 是布尔过滤器：失败档必须下发 false（字符串会被当空值忽略）
     expect(api.list).toHaveBeenLastCalledWith(
-      expect.objectContaining({ ok: "failed" })
+      expect.objectContaining({ ok: false })
     );
   });
 
@@ -120,6 +123,21 @@ describe("McpCallLogsDrawer", () => {
     );
     expect(trs[0].text()).toContain("mcp.logChannelAi");
     expect(trs[1].text()).toContain("mcp.logChannelAdmin");
+  });
+
+  it("拉取失败：显式提示并清空行（不再呈现为 0 条记录）", async () => {
+    api.list.mockResolvedValue({ code: 1003, detail: "无权限查看" });
+    const wrapper = await mountDrawer();
+    expect(message).toHaveBeenCalledWith("无权限查看", { type: "error" });
+    expect(
+      wrapper.findAll('[data-testid="mcp-call-logs-table"] .el-table__row')
+    ).toHaveLength(0);
+  });
+
+  it("网络异常：归一为可读提示", async () => {
+    api.list.mockRejectedValue(new Error("Network Error"));
+    await mountDrawer();
+    expect(message).toHaveBeenCalledWith("Network Error", { type: "error" });
   });
 
   it("行时间格式化为 MM-DD HH:mm:ss", async () => {

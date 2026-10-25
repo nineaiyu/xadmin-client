@@ -234,8 +234,9 @@ class WS {
         if (this.closeCallback) {
           this.closeCallback(socket, event);
         }
-        // 4403 = 服务端权限拒绝：重连也不会成功，停止退避循环
-        if (event?.code === 4403) return;
+        // 4401 = 未认证（登录失效/被登出）、4403 = 权限拒绝：重连也不会成功，
+        // 停止退避循环（否则登出后每 30s 一次无效连接，服务端持续产生拒绝日志）
+        if (event?.code === 4401 || event?.code === 4403) return;
         // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
         const backoff = Math.min(
           timeout * 2 ** this.reconnectCount,

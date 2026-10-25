@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { MagicStick } from "@element-plus/icons-vue";
+import DataTable from "@/components/DataTable";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import {
@@ -51,10 +52,21 @@ const runDraft = async () => {
   if (!description.value.trim() || !props.model) return;
   loading.value = true;
   try {
+    // 异常归一为信封：开关关闭 / AI 未配置 / 网关失败 / 无权限都必须给出可读提示，
+    // 不能只让按钮从 loading 恢复（200 + 业务码与网络异常同一出口）
     const res = await systemCodeGenApi
       .aiDraft({ model: props.model, description: description.value.trim() })
-      .catch(() => null);
-    if (!res || !isSuccess(res) || !res.data) return;
+      .catch(
+        (error: { detail?: string; message?: string } | null | undefined) => ({
+          code: -1,
+          data: null,
+          detail: error?.detail ?? error?.message
+        })
+      );
+    if (!isSuccess(res) || !res.data) {
+      message(String(res?.detail || t("results.failed")), { type: "error" });
+      return;
+    }
     result.value = res.data;
     selected.value = Object.fromEntries(
       (res.data.fields ?? []).map(field => [field.name, true])
@@ -114,6 +126,8 @@ defineExpose({ open });
           v-model="description"
           type="textarea"
           :rows="3"
+          :maxlength="2000"
+          show-word-limit
           :placeholder="t('codegen.aiDraftPlaceholder')"
           data-testid="ai-draft-description"
         />
@@ -155,9 +169,10 @@ defineExpose({ open });
           {{ warning }}
         </div>
       </el-alert>
-      <el-table
+      <DataTable
         v-if="result.fields.length"
         :data="result.fields"
+        :label="t('codegen.aiDraftTitle')"
         size="small"
         class="mt-3"
         max-height="320"
@@ -189,7 +204,7 @@ defineExpose({ open });
             }}</span>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </template>
     <template #footer>
       <el-button @click="visible = false">

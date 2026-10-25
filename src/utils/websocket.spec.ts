@@ -16,7 +16,7 @@ class FakeWebSocket {
   url: string;
   readyState = FakeWebSocket.CONNECTING;
   onopen: (() => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((ev?: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((ev: { data: string }) => void) | null = null;
   sent: string[] = [];
@@ -45,6 +45,12 @@ class FakeWebSocket {
   drop() {
     this.readyState = FakeWebSocket.CLOSED;
     this.onclose?.();
+  }
+
+  /** 测试辅助：带关闭码断开（4401/4403 等服务端拒连语义） */
+  dropWithCode(code: number) {
+    this.readyState = FakeWebSocket.CLOSED;
+    this.onclose?.({ code });
   }
 }
 
@@ -131,6 +137,22 @@ describe("WS 重连策略", () => {
       instances[0].drop();
       await vi.advanceTimersByTimeAsync(60000);
       expect(instances).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("4401（未认证）/ 4403（无权限）是终态：不再无限退避重连", async () => {
+    vi.useFakeTimers();
+    try {
+      for (const code of [4401, 4403]) {
+        const { ws, instances } = makeWS();
+        instances[0].dropWithCode(code);
+        await vi.advanceTimersByTimeAsync(60000);
+        expect(instances).toHaveLength(1);
+        // 释放 visibilitychange 监听与计时器（避免干扰后续用例的可见性断言）
+        ws.close();
+      }
     } finally {
       vi.useRealTimers();
     }

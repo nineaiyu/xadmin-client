@@ -1,4 +1,4 @@
-import { flushPromises, mount } from "@vue/test-utils";
+import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChartCard from "../ChartCard.vue";
@@ -89,6 +89,17 @@ const mountCard = (
     props: { card, ...extraProps },
     global: { stubs: { "el-button": true, ReSkeleton: true } }
   });
+
+/** 推送帧注入入口（defineExpose 的 applyData）：exposed 面按契约收窄，避免整实例逃逸 */
+const applyFrame = async (
+  wrapper: VueWrapper,
+  entry: Record<string, unknown>
+) => {
+  const exposed = wrapper.vm.$.exposed as {
+    applyData: (frame: Record<string, unknown>) => Promise<void>;
+  };
+  await exposed.applyData(entry);
+};
 
 beforeEach(() => {
   state.executeMock.mockReset().mockResolvedValue({
@@ -224,6 +235,56 @@ describe("ChartCard 联动过滤", () => {
 
     const payload = state.aggregateMock.mock.calls[0][1];
     expect(payload.filters).toBeUndefined();
+  });
+});
+
+/**
+ * 实时推送帧（ws/dashboard）：联动的请求级 filters 不在推送载荷里，
+ * 存在联动时必须丢弃帧并按 filters 重拉，否则 chip 还在但数据回到全量。
+ */
+describe("ChartCard 实时推送帧与联动", () => {
+  it("无联动：推送帧直接注入（免拉直渲）", async () => {
+    const wrapper = mountCard(NUMBER_CARD);
+    await flushPromises();
+    expect(state.executeMock).toHaveBeenCalledTimes(1);
+
+    await applyFrame(wrapper, {
+      card: "c1",
+      kind: "execute",
+      data: { total: 999 }
+    });
+    await flushPromises();
+
+    // 不再发请求，数值直接取推送帧
+    expect(state.executeMock).toHaveBeenCalledTimes(1);
+    expect(wrapper.find(".text-3xl").text()).toBe("999");
+  });
+
+  it("联动生效：丢弃未过滤的推送帧，按当前 filters 静默重拉", async () => {
+    const wrapper = mountCard(NUMBER_CARD, {
+      linkageFilter: { field: "category", value: 0 }
+    });
+    await flushPromises();
+    expect(state.executeMock).toHaveBeenCalledTimes(1);
+
+    state.executeMock.mockResolvedValue({
+      code: 1000,
+      data: { columns: [], rows: [], total: 7, limit: 1000 }
+    });
+    await applyFrame(wrapper, {
+      card: "c1",
+      kind: "execute",
+      data: { total: 999 }
+    });
+    await flushPromises();
+
+    // 重拉仍带 filters；渲染的是过滤后的 7 而不是推送帧的 999
+    expect(state.executeMock).toHaveBeenCalledTimes(2);
+    expect(state.executeMock).toHaveBeenLastCalledWith("ds-1", {
+      count_only: true,
+      filters: [{ field: "category", op: "exact", value: 0 }]
+    });
+    expect(wrapper.find(".text-3xl").text()).toBe("7");
   });
 });
 

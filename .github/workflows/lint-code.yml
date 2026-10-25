@@ -74,6 +74,11 @@ jobs:
         # 必须显式登记豁免并写明理由（scripts/handwritten-forms-exempt.json）
         run: node scripts/check-handwritten-forms.mjs
 
+      - name: Bare table gate
+        # 表格选型收口：直接手写 <el-table> 必须改走 DataTable / ReReadonlyTable /
+        # RePlusPage；存量基线只减不增（scripts/bare-tables-baseline.json）
+        run: pnpm check:tables
+
       - name: Quarantine manifest gate
         # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
         # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）

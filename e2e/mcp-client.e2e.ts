@@ -214,6 +214,25 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
       "echo: hello",
       { timeout: 15_000 }
     );
+
+    // ---- 调用记录抽屉：打开 → 有行 → 结果筛选 ----
+    // 先收起工具抽屉（遮罩会拦截行内按钮点击）
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden({ timeout: 10_000 });
+    await row.getByRole("button", { name: "调用记录" }).click();
+    const logsDrawer = page.locator(".el-drawer").last();
+    const logsTable = logsDrawer.getByTestId("mcp-call-logs-table");
+    await expect(logsTable).toContainText("echo", { timeout: 15_000 });
+    await expect(logsTable).toContainText("成功");
+    // 只看失败：本次只有一次成功调用 → 空表（仍应可用，不报错）
+    await logsDrawer
+      .locator(".el-radio-button")
+      .filter({ hasText: "失败" })
+      .first()
+      .click();
+    await expect(logsTable.locator(".el-table__row")).toHaveCount(0, {
+      timeout: 15_000
+    });
   } finally {
     stub.close();
     if (serverPk) {

@@ -381,3 +381,36 @@ test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => 
   await expect(panel).toContainText("stub-model");
   await expect(panel).toContainText("已配置");
 });
+
+test("首页 AI 日报卡：指标芯片渲染 + 失败任务直达任务日志", async ({
+  page
+}) => {
+  await login(page);
+
+  // 站点级开关：开启后首页渲染整卡（双浏览器共享库，用例结束复位避免影响视觉基线）
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_DAILY_REPORT_ENABLED: true
+  });
+  expect(saved.code).toBe(1000);
+  try {
+    // 开关经 pub/sub 异步回写 settings：留缓冲后整页进入首页读最新状态。
+    // 登录已落首页时同 URL 的 goto 不算文档导航（hash 路由不重跑取数），必须显式 reload
+    await page.waitForTimeout(1_500);
+    await page.goto(`${FRONT_URL}/#/welcome`);
+    await page.reload();
+    const card = page.getByTestId("ai-daily-report");
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await expect(
+      card.getByTestId("ai-daily-report-metric-approval_pending")
+    ).toBeVisible();
+    // 失败任务芯片可直达任务日志页（原写死空链接，点击无响应）
+    await card.getByTestId("ai-daily-report-metric-task_failed_24h").click();
+    await expect(page).toHaveURL(/#\/system\/celery\/logs\/index/, {
+      timeout: 15_000
+    });
+  } finally {
+    await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+      AI_DAILY_REPORT_ENABLED: false
+    }).catch(() => undefined);
+  }
+});

@@ -2,6 +2,9 @@
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
+import DataTable from "@/components/DataTable";
+import { message } from "@/utils/message";
+import { isSuccess } from "@/api/types";
 import {
   mcpCallLogApi,
   type McpCallLogItem,
@@ -34,17 +37,31 @@ const load = async () => {
   if (!props.server) return;
   loading.value = true;
   try {
+    // 异常归一为信封：403 / 网络错误必须显式提示，否则会被读成「0 条记录」
     const res = await mcpCallLogApi
       .list<McpCallLogItem>({
         page: page.value,
         size: pageSize,
         object_pk: props.server.pk,
         ordering: "-created_time",
-        ...(outcome.value === "all" ? {} : { ok: outcome.value })
+        // 服务端 ok 是布尔过滤器（?ok=false 取失败行）：传 "failed" 会被当空值忽略
+        ...(outcome.value === "all" ? {} : { ok: outcome.value === "ok" })
       })
-      .catch(() => null);
-    rows.value = res?.data?.results ?? [];
-    total.value = res?.data?.total ?? 0;
+      .catch(
+        (error: { detail?: string; message?: string } | null | undefined) => ({
+          code: -1,
+          data: null,
+          detail: error?.detail ?? error?.message
+        })
+      );
+    if (!isSuccess(res)) {
+      rows.value = [];
+      total.value = 0;
+      message(String(res?.detail || t("results.failed")), { type: "error" });
+      return;
+    }
+    rows.value = res.data?.results ?? [];
+    total.value = res.data?.total ?? 0;
   } finally {
     loading.value = false;
   }
@@ -90,9 +107,10 @@ const handleOutcome = () => {
         {{ t("mcp.logTotal", { count: total }) }}
       </span>
     </div>
-    <el-table
+    <DataTable
       v-loading="loading"
       :data="rows"
+      :label="t('mcp.logs')"
       size="small"
       data-testid="mcp-call-logs-table"
     >
@@ -132,7 +150,7 @@ const handleOutcome = () => {
           <span class="text-xs break-all">{{ row.detail || "-" }}</span>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-pagination
       v-if="total > pageSize"
       class="mt-3 justify-end"

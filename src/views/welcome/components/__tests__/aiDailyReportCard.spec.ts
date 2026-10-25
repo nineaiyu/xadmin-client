@@ -27,6 +27,7 @@ const report = {
     approvals: "/approval/index",
     monitor: "/system/monitor/index",
     operation_log: "/system/logs/operation/index",
+    tasks: "/system/celery/logs/index",
     ai_usage: "/integration/ai/index"
   },
   summary: "存在一笔监控告警与两笔任务失败。",
@@ -69,6 +70,14 @@ describe("AiDailyReportCard", () => {
       .find('[data-testid="ai-daily-report-metric-approval_pending"]')
       .trigger("click");
     expect(push).toHaveBeenCalledWith("/approval/index");
+  });
+
+  it("失败任务芯片可直达任务日志页", async () => {
+    const wrapper = factory();
+    await wrapper
+      .find('[data-testid="ai-daily-report-metric-task_failed_24h"]')
+      .trigger("click");
+    expect(push).toHaveBeenCalledWith("/system/celery/logs/index");
   });
 
   it("无摘要时按原因展示降级文案", () => {
