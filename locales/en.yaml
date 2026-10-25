@@ -1159,6 +1159,7 @@ buttons:
   changeHistory: Change history
 
 menus:
+  playground: Components
   pluginDemo: Plugin note (demo plugin)
   searchData: Data search
   userOnline: Online users
@@ -2686,6 +2687,15 @@ login:
   smsVerify: SMS Auth
 
 welcome:
+  aiDailyTitle: AI Daily Report
+  aiDailyPending: Pending approvals
+  aiDailyAlerts: Monitor alerts
+  aiDailyErrors: Failed requests
+  aiDailyTasks: Failed tasks
+  aiDailyCalls: AI calls
+  aiDailyEmpty: Digest not generated yet (scheduled daily at 07:31)
+  aiDailyFailed: Digest generation failed; live metrics below
+  aiDailyGeneratedAt: "Digest generated at {time}"
   loadFailed: Failed to load dashboard data; some cards may show 0
   dataScopeLimited: Some statistics show 0 because you lack data permissions. Contact an administrator to configure data scope.
   operateLog: Log of operations
@@ -4422,6 +4432,22 @@ leaveApply:
   statsRejected: Rejected
 
 mcp:
+  logs: Call Logs
+  logChannelAi: AI action
+  logChannelAdmin: Console
+  logOutcomeAll: All
+  logOutcomeOk: Success
+  logOutcomeFailed: Failed
+  logTotal: "{count} in total"
+  logColTime: Time
+  logColTool: Tool
+  logColUser: User
+  logColChannel: Channel
+  logColResult: Result
+  logColDetail: Detail
+  logOk: OK
+  logFailed: Failed
+  dailyCallLimit: Daily call limit
   create: New server
   createTitle: New external MCP server
   editTitle: Edit external MCP server
@@ -4659,7 +4685,61 @@ pickerShortcuts:
   lastMonth: Last month
   thisYear: This year
 
+playground:
+  intro: "{count} in-house components; Sample = interactive, Docs = handbook"
+  searchPlaceholder: Search by name or purpose
+  noMatch: No matching component
+  hasDemo: Sample
+  docsOnly: Docs
+  catAll: All
+  catDisplay: Display
+  catLayout: Layout
+  catInput: Input
+  catFeedback: Feedback
+  catEcosystem: Containers & ecosystem
+  demoDisplay: Display samples
+  demoLayout: Layout samples
+  demoInput: Input samples
+  statTotal: Total requests
+  statOk: Success
+  statFailed: Failed
+  statRate: Success rate
+  scrollItem: Scrollbar demo row
+  emptyDemo: No data yet
+  emptyHint: Empty state supports a secondary hint
+  resultTitle: Request accepted
+  resultSub: Subtitle example of the result component
+  paneLeft: Left pane (drag the divider)
+  paneRight: Right pane
+  paramThreshold: Threshold
+  paramThresholdDesc: Percentage that triggers alerts
+  paramRegion: Region
+  paramRegionDesc: Deployment region identifier
+  paramRetention: Retention
+  paramRetentionDesc: Log retention duration
+  paramOwner: Owner
+  paramOwnerDesc: On-call owner
+  verifyState: State
 codegen:
+  aiDraft: AI Draft
+  aiDraftTitle: AI Field Draft
+  aiDraftLabel: Page description
+  aiDraftPlaceholder: Describe the page and trade-offs, e.g. name required, status column shown and searchable, author via search select, cover as color field
+  aiDraftRun: Generate Draft
+  aiDraftNoFields: AI produced no usable field draft; adjust the description and retry
+  aiDraftApplied: "Adopted {count} draft item(s)"
+  aiDraftWarnings: "{count} draft item(s) stripped by server validation"
+  aiDraftApply: "Adopt ({count})"
+  aiDraftColField: Field
+  aiDraftColLabel: Label
+  aiDraftColOverrides: Overrides
+  aiDraftFlagExcluded: excluded
+  aiDraftFlagRequired: required
+  aiDraftFlagOptional: optional
+  aiDraftFlagReadonly: read-only
+  aiDraftFlagInTable: in table
+  aiDraftFlagInSearch: searchable
+  aiDraftNeedModel: Pick a model to use AI draft
   planRename: Rename plan
   planRenamePrompt: Enter a new plan name
   planShare: Share plan

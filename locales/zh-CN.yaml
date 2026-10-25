@@ -1159,6 +1159,7 @@ buttons:
   changeHistory: 变更历史
 
 menus:
+  playground: 组件示例
   pluginDemo: 插件示例便签
   searchData: 数据查询
   userOnline: 在线用户
@@ -2686,6 +2687,15 @@ login:
   smsVerify: 短信验证
 
 welcome:
+  aiDailyTitle: AI 日报
+  aiDailyPending: 待办审批
+  aiDailyAlerts: 监控告警
+  aiDailyErrors: 异常请求
+  aiDailyTasks: 任务失败
+  aiDailyCalls: AI 调用
+  aiDailyEmpty: 摘要尚未生成（每日 07:31 定时更新）
+  aiDailyFailed: 摘要生成失败，以下为实时指标
+  aiDailyGeneratedAt: 摘要生成于 {time}
   loadFailed: 首页数据加载失败，部分卡片可能显示 0
   dataScopeLimited: 部分统计因缺少数据权限显示为 0，请联系管理员配置数据范围
   operateLog: 操作日志
@@ -4420,6 +4430,22 @@ leaveApply:
   statsRejected: 已驳回
 
 mcp:
+  logs: 调用记录
+  logChannelAi: AI 动作
+  logChannelAdmin: 管理面
+  logOutcomeAll: 全部
+  logOutcomeOk: 成功
+  logOutcomeFailed: 失败
+  logTotal: "共 {count} 条"
+  logColTime: 时间
+  logColTool: 工具
+  logColUser: 用户
+  logColChannel: 渠道
+  logColResult: 结果
+  logColDetail: 摘要
+  logOk: 成功
+  logFailed: 失败
+  dailyCallLimit: 日调用配额
   create: 新建服务器
   createTitle: 新建外部 MCP 服务器
   editTitle: 编辑外部 MCP 服务器
@@ -4655,7 +4681,61 @@ pickerShortcuts:
   lastMonth: 上个月
   thisYear: 本年
 
+playground:
+  intro: "共 {count} 个自研组件；「样例」可交互，「文档」看组件手册"
+  searchPlaceholder: 搜索组件名或用途
+  noMatch: 没有匹配的组件
+  hasDemo: 样例
+  docsOnly: 文档
+  catAll: 全部
+  catDisplay: 展示
+  catLayout: 布局
+  catInput: 输入
+  catFeedback: 反馈
+  catEcosystem: 容器与生态
+  demoDisplay: 展示类示例
+  demoLayout: 布局类示例
+  demoInput: 输入类示例
+  statTotal: 总请求
+  statOk: 成功
+  statFailed: 失败
+  statRate: 成功率
+  scrollItem: 滚动条示例行
+  emptyDemo: 暂无数据
+  emptyHint: 空态组件支持次级提示
+  resultTitle: 操作已受理
+  resultSub: 结果态组件的副标题示例
+  paneLeft: 左栏（拖动分隔条）
+  paneRight: 右栏
+  paramThreshold: 阈值
+  paramThresholdDesc: 触发告警的百分比
+  paramRegion: 区域
+  paramRegionDesc: 部署所在区域标识
+  paramRetention: 保留期
+  paramRetentionDesc: 日志保留时长
+  paramOwner: 负责人
+  paramOwnerDesc: 值班负责人
+  verifyState: 状态
 codegen:
+  aiDraft: AI 起草
+  aiDraftTitle: AI 字段草案
+  aiDraftLabel: 页面描述
+  aiDraftPlaceholder: 描述这个页面的用法与取舍，例如：书名必填、状态列要展示并可搜索、作者用搜索选择、封面用颜色字段
+  aiDraftRun: 生成草案
+  aiDraftNoFields: AI 未产出可用字段草案，请调整描述后重试
+  aiDraftApplied: 已采纳 {count} 项草案
+  aiDraftWarnings: "{count} 项草案被服务端校验剔除"
+  aiDraftApply: "采纳（{count}）"
+  aiDraftColField: 字段
+  aiDraftColLabel: 显示名
+  aiDraftColOverrides: 覆盖项
+  aiDraftFlagExcluded: 排除
+  aiDraftFlagRequired: 必填
+  aiDraftFlagOptional: 可选
+  aiDraftFlagReadonly: 只读
+  aiDraftFlagInTable: 入列
+  aiDraftFlagInSearch: 可搜索
+  aiDraftNeedModel: 选择模型后可用 AI 起草
   planRename: 重命名方案
   planRenamePrompt: 输入新的方案名称
   planShare: 共享方案

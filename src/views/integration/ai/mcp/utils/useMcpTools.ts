@@ -6,11 +6,12 @@ import { mcpServerApi, type McpServerItem } from "@/api/ai/mcp";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import McpToolsDrawer from "../components/McpToolsDrawer.vue";
+import McpCallLogsDrawer from "../components/McpCallLogsDrawer.vue";
 
 import { drawerSize } from "@/components/ReDialog/size";
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** MCP 服务器行操作（自 mcp/utils/hook 抽出）：同步工具快照 / 工具抽屉 */
+/** MCP 服务器行操作（自 mcp/utils/hook 抽出）：同步工具快照 / 工具抽屉 / 调用审计 */
 export function useMcpTools({
   t,
   refresh
@@ -48,5 +49,17 @@ export function useMcpTools({
     });
   };
 
-  return { runSync, openTools };
+  /** 调用审计抽屉：单服务器流水（list:McpCallLog 权限点在按钮 show 已收敛） */
+  const openLogs = (row: McpServerItem) => {
+    addDrawer({
+      title: t("mcp.logs"),
+      size: drawerSize("lg"),
+      destroyOnClose: true,
+      closeOnClickModal: false,
+      hideFooter: true,
+      contentRenderer: () => h(McpCallLogsDrawer, { server: row })
+    });
+  };
+
+  return { runSync, openTools, openLogs };
 }

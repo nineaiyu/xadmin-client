@@ -5,6 +5,7 @@ import GroupLine from "~icons/ri/group-line";
 import type { Component } from "vue";
 import type { EpColorName } from "@/utils/chartTheme";
 import type { DashboardTrendItem } from "@/api/system/dashboard";
+import type { AiDailyReport } from "@/api/ai/ai";
 import type { RecordType } from "plus-pro-components";
 import type { useI18n } from "vue-i18n";
 
@@ -80,9 +81,11 @@ export function createDashboardState(t: TFunction) {
   );
   /** 任一统计接口因缺少数据权限返回空集：页面顶部提示，避免把 0 当成真实值 */
   const scopeLimited = ref(false);
-  /** 首屏取数进行中 / 任一卡片失败（页面统一提示并可重试） */
+  /** 首页取数进行中 / 任一卡片失败（页面统一提示并可重试） */
   const loading = ref(true);
   const loadFailed = ref(false);
+  /** AI 日报卡（开关关闭/未授权时恒为 null，整卡不渲染） */
+  const dailyReport = ref<AiDailyReport | null>(null);
 
   return {
     chartData,
@@ -92,7 +95,8 @@ export function createDashboardState(t: TFunction) {
     userActiveList,
     scopeLimited,
     loading,
-    loadFailed
+    loadFailed,
+    dailyReport
   };
 }
 

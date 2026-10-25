@@ -6,6 +6,7 @@ import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "./components/ReFlicker";
 import ReSkeleton from "@/components/ReSkeleton";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
+import { AiDailyReportCard } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
@@ -33,6 +34,7 @@ const {
   scopeLimited,
   loading,
   loadFailed,
+  dailyReport,
   reload
 } = useDashboard();
 let curWeek = ref(1);
@@ -75,6 +77,10 @@ const timelineIcons = timelineTones.map(tone =>
     />
     <!-- 首屏不使用入场动画：内容首帧可见（LCP），位移动画也不计入布局位移（CLS） -->
     <el-row :gutter="24" justify="space-around">
+      <!-- AI 日报卡：开关关闭 / 未授权 / 未配置时 dailyReport 为 null，整卡不渲染（视觉零变更） -->
+      <re-col v-if="dailyReport" :xs="24" class="mb-4.5">
+        <AiDailyReportCard :report="dailyReport" />
+      </re-col>
       <re-col
         v-for="(item, index) in chartData"
         :key="index"

@@ -9,17 +9,19 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 > barrel 采用直接 export 组件本体——消费端均为局部 import，无 `app.use` 全局注册场景，
 > 不要求 `withInstall`（历史约定已按实践收敛，个别存量 `withInstall` 不必拆除）。
 > 门禁：`pnpm test:run`（组件级单测）+ `pnpm check:module-cycles` + `pnpm check:bundle-size`。
+> 可执行文档：`Re*` 组件的活样例与分组目录见 `/playground`（`views/playground/`，
+> 注册表 `registry.ts` 与本分组表同源，vitest 守护两边名字集合一致）。
 
 ## 一、按用途分组
 
 | 分组                             | 组件                                                                                                                                                                                                                                                                          |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 页面与容器                       | `RePlusPage`（元数据驱动列表页）、`RePlusSearch`（实体搜索下拉）、`RePage`（通用内容骨架）、`ReSplitPane`、`ReReadonlyTable`、`DataTable`（手写表格统一壳）、`AuthorizedAppTable`（已授权应用表格，管理端 / 个人端共用）、`RePureTableBar`、`ReRecycleBin`（RePlusPage 内建） |
-| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`                                                                                                                                                            |
-| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`                                                                                                                                                      |
-| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm`                                                                                                                     |
+| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`、`ReScrollbar`（到达态事件）、`ReBackTop`、`ReMessageNotifications`、`ReNoticeShow`、`ReTaskCenterDrawer`、`ReTaskLogDialog`                               |
+| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReStat`（StatBar/StatGrid）、`ReCollapseParams`（参数折叠）、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`、`ReMenuPermissionTree`                                                                |
+| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReIconPicker`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm`                                                                                                     |
 | 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`                                                                                                                                                                                                                                         |
-| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReAuth`、`ReResize`（拖拽缩放盒）                                                                                                                                                                                           |
+| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReResize`（拖拽缩放盒）、`ReTreeLine`（树连接线）、`ReAnimateSelector`（动画选择器）                                                                                                                                        |
 | AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                                                                                                                        |
 | 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`                                                                                                      |
 

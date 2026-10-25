@@ -147,6 +147,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai/assistant/daily-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description AI 日报
+         *
+         *     首页日报卡数据：观测指标实时聚合 + 最近一期 LLM 摘要（缓存，无同步
+         *     LLM 调用）；开关 AI_DAILY_REPORT_ENABLED 默认关，关闭时仅返回
+         *     ``enabled: false``。摘要由周期任务每日生成（ai/tasks.py），只读聚合、
+         *     不触发任何写动作；权限点与 status 共用同一路径正则（见菜单种子）。
+         */
+        get: operations["api_ai_assistant_daily_report_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ai/assistant/history": {
         parameters: {
             query?: never;
@@ -591,6 +615,112 @@ export interface paths {
         put?: never;
         /** @description JSON-RPC 2.0 单对象请求（batch 请求不支持，返回 Invalid Request）。 */
         post: operations["api_ai_mcp_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 调用流水列表 */
+        get: operations["api_ai_mcp_call_logs_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs/export-async": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 异步导出{cls}数据 */
+        post: operations["api_ai_mcp_call_logs_export_async_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs/export-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description 导出{cls}数据
+         *
+         *     type=csv|xlsx，缺省 xlsx
+         */
+        get: operations["api_ai_mcp_call_logs_export_data_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_ai_mcp_call_logs_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs/search-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的查询字段 */
+        get: operations["api_ai_mcp_call_logs_search_fields_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/mcp-call-logs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 调用详情 */
+        get: operations["api_ai_mcp_call_logs_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10412,6 +10542,23 @@ export interface paths {
         patch: operations["api_system_codegen_plans_partial_update"];
         trace?: never;
     };
+    "/api/system/codegen/ai-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description AI 字段草案：自然语言 → 字段覆盖草案（服务端按字段表格同套约束过滤，人审采纳后进既有预览/下载管线） */
+        post: operations["api_system_codegen_ai_draft_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/codegen/download": {
         parameters: {
             query?: never;
@@ -14235,10 +14382,22 @@ export interface components {
              */
             AI_BASE_URL?: string;
             /**
+             * AI codegen draft
+             * @description 代码生成器的自然语言字段草案：AI 给出字段覆盖建议，人工审核采纳（绝不直接写代码）
+             * @default false
+             */
+            AI_CODEGEN_DRAFT_ENABLED: boolean;
+            /**
              * 聊天上下文条数
              * @default 20
              */
             AI_CONTEXT_LIMIT: number;
+            /**
+             * AI 日报
+             * @description 首页每日站点摘要：聚合审批/监控/审计/AI 用量指标并经 LLM 生成摘要（定时任务，只读、不触发动作）
+             * @default false
+             */
+            AI_DAILY_REPORT_ENABLED: boolean;
             /**
              * 频率惩罚
              * Format: double
@@ -16866,6 +17025,11 @@ export interface components {
             /** 创建人 */
             readonly creator: string | null;
             /**
+             * 日调用配额
+             * @default 0
+             */
+            daily_call_limit: number;
+            /**
              * 启用
              * @default true
              */
@@ -18039,10 +18203,22 @@ export interface components {
              */
             AI_BASE_URL?: string;
             /**
+             * AI codegen draft
+             * @description 代码生成器的自然语言字段草案：AI 给出字段覆盖建议，人工审核采纳（绝不直接写代码）
+             * @default false
+             */
+            AI_CODEGEN_DRAFT_ENABLED: boolean;
+            /**
              * 聊天上下文条数
              * @default 20
              */
             AI_CONTEXT_LIMIT: number;
+            /**
+             * AI 日报
+             * @description 首页每日站点摘要：聚合审批/监控/审计/AI 用量指标并经 LLM 生成摘要（定时任务，只读、不触发动作）
+             * @default false
+             */
+            AI_DAILY_REPORT_ENABLED: boolean;
             /**
              * 频率惩罚
              * Format: double
@@ -19801,6 +19977,11 @@ export interface components {
             readonly created_time?: string | null;
             /** 创建人 */
             readonly creator?: string | null;
+            /**
+             * 日调用配额
+             * @default 0
+             */
+            daily_call_limit: number;
             /**
              * 启用
              * @default true
@@ -24062,6 +24243,30 @@ export interface operations {
             };
         };
     };
+    api_ai_assistant_daily_report_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
     api_ai_assistant_history_retrieve: {
         parameters: {
             query?: never;
@@ -24771,6 +24976,235 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    api_ai_mcp_call_logs_list: {
+        parameters: {
+            query?: {
+                created_time_after?: string;
+                created_time_before?: string;
+                creator?: number;
+                dept_belong?: string;
+                description?: string;
+                modifier?: number;
+                /** @description MCP 服务器 */
+                object_pk?: string;
+                /** @description 成功 */
+                ok?: unknown;
+                /** @description 用于排序结果的字段。 */
+                ordering?: string;
+                /** @description 分页结果集中的页码。 */
+                page?: number;
+                pk?: number;
+                /** @description 每页返回的结果数量。 */
+                size?: number;
+                spm?: unknown;
+                updated_time_after?: string;
+                updated_time_before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            has_more?: boolean;
+                            next_cursor?: string;
+                            results?: {
+                                code?: number;
+                                detail?: string;
+                                requestId?: string;
+                                timestamp?: string;
+                            }[];
+                            total?: number;
+                        };
+                        detail?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_ai_mcp_call_logs_export_async_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    type?: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    type?: string;
+                };
+                "multipart/form-data": {
+                    type?: string;
+                };
+                "text/csv": {
+                    type?: string;
+                };
+                "text/xlsx": {
+                    type?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_ai_mcp_call_logs_export_data_retrieve: {
+        parameters: {
+            query: {
+                type: "csv" | "xlsx";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    api_ai_mcp_call_logs_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_ai_mcp_call_logs_search_fields_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_ai_mcp_call_logs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 操作日志 的 唯一整数值。 */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
             };
         };
     };
@@ -47479,6 +47913,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CodegenPlan"];
+                };
+            };
+        };
+    };
+    api_system_codegen_ai_draft_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                properties: unknown;
+                required: {
+                    [key: string]: unknown;
+                };
+                type: {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
                 };
             };
         };

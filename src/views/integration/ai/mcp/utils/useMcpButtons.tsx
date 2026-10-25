@@ -15,12 +15,16 @@ export function useMcpButtons({
   t,
   canSync,
   runSync,
-  openTools
+  openTools,
+  openLogs,
+  canLogs
 }: {
   t: TFunction;
   canSync: boolean;
   runSync: (row: McpServerItem, loading?: { value: boolean }) => Promise<void>;
   openTools: (row: McpServerItem) => void;
+  openLogs: (row: McpServerItem) => void;
+  canLogs: boolean;
 }) {
   const operationButtonsProps = shallowRef<OperationProps>({
     // 默认按钮（编辑 / 删除）+ 同步 / 工具 全内联
@@ -42,6 +46,14 @@ export function useMcpButtons({
         onClick: ({ row }) => openTools(row as McpServerItem),
         index: 10,
         show: true
+      },
+      {
+        text: t("mcp.logs"),
+        code: "logs",
+        props: { link: true },
+        onClick: ({ row }) => openLogs(row as McpServerItem),
+        index: 11,
+        show: canLogs
       }
     ]
   });

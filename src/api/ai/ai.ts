@@ -76,6 +76,26 @@ export type AiToolItem = {
 
 export type AiToolsResult = { action_enabled: boolean; tools: AiToolItem[] };
 
+/** AI 日报卡（首页）：指标实时聚合 + 最近一期 LLM 摘要（缓存） */
+export type AiDailyReport = {
+  enabled: boolean;
+  metrics?: {
+    approval_pending: number;
+    monitor_firing: number;
+    error_requests_24h: number;
+    task_failed_24h: number;
+    ai_calls_24h: number;
+    ai_tokens_24h: number;
+  };
+  /** 异常项点击直达路径（router.push 用；与菜单种子同源） */
+  links?: Record<string, string>;
+  summary?: string;
+  /** 摘要生成失败的可读原因（摘要为空时提示降级） */
+  summary_error?: string;
+  /** 摘要生成时间（ISO；空 = 尚未生成） */
+  generated_at?: string;
+};
+
 /** 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
 export type AiMetrics = {
   days: number;
@@ -353,6 +373,15 @@ class AiAssistantApi extends BaseApi {
   /** 统一工具目录（MCP tools/list 等价：当前用户可执行的全部系统动作） */
   tools = () => {
     return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/tools`);
+  };
+  /** 首页 AI 日报卡（指标实时 + 摘要缓存；开关关闭时 enabled=false） */
+  dailyReport = () => {
+    return this.request<DetailResult<AiDailyReport>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/daily-report`
+    );
   };
   /** 指令执行草稿（流式）：思考增量 + done 带 drafts（多步串联）/ draft（单动作兜底）/ 澄清消息 */
   actionInterpretStream = (

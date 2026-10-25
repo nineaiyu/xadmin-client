@@ -23,13 +23,16 @@ export function useMcpServers(tableRef: Ref) {
   const refresh = () => tableRef.value?.handleGetData();
 
   const { addOrEditOptions } = useMcpServerFormOptions({ t });
-  const { runSync, openTools } = useMcpTools({ t, refresh });
+  const { runSync, openTools, openLogs } = useMcpTools({ t, refresh });
   const { listColumnsFormat } = useMcpColumns({ t, openTools });
+  const canLogs = hasAuth("list:McpCallLog");
   const { operationButtonsProps } = useMcpButtons({
     t,
     canSync,
     runSync,
-    openTools
+    openTools,
+    openLogs,
+    canLogs
   });
 
   return {

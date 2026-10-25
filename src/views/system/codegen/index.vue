@@ -18,6 +18,7 @@ import { systemCodeGenApi } from "@/api/system/codegen";
 import RePage from "@/components/RePage";
 import type {
   CodegenArtifact,
+  CodegenFieldOverride,
   CodegenModelItem,
   CodegenModelPlan,
   CodegenPayload
@@ -39,6 +40,7 @@ import {
 import BaseConfig from "./components/BaseConfig.vue";
 import OptionSwitches from "./components/OptionSwitches.vue";
 import FieldConfigTable from "./components/FieldConfigTable.vue";
+import AiDraftDialog from "./components/AiDraftDialog.vue";
 import ArtifactPreview from "./components/ArtifactPreview.vue";
 import SavedPlans from "./components/SavedPlans.vue";
 
@@ -73,6 +75,28 @@ const planLoading = ref(false);
 const pendingPlanState = ref<CodegenFormState | null>(null);
 
 const fieldTableRef = ref<InstanceType<typeof FieldConfigTable>>();
+const aiDraftRef = ref<InstanceType<typeof AiDraftDialog>>();
+const canAiDraft = computed(
+  () => Boolean(state.model) && hasAuth("aiDraft:SystemCodeGen")
+);
+
+/**
+ * 采纳 AI 草案：合并进字段配置（人审后的最后一步）。采纳项按草案顺序居前
+ * （pk 恒首），未触及字段保持原序殿后——与 apply_field_overrides 的顺序语义一致。
+ */
+function applyAiDraft(overrides: CodegenFieldOverride[]) {
+  const draftNames = new Set(overrides.map(row => row.name));
+  const byName = new Map(state.fields.map(row => [row.name, row]));
+  const adopted = overrides.map(draft => ({
+    ...(byName.get(draft.name) ?? { name: draft.name }),
+    ...draft
+  }));
+  const pkRow = state.fields.find(row => row.name === "pk");
+  const untouched = state.fields.filter(
+    row => !draftNames.has(row.name) && row.name !== "pk"
+  );
+  state.fields = [...(pkRow ? [pkRow] : []), ...adopted, ...untouched];
+}
 
 const previewLoading = ref(false);
 const downloadLoading = ref(false);
@@ -372,9 +396,28 @@ onMounted(() => {
           />
           <OptionSwitches v-model="stateModel" />
           <template v-if="mode === 'single'">
-            <el-divider content-position="left">
-              {{ t("codegen.fieldConfig") }}
-            </el-divider>
+            <div class="flex-bc gap-2">
+              <el-divider content-position="left" class="flex-1 my-2!">
+                {{ t("codegen.fieldConfig") }}
+              </el-divider>
+              <el-tooltip
+                v-if="hasAuth('aiDraft:SystemCodeGen')"
+                :content="state.model ? '' : t('codegen.aiDraftNeedModel')"
+                placement="top"
+              >
+                <span>
+                  <el-button
+                    size="small"
+                    :icon="MagicStick"
+                    :disabled="!canAiDraft"
+                    data-testid="ai-draft-open"
+                    @click="aiDraftRef?.open()"
+                  >
+                    {{ t("codegen.aiDraft") }}
+                  </el-button>
+                </span>
+              </el-tooltip>
+            </div>
             <FieldConfigTable
               v-show="planData"
               ref="fieldTableRef"
@@ -445,6 +488,12 @@ onMounted(() => {
           <ReEmpty v-else :description="t('codegen.batchPreviewEmpty')" />
         </el-col>
       </el-row>
+      <AiDraftDialog
+        v-if="mode === 'single'"
+        ref="aiDraftRef"
+        :model="state.model"
+        @apply="applyAiDraft"
+      />
     </el-card>
   </RePage>
 </template>

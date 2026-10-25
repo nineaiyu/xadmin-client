@@ -43,6 +43,11 @@ export function useDashboard() {
     if (hasAuth("list:SystemOperationLog")) {
       tasks.push(fetchers.getOperateLogList());
     }
+    // AI 日报卡：与助手状态同一权限点（status:AiAssistant 正则覆盖 daily-report）；
+    // 未授权用户不发请求（避免 403 噪音），开关关闭时后端只回 enabled=false
+    if (hasAuth("status:AiAssistant")) {
+      tasks.push(fetchers.getDailyReport());
+    }
     Promise.all(tasks).finally(() => {
       state.loading.value = false;
     });
@@ -60,6 +65,7 @@ export function useDashboard() {
     scopeLimited: state.scopeLimited,
     loading: state.loading,
     loadFailed: state.loadFailed,
+    dailyReport: state.dailyReport,
     reload
   };
 }

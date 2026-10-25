@@ -8,6 +8,7 @@ import {
   getDashBoardTodayOperateTotalApi
 } from "@/api/system/dashboard";
 import { operationLogApi } from "@/api/audit/logs/operation";
+import { aiAssistantApi } from "@/api/ai/ai";
 import { getKeyList } from "@pureadmin/utils";
 import type { DashboardState } from "./dashboardState";
 import type { useI18n } from "vue-i18n";
@@ -156,6 +157,22 @@ export function createDashboardFetchers({
       });
   };
 
+  /**
+   * AI 日报卡：开关关闭时后端只回 enabled=false（卡不渲染）。失败静默——
+   * 该卡是增强项，不计入 loadFailed（普通用户无 AI 权限时请求根本不发，
+   * 见 hook.tsx 的 hasAuth 门）。
+   */
+  const getDailyReport = () => {
+    return aiAssistantApi
+      .dailyReport()
+      .then(res => {
+        if (isSuccess(res) && res.data?.enabled) {
+          state.dailyReport.value = res.data;
+        }
+      })
+      .catch(() => undefined);
+  };
+
   return {
     getUserActiveList,
     getTodayOperateTotal,
@@ -163,6 +180,7 @@ export function createDashboardFetchers({
     getUserLoginTotal,
     getUserLoginList,
     getUserRegisterList,
-    getOperateLogList
+    getOperateLogList,
+    getDailyReport
   };
 }
