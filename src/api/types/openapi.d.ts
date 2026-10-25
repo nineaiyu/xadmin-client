@@ -5460,6 +5460,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/auth/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取登录页能力清单 */
+        get: operations["api_identity_auth_capabilities_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity/auth/captcha": {
         parameters: {
             query?: never;
@@ -6255,8 +6272,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description 获取登录配置信息 */
-        get: operations["api_identity_login_basic_retrieve"];
+        get?: never;
         put?: never;
         /** @description 用户名密码登录 */
         post: operations["api_identity_login_basic_create"];
@@ -15268,7 +15284,7 @@ export interface components {
             old_password: string;
             /**
              * 确认密码
-             * @description Legacy contract name: this field carries the NEW password itself (not a repeat/confirm value)
+             * @description 契约命名遗留：本字段承载的就是新密码本身（不是二次确认值）
              */
             sure_password: string;
         };
@@ -20740,7 +20756,7 @@ export interface components {
             /**
              * 通过手机登录
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_LOGIN_BY_SMS_ENABLED: boolean;
             /**
@@ -20958,7 +20974,7 @@ export interface components {
             /**
              * 通过手机注册
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_REGISTER_BY_SMS_ENABLED: boolean;
             /**
@@ -20997,7 +21013,7 @@ export interface components {
             /**
              * 通过短信重置密码
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_RESET_PASSWORD_BY_SMS_ENABLED: boolean;
             /**
@@ -22571,7 +22587,7 @@ export interface components {
             /**
              * 通过手机登录
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_LOGIN_BY_SMS_ENABLED: boolean;
             /**
@@ -22789,7 +22805,7 @@ export interface components {
             /**
              * 通过手机注册
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_REGISTER_BY_SMS_ENABLED: boolean;
             /**
@@ -22828,7 +22844,7 @@ export interface components {
             /**
              * 通过短信重置密码
              * @description 允许用户通过发送短信验证码
-             * @default true
+             * @default false
              */
             SECURITY_RESET_PASSWORD_BY_SMS_ENABLED: boolean;
             /**
@@ -35680,6 +35696,60 @@ export interface operations {
             };
         };
     };
+    api_identity_auth_capabilities_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            access?: boolean;
+                            basic?: {
+                                captcha?: boolean;
+                                enabled?: boolean;
+                                encrypted?: boolean;
+                                token?: boolean;
+                            };
+                            code?: {
+                                email?: boolean;
+                                enabled?: boolean;
+                                sms?: boolean;
+                            };
+                            lifetime?: number;
+                            oauth?: {
+                                flavor?: string;
+                                key?: string;
+                                name?: string;
+                            }[];
+                            register?: {
+                                email?: boolean;
+                                enabled?: boolean;
+                                sms?: boolean;
+                            };
+                            reset?: {
+                                email?: boolean;
+                                enabled?: boolean;
+                                sms?: boolean;
+                            };
+                        };
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
     api_identity_auth_captcha_retrieve: {
         parameters: {
             query?: never;
@@ -37458,39 +37528,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LoginAccessPolicy"];
-                };
-            };
-        };
-    };
-    api_identity_login_basic_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        code?: number;
-                        data?: {
-                            access?: boolean;
-                            basic?: boolean;
-                            captcha?: boolean;
-                            encrypted?: boolean;
-                            lifetime?: number;
-                            reset?: boolean;
-                            token?: boolean;
-                        };
-                        detail?: string;
-                        requestId?: string;
-                        timestamp?: string;
-                    };
                 };
             };
         };
@@ -47354,6 +47391,7 @@ export interface operations {
                         data?: {
                             content?: string;
                             key?: string;
+                            kind?: string;
                             label?: string;
                             mode?: string;
                             notice?: string;

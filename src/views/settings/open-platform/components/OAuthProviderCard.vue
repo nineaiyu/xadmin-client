@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   FLAVOR_LABELS,
   formatGroupRoleMap,
@@ -61,23 +61,20 @@ const runTest = () => {
   emit("test", { ...provider.value });
 };
 
+const confirm = useConfirm();
+
 const confirmRemove = async () => {
   if (!provider.value.key) {
     emit("remove");
     return;
   }
-  try {
-    await ElMessageBox.confirm(
-      t("oauthProvider.removeConfirm", {
-        name: provider.value.name || provider.value.key
-      }),
-      t("oauthProvider.remove"),
-      { type: "warning" }
-    );
-    emit("remove");
-  } catch {
-    // 取消删除
-  }
+  const ok = await confirm(
+    t("oauthProvider.removeConfirm", {
+      name: provider.value.name || provider.value.key
+    }),
+    { title: t("oauthProvider.remove"), danger: true }
+  );
+  if (ok) emit("remove");
 };
 
 const showSecretHint = computed(() =>

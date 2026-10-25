@@ -16,7 +16,7 @@ vi.mock("@/api/system/notifications", () => ({
 }));
 // 骨架桩：按 panes 渲染面板（与真实骨架同语义——不在 panes 里的面板不渲染），
 // 面板显隐断言落在具名插槽是否被挂载上
-vi.mock("@/views/settings/components/settings/index.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/index.vue", () => ({
   default: {
     name: "Setting",
     props: ["panes"],

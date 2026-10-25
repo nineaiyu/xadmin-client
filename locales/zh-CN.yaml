@@ -1207,7 +1207,6 @@ menus:
   fourZeroThree: "403"
   FiveZeroZero: "500"
   about: 关于
-  empty: 无Layout页
   noticeAndAnnouncement: 通知公告
   newsAndAnnouncement: 消息公告
   readNotice: 已读消息
@@ -2420,6 +2419,9 @@ systemNotice:
   markdownHeadingText: 标题
   markdownLink: 链接
   markdownLinkText: 链接文字
+  markdownTableCol1: 列 1
+  markdownTableCol2: 列 2
+  markdownTableCell: 内容
   markdownCode: 行内代码
   markdownStrikethrough: 删除线
   markdownQuote: 引用
@@ -2822,6 +2824,8 @@ setting:
   name: 设置项名称
   noPermission: 没有可查看的设置项（缺少查看权限）
   loadFailed: 设置项加载失败，请稍后重试
+  effectiveOk: "「{name}」当前已实际生效"
+  effectiveBlocked: "「{name}」未实际生效"
   value: 设置值
   category: 设置分类
   is_active: 启用状态
@@ -3542,6 +3546,9 @@ dataScreen:
   richList: 无序列表
   richOrderedList: 有序列表
   richTable: 表格
+  richTableCol1: 标题一
+  richTableCol2: 标题二
+  richTableCell: 内容
   richPreview: 实时预览
   richPlaceholder: 文本
   animationNone: 无
@@ -4627,11 +4634,6 @@ pickerShortcuts:
   thisMonth: 本月
   lastMonth: 上个月
   thisYear: 本年
-
-emptyPage:
-  title: 业务内容模块
-  description: "使用场景：需要外嵌平台某个页面，不需要展示菜单导航以及额外模块"
-  back: 返回上一页
 
 codegen:
   planRename: 重命名方案

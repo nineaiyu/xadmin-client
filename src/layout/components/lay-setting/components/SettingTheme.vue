@@ -44,7 +44,7 @@ const greyVal = computed<boolean>({
   set: value => storageConfigureChange("grey", value)
 });
 
-/** 色弱模式：整站反色补偿（`html-weakness` 同上） */
+/** 色弱模式：整站反色补偿，图片/视频等媒体还原原色（`html-weakness` 同上） */
 const weakVal = computed<boolean>({
   get: () => $storage?.configure?.weak ?? false,
   set: value => storageConfigureChange("weak", value)

@@ -16,12 +16,15 @@ const visible = ref(false);
       {{ t("login.privacyPolicy") }}
     </el-button>
   </p>
+  <!-- 必须 append-to-body：外层 Motion 容器残留 transform，会把 position:fixed
+       的遮罩压进这一行（弹窗被裁成 19px 高的白条）。与 Register.vue 同一约束。 -->
   <el-dialog
     v-model="visible"
     :title="t('login.privacyPolicy')"
     width="560px"
     align-center
     destroy-on-close
+    append-to-body
   >
     <p class="whitespace-pre-wrap text-sm leading-6">
       {{ t("login.privacyPolicyBody") }}

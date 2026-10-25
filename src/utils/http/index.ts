@@ -44,6 +44,15 @@ import {
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 
 /**
+ * 认证豁免 URL 清单（同一份清单、两处消费，防的故障不同）：
+ * ① attachRouteController——路由切换取消在途请求时豁免登录/刷新，
+ *    误拦会让「刷新 token 的请求被路由取消」复发；
+ * ② 请求拦截器 token 注入——无 token 不触发刷新，防「token 过期死循环」。
+ * 清单同源：改一处漏一处会让两种故障各复发一种，故收敛为单一常量。
+ */
+const AUTH_EXEMPT_URLS = ["/api/identity/refresh", "/api/identity/login"];
+
+/**
  * multipart/form-data 对象展开序列化（FormData 上传协议 v1 唯一收敛点）。
  *
  * 嵌套对象按点分键拆分成表单字段（a.0.b → a[0][b] 语义），后端
@@ -95,11 +104,7 @@ class PureHttp {
     config: PureHttpRequestConfig
   ): AbortController | null {
     if (config.skipRouteCancel || config.responseType === "blob") return null;
-    if (
-      ["/api/identity/refresh", "/api/identity/login"].some(url =>
-        (config.url ?? "").endsWith(url)
-      )
-    ) {
+    if (AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url))) {
       return null;
     }
     const controller = new AbortController();
@@ -340,8 +345,7 @@ class PureHttp {
           return config as InternalAxiosRequestConfig;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/api/identity/refresh", "/api/identity/login"];
-        return whiteList.some(url => (config.url ?? "").endsWith(url))
+        return AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url))
           ? (config as InternalAxiosRequestConfig)
           : new Promise(resolve => {
               const token = getToken();

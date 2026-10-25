@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable";
 import type { FormField } from "@/api/dataset/dform";
 
 /** 明细子表控件（自 SubmissionForm 按控件族拆出） */
@@ -20,7 +21,13 @@ const { t } = useI18n();
 
 <template>
   <div class="w-full">
-    <el-table :data="rows" size="small" border>
+    <!-- 表格可访问名用字段标签（用户 schema 内容，逐字段唯一） -->
+    <DataTable
+      :data="rows"
+      size="small"
+      border
+      :label="field.label || field.key"
+    >
       <el-table-column
         v-for="column in field.columns ?? []"
         :key="column.key"
@@ -69,7 +76,7 @@ const { t } = useI18n();
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-button
       class="mt-1"
       size="small"

@@ -174,7 +174,7 @@ function downloadActive() {
         >
           <div class="flex items-center gap-1">
             <span class="truncate">{{ fileName(item) }}</span>
-            <el-tag v-if="item.label === '后续步骤'" size="small" type="info">
+            <el-tag v-if="item.kind === 'next-steps'" size="small" type="info">
               MD
             </el-tag>
           </div>

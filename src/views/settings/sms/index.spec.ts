@@ -17,7 +17,7 @@ vi.mock("@/api/system/settings", () => ({
   settingsSmsServerApi: { backends: mocks.backends },
   settingsSmsConfigApi: { marker: "sms-config-api" }
 }));
-vi.mock("@/views/settings/components/settings/index.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/index.vue", () => ({
   default: {
     name: "Setting",
     props: ["panes"],

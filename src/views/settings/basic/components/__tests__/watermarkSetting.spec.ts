@@ -28,7 +28,7 @@ vi.mock("@/store/modules/user", () => ({
     pk: 1
   })
 }));
-vi.mock("@/views/settings/components/settings/SettingItem.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/SettingItem.vue", () => ({
   default: {
     name: "SettingItem",
     emits: ["change"],
@@ -36,7 +36,7 @@ vi.mock("@/views/settings/components/settings/SettingItem.vue", () => ({
   }
 }));
 
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
+import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
 import WatermarkSetting from "../WatermarkSetting.vue";
 
 const item = {

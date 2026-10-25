@@ -11,8 +11,8 @@ import { useRoute } from "vue-router";
 import type { FieldValues } from "plus-pro-components";
 import type { SiteWatermarkResultConfig } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
-import type { settingItemProps } from "@/views/settings/components/settings/types";
+import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
+import type { settingItemProps } from "@/views/settings/components/settings-shell/types";
 import {
   buildWatermarkRenderOptions,
   formatWatermarkTime,

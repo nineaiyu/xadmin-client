@@ -311,3 +311,48 @@ describe("ReDialog 尺寸档位", () => {
     expect(DRAWER_NARROW_WIDTH).toBe("480px");
   });
 });
+
+describe("ReDialog 焦点圈入（弹层打开后键盘焦点入层、关闭后还原触发元素）", () => {
+  beforeEach(() => {
+    dialogStore.value = [];
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    closeAllDialog();
+    document.body.innerHTML = "";
+  });
+
+  it("打开后初始焦点落在弹层内，关闭后焦点还原到触发元素", async () => {
+    mountContainer();
+    const trigger = document.createElement("button");
+    trigger.textContent = "触发按钮";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    addDialog({
+      title: "焦点实证",
+      contentRenderer: () => h("div", [h("input", { class: "probe-input" })])
+    });
+    await flushPromises();
+    await nextTick();
+
+    const dialog = document.querySelector(".el-dialog");
+    expect(dialog).toBeTruthy();
+    expect(
+      dialog!.contains(document.activeElement),
+      `初始焦点应落在弹层内，实际为 ${document.activeElement?.outerHTML ?? "null"}`
+    ).toBe(true);
+
+    closeDialog(dialogStore.value[0], 0, { command: "close" });
+    await flushPromises();
+    vi.advanceTimersByTime(300); // closeDelay 默认 200ms，过后弹层出栈
+    await flushPromises();
+    expect(
+      document.activeElement,
+      "关闭后焦点应还原到触发元素（EP focus-trap 的 return-focus）"
+    ).toBe(trigger);
+  });
+});

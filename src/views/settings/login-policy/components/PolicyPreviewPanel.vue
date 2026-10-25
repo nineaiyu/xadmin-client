@@ -7,6 +7,7 @@ import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
 import { isIPv4, isIPv6 } from "@/utils/rules/ip";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
+import DataTable from "@/components/DataTable";
 
 /**
  * 登录策略命中预演：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
@@ -80,6 +81,10 @@ const dimList = (row: Record<string, unknown>) => [
   },
   { key: "ip", ok: row.ip_matched === true, label: t("loginPolicy.dimIp") }
 ];
+
+/** 未启用策略整行弱化（row 显式收窄：attr 透传到 DataTable 后不再有 EP 作用域行类型） */
+const inactiveRowClass = ({ row }: { row: Record<string, unknown> }) =>
+  row.is_active === false ? "preview-inactive-row" : "";
 
 /** 样例 IP 严格校验（口径见 utils/sampleIp.ts，与后端 ipaddress 解析对齐） */
 const validateIp = (
@@ -209,13 +214,12 @@ const echoLine = (data: LoginPolicyPreview) =>
         {{ echoLine(result) }}
       </div>
 
-      <el-table
+      <DataTable
         :data="result.items"
         border
         size="small"
-        :row-class-name="
-          ({ row }) => (row.is_active === false ? 'preview-inactive-row' : '')
-        "
+        :label="t('loginPolicy.previewTitle')"
+        :row-class-name="inactiveRowClass"
       >
         <el-table-column
           prop="priority"
@@ -276,7 +280,7 @@ const echoLine = (data: LoginPolicyPreview) =>
             <span v-else>-</span>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </template>
   </div>
 </template>

@@ -8,8 +8,8 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import { settingsPane } from "@/views/settings/components/settings/types";
-import Setting from "@/views/settings/components/settings/index.vue";
+import { settingsPane } from "@/views/settings/components/settings-shell/types";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import type { RecordType } from "plus-pro-components";
 

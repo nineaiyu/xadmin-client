@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { hasAuth } from "@/router/utils";
 import type { PageColumn } from "@/components/RePlusPage";
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
-import type { settingItemProps } from "@/views/settings/components/settings/types";
+import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
+import type { settingItemProps } from "@/views/settings/components/settings-shell/types";
 import { aiConfigApi } from "@/api/ai/ai";
 
 /**

@@ -97,9 +97,13 @@ function prefixLines(marker: (_position: number) => string) {
   void focusRange(caret, caret);
 }
 
-/** 表格：插入 2×2 骨架（表头 + 一行数据），单元格就地编辑 */
+/** 表格：插入 2×2 骨架（表头 + 一行数据），单元格就地编辑；文案走词条（en 不插中文示例） */
 function insertTable() {
-  const snippet = "| 标题一 | 标题二 |\n| --- | --- |\n| 内容 | 内容 |";
+  const snippet = `| ${t("dataScreen.richTableCol1")} | ${t(
+    "dataScreen.richTableCol2"
+  )} |\n| --- | --- |\n| ${t("dataScreen.richTableCell")} | ${t(
+    "dataScreen.richTableCell"
+  )} |`;
   const { start, end } = selectionRange();
   const prefix =
     start > 0 && !value.value.slice(0, start).endsWith("\n") ? "\n" : "";

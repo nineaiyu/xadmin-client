@@ -2,6 +2,12 @@ import type { Ref } from "vue";
 
 import { computed, ref, unref, watch } from "vue";
 
+/**
+ * ReIcon 选择器局部分页（原 src/hooks/usePagination，唯一消费方是本目录
+ * Select.vue，故并入局部）：通用列表分页走 `@/hooks/usePagedList`，
+ * 不要在新页面引用本模块。
+ */
+
 /** 按页码切片（1 基）。页码 / 每页条数非法时抛错，使调用方的状态错误尽早暴露。 */
 export function paginate<T>(list: T[], pageNo: number, pageSize: number): T[] {
   if (pageNo < 1) throw new Error("Page number must be positive");

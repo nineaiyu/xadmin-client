@@ -49,7 +49,6 @@ const TECH_LABELS: Record<string, string> = {
   typescript: "TypeScript",
   "element-plus": "Element Plus",
   pinia: "Pinia",
-  unocss: "UnoCSS",
   tailwindcss: "Tailwind CSS"
 };
 const techStack = Object.entries(TECH_LABELS)

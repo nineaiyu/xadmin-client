@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import DataTable from "@/components/DataTable";
 import { CONDITION_OPS, conditionOpLabel, type RouteItem } from "./flowConfig";
 
 /**
@@ -67,7 +68,12 @@ defineExpose({ getRoutes });
       :title="t('systemApprovalFlow.routesTip')"
       class="mb-3"
     />
-    <el-table :data="routes" size="small" border>
+    <DataTable
+      :data="routes"
+      size="small"
+      border
+      :label="t('systemApprovalFlow.routesTitle')"
+    >
       <el-table-column
         :label="t('systemApprovalFlow.conditionField')"
         width="150"
@@ -118,7 +124,7 @@ defineExpose({ getRoutes });
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-button
       link
       type="primary"

@@ -61,6 +61,21 @@ const loadFailed = ref(false);
 const submitLoading = ref(false);
 const testLoading = ref(false);
 const { getColumnData } = useBaseColumns(props.localeName);
+
+/** 「实际生效状态」诊断项(后端 build_setting_effective 下发,设置端点可选携带) */
+type EffectiveItem = {
+  title: string;
+  enabled: boolean;
+  reasons?: string[];
+  notices?: string[];
+};
+const effectiveItems = ref<EffectiveItem[]>([]);
+/** 提取保留键 effective:诊断不进表单 formData(否则会随保存回传) */
+const applyEffective = (payload: unknown) => {
+  const items = (payload as { items?: EffectiveItem[] } | null | undefined)
+    ?.items;
+  effectiveItems.value = Array.isArray(items) ? items : [];
+};
 const addOrEditData = ref<{
   addOrEditRules: RecordType;
   addOrEditColumns: PageColumn[];
@@ -133,7 +148,10 @@ const getData = () => {
         retrieveRes
           .then(res => {
             if (res && isSuccess(res)) {
-              addOrEditData.value.formData = pickBy(res.data, (_value, key) =>
+              const payload = (res.data ?? {}) as RecordType;
+              const { effective, ...formValues } = payload;
+              applyEffective(effective);
+              addOrEditData.value.formData = pickBy(formValues, (_value, key) =>
                 keepField(key)
               );
               addOrEditData.value.defaultData = cloneDeep(
@@ -166,7 +184,10 @@ const handleSubmitSettings = (data: FieldValues) => {
       t,
       apiReq: props.api.partialUpdate(props.queryParams, data),
       success: res => {
-        const response = res?.data ?? {};
+        const payload = (res?.data ?? {}) as RecordType;
+        const { effective, ...response } = payload;
+        // 保存响应同样携带诊断:横幅随保存即时刷新,无需重进页面
+        applyEffective(effective);
         addOrEditData.value.defaultData = response;
         // 消费服务端响应整形（如短信手机号归一为 {code, phone}），表单回显与库内一致
         addOrEditData.value.formData = {
@@ -212,42 +233,65 @@ const handleTest = () => {
       {{ t("buttons.reload") }}
     </el-button>
   </div>
-  <PlusForm
-    ref="addFormRef"
-    v-model="addOrEditData.formData"
-    v-loading="loading"
-    :columns="formColumns"
-    :rules="addOrEditData.addOrEditRules"
-    :default-values="cloneDeep(addOrEditData.defaultData)"
-    :row-props="{ gutter: 24 }"
-    class="setting-form"
-    :label-position="isNarrow ? 'top' : 'right'"
-    :label-width="isNarrow ? 'auto' : LABEL_WIDTH"
-    :has-footer="auth.partialUpdate"
-    v-bind="formProps"
-    @submit="handleSubmitSettings"
-  >
-    <template #footer="{ handleSubmit }">
-      <el-button v-if="auth.partialUpdate" @click="getData"
-        >{{ t("buttons.reset") }}
-      </el-button>
+  <template v-else>
+    <!-- 实际生效状态诊断(后端可选下发):原始开关之外给出合成结果与未生效原因,
+         消除「开关开着但功能实际不可用」的可观测性缺口;tab 未下发时不渲染 -->
+    <el-alert
+      v-for="item in effectiveItems"
+      :key="item.title"
+      class="mb-3!"
+      :type="item.enabled && !item.notices?.length ? 'success' : 'warning'"
+      :closable="false"
+      show-icon
+      data-testid="setting-effective"
+    >
+      <template #title>
+        {{
+          item.enabled
+            ? t("setting.effectiveOk", { name: item.title })
+            : t("setting.effectiveBlocked", { name: item.title })
+        }}
+      </template>
+      <div v-for="reason in item.reasons ?? []" :key="reason">{{ reason }}</div>
+      <div v-for="notice in item.notices ?? []" :key="notice">{{ notice }}</div>
+    </el-alert>
+    <PlusForm
+      ref="addFormRef"
+      v-model="addOrEditData.formData"
+      v-loading="loading"
+      :columns="formColumns"
+      :rules="addOrEditData.addOrEditRules"
+      :default-values="cloneDeep(addOrEditData.defaultData)"
+      :row-props="{ gutter: 24 }"
+      class="setting-form"
+      :label-position="isNarrow ? 'top' : 'right'"
+      :label-width="isNarrow ? 'auto' : LABEL_WIDTH"
+      :has-footer="auth.partialUpdate"
+      v-bind="formProps"
+      @submit="handleSubmitSettings"
+    >
+      <template #footer="{ handleSubmit }">
+        <el-button v-if="auth.partialUpdate" @click="getData"
+          >{{ t("buttons.reset") }}
+        </el-button>
 
-      <el-button
-        v-if="auth.partialUpdate"
-        type="primary"
-        :loading="submitLoading"
-        @click="handleSubmit"
-        >{{ t("buttons.save") }}
-      </el-button>
-      <el-button
-        v-if="auth.test"
-        type="success"
-        :loading="testLoading"
-        @click="handleTest"
-        >{{ t("buttons.test") }}
-      </el-button>
-    </template>
-  </PlusForm>
+        <el-button
+          v-if="auth.partialUpdate"
+          type="primary"
+          :loading="submitLoading"
+          @click="handleSubmit"
+          >{{ t("buttons.save") }}
+        </el-button>
+        <el-button
+          v-if="auth.test"
+          type="success"
+          :loading="testLoading"
+          @click="handleTest"
+          >{{ t("buttons.test") }}
+        </el-button>
+      </template>
+    </PlusForm>
+  </template>
 </template>
 
 <style lang="scss" scoped>

@@ -3,7 +3,7 @@ import OAuthEntry from "./OauthEntry.vue";
 import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
 import { message } from "@/utils/message";
 import RememberLogin from "./RememberLogin.vue";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Motion from "../utils/motion";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
@@ -36,6 +36,15 @@ const verifyCodeRef = ref<{
   getRef?: () => FormInstance;
 }>();
 const { t } = useI18n();
+const loginPageStore = useLoginPageStoreHook();
+
+/** 能力清单(外壳拉取):入口可见性判断的唯一来源 */
+const accessEnabled = computed(
+  () => loginPageStore.capabilities?.access === true
+);
+const resetEnabled = computed(
+  () => loginPageStore.capabilities?.reset?.enabled === true
+);
 
 const {
   checked,
@@ -103,7 +112,7 @@ onMounted(() => {
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
   onConfig(verifyCodeConfig);
-  loginDay.value = authInfo.value.lifetime ?? 1;
+  loginDay.value = loginPageStore.capabilities?.lifetime ?? 1;
   formatLoginDayOptions();
   syncRememberToStore();
 };
@@ -137,7 +146,7 @@ const onBack = backToBasicPage;
         @configReqEnd="configLoading = false"
       />
 
-      <el-form v-if="authInfo.access" :model="formData" size="large">
+      <el-form v-if="accessEnabled" :model="formData" size="large">
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
@@ -147,13 +156,11 @@ const onBack = backToBasicPage;
                 :login-day-list="loginDayList"
               />
               <el-button
-                v-if="authInfo.reset"
+                v-if="resetEnabled"
                 link
                 type="primary"
                 @click="
-                  useLoginPageStoreHook().SET_CURRENT_PAGE(
-                    LOGIN_PAGE.resetPassword
-                  )
+                  loginPageStore.SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
                 "
               >
                 {{ t("login.forget") }}

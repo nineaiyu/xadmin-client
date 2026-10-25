@@ -28,6 +28,9 @@ const i18n = createI18n({
         richList: "无序列表",
         richOrderedList: "有序列表",
         richTable: "表格",
+        richTableCol1: "标题一",
+        richTableCol2: "标题二",
+        richTableCell: "内容",
         richPreview: "实时预览",
         richPlaceholder: "文本",
         richTextHint: "标记提示"

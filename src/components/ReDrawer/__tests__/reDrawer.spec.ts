@@ -137,3 +137,48 @@ describe("ReDrawer 抽屉容器", () => {
     expect(drawerStore.value[0]?.visible).toBe(false);
   });
 });
+
+describe("ReDrawer 焦点圈入（弹层打开后键盘焦点入层、关闭后还原触发元素）", () => {
+  beforeEach(() => {
+    drawerStore.value = [];
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    closeAllDrawer();
+    document.body.innerHTML = "";
+  });
+
+  it("打开后初始焦点落在抽屉内，关闭后焦点还原到触发元素", async () => {
+    mountContainer();
+    const trigger = document.createElement("button");
+    trigger.textContent = "触发按钮";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    addDrawer({
+      title: "焦点实证",
+      contentRenderer: () => h("div", [h("input", { class: "probe-input" })])
+    });
+    await flushPromises();
+    await nextTick();
+
+    const drawer = document.querySelector(".el-drawer");
+    expect(drawer).toBeTruthy();
+    expect(
+      drawer!.contains(document.activeElement),
+      `初始焦点应落在抽屉内，实际为 ${document.activeElement?.outerHTML ?? "null"}`
+    ).toBe(true);
+
+    closeDrawer(drawerStore.value[0], 0);
+    await flushPromises();
+    vi.advanceTimersByTime(300); // closeDelay 默认 200ms，过后抽屉出栈
+    await flushPromises();
+    expect(
+      document.activeElement,
+      "关闭后焦点应还原到触发元素（EP focus-trap 的 return-focus）"
+    ).toBe(trigger);
+  });
+});

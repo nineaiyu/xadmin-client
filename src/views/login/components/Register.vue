@@ -5,7 +5,8 @@ import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
-import { onMounted, ref } from "vue";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import { computed, onMounted, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import PasswordFields from "./PasswordFields.vue";
@@ -23,6 +24,10 @@ const { t } = useI18n();
 const checked = ref(false);
 /** 隐私政策弹窗：无独立路由，注册页内以对话框展示简要条款 */
 const privacyVisible = ref(false);
+/** 注册入口可用性:能力清单下发(关闭时不渲染注册表单) */
+const registerEnabled = computed(
+  () => useLoginPageStoreHook().capabilities?.register?.enabled === true
+);
 const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
@@ -102,7 +107,7 @@ onMounted(() => (configLoading.value = true));
     />
 
     <el-form
-      v-if="authInfo.access"
+      v-if="registerEnabled"
       ref="formDataRef"
       :model="formData"
       :rules="formRules"

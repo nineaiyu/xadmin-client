@@ -81,7 +81,6 @@ export function resolveImageQuality(
   const size = canvas.width * canvas.height;
   for (let i = 0; i < rules.length; i++) {
     if (size > 1024 * 1024 * rules[i].value) {
-      console.log("get quality", size / 1024, rules[i]);
       return { quality: rules[i].quality, type: rules[i].type };
     }
   }

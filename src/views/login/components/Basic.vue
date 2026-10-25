@@ -16,7 +16,6 @@ import User from "~icons/ri/user-3-fill";
 import Keyhole from "~icons/ri/shield-keyhole-line";
 import {
   getTempTokenApi,
-  loginAuthApi,
   type LoginResultData,
   type TokenInfo
 } from "@/api/auth";
@@ -25,9 +24,7 @@ import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
 import RememberLogin from "./RememberLogin.vue";
 import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
-import type { RecordType } from "plus-pro-components";
 import {
-  useAuthInfo,
   useEnterSubmit,
   useLoginFlow,
   useRememberLogin
@@ -40,6 +37,7 @@ defineOptions({
 const captchaRef = ref();
 const ruleFormRef = ref<FormInstance>();
 const { t } = useI18n();
+const loginPageStore = useLoginPageStoreHook();
 
 const {
   checked,
@@ -49,10 +47,27 @@ const {
   syncRememberToStore
 } = useRememberLogin();
 
-const { authInfo, configLoading, onConfig } = useAuthInfo();
+/** 登录页能力清单(外壳拉取,本组件挂载时必已就绪) */
+const capabilities = computed(() => loginPageStore.capabilities);
 
-/** 账号密码登录开关：配置未返回前按开启处理，避免首帧误报「已关闭」 */
-const basicLoginEnabled = computed(() => authInfo.value.basic !== false);
+const accessEnabled = computed(() => capabilities.value?.access === true);
+const basicLoginEnabled = computed(
+  () => capabilities.value?.basic?.enabled === true
+);
+const resetEnabled = computed(
+  () => capabilities.value?.reset?.enabled === true
+);
+
+/** 「其他登录方式」入口:按能力清单过滤(验证码通道全关 / 注册关闭时入口隐藏) */
+const visibleOperates = computed(() =>
+  operates.filter(item => {
+    if (item.page === LOGIN_PAGE.verifyCode)
+      return capabilities.value?.code?.enabled === true;
+    if (item.page === LOGIN_PAGE.register)
+      return capabilities.value?.register?.enabled === true;
+    return true;
+  })
+);
 
 const ruleForm = reactive({
   username: "",
@@ -70,8 +85,9 @@ let tokenPromise: Promise<void> | null = null;
 
 /** 取一次性临时 Token 写入表单；force=true 强制刷新（登录失败后 token 已被消费） */
 const initToken = (force = false) => {
-  if (!(authInfo.value.access && authInfo.value.token))
+  if (!(accessEnabled.value && capabilities.value?.basic?.token)) {
     return Promise.resolve();
+  }
   if (!force && tokenPromise) return tokenPromise;
   tokenPromise = getTempTokenApi()
     .then(res => {
@@ -127,7 +143,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       t,
       apiReq: useUserStoreHook().loginByUsername(
         cloneDeep(ruleForm),
-        authInfo.value.encrypted
+        capabilities.value?.basic?.encrypted
       ),
       // 成功提示由登录流弹出「登录成功」，关掉默认文案
       showSuccessMsg: false,
@@ -164,34 +180,17 @@ const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 /** 回车提交（随组件卸载自动移除监听） */
 useEnterSubmit(() => onLogin(ruleFormRef.value));
 
-/** 登录配置失败：与「管理员禁用登录」区分，给重试入口 */
-const configFailed = ref(false);
-const loadLoginConfig = () => {
-  configLoading.value = true;
-  configFailed.value = false;
-  loginAuthApi()
-    .then(res => {
-      if (isSuccess(res)) {
-        onConfig(res.data as RecordType);
-        void initToken();
-        loginDay.value = authInfo.value.lifetime ?? 1;
-        formatLoginDayOptions();
-        syncRememberToStore();
-      } else {
-        configFailed.value = true;
-      }
-    })
-    .catch(() => {
-      configFailed.value = true;
-    })
-    .finally(() => (configLoading.value = false));
-};
-
-onMounted(loadLoginConfig);
+// 能力清单已由外壳拉取就绪:挂载即初始化一次性 token 与免登录天数
+onMounted(() => {
+  void initToken();
+  loginDay.value = capabilities.value?.lifetime ?? 1;
+  formatLoginDayOptions();
+  syncRememberToStore();
+});
 </script>
 
 <template>
-  <div v-loading="configLoading">
+  <div>
     <LoginMfa
       v-if="loginMfaInfo"
       :mfa-info="loginMfaInfo"
@@ -200,7 +199,7 @@ onMounted(loadLoginConfig);
     />
     <template v-else>
       <el-form
-        v-if="authInfo.access"
+        v-if="accessEnabled"
         ref="ruleFormRef"
         :model="ruleForm"
         :rules="loginRules"
@@ -230,7 +229,7 @@ onMounted(loadLoginConfig);
             </el-form-item>
           </Motion>
 
-          <Motion v-if="authInfo.access && authInfo.captcha" :delay="200">
+          <Motion v-if="capabilities?.basic?.captcha" :delay="200">
             <el-form-item prop="captcha_code">
               <el-input
                 v-model="ruleForm.captcha_code"
@@ -259,13 +258,11 @@ onMounted(loadLoginConfig);
                 :login-day-list="loginDayList"
               />
               <el-button
-                v-if="authInfo.reset"
+                v-if="resetEnabled"
                 link
                 type="primary"
                 @click="
-                  useLoginPageStoreHook().SET_CURRENT_PAGE(
-                    LOGIN_PAGE.resetPassword
-                  )
+                  loginPageStore.SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
                 "
               >
                 {{ t("login.forget") }}
@@ -297,28 +294,20 @@ onMounted(loadLoginConfig);
           <OAuthEntry />
         </Motion>
       </el-form>
-      <Motion v-else-if="configFailed" :delay="300">
-        <el-result icon="error" :title="t('login.configLoadFailed')">
-          <template #extra>
-            <el-button type="primary" @click="loadLoginConfig">
-              {{ t("buttons.reload") }}
-            </el-button>
-          </template>
-        </el-result>
-      </Motion>
       <Motion v-else :delay="300">
         <el-result icon="error" :title="t('login.serverForbidden')" />
       </Motion>
-      <!-- 服务整体禁用（authInfo.access=false）时隐藏登录方式切换：目标页同样是「服务已禁止」，保留即成死循环点击面 -->
-      <Motion v-if="authInfo.access" :delay="300">
+      <!-- 入口按钮按能力清单过滤:验证码通道全关/注册关闭时对应入口隐藏;
+           服务整体禁用时全部隐藏(目标页同样是「服务已禁止」,保留即成死循环点击面) -->
+      <Motion v-if="accessEnabled && visibleOperates.length" :delay="300">
         <el-form-item>
           <div class="w-full h-5 flex-bc">
             <el-button
-              v-for="item in operates"
+              v-for="item in visibleOperates"
               :key="item.page"
               class="w-full mt-4!"
               size="default"
-              @click="useLoginPageStoreHook().SET_CURRENT_PAGE(item.page)"
+              @click="loginPageStore.SET_CURRENT_PAGE(item.page)"
             >
               {{ t(item.title) }}
             </el-button>

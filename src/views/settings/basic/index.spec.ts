@@ -15,7 +15,7 @@ vi.mock("@/store/modules/watermark", () => ({
   useWatermarkStoreHook: () => ({ refreshSiteWatermark: vi.fn() })
 }));
 // 骨架桩：按 panes 渲染面板（与真实骨架同语义）
-vi.mock("@/views/settings/components/settings/index.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/index.vue", () => ({
   default: {
     name: "Setting",
     props: ["panes"],
@@ -26,7 +26,7 @@ vi.mock("@/views/settings/components/settings/index.vue", () => ({
     </div>`
   }
 }));
-vi.mock("@/views/settings/components/settings/SettingItem.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/SettingItem.vue", () => ({
   default: {
     name: "SettingItem",
     template: "<div data-testid='monitor-item' />"
@@ -40,7 +40,7 @@ vi.mock("./components/WatermarkSetting.vue", () => ({
   }
 }));
 
-import Setting from "@/views/settings/components/settings/index.vue";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
 import WatermarkSetting from "./components/WatermarkSetting.vue";
 import index from "./index.vue";
 

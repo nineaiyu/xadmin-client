@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import Setting from "@/views/settings/components/settings/index.vue";
-import { settingsPane } from "@/views/settings/components/settings/types";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
+import { settingsPane } from "@/views/settings/components/settings-shell/types";
 import { hasAuth } from "@/router/utils";
 import ScimPanel from "./components/ScimPanel.vue";
 import OAuthProviderPanel from "./components/OAuthProviderPanel.vue";

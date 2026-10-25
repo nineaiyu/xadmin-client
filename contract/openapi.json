@@ -1996,7 +1996,7 @@
             "writeOnly": true
           },
           "sure_password": {
-            "description": "Legacy contract name: this field carries the NEW password itself (not a repeat/confirm value)",
+            "description": "契约命名遗留：本字段承载的就是新密码本身（不是二次确认值）",
             "maxLength": 128,
             "title": "确认密码",
             "type": "string",
@@ -11579,7 +11579,7 @@
             "type": "boolean"
           },
           "SECURITY_LOGIN_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过手机登录",
             "type": "boolean"
@@ -11875,7 +11875,7 @@
             "type": "boolean"
           },
           "SECURITY_REGISTER_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过手机注册",
             "type": "boolean"
@@ -11917,7 +11917,7 @@
             "type": "boolean"
           },
           "SECURITY_RESET_PASSWORD_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过短信重置密码",
             "type": "boolean"
@@ -14474,7 +14474,7 @@
             "type": "boolean"
           },
           "SECURITY_LOGIN_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过手机登录",
             "type": "boolean"
@@ -14780,7 +14780,7 @@
             "type": "boolean"
           },
           "SECURITY_REGISTER_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过手机注册",
             "type": "boolean"
@@ -14822,7 +14822,7 @@
             "type": "boolean"
           },
           "SECURITY_RESET_PASSWORD_BY_SMS_ENABLED": {
-            "default": true,
+            "default": false,
             "description": "允许用户通过发送短信验证码",
             "title": "通过短信重置密码",
             "type": "boolean"
@@ -43841,6 +43841,132 @@
         "tags": ["ApiApplicationViewSet"]
       }
     },
+    "/api/identity/auth/capabilities": {
+      "get": {
+        "description": "获取登录页能力清单",
+        "operationId": "api_identity_auth_capabilities_retrieve",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
+                      "type": "number"
+                    },
+                    "data": {
+                      "properties": {
+                        "access": {
+                          "type": "boolean"
+                        },
+                        "basic": {
+                          "properties": {
+                            "captcha": {
+                              "type": "boolean"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "encrypted": {
+                              "type": "boolean"
+                            },
+                            "token": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "code": {
+                          "properties": {
+                            "email": {
+                              "type": "boolean"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "sms": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "lifetime": {
+                          "type": "number"
+                        },
+                        "oauth": {
+                          "items": {
+                            "properties": {
+                              "flavor": {
+                                "type": "string"
+                              },
+                              "key": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "register": {
+                          "properties": {
+                            "email": {
+                              "type": "boolean"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "sms": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "reset": {
+                          "properties": {
+                            "email": {
+                              "type": "boolean"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "sms": {
+                              "type": "boolean"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "CookieJWTAuthentication": []
+          },
+          {}
+        ],
+        "tags": ["LoginCapabilitiesAPIView"]
+      }
+    },
     "/api/identity/auth/captcha": {
       "get": {
         "description": "获取图形验证码",
@@ -47894,63 +48020,6 @@
       }
     },
     "/api/identity/login/basic": {
-      "get": {
-        "description": "获取登录配置信息",
-        "operationId": "api_identity_login_basic_retrieve",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "code": {
-                      "type": "number"
-                    },
-                    "data": {
-                      "properties": {
-                        "access": {
-                          "type": "boolean"
-                        },
-                        "basic": {
-                          "type": "boolean"
-                        },
-                        "captcha": {
-                          "type": "boolean"
-                        },
-                        "encrypted": {
-                          "type": "boolean"
-                        },
-                        "lifetime": {
-                          "type": "number"
-                        },
-                        "reset": {
-                          "type": "boolean"
-                        },
-                        "token": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "detail": {
-                      "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
-                    },
-                    "timestamp": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": ["BasicLoginAPIView"]
-      },
       "post": {
         "description": "用户名密码登录",
         "operationId": "api_identity_login_basic_create",
@@ -69260,6 +69329,9 @@
                             "type": "string"
                           },
                           "key": {
+                            "type": "string"
+                          },
+                          "kind": {
                             "type": "string"
                           },
                           "label": {

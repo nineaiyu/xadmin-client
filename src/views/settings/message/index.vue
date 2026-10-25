@@ -2,8 +2,8 @@
 import { settingsEmailApi, settingsNotifyImApi } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { settingsPane } from "@/views/settings/components/settings/types";
-import Setting from "@/views/settings/components/settings/index.vue";
+import { settingsPane } from "@/views/settings/components/settings-shell/types";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
 import { systemMsgSubscriptionApi } from "@/api/system/notifications";
 import MessageNotifications from "@/components/ReMessageNotifications";
 import MessageTemplatePanel from "./components/MessageTemplatePanel.vue";

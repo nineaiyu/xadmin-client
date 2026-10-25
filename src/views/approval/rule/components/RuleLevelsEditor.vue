@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable";
 import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
 import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
 import { createLevelRow, type LevelRow } from "../utils/types";
@@ -74,7 +75,12 @@ function moveLevel(index: number, delta: number) {
     <p class="mb-2 text-xs text-(--el-text-color-regular)">
       {{ t("approvalRule.levelsTip") }}
     </p>
-    <el-table :data="levels" size="small" border>
+    <DataTable
+      :data="levels"
+      size="small"
+      border
+      :label="t('approvalRule.levels')"
+    >
       <el-table-column
         type="index"
         width="50"
@@ -165,7 +171,7 @@ function moveLevel(index: number, delta: number) {
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-button class="mt-2" size="small" @click="addLevel">
       {{ t("approvalRule.addLevel") }}
     </el-button>

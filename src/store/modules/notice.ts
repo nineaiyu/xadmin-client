@@ -203,7 +203,9 @@ export const useNoticeStore = defineStore("pure-notice", {
               onLogout();
               break;
             case "error":
-              console.log(raw);
+              // 服务端下发的错误事件：不入通知浮层（防刷屏），但必须以 warn
+              // 落控制台——此前 console.log 级别的吞错在排查时形同没有日志
+              console.warn("[notice] WebSocket error message:", raw);
               break;
           }
         }

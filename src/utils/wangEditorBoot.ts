@@ -57,7 +57,7 @@ export function ensureWangEditorBoot(): Promise<void> {
       Boot.registerModule(attachmentModule);
     } catch (e) {
       // 重复注册等场景静默跳过（与入口静态注册时期的行为一致）
-      console.log(e);
+      console.debug("[wangEditor] module re-registered, skipped:", e);
     }
   })();
   return bootPromise;

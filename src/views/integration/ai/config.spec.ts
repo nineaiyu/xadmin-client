@@ -24,7 +24,7 @@ vi.mock("@/router/utils", () => ({
   usePageAuth: mocks.usePageAuth
 }));
 // 设置壳桩：按 panes 渲染槽位（与真实骨架同语义）
-vi.mock("@/views/settings/components/settings/index.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/index.vue", () => ({
   default: {
     name: "Setting",
     props: ["panes"],

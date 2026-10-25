@@ -12,7 +12,7 @@
 | `src/views/`                  | 页面：一个页面 = `index.vue`（壳）+ `utils/hook.tsx`（列渲染 / 按钮 / 搜索区格式化）+ `components/*Form.vue`（弹窗表单）                |
 | `src/store/`                  | Pinia：user / permission / siteConfig / multiTags…                                                                                      |
 | `src/utils/`                  | 工具（sse、dict、auth、desktopNotify、fetchAllRows…）                                                                                   |
-| `src/style/`                  | 样式与设计令牌（UnoCSS + scss + tokens）                                                                                                |
+| `src/style/`                  | 样式与设计令牌（Tailwind CSS v4 + scss + tokens）                                                                                       |
 | `public/platform-config.json` | 项目参数（站点标题 / 布局 / 主题…）——**改偏好必须同步这里**                                                                             |
 | `e2e/`                        | Playwright 用例（`*.e2e.ts`）+ `helpers.ts` + `quarantine.json`（隔离清单）+ `README.md`（运行表与陷阱表）                              |
 | `scripts/`                    | 门禁脚本（`check-*.mjs`）与 E2E 编排（`e2e-run.mjs`）                                                                                   |
@@ -41,7 +41,8 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
    （校验失败返回 null 以保持弹层），且必须登记 `scripts/handwritten-forms-exempt.json`
    （`pnpm check:forms` 会拦）；**先 `done()` 关弹层再 `await load*()` 刷新**。
 4. API 调用统一 `.catch(error => ({code: -1, data: null, detail}))` 归一异常，避免 `beforeSure`
-   抛错导致 loading 悬挂。
+   抛错导致 loading 悬挂。注意：**列表页（RePlusPage/defineListPage）的请求与错误反馈由框架
+   内部消化，页面零 try/catch；该归一样板仅手写调用点需要**（全仓手写 `code: -1` 仅个位数）。
 5. **200 + 业务码失败必须页面显式处理**（`res.code === SUCCESS_CODE` 之外的分支要 `ElMessage.error`）——
    http 拦截器只管 4xx/5xx。
 6. 新增 / 修改页面后同步 i18n 词条（zh + en 对称，`pnpm check:i18n`）；YAML 里的裸 `@` 要写 `{'@'}`。
@@ -60,8 +61,10 @@ pnpm lint                    # eslint --max-warnings 0 + prettier + stylelint
 
 ## 五、样式与组件约定
 
-- 样式用 UnoCSS 原子类 + 设计令牌（`src/style/tokens/`）；**不要写死字号与颜色字面量**
-  （`pnpm check:font-size-literals` / `check:color-literals` 会拦），用语义令牌。
+- 样式用 Tailwind CSS v4 原子类（`src/style/tailwind.css` 的 `@theme` 桥接语义令牌；
+  UnoCSS 已全量移除，不存在 `uno.config.*`）+ 设计令牌（`src/style/tokens/`）；
+  **不要写死字号与颜色字面量**（`pnpm check:font-size-literals` / `check:color-literals`
+  会拦），用语义令牌。
 - 暗色适配走令牌（`html.dark` 分支），别用 `!important` 堆叠。
 - 新用 Element Plus 组件要同时登记组件与 `element-plus/es/components/xxx/style/css`。
 - 图表统一走 `useECharts` 封装；canvas 导出动画需等待渲染完成。

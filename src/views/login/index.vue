@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, toRaw, watch } from "vue";
+import { computed, onMounted, toRaw, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import Motion from "./utils/motion";
 import basic from "./components/Basic.vue";
@@ -11,6 +11,7 @@ import { LOGIN_PAGE } from "./utils/enums";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import { loginCapabilitiesApi } from "@/api/auth";
 import { avatar, bg, illustration } from "./utils/static";
 
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
@@ -28,8 +29,34 @@ defineOptions({
   name: "LoginIndex"
 });
 
+const loginPageStore = useLoginPageStoreHook();
 const currentPage = computed(() => {
-  return useLoginPageStoreHook().currentPage;
+  return loginPageStore.currentPage;
+});
+
+// 能力清单由外壳统一拉取:就绪前不渲染子页(配置未到时 access 未知,
+// 直接渲染会先闪「服务已禁止」);失败给整页重试(与子页原 configFailed 同口径)
+const capabilitiesReady = computed(
+  () => loginPageStore.capabilitiesStatus === "success"
+);
+const capabilitiesFailed = computed(
+  () => loginPageStore.capabilitiesStatus === "failed"
+);
+const reloadCapabilities = async () => {
+  loginPageStore.SET_CAPABILITIES_STATUS("loading");
+  try {
+    const res = await loginCapabilitiesApi();
+    if (res.code === 1000 && res.data) {
+      loginPageStore.SET_CAPABILITIES(res.data);
+    } else {
+      loginPageStore.SET_CAPABILITIES_STATUS("failed");
+    }
+  } catch {
+    loginPageStore.SET_CAPABILITIES_STATUS("failed");
+  }
+};
+onMounted(() => {
+  void reloadCapabilities();
 });
 
 const { initStorage } = useLayout();
@@ -132,15 +159,30 @@ watch(
               />
             </h2>
           </Motion>
-          <!-- 账户密码登录 -->
-          <basic v-if="currentPage === LOGIN_PAGE.basic" />
+          <!-- 能力清单未就绪:不渲染任何子页(避免配置未到时闪「服务已禁止」) -->
+          <Motion v-if="capabilitiesFailed" :delay="100">
+            <el-result icon="error" :title="t('login.configLoadFailed')">
+              <template #extra>
+                <el-button type="primary" @click="reloadCapabilities">
+                  {{ t("buttons.reload") }}
+                </el-button>
+              </template>
+            </el-result>
+          </Motion>
+          <Motion v-else-if="capabilitiesReady" :delay="100">
+            <!-- 账户密码登录 -->
+            <basic v-if="currentPage === LOGIN_PAGE.basic" />
 
-          <!-- 验证码登录 -->
-          <login v-if="currentPage === LOGIN_PAGE.verifyCode" />
-          <!-- 注册 -->
-          <register v-if="currentPage === LOGIN_PAGE.register" />
-          <!-- 忘记密码 -->
-          <resetPassword v-if="currentPage === LOGIN_PAGE.resetPassword" />
+            <!-- 验证码登录 -->
+            <login v-if="currentPage === LOGIN_PAGE.verifyCode" />
+            <!-- 注册 -->
+            <register v-if="currentPage === LOGIN_PAGE.register" />
+            <!-- 忘记密码 -->
+            <resetPassword v-if="currentPage === LOGIN_PAGE.resetPassword" />
+          </Motion>
+          <Motion v-else :delay="100">
+            <div v-loading="true" class="h-40 flex-c" />
+          </Motion>
         </div>
       </div>
     </div>
@@ -153,8 +195,9 @@ watch(
   </div>
 </template>
 
-<style scoped>
-@import url("@/style/login.css");
+<!-- 登录页外壳样式：全局（类名仅本页使用），scss 版消费语义令牌 -->
+<style lang="scss">
+@use "@/style/login";
 </style>
 
 <style lang="scss" scoped>

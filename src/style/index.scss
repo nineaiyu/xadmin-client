@@ -22,9 +22,21 @@
   filter: grayscale(100%);
 }
 
-/* 色弱模式 */
+/* 色弱模式：整站反相提升对比度；媒体（图片/视频/画布/内嵌框）需还原为原色，
+   避免照片/头像呈负片——口径与 dark.scss 对 WangEditor 的规避一致。
+   invert(80%) 为仿射映射 c→-0.6c+0.8，媒体侧再叠 invert(80%) contrast(25/9)
+   恰好精确还原通道值（对比度系数 2.78 为 25/9 的取整，残差 <0.1%） */
 .html-weakness {
   filter: invert(80%);
+
+  img,
+  video,
+  canvas,
+  iframe,
+  embed,
+  object {
+    filter: invert(80%) contrast(2.78);
+  }
 }
 
 /* 轻微缩小，再恢复原状的平滑缩放动画 */

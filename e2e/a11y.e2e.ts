@@ -238,6 +238,35 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
   ).toEqual([]);
 });
 
+/**
+ * 投屏页（full-content 全屏路由）不挂 Layout：skip-link / a11y-live 等由 Layout
+ * 装配的设施天然缺席（展示场景键盘交互少，非缺陷——2026.10 前端审查 F-3 登记）。
+ * 本用例钉住「无 Layout 时仍守住 a11y 底线」：页面语言、文档标题、主题装配
+ * （bootTheme 在 main.ts 挂载前执行，不依赖 Layout）与 axe 基线扫描。
+ */
+test("a11y 扩面：投屏页（无 Layout 全屏路由）守住语言/标题/主题底线且无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  // 内置示例大屏主键（load_init_json 的「示例-运营大屏」，与 visual 基线同源）
+  await page.goto(
+    "/#/analysis/screen/display?pk=5eed0003-0000-4000-8000-000000000003"
+  );
+  await expect(page.locator(".screen-root")).toBeVisible({
+    timeout: 20_000
+  });
+
+  // 无 Layout 的静态底线：语言与标题不回退为空
+  expect(await page.locator("html").getAttribute("lang")).toBeTruthy();
+  expect(await page.title()).not.toBe("");
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `投屏页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
 test("a11y 交互：数据表有可访问名，弹窗/抽屉关闭后焦点归还触发元素", async ({
   page
 }) => {

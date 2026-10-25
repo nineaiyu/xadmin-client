@@ -1,34 +1,23 @@
 <script lang="ts" setup>
-import { isSuccess } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowDown, ArrowUp, Download, Setting } from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import { copyText } from "@/utils/clipboard";
-import { useSortable } from "@/hooks/useSortable";
+import type { DashboardItem } from "@/api/dataset/datasets";
 import {
   AUTO_REFRESH_OPTIONS,
   useDashboardAutoRefresh
 } from "./utils/useDashboardAutoRefresh";
-import {
-  dashboardApi,
-  datasetApi,
-  listRows,
-  type DashboardCard,
-  type DashboardItem,
-  type DatasetItem
-} from "@/api/dataset/datasets";
-import { cardRenderHeight } from "@/utils/cardHeight";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { useDashboardDelete } from "./utils/useDashboardDelete";
-import { moveCardInList } from "./utils/dashboardActions";
+import { useDashboardEditing } from "./utils/useDashboardEditing";
+import { useDashboardView } from "./utils/useDashboardView";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
+import { cardRenderHeight } from "@/utils/cardHeight";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
 import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
 
@@ -45,20 +34,38 @@ const canDestroy = hasAuth("destroy:DataDashboard");
 /** 展板路由（meta.kiosk）：隐藏全部编辑/选择工具栏，只读自动刷新 */
 const kiosk = computed(() => route.meta?.kiosk === true);
 
-const dashboards = ref<DashboardItem[]>([]);
-const current = ref<DashboardItem | null>(null);
-const loading = ref(false);
-const editing = ref(false);
-/**
- * 卡片刷新信号：自增经 refreshToken prop 下发，ChartCard watch 后原位重拉
- * （保留 ECharts 实例，不再销毁重建）；结构性重挂仍由 layoutKey 承担
- * （仅卡片集合/顺序变化时变，span/height 走响应式绑定无需重挂）。
- */
-const refreshKey = ref(0);
+// ---- 展示态（清单/选中/分享/数据集目录/刷新信号）与编辑态（草稿/拖拽/保存）各归 composable ----
+const view = useDashboardView({ t, route, router });
+const {
+  current,
+  dashboards,
+  datasetName,
+  datasets,
+  loadDashboards,
+  loadDatasets,
+  loading,
+  refreshCards,
+  refreshKey,
+  selectDashboard,
+  setSwitchGuard,
+  shareDashboard
+} = view;
 
-const refreshCards = () => {
-  refreshKey.value += 1;
-};
+const {
+  editing,
+  layout,
+  layoutKey,
+  moveCard,
+  removeCard,
+  rowRef,
+  saveLayout,
+  saving,
+  stopEditing,
+  toggleEdit,
+  updateDraft
+} = useDashboardEditing({ t, current, dashboards });
+// 切换仪表盘先退出编辑（未保存草稿随之放弃），与「保存才提交」的草稿语义一致
+setSwitchGuard(stopEditing);
 
 /* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
 const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
@@ -67,167 +74,14 @@ const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
   refresh: refreshCards
 });
 
-const layout = computed<DashboardCard[]>(() =>
-  editing.value ? draftLayout.value : (current.value?.layout ?? [])
-);
-
-/** 编辑态草稿：拖拽排序/增删卡片落在草稿上，保存才提交后端 */
-const draftLayout = ref<DashboardCard[]>([]);
-const layoutKey = computed(() =>
-  draftLayout.value.map(card => card.id).join("|")
-);
-
-const rowRef = ref();
-
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
 const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
-
-const loadDashboards = async () => {
-  loading.value = true;
-  try {
-    // fetchAllRows：下拉与 ?pk= 分享定位必须覆盖全量仪表盘——只取首页 20 条
-    // 会让超出分页的仪表盘在下拉里缺失、分享定位静默回落（与 loadDatasets 同口径）
-    const res = await fetchAllRows(dashboardApi.list);
-    dashboards.value = listRows<DashboardItem>(res as never);
-    if (!current.value && dashboards.value.length > 0) {
-      // 分享链接定位：?pk=<仪表盘主键> 命中则直接打开对应仪表盘
-      const sharedPk = typeof route.query.pk === "string" ? route.query.pk : "";
-      current.value =
-        dashboards.value.find(item => item.pk === sharedPk) ??
-        dashboards.value[0];
-      // 首次落地即写回地址栏，分享时无需依赖异步 replace 完成
-      syncDashboardQuery();
-    }
-  } finally {
-    loading.value = false;
-  }
-};
-
-const datasets = ref<DatasetItem[]>([]);
-const loadDatasets = async () => {
-  // 数据集下拉失败不阻塞看板主链路：显式提示（此前未捕获，失败用户无感知）
-  const res = await fetchAllRows(datasetApi.list).catch(() => null);
-  if (!res) {
-    message(t("dashboard.datasetsLoadFailed"), { type: "warning" });
-    return;
-  }
-  datasets.value = listRows<DatasetItem>(res as never);
-};
-
-/** 选中仪表盘并把 pk 写回地址栏（分享即复制当前 URL） */
-const selectDashboard = (pk: string) => {
-  current.value = dashboards.value.find(item => item.pk === pk) ?? null;
-  editing.value = false;
-  syncDashboardQuery();
-};
-
-const syncDashboardQuery = () => {
-  if (!current.value) return;
-  router.replace({ query: { ...route.query, pk: current.value.pk } });
-};
-
-/** 复制当前仪表盘视图链接（同角色内有权限者打开即定位到该仪表盘） */
-const shareDashboard = async () => {
-  if (!current.value) return;
-  // 直接构造带 pk 的完整 URL：router.replace 是异步的，首次分享不能依赖地址栏已更新
-  const [base] = window.location.href.split("#");
-  const query = new URLSearchParams({
-    ...route.query,
-    pk: current.value.pk
-  } as Record<string, string>);
-  const shareUrl = `${base}#${route.path}?${query.toString()}`;
-  syncDashboardQuery();
-  await copyText(shareUrl, { failureFallbackText: shareUrl });
-};
-
-const toggleEdit = () => {
-  if (!current.value) return;
-  if (!editing.value) {
-    draftLayout.value = JSON.parse(JSON.stringify(current.value.layout ?? []));
-    editing.value = true;
-    setupSortable();
-  } else {
-    editing.value = false;
-    destroySortable();
-  }
-};
-
-/**
- * 卡片拖拽排序：手柄 `drag-handle` 仅编辑态渲染，编辑期间把手柄拖动结果写回草稿。
- * 拖拽手势由 useSortable 统一承载（sortablejs 按需加载），本处只保留数据重排。
- */
-const { init: setupSortable, destroy: destroySortable } = useSortable(
-  () => rowRef.value?.$el as HTMLElement | undefined,
-  {
-    animation: 200,
-    handle: ".drag-handle",
-    onEnd: ({ oldIndex, newIndex }) => {
-      if (
-        oldIndex === undefined ||
-        newIndex === undefined ||
-        oldIndex === newIndex
-      )
-        return;
-      const next = [...draftLayout.value];
-      const [moved] = next.splice(oldIndex, 1);
-      next.splice(newIndex, 0, moved);
-      draftLayout.value = next;
-    }
-  }
-);
-
-const saving = ref(false);
-
-const saveLayout = async () => {
-  if (!current.value) return;
-  // 防重：连点只发一次 PATCH（partialUpdate 异步，竞态会并发写同一 layout）
-  if (saving.value) return;
-  saving.value = true;
-  try {
-    const res = await dashboardApi.partialUpdate<DashboardItem>(
-      current.value.pk,
-      { layout: draftLayout.value }
-    );
-    if (isSuccess(res)) {
-      message(t("dashboard.saveOk"), { type: "success" });
-      const index = dashboards.value.findIndex(
-        item => item.pk === current.value?.pk
-      );
-      if (index >= 0 && res.data) {
-        dashboards.value[index] = res.data;
-        current.value = dashboards.value[index];
-      }
-      editing.value = false;
-      destroySortable();
-      return;
-    }
-    // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-    if (res.detail) message(String(res.detail), { type: "error" });
-  } finally {
-    saving.value = false;
-  }
-};
-
-const removeCard = (id: string) => {
-  draftLayout.value = draftLayout.value.filter(card => card.id !== id);
-};
-
-/** 编辑态键盘可用的卡片排序（拖拽手柄之外的替代入口） */
-const moveCard = (id: string, offset: number) => {
-  const next = moveCardInList(draftLayout.value, id, offset);
-  if (next !== draftLayout.value) draftLayout.value = next;
-};
-
-const datasetName = (pk: string) =>
-  datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
 // ---- 卡片弹窗（新建 / 编辑双模式）与图片导出：独立 composable（控制页面体积） ----
 const { openCardSettings, openCardDialog } = useCardDialog({
   t,
   datasets,
-  updateDraft: updater => {
-    draftLayout.value = updater(draftLayout.value);
-  }
+  updateDraft
 });
 
 // ---- 新建 / 设置仪表盘弹窗：独立 composable（控制页面体积） ----
@@ -236,13 +90,13 @@ const { openCreateDashboard, openDashboardSettings } = useDashboardDialogs({
   dashboards,
   current,
   reload: loadDashboards,
-  syncQuery: syncDashboardQuery
+  syncQuery: view.syncDashboardQuery
 });
 
 const { removeDashboard } = useDashboardDelete({
   current,
   reload: loadDashboards,
-  syncQuery: syncDashboardQuery
+  syncQuery: view.syncDashboardQuery
 });
 
 const goDatasetPage = () => {

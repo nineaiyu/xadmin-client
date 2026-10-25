@@ -14,8 +14,8 @@ import {
 } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import Setting from "@/views/settings/components/settings/index.vue";
-import { settingsPane } from "@/views/settings/components/settings/types";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
+import { settingsPane } from "@/views/settings/components/settings-shell/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 import { useI18n } from "vue-i18n";

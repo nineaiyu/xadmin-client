@@ -18,7 +18,9 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  * ReDialog / ReDrawer 只传各自的 store 操作与状态清理函数，页脚行为保持同源。
  * 自定义 `footerButtons` 仍原样透传（调用方可完全接管按钮区）。
  */
-export function useOverlayFooter<TOptions extends OverlayBaseOptions>({
+export function useOverlayFooter<
+  TOptions extends OverlayBaseOptions<TOptions>
+>({
   close,
   getUid,
   t,

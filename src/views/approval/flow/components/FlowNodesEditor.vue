@@ -3,6 +3,7 @@ import { h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
+import DataTable from "@/components/DataTable";
 import { approvalFlowApi } from "@/api/approval/approvalFlow";
 import { useConfirm } from "@/hooks/useConfirm";
 import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
@@ -120,7 +121,13 @@ function assigneeHint(type: string): string {
 <template>
   <div>
     <!-- 单根包裹：父组件用 v-show 切换列表/画布，多根组件上运行时指令（v-show）不生效并告警 -->
-    <el-table :data="nodes" size="small" border class="nodes-table">
+    <DataTable
+      :data="nodes"
+      size="small"
+      border
+      class="nodes-table"
+      :label="t('systemApprovalFlow.nodesTitle')"
+    >
       <el-table-column
         type="index"
         width="50"
@@ -394,7 +401,7 @@ function assigneeHint(type: string): string {
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
   </div>
 </template>
 

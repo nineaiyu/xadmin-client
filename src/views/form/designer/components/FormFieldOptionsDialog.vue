@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable";
 import type {
   FormCascaderOption,
   FormField,
@@ -196,7 +197,12 @@ const save = () => {
     </template>
 
     <template v-else>
-      <el-table :data="columns" size="small" border>
+      <DataTable
+        :data="columns"
+        size="small"
+        border
+        :label="t('dform.typeTable')"
+      >
         <el-table-column :label="t('dform.fieldKey')" width="150">
           <template #default="{ row }">
             <el-input v-model="row.key" size="small" />
@@ -247,7 +253,7 @@ const save = () => {
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
       <el-button class="mt-2" size="small" plain @click="addColumn">
         {{ t("dform.addColumn") }}
       </el-button>

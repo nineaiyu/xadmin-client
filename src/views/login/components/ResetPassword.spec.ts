@@ -8,6 +8,11 @@ vi.mock("@/api/auth", () => ({
   resetPasswordApi: vi.fn().mockResolvedValue({ code: 1000, data: {} })
 }));
 vi.mock("@/components/RePlusPage", () => ({ handleOperation: vi.fn() }));
+vi.mock("@/store/modules/loginPage", () => ({
+  useLoginPageStoreHook: () => ({
+    capabilities: { reset: { enabled: false, email: false, sms: false } }
+  })
+}));
 vi.mock("@/components/ReSendVerifyCode", () => ({
   default: { name: "ReSendVerifyCode", template: "<div />" }
 }));
@@ -29,7 +34,7 @@ vi.mock("../useLoginFlow", async () => {
 import ResetPassword from "./ResetPassword.vue";
 
 describe("重置密码未开放", () => {
-  it("access=false：渲染说明与返回入口，不出现空白页", async () => {
+  it("reset.enabled=false：渲染说明与返回入口，不出现空白页", async () => {
     const wrapper = mount(ResetPassword, {
       global: {
         stubs: {

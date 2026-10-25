@@ -56,18 +56,6 @@ const frameworkRoutes: Array<RouteConfigsTable> = [
       }
     ]
   },
-  // 无 layout 的全屏空白页模板（iframe/打印落地等极少数场景直接复用）：
-  // 保留为示例入口，无业务引用；删除会改变既有路由表面积，暂不迁移到动态菜单。
-  {
-    path: "/empty",
-    name: "Empty",
-    component: () => import("@/views/empty/index.vue"),
-    meta: {
-      title: $t("menus.empty"),
-      showLink: false,
-      rank: 10103
-    }
-  },
   // 邀请激活：令牌即凭据，未登录访问，独立无侧栏页面
   {
     path: "/invite/accept",

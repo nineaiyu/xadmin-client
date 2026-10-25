@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import Motion from "../utils/motion";
 import type { FormInstance } from "element-plus";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import PasswordFields from "./PasswordFields.vue";
 import type { RecordType } from "plus-pro-components";
@@ -18,6 +19,10 @@ import {
 
 const { t } = useI18n();
 const loading = ref(false);
+/** 重置入口可用性:能力清单下发(关闭时不渲染重置表单) */
+const resetEnabled = computed(
+  () => useLoginPageStoreHook().capabilities?.reset?.enabled === true
+);
 const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
@@ -79,7 +84,7 @@ onMounted(() => (configLoading.value = true));
     />
     <!-- 未开放自助重置：保留可读说明与返回入口，不渲染空白页 -->
     <el-form
-      v-if="authInfo.access"
+      v-if="resetEnabled"
       ref="formDataRef"
       :model="formData"
       :rules="formRules"

@@ -18,7 +18,8 @@ import LinksIcon from "~icons/ri/links-line";
 import KeyIcon from "~icons/ri/key-2-line";
 import ConnectionIcon from "~icons/ep/connection";
 
-// 高频页签（资料/设置）静态加载；低频重面板（PAT 列表、OAuth、登录日志）按需加载
+// 高频页签（资料/设置）静态加载；低频重面板（MFA / Passkey 向导、PAT 列表、OAuth、
+// 登录日志）按需加载——重面板含向导流程与表单依赖，不该计入首屏 chunk
 const SecurityLog = defineAsyncComponent(
   () => import("../components/SecurityLog.vue")
 );
@@ -31,12 +32,16 @@ const AccessToken = defineAsyncComponent(
 const AuthorizedApps = defineAsyncComponent(
   () => import("../components/AuthorizedApps.vue")
 );
+const MfaSecurity = defineAsyncComponent(
+  () => import("../components/MfaSecurity.vue")
+);
+const PasskeySecurity = defineAsyncComponent(
+  () => import("../components/PasskeySecurity.vue")
+);
 import Profile from "../components/Profile.vue";
 import Preferences from "../components/Preferences.vue";
 import Notifications from "../components/Notifications.vue";
 import AccountManagement from "../components/AccountManagement.vue";
-import MfaSecurity from "../components/MfaSecurity.vue";
-import PasskeySecurity from "../components/PasskeySecurity.vue";
 
 export interface AccountPane {
   key: string;

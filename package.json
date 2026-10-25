@@ -27,6 +27,7 @@
     "check:color-literals": "node scripts/check-color-literals.mjs",
     "check:module-cycles": "node scripts/check-module-cycles.mjs",
     "check:forms": "node scripts/check-handwritten-forms.mjs",
+    "check:docs-components": "node scripts/check-docs-components.mjs",
     "analyze:bundle": "node scripts/bundle-analyze.mjs",
     "gen:module": "node scripts/gen-module.mjs",
     "gen:metadata-types": "node scripts/gen-metadata-types.mjs",

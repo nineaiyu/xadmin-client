@@ -2,6 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { useI18n } from "vue-i18n";
 import { debounce } from "lodash-es";
+import FormSelectorCard from "../components/FormSelectorCard.vue";
 import { useFormData } from "./utils/hook";
 
 defineOptions({
@@ -46,26 +47,16 @@ const applyFiltersDebounced = debounce(applyFilters, 300);
     <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
          不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白 -->
 
-    <!-- 选择表单卡片：本页入口（行可见性由后端数据权限编译器收敛） -->
-    <el-card shadow="never" class="mb-3">
-      <template #header>
-        <span class="font-semibold">{{ t("formData.selectTitle") }}</span>
-      </template>
-      <ReEmpty
-        v-if="formsLoadFailed"
-        :description="t('formData.formsLoadFailed')"
-        :image-size="60"
-      >
-        <el-button size="small" type="primary" @click="loadForms">
-          {{ t("formData.retry") }}
-        </el-button>
-      </ReEmpty>
-      <ReEmpty
-        v-else-if="forms.length === 0"
-        :description="t('formData.noForms')"
-        :image-size="60"
-      />
-      <div v-else class="flex flex-wrap items-center gap-3">
+    <!-- 选择表单卡片：本页入口（行可见性由后端数据权限编译器收敛）；
+         失败重试 / 空态 / 卡片骨架由 FormSelectorCard 收敛，选择器与字段筛选留在插槽 -->
+    <FormSelectorCard
+      :title="t('formData.selectTitle')"
+      :forms="forms"
+      :load-failed="formsLoadFailed"
+      locale-name="formData"
+      @retry="loadForms"
+    >
+      <div class="flex flex-wrap items-center gap-3">
         <el-select
           v-model="selectedFormPk"
           class="w-80"
@@ -209,7 +200,7 @@ const applyFiltersDebounced = debounce(applyFilters, 300);
           </el-button>
         </div>
       </template>
-    </el-card>
+    </FormSelectorCard>
 
     <!-- 表格区：切换表单按 pk 重建（动态列随所选表单 schema 重新生成）；
          搜索区由框架接管，表单筛选走顶部选择器（已注入列表与导出请求） -->

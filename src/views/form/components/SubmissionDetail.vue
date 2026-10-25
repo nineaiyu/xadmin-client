@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
+import DataTable from "@/components/DataTable";
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -251,11 +252,12 @@ const trailStatus = (item: SubmissionTrailItem) =>
         :key="item.key"
         :label="item.label"
       >
-        <el-table
+        <DataTable
           v-if="item.isTable"
           :data="tableRowsOf(item.value)"
           size="small"
           border
+          :label="item.label"
         >
           <el-table-column
             v-for="column in item.columns"
@@ -267,7 +269,7 @@ const trailStatus = (item: SubmissionTrailItem) =>
               {{ cellText(column, tableRow) }}
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
         <span v-else class="break-all">
           {{ displayOf(item.field, item.value) }}
         </span>

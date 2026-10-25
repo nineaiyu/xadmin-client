@@ -8,7 +8,7 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
+import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 import { copyText } from "@/utils/clipboard";
 import { formatDateTime } from "@/utils/format";

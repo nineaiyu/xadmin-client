@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * 凭据与密钥总览：只读聚合页（非模型列表页）。
+ *
+ * 不迁 RePlusPage 的口径：后端 CredentialViewSet 是 GenericViewSet，只有
+ * overview / rotate 两个端点（无 list / search-columns / search-fields 元数据面，
+ * 运行时路由内省可证）；三张表来自三源异构聚合（系统配置 / Setting 敏感键 /
+ * 模型字段级加密），列集互不相同且刻意不回传任何值——元数据协议没有可消费的
+ * 模型面。客户端过滤 + 分页是有意形态，勿按「存量手写表格」迁移。
+ */
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {

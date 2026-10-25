@@ -1,7 +1,7 @@
 import { nextTick, ref } from "vue";
 import { describe, expect, it } from "vitest";
 
-import { paginate, usePagination } from "./usePagination";
+import { paginate, usePagination } from "../src/usePagination";
 
 describe("paginate", () => {
   it("按页码切片（1 基）", () => {

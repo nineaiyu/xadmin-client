@@ -72,11 +72,13 @@ export type CodegenFieldOverride = {
 };
 
 /** 生成产物（path = 仓库相对路径，如 xadmin-server/demo/views.py） */
+/** kind 是前后端契约标识（如 next-steps），label 仅作展示文案，勿用于逻辑判定 */
 export type CodegenArtifact = {
   label: string;
   path: string;
   content: string;
   mode: string;
+  kind?: string;
   key: string;
   notice?: string;
 };

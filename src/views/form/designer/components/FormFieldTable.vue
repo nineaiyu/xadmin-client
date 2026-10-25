@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import { useSortable } from "@/hooks/useSortable";
+import DataTable from "@/components/DataTable";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { FIELD_TYPE_OPTIONS } from "../utils/schemaMeta";
 import { convergeFieldAttributes } from "../utils/fieldConverge";
@@ -106,12 +107,13 @@ const move = (index: number, offset: -1 | 1) => {
 </script>
 
 <template>
-  <el-table
+  <DataTable
     ref="tableRef"
     :data="fields"
     row-key="key"
     size="small"
     max-height="360"
+    :label="t('dform.fields')"
   >
     <el-table-column :label="t('dform.fieldSort')" width="46" align="center">
       <template #default>
@@ -227,7 +229,7 @@ const move = (index: number, offset: -1 | 1) => {
         </el-button>
       </template>
     </el-table-column>
-  </el-table>
+  </DataTable>
 
   <FormFieldOptionsDialog
     v-model="optionsDialogVisible"

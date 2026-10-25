@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { datasetApi, type ExecuteResult } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
+import DataTable from "@/components/DataTable";
 
 /**
  * 明细表预览：按设计列（`designColumns`）展示数据集前 N 行。
@@ -116,13 +117,14 @@ defineExpose({ load, notifyFull });
       </span>
     </div>
     <p v-if="errorMsg" class="report-table__error">{{ errorMsg }}</p>
-    <el-table
+    <DataTable
       v-else
       v-loading="loading"
       :data="rows"
       size="small"
       height="240"
       border
+      :label="t('dataReport.detailTable')"
     >
       <el-table-column
         v-for="column in visibleColumns"
@@ -134,7 +136,7 @@ defineExpose({ load, notifyFull });
         <template #default="{ row }">{{ cellText(row, column) }}</template>
       </el-table-column>
       <el-table-column v-if="visibleColumns.length === 0" label="—" />
-    </el-table>
+    </DataTable>
   </div>
 </template>
 

@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSortable } from "@/hooks/useSortable";
+import DataTable from "@/components/DataTable";
 import type {
   CodegenFieldItem,
   CodegenFieldOverride,
@@ -133,12 +134,13 @@ useSortable(
         {{ t("codegen.resetFields") }}
       </el-button>
     </div>
-    <el-table
+    <DataTable
       ref="tableRef"
       :data="fields"
       size="small"
       row-key="name"
       max-height="460"
+      :label="t('codegen.fields')"
     >
       <el-table-column width="28" align="center">
         <template #default>
@@ -307,6 +309,6 @@ useSortable(
           <el-switch v-model="row.include" size="small" :disabled="isPk(row)" />
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
   </div>
 </template>

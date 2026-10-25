@@ -19,6 +19,13 @@ vi.mock("@/utils/message", () => ({ message: state.message }));
 vi.mock("@/store/modules/user", () => ({
   useUserStoreHook: () => ({ registerByUsername: state.register })
 }));
+vi.mock("@/store/modules/loginPage", () => ({
+  useLoginPageStoreHook: () => ({
+    capabilities: {
+      register: { enabled: true, email: true, sms: false }
+    }
+  })
+}));
 vi.mock("../useLoginFlow", async () => {
   const { ref } = await import("vue");
   state.loading = ref(false);

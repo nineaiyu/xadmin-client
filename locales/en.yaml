@@ -1207,7 +1207,6 @@ menus:
   fourZeroThree: "403"
   FiveZeroZero: "500"
   about: About
-  empty: Empty Page
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
   readNotice: Read Notices
@@ -2420,6 +2419,9 @@ systemNotice:
   markdownHeadingText: Heading
   markdownLink: Link
   markdownLinkText: Link text
+  markdownTableCol1: Column 1
+  markdownTableCol2: Column 2
+  markdownTableCell: Content
   markdownCode: Inline code
   markdownStrikethrough: Strikethrough
   markdownQuote: Quote
@@ -2822,6 +2824,8 @@ setting:
   name: Setting name
   noPermission: No settings available (missing view permission)
   loadFailed: Failed to load settings, please try again later
+  effectiveOk: "\"{name}\" is currently in effect"
+  effectiveBlocked: "\"{name}\" is not in effect"
   value: Setting value
   category: Setting category
   is_active: Is active
@@ -3542,6 +3546,9 @@ dataScreen:
   richList: Bullet list
   richOrderedList: Numbered list
   richTable: Table
+  richTableCol1: Column 1
+  richTableCol2: Column 2
+  richTableCell: Content
   richPreview: Live preview
   richPlaceholder: text
   animationNone: None
@@ -4631,11 +4638,6 @@ pickerShortcuts:
   thisMonth: This month
   lastMonth: Last month
   thisYear: This year
-
-emptyPage:
-  title: Business content module
-  description: "Use case: embed a single platform page without menu navigation or extra modules"
-  back: Back to previous page
 
 codegen:
   planRename: Rename plan

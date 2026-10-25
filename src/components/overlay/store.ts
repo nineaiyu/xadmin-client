@@ -18,7 +18,9 @@ export interface OverlayPayloadApi<T> {
  * `_uid` 与载荷通道三个字段一律挂为**不可枚举**：模板 `v-bind="options"` 会把
  * 可枚举字段透传给 `el-dialog` / `el-drawer`，函数/对象值会被字符串化落到 DOM。
  */
-export function createOverlayStore<TOptions extends OverlayBaseOptions>() {
+export function createOverlayStore<
+  TOptions extends OverlayBaseOptions<TOptions>
+>() {
   const store = ref<TOptions[]>([]) as Ref<TOptions[]>;
   let uid = 0;
 

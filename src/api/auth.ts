@@ -139,12 +139,40 @@ export type AuthInfoResult = {
     token?: boolean;
     encrypted?: boolean;
     lifetime?: number;
-    reset?: boolean;
     password?: PasswordRule[];
     email?: boolean;
     sms?: boolean;
-    basic?: boolean;
     rate?: number;
+  };
+};
+
+/** 登录页能力清单(GET /api/identity/auth/capabilities):各登录方式入口
+ * 可见性的唯一事实源;basic 携带账密登录细节开关,验证码场景的页内细节
+ * (发码冷却 / 密码规则等)仍由 verify?category= 承载 */
+export type OAuthCapabilityEntry = {
+  key: string;
+  name: string;
+  flavor: string;
+};
+
+export type AuthCapabilitiesResult = {
+  code: number;
+  detail: string;
+  data: {
+    /** 登录总开关(关闭时登录页整体不可用) */
+    access: boolean;
+    /** 免登录天数(refresh token 生命周期,天) */
+    lifetime: number;
+    basic: {
+      enabled: boolean;
+      captcha: boolean;
+      token: boolean;
+      encrypted: boolean;
+    };
+    code: { enabled: boolean; email: boolean; sms: boolean };
+    register: { enabled: boolean; email: boolean; sms: boolean };
+    reset: { enabled: boolean; email: boolean; sms: boolean };
+    oauth: OAuthCapabilityEntry[];
   };
 };
 
@@ -184,13 +212,13 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 登录方式能力探测（data 仅在显式传入时作为请求体） */
-  loginAuth = (data?: object) => {
-    return this.request<AuthInfoResult>(
+  /** 登录页能力清单(各登录方式入口可用性,登录页外壳一次性拉取) */
+  loginCapabilities = () => {
+    return this.request<AuthCapabilitiesResult>(
       "get",
       {},
-      data,
-      "/api/identity/login/basic"
+      undefined,
+      "/api/identity/auth/capabilities"
     );
   };
 
@@ -223,16 +251,6 @@ class AuthApi extends BaseApi {
   register = (data?: object) => {
     return this.request<TokenResult>(
       "post",
-      {},
-      data,
-      "/api/identity/register"
-    );
-  };
-
-  /** 注册方式能力探测（data 仅在显式传入时作为请求体） */
-  registerAuth = (data?: object) => {
-    return this.request<AuthInfoResult>(
-      "get",
       {},
       data,
       "/api/identity/register"
@@ -305,7 +323,7 @@ export const loginBasicApi = (data?: object) => authApi.loginBasic(data);
 export const loginVerifyCodeApi = (data?: object) =>
   authApi.loginVerifyCode(data);
 
-export const loginAuthApi = (data?: object) => authApi.loginAuth(data);
+export const loginCapabilitiesApi = () => authApi.loginCapabilities();
 
 export const getTempTokenApi = () => authApi.tempToken();
 export const getCaptchaApi = () => authApi.captcha();
@@ -313,7 +331,6 @@ export const getCaptchaApi = () => authApi.captcha();
 export const refreshTokenApi = (data?: object) => authApi.refreshToken(data);
 
 export const registerApi = (data?: object) => authApi.register(data);
-export const registerAuthApi = (data?: object) => authApi.registerAuth(data);
 
 export const logoutApi = (data?: object) => authApi.logout(data);
 
