@@ -28,6 +28,7 @@ const {
     </p>
     <RePlusPage
       ref="tableRef"
+      :selection="false"
       :api="api"
       :auth="auth"
       locale-name="logsLogin"

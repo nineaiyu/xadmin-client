@@ -973,6 +973,7 @@ post:
   preview: Preview
 
 directory:
+  filterByTag: Filter by tag
   membersLoadFailed: Failed to load members, please retry later
   noPermission: No permission to view the directory
   noPermissionHint: Ask an administrator to grant list:SystemDirectory
@@ -1755,6 +1756,11 @@ systemUser:
   dept: Department
   date_joined: Registration Date
   last_login: Last Login Date
+  recentLogins: Recent logins
+  noLoginRecords: No login records
+  loginSucceeded: Signed in
+  loginFailed: Sign-in failed
+  loginRecordsLoadFailed: Failed to load login records
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
@@ -1875,6 +1881,7 @@ systemPermission:
   permission: Permissions
   trial: Trial
   trialTitle: "Trial: {name}"
+  trialPermissionRequired: 'Trial requires the "previewTrial:SystemUser" permission. Ask an administrator to grant it.'
   trialReadonlyHint: The list-page trial uses the saved rules of this permission group; edit the group to change the draft
   lookupMissing: Missing required permissions ({permissions}). Scope and rule field candidates are unavailable, so create and edit are disabled
   lookupLoadFailed: Failed to load the data permission dependencies. Create and edit are disabled; refresh the page and try again

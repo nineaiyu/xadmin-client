@@ -2,7 +2,6 @@ import { h } from "vue";
 import { handleShowChangeHistory } from "@/components/RePlusPage";
 import { fetchFreshRow } from "./freshRow";
 import {
-  PanelProfile,
   ReActionPanel,
   bindRowGroups,
   openManageDrawer
@@ -11,7 +10,8 @@ import { hasAuth } from "@/router/utils";
 import { useUserStoreHook } from "@/store/modules/user";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 import { buildUserActionGroups } from "./userActions";
-import { buildUserMetaItems, buildUserProfileData } from "./userPanel";
+import { buildUserMetaItems } from "./userPanel";
+import { buildUserPanelSlots } from "./userPanelSlots";
 import { openUserPreview } from "./userPreview";
 import type { UnwrapNestedRefs } from "vue";
 import type { useI18n } from "vue-i18n";
@@ -106,10 +106,7 @@ export function useUserPanel({
               row
             )
           },
-          {
-            profile: () =>
-              h(PanelProfile, { profile: buildUserProfileData(row, t) })
-          }
+          buildUserPanelSlots(row, t)
         )
     });
   }

@@ -30,7 +30,8 @@ const {
   needsAggregateValue,
   onAggregateMetricChange,
   runAggregatePreview,
-  exportAggregateCsv
+  exportAggregateCsv,
+  canAggregate
 } = useDataset(tableRef);
 </script>
 
@@ -58,7 +59,7 @@ const {
           <el-radio-button value="rows">
             {{ t("dataDataset.previewRows") }}
           </el-radio-button>
-          <el-radio-button value="aggregate">
+          <el-radio-button v-if="canAggregate" value="aggregate">
             {{ t("dataDataset.previewAggregate") }}
           </el-radio-button>
         </el-radio-group>

@@ -199,6 +199,7 @@ function downloadActive() {
                 size="small"
                 text
                 :icon="CopyDocument"
+                :aria-label="t('codegen.copyCode')"
                 @click="copyActive"
               />
             </el-tooltip>
@@ -207,6 +208,7 @@ function downloadActive() {
                 size="small"
                 text
                 :icon="Download"
+                :aria-label="t('codegen.downloadFile')"
                 @click="downloadActive"
               />
             </el-tooltip>

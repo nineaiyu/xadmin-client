@@ -30,6 +30,9 @@ export function useDataset(tableRef: Ref) {
     canEdit: hasAuth("partialUpdate:DataDataset"),
     canExecute: hasAuth("execute:DataDataset")
   };
+  // 聚合页签与后端 aggregate:DataDataset 权限点同口径：仅 execute 权限时
+  // 不应出现必然 403 的入口
+  const canAggregate = hasAuth("aggregate:DataDataset");
 
   const { listColumnsFormat } = useDatasetColumns({ t });
   const preview = useDatasetPreview({ t });
@@ -58,6 +61,7 @@ export function useDataset(tableRef: Ref) {
     needsAggregateValue: preview.needsAggregateValue,
     onAggregateMetricChange: preview.onAggregateMetricChange,
     runAggregatePreview: preview.runAggregatePreview,
-    exportAggregateCsv: preview.exportAggregateCsv
+    exportAggregateCsv: preview.exportAggregateCsv,
+    canAggregate
   };
 }

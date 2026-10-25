@@ -3,7 +3,13 @@ import ReEmpty from "@/components/ReEmpty";
 import { h, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
-import { listDirectory, type DirectoryMember } from "@/api/identity/directory";
+import {
+  directoryApi,
+  listDirectory,
+  type DirectoryMember
+} from "@/api/identity/directory";
+import { isSuccess } from "@/api/types";
+import { buildDirectoryParams } from "../utils/directoryParams";
 import { usePagedList } from "@/hooks/usePagedList";
 import { message } from "@/utils/message";
 import { addDrawer } from "@/components/ReDrawer";
@@ -34,6 +40,8 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const keyword = ref("");
+const tags = ref<string[]>([]);
+const tagOptions = ref<Array<{ label: string; value: string }>>([]);
 const viewMode = ref<"card" | "list">("card");
 /** 加载失败态：与「无成员」分开呈现，避免网络/权限失败伪装成空名录 */
 const loadFailed = ref(false);
@@ -50,13 +58,17 @@ const {
 } = usePagedList<DirectoryMember>({
   pageSize: 20,
   fetch: params =>
-    listDirectory({
-      ...params,
-      dept: props.mode === "dept" ? props.dept : "",
-      posts: props.mode === "post" && props.post ? props.post : "",
-      keyword: keyword.value.trim(),
-      ordering: "username"
-    }),
+    listDirectory(
+      buildDirectoryParams({
+        mode: props.mode,
+        dept: props.dept,
+        post: props.post,
+        keyword: keyword.value,
+        tags: tags.value,
+        page: params.page,
+        size: params.size
+      })
+    ),
   pickRows: res =>
     (res.data as { results?: DirectoryMember[] } | null)?.results ?? [],
   onFail: res => {
@@ -72,7 +84,21 @@ const loadMembers = async (resetPage = false) => {
   return fetchData(resetPage);
 };
 
-onMounted(() => loadMembers());
+/** 标签候选来自 search-fields 元数据（tag 下拉 choices），不额外要求标签中心权限 */
+async function loadTagOptions() {
+  const res = await directoryApi.fields().catch(() => null);
+  if (!res || !isSuccess(res)) return;
+  const field = res.data?.find(item => item.key === "tag");
+  tagOptions.value = (field?.choices ?? []).map(choice => ({
+    value: String(choice.value),
+    label: String(choice.label ?? choice.value)
+  }));
+}
+
+onMounted(() => {
+  loadMembers();
+  void loadTagOptions();
+});
 
 // 左栏维度/取值变化即刷新（含切换浏览维度）
 watch(
@@ -135,6 +161,24 @@ function openDetail(row: DirectoryMember) {
       <el-button type="primary" @click="onSearch">
         {{ t("directory.search") }}
       </el-button>
+      <el-select
+        v-if="tagOptions.length"
+        v-model="tags"
+        class="max-w-60"
+        multiple
+        collapse-tags
+        clearable
+        filterable
+        :placeholder="t('directory.filterByTag')"
+        @change="loadMembers(true)"
+      >
+        <el-option
+          v-for="item in tagOptions"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        />
+      </el-select>
       <div class="ml-auto flex items-center gap-3">
         <span class="text-sm text-(--el-text-color-secondary)">
           {{ t("directory.total", { n: total }) }}

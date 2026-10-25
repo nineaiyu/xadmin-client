@@ -14,6 +14,7 @@ const { api, auth } = useSystemSetting();
          （根级注释 = Fragment 根：离开本页时过渡无法收尾，会导致后续所有页面白屏） -->
     <!-- locale-name 与 locales 的 setting 命名空间对应：列头不再回退后端 verbose_name -->
     <RePlusPage
+      :selection="false"
       :api="api"
       :auth="auth"
       locale-name="setting"

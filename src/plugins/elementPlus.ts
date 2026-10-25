@@ -144,6 +144,7 @@ import "element-plus/es/components/dropdown/style/css";
 import "element-plus/es/components/dropdown-item/style/css";
 import "element-plus/es/components/dropdown-menu/style/css";
 import "element-plus/es/components/empty/style/css";
+import "element-plus/es/components/skeleton/style/css";
 import "element-plus/es/components/footer/style/css";
 import "element-plus/es/components/form/style/css";
 import "element-plus/es/components/form-item/style/css";
@@ -311,6 +312,10 @@ const lazyComponents: Record<string, () => Promise<Component>> = {
   ElMenuItemGroup: () =>
     import("element-plus/es/components/menu/index.mjs").then(
       m => m.ElMenuItemGroup
+    ),
+  ElSkeleton: () =>
+    import("element-plus/es/components/skeleton/index.mjs").then(
+      m => m.ElSkeleton
     ),
   ElSlider: () =>
     import("element-plus/es/components/slider/index.mjs").then(m => m.ElSlider),

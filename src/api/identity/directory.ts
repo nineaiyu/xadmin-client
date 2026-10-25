@@ -23,6 +23,8 @@ export interface DirectoryParams {
   dept?: number | string | "";
   posts?: number | string | "";
   keyword?: string;
+  /** 标签筛选：名称或主键，逗号分隔多标签按 AND 语义 */
+  tag?: string;
   ordering?: string;
 }
 

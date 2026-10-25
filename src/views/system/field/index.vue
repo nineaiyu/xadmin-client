@@ -11,6 +11,7 @@ const { api, auth, tableRef, tableBarButtonsProps } = useModelField();
 <template>
   <RePlusPage
     ref="tableRef"
+    :selection="false"
     :api="api"
     :auth="auth"
     :operation="false"

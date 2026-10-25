@@ -973,6 +973,7 @@ post:
   preview: 预览
 
 directory:
+  filterByTag: 按标签筛选
   membersLoadFailed: 成员加载失败，请稍后重试
   noPermission: 无通讯录查看权限
   noPermissionHint: 联系管理员授予 list:SystemDirectory 权限后可见
@@ -1755,6 +1756,11 @@ systemUser:
   dept: 所属部门
   date_joined: 注册时间
   last_login: 上次登录时间
+  recentLogins: 最近登录
+  noLoginRecords: 暂无登录记录
+  loginSucceeded: 登录成功
+  loginFailed: 登录失败
+  loginRecordsLoadFailed: 登录记录加载失败
   batchSendNotice: 批量发送通知
   editAvatar: 修改头像
   resetPassword: 重置密码
@@ -1875,6 +1881,7 @@ systemPermission:
   permission: 数据权限
   trial: 试算
   trialTitle: "试算：{name}"
+  trialPermissionRequired: 试算需要「previewTrial:SystemUser」权限，请联系管理员授权
   trialReadonlyHint: 列表页试算按该权限组已保存的规则执行；修改草稿请进入编辑
   lookupMissing: 缺少依赖权限（{permissions}），生效范围与规则字段候选不可用，已禁用新增与编辑
   lookupLoadFailed: 数据权限依赖数据加载失败，已禁用新增与编辑，请刷新页面重试

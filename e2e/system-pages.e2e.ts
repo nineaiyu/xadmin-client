@@ -5,6 +5,7 @@ import {
   login,
   logout,
   openMenuPath,
+  openUserPanel,
   waitAppWebSocket
 } from "./helpers";
 
@@ -151,6 +152,26 @@ test("账户设置：头像下拉可进入个人信息页", async ({ page }) => 
   await expect(page.locator(".el-form, .el-tabs").first()).toBeVisible({
     timeout: 15_000
   });
+});
+
+test("用户管理：管理抽屉展示最近登录时间线", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  const table = page.locator(".el-table").first();
+  await expect(table).toBeVisible({ timeout: 15_000 });
+
+  const row = page.locator(".el-table__row").first();
+  const loginLogResponse = page.waitForResponse(
+    response =>
+      response.url().includes("/api/audit/logs/login") &&
+      response.request().method() === "GET",
+    { timeout: 15_000 }
+  );
+  const panel = await openUserPanel(page, row);
+  expect((await loginLogResponse).status()).toBe(200);
+  await expect(panel.getByText("最近登录")).toBeVisible();
+  // 有日志时渲染时间线，无日志时渲染空态；两者都证明区块已挂载
+  await expect(panel.locator(".el-timeline, .el-empty").first()).toBeVisible();
 });
 
 test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {

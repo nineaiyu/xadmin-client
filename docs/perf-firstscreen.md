@@ -164,3 +164,32 @@ XHR 在 ~210 ms 已全部结束，说明瓶颈不在网络。
 
 **复跑**：`pnpm build` + `E2E_BASE_URL=http://127.0.0.1:18899 node scripts/firstscreen-profile.mjs`；
 基线用 `--update` 回写。`perf.e2e.ts` 的 dev 链路数字受登录快路径影响，不作为首屏结论。
+
+## 三、异步大 chunk 审计（2026-10-26）
+
+构建产物 `dist/index.html` 的 modulepreload 闭包**不包含**下列 chunk；入口只保留动态
+import 引用（`grep -Eo '(echarts|ri-|fa-solid|vanilla-jsoneditor)[^" ]*\.js' dist/index.html`
+为空）。因此它们是按需下载，不属于首屏体积问题；本节只评估「首次进入对应页面」是否还能更快。
+
+| chunk                | raw              | gzip             | 加载时机                                            | 结论 |
+| -------------------- | ---------------- | ---------------- | --------------------------------------------------- | ---- |
+| `echarts`            | 1060.8 KB        | 345.6 KB         | 图表页挂载时 `loadEcharts()` 动态加载               | 保留 |
+| `ri` / `fa-solid`    | 749.9 / 631.2 KB | 184.4 / 197.5 KB | 首次命中该图标集（`iconRegistry` 动态 import 子集） | 保留 |
+| `vanilla-jsoneditor` | 639.2 KB         | 176.4 KB         | JSON 字段编辑器/查看器挂载时异步加载                | 保留 |
+
+审计结论：
+
+1. **ECharts**：`src/plugins/echarts.ts` 已按需注册 Line/Bar/Pie + SVG renderer + 6 个组件，
+   但注册入口必须从 `echarts/charts` / `echarts/components` 桶文件取具名导出；ECharts 的
+   `package.json` 将 `lib/chart/*.js` / `lib/component/*.js` 声明为 sideEffects，且 exports
+   未暴露深层 install 路径，桶内未用图表不会被摇掉，因此 345.6 KB 是「已注册图表集」的
+   实际成本。按路由拆 line/bar/pie 需要页面级注册 + 动态注册表，收益只落在首次图表页，
+   复杂度与回归风险不成比例，暂不做。
+2. **vanilla-jsoneditor**：仅在 JSON 字段编辑器/查看器挂载时加载（`JsonInput.vue` 经
+   `defineAsyncComponent` 进入表单渲染链），库本身为单体包，无安全拆分点。
+3. **ri / fa-solid**：子集 JSON 已按图标集懒加载；进一步按 shard 拆分需要同时改
+   `gen-icon-subset` 生成器与 `iconRegistry` 的 icon→shard 映射，属于独立优化项。
+4. 首屏闭包门禁（`pnpm check:bundle-size`）继续作为回归护栏；若图表页 TTI 或首次
+   菜单渲染成为目标，再按上述第 1/3 点单独立项。
+
+> 数据来自本机 `pnpm build`（gzip 列取构建日志）；不同机器只比较趋势。
