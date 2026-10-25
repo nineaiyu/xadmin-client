@@ -1,21 +1,10 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import {
-  ArrowDown,
-  ArrowUp,
-  Download,
-  Setting,
-  View
-} from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
-import type { DashboardItem } from "@/api/dataset/datasets";
-import {
-  AUTO_REFRESH_OPTIONS,
-  useDashboardAutoRefresh
-} from "./utils/useDashboardAutoRefresh";
+import { useDashboardAutoRefresh } from "./utils/useDashboardAutoRefresh";
 import { useCardImageExport } from "./utils/useCardImageExport";
 import { useDashboardSnapshot } from "./utils/useDashboardSnapshot";
 import { useCardDialog } from "./utils/useCardDialog";
@@ -23,12 +12,15 @@ import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { useDashboardDelete } from "./utils/useDashboardDelete";
 import { useDashboardEditing } from "./utils/useDashboardEditing";
 import { useDashboardView } from "./utils/useDashboardView";
+import { useCardDrill } from "./utils/useCardDrill";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { syncSelectInputsA11y } from "@/utils/tableA11y";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
 import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
 import CardDrillDrawer from "./components/CardDrillDrawer.vue";
+import CardHeaderActions from "./components/CardHeaderActions.vue";
+import DashboardToolbar from "./components/DashboardToolbar.vue";
 
 defineOptions({
   name: "DataDashboard"
@@ -127,30 +119,7 @@ const goDatasetPage = () => {
 };
 
 /* ---------------- 卡片下钻：图表点击 / 查看明细 → 数据集明细抽屉 ---------------- */
-const drillVisible = ref(false);
-const drillCard = ref<{
-  dataset: string;
-  title?: string | null;
-  group_by?: string;
-} | null>(null);
-const drillPoint = ref<{ name: string; raw?: unknown } | null>(null);
-
-function openDrill(
-  card: { dataset: string; title?: string | null; group_by?: string },
-  point: { name: string; raw?: unknown } | null
-) {
-  drillCard.value = card;
-  drillPoint.value = point;
-  drillVisible.value = true;
-}
-
-/** 维度过滤：趋势序列（无 raw）与无分组卡回落为全量明细 */
-const drillFilter = computed(() => {
-  const card = drillCard.value;
-  const point = drillPoint.value;
-  if (!card?.group_by || !point || point.raw === undefined) return null;
-  return { field: card.group_by, label: point.name, value: point.raw };
-});
+const { drillVisible, drillCard, openDrill, drillFilter } = useCardDrill();
 
 onMounted(async () => {
   await Promise.all([loadDashboards(), loadDatasets()]);
@@ -172,110 +141,28 @@ onMounted(async () => {
     <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
          不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白；
          根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
-    <el-card v-if="!kiosk" shadow="never" class="mb-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="font-semibold">{{ t("dashboard.title") }}</span>
-        <el-select
-          v-model="current"
-          :placeholder="t('dashboard.pickDashboard')"
-          value-key="pk"
-          class="w-56!"
-          data-testid="dashboard-picker"
-          @change="(item: DashboardItem) => selectDashboard(item?.pk)"
-        >
-          <el-option
-            v-for="item in dashboards"
-            :key="item.pk"
-            :value="item"
-            :label="item.name"
-          />
-        </el-select>
-        <el-button
-          v-if="canCreate"
-          data-testid="dashboard-create"
-          @click="openCreateDashboard"
-        >
-          {{ t("dashboard.create") }}
-        </el-button>
-        <el-button
-          v-if="canEdit && current && current.is_owner !== false"
-          :type="editing ? 'warning' : 'primary'"
-          @click="toggleEdit"
-        >
-          {{ editing ? t("dashboard.cancelEdit") : t("dashboard.edit") }}
-        </el-button>
-        <el-button
-          v-if="editing"
-          type="success"
-          :loading="saving"
-          @click="saveLayout"
-        >
-          {{ t("dashboard.saveLayout") }}
-        </el-button>
-        <el-button
-          v-if="editing && canDestroy"
-          type="danger"
-          plain
-          @click="removeDashboard"
-        >
-          {{ t("dashboard.remove") }}
-        </el-button>
-        <el-button
-          v-if="canEdit && current && current.is_owner !== false && !editing"
-          plain
-          data-testid="dashboard-settings"
-          @click="openDashboardSettings"
-        >
-          {{ t("dashboard.settings") }}
-        </el-button>
-        <div class="flex-1" />
-        <el-button
-          v-if="current"
-          link
-          type="primary"
-          data-testid="dashboard-export-snapshot"
-          :loading="exportingSnapshot"
-          @click="exportDashboardSnapshot"
-        >
-          {{ t("dashboard.exportSnapshot") }}
-        </el-button>
-        <el-button
-          v-if="current"
-          link
-          type="primary"
-          data-testid="dashboard-share"
-          @click="shareDashboard"
-        >
-          {{ t("dashboard.share") }}
-        </el-button>
-        <el-button
-          v-if="current"
-          link
-          type="primary"
-          data-testid="dashboard-refresh"
-          @click="refreshCards"
-        >
-          {{ t("dashboard.refresh") }}
-        </el-button>
-        <el-select
-          v-model="autoRefreshSeconds"
-          class="w-28!"
-          size="default"
-          data-testid="dashboard-auto-refresh"
-          :title="t('dashboard.autoRefreshTip')"
-        >
-          <el-option
-            v-for="item in AUTO_REFRESH_OPTIONS"
-            :key="item.value"
-            :value="item.value"
-            :label="t(item.labelKey)"
-          />
-        </el-select>
-        <el-button link type="primary" @click="goDatasetPage">
-          {{ t("dashboard.manageDatasets") }}
-        </el-button>
-      </div>
-    </el-card>
+    <DashboardToolbar
+      v-if="!kiosk"
+      v-model:auto-refresh-seconds="autoRefreshSeconds"
+      :can-edit="canEdit"
+      :can-create="canCreate"
+      :can-destroy="canDestroy"
+      :current="current"
+      :dashboards="dashboards"
+      :editing="editing"
+      :saving="saving"
+      :exporting-snapshot="exportingSnapshot"
+      @select="selectDashboard"
+      @create="openCreateDashboard"
+      @toggle-edit="toggleEdit"
+      @save="saveLayout"
+      @remove="removeDashboard"
+      @settings="openDashboardSettings"
+      @export-snapshot="exportDashboardSnapshot"
+      @share="shareDashboard"
+      @refresh="refreshCards"
+      @go-datasets="goDatasetPage"
+    />
 
     <ReEmpty
       v-if="!current"
@@ -305,66 +192,22 @@ onMounted(async () => {
           >
             <template #header>
               <div class="flex items-center gap-2">
+                <!-- 拖拽手柄留在标题左侧（sortable 的 handle 选择器按卡片头定位） -->
                 <span v-if="editing" class="drag-handle" aria-hidden="true" />
                 <span class="truncate font-medium">{{ card.title }}</span>
                 <el-tag size="small" type="info" class="card-dataset-tag ml-1">
                   {{ datasetName(card.dataset) }}
                 </el-tag>
                 <div class="flex-1" />
-                <el-button
-                  v-if="!editing"
-                  link
-                  type="primary"
-                  :icon="Download"
-                  :title="t('dashboard.exportImage')"
-                  :loading="exportingCard === card.id"
-                  data-testid="card-export-image"
-                  @click="exportCardImage(card)"
+                <CardHeaderActions
+                  :editing="editing"
+                  :exporting="exportingCard === card.id"
+                  @export-image="exportCardImage(card)"
+                  @drill="openDrill(card, null)"
+                  @move="direction => moveCard(card.id, direction)"
+                  @settings="openCardSettings(card)"
+                  @remove="removeCard(card.id)"
                 />
-                <el-button
-                  v-if="!editing"
-                  link
-                  type="primary"
-                  :icon="View"
-                  :title="t('dashboard.drillViewData')"
-                  :aria-label="t('dashboard.drillViewData')"
-                  data-testid="card-drill-open"
-                  @click="openDrill(card, null)"
-                />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="primary"
-                  :icon="ArrowUp"
-                  :title="t('dashboard.moveUp')"
-                  :aria-label="t('dashboard.moveUp')"
-                  @click="moveCard(card.id, -1)"
-                />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="primary"
-                  :icon="ArrowDown"
-                  :title="t('dashboard.moveDown')"
-                  :aria-label="t('dashboard.moveDown')"
-                  @click="moveCard(card.id, 1)"
-                />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="primary"
-                  :icon="Setting"
-                  :title="t('dashboard.cardSettings')"
-                  @click="openCardSettings(card)"
-                />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="danger"
-                  @click="removeCard(card.id)"
-                >
-                  {{ t("dashboard.remove") }}
-                </el-button>
               </div>
             </template>
             <ChartCard
