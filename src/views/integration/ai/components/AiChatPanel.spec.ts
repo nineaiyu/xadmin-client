@@ -69,6 +69,7 @@ const mountPanel = (
     streaming?: boolean;
     activeStreaming?: { content: string; reasoning: string } | null;
     groups?: MessageGroup[];
+    initialDraft?: { seq: number; text: string } | null;
   } = {}
 ) =>
   mount(AiChatPanel, {
@@ -189,6 +190,33 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(
       wrapper.find('[data-testid="ai-send"]').attributes("disabled")
     ).toBeDefined();
+  });
+
+  it("initialDraft 预填：挂载即填入；空载荷不清空用户输入，新 seq 覆盖", async () => {
+    const wrapper = mountPanel({
+      initialDraft: { seq: 1, text: "怎么配置数据集？" }
+    });
+    const readValue = () =>
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value;
+    expect(readValue()).toBe("怎么配置数据集？");
+
+    // keep-alive 激活未携带 q：不清空用户已输入的内容
+    await wrapper
+      .find('[data-testid="ai-ask-input"]')
+      .setValue("用户改写的提问");
+    await wrapper.setProps({ initialDraft: null });
+    expect(readValue()).toBe("用户改写的提问");
+
+    // 命令面板再次「问 AI」（同词也带新 seq）：覆盖为新预填
+    await wrapper.setProps({
+      initialDraft: { seq: 2, text: "用户改写的提问" }
+    });
+    expect(readValue()).toBe("用户改写的提问");
+    await wrapper.setProps({ initialDraft: { seq: 3, text: "换一个问题" } });
+    expect(readValue()).toBe("换一个问题");
   });
 
   it("只有最新一条 assistant 消息可操作；NL 卡运行按钮冒泡 runNl 携带 dsl", async () => {

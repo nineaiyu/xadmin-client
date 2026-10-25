@@ -1,8 +1,9 @@
 import { onBeforeUnmount, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useGlobal } from "@pureadmin/utils";
 import { responsiveStorageNameSpace } from "@/store/utils";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
-import { applyTablePrefs } from "./tablePrefsApply";
+import { applyTablePrefs, resolveInitialTableSize } from "./tablePrefsApply";
 import {
   SAVE_DEBOUNCE_MS,
   createTablePrefsStorage,
@@ -25,6 +26,7 @@ export type { TablePrefs } from "./tablePrefsStorage";
  */
 export function useTablePrefs(pageKey?: string) {
   const route = useRoute();
+  const { $storage } = useGlobal<GlobalPropertiesApi>();
   const key = pageKey || route.path || "unknown";
   const nameSpace = responsiveStorageNameSpace();
   const siteConfigStore = useSiteConfigStoreHook();
@@ -40,8 +42,10 @@ export function useTablePrefs(pageKey?: string) {
   });
 
   const current = storage.readLocalMap()[key] ?? {};
-  /** 表格密度（供组件初始化 ref 使用） */
-  const size = ref<string>(current.size || "default");
+  /** 表格密度（供组件初始化 ref 使用）：未手动切换过的页面跟随全局界面密度偏好 */
+  const size = ref<string>(
+    resolveInitialTableSize(current.size, $storage.configure?.uiSize)
+  );
   const prefs = ref<TablePrefs>(current);
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;

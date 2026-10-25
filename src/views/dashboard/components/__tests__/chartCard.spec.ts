@@ -15,6 +15,10 @@ const state = vi.hoisted(() => ({
   executeMock: vi.fn(),
   aggregateMock: vi.fn(),
   setOptionsMock: vi.fn(),
+  /** echarts 实例桩（下钻点击挂载用）；null = 未创建 */
+  fakeInstance: null as {
+    on: (event: string, handler: unknown) => void;
+  } | null,
   initTheme: undefined as string | undefined,
   /** 站点明暗（测试内可改：深色站点 + 大屏浅色主题是本轮的关键组合） */
   siteDark: false
@@ -35,7 +39,7 @@ vi.mock("@pureadmin/utils", () => ({
     return {
       setOptions: state.setOptionsMock,
       resize: vi.fn(),
-      getInstance: vi.fn()
+      getInstance: () => state.fakeInstance
     };
   }
 }));
@@ -96,10 +100,11 @@ beforeEach(() => {
     data: {
       name: "x",
       metric: "count",
-      series: [{ name: "A", value: 3 }]
+      series: [{ name: "A", value: 3, raw: 1 }]
     }
   });
   state.setOptionsMock.mockReset();
+  state.fakeInstance = null;
   state.initTheme = undefined;
   state.siteDark = false;
 });
@@ -231,5 +236,52 @@ describe("ChartCard 强制浅色渲染", () => {
 
     expect(wrapper.classes()).toContain("chart-card--force-light");
     expect(wrapper.attributes("data-chart-theme")).toBe("light");
+  });
+});
+
+describe("ChartCard 下钻（drillable）", () => {
+  it("未开启 drillable：图表渲染后不挂点击（大屏/投屏展示场景）", async () => {
+    const onMock = vi.fn();
+    state.fakeInstance = { on: onMock };
+    mountCard(BAR_CARD);
+    await flushPromises();
+
+    expect(state.setOptionsMock).toHaveBeenCalled();
+    expect(onMock).not.toHaveBeenCalled();
+  });
+
+  it("drillable：渲染后挂 click，点击维度派发 drill（携带 raw 原值）", async () => {
+    let clickHandler: ((params: { name?: string }) => void) | null = null;
+    state.fakeInstance = {
+      on: (event, handler) => {
+        if (event === "click") clickHandler = handler as typeof clickHandler;
+      }
+    };
+    const wrapper = mountCard(BAR_CARD, { drillable: true });
+    await flushPromises();
+
+    expect(state.setOptionsMock).toHaveBeenCalled();
+    expect(clickHandler).not.toBeNull();
+
+    clickHandler!({ name: "A" });
+    expect(wrapper.emitted("drill")?.[0]).toEqual([{ name: "A", raw: 1 }]);
+
+    // 未命中维度：仍派发但 raw 为 undefined（父级回落全量明细；饼图空名
+    // 兜底 "-" 的扇区点击同样走该路径）
+    clickHandler!({ name: "不存在的维度" });
+    expect(wrapper.emitted("drill")?.[1]).toEqual([
+      { name: "不存在的维度", raw: undefined }
+    ]);
+  });
+
+  it("drillable 动态开启：编辑态切换后补挂（编辑期间不派发）", async () => {
+    const onMock = vi.fn();
+    state.fakeInstance = { on: onMock };
+    const wrapper = mountCard(BAR_CARD, { drillable: false });
+    await flushPromises();
+    expect(onMock).not.toHaveBeenCalled();
+
+    await wrapper.setProps({ drillable: true });
+    expect(onMock).toHaveBeenCalledWith("click", expect.any(Function));
   });
 });

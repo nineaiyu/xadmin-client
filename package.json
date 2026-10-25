@@ -59,6 +59,7 @@
     "test:e2e:perf": "node scripts/e2e-run.mjs perf",
     "test:e2e:perf:update": "node scripts/e2e-run.mjs perf:update",
     "test:e2e:csp": "node scripts/e2e-run.mjs csp",
+    "test:e2e:a11y": "node scripts/e2e-run.mjs a11y",
     "test:e2e:fresh": "node scripts/e2e-run.mjs fresh",
     "test:e2e:smoke:fresh": "node scripts/e2e-run.mjs smoke:fresh",
     "test:e2e:parallel": "node scripts/e2e-run.mjs parallel",

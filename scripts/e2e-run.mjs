@@ -39,6 +39,10 @@ const MODES = {
     files: ["e2e/visual.e2e.ts"],
     args: ["--update-snapshots"]
   },
+  a11y: {
+    env: { E2E_API_PORT: "18896" },
+    files: ["e2e/a11y.e2e.ts"]
+  },
   perf: {
     env: { E2E_PERF: "1", E2E_API_PORT: "18896" },
     files: ["e2e/perf.e2e.ts"],

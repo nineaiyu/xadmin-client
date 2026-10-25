@@ -461,6 +461,10 @@ layout:
   headerAutoHideTip: Hide the header when scrolling down, restore on scroll up
   compactMode: Compact mode
   compactModeTip: Tighter content padding with a centered max width
+  uiSize: UI density
+  uiSizeTip: Overall size of tables, forms and buttons; tables with a manually picked density keep their own choice
+  uiSizeDefault: Default
+  uiSizeCompact: Compact
   display: Display
   greyMode: Grey mode
   colorWeakMode: Color weak mode
@@ -1025,6 +1029,7 @@ tag:
 commandPalette:
   title: Quick actions
   openAi: Open AI assistant
+  askAi: Ask AI
   openTaskLog: Open task log
   openTags: Open tag management
   openModules: Open module management
@@ -3350,6 +3355,15 @@ dashboard:
   moveDown: Move card down
   datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   exportImage: Export image
+  drillViewData: View data
+  drillFilteredBy: Filtered by {field} = {value}
+  drillClearFilter: View all rows
+  drillLoadFailed: Failed to load rows
+  drillRetry: Retry
+  drillRows: Detail rows
+  drillTotal: "{count} rows in total (first {limit} shown)"
+  exportSnapshot: Export snapshot
+  exportSnapshotNote: "{count} cards have no chart and were exported as placeholders"
   exportNoChart: Metric cards have no chart to export
   title: Dashboards
   pickDashboard: Pick a dashboard
@@ -3406,6 +3420,7 @@ dashboard:
   autoRefresh30s: Every 30s
   autoRefresh60s: Every minute
   autoRefresh5m: Every 5 minutes
+  autoRefresh: Auto refresh interval
   autoRefreshTip: Refresh the current dashboard cards on a timer (for wall displays)
 
   share: Share
@@ -3687,6 +3702,8 @@ dataScreen:
   save: Save
   noDashboards: No dashboard to display
   exportScreen: Export screen
+  exportSnapshot: Snapshot PNG
+  exportSnapshotTip: Compose all charts into one PNG image (with title, timestamp and watermark)
   exportNoChart: The current screen has no chart to export
   exportSkipped: "{count} metric cards were not exported"
   pause: Pause rotation

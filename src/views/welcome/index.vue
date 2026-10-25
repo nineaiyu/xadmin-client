@@ -111,7 +111,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
-              <p class="font-medium text-(--el-color-success)">
+              <p class="font-medium text-(--success-text)">
                 {{ item.percent }}
               </p>
             </div>
@@ -159,7 +159,7 @@ const timelineIcons = timelineTones.map(tone =>
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
-              <p class="text-sm font-medium text-(--el-color-success-dark-2)">
+              <p class="text-sm font-medium text-(--success-text)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
@@ -207,7 +207,7 @@ const timelineIcons = timelineTones.map(tone =>
               t("welcome.operateLog")
             }}</span>
           </div>
-          <el-scrollbar class="mt-3" max-height="410">
+          <el-scrollbar class="mt-3" max-height="410" tabindex="0">
             <el-timeline>
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
@@ -246,6 +246,12 @@ const timelineIcons = timelineTones.map(tone =>
   /* el-timeline 每一项上下、左右边距 */
   .el-timeline-item {
     margin: 0 6px;
+  }
+
+  /* 时间线时间戳：EP 缺省 secondary 灰在白底对比度不足 4.5:1
+     （axe color-contrast serious，webkit 渲染临界），正文灰加深一档 */
+  .el-timeline-item__timestamp {
+    color: var(--el-text-color-regular);
   }
 }
 </style>

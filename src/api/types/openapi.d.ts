@@ -3347,6 +3347,8 @@ export interface paths {
          *     行级数据权限随调用者过滤，fail-closed
          *
          *     ``count_only=true``：仅取行数（数字卡场景，跳过行物化）。
+         *     ``filters``：请求级行过滤（卡片下钻），与数据集定义 filters 叠加，
+         *     校验口径同保存侧（``validate_filters``：字段白名单 + op 白名单 + 类型）。
          */
         post: operations["api_dataset_datasets_execute_create"];
         delete?: never;

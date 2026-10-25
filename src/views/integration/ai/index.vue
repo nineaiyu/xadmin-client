@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, h, onActivated, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -179,9 +180,26 @@ function selectFeature(key: AiConsoleFeature) {
   if (isNarrow.value) drawerVisible.value = false;
 }
 
+const route = useRoute();
+const router = useRouter();
+/** 命令面板「问 AI」预填载荷（经 ?q= 携带）：seq 保证同词两次进入也触发预填 */
+const askPayload = ref<{ seq: number; text: string } | null>(null);
+let askSeq = 0;
+
+/** 消费 ?q=：切到问答入口并预填输入框（消费后从 URL 移除，避免刷新重复预填） */
+function consumeAskQuery() {
+  const question =
+    typeof route.query.q === "string" ? route.query.q.trim() : "";
+  if (!question || !canAsk.value) return;
+  aiConsole.feature.value = "docs";
+  askPayload.value = { seq: ++askSeq, text: question };
+  router.replace({ query: { ...route.query, q: undefined } });
+}
+
 let activatedOnce = false;
 onMounted(() => {
   loadStatus();
+  consumeAskQuery();
   activatedOnce = true;
 });
 
@@ -192,6 +210,7 @@ onActivated(() => {
     return;
   }
   loadStatus();
+  consumeAskQuery();
 });
 </script>
 
@@ -277,6 +296,7 @@ onActivated(() => {
           :placeholder="placeholder"
           :empty-text="emptyText"
           :disabled="!ready || !activeEntry"
+          :initial-draft="askPayload"
           :loading-history="aiConsole.loadingHistory.value"
           :has-more="aiConsole.hasMore.value"
           :loading-more="aiConsole.loadingMore.value"

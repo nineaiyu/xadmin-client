@@ -142,6 +142,8 @@ declare global {
     HeaderAutoHide?: boolean;
     /** 内容区紧凑模式（收紧留白并居中限宽） */
     CompactMode?: boolean;
+    /** 界面密度（default / small）：注入全部 Element Plus 组件 size（表格 / 表单 / 按钮等） */
+    UiSize?: string;
     /** 圆角档位（none / small / default / large / xlarge）：缩放 --radius-* 令牌 */
     Radius?: RadiusScaleType;
     /** 字号档位（small / default / large / custom）：缩放 --font-size-* 令牌，根字号不随之变化 */
@@ -349,6 +351,8 @@ declare global {
       stretch?: boolean | number;
       headerAutoHide?: boolean;
       compactMode?: boolean;
+      /** 界面密度（default / small）：全局注入 EP 组件 size（ElConfigProvider） */
+      uiSize?: string;
       radius?: RadiusScaleType;
       fontScale?: FontScaleType;
       /** 自定义字号基准（px）：fontScale=custom 时写入 --font-scale 倍率 */

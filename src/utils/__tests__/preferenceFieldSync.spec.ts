@@ -143,6 +143,7 @@ const SERVER_PERSISTED_FIELDS = [
   "Stretch",
   "HeaderAutoHide",
   "CompactMode",
+  "UiSize",
   "TagsMiddleClickClose",
   "TagsWheelSwitch",
   "DynamicTitle",

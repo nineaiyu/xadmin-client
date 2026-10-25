@@ -39,6 +39,16 @@ const props = defineProps<{
    * 优先级 forceDark > forceLight > 跟随站点；配色走固定浅色基线。
    */
   forceLight?: boolean;
+  /**
+   * 图表可下钻：点击图形元素向上派发 drill 事件（携带点击维度值），由父级
+   * 打开明细抽屉。默认关闭（大屏/投屏展示场景不接下钻）。
+   */
+  drillable?: boolean;
+}>();
+
+const emit = defineEmits<{
+  /** 点亮图形元素（drillable 时）：point 为点击的维度项；null = 全量 */
+  drill: [point: { name: string; raw?: unknown } | null];
 }>();
 
 const { t } = useI18n();
@@ -256,12 +266,35 @@ const loadData = () =>
     }
   });
 
+/** 最近一次聚合序列（下钻点击时按维度名反查 raw 原始值） */
+const lastSeries = ref<AggregateResult["series"]>([]);
+let drillBound = false;
+
+/**
+ * 图表点击下钻：点击柱/扇区派发该维度项（name 为可读 label，raw 为过滤原值；
+ * 趋势序列无 raw——派发后由父级回落为全量明细）。实例由 useECharts 延迟创建，
+ * 首次渲染成功后挂载一次。
+ */
+function bindDrillClick() {
+  if (drillBound || !props.drillable) return;
+  const instance = getInstance();
+  if (!instance || typeof instance.on !== "function") return;
+  instance.on("click", (params: { name?: string }) => {
+    if (!props.drillable || !params?.name) return;
+    const hit = lastSeries.value.find(item => item.name === params.name);
+    emit("drill", { name: params.name, raw: hit?.raw });
+  });
+  drillBound = true;
+}
+
 /** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
 const renderAggregate = async (result: AggregateResult) => {
   if (await waitChartSized(() => chartRef.value as HTMLElement | undefined)) {
     // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
     resize();
     setOptions(buildSeriesOptions(result));
+    lastSeries.value = result.series;
+    bindDrillClick();
   }
 };
 
@@ -310,6 +343,14 @@ watch(
 watch(
   () => props.refreshToken,
   () => loadData()
+);
+
+/** 编辑态切换后补挂下钻（编辑期间不派发，退出编辑时实例已在） */
+watch(
+  () => props.drillable,
+  value => {
+    if (value) bindDrillClick();
+  }
 );
 
 /**

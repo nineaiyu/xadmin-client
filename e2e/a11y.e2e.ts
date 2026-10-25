@@ -238,6 +238,65 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
   ).toEqual([]);
 });
 
+test("a11y 扩面：首页（welcome 卡片）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  // 首页侧边栏链接即 #/（路由 /welcome，不在种子菜单里单列）
+  await openMenuPath(page, [], "/");
+  await expect(page.locator("#main-content")).toBeVisible({
+    timeout: 15_000
+  });
+  // 等第一张卡片渲染到位（图表数据异步拉取，半渲染态会扫到瞬态）
+  await expect(page.locator(".el-card").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `首页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：AI 控制台（左右分栏会话面）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["集成管理"], "/integration/ai/index");
+  // AI 未启用时渲染引导占位、启用时渲染控制台分栏——两种形态都属合法扫描面
+  await expect(
+    page.locator('[data-testid="ai-console"], .el-card').first()
+  ).toBeVisible({ timeout: 15_000 });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `AI 控制台 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：仪表盘页（图表卡片网格）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
+  await expect(page.locator('[data-testid="dashboard-cards"]')).toBeVisible({
+    timeout: 15_000
+  });
+  // 图表卡骨架退场后再扫：echarts 入场动画期间半透明元素会拉低对比度（瞬态假违规）
+  await expect(page.locator('[data-testid="chart-card-skeleton"]')).toHaveCount(
+    0,
+    { timeout: 15_000 }
+  );
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `仪表盘页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
 /**
  * 投屏页（full-content 全屏路由）不挂 Layout：skip-link / a11y-live 等由 Layout
  * 装配的设施天然缺席（展示场景键盘交互少，非缺陷——2026.10 前端审查 F-3 登记）。

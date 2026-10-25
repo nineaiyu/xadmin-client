@@ -51,6 +51,8 @@ export const injectResponsiveStorage = (app: App, config: PlatformConfigs) => {
         stretch: config.Stretch ?? false,
         headerAutoHide: config.HeaderAutoHide ?? false,
         compactMode: config.CompactMode ?? false,
+        // 界面密度（default / small）：ElConfigProvider 全局 size 的数据源
+        uiSize: config.UiSize ?? "default",
         radius: config.Radius ?? "default",
         fontScale: config.FontScale ?? "default",
         fontScaleCustom: config.FontScaleCustom ?? 14,

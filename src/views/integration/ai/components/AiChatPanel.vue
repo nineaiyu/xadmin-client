@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SendIcon from "~icons/ep/promotion";
@@ -42,6 +42,8 @@ const props = defineProps<{
   nlRunnable: boolean;
   actionExecutor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
   isNarrow: boolean;
+  /** 初始输入内容（命令面板「问 AI」经路由 query 预填）；seq 变化即覆盖 */
+  initialDraft?: { seq: number; text: string } | null;
 }>();
 
 const emit = defineEmits<{
@@ -57,7 +59,15 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const draft = ref("");
+const draft = ref(props.initialDraft?.text ?? "");
+// 命令面板「问 AI」再次进入（keep-alive 复用本组件）时刷新预填；
+// 仅在携带非空文案时覆盖，不清空用户已输入的内容
+watch(
+  () => props.initialDraft,
+  payload => {
+    if (payload?.text) draft.value = payload.text;
+  }
+);
 const scrollEl = ref<HTMLElement | null>(null);
 
 /** 列表壳滚动元素就绪：登记并向上冒泡，供父级滚动到底/离底检测持有 */

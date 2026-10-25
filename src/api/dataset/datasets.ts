@@ -56,7 +56,8 @@ export type ExecuteResult = {
 export type AggregateResult = {
   name: string;
   metric: string;
-  series: { name: string; value: number }[];
+  /** raw：分组原始值（卡片下钻过滤依据；趋势/单桶序列无该字段） */
+  series: { name: string; raw?: unknown; value: number }[];
 };
 
 /** metric：指标卡（无分组单值聚合，count = 行总数；与数据集聚合同口径） */

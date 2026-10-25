@@ -49,7 +49,7 @@ export function createPageRequest({
   // 请求序号：仅接受最新一次请求的响应，避免同页快速切换筛选/分页时旧响应覆盖新列表
   let latestRequestSeq = 0;
 
-  return (
+  const handleGetData = (
     queryParams = {},
     options: {
       /** 首开内联元数据消费（with_meta=1 响应中的 search_columns/search_fields） */
@@ -57,7 +57,7 @@ export function createPageRequest({
       /** 内联响应缺元数据键时的一次性回退（旧后端/无元数据 Action 视图集） */
       onInlineMetaMissing?: () => void;
     } = {}
-  ) => {
+  ): void => {
     // 列表接口是分页数据源的必要条件（缺省时直接收尾 loading，不发起请求）
     if (!api.list) {
       loadingStatus.value = false;
@@ -107,6 +107,13 @@ export function createPageRequest({
               // 旧后端/未混入元数据 Action：回退分离请求
               options.onInlineMetaMissing?.();
             }
+            // 跳转承接（全局搜索 / 角色联动 ?x=y）：routeParams 要等内联元数据
+            // 装配（fieldsInitCallback）才并入搜索表单，首查发出时尚未携带——
+            // 此处补一次带过滤的查询并提前结束本次回调（补查走完整链路）
+            if (Object.keys(routeParams).length > 0) {
+              handleGetData();
+              return;
+            }
           }
         } else {
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
@@ -120,4 +127,6 @@ export function createPageRequest({
         loadingStatus.value = false;
       });
   };
+
+  return handleGetData;
 }

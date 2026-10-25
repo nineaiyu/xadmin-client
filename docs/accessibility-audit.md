@@ -49,6 +49,22 @@
 
 > 2026-09-08：`color-contrast` 曾增补 `el-link`（与 `el-button` 同取主题色）；该形态 2026-10-11 随主色切换（`#006be6`）达标后摘除。
 
+## 四、扩面整改（2026-10-25，a11y 档位扩面随 2026.10 前端提案落地）
+
+`e2e/a11y.e2e.ts` 扩面新增首页（welcome）、AI 控制台、仪表盘页三个扫描面（并新增独立
+`pnpm test:e2e:a11y` 档位做定向快速反馈）。扩面首扫暴露 4 类存量缺陷，全部本地修复、
+豁免表维持为空：
+
+| 位置                                                                  | 问题（axe 规则 / impact）                                                                       | 修复                                                                                                                                         |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `welcome/index.vue` 活跃用户卡增长百分比 ×3、注册用户文案 ×2          | `color-contrast`（serious）：`--el-color-success` / dark-2 档绿字在白底 < 4.5:1                 | 令牌层新增成功文本档 `--success-text`（`ep-bridge.scss`：亮色 color-mix 55% success 向黑压暗，暗色保持本色），两处文字改用该档               |
+| `welcome/index.vue` 版本日志滚动区（el-scrollbar）                    | `scrollable-region-focusable`（serious）：可滚动区不可键盘聚焦                                  | 与多值标签渲染器同一手法补 `tabindex="0"`                                                                                                    |
+| `dashboard/index.vue` 卡片头「数据集名」el-tag--info ×4               | `color-contrast`（serious）：info tag 文字色在浅灰底 < 4.5:1                                    | scoped 样式将 `.el-tag__content` 文字加深为 `--el-text-color-regular`（底色不变）                                                            |
+| `welcome/index.vue` 版本时间线时间戳 ×4                               | `color-contrast`（serious，webkit 渲染临界）：EP 缺省 secondary 灰在白底 < 4.5:1                | scoped 样式将 `.el-timeline-item__timestamp` 加深为 `--el-text-color-regular`                                                                |
+| 顶栏时区面板下拉（`NavbarTimezone.vue`）、仪表盘选择与自动刷新下拉 ×3 | `label`（critical）：EP el-select 内部 combobox 无可访问名（attrs 落根元素，框架无 props 入口） | `utils/tableA11y.ts` 新增通用 `syncSelectInputsA11y`（分页器下拉同一手法的泛化），三处在渲染后（popover `@show` / onMounted）补 `aria-label` |
+
+验证：`pnpm test:e2e:a11y` 双浏览器（chromium + webkit）全绿，既有 7 用例零回归。
+
 ### 2026-09-24 补充登记（用户管理页行操作抽屉改造）
 
 | 规则                   | 命中形态                                                     | 原因                                                                                                                                                                                                                                                    | 移出条件                                                       |

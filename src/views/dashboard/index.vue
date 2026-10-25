@@ -1,8 +1,14 @@
 <script lang="ts" setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowDown, ArrowUp, Download, Setting } from "@element-plus/icons-vue";
+import {
+  ArrowDown,
+  ArrowUp,
+  Download,
+  Setting,
+  View
+} from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
 import type { DashboardItem } from "@/api/dataset/datasets";
@@ -11,6 +17,7 @@ import {
   useDashboardAutoRefresh
 } from "./utils/useDashboardAutoRefresh";
 import { useCardImageExport } from "./utils/useCardImageExport";
+import { useDashboardSnapshot } from "./utils/useDashboardSnapshot";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
 import { useDashboardDelete } from "./utils/useDashboardDelete";
@@ -18,8 +25,10 @@ import { useDashboardEditing } from "./utils/useDashboardEditing";
 import { useDashboardView } from "./utils/useDashboardView";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
 import { cardRenderHeight } from "@/utils/cardHeight";
+import { syncSelectInputsA11y } from "@/utils/tableA11y";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
 import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
+import CardDrillDrawer from "./components/CardDrillDrawer.vue";
 
 defineOptions({
   name: "DataDashboard"
@@ -75,7 +84,17 @@ const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
 });
 
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
-const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
+const { cardRefs, setCardRef, exportingCard, exportCardImage } =
+  useCardImageExport(t);
+
+/** 快照导出：整盘卡片按页面布局合成单张 PNG（标题/时间戳/水印叠加） */
+const { exporting: exportingSnapshot, exportDashboardSnapshot } =
+  useDashboardSnapshot({
+    layout,
+    current,
+    cardRefs,
+    rowEl: () => (rowRef.value?.$el as HTMLElement | undefined) ?? null
+  });
 
 // ---- 卡片弹窗（新建 / 编辑双模式）与图片导出：独立 composable（控制页面体积） ----
 const { openCardSettings, openCardDialog } = useCardDialog({
@@ -107,8 +126,44 @@ const goDatasetPage = () => {
   router.push("/analysis/dataset/index");
 };
 
+/* ---------------- 卡片下钻：图表点击 / 查看明细 → 数据集明细抽屉 ---------------- */
+const drillVisible = ref(false);
+const drillCard = ref<{
+  dataset: string;
+  title?: string | null;
+  group_by?: string;
+} | null>(null);
+const drillPoint = ref<{ name: string; raw?: unknown } | null>(null);
+
+function openDrill(
+  card: { dataset: string; title?: string | null; group_by?: string },
+  point: { name: string; raw?: unknown } | null
+) {
+  drillCard.value = card;
+  drillPoint.value = point;
+  drillVisible.value = true;
+}
+
+/** 维度过滤：趋势序列（无 raw）与无分组卡回落为全量明细 */
+const drillFilter = computed(() => {
+  const card = drillCard.value;
+  const point = drillPoint.value;
+  if (!card?.group_by || !point || point.raw === undefined) return null;
+  return { field: card.group_by, label: point.name, value: point.raw };
+});
+
 onMounted(async () => {
   await Promise.all([loadDashboards(), loadDatasets()]);
+  // 自动刷新下拉的可访问名（EP el-select 无 props 入口，渲染后补名；
+  // 与分页器下拉同一收口手法）
+  syncSelectInputsA11y(
+    document.querySelector('[data-testid="dashboard-picker"]'),
+    t("dashboard.pickDashboard")
+  );
+  syncSelectInputsA11y(
+    document.querySelector('[data-testid="dashboard-auto-refresh"]'),
+    t("dashboard.autoRefresh")
+  );
 });
 </script>
 
@@ -125,6 +180,7 @@ onMounted(async () => {
           :placeholder="t('dashboard.pickDashboard')"
           value-key="pk"
           class="w-56!"
+          data-testid="dashboard-picker"
           @change="(item: DashboardItem) => selectDashboard(item?.pk)"
         >
           <el-option
@@ -173,6 +229,16 @@ onMounted(async () => {
           {{ t("dashboard.settings") }}
         </el-button>
         <div class="flex-1" />
+        <el-button
+          v-if="current"
+          link
+          type="primary"
+          data-testid="dashboard-export-snapshot"
+          :loading="exportingSnapshot"
+          @click="exportDashboardSnapshot"
+        >
+          {{ t("dashboard.exportSnapshot") }}
+        </el-button>
         <el-button
           v-if="current"
           link
@@ -233,6 +299,7 @@ onMounted(async () => {
           <el-card
             shadow="never"
             class="app-card flex flex-col overflow-hidden"
+            :data-card-id="card.id"
             :style="{ height: `${cardRenderHeight(card.height)}px` }"
             :body-style="{ flex: '1 1 0%', minHeight: '0' }"
           >
@@ -240,7 +307,7 @@ onMounted(async () => {
               <div class="flex items-center gap-2">
                 <span v-if="editing" class="drag-handle" aria-hidden="true" />
                 <span class="truncate font-medium">{{ card.title }}</span>
-                <el-tag size="small" type="info" class="ml-1">
+                <el-tag size="small" type="info" class="card-dataset-tag ml-1">
                   {{ datasetName(card.dataset) }}
                 </el-tag>
                 <div class="flex-1" />
@@ -253,6 +320,16 @@ onMounted(async () => {
                   :loading="exportingCard === card.id"
                   data-testid="card-export-image"
                   @click="exportCardImage(card)"
+                />
+                <el-button
+                  v-if="!editing"
+                  link
+                  type="primary"
+                  :icon="View"
+                  :title="t('dashboard.drillViewData')"
+                  :aria-label="t('dashboard.drillViewData')"
+                  data-testid="card-drill-open"
+                  @click="openDrill(card, null)"
                 />
                 <el-button
                   v-if="editing"
@@ -295,6 +372,8 @@ onMounted(async () => {
               :ref="setCardRef(card.id)"
               :card="card"
               :refresh-token="refreshKey"
+              :drillable="!editing"
+              @drill="point => openDrill(card, point)"
             />
           </el-card>
         </el-col>
@@ -303,10 +382,23 @@ onMounted(async () => {
         {{ t("dashboard.addCard") }}
       </el-button>
     </template>
+
+    <CardDrillDrawer
+      v-model="drillVisible"
+      :title="String(drillCard?.title ?? '')"
+      :dataset="drillCard?.dataset ?? ''"
+      :filter="drillFilter"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
+/* 卡片头「数据集名」标签：el-tag--info 缺省文字色在浅灰底上对比度不足
+   （axe color-contrast serious），正文灰加深一档（底色不变，视觉近似） */
+.card-dataset-tag :deep(.el-tag__content) {
+  color: var(--el-text-color-regular);
+}
+
 /* 卡片拖拽手柄：2×3 点阵（CSS 绘制，避免文本字符在不同字体下的宽度差异） */
 .drag-handle {
   display: block;

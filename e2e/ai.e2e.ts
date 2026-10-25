@@ -140,6 +140,27 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   });
 });
 
+test("命令面板问 AI：搜索词直达助手页并预填输入框", async ({ page }) => {
+  await login(page);
+  // 前置：首个用例已开启全局开关并激活档案（同库串行），助手页输入框可用
+  await page.keyboard.press("Control+k");
+  const input = page.locator(".pure-search-dialog input").first();
+  await input.fill("命令面板预填验证问题");
+
+  const askEntry = page.getByTestId("ask-ai-entry");
+  await expect(askEntry).toBeVisible({ timeout: 10_000 });
+  await askEntry.click();
+
+  await expect(page).toHaveURL(/#\/integration\/ai\/index/, {
+    timeout: 15_000
+  });
+  // 预填落在问答入口的输入框；q 消费后从 URL 移除（刷新不重复预填）
+  const askInput = page.getByTestId("ai-ask-input");
+  await expect(askInput).toBeVisible({ timeout: 15_000 });
+  await expect(askInput).toHaveValue("命令面板预填验证问题");
+  await expect(page).not.toHaveURL(/q=/);
+});
+
 test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await login(page);
 

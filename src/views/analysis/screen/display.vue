@@ -26,6 +26,7 @@ import PauseIcon from "~icons/ep/video-pause";
 import PlayIcon from "~icons/ep/video-play";
 import FullscreenIcon from "~icons/ep/full-screen";
 import DownloadIcon from "~icons/ep/download";
+import CameraIcon from "~icons/ep/camera";
 import BackIcon from "~icons/ep/back";
 
 defineOptions({
@@ -96,13 +97,15 @@ const screenCards = useScreenCards({ isStage, currentCards, currentDashboard });
 const { cardRefs, setCardRef, paneRefs, setPaneRef } = screenCards;
 
 /** 导出当前屏：逐卡渲染图片并按 ZIP 打包（实现见 utils/useScreenExport.ts，行数门禁抽出） */
-const { exporting, exportScreen } = useScreenExport({
+const { exporting, exportScreen, exportScreenSnapshot } = useScreenExport({
   isCanvas: isStage,
   currentCards,
   cardRefs,
   paneRefs,
   layoutPanes: activePanes,
-  paneCards
+  paneCards,
+  screenTitle: () => String(screen.value?.name ?? ""),
+  isDark: () => screenDark.value
 });
 
 const toggleFullscreen = () => {
@@ -222,6 +225,16 @@ onMounted(loadScreen);
         @click="exportScreen"
       >
         {{ t("dataScreen.exportScreen") }}
+      </el-button>
+      <el-button
+        size="small"
+        :icon="CameraIcon"
+        :loading="exporting"
+        data-testid="screen-export-snapshot"
+        :title="t('dataScreen.exportSnapshotTip')"
+        @click="exportScreenSnapshot"
+      >
+        {{ t("dataScreen.exportSnapshot") }}
       </el-button>
       <el-button
         v-if="!isStage"

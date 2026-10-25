@@ -460,6 +460,10 @@ layout:
   headerAutoHideTip: 向下滚动自动收起顶栏，向上滚动恢复
   compactMode: 紧凑模式
   compactModeTip: 收紧内容留白并居中限宽
+  uiSize: 界面密度
+  uiSizeTip: 表格、表单与按钮等组件的整体尺寸；表格内手动切换过密度的页面保持各自选择
+  uiSizeDefault: 默认
+  uiSizeCompact: 紧凑
   display: 界面显示
   greyMode: 灰色模式
   colorWeakMode: 色弱模式
@@ -1025,6 +1029,7 @@ tag:
 commandPalette:
   title: 快捷动作
   openAi: 打开 AI 助手
+  askAi: 问 AI
   openTaskLog: 打开任务日志
   openTags: 打开标签管理
   openModules: 打开模块管理
@@ -3350,6 +3355,15 @@ dashboard:
   moveDown: 下移卡片
   datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   exportImage: 导出图片
+  drillViewData: 查看明细
+  drillFilteredBy: 按 {field} = {value} 过滤
+  drillClearFilter: 查看全量
+  drillLoadFailed: 明细加载失败
+  drillRetry: 重试
+  drillRows: 明细行
+  drillTotal: 共 {count} 行（展示前 {limit} 行）
+  exportSnapshot: 导出快照
+  exportSnapshotNote: 有 {count} 个卡片未含图表，已按占位导出
   exportNoChart: 指标卡没有可导出的图表
   title: 仪表盘
   pickDashboard: 选择仪表盘
@@ -3406,6 +3420,7 @@ dashboard:
   autoRefresh30s: 每 30 秒
   autoRefresh60s: 每 1 分钟
   autoRefresh5m: 每 5 分钟
+  autoRefresh: 自动刷新间隔
   autoRefreshTip: 定时自动刷新当前仪表盘的卡片数据（挂屏轮看用）
 
   share: 分享
@@ -3687,6 +3702,8 @@ dataScreen:
   save: 保存
   noDashboards: 无可投屏仪表盘
   exportScreen: 导出当前屏
+  exportSnapshot: 快照长图
+  exportSnapshotTip: 逐卡合成为单张 PNG 长图（含标题、时间戳与水印）
   exportNoChart: 当前屏没有可导出的图表
   exportSkipped: 有 { count } 个指标卡未导出
   pause: 暂停轮播

@@ -45,5 +45,5 @@ export function useCardImageExport(t: TFunction) {
     }
   };
 
-  return { setCardRef, exportingCard, exportCardImage };
+  return { cardRefs, setCardRef, exportingCard, exportCardImage };
 }

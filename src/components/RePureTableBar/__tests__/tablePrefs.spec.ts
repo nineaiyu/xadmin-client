@@ -31,7 +31,10 @@ vi.mock("@/api/config", () => ({
   }
 }));
 
-import { applyTablePrefs } from "../src/tablePrefsApply";
+import {
+  applyTablePrefs,
+  resolveInitialTableSize
+} from "../src/tablePrefsApply";
 import { createTablePrefsStorage } from "../src/tablePrefsStorage";
 import {
   buildRenderClass,
@@ -144,6 +147,14 @@ describe("RePureTableBar 列显隐 / 列序应用", () => {
     expect(columns[0].hide).toBeUndefined();
     expect(result.size).toBeUndefined();
     expect(applyTablePrefs({ hidden: ["x"] }, [])).toEqual({});
+  });
+
+  it("初始密度：未手动切换的页面跟随全局界面密度，切换过的保持各自选择", () => {
+    expect(resolveInitialTableSize(undefined, "small")).toBe("small");
+    expect(resolveInitialTableSize(undefined, "default")).toBe("default");
+    expect(resolveInitialTableSize(undefined, undefined)).toBe("default");
+    expect(resolveInitialTableSize("large", "small")).toBe("large");
+    expect(resolveInitialTableSize("small", "default")).toBe("small");
   });
 });
 
