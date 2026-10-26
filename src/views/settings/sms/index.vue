@@ -19,6 +19,8 @@ defineOptions({
 
 const { t, te } = useI18n();
 const smsBackends = ref<Array<settingsPane>>([]);
+/** 服务商页签保存后重取总配置诊断（凭据完整性提示挂在「短信设置」页签） */
+const serverRefresh = ref(0);
 // 静态渠道项与动态后端子项按 settingsPane 契约统一（api 槽位为结构化接口，
 // ViewBaseApi 及其子类实例均可直接赋给）
 const panes = computed<Array<settingsPane>>(() => [
@@ -29,7 +31,8 @@ const panes = computed<Array<settingsPane>>(() => [
     item: {
       auth: settingAuth("SmsSetting"),
       api: settingsSmsServerApi,
-      localeName: "settingSms"
+      localeName: "settingSms",
+      refreshKey: serverRefresh.value
     }
   },
   ...smsBackends.value
@@ -60,7 +63,10 @@ async function loadBackends() {
             auth: settingAuth("SmsConfig", true),
             api: settingsSmsConfigApi,
             queryParams: { category: value },
-            localeName: "settingSms"
+            localeName: "settingSms",
+            onSaved: () => {
+              serverRefresh.value += 1;
+            }
           }
         });
       });

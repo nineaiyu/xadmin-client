@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login, openMenuPath } from "./helpers";
 
 /**
- * 消息设置页 IM 渠道三页签：钉钉/企微/飞书各自独立页签，仅渲染
+ * 通知渠道页 IM 三页签：钉钉/企微/飞书各自独立页签，仅渲染
  * 自己的字段（SettingItem fields 白名单）——消除「一个表单三家字段 + 单个测试
  * 按钮测的是哪家」的歧义，测试按钮经 ?channel= 只测本渠道（后端单测覆盖）。
  *
@@ -18,9 +18,9 @@ const TAB = {
   feishu: "飞书"
 };
 
-test("消息设置：IM 渠道三页签字段隔离与独立测试按钮", async ({ page }) => {
+test("通知渠道：IM 三页签字段隔离与独立测试按钮", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统设置"], "/settings/message");
+  await openMenuPath(page, ["系统设置"], "/settings/channel");
 
   const tab = (name: string) => page.getByRole("tab", { name, exact: true });
   const pane = (name: string) => page.getByRole("tabpanel", { name });

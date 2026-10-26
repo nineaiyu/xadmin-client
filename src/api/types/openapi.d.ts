@@ -5631,6 +5631,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/auth/captcha/challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 获取交互式验证码挑战 */
+        post: operations["api_identity_auth_captcha_challenge_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/identity/auth/captcha/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 校验答案并换取一次性 ticket */
+        post: operations["api_identity_auth_captcha_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity/auth/invite/accept": {
         parameters: {
             query?: never;
@@ -9625,6 +9659,112 @@ export interface paths {
         patch: operations["api_settings_captcha_partial_update"];
         trace?: never;
     };
+    "/api/settings/captcha/general": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的详情 */
+        get: operations["api_settings_captcha_general_retrieve"];
+        /** @description 整体更新{cls}信息 */
+        put: operations["api_settings_captcha_general_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description 部分更新{cls}信息 */
+        patch: operations["api_settings_captcha_general_partial_update"];
+        trace?: never;
+    };
+    "/api/settings/captcha/general/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_settings_captcha_general_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/interactive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的详情 */
+        get: operations["api_settings_captcha_interactive_retrieve"];
+        /** @description 整体更新{cls}信息 */
+        put: operations["api_settings_captcha_interactive_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description 部分更新{cls}信息 */
+        patch: operations["api_settings_captcha_interactive_partial_update"];
+        trace?: never;
+    };
+    "/api/settings/captcha/interactive/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 预览交互式验证码 */
+        post: operations["api_settings_captcha_interactive_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/interactive/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_settings_captcha_interactive_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description 预览图片验证码 */
+        post: operations["api_settings_captcha_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/captcha/search-columns": {
         parameters: {
             query?: never;
@@ -12497,7 +12637,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 批量删除{cls} */
+        /** @description 批量删除{cls}（高危：与删除同口径纳入审批） */
         post: operations["api_system_permission_batch_destroy_create"];
         delete?: never;
         options?: never;
@@ -15459,12 +15599,165 @@ export interface components {
          */
         CAPTCHACHALLENGEFUNCTEnum: "captcha.helpers.random_char_challenge" | "captcha.helpers.math_challenge";
         /**
+         * @description * `chinese` - 常用汉字
+         *     * `ascii` - 字母数字
+         * @enum {string}
+         */
+        CAPTCHACLICKCHARSETEnum: "chinese" | "ascii";
+        /**
+         * @description * `slide` - 滑动拼图
+         *     * `rotate` - 旋转回正
+         *     * `click` - 文字点选
+         * @enum {string}
+         */
+        CAPTCHAINTERACTIVETYPESEnum: "slide" | "rotate" | "click";
+        /**
+         * @description * `image` - 图片验证码
+         *     * `interactive` - 交互式验证码
+         * @enum {string}
+         */
+        CAPTCHAMODEEnum: "image" | "interactive";
+        /**
          * @description * `captcha.helpers.noise_null` - 无噪声函数
          *     * `captcha.helpers.noise_arcs` - 弧噪声函数
          *     * `captcha.helpers.noise_dots` - 点噪声函数
          * @enum {string}
          */
         CAPTCHANOISEFUNCTIONSEnum: "captcha.helpers.noise_null" | "captcha.helpers.noise_arcs" | "captcha.helpers.noise_dots";
+        CaptchaChallengeIn: {
+            /** 验证码场景 */
+            scene: components["schemas"]["SceneEnum"];
+            /**
+             * 验证码题型
+             * @description 留空则由服务端从启用题型中随机选择
+             *
+             *     * `slide` - slide
+             *     * `rotate` - rotate
+             *     * `click` - click
+             */
+            type?: components["schemas"]["TypeEnum"];
+        };
+        CaptchaChallengeOut: {
+            /** 底图 */
+            background: string;
+            /** 挑战 ID */
+            challenge_id: string;
+            /** 点选数量 */
+            count?: number;
+            /** 图片高度 */
+            height?: number;
+            /** 拼图块 */
+            piece?: string;
+            /** 拼图块尺寸 */
+            piece_size?: number;
+            /** 点选提示图 */
+            tip?: string;
+            /** 有效期（秒） */
+            ttl: number;
+            /** 验证码题型 */
+            type: components["schemas"]["TypeEnum"];
+            /** 图片宽度 */
+            width?: number;
+        };
+        CaptchaChallengeResponse: {
+            /** 业务码 */
+            code: number;
+            data: components["schemas"]["CaptchaChallengeOut"];
+            /** 详情 */
+            detail?: string;
+            /** 错误码 */
+            error?: string;
+        };
+        CaptchaImagePreviewData: {
+            /** Preview image */
+            image: string;
+            /** Answer length */
+            length: number;
+        };
+        CaptchaImagePreviewResponse: {
+            /** 业务码 */
+            code: number;
+            data: components["schemas"]["CaptchaImagePreviewData"];
+            /** 详情 */
+            detail?: string;
+        };
+        CaptchaInteractivePreviewData: {
+            /** 底图 */
+            background: string;
+            /** 点选数量 */
+            count?: number;
+            /** 图片高度 */
+            height?: number;
+            /** 拼图块 */
+            piece?: string;
+            /** 拼图块尺寸 */
+            piece_size?: number;
+            /** 点选提示图 */
+            tip?: string;
+            /** 验证码题型 */
+            type: components["schemas"]["TypeEnum"];
+            /** 图片宽度 */
+            width?: number;
+        };
+        CaptchaInteractivePreviewIn: {
+            /** 验证码题型 */
+            type?: components["schemas"]["TypeEnum"];
+        };
+        CaptchaInteractivePreviewResponse: {
+            /** 业务码 */
+            code: number;
+            data: components["schemas"]["CaptchaInteractivePreviewData"];
+            /** 详情 */
+            detail?: string;
+        };
+        CaptchaTrackPoint: {
+            /**
+             * 时间戳（毫秒）
+             * Format: double
+             */
+            t: number;
+            /**
+             * X 坐标
+             * Format: double
+             */
+            x: number;
+            /**
+             * Y 坐标
+             * Format: double
+             */
+            y: number;
+        };
+        CaptchaVerifyIn: {
+            /** 答案 */
+            answer: unknown;
+            /** 挑战 ID */
+            challenge_id: string;
+            /** 验证码场景 */
+            scene: components["schemas"]["SceneEnum"];
+            /** 指针轨迹 */
+            track?: components["schemas"]["CaptchaTrackPoint"][];
+            /** 验证码题型 */
+            type: components["schemas"]["TypeEnum"];
+        };
+        CaptchaVerifyOut: {
+            /** 剩余尝试次数 */
+            attempts_left?: number;
+            /** 票据有效期（秒） */
+            expires_in?: number;
+            /** 是否通过 */
+            passed: boolean;
+            /** 一次性票据 */
+            ticket?: string;
+        };
+        CaptchaVerifyResponse: {
+            /** 业务码 */
+            code: number;
+            data: components["schemas"]["CaptchaVerifyOut"];
+            /** 详情 */
+            detail?: string;
+            /** 错误码 */
+            error?: string;
+        };
         /**
          * @description * `image` - 图片
          *     * `document` - 文档
@@ -20920,7 +21213,7 @@ export interface components {
             /**
              * 验证码字体大小
              * @description 图片验证码字体大小
-             * @default 22
+             * @default 26
              */
             CAPTCHA_FONT_SIZE: number;
             /** 验证码字体色 */
@@ -20934,21 +21227,8 @@ export interface components {
             /**
              * 噪声函数
              * @default [
-             *       "c",
-             *       "a",
-             *       "p",
-             *       "t",
-             *       "h",
-             *       ".",
-             *       "e",
-             *       "l",
-             *       "r",
-             *       "s",
-             *       "n",
-             *       "o",
-             *       "i",
-             *       "_",
-             *       "u"
+             *       "captcha.helpers.noise_arcs",
+             *       "captcha.helpers.noise_dots"
              *     ]
              */
             CAPTCHA_NOISE_FUNCTIONS: components["schemas"]["CAPTCHANOISEFUNCTIONSEnum"][];
@@ -20957,6 +21237,100 @@ export interface components {
              * @description 图片验证码过期时间
              */
             CAPTCHA_TIMEOUT?: number;
+        };
+        /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
+        PatchedSecurityCaptchaGeneral: {
+            /**
+             * 启用验证码
+             * @description 全局开关；关闭后所有场景不再要求验证码
+             * @default true
+             */
+            CAPTCHA_ENABLED: boolean;
+            /**
+             * 验证码模式
+             * @description 所有场景使用的验证码类型；新增类型可按独立页签扩展
+             *
+             *     * `image` - 图片验证码
+             *     * `interactive` - 交互式验证码
+             * @default image
+             */
+            CAPTCHA_MODE: components["schemas"]["CAPTCHAMODEEnum"];
+        };
+        /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
+        PatchedSecurityCaptchaInteractive: {
+            /**
+             * 挑战有效期（秒）
+             * @default 120
+             */
+            CAPTCHA_CHALLENGE_TTL: number;
+            /**
+             * 点选字符集
+             * @default chinese
+             */
+            CAPTCHA_CLICK_CHARSET: components["schemas"]["CAPTCHACLICKCHARSETEnum"];
+            /**
+             * 点选命中半径（像素）
+             * @default 20
+             */
+            CAPTCHA_CLICK_RADIUS: number;
+            /**
+             * 图片验证码回退
+             * @description 交互式模式下允许用户切换为图片验证码（无障碍回退；对 OCR 的防护较弱）
+             * @default false
+             */
+            CAPTCHA_IMAGE_FALLBACK_ENABLED: boolean;
+            /**
+             * 交互式题型
+             * @description 交互式模式下启用的题型
+             * @default [
+             *       "slide",
+             *       "rotate",
+             *       "click"
+             *     ]
+             */
+            CAPTCHA_INTERACTIVE_TYPES: components["schemas"]["CAPTCHAINTERACTIVETYPESEnum"][];
+            /**
+             * 单题最大尝试次数
+             * @default 3
+             */
+            CAPTCHA_MAX_ATTEMPTS: number;
+            /**
+             * 旋转图片尺寸（像素）
+             * @default [
+             *       240,
+             *       240
+             *     ]
+             */
+            CAPTCHA_ROTATE_SIZE: number[];
+            /**
+             * 旋转容差（度）
+             * @default 4
+             */
+            CAPTCHA_ROTATE_TOLERANCE: number;
+            /**
+             * 滑动底图尺寸（像素）
+             * @default [
+             *       320,
+             *       180
+             *     ]
+             */
+            CAPTCHA_SLIDE_SIZE: number[];
+            /**
+             * 滑动容差（像素）
+             * @default 4
+             */
+            CAPTCHA_SLIDE_TOLERANCE: number;
+            /**
+             * 验证票据有效期（秒）
+             * @default 120
+             */
+            CAPTCHA_TICKET_TTL: number;
+            /**
+             * 指针轨迹校验
+             * @description 拒绝缺少合理指针轨迹的答案
+             * @default true
+             */
+            CAPTCHA_TRACK_CHECK_ENABLED: boolean;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         PatchedSecurityLoginAuth: {
@@ -22282,6 +22656,16 @@ export interface components {
              */
             readonly updated_time: string | null;
         };
+        /**
+         * @description * `login` - login
+         *     * `register` - register
+         *     * `reset` - reset
+         *     * `bind_email` - bind_email
+         *     * `bind_phone` - bind_phone
+         *     * `invite` - invite
+         * @enum {string}
+         */
+        SceneEnum: "login" | "register" | "reset" | "bind_email" | "bind_phone" | "invite";
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         ScimSetting: {
             /**
@@ -22771,7 +23155,7 @@ export interface components {
             /**
              * 验证码字体大小
              * @description 图片验证码字体大小
-             * @default 22
+             * @default 26
              */
             CAPTCHA_FONT_SIZE: number;
             /** 验证码字体色 */
@@ -22785,21 +23169,8 @@ export interface components {
             /**
              * 噪声函数
              * @default [
-             *       "c",
-             *       "a",
-             *       "p",
-             *       "t",
-             *       "h",
-             *       ".",
-             *       "e",
-             *       "l",
-             *       "r",
-             *       "s",
-             *       "n",
-             *       "o",
-             *       "i",
-             *       "_",
-             *       "u"
+             *       "captcha.helpers.noise_arcs",
+             *       "captcha.helpers.noise_dots"
              *     ]
              */
             CAPTCHA_NOISE_FUNCTIONS: components["schemas"]["CAPTCHANOISEFUNCTIONSEnum"][];
@@ -22808,6 +23179,100 @@ export interface components {
              * @description 图片验证码过期时间
              */
             CAPTCHA_TIMEOUT: number;
+        };
+        /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
+        SecurityCaptchaGeneral: {
+            /**
+             * 启用验证码
+             * @description 全局开关；关闭后所有场景不再要求验证码
+             * @default true
+             */
+            CAPTCHA_ENABLED: boolean;
+            /**
+             * 验证码模式
+             * @description 所有场景使用的验证码类型；新增类型可按独立页签扩展
+             *
+             *     * `image` - 图片验证码
+             *     * `interactive` - 交互式验证码
+             * @default image
+             */
+            CAPTCHA_MODE: components["schemas"]["CAPTCHAMODEEnum"];
+        };
+        /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
+        SecurityCaptchaInteractive: {
+            /**
+             * 挑战有效期（秒）
+             * @default 120
+             */
+            CAPTCHA_CHALLENGE_TTL: number;
+            /**
+             * 点选字符集
+             * @default chinese
+             */
+            CAPTCHA_CLICK_CHARSET: components["schemas"]["CAPTCHACLICKCHARSETEnum"];
+            /**
+             * 点选命中半径（像素）
+             * @default 20
+             */
+            CAPTCHA_CLICK_RADIUS: number;
+            /**
+             * 图片验证码回退
+             * @description 交互式模式下允许用户切换为图片验证码（无障碍回退；对 OCR 的防护较弱）
+             * @default false
+             */
+            CAPTCHA_IMAGE_FALLBACK_ENABLED: boolean;
+            /**
+             * 交互式题型
+             * @description 交互式模式下启用的题型
+             * @default [
+             *       "slide",
+             *       "rotate",
+             *       "click"
+             *     ]
+             */
+            CAPTCHA_INTERACTIVE_TYPES: components["schemas"]["CAPTCHAINTERACTIVETYPESEnum"][];
+            /**
+             * 单题最大尝试次数
+             * @default 3
+             */
+            CAPTCHA_MAX_ATTEMPTS: number;
+            /**
+             * 旋转图片尺寸（像素）
+             * @default [
+             *       240,
+             *       240
+             *     ]
+             */
+            CAPTCHA_ROTATE_SIZE: number[];
+            /**
+             * 旋转容差（度）
+             * @default 4
+             */
+            CAPTCHA_ROTATE_TOLERANCE: number;
+            /**
+             * 滑动底图尺寸（像素）
+             * @default [
+             *       320,
+             *       180
+             *     ]
+             */
+            CAPTCHA_SLIDE_SIZE: number[];
+            /**
+             * 滑动容差（像素）
+             * @default 4
+             */
+            CAPTCHA_SLIDE_TOLERANCE: number;
+            /**
+             * 验证票据有效期（秒）
+             * @default 120
+             */
+            CAPTCHA_TICKET_TTL: number;
+            /**
+             * 指针轨迹校验
+             * @description 拒绝缺少合理指针轨迹的答案
+             * @default true
+             */
+            CAPTCHA_TRACK_CHECK_ENABLED: boolean;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         SecurityLoginAuth: {
@@ -23367,6 +23832,13 @@ export interface components {
             readonly access: string;
             refresh: string;
         };
+        /**
+         * @description * `slide` - slide
+         *     * `rotate` - rotate
+         *     * `click` - click
+         * @enum {string}
+         */
+        TypeEnum: "slide" | "rotate" | "click";
         /**
          * @description 可打标对象的序列化器混入：只读 ``tags`` 字段（列表/详情通用）。
          *
@@ -36234,6 +36706,9 @@ export interface operations {
                             access?: boolean;
                             basic?: {
                                 captcha?: boolean;
+                                captcha_image_fallback?: boolean;
+                                captcha_mode?: string;
+                                captcha_types?: string[];
                                 enabled?: boolean;
                                 encrypted?: boolean;
                                 token?: boolean;
@@ -36295,6 +36770,60 @@ export interface operations {
             };
         };
     };
+    api_identity_auth_captcha_challenge_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaptchaChallengeIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["CaptchaChallengeIn"];
+                "multipart/form-data": components["schemas"]["CaptchaChallengeIn"];
+                "text/csv": components["schemas"]["CaptchaChallengeIn"];
+                "text/xlsx": components["schemas"]["CaptchaChallengeIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaptchaChallengeResponse"];
+                };
+            };
+        };
+    };
+    api_identity_auth_captcha_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaptchaVerifyIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["CaptchaVerifyIn"];
+                "multipart/form-data": components["schemas"]["CaptchaVerifyIn"];
+                "text/csv": components["schemas"]["CaptchaVerifyIn"];
+                "text/xlsx": components["schemas"]["CaptchaVerifyIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaptchaVerifyResponse"];
+                };
+            };
+        };
+    };
     api_identity_auth_invite_accept_create: {
         parameters: {
             query?: never;
@@ -36307,6 +36836,7 @@ export interface operations {
                 "application/json": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     /** @description Submit an AESCipherV2(token) ciphertext keyed by the invite token; plaintext is only accepted when the encrypted switch is off */
                     password?: string;
                     token?: string;
@@ -36314,6 +36844,7 @@ export interface operations {
                 "application/x-www-form-urlencoded": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     /** @description Submit an AESCipherV2(token) ciphertext keyed by the invite token; plaintext is only accepted when the encrypted switch is off */
                     password?: string;
                     token?: string;
@@ -36321,6 +36852,7 @@ export interface operations {
                 "multipart/form-data": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     /** @description Submit an AESCipherV2(token) ciphertext keyed by the invite token; plaintext is only accepted when the encrypted switch is off */
                     password?: string;
                     token?: string;
@@ -36328,6 +36860,7 @@ export interface operations {
                 "text/csv": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     /** @description Submit an AESCipherV2(token) ciphertext keyed by the invite token; plaintext is only accepted when the encrypted switch is off */
                     password?: string;
                     token?: string;
@@ -36335,6 +36868,7 @@ export interface operations {
                 "text/xlsx": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     /** @description Submit an AESCipherV2(token) ciphertext keyed by the invite token; plaintext is only accepted when the encrypted switch is off */
                     password?: string;
                     token?: string;
@@ -36374,7 +36908,10 @@ export interface operations {
                     "application/json": {
                         code?: number;
                         data?: {
+                            captcha_image_fallback?: boolean;
+                            captcha_mode?: string;
                             captcha_required?: boolean;
+                            captcha_types?: string[];
                             encrypted?: boolean;
                             state?: string;
                             username?: string;
@@ -36635,6 +37172,9 @@ export interface operations {
                         data?: {
                             access?: boolean;
                             captcha?: boolean;
+                            captcha_image_fallback?: boolean;
+                            captcha_mode?: string;
+                            captcha_types?: string[];
                             email?: boolean;
                             encrypted?: boolean;
                             lifetime?: number;
@@ -36670,6 +37210,7 @@ export interface operations {
                 "application/json": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     form_type?: string;
                     target?: string;
                     token?: string;
@@ -36677,6 +37218,7 @@ export interface operations {
                 "application/x-www-form-urlencoded": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     form_type?: string;
                     target?: string;
                     token?: string;
@@ -36684,6 +37226,7 @@ export interface operations {
                 "multipart/form-data": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     form_type?: string;
                     target?: string;
                     token?: string;
@@ -36691,6 +37234,7 @@ export interface operations {
                 "text/csv": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     form_type?: string;
                     target?: string;
                     token?: string;
@@ -36698,6 +37242,7 @@ export interface operations {
                 "text/xlsx": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     form_type?: string;
                     target?: string;
                     token?: string;
@@ -37554,6 +38099,8 @@ export interface operations {
                 /** @description 每页返回的结果数量。 */
                 size?: number;
                 spm?: unknown;
+                /** @description 标签 */
+                tag?: unknown;
                 updated_time_after?: string;
                 updated_time_before?: string;
             };
@@ -38062,6 +38609,7 @@ export interface operations {
                 "application/json": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     password: string;
                     token?: string;
                     username: string;
@@ -38069,6 +38617,7 @@ export interface operations {
                 "application/x-www-form-urlencoded": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     password: string;
                     token?: string;
                     username: string;
@@ -38076,6 +38625,7 @@ export interface operations {
                 "multipart/form-data": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     password: string;
                     token?: string;
                     username: string;
@@ -38083,6 +38633,7 @@ export interface operations {
                 "text/csv": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     password: string;
                     token?: string;
                     username: string;
@@ -38090,6 +38641,7 @@ export interface operations {
                 "text/xlsx": {
                     captcha_code?: string;
                     captcha_key?: string;
+                    captcha_ticket?: string;
                     password: string;
                     token?: string;
                     username: string;
@@ -45200,6 +45752,294 @@ export interface operations {
             };
         };
     };
+    api_settings_captcha_general_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaGeneral"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_general_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SecurityCaptchaGeneral"];
+                "application/x-www-form-urlencoded": components["schemas"]["SecurityCaptchaGeneral"];
+                "multipart/form-data": components["schemas"]["SecurityCaptchaGeneral"];
+                "text/csv": components["schemas"]["SecurityCaptchaGeneral"];
+                "text/xlsx": components["schemas"]["SecurityCaptchaGeneral"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaGeneral"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_general_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSecurityCaptchaGeneral"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSecurityCaptchaGeneral"];
+                "multipart/form-data": components["schemas"]["PatchedSecurityCaptchaGeneral"];
+                "text/csv": components["schemas"]["PatchedSecurityCaptchaGeneral"];
+                "text/xlsx": components["schemas"]["PatchedSecurityCaptchaGeneral"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaGeneral"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_general_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_settings_captcha_interactive_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaInteractive"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_interactive_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SecurityCaptchaInteractive"];
+                "application/x-www-form-urlencoded": components["schemas"]["SecurityCaptchaInteractive"];
+                "multipart/form-data": components["schemas"]["SecurityCaptchaInteractive"];
+                "text/csv": components["schemas"]["SecurityCaptchaInteractive"];
+                "text/xlsx": components["schemas"]["SecurityCaptchaInteractive"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaInteractive"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_interactive_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSecurityCaptchaInteractive"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSecurityCaptchaInteractive"];
+                "multipart/form-data": components["schemas"]["PatchedSecurityCaptchaInteractive"];
+                "text/csv": components["schemas"]["PatchedSecurityCaptchaInteractive"];
+                "text/xlsx": components["schemas"]["PatchedSecurityCaptchaInteractive"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaInteractive"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_interactive_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CaptchaInteractivePreviewIn"];
+                "application/x-www-form-urlencoded": components["schemas"]["CaptchaInteractivePreviewIn"];
+                "multipart/form-data": components["schemas"]["CaptchaInteractivePreviewIn"];
+                "text/csv": components["schemas"]["CaptchaInteractivePreviewIn"];
+                "text/xlsx": components["schemas"]["CaptchaInteractivePreviewIn"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaptchaInteractivePreviewResponse"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_interactive_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_settings_captcha_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaptchaImagePreviewResponse"];
+                };
+            };
+        };
+    };
     api_settings_captcha_search_columns_retrieve: {
         parameters: {
             query?: never;
@@ -51845,13 +52685,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "application/json": string[];
-                "application/x-www-form-urlencoded": string[];
-                "multipart/form-data": string[];
-                "text/csv": string[];
-                "text/xlsx": string[];
+                "application/json": components["schemas"]["DataPermission"];
+                "application/x-www-form-urlencoded": components["schemas"]["DataPermission"];
+                "multipart/form-data": components["schemas"]["DataPermission"];
+                "text/csv": components["schemas"]["DataPermission"];
+                "text/xlsx": components["schemas"]["DataPermission"];
             };
         };
         responses: {
@@ -51860,12 +52700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        code?: number;
-                        detail?: string;
-                        requestId?: string;
-                        timestamp?: string;
-                    };
+                    "application/json": components["schemas"]["DataPermission"];
                 };
             };
         };

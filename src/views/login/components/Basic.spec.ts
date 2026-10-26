@@ -1,18 +1,44 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 
+type TestCapabilities = {
+  access: boolean;
+  lifetime: number;
+  basic: {
+    enabled: boolean;
+    captcha: boolean;
+    captcha_mode: "image" | "interactive";
+    captcha_types: string[];
+    captcha_image_fallback: boolean;
+    token: boolean;
+    encrypted: boolean;
+  };
+  code: { enabled: boolean; email: boolean; sms: boolean };
+  register: { enabled: boolean; email: boolean; sms: boolean };
+  reset: { enabled: boolean; email: boolean; sms: boolean };
+  oauth: { key: string; name: string; flavor: string }[];
+};
+
 const state = vi.hoisted(() => ({
   page: vi.fn(),
   /** 能力清单:各用例按需覆写(默认全开) */
   capabilities: {
     access: true,
     lifetime: 1,
-    basic: { enabled: true, captcha: false, token: false, encrypted: false },
+    basic: {
+      enabled: true,
+      captcha: false,
+      captcha_mode: "image",
+      captcha_types: [],
+      captcha_image_fallback: false,
+      token: false,
+      encrypted: false
+    },
     code: { enabled: true, email: true, sms: false },
     register: { enabled: true, email: true, sms: false },
     reset: { enabled: true, email: true, sms: false },
     oauth: []
-  }
+  } as TestCapabilities
 }));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -61,7 +87,10 @@ import Basic from "./Basic.vue";
 const stubs = {
   ElForm: { name: "ElForm", template: "<form><slot /></form>" },
   ElFormItem: { name: "ElFormItem", template: "<div><slot /></div>" },
-  ElInput: { name: "ElInput", template: "<input />" },
+  ElInput: {
+    name: "ElInput",
+    template: '<div><input /><slot name="append" /></div>'
+  },
   ElButton: {
     name: "ElButton",
     emits: ["click"],
@@ -75,7 +104,14 @@ const stubs = {
   ElResult: { name: "ElResult", template: "<div class='result-stub' />" },
   Motion: { name: "Motion", template: "<div><slot /></div>" },
   RememberLogin: { name: "RememberLogin", template: "<div />" },
-  ReImageVerify: { name: "ReImageVerify", template: "<div />" },
+  ReImageVerify: {
+    name: "ReImageVerify",
+    template: "<div class='image-captcha-stub' />"
+  },
+  ReCaptchaChallenge: {
+    name: "ReCaptchaChallenge",
+    template: "<div class='challenge-stub' />"
+  },
   OAuthEntry: { name: "OAuthEntry", template: "<div class='oauth-stub' />" },
   LoginMfa: { name: "LoginMfa", template: "<div />" }
 };
@@ -136,5 +172,32 @@ describe("登录方式入口按能力清单过滤", () => {
     expect(wrapper.find(".result-stub").exists()).toBe(true);
     expect(wrapper.text()).not.toContain("login.verifyCodeLogin");
     state.capabilities.access = true;
+  });
+});
+
+describe("交互式验证码形态", () => {
+  it("interactive 模式：隐藏图片码行内输入，挂载挑战编排组件", async () => {
+    state.capabilities.basic.captcha = true;
+    state.capabilities.basic.captcha_mode = "interactive";
+    state.capabilities.basic.captcha_types = ["slide", "click"];
+    const wrapper = mountBasic();
+    await flushPromises();
+
+    expect(wrapper.find(".challenge-stub").exists()).toBe(true);
+    expect(wrapper.find(".image-captcha-stub").exists()).toBe(false);
+    state.capabilities.basic.captcha = false;
+    state.capabilities.basic.captcha_mode = "image";
+    state.capabilities.basic.captcha_types = [];
+  });
+
+  it("image 模式：保留图片验证码行内输入", async () => {
+    state.capabilities.basic.captcha = true;
+    state.capabilities.basic.captcha_mode = "image";
+    const wrapper = mountBasic();
+    await flushPromises();
+
+    expect(wrapper.find(".image-captcha-stub").exists()).toBe(true);
+    expect(wrapper.find(".challenge-stub").exists()).toBe(false);
+    state.capabilities.basic.captcha = false;
   });
 });

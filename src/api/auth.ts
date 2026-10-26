@@ -130,12 +130,58 @@ export type CaptchaResult = {
   length: number;
 };
 
+/** 交互式验证码题型 / 场景（与后端 captcha.const 的枚举保持一致） */
+export type CaptchaType = "slide" | "rotate" | "click";
+export type CaptchaScene =
+  "login" | "register" | "reset" | "bind_email" | "bind_phone" | "invite";
+export type CaptchaMode = "image" | "interactive";
+
+/** 拖动 / 点击采样点：坐标为题目图片的自然像素，t 为毫秒时间戳 */
+export type CaptchaTrackPoint = { x: number; y: number; t: number };
+
+export type CaptchaChallengeData = {
+  challenge_id: string;
+  type: CaptchaType;
+  background: string;
+  piece?: string;
+  tip?: string;
+  width?: number;
+  height?: number;
+  piece_size?: number;
+  count?: number;
+  ttl: number;
+};
+
+export type CaptchaVerifyData = {
+  passed: boolean;
+  ticket?: string;
+  expires_in?: number;
+  attempts_left?: number;
+};
+
+export type CaptchaChallengeResult = {
+  code: number;
+  detail: string;
+  data: CaptchaChallengeData;
+};
+
+export type CaptchaVerifyResult = {
+  code: number;
+  detail: string;
+  data: CaptchaVerifyData;
+  /** 失败语义：captcha_invalid / captcha_exhausted（HTTP 400 时下发） */
+  error?: string;
+};
+
 export type AuthInfoResult = {
   code: number;
   detail: string;
   data: {
     access: boolean;
     captcha?: boolean;
+    captcha_mode?: CaptchaMode;
+    captcha_types?: CaptchaType[];
+    captcha_image_fallback?: boolean;
     token?: boolean;
     encrypted?: boolean;
     lifetime?: number;
@@ -166,6 +212,9 @@ export type AuthCapabilitiesResult = {
     basic: {
       enabled: boolean;
       captcha: boolean;
+      captcha_mode: CaptchaMode;
+      captcha_types: CaptchaType[];
+      captcha_image_fallback: boolean;
       token: boolean;
       encrypted: boolean;
     };
@@ -181,7 +230,15 @@ export type AuthCapabilitiesResult = {
 export type InviteValidateResult = {
   code: number;
   detail: string;
-  data: { state: string; username: string; encrypted?: boolean };
+  data: {
+    state: string;
+    username: string;
+    encrypted?: boolean;
+    captcha_required?: boolean;
+    captcha_mode?: CaptchaMode;
+    captcha_types?: CaptchaType[];
+    captcha_image_fallback?: boolean;
+  };
 };
 
 /**
@@ -239,6 +296,26 @@ class AuthApi extends BaseApi {
       {},
       undefined,
       "/api/identity/auth/captcha"
+    );
+  };
+
+  /** 交互式验证码：获取挑战（答案永不下发） */
+  captchaChallenge = (data?: object) => {
+    return this.request<CaptchaChallengeResult>(
+      "post",
+      {},
+      data,
+      "/api/identity/auth/captcha/challenge"
+    );
+  };
+
+  /** 交互式验证码：校验并换取一次性 ticket */
+  captchaVerify = (data?: object) => {
+    return this.request<CaptchaVerifyResult>(
+      "post",
+      {},
+      data,
+      "/api/identity/auth/captcha/verify"
     );
   };
 
@@ -327,6 +404,9 @@ export const loginCapabilitiesApi = () => authApi.loginCapabilities();
 
 export const getTempTokenApi = () => authApi.tempToken();
 export const getCaptchaApi = () => authApi.captcha();
+export const captchaChallengeApi = (data?: object) =>
+  authApi.captchaChallenge(data);
+export const captchaVerifyApi = (data?: object) => authApi.captchaVerify(data);
 
 export const refreshTokenApi = (data?: object) => authApi.refreshToken(data);
 

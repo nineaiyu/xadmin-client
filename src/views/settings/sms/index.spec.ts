@@ -51,7 +51,11 @@ const settingHostItems = (wrapper: Awaited<ReturnType<typeof mountPage>>) =>
   wrapper.findComponent({ name: "Setting" }).props("panes") as Array<{
     key?: string;
     label?: string;
-    item?: { queryParams?: { category?: string } };
+    item?: {
+      queryParams?: { category?: string };
+      refreshKey?: number;
+      onSaved?: () => void;
+    };
   }>;
 
 describe("SettingSms 渠道面板装配", () => {
@@ -120,6 +124,26 @@ describe("SettingSms 渠道面板装配", () => {
     await flushPromises();
 
     expect(mocks.backends).not.toHaveBeenCalled();
+  });
+
+  it("服务商保存后递增总配置诊断刷新令牌", async () => {
+    mocks.hasAuth.mockReturnValue(true);
+    mocks.backends.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: [{ label: "Aliyun", value: "alibaba" }]
+    });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const server = () =>
+      settingHostItems(wrapper).find(pane => pane.key === "server");
+    const backend = () =>
+      settingHostItems(wrapper).find(pane => pane.key === "alibaba");
+
+    expect(server()?.item?.refreshKey).toBe(0);
+    backend()?.item?.onSaved?.();
+    await nextTick();
+    expect(server()?.item?.refreshKey).toBe(1);
   });
 
   it("backends 失败：给出可读提示与重试入口，点击重试再次拉取", async () => {

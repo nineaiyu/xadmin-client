@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
@@ -13,6 +13,8 @@ import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
+import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
+import type { CaptchaMode, CaptchaType } from "@/api/auth";
 
 defineOptions({
   name: "InviteAccept"
@@ -31,6 +33,21 @@ const submitting = ref(false);
 /** 服务端图形验证码：key 由图片接口下发，code 由用户输入，激活时一并提交 */
 const captchaKey = ref("");
 const captchaCode = ref("");
+/** 交互式验证码：题型与一次性 ticket（与图片码二选一，由服务端模式决定） */
+const captchaMode = ref<CaptchaMode>("image");
+const captchaTypes = ref<CaptchaType[]>([]);
+const captchaTicket = ref("");
+const captchaChallengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
+/** 无障碍回退：显式切换图片码后，本次激活不再弹交互式挑战 */
+const imageFallback = ref(false);
+const captchaImageFallback = ref(false);
+const captchaRequired = ref(true);
+const interactiveCaptcha = computed(
+  () =>
+    captchaRequired.value &&
+    captchaMode.value === "interactive" &&
+    !imageFallback.value
+);
 /** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
 const passwordRules = ref<PasswordRule[]>([]);
 const rulesLoadFailed = ref(false);
@@ -74,6 +91,9 @@ const load = async () => {
     return;
   }
   encrypted.value = Boolean(res?.data?.encrypted);
+  captchaMode.value =
+    res?.data?.captcha_mode === "interactive" ? "interactive" : "image";
+  captchaTypes.value = res?.data?.captcha_types ?? [];
   const next = res?.data?.state;
   state.value =
     next === "pending"
@@ -107,12 +127,24 @@ async function submit() {
     message(msg, { type: "warning" });
     return;
   }
-  if (!captchaKey.value || !captchaCode.value.trim()) {
-    message(t("invite.captchaRequired"), { type: "warning" });
-    return;
+  if (captchaRequired.value && !interactiveCaptcha.value) {
+    if (!captchaKey.value || !captchaCode.value.trim()) {
+      message(t("invite.captchaRequired"), { type: "warning" });
+      return;
+    }
   }
   submitting.value = true;
   try {
+    captchaTicket.value = "";
+    if (interactiveCaptcha.value) {
+      try {
+        captchaTicket.value = (await captchaChallengeRef.value?.open()) ?? "";
+      } catch {
+        // 用户取消挑战：保持表单可重试（finally 会复位提交态）
+        return;
+      }
+      if (!captchaTicket.value) return;
+    }
     // 开关开启时先以激活令牌为密钥加密（与注册/重置密码同一套加密协议）：
     // await 置于 submitting 置位之后、请求之前，加密失败与请求失败同走
     // catch 归一为 null 直接收尾，绝不降级提交明文
@@ -125,7 +157,8 @@ async function submit() {
       token: token.value,
       password,
       captcha_key: captchaKey.value,
-      captcha_code: captchaCode.value.trim()
+      captcha_code: captchaCode.value.trim(),
+      captcha_ticket: captchaTicket.value
     }).catch(() => null);
     if (!res) return;
     if (isSuccess(res)) {
@@ -139,6 +172,8 @@ async function submit() {
   } finally {
     submitting.value = false;
     captchaCode.value = "";
+    captchaTicket.value = "";
+    captchaChallengeRef.value?.reset();
   }
 }
 </script>
@@ -200,7 +235,10 @@ async function submit() {
             @keyup.enter="submit"
           />
         </el-form-item>
-        <el-form-item :label="t('invite.captcha')">
+        <el-form-item
+          v-if="captchaRequired && !interactiveCaptcha"
+          :label="t('invite.captcha')"
+        >
           <div class="flex w-full items-center gap-2">
             <el-input
               v-model="captchaCode"
@@ -220,6 +258,13 @@ async function submit() {
         >
           {{ t("invite.submit") }}
         </el-button>
+        <ReCaptchaChallenge
+          v-if="interactiveCaptcha"
+          ref="captchaChallengeRef"
+          scene="invite"
+          :types="captchaTypes"
+          :image-fallback="captchaImageFallback"
+        />
       </el-form>
 
       <template v-else>

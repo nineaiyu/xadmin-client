@@ -1,6 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { ElButton, ElText } from "element-plus";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reactive } from "vue";
 
 const mocks = vi.hoisted(() => ({
@@ -12,11 +12,13 @@ vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 
 const userinfoStore = reactive({ email: "", phone: "" });
+const bindAvailability = reactive({ email: true, sms: true });
 
 vi.mock("../utils/hook", () => ({
   useAccountManage: () => ({
     t: (key: string) => key,
     userinfoStore,
+    bindAvailability,
     handleChangePassword: mocks.handleChangePassword,
     handleBindEmailOrPhone: mocks.handleBindEmailOrPhone
   })
@@ -28,7 +30,10 @@ const mountPanel = async () => {
   const wrapper = mount(AccountManagement, {
     global: {
       components: { ElButton, ElText },
-      stubs: { "el-divider": true }
+      stubs: {
+        "el-divider": true,
+        "el-tooltip": { template: "<span><slot /></span>" }
+      }
     }
   });
   await flushPromises();
@@ -43,6 +48,13 @@ const texts = async () =>
     .map(node => node.text());
 
 describe("AccountManagement 绑定状态回显门控", () => {
+  beforeEach(() => {
+    userinfoStore.email = "";
+    userinfoStore.phone = "";
+    bindAvailability.email = true;
+    bindAvailability.sms = true;
+  });
+
   it("手机与邮箱均已绑定时各自回显已绑定值", async () => {
     userinfoStore.email = "user@example.com";
     userinfoStore.phone = "13800000000";
@@ -69,5 +81,18 @@ describe("AccountManagement 绑定状态回显门控", () => {
     const [phoneRow, emailRow] = await texts();
     expect(phoneRow).toBe("account.bind：13800000000");
     expect(emailRow).toBe("account.unbound");
+  });
+
+  it("短信/邮件通道未就绪时更新按钮置灰，密码按钮不受影响", async () => {
+    bindAvailability.sms = false;
+    bindAvailability.email = false;
+    const wrapper = await mountPanel();
+
+    const buttons = wrapper.findAllComponents(ElButton);
+    expect(buttons.map(button => button.props("disabled"))).toEqual([
+      false,
+      true,
+      true
+    ]);
   });
 });

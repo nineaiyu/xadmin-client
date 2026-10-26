@@ -2,11 +2,20 @@ import { describe, expect, beforeEach, it } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 
 import { useLoginPageStore } from "../loginPage";
+import type { AuthCapabilitiesResult } from "@/api/auth";
 
-const CAPABILITIES = {
+const CAPABILITIES: AuthCapabilitiesResult["data"] = {
   access: true,
   lifetime: 7,
-  basic: { enabled: true, captcha: false, token: false, encrypted: false },
+  basic: {
+    enabled: true,
+    captcha: false,
+    captcha_mode: "image",
+    captcha_types: [],
+    captcha_image_fallback: false,
+    token: false,
+    encrypted: false
+  },
   code: { enabled: true, email: true, sms: false },
   register: { enabled: true, email: true, sms: false },
   reset: { enabled: true, email: true, sms: false },

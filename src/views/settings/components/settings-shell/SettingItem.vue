@@ -44,6 +44,7 @@ const props = withDefaults(defineProps<settingItemProps>(), {
   canRead: undefined,
   formProps: () => ({}),
   queryParams: () => ({}),
+  refreshKey: 0,
   onSaved: undefined,
   columnDecorator: undefined,
   auth: () => ({
@@ -175,6 +176,22 @@ const getData = () => {
 onMounted(() => {
   getData();
 });
+
+/** 跨页签联动：只重取并刷新诊断，不覆盖表单里未保存的修改 */
+const refreshDiagnostics = () => {
+  if (!(props.canRead ?? props.auth.retrieve)) return;
+  void props.api
+    .retrieve(props.queryParams)
+    .then(res => {
+      if (res && isSuccess(res)) {
+        const { effective } = (res.data ?? {}) as RecordType;
+        applyEffective(effective);
+      }
+    })
+    .catch(() => undefined);
+};
+
+watch(() => props.refreshKey, refreshDiagnostics);
 
 const handleSubmitSettings = (data: FieldValues) => {
   emit("submit", data);

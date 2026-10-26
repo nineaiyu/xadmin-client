@@ -14,16 +14,16 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 
 ## 一、按用途分组
 
-| 分组                             | 组件                                                                                                                                                                                                                                                                          |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 页面与容器                       | `RePlusPage`（元数据驱动列表页）、`RePlusSearch`（实体搜索下拉）、`RePage`（通用内容骨架）、`ReSplitPane`、`ReReadonlyTable`、`DataTable`（手写表格统一壳）、`AuthorizedAppTable`（已授权应用表格，管理端 / 个人端共用）、`RePureTableBar`、`ReRecycleBin`（RePlusPage 内建） |
-| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`、`ReScrollbar`（到达态事件）、`ReBackTop`、`ReMessageNotifications`、`ReNoticeShow`、`ReTaskCenterDrawer`、`ReTaskLogDialog`                               |
-| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReStat`（StatBar/StatGrid）、`ReCollapseParams`（参数折叠）、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`、`ReMenuPermissionTree`                                                                |
-| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReIconPicker`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm`                                                                                                     |
-| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`；常驻面板的声明式壳 `OverlayDialog` / `OverlayDrawer`（`src/components/overlay/`，与命令式弹层共用滚动锁）                                                                                                                              |
-| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReResize`（拖拽缩放盒）、`ReTreeLine`（树连接线）、`ReAnimateSelector`（动画选择器）                                                                                                                                        |
-| AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                                                                                                                        |
-| 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`                                                                                                      |
+| 分组                             | 组件                                                                                                                                                                                                                                                                              |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 页面与容器                       | `RePlusPage`（元数据驱动列表页）、`RePlusSearch`（实体搜索下拉）、`RePage`（通用内容骨架）、`ReSplitPane`、`ReReadonlyTable`、`DataTable`（手写表格统一壳）、`AuthorizedAppTable`（已授权应用表格，管理端 / 个人端共用）、`RePureTableBar`、`ReRecycleBin`（RePlusPage 内建）     |
+| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`、`ReScrollbar`（到达态事件）、`ReBackTop`、`ReMessageNotifications`、`ReNoticeShow`、`ReTaskCenterDrawer`、`ReTaskLogDialog`                                   |
+| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReStat`（StatBar/StatGrid）、`ReCollapseParams`（参数折叠）、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`、`ReMenuPermissionTree`                                                                    |
+| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReIconPicker`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`ReCaptchaChallenge`（交互式验证码编排）、`ReCaptchaPuzzle` / `ReRotateCaptcha` / `ReWordClickCaptcha`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm` |
+| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`；常驻面板的声明式壳 `OverlayDialog` / `OverlayDrawer`（`src/components/overlay/`，与命令式弹层共用滚动锁）                                                                                                                                  |
+| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReResize`（拖拽缩放盒）、`ReTreeLine`（树连接线）、`ReAnimateSelector`（动画选择器）                                                                                                                                            |
+| AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                                                                                                                            |
+| 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`                                                                                                          |
 
 > **弹窗表单标签宽度**：`RePlusPage` 的新增/编辑弹窗（`AddOrEdit`）标签宽度按当前页签
 > 最长标签自适应（`src/components/RePlusPage/src/utils/adaptiveLabelWidth.ts`）：列元数据
@@ -107,8 +107,10 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 
 > **以下组件已全部接入真实页面**：`ReScrollbar` → AI 控制台左栏 `AiFeatureNav`（功能导航滚动区，经 `label` 下发可访问名）；`ReCollapseParams` → 监控「告警阈值设置」弹窗 `ThresholdForm`（名称列支持可选 `label`）；`ReRenderContent` → `AiResultTable` 单元格；`ReIconPicker` → 菜单管理 `MenuFormBasic` 与代码生成 `BaseConfig` 的图标字段；`ReBackTop` → 布局内容区（`lay-content` 与 `layout/index.vue` 两分支）。下方表格的「接入条件」为原始交付口径，保留备查。
 >
-> 滑条验证码变体（旋转 / 拼图）已随消费方下线移除：邀请激活页现用图片输入验证码，
-> 基础滑条组件 `ReSliderCaptcha`（含键盘可达与触屏支持）保留为平台能力。
+> 验证码组件族：图片码 `ReImageVerify` 与交互式 `ReCaptchaChallenge`（弹层内按题型分发
+> `ReCaptchaPuzzle` / `ReRotateCaptcha` / `ReWordClickCaptcha`）由 `CAPTCHA_MODE` 切换；
+> 交互式答案由服务端校验并换一次性 ticket，前端只负责采集坐标 / 角度 / 轨迹。
+> 基础滑条 `ReSliderCaptcha`（含键盘可达与触屏支持）是拼图 / 旋转题的拖杆基座。
 
 | 组件               | 用法示例                                                                       | 说明                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

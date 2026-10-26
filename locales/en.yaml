@@ -350,6 +350,25 @@ sliderRotateCaptcha:
 sliderTranslateCaptcha:
   text: Drag to fit the puzzle piece
 
+captchaChallenge:
+  title: Security verification
+  challengeTitle: Complete the security check
+  refresh: New challenge
+  retryHint: Verification failed, {count} attempts left
+  success: Verified
+  verifyFailed: Verification failed, please try again
+  loadFailed: Failed to load the challenge, please retry
+  puzzleAlt: Slide puzzle captcha
+  rotateAlt: Rotate captcha
+  clickHint: Click the characters in the order shown in the tip
+  tipAlt: Click character tip
+  clickStage: Word click captcha image
+  clickAlt: Word click captcha
+  selected: Selected {count}/{total}
+  resetSelection: Reselect
+  confirm: Confirm
+  imageFallback: Use image captcha
+
 backTop:
   text: Back to top
 
@@ -1187,7 +1206,9 @@ menus:
   systemSettings: System Settings
   basicSettings: Basic Settings
   messageSettings: Message Settings
+  channelSettings: Notification Channels
   smsSettings: SMS Settings
+  captchaSettings: Captcha Settings
   ldapSettings: LDAP Directory
   openPlatformSettings: Open Platform
   dataAnalysis: Data Analysis
@@ -1206,7 +1227,8 @@ menus:
   formDesigner: Form Design
   formMySubmission: My Submissions
   formData: Form Data
-  securitySettings: Security Settings
+  securitySettings: Login Security
+  accountSecuritySettings: Account Security
   userManagement: User Manage
   directory: Directory
   deptManagement: Department Manage
@@ -1737,6 +1759,8 @@ account:
   password: Password
   bind: Bind
   unbound: Unbound
+  emailUnavailable: Email service is not configured, email binding is unavailable
+  smsUnavailable: SMS service is not configured, phone binding is unavailable
 
 systemUser:
   invite: Invite to activate
@@ -2885,8 +2909,10 @@ settingWatermark:
   previewOutOfScope: This settings page is outside the configured page scope, so actual pages will not show it; the preview below is for style only
 
 settingMessage:
-  mailTitle: Email Server
   messageTitle: Message Notifications
+
+settingChannel:
+  mailTitle: Email Server
   dingtalkTitle: DingTalk
   wecomTitle: WeCom
   feishuTitle: FeiShu
@@ -2896,19 +2922,37 @@ settingLdap:
   title: LDAP Directory
   desc: Configure the directory connection, user/department sync and group-role mapping; "Test connection" only checks connection/search and does not write users
 
+settingCaptcha:
+  general: Captcha General
+  generalDesc: Global switch and the captcha type in use; when disabled, no scene requires a captcha
+  image: Image Captcha
+  imageDesc: Generation mode, length, font, colors and noise of the image character captcha
+  imagePreviewTitle: Image Captcha Preview
+  interactive: Interactive Captcha
+  interactiveDesc: "Slide puzzle / rotate / word click: types, tolerances, TTL, sizes and accessibility fallback"
+  interactivePreviewTitle: Interactive Captcha Preview
+  previewType: Preview type
+  previewSlide: Slide puzzle
+  previewRotate: Rotate upright
+  previewClick: Word click
+  refreshPreview: Refresh preview
+  previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
+  previewFailed: Failed to load preview
+
 settingSecurity:
-  code: Verify Code
-  captcha: Captcha Code
   login: Login Safe
   limit: Login Limit
+  mfa: MFA Verification Settings
+  monitor: Resource Alert
+  blockIp: Block Ip
+
+settingAccountSecurity:
   register: Register Safe
   resetPassword: Reset Password
   passwordRule: Password Rules
   bindEmail: Bind Email
   bindPhone: Bind Phone
-  mfa: MFA Verification Settings
-  monitor: Resource Alert
-  blockIp: Block Ip
+  verifyCode: Email / SMS Verify Code
 
 settingPassword:
   tips: Password should be

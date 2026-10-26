@@ -159,4 +159,37 @@ describe("SettingItem 实际生效状态诊断", () => {
     expect(alert.text()).toContain("setting.effectiveOk:邮件服务");
     expect(alert.text()).toContain("EMAIL_HOST");
   });
+
+  it("refreshKey 变化只重取诊断并刷新横幅", async () => {
+    state.retrieve
+      .mockResolvedValueOnce({
+        code: 1000,
+        data: {
+          effective: {
+            items: [{ title: "短信服务", enabled: false, reasons: ["未开启"] }]
+          }
+        }
+      })
+      .mockResolvedValueOnce({
+        code: 1000,
+        data: {
+          effective: {
+            items: [{ title: "短信服务", enabled: true, notices: [] }]
+          }
+        }
+      });
+    const wrapper = mountItem();
+    await flushPromises();
+    expect(
+      wrapper.find('[data-testid="setting-effective"]').classes()
+    ).toContain("el-alert--warning");
+
+    await wrapper.setProps({ refreshKey: 1 });
+    await flushPromises();
+
+    expect(state.retrieve).toHaveBeenCalledTimes(2);
+    expect(
+      wrapper.find('[data-testid="setting-effective"]').classes()
+    ).toContain("el-alert--success");
+  });
 });

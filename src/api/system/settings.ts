@@ -1,5 +1,6 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
+import type { CaptchaChallengeData } from "@/api/auth";
 //系统设置
 export const settingsApi = new BaseApi("/api/settings/setting");
 
@@ -99,8 +100,60 @@ export const settingsResetPasswordCodeApi = new ViewBaseApi(
   "/api/settings/reset/auth"
 );
 
+// 验证码总配置（全局开关 + 验证码类型选择）
+export const settingsCaptchaGeneralApi = new ViewBaseApi(
+  "/api/settings/captcha/general"
+);
+
+/** 图片验证码预览（只读，不写 CaptchaStore） */
+export type CaptchaImagePreviewResult = {
+  code: number;
+  detail: string;
+  data: { image: string; length: number };
+};
+
+/** 交互式验证码预览（只读，不写挑战缓存/ticket） */
+export type CaptchaInteractivePreviewData = Omit<
+  CaptchaChallengeData,
+  "challenge_id" | "ttl"
+>;
+export type CaptchaInteractivePreviewResult = {
+  code: number;
+  detail: string;
+  data: CaptchaInteractivePreviewData;
+};
+
+class SettingsCaptchaApi extends ViewBaseApi {
+  preview = () => {
+    return this.request<CaptchaImagePreviewResult>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/preview`
+    );
+  };
+}
+
+class SettingsCaptchaInteractiveApi extends ViewBaseApi {
+  preview = (data?: { type?: string }) => {
+    return this.request<CaptchaInteractivePreviewResult>(
+      "post",
+      {},
+      data,
+      `${this.baseApi}/preview`
+    );
+  };
+}
+
 // 图片验证码设置
-export const settingsCaptchaApi = new ViewBaseApi("/api/settings/captcha");
+export const settingsCaptchaApi = new SettingsCaptchaApi(
+  "/api/settings/captcha"
+);
+
+// 交互式验证码设置
+export const settingsCaptchaInteractiveApi = new SettingsCaptchaInteractiveApi(
+  "/api/settings/captcha/interactive"
+);
 
 // 绑定邮箱手机设置
 export const settingsBindEmailApi = new ViewBaseApi("/api/settings/bind/email");

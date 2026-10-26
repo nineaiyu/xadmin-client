@@ -132,3 +132,21 @@ test("账户设置（无布局页）：图标与 v-tippy 指令自足，无未�
   expect(iconWarnings).toEqual([]);
   expect(directiveWarnings).toEqual([]);
 });
+
+test("账户管理：通道未就绪时绑定更新按钮置灰（受系统配置管理）", async ({
+  page
+}) => {
+  await login(page);
+  await page.goto("/#/account-settings?tab=accountManagement");
+  await expect(page.locator("h3").first()).toContainText("账户管理", {
+    timeout: 15_000
+  });
+
+  // 行序：密码 / 手机 / 邮箱；E2E 档未配置短信（SMS_ENABLED=False），手机更新必须置灰
+  const rows = page.locator(".account-row");
+  await expect(rows.nth(1).getByRole("button", { name: "更新" })).toBeDisabled({
+    timeout: 15_000
+  });
+  // 邮件走 locmem 测试后端，通道视为就绪：邮箱更新保持可用
+  await expect(rows.nth(2).getByRole("button", { name: "更新" })).toBeEnabled();
+});

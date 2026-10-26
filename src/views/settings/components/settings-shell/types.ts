@@ -46,6 +46,8 @@ export interface settingItemProps {
   canRead?: boolean;
   formProps?: object;
   queryParams?: object;
+  /** 外部刷新令牌：变化时仅重取只读诊断（跨页签联动，不重置表单未保存修改） */
+  refreshKey?: number;
   /** 保存成功后的回调（autoSubmit 请求 code=1000 时触发；失败不回调） */
   onSaved?: (values: FieldValues) => void | Promise<void>;
   /**

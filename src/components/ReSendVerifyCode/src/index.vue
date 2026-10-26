@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useSendVerifyCode } from "./hooks";
 import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
+import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
+import type { CaptchaMode, CaptchaScene, CaptchaType } from "@/api/auth";
 import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
 import Email from "~icons/ep/message";
 import Keyhole from "~icons/ri/shield-keyhole-line";
@@ -15,6 +17,9 @@ defineOptions({ name: "ReSendVerifyCode" });
 interface VerifyCodeConfig {
   access: boolean;
   captcha: boolean;
+  captcha_mode?: CaptchaMode;
+  captcha_types?: CaptchaType[];
+  captcha_image_fallback?: boolean;
   token: boolean;
   encrypted: boolean;
   email: boolean;
@@ -45,6 +50,7 @@ const emit = defineEmits<{
 }>();
 const formDataRef = ref<FormInstance>();
 const captchaRef = ref();
+const challengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
 
 function getRef() {
   return formDataRef.value;
@@ -57,11 +63,19 @@ const {
   formRules,
   isDisabled,
   verifyCodeConfig,
+  interactiveCaptcha,
   configFailed,
   reloadConfig,
   handleSendCode,
   fetchSuggestions
-} = useSendVerifyCode(formDataRef, captchaRef, formData, props, emit);
+} = useSendVerifyCode(
+  formDataRef,
+  captchaRef,
+  challengeRef,
+  formData,
+  props,
+  emit
+);
 
 defineExpose({ getRef, handleSendCode });
 
@@ -69,6 +83,11 @@ const updatePhone = (phone: { code: string; phone: string }) => {
   formData.value.phone = `${phone.code}${phone.phone}`;
 };
 const phone = ref({ code: "+86", phone: "" });
+
+/** 发码场景与后端 captcha.const 的 scene 枚举同值（category 即场景键） */
+const captchaScene = computed<CaptchaScene>(
+  () => (props.category || "login") as CaptchaScene
+);
 </script>
 
 <template>
@@ -127,7 +146,11 @@ const phone = ref({ code: "+86", phone: "" });
     </Motion>
 
     <Motion
-      v-if="verifyCodeConfig.access && verifyCodeConfig.captcha"
+      v-if="
+        verifyCodeConfig.access &&
+        verifyCodeConfig.captcha &&
+        !interactiveCaptcha
+      "
       :delay="200"
     >
       <el-form-item prop="captcha_code">
@@ -167,5 +190,12 @@ const phone = ref({ code: "+86", phone: "" });
         </div>
       </el-form-item>
     </Motion>
+    <ReCaptchaChallenge
+      v-if="interactiveCaptcha"
+      ref="challengeRef"
+      :scene="captchaScene"
+      :types="verifyCodeConfig.captcha_types"
+      :image-fallback="verifyCodeConfig.captcha_image_fallback === true"
+    />
   </el-form>
 </template>

@@ -6,6 +6,7 @@ import {
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
+import type { CaptchaMode, CaptchaType } from "@/api/auth";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { isEmpty } from "@pureadmin/utils";
 import { buildEmailRule } from "@/utils/rules/email";
@@ -25,6 +26,7 @@ export interface SendVerifyFormData {
   email?: string;
   captcha_key?: string;
   captcha_code?: string;
+  captcha_ticket?: string;
   verify_code?: string;
   verify_token?: string;
   [key: string]: unknown;
@@ -33,6 +35,9 @@ export interface SendVerifyFormData {
 export const useSendVerifyCode = (
   formDataRef: Ref<FormInstance | undefined>,
   captchaRef: Ref<{ getImgCode?: () => void } | undefined>,
+  challengeRef: Ref<
+    { open?: () => Promise<string>; reset?: () => void } | undefined
+  >,
   formData: Ref<SendVerifyFormData>,
   props: { category?: string },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
@@ -54,21 +59,45 @@ export const useSendVerifyCode = (
     target: "",
     captcha_key: "",
     captcha_code: "",
+    captcha_ticket: "",
     verify_code: "",
     verify_token: undefined
   };
 
   formData.value = Object.assign(formData.value, defaultValue);
 
-  const verifyCodeConfig = reactive({
+  const verifyCodeConfig = reactive<{
+    access: boolean;
+    captcha: boolean;
+    captcha_mode: CaptchaMode;
+    captcha_types: CaptchaType[];
+    captcha_image_fallback: boolean;
+    token: boolean;
+    encrypted: boolean;
+    email: boolean;
+    sms: boolean;
+    rate: number;
+  }>({
     access: false,
     captcha: false,
+    captcha_mode: "image",
+    captcha_types: [],
+    captcha_image_fallback: false,
     token: false,
     encrypted: false,
     email: false,
     sms: false,
     rate: 60
   });
+
+  /** 无障碍回退：显式切换图片码后，本组件后续发送不再弹交互式挑战 */
+  const imageFallback = ref(false);
+  const interactiveCaptcha = computed(
+    () =>
+      verifyCodeConfig.captcha &&
+      verifyCodeConfig.captcha_mode === "interactive" &&
+      !imageFallback.value
+  );
 
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
@@ -105,6 +134,11 @@ export const useSendVerifyCode = (
         required: true,
 
         validator: (rule, value, callback) => {
+          // 交互式验证码没有行内字符输入：由挑战弹层换取 ticket，行内规则直接放行
+          if (interactiveCaptcha.value) {
+            callback();
+            return;
+          }
           if (value === "") {
             callback(new Error(transformI18n($t("login.verifyCodeReg"))));
           } else if (
@@ -171,7 +205,8 @@ export const useSendVerifyCode = (
       token: formData.value.token,
       target: formData.value[formData.value.form_type],
       captcha_key: formData.value.captcha_key,
-      captcha_code: formData.value.captcha_code
+      captcha_code: formData.value.captcha_code,
+      captcha_ticket: formData.value.captcha_ticket
     };
   };
 
@@ -188,6 +223,20 @@ export const useSendVerifyCode = (
       ],
       verifyCodeConfig.rate,
       async interval => {
+        formData.value.captcha_ticket = "";
+        if (interactiveCaptcha.value) {
+          try {
+            formData.value.captcha_ticket =
+              (await challengeRef.value?.open?.()) ?? "";
+          } catch (error) {
+            if ((error as Error)?.message === "captcha-image-fallback") {
+              imageFallback.value = true;
+            }
+            // 用户取消 / 切换回退：不进入冷却，保持可重试
+            return;
+          }
+          if (!formData.value.captcha_ticket) return;
+        }
         const data = formatSendData();
         if (verifyCodeConfig.encrypted) {
           data["target"] = await AesEncrypted(
@@ -201,6 +250,7 @@ export const useSendVerifyCode = (
           success(res) {
             if (!res?.data) return;
             formData.value.verify_token = res.data.verify_token;
+            formData.value.captcha_ticket = "";
             emit("sendCodeReqSuccess", res.data);
             interval(verifyCodeConfig.rate);
             if (callback) {
@@ -210,11 +260,15 @@ export const useSendVerifyCode = (
           showSuccessMsg: ["email", "phone"].includes(formData.value.form_type),
           exception() {
             initToken();
-            captchaRef.value?.getImgCode?.();
+            formData.value.captcha_ticket = "";
+            challengeRef.value?.reset?.();
+            if (!interactiveCaptcha.value) captchaRef.value?.getImgCode?.();
           },
           failed() {
             initToken();
-            captchaRef.value?.getImgCode?.();
+            formData.value.captcha_ticket = "";
+            challengeRef.value?.reset?.();
+            if (!interactiveCaptcha.value) captchaRef.value?.getImgCode?.();
           }
         });
       }
@@ -264,6 +318,8 @@ export const useSendVerifyCode = (
     formRules,
     isDisabled,
     verifyCodeConfig,
+    interactiveCaptcha,
+    imageFallback,
     configFailed,
     reloadConfig: loadConfig,
     handleSendCode,

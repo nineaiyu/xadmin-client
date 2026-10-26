@@ -5,13 +5,14 @@
 // 表单值变化（含回显）经 SettingItem 的 change 事件驱动，防抖后重绘预览。
 import { useDebounceFn } from "@vueuse/core";
 import { useWatermark } from "@pureadmin/utils";
-import { onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import type { FieldValues } from "plus-pro-components";
 import type { SiteWatermarkResultConfig } from "@/api/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
+import SettingPreview from "@/views/settings/components/settings-shell/SettingPreview.vue";
 import type { settingItemProps } from "@/views/settings/components/settings-shell/types";
 import {
   buildWatermarkRenderOptions,
@@ -33,7 +34,9 @@ const props = defineProps<{
 const { t } = useI18n();
 const route = useRoute();
 const userStore = useUserStoreHook();
-const previewEl = ref<HTMLElement | null>(null);
+const previewCard = ref<{ stageEl?: HTMLElement }>();
+/** 水印画布挂在预览卡片的舞台上（组件暴露 stageEl） */
+const previewEl = computed(() => previewCard.value?.stageEl ?? null);
 /** 预览提示：关闭 / 当前页不在路径范围（两者都不应让管理员误以为配置已生效） */
 const previewNote = ref<"" | "disabled" | "outOfScope">("");
 const { setWatermark, clear } = useWatermark(previewEl);
@@ -69,54 +72,21 @@ onBeforeUnmount(() => clear());
 </script>
 
 <template>
-  <div class="watermark-preview">
-    <p class="watermark-preview__label">
-      {{ t("settingWatermark.preview") }}
-    </p>
-    <div ref="previewEl" class="watermark-preview__stage" />
-    <p
-      v-if="previewNote"
-      class="watermark-preview__tip watermark-preview__tip--note"
-      data-testid="watermark-preview-note"
-    >
-      {{
-        previewNote === "disabled"
-          ? t("settingWatermark.previewDisabled")
-          : t("settingWatermark.previewOutOfScope")
-      }}
-    </p>
-    <p class="watermark-preview__tip">
-      {{ t("settingWatermark.previewTip") }}
-    </p>
-  </div>
+  <SettingPreview
+    ref="previewCard"
+    :title="t('settingWatermark.preview')"
+    :tip="t('settingWatermark.previewTip')"
+    :empty="previewNote === 'disabled'"
+    :empty-text="t('settingWatermark.previewDisabled')"
+    empty-testid="watermark-preview-note"
+    :note="
+      previewNote === 'outOfScope'
+        ? t('settingWatermark.previewOutOfScope')
+        : ''
+    "
+    note-testid="watermark-preview-note"
+    height="200px"
+    :padded="false"
+  />
   <SettingItem v-bind="props.item" @change="onFormChange" />
 </template>
-
-<style lang="scss" scoped>
-/**
- * 水印预览：与页签内容区同宽（留白由 Setting 容器统一给），
- * 样式从行内迁移到类上，便于与设置项表单共享同一套圆角 / 边框变量。
- */
-.watermark-preview__label {
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-
-.watermark-preview__stage {
-  position: relative;
-  height: 144px;
-  overflow: hidden;
-  background: var(--el-fill-color-lighter);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--radius-lg);
-}
-
-.watermark-preview__tip {
-  margin-top: var(--space-1);
-  font-size: var(--font-size-xs);
-  line-height: 20px;
-  color: var(--el-text-color-secondary);
-}
-</style>

@@ -57,17 +57,22 @@ describe("resolveInitialPane", () => {
 describe("syncTabQuery", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    window.location.hash = "";
+    window.history.replaceState(null, "", "/");
   });
 
-  it("经 history.replaceState 写入地址栏（不触发路由导航）", () => {
-    window.location.hash = "#/account-settings";
+  it("经 history.replaceState 写入地址栏并保留路由 state（不触发路由导航）", () => {
+    window.history.replaceState(
+      { back: "/settings", current: "/account-settings", position: 2 },
+      "",
+      "#/account-settings"
+    );
     const spy = vi.spyOn(window.history, "replaceState");
+    const routerState = window.history.state;
 
     syncTabQuery("securityLog");
 
     expect(spy).toHaveBeenCalledWith(
-      null,
+      routerState,
       "",
       "#/account-settings?tab=securityLog"
     );

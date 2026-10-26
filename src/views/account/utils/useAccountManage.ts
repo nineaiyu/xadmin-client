@@ -5,6 +5,7 @@ import { AesEncrypted } from "@/utils/aes";
 import BindEmailOrPhone from "../components/BindEmailOrPhone.vue";
 import ChangePassword from "../components/ChangePassword.vue";
 import { useApiAuth } from "./useApiAuth";
+import { useBindAvailability } from "./useBindAvailability";
 import { confirmBindConflict } from "./confirmBindConflict";
 
 /** 账户管理（绑定邮箱/手机、修改密码）；自 utils/hook 拆出，行为不变 */
@@ -12,6 +13,7 @@ export function useAccountManage() {
   const { t } = useI18n();
   const { api, auth } = useApiAuth();
   const userinfoStore = useUserStoreHook();
+  const { bindAvailability } = useBindAvailability();
 
   function handleBindEmailOrPhone(category: string) {
     openDialogDrawer({
@@ -110,6 +112,7 @@ export function useAccountManage() {
     api,
     auth,
     userinfoStore,
+    bindAvailability,
     handleChangePassword,
     handleBindEmailOrPhone
   };

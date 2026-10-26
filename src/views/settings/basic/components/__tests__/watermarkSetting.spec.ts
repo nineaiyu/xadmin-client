@@ -56,7 +56,8 @@ describe("WatermarkSetting 预览总开关与路径范围", () => {
   it("总开关关闭：清空预览并提示已关闭", async () => {
     const wrapper = mount(WatermarkSetting, {
       props: { item },
-      attachTo: document.body
+      attachTo: document.body,
+      global: { directives: { loading: {} } }
     });
     await emitValues(wrapper, {
       FRONT_END_WEB_WATERMARK_ENABLED: false,
@@ -75,7 +76,8 @@ describe("WatermarkSetting 预览总开关与路径范围", () => {
     mocks.setWatermark.mockClear();
     const wrapper = mount(WatermarkSetting, {
       props: { item },
-      attachTo: document.body
+      attachTo: document.body,
+      global: { directives: { loading: {} } }
     });
     await emitValues(wrapper, {
       FRONT_END_WEB_WATERMARK_ENABLED: true,

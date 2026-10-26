@@ -9,6 +9,7 @@ import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { ReImageVerify } from "@/components/ReImageVerify";
+import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { handleOperation } from "@/components/RePlusPage";
 import Lock from "~icons/ri/lock-fill";
@@ -35,6 +36,9 @@ defineOptions({
 });
 
 const captchaRef = ref();
+const captchaChallengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
+/** 无障碍回退：用户显式切换为图片码后，本次会话不再弹交互式挑战 */
+const imageFallback = ref(false);
 const ruleFormRef = ref<FormInstance>();
 const { t } = useI18n();
 const loginPageStore = useLoginPageStoreHook();
@@ -57,6 +61,15 @@ const basicLoginEnabled = computed(
 const resetEnabled = computed(
   () => capabilities.value?.reset?.enabled === true
 );
+const interactiveCaptcha = computed(
+  () =>
+    capabilities.value?.basic?.captcha === true &&
+    capabilities.value?.basic?.captcha_mode === "interactive" &&
+    !imageFallback.value
+);
+const captchaTypes = computed(
+  () => capabilities.value?.basic?.captcha_types ?? []
+);
 
 /** 「其他登录方式」入口:按能力清单过滤(验证码通道全关 / 注册关闭时入口隐藏) */
 const visibleOperates = computed(() =>
@@ -74,7 +87,8 @@ const ruleForm = reactive({
   password: "",
   token: "",
   captcha_key: "",
-  captcha_code: ""
+  captcha_code: "",
+  captcha_ticket: ""
 });
 
 /**
@@ -108,7 +122,9 @@ const initToken = (force = false) => {
  */
 const refreshLoginResources = () => {
   void initToken(true);
-  captchaRef.value?.getImgCode();
+  ruleForm.captcha_ticket = "";
+  captchaChallengeRef.value?.reset();
+  if (!interactiveCaptcha.value) captchaRef.value?.getImgCode();
 };
 
 const {
@@ -136,6 +152,23 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
     // 提交前等 token 就绪（就绪后瞬时返回；失败路径见下方回调的强制刷新）。
     await initToken();
+    // 交互式验证码：提交前弹出挑战，换取一次性 ticket 随登录体提交
+    if (interactiveCaptcha.value) {
+      try {
+        const ticket = await captchaChallengeRef.value?.open();
+        if (!ticket) {
+          loading.value = false;
+          return;
+        }
+        ruleForm.captcha_ticket = ticket;
+      } catch (error) {
+        loading.value = false;
+        if ((error as Error)?.message === "captcha-image-fallback") {
+          imageFallback.value = true;
+        }
+        return;
+      }
+    }
     // 登录请求（user store 封装）：成功时已写 token 并按 mfa_required 分支处理；
     // 失败与异常都走 handleOperation 的回调刷新一次性资源——一次性 token 提交即
     // 消费，不刷新则下次提交必带失效 token（验证码同理）
@@ -229,7 +262,10 @@ onMounted(() => {
             </el-form-item>
           </Motion>
 
-          <Motion v-if="capabilities?.basic?.captcha" :delay="200">
+          <Motion
+            v-if="capabilities?.basic?.captcha && !interactiveCaptcha"
+            :delay="200"
+          >
             <el-form-item prop="captcha_code">
               <el-input
                 v-model="ruleForm.captcha_code"
@@ -317,6 +353,13 @@ onMounted(() => {
       <Motion :delay="450">
         <LoginPrivacyNotice />
       </Motion>
+      <ReCaptchaChallenge
+        v-if="interactiveCaptcha"
+        ref="captchaChallengeRef"
+        scene="login"
+        :types="captchaTypes"
+        :image-fallback="capabilities?.basic?.captcha_image_fallback === true"
+      />
     </template>
   </div>
 </template>

@@ -24,7 +24,8 @@ export function buildTabHash(hash: string, paneKey: string): string {
 export function syncTabQuery(paneKey: string): void {
   if (typeof window === "undefined" || !paneKey) return;
   const next = buildTabHash(window.location.hash, paneKey);
-  window.history.replaceState(null, "", next);
+  // 保留 vue-router 写入的 history.state：置 null 会让下一次导航触发 R0121 警告
+  window.history.replaceState(window.history.state, "", next);
 }
 
 /**

@@ -350,6 +350,25 @@ sliderRotateCaptcha:
 sliderTranslateCaptcha:
   text: 拖动滑块拼合图片缺口
 
+captchaChallenge:
+  title: 安全验证
+  challengeTitle: 请完成安全验证
+  refresh: 换一题
+  retryHint: 验证未通过，还可尝试 {count} 次
+  success: 验证通过
+  verifyFailed: 验证失败，请重试
+  loadFailed: 验证码加载失败，请重试
+  puzzleAlt: 滑动拼图验证码
+  rotateAlt: 旋转验证码
+  clickHint: 请按提示顺序依次点击图中文字
+  tipAlt: 点选文字提示
+  clickStage: 点选验证码图片
+  clickAlt: 文字点选验证码
+  selected: 已选 {count}/{total}
+  resetSelection: 重选
+  confirm: 确认
+  imageFallback: 使用图片验证码
+
 backTop:
   text: 回到顶部
 
@@ -1187,7 +1206,9 @@ menus:
   systemSettings: 系统设置
   basicSettings: 基本设置
   messageSettings: 消息通知
+  channelSettings: 通知渠道
   smsSettings: 短信设置
+  captchaSettings: 验证码设置
   ldapSettings: LDAP 目录
   openPlatformSettings: 开放平台
   dataAnalysis: 数据分析
@@ -1206,7 +1227,8 @@ menus:
   formDesigner: 表单设计
   formMySubmission: 我的填报
   formData: 表单数据
-  securitySettings: 安全设置
+  securitySettings: 登录安全
+  accountSecuritySettings: 账号安全
   userManagement: 用户管理
   directory: 通讯录
   deptManagement: 部门管理
@@ -1737,6 +1759,8 @@ account:
   password: 密码
   bind: 已绑定
   unbound: 暂未绑定
+  emailUnavailable: 管理员未配置邮件服务，暂不可绑定邮箱
+  smsUnavailable: 管理员未配置短信服务，暂不可绑定手机
 
 systemUser:
   invite: 邀请激活
@@ -2885,8 +2909,10 @@ settingWatermark:
   previewOutOfScope: 当前设置页不在「生效页面」范围内，实际页面不会显示；以下样式仅供预览
 
 settingMessage:
-  mailTitle: 邮件服务器
   messageTitle: 系统消息订阅
+
+settingChannel:
+  mailTitle: 邮件服务器
   dingtalkTitle: 钉钉
   wecomTitle: 企业微信
   feishuTitle: 飞书
@@ -2896,19 +2922,37 @@ settingLdap:
   title: LDAP 目录
   desc: 配置目录连接、用户/部门同步与组角色映射；「测试连接」只验证连接与搜索，不写入用户
 
+settingCaptcha:
+  general: 验证码总配置
+  generalDesc: 全局开关与当前使用的验证码类型；关闭后所有场景不再要求验证码
+  image: 图片验证码
+  imageDesc: 图片字符验证码的生成方式、长度、字体、颜色与噪点
+  imagePreviewTitle: 图片验证码预览
+  interactive: 交互式验证码
+  interactiveDesc: 滑动拼图 / 旋转回正 / 文字点选：题型、容差、有效期、尺寸与无障碍回退
+  interactivePreviewTitle: 交互式验证码预览
+  previewType: 预览题型
+  previewSlide: 滑动拼图
+  previewRotate: 旋转回正
+  previewClick: 文字点选
+  refreshPreview: 刷新预览
+  previewTip: 预览基于已保存配置；仅用于查看样式，不会提交验证
+  previewFailed: 预览加载失败
+
 settingSecurity:
-  code: 验证码安全配置
-  captcha: 图片验证码配置
   login: 登录安全配置
   limit: 登录限制配置
+  mfa: MFA 二次验证配置
+  monitor: 资源告警
+  blockIp: 安全拦截IP
+
+settingAccountSecurity:
   register: 注册安全配置
   resetPassword: 重置密码配置
   passwordRule: 密码规则配置
   bindEmail: 绑定邮箱配置
   bindPhone: 绑定手机配置
-  mfa: MFA 二次验证配置
-  monitor: 资源告警
-  blockIp: 安全拦截IP
+  verifyCode: 邮件/短信验证码
 
 settingPassword:
   tips: 密码需要满足

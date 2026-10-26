@@ -136,7 +136,8 @@ describe("InviteAccept 激活密码规则前置校验", () => {
       token: "tok-1",
       password: "Str0ng!pwd",
       captcha_key: "captcha-key",
-      captcha_code: "abcd"
+      captcha_code: "abcd",
+      captcha_ticket: ""
     });
     expect(mocks.message).toHaveBeenCalledWith("ok", { type: "success" });
   });
@@ -263,7 +264,8 @@ describe("InviteAccept 激活密码规则前置校验", () => {
       token: "tok-1",
       password: "Str0ng!pwd",
       captcha_key: "captcha-key",
-      captcha_code: "abcd"
+      captcha_code: "abcd",
+      captcha_ticket: ""
     });
   });
 });
