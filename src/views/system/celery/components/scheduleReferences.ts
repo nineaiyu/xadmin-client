@@ -1,6 +1,7 @@
 import { h } from "vue";
 import { useRouter } from "vue-router";
-import { ElLink, ElMessageBox } from "element-plus";
+import { ElLink } from "element-plus";
+import { closeMessageBox, useAlert } from "@/hooks/useMessageBox";
 import type { useI18n } from "vue-i18n";
 import type { ScheduleReference } from "@/api/task/task";
 
@@ -12,9 +13,10 @@ export function createScheduleReferenceDialog(
   kind: "crontab" | "interval"
 ) {
   const router = useRouter();
+  const alert = useAlert();
 
   const goTaskList = (schedulePk: string | number) => {
-    ElMessageBox.close();
+    closeMessageBox();
     router.push({
       path: "/system/celery/task/index",
       query: { [kind]: String(schedulePk) }
@@ -23,7 +25,7 @@ export function createScheduleReferenceDialog(
 
   const show = (references: ScheduleReference, schedulePk: string | number) => {
     const tasks = references.tasks ?? [];
-    ElMessageBox.alert(
+    void alert(
       h("div", [
         h(
           "p",
@@ -64,7 +66,7 @@ export function createScheduleReferenceDialog(
           if (action === "confirm") goTaskList(schedulePk);
         }
       }
-    ).catch(() => undefined);
+    );
   };
 
   return { show, goTaskList };

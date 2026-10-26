@@ -1,6 +1,7 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { useI18n } from "vue-i18n";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import { $t, transformI18n } from "@/plugins/i18n";
@@ -157,7 +158,7 @@ onMounted(() => (configLoading.value = true));
       </el-form-item>
     </Motion>
 
-    <el-dialog
+    <OverlayDialog
       v-model="privacyVisible"
       :title="t('login.privacyPolicy')"
       width="480px"
@@ -171,6 +172,6 @@ onMounted(() => (configLoading.value = true));
           {{ t("login.definite") }}
         </el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

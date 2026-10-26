@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, ref, watch } from "vue";
 import { Plus } from "@element-plus/icons-vue";
 import type { UploadProps, UploadRawFile, UploadUserFile } from "element-plus";
@@ -86,7 +87,7 @@ const disableShowAdd = computed(() => {
       </el-icon>
     </el-upload>
 
-    <el-dialog v-model="dialogVisible">
+    <OverlayDialog v-model="dialogVisible">
       <div class="flex-c flex-col">
         <img :src="dialogFile.url" alt="Preview Image" class="max-w-full" />
         <div v-if="dialogFile?.size">{{ formatBytes(dialogFile.size) }}</div>
@@ -94,7 +95,7 @@ const disableShowAdd = computed(() => {
           {{ dialogFile.name }}
         </div>
       </div>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>
 <style lang="scss" scoped>

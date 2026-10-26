@@ -1,7 +1,7 @@
-import { ElMessageBox } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import { screenTemplateApi } from "@/api/dataset/analysis";
 import { isSuccess } from "@/api/types";
+import { useAlert } from "@/hooks/useMessageBox";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -9,7 +9,7 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 export async function showServerTemplateDetail(id: string, t: TFunction) {
   const res = await screenTemplateApi.retrieve(id).catch(() => null);
   if (res && isSuccess(res)) {
-    await ElMessageBox.alert(
+    await useAlert()(
       JSON.stringify(res.data, null, 2),
       t("dataScreen.templateDetail"),
       {
@@ -18,7 +18,7 @@ export async function showServerTemplateDetail(id: string, t: TFunction) {
     );
     return;
   }
-  await ElMessageBox.alert(
+  await useAlert()(
     t("dataScreen.templateDetailFailed"),
     t("dataScreen.templateDetail")
   );

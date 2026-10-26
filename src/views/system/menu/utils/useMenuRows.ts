@@ -9,6 +9,7 @@ import { ref, type UnwrapNestedRefs } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
 import type { menuApi } from "@/api/system/menu";
@@ -21,6 +22,8 @@ export function useMenuRows(api: MenuApi) {
 
   const rawRows = ref<Array<Record<string, unknown>>>([]);
   const loading = ref(true);
+  /** 拉取失败原因：树区据 this 渲染错误态 + 重试，避免失败伪装成空树 */
+  const loadError = ref("");
   /** 行内启停中：pk 集合（按钮 loading 用） */
   const busyPks = ref<Set<string>>(new Set());
 
@@ -34,6 +37,7 @@ export function useMenuRows(api: MenuApi) {
   /** 拉取菜单全量（强制刷新共享缓存，供角色/权限页复用） */
   const getMenuData = () => {
     loading.value = true;
+    loadError.value = "";
     return fetchMetaList(META_KEYS.menu, () => fetchAllRows(api.list), {
       force: true
     })
@@ -41,10 +45,13 @@ export function useMenuRows(api: MenuApi) {
         if (isSuccess(res)) {
           rawRows.value = res.data.results as Array<Record<string, unknown>>;
         } else {
+          loadError.value = String(res.detail ?? t("results.failed"));
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
       })
-      .catch(() => undefined)
+      .catch(error => {
+        loadError.value = normalizeError(error).detail || t("results.failed");
+      })
       .finally(() => {
         loading.value = false;
       });
@@ -78,6 +85,7 @@ export function useMenuRows(api: MenuApi) {
   return {
     rawRows,
     loading,
+    loadError,
     busyPks,
     setBusy,
     getMenuData,

@@ -5,6 +5,7 @@ import ReCol from "@/components/ReCol";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "./components/ReFlicker";
 import ReSkeleton from "@/components/ReSkeleton";
+import ReEmpty from "@/components/ReEmpty";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import { AiDailyReportCard } from "./components";
 import Segmented from "@/components/ReSegmented";
@@ -214,7 +215,12 @@ const timelineIcons = timelineTones.map(tone =>
             }}</span>
           </div>
           <el-scrollbar class="mt-3" max-height="410" tabindex="0">
-            <el-timeline>
+            <ReEmpty
+              v-if="!operateLogList.length"
+              :description="t('welcome.noOperateLog')"
+              :image-size="60"
+            />
+            <el-timeline v-else>
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
                 :key="item.pk ?? item.id ?? index"

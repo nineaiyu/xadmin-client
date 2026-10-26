@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 /**
  * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 开关 / 解绑 / 恢复码。
  * - 关闭：仅停用登录二次验证开关，密钥保留，重新开启时校验一次动态码即可（无需重新扫码）；
@@ -386,7 +387,7 @@ onMounted(loadStatus);
       </template>
     </el-form>
 
-    <el-dialog
+    <OverlayDialog
       v-model="recoveryDialogVisible"
       :title="$t('mfa.recoveryTitle')"
       :width="dialogSize('sm')"
@@ -417,6 +418,6 @@ onMounted(loadStatus);
           $t("mfa.recoverySaved")
         }}</el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

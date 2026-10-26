@@ -74,6 +74,8 @@ const total = ref(0);
 let loadSeq = 0;
 /** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
 const errorMsg = ref("");
+/** 联动过滤期间的静默重拉计数：仅显示轻量指示，不闪整卡骨架 */
+const refreshingCount = ref(0);
 /** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
 const { setOptions, resize, getInstance } = useECharts(chartRef, {
   theme,
@@ -346,7 +348,10 @@ const applyData = async (entry: {
     // 联动过滤生效期间：推送帧由服务端按卡片定义聚合，载荷不含请求级 filters，
     // 直接落盘会把已过滤的结果覆盖成全量（chip 还在、数据已错）。此处丢弃帧，
     // 按当前 filters 静默重拉——与 HTTP 路径同一取数口径，服务端再校验一次。
-    void fetchData();
+    refreshingCount.value += 1;
+    void fetchData().finally(() => {
+      refreshingCount.value = Math.max(0, refreshingCount.value - 1);
+    });
     return;
   }
   // 推送帧与在途 HTTP 请求互斥：先作废在途序号，避免早发晚到的响应覆盖更新的帧
@@ -417,6 +422,14 @@ defineExpose({ loadData, applyData, renderImage });
     }"
     :data-chart-theme="dark ? 'dark' : 'light'"
   >
+    <div
+      v-if="refreshingCount > 0"
+      class="pointer-events-none absolute right-2 top-2 z-10 rounded border border-solid border-(--divider) bg-(--el-bg-color) px-2 py-1 text-xs text-(--el-text-color-secondary)"
+      role="status"
+      data-testid="chart-card-refreshing"
+    >
+      {{ t("dashboard.refreshing") }}
+    </div>
     <div
       v-if="errorMsg"
       class="flex-c size-full flex-col gap-2 text-center"

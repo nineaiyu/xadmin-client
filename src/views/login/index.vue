@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, toRaw, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
-import Motion from "./utils/motion";
+import Motion from "@/components/ReMotion";
 import basic from "./components/Basic.vue";
 import TypeIt from "./components/ReTypeit";
 import register from "./components/Register.vue";
@@ -12,6 +12,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { loginCapabilitiesApi } from "@/api/auth";
+import { isSuccess } from "@/api/types";
 import { avatar, bg, illustration } from "./utils/static";
 
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
@@ -46,7 +47,7 @@ const reloadCapabilities = async () => {
   loginPageStore.SET_CAPABILITIES_STATUS("loading");
   try {
     const res = await loginCapabilitiesApi();
-    if (res.code === 1000 && res.data) {
+    if (isSuccess(res) && res.data) {
       loginPageStore.SET_CAPABILITIES(res.data);
     } else {
       loginPageStore.SET_CAPABILITIES_STATUS("failed");

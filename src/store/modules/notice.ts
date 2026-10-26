@@ -11,7 +11,7 @@ import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
 import { sanitizeHtml } from "@/utils/sanitize";
 import { isKioskMeta } from "@/utils/kiosk";
 import { resolveMessageFormat } from "@/utils/noticeFormat";
-import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
+import { openNoticeDetailDialog } from "@/components/ReNoticeShow/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
 import type { NotificationOptions, NotificationType } from "element-plus";
 

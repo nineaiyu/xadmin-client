@@ -1,10 +1,10 @@
 import { h } from "vue";
-import { ElMessageBox } from "element-plus";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { usePrompt } from "@/hooks/useMessageBox";
 import { dynamicFormApi } from "@/api/dataset/dform";
 import TemplatePickerDialog from "../components/TemplatePickerDialog.vue";
 import { fetchFormDetail } from "./designerFormDialog";
@@ -60,24 +60,18 @@ export function createTemplateActions({
       message(t("results.failed"), { type: "warning" });
       return;
     }
-    let name: string;
-    try {
-      const { value } = await ElMessageBox.prompt(
-        t("dform.templateNameHint"),
-        t("dform.saveAsTemplate"),
-        {
-          confirmButtonText: t("buttons.sure"),
-          cancelButtonText: t("buttons.cancel"),
-          inputValue: t("dform.templateNameDefault", { name: row.name }),
-          inputValidator: (value: string) =>
-            (value ?? "").trim() ? true : t("dform.templateNameRequired"),
-          draggable: true
-        }
-      );
-      name = (value ?? "").trim();
-    } catch {
-      return;
-    }
+    const result = await usePrompt()(
+      t("dform.templateNameHint"),
+      t("dform.saveAsTemplate"),
+      {
+        inputValue: t("dform.templateNameDefault", { name: row.name }),
+        inputValidator: (value: string) =>
+          (value ?? "").trim() ? true : t("dform.templateNameRequired"),
+        draggable: true
+      }
+    );
+    if (!result) return;
+    const name = result.value.trim();
     const res = await dynamicFormApi
       .create({
         name,

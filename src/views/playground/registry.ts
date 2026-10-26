@@ -31,215 +31,231 @@ export const PLAYGROUND_ENTRIES: PlaygroundEntry[] = [
   {
     name: "ReText",
     category: "display",
-    description: "省略文本 + tippy 提示（可展开）",
+    description: "playground.desc.ReText",
     demo: "/playground/display"
   },
   {
     name: "ReEmpty",
     category: "display",
-    description: "空态（可配次级提示 / 图标 / 尺寸档）",
+    description: "playground.desc.ReEmpty",
     demo: "/playground/display"
   },
   {
     name: "ReResult",
     category: "display",
-    description: "通用结果态（info/success/warning/danger/offline）",
+    description: "playground.desc.ReResult",
     demo: "/playground/display"
   },
   {
     name: "ReStat",
     category: "display",
-    description: "统计条 StatBar / 统计网格 StatGrid",
+    description: "playground.desc.ReStat",
     demo: "/playground/display"
   },
   {
     name: "ReCountTo",
     category: "display",
-    description: "数字滚动动画（普通 + 回弹两形态）",
+    description: "playground.desc.ReCountTo",
     demo: "/playground/display"
   },
   {
     name: "ReJsonViewer",
     category: "display",
-    description: "JSON 树查看（懒加载 vue-json-pretty）",
+    description: "playground.desc.ReJsonViewer",
     demo: "/playground/display"
   },
   {
     name: "ReSkeleton",
     category: "display",
-    description: "骨架屏（text / fill 两变体）",
+    description: "playground.desc.ReSkeleton",
     demo: "/playground/display"
   },
   {
     name: "ReScrollbar",
     category: "display",
-    description: "增强滚动条（到达态事件 + 遮罩）",
+    description: "playground.desc.ReScrollbar",
     demo: "/playground/display"
   },
   // ---- 布局（layout）----
   {
     name: "ReCol",
     category: "layout",
-    description: "栅格列（pureadmin 上游件）",
+    description: "playground.desc.ReCol",
     demo: "/playground/layout"
   },
   {
     name: "ReSplitPane",
     category: "layout",
-    description: "可拖拽分栏容器",
+    description: "playground.desc.ReSplitPane",
     demo: "/playground/layout"
   },
   {
     name: "ReResize",
     category: "layout",
-    description: "拖拽缩放盒（八向手柄）",
+    description: "playground.desc.ReResize",
     demo: "/playground/layout"
   },
   {
     name: "ReCollapseParams",
     category: "layout",
-    description: "参数折叠面板（名称/值/说明三列）",
+    description: "playground.desc.ReCollapseParams",
     demo: "/playground/layout"
   },
   {
     name: "RePage",
     category: "layout",
-    description: "通用页面骨架（页头 + 内容 + 页脚）"
+    description: "playground.desc.RePage"
   },
-  { name: "ReNavDrawer", category: "layout", description: "导航抽屉" },
+  {
+    name: "ReNavDrawer",
+    category: "layout",
+    description: "playground.desc.ReNavDrawer"
+  },
   // ---- 输入（input）----
   {
     name: "ReIconPicker",
     category: "input",
-    description: "图标选择器（薄封装 ReIcon）",
+    description: "playground.desc.ReIconPicker",
     demo: "/playground/input"
   },
   {
     name: "ReAnimateSelector",
     category: "input",
-    description: "animate.css 动画选择器",
+    description: "playground.desc.ReAnimateSelector",
     demo: "/playground/input"
   },
   {
     name: "ReImageVerify",
     category: "input",
-    description: "图形验证码（canvas 自包含）",
+    description: "playground.desc.ReImageVerify",
     demo: "/playground/input"
   },
   {
     name: "ReSliderCaptcha",
     category: "input",
-    description: "滑块验证码（键盘 + 触屏可达）",
+    description: "playground.desc.ReSliderCaptcha",
     demo: "/playground/input"
   },
   {
     name: "ReSendVerifyCode",
     category: "input",
-    description: "验证码发送（倒计时按钮，需后端配置接口）"
+    description: "playground.desc.ReSendVerifyCode"
   },
-  { name: "ReCropper", category: "input", description: "图片裁剪" },
+  {
+    name: "ReCropper",
+    category: "input",
+    description: "playground.desc.ReCropper"
+  },
   {
     name: "RePictureUpload",
     category: "input",
-    description: "图片裁剪预览上传"
+    description: "playground.desc.RePictureUpload"
   },
   {
     name: "ReApiSelect",
     category: "input",
-    description: "远程取数下拉 / 树选（含 ReApiTreeSelect）"
+    description: "playground.desc.ReApiSelect"
   },
-  { name: "RePlusSearch", category: "input", description: "实体搜索下拉" },
+  {
+    name: "RePlusSearch",
+    category: "input",
+    description: "playground.desc.RePlusSearch"
+  },
   // ---- 反馈（feedback）----
   {
     name: "ReDialog",
     category: "feedback",
-    description: "统一弹窗出口（组件注册 + 命令式 API）"
+    description: "playground.desc.ReDialog"
   },
   {
     name: "ReDrawer",
     category: "feedback",
-    description: "统一抽屉出口（组件注册 + 命令式 API）"
+    description: "playground.desc.ReDrawer"
   },
   {
     name: "ReStateContainer",
     category: "feedback",
-    description: "loading/empty/error/ready 四态收敛"
+    description: "playground.desc.ReStateContainer"
   },
   {
     name: "ReMfaConfirm",
     category: "feedback",
-    description: "命令式唤起身份二次验证对话框"
+    description: "playground.desc.ReMfaConfirm"
   },
-  { name: "ReNoticeShow", category: "feedback", description: "通知展示" },
+  {
+    name: "ReNoticeShow",
+    category: "feedback",
+    description: "playground.desc.ReNoticeShow"
+  },
   {
     name: "ReMessageNotifications",
     category: "feedback",
-    description: "消息通知"
+    description: "playground.desc.ReMessageNotifications"
   },
   {
     name: "ReTaskCenterDrawer",
     category: "feedback",
-    description: "任务中心抽屉"
+    description: "playground.desc.ReTaskCenterDrawer"
   },
   {
     name: "ReTaskLogDialog",
     category: "feedback",
-    description: "任务日志弹窗"
+    description: "playground.desc.ReTaskLogDialog"
   },
   {
     name: "ReBackTop",
     category: "feedback",
-    description: "回到顶部（自实现原生 button）"
+    description: "playground.desc.ReBackTop"
   },
   // ---- 容器与生态（ecosystem）----
   {
     name: "RePlusPage",
     category: "ecosystem",
-    description: "元数据驱动列表页生态（含 ReRecycleBin）"
+    description: "playground.desc.RePlusPage"
   },
   {
     name: "RePureTableBar",
     category: "ecosystem",
-    description: "表格工具栏（配 @pureadmin/table）"
+    description: "playground.desc.RePureTableBar"
   },
   {
     name: "ReTableAction",
     category: "ecosystem",
-    description: "表格操作列（主操作 + 更多下拉）"
+    description: "playground.desc.ReTableAction"
   },
   {
     name: "ReReadonlyTable",
     category: "ecosystem",
-    description: "只读少列键值表"
+    description: "playground.desc.ReReadonlyTable"
   },
   {
     name: "ReRenderContent",
     category: "ecosystem",
-    description: "内容渲染器（字符串/组件/VNode → VNode）"
+    description: "playground.desc.ReRenderContent"
   },
   {
     name: "ReIcon",
     category: "ecosystem",
-    description: "离线图标渲染 + useRenderIcon"
+    description: "playground.desc.ReIcon"
   },
   {
     name: "ReMenuPermissionTree",
     category: "ecosystem",
-    description: "菜单权限树"
+    description: "playground.desc.ReMenuPermissionTree"
   },
   {
     name: "RePermissionPreview",
     category: "ecosystem",
-    description: "权限预览"
+    description: "playground.desc.RePermissionPreview"
   },
   {
     name: "ReActionPanel",
     category: "ecosystem",
-    description: "实体管理动作抽屉"
+    description: "playground.desc.ReActionPanel"
   },
   {
     name: "ReTreeLine",
     category: "ecosystem",
-    description: "el-tree / el-tree-v2 连接线"
+    description: "playground.desc.ReTreeLine"
   }
 ];

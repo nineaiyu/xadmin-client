@@ -91,6 +91,11 @@ const { t } = useI18n();
       >
         {{ t("dashboard.saveLayout") }}
       </el-button>
+      <el-divider
+        v-if="editing && canDestroy"
+        direction="vertical"
+        class="mx-1!"
+      />
       <el-button
         v-if="editing && canDestroy"
         type="danger"

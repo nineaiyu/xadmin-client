@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 import { computed, h, isVNode, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
@@ -189,7 +190,7 @@ defineExpose({ open });
     {{ title || t("recycleBin.title") }}
   </el-button>
 
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     :title="title || t('recycleBin.title')"
     :size="drawerSize('lg')"
@@ -302,5 +303,5 @@ defineExpose({ open });
       size="small"
       class="mt-3 justify-end"
     />
-  </el-drawer>
+  </OverlayDrawer>
 </template>

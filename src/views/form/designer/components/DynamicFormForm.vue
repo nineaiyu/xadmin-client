@@ -7,13 +7,16 @@ import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { addDialog } from "@/components/ReDialog";
 import ReApiSelect from "@/components/ReApiSelect";
 import { dialogSize } from "@/components/ReDialog/size";
+import { useConfirm } from "@/hooks/useConfirm";
 import type {
   DynamicFormItem,
+  FillableFormItem,
   FormField,
   FormLinkage,
   FormSchema
 } from "@/api/dataset/dform";
 import { assertFormulaAcyclic, FormulaError } from "@/views/form/utils/formula";
+import SubmissionForm from "@/views/form/my/components/SubmissionForm.vue";
 import FormFieldDialog from "./FormFieldDialog.vue";
 import FormFieldTable from "./FormFieldTable.vue";
 import FormLinkageSection from "./FormLinkageSection.vue";
@@ -42,6 +45,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 const form = reactive({
   name: props.row?.name ?? props.prefill?.name ?? "",
@@ -64,6 +68,22 @@ const linkages = ref<FormLinkage[]>(
     )
   )
 );
+
+/** 设计器页签：设计 / 实时预览（预览直接消费当前未保存的 schema） */
+const activeTab = ref<"design" | "preview">("design");
+
+/**
+ * 预览用伪表单：主键仅占位（预览不提交），schema 绑定当前编辑中的字段与联动；
+ * 字段顺序 / 选项 / 联动规则变更即时反映到填写控件。
+ */
+const previewForm = computed<FillableFormItem>(() => ({
+  pk: props.row?.pk ?? "preview",
+  name: form.name || t("dform.designerTitle"),
+  description: form.description,
+  schema: { fields: fields.value, linkages: linkages.value },
+  approval_required: form.approval_required,
+  approval_flow: form.approval_flow || null
+}));
 
 /** 设计器脏状态：弹窗关闭前据此决定是否二次确认（保存成功后弹窗直接关闭） */
 const initialSnapshot = JSON.stringify({
@@ -108,8 +128,15 @@ const addField = () => {
   });
 };
 
-const removeField = (index: number) => {
-  fields.value.splice(index, 1);
+const removeField = async (index: number) => {
+  const field = fields.value[index];
+  const ok = await confirm(
+    t("dform.removeFieldConfirm", {
+      name: field?.label || field?.key || ""
+    }),
+    { danger: true }
+  );
+  if (ok) fields.value.splice(index, 1);
 };
 
 /** 字段排序（拖拽与上移/下移同一路径）：字段顺序即渲染顺序，保存时按数组顺序落 schema */
@@ -213,68 +240,88 @@ defineExpose({ getPayload, isDirty });
 
 <template>
   <div>
-    <el-form label-width="90px">
-      <el-form-item :label="t('dform.name')" required>
-        <el-input v-model="form.name" />
-      </el-form-item>
-      <el-form-item :label="t('dform.description')">
-        <el-input v-model="form.description" />
-      </el-form-item>
-      <el-form-item :label="t('dform.approvalFlow')">
-        <ReApiSelect
-          v-model="form.approval_flow"
-          :api="loadFlowOptions"
-          label-field="name"
-          value-field="pk"
-          clearable
-          :placeholder="t('dform.noApprovalFlow')"
-          :style="{ width: '100%' }"
+    <el-tabs v-model="activeTab">
+      <el-tab-pane :label="t('dform.designTab')" name="design">
+        <el-form label-width="90px">
+          <el-form-item :label="t('dform.name')" required>
+            <el-input v-model="form.name" />
+          </el-form-item>
+          <el-form-item :label="t('dform.description')">
+            <el-input v-model="form.description" />
+          </el-form-item>
+          <el-form-item :label="t('dform.approvalFlow')">
+            <ReApiSelect
+              v-model="form.approval_flow"
+              :api="loadFlowOptions"
+              label-field="name"
+              value-field="pk"
+              clearable
+              :placeholder="t('dform.noApprovalFlow')"
+              :style="{ width: '100%' }"
+            />
+            <div class="text-xs text-(--el-text-color-regular)">
+              {{ t("dform.approvalFlowTip") }}
+            </div>
+            <div
+              v-if="flowOptionsFailed"
+              class="text-xs text-(--el-color-warning)"
+            >
+              {{ t("dform.flowOptionsLoadFailed") }}
+            </div>
+          </el-form-item>
+          <el-form-item :label="t('dform.formEnabled')">
+            <div class="flex items-center gap-2">
+              <el-switch
+                v-model="form.is_active"
+                data-testid="form-active-switch"
+              />
+              <span class="text-xs text-(--el-text-color-regular)">{{
+                t("dform.formEnabledTip")
+              }}</span>
+            </div>
+          </el-form-item>
+          <el-form-item :label="t('dform.approvalRequired')">
+            <div class="flex items-center gap-2">
+              <el-switch
+                v-model="form.approval_required"
+                data-testid="form-approval-switch"
+              />
+              <span class="text-xs text-(--el-text-color-regular)">{{
+                t("dform.approvalTip")
+              }}</span>
+            </div>
+          </el-form-item>
+        </el-form>
+        <div class="mb-2 flex items-center gap-2">
+          <span class="text-sm font-medium">{{ t("dform.fields") }}</span>
+          <div class="flex-1" />
+          <el-button size="small" type="primary" plain @click="addField">
+            {{ t("dform.addField") }}
+          </el-button>
+        </div>
+        <FormFieldTable
+          :fields="fields"
+          @move="moveFieldTo"
+          @configure="openFieldDialog"
+          @remove="removeField"
         />
-        <div class="text-xs text-(--el-text-color-regular)">
-          {{ t("dform.approvalFlowTip") }}
+        <div class="mt-4">
+          <FormLinkageSection v-model="linkages" :fields="fields" />
         </div>
-        <div v-if="flowOptionsFailed" class="text-xs text-(--el-color-warning)">
-          {{ t("dform.flowOptionsLoadFailed") }}
-        </div>
-      </el-form-item>
-      <el-form-item :label="t('dform.formEnabled')">
-        <div class="flex items-center gap-2">
-          <el-switch
-            v-model="form.is_active"
-            data-testid="form-active-switch"
+      </el-tab-pane>
+      <el-tab-pane :label="t('dform.previewTab')" name="preview" lazy>
+        <div data-testid="designer-preview-pane">
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            class="mb-3"
+            :title="t('dform.previewHint')"
           />
-          <span class="text-xs text-(--el-text-color-regular)">{{
-            t("dform.formEnabledTip")
-          }}</span>
+          <SubmissionForm v-if="fields.length" :form="previewForm" />
+          <el-empty v-else :description="t('dform.previewEmpty')" />
         </div>
-      </el-form-item>
-      <el-form-item :label="t('dform.approvalRequired')">
-        <div class="flex items-center gap-2">
-          <el-switch
-            v-model="form.approval_required"
-            data-testid="form-approval-switch"
-          />
-          <span class="text-xs text-(--el-text-color-regular)">{{
-            t("dform.approvalTip")
-          }}</span>
-        </div>
-      </el-form-item>
-    </el-form>
-    <div class="mb-2 flex items-center gap-2">
-      <span class="text-sm font-medium">{{ t("dform.fields") }}</span>
-      <div class="flex-1" />
-      <el-button size="small" type="primary" plain @click="addField">
-        {{ t("dform.addField") }}
-      </el-button>
-    </div>
-    <FormFieldTable
-      :fields="fields"
-      @move="moveFieldTo"
-      @configure="openFieldDialog"
-      @remove="removeField"
-    />
-    <div class="mt-4">
-      <FormLinkageSection v-model="linkages" :fields="fields" />
-    </div>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>

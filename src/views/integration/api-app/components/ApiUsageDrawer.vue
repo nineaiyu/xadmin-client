@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 import ReStateContainer from "@/components/ReStateContainer";
 import {
   ReReadonlyTable,
@@ -80,7 +81,7 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
 </script>
 
 <template>
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     data-testid="api-usage-drawer"
     :size="drawerSize('md')"
@@ -193,7 +194,7 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
         :min-height="180"
       />
     </div>
-  </el-drawer>
+  </OverlayDrawer>
 </template>
 
 <style lang="scss" scoped>

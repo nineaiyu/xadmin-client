@@ -51,6 +51,18 @@ const FORBIDDEN_EDGES = [
     toReaches: ["src/api/base.ts", "src/utils/http/index.ts"],
     reason:
       "store 层顶层静态引用「依赖 http 链路」的 api 模块会形成 api/base → utils/http → utils/auth → store → api/auth → api/base 类环；store 调用这类 api 一律在动作内动态 import()。"
+  },
+  {
+    from: "src/components/",
+    to: "src/views/",
+    reason:
+      "组件层是页面层的依赖方，反向静态引用 views 会让组件库无法独立复用并放大加载图（历史：验证码组件的动效包装、权限预览预设直接 import 页面组件）；共享实现下沉到 components，页面差异由调用方注入。"
+  },
+  {
+    from: "src/layout/",
+    to: "src/views/",
+    reason:
+      "布局壳层不得反向依赖页面域实现（历史：顶栏通知铃铛 import 站内信详情弹窗）；通用弹层/展示组件下沉 components，页面级行为由 store 或页面自行接线。"
   }
 ];
 

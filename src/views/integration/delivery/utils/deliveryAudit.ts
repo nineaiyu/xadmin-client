@@ -1,7 +1,7 @@
 import { h } from "vue";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { ElMessageBox } from "element-plus";
+import { useAlert } from "@/hooks/useMessageBox";
 import {
   choiceValue,
   type StatusTagType,
@@ -29,7 +29,7 @@ export function showDeliveryRequest(
   t: TFunction,
   row: WebhookDeliveryItem
 ): void {
-  ElMessageBox.alert(
+  void useAlert()(
     JSON.stringify(
       {
         payload: row.payload ?? {},

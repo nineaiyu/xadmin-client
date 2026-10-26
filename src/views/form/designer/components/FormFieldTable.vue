@@ -130,6 +130,7 @@ const move = (index: number, offset: -1 | 1) => {
         <el-input
           v-model="(row as FormField).key"
           size="small"
+          :aria-label="t('dform.fieldKey')"
           :class="{ 'dform-cell-invalid': keyErrorOf(row as FormField) }"
         />
       </template>
@@ -139,6 +140,7 @@ const move = (index: number, offset: -1 | 1) => {
         <el-input
           v-model="(row as FormField).label"
           size="small"
+          :aria-label="t('dform.fieldLabel')"
           :class="{ 'dform-cell-invalid': labelErrorOf(row as FormField) }"
         />
       </template>
@@ -148,6 +150,7 @@ const move = (index: number, offset: -1 | 1) => {
         <el-select
           :model-value="(row as FormField).type"
           size="small"
+          :aria-label="t('dform.fieldType')"
           data-testid="field-type-select"
           @change="
             (type: FormFieldType) => onTypeChange(row as FormField, type)
@@ -185,7 +188,11 @@ const move = (index: number, offset: -1 | 1) => {
     </el-table-column>
     <el-table-column :label="t('dform.fieldRequired')" width="70">
       <template #default="{ row }">
-        <el-switch v-model="(row as FormField).required" size="small" />
+        <el-switch
+          v-model="(row as FormField).required"
+          size="small"
+          :aria-label="t('dform.fieldRequired')"
+        />
       </template>
     </el-table-column>
     <el-table-column :label="t('dform.actions')" width="220">

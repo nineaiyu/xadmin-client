@@ -3,6 +3,8 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import ReEmpty from "@/components/ReEmpty";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import SearchIcon from "~icons/ep/search";
 import {
   CATEGORY_LABELS,
   PLAYGROUND_ENTRIES,
@@ -37,7 +39,7 @@ const groups = computed(() => {
           entry.category === category &&
           (!keywordLower ||
             entry.name.toLowerCase().includes(keywordLower) ||
-            entry.description.toLowerCase().includes(keywordLower))
+            t(entry.description).toLowerCase().includes(keywordLower))
       )
     }))
     .filter(group => group.entries.length);
@@ -80,7 +82,7 @@ const openDemo = (demo?: string) => {
             size="small"
             clearable
             :placeholder="t('playground.searchPlaceholder')"
-            :prefix-icon="'ep:search'"
+            :prefix-icon="useRenderIcon(SearchIcon)"
             class="w-50!"
             :data-testid="'playground-search'"
           />
@@ -128,7 +130,7 @@ const openDemo = (demo?: string) => {
               </el-tag>
             </div>
             <p class="mt-1 text-xs leading-5 text-fg-muted">
-              {{ entry.description }}
+              {{ t(entry.description) }}
             </p>
           </el-card>
         </el-col>

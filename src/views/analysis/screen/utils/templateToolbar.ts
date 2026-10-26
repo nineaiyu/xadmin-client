@@ -1,6 +1,6 @@
 import { ref, type ComputedRef } from "vue";
-import { ElMessageBox } from "element-plus";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePrompt } from "@/hooks/useMessageBox";
 import type { FreeTemplate } from "./freeTemplates";
 import { showServerTemplateDetail } from "./freeTemplateDetail";
 import type { TemplateApplyMode } from "./createFreeEditor";
@@ -91,7 +91,7 @@ export function useTemplateToolbarCommands(deps: {
 
   /** 命名输入（保存 / 重命名共用）：取消返回 null，输入为空由 inputValidator 拦住 */
   async function askName(title: string, initial = ""): Promise<string | null> {
-    const answer = await ElMessageBox.prompt(
+    const answer = await usePrompt()(
       t("dataScreen.templateNamePrompt"),
       title,
       {
@@ -101,9 +101,8 @@ export function useTemplateToolbarCommands(deps: {
         inputValidator: value =>
           Boolean(value?.trim()) || t("dataScreen.templateNameRequired")
       }
-    ).catch(() => null);
-    const value = (answer as { value?: string } | null)?.value;
-    return value?.trim() ? value.trim() : null;
+    );
+    return answer?.value.trim() ? answer.value.trim() : null;
   }
 
   /** 可选文本（取消 = 空串）：用于「分组名」这类可留空的输入 */
@@ -111,11 +110,11 @@ export function useTemplateToolbarCommands(deps: {
     title: string,
     prompt: string
   ): Promise<string> {
-    const answer = await ElMessageBox.prompt(prompt, title, {
+    const answer = await usePrompt()(prompt, title, {
       confirmButtonText: t("dataScreen.templateSave"),
       cancelButtonText: t("dataScreen.cancel")
-    }).catch(() => null);
-    return String((answer as { value?: string } | null)?.value ?? "").trim();
+    });
+    return answer?.value.trim() ?? "";
   }
 
   async function onSaveTemplate() {

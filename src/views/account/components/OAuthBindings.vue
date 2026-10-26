@@ -10,8 +10,9 @@ import {
 } from "@/api/identity/oauth";
 import { message } from "@/utils/message";
 import { AesEncrypted } from "@/utils/aes";
+import { normalizeError } from "@/utils/apiError";
+import { usePrompt } from "@/hooks/useMessageBox";
 import { useUserStoreHook } from "@/store/modules/user";
-import { ElMessageBox } from "element-plus";
 import AccountPanel from "./AccountPanel.vue";
 
 /**
@@ -79,34 +80,31 @@ const loadProviders = () => {
 const displayName = (row: BindingRow) =>
   String(row.profile?.nickname || row.profile?.email || row.subject);
 
-const unbind = (row: BindingRow) => {
-  void ElMessageBox.prompt(t("oauth.unbindPasswordTip"), t("oauth.unbind"), {
+const prompt = usePrompt();
+
+const unbind = async (row: BindingRow) => {
+  const input = await prompt(t("oauth.unbindPasswordTip"), t("oauth.unbind"), {
     inputType: "password",
     inputPlaceholder: t("oauth.password"),
     inputValidator: value => Boolean(value),
     // 解绑是破坏性操作：确认钮着危险色（useConfirm 同口径；
     // prompt 模式焦点本就在输入框，不存在回车误确认问题）
     confirmButtonClass: "el-button--danger"
-  })
-    // 与改密同口径：口令按 AESCipherV2(username) 加密后提交，不落明文
-    .then(async ({ value }) =>
-      oauthApi.unbind(
-        row.pk,
-        await AesEncrypted(
-          userinfoStore.username as string,
-          String(value ?? "")
-        )
-      )
+  });
+  if (!input) return;
+  // 与改密同口径：口令按 AESCipherV2(username) 加密后提交，不落明文
+  const res = await oauthApi
+    .unbind(
+      row.pk,
+      await AesEncrypted(userinfoStore.username as string, input.value)
     )
-    .then(res => {
-      if (isSuccess(res)) {
-        message(t("oauth.unbindSuccess"), { type: "success" });
-        load();
-      } else if (res.detail) {
-        message(res.detail, { type: "warning" });
-      }
-    })
-    .catch(() => undefined);
+    .catch(normalizeError);
+  if (isSuccess(res)) {
+    message(t("oauth.unbindSuccess"), { type: "success" });
+    load();
+  } else if (res.detail) {
+    message(res.detail, { type: "warning" });
+  }
 };
 
 /** 发起绑定：取授权地址后整体跳转，IdP 回跳 `/#/oauth/callback` 完成绑定 */

@@ -13,8 +13,10 @@
   padding: 0 !important;
 }
 
-.is-dark {
-  /* 暗色 tooltip（v-tippy 独立 popper 引擎）：必须高于 EP 弹层，取值见 z-index 阶梯 */
+/* 暗色 tooltip（v-tippy 独立 popper 引擎）：必须高于 EP 弹层，取值见 z-index 阶梯。
+   只命中 tippy 的暗色主题；`.is-dark` 是 EP 暗色弹层自身的类，误命中会把
+   dropdown / select 等弹层抬到 9999，压过 dialog 与遮罩层叠。 */
+.tippy-box[data-theme="dark"] {
   z-index: var(--z-index-tippy) !important;
 }
 

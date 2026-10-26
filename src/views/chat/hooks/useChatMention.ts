@@ -1,4 +1,4 @@
-import { computed, type ComputedRef, type Ref } from "vue";
+import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { ChatPeer, ChatRoomItem } from "@/api/chat";
 
 /**
@@ -22,8 +22,15 @@ export function useChatMention(deps: {
     return matched ? matched[1].toLowerCase() : null;
   });
 
+  /** 键盘导航当前项；Esc 关闭后本次输入不再弹出（继续输入即恢复） */
+  const mentionIndex = ref(0);
+  const mentionDismissed = ref(false);
+  watch(deps.draft, () => {
+    mentionDismissed.value = false;
+  });
+
   const mentionCandidates = computed(() => {
-    if (mentionQuery.value === null) return [];
+    if (mentionDismissed.value || mentionQuery.value === null) return [];
     // 群聊：成员预览并入候选（离线/非最近成员也能被 @），按 pk 去重
     const pool = new Map<number, ChatPeer>();
     (deps.room.value?.members ?? []).forEach(peer => pool.set(peer.pk, peer));
@@ -36,6 +43,10 @@ export function useChatMention(deps: {
       .slice(0, 6);
   });
 
+  watch(mentionCandidates, () => {
+    mentionIndex.value = 0;
+  });
+
   function insertMention(peer: ChatPeer) {
     deps.draft.value = deps.draft.value.replace(
       /@([\p{L}\p{N}_\-]*)$/u,
@@ -43,5 +54,31 @@ export function useChatMention(deps: {
     );
   }
 
-  return { mentionCandidates, insertMention };
+  /** 上下键移动候选高亮（循环） */
+  function moveMention(step: number) {
+    const count = mentionCandidates.value.length;
+    if (!count) return;
+    mentionIndex.value = (mentionIndex.value + step + count) % count;
+  }
+
+  /** Enter 选中当前候选；返回是否消费了事件 */
+  function chooseMention() {
+    const peer = mentionCandidates.value[mentionIndex.value];
+    if (!peer) return false;
+    insertMention(peer);
+    return true;
+  }
+
+  function dismissMentions() {
+    mentionDismissed.value = true;
+  }
+
+  return {
+    mentionCandidates,
+    mentionIndex,
+    insertMention,
+    moveMention,
+    chooseMention,
+    dismissMentions
+  };
 }

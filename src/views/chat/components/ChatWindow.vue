@@ -137,7 +137,14 @@ const placeholder = computed(() => {
 });
 
 /** `@` 成员联想（候选口径与选中替换见 hooks/useChatMention.ts，行数门禁抽出） */
-const { mentionCandidates, insertMention } = useChatMention({
+const {
+  mentionCandidates,
+  mentionIndex,
+  insertMention,
+  moveMention,
+  chooseMention,
+  dismissMentions
+} = useChatMention({
   draft,
   room: computed(() => props.room),
   contacts: computed(() => props.contacts)
@@ -216,11 +223,39 @@ const { isFresh } = useListAppendAnimation(() =>
 );
 
 function submit() {
+  // 流式回答期间禁用发送：否则草稿被清空后 sendAi 直接早退，消息会静默丢失
+  if (activeStreaming.value) return;
   const content = draft.value.trim();
   if (!content) return;
   draft.value = "";
   // 由父组件按当前会话类型路由到「普通发送」或「AI 提问」
   emit("send", content);
+}
+
+/** 输入区键盘：@ 候选打开时上下键/Enter/Esc 由候选接管，否则 Enter 发送 */
+function onComposerKeydown(event: Event | KeyboardEvent) {
+  if (!(event instanceof KeyboardEvent)) return;
+  if (mentionCandidates.value.length) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveMention(event.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      chooseMention();
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      dismissMentions();
+      return;
+    }
+  }
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    submit();
+  }
 }
 
 // 切换会话时清空草稿（避免把 A 会话的内容发到 B 会话）。
@@ -336,11 +371,18 @@ watch(
       <div
         v-if="mentionCandidates.length"
         class="mb-2 rounded border border-solid border-(--divider) p-1"
+        role="listbox"
+        aria-label="@"
       >
         <div
-          v-for="peer in mentionCandidates"
+          v-for="(peer, index) in mentionCandidates"
           :key="peer.pk"
           class="sidebar-item cursor-pointer rounded px-2 py-1 text-sm"
+          :class="{
+            'bg-(--el-fill-color-light)': index === mentionIndex
+          }"
+          role="option"
+          :aria-selected="index === mentionIndex"
           @click="insertMention(peer)"
         >
           {{ peer.nickname || peer.username }}
@@ -355,6 +397,7 @@ watch(
         <ChatComposerToolbar
           :can-upload="canUploadAttachment"
           :disabled="!room || uploading"
+          :uploading="uploading"
           @emoji="insertEmoji"
           @send-attachment="(file, kind) => emit('sendAttachment', file, kind)"
         />
@@ -364,18 +407,19 @@ watch(
           :autosize="{ minRows: 2, maxRows: 4 }"
           :placeholder="placeholder"
           :disabled="!room"
-          @keydown.enter.exact.prevent="submit"
+          @keydown="onComposerKeydown"
         />
       </div>
       <div class="mt-2 flex-bc">
         <div class="text-xs text-(--el-text-color-secondary)">
-          <span v-if="isAiRoom && aiEnabled">{{ aiHint }}</span>
+          <span v-if="uploading">{{ t("chat.uploading") }}</span>
+          <span v-else-if="isAiRoom && aiEnabled">{{ aiHint }}</span>
           <span v-else>{{ t("chat.enterHint") }}</span>
         </div>
         <el-button
           type="primary"
           :icon="useRenderIcon(SendIcon)"
-          :disabled="!room || !draft.trim()"
+          :disabled="!room || !draft.trim() || Boolean(activeStreaming)"
           data-testid="chat-send"
           @click="submit"
         >

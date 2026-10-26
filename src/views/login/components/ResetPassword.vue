@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref } from "vue";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";

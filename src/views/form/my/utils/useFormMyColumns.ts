@@ -80,12 +80,23 @@ export function useFormMyColumns({
           _column: { key: "data" },
           label: t("dform.submissionData"),
           minWidth: 240,
-          cellRenderer: ({ row }: { row: RecordType }) =>
-            h(
+          cellRenderer: ({ row }: { row: RecordType }) => {
+            const data = (row as SubmissionItem).data ?? {};
+            const textOptions = {
+              tableRows: (count: number) => t("formData.tableRows", { count })
+            };
+            return h(
               "span",
-              { class: "text-xs" },
-              submissionDataText((row as SubmissionItem).data ?? {})
-            )
+              {
+                class: "block truncate text-xs",
+                title: submissionDataText(data, {
+                  ...textOptions,
+                  maxLength: 0
+                })
+              },
+              submissionDataText(data, textOptions)
+            );
+          }
         } as PageTableColumn);
       }
     });

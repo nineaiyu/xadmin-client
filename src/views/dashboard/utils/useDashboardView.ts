@@ -13,6 +13,7 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import { message } from "@/utils/message";
 
 type Translate = (key: string) => string;
+type SwitchGuard = () => boolean | void | Promise<boolean | void>;
 
 /** 仪表盘展示态：清单加载 / 当前选中 / 分享定位 / 数据集目录 / 卡片刷新信号（切盘经 setSwitchGuard 通知编辑态收口） */
 export function useDashboardView(options: {
@@ -27,14 +28,14 @@ export function useDashboardView(options: {
   const datasets = ref<DatasetItem[]>([]);
   /** 卡片刷新信号：自增经 refreshToken prop 下发，ChartCard 原位重拉（不销毁 ECharts 实例） */
   const refreshKey = ref(0);
-  let switchGuard: (() => void) | null = null;
+  let switchGuard: SwitchGuard | null = null;
 
   const refreshCards = () => {
     refreshKey.value += 1;
   };
 
-  /** 切换仪表盘前的收口钩子（编辑态注册：放弃草稿并退出编辑） */
-  const setSwitchGuard = (guard: () => void) => {
+  /** 切换仪表盘前的收口钩子（编辑态注册：草稿有改动时先确认，放弃草稿才放行） */
+  const setSwitchGuard = (guard: SwitchGuard) => {
     switchGuard = guard;
   };
 
@@ -76,8 +77,8 @@ export function useDashboardView(options: {
   };
 
   /** 选中仪表盘并把 pk 写回地址栏（分享即复制当前 URL） */
-  const selectDashboard = (pk: string) => {
-    switchGuard?.();
+  const selectDashboard = async (pk: string) => {
+    if ((await switchGuard?.()) === false) return;
     current.value = dashboards.value.find(item => item.pk === pk) ?? null;
     syncDashboardQuery();
   };

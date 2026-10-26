@@ -41,6 +41,8 @@ export function usePlusPageState({
 
   const dataList = ref([]);
   const loadingStatus = ref(false);
+  /** 列表请求失败原因（框架四态：错误态 + 重试；成功/发起新请求时清空） */
+  const loadError = ref("");
   // 显式对齐 @pureadmin/table 的 treeProps 期望形状（其 default 字面量类型三字段全必填）
   const treeProps = ref<{
     hasChildren: string;
@@ -96,6 +98,7 @@ export function usePlusPageState({
   return {
     dataList,
     loadingStatus,
+    loadError,
     treeProps,
     selectedNum,
     defaultValue,

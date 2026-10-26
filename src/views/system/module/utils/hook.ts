@@ -56,6 +56,7 @@ export function useSystemModule() {
     loadError,
     saving,
     data: draft.data,
+    dirty: draft.dirty,
     draftPreset: draft.draftPreset,
     draftEnabled: draft.draftEnabled,
     moduleLevelKey,

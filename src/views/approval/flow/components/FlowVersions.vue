@@ -2,7 +2,7 @@
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { usePrompt } from "@/hooks/useMessageBox";
 import ReTableAction from "@/components/ReTableAction";
 import {
   ReReadonlyTable,
@@ -68,8 +68,8 @@ const fetchVersions = () => {
     });
 };
 
-const handleRollback = (version: number) => {
-  ElMessageBox.prompt(
+const handleRollback = async (version: number) => {
+  const answer = await usePrompt()(
     t("systemApprovalFlow.rollbackConfirm", { n: version }),
     t("systemApprovalFlow.rollbackTitle"),
     {
@@ -80,31 +80,24 @@ const handleRollback = (version: number) => {
       // prompt 模式焦点本就在输入框，不存在回车误确认问题）
       confirmButtonClass: "el-button--danger"
     }
-  )
-    .then(({ value }) => {
-      approvalFlowApi
-        .rollback(props.flowPk, version, value || "")
-        .then(res => {
-          if (isSuccess(res)) {
-            message(t("systemApprovalFlow.rollbackSuccess"), {
-              type: "success"
-            });
-            emit("rollback");
-            fetchVersions();
-            return;
-          }
-          // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
-          message(String(res.detail || t("results.failed")), {
-            type: "error"
-          });
-        })
-        .catch(() => {
-          /* HTTP 层错误提示由拦截器统一处理 */
-        });
-    })
-    .catch(() => {
-      // 取消确认框：静默
+  );
+  if (!answer) return;
+  const res = await approvalFlowApi
+    .rollback(props.flowPk, version, answer.value || "")
+    .catch(() => null);
+  if (!res) return;
+  if (isSuccess(res)) {
+    message(t("systemApprovalFlow.rollbackSuccess"), {
+      type: "success"
     });
+    emit("rollback");
+    fetchVersions();
+    return;
+  }
+  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
+  message(String(res.detail || t("results.failed")), {
+    type: "error"
+  });
 };
 
 onMounted(fetchVersions);

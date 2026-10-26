@@ -13,8 +13,10 @@ import {
   type PermissionPreviewEntity
 } from "../src/presets";
 
-/** 四个实体 → 标题 / 抽屉档位 / 内容组件 / 取数端点 */
+/** 四个实体 → 标题 / 抽屉档位 / 取数端点 */
 const ENTITIES: PermissionPreviewEntity[] = ["user", "dept", "role", "post"];
+/** 内容组件由页面层传入（组件库不反向依赖 views），测试用最小桩 */
+const COMPONENT = { render: () => null };
 
 describe("PREVIEW_PRESETS", () => {
   afterEach(() => {
@@ -38,9 +40,6 @@ describe("PREVIEW_PRESETS", () => {
     expect(PREVIEW_PRESETS.post).toMatchObject({
       titleKey: "permissionPreview.postTitle",
       size: "lg"
-    });
-    ENTITIES.forEach(entity => {
-      expect(PREVIEW_PRESETS[entity].component).toBeTruthy();
     });
   });
 
@@ -74,7 +73,12 @@ describe("openPermissionPreview", () => {
 
   it("按预设打开抽屉（标题/宽度/内容组件）", () => {
     const t = (key: string) => key;
-    openPermissionPreview({ entity: "role", row: { pk: "1" }, t });
+    openPermissionPreview({
+      entity: "role",
+      row: { pk: "1" },
+      t,
+      component: COMPONENT
+    });
     expect(addDrawer).toHaveBeenCalledTimes(1);
     const options = vi.mocked(addDrawer).mock.calls[0][0];
     expect(options.title).toBe("permissionPreview.roleTitle");
@@ -89,7 +93,8 @@ describe("openPermissionPreview", () => {
       openPermissionPreview({
         entity: "tenant" as PermissionPreviewEntity,
         row: { pk: "1" },
-        t: (key: string) => key
+        t: (key: string) => key,
+        component: COMPONENT
       })
     ).not.toThrow();
     expect(addDrawer).not.toHaveBeenCalled();

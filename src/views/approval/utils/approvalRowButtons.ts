@@ -1,6 +1,6 @@
-import { ElMessageBox } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
+import { usePrompt } from "@/hooks/useMessageBox";
 import { approvalApi } from "@/api/approval/approval";
 import {
   handleOperation,
@@ -41,7 +41,7 @@ export function pendingRowButtons(
       onClick: async ({ row, loading }) => {
         // 通过意见选填（多级链逐级留痕；后端 comment 字段自始支持，此前前端
         // 不采集导致审批意见恒为空）：输入弹窗承载确认语义，取消输入即中止
-        const { value } = await ElMessageBox.prompt(
+        const answer = await usePrompt()(
           t("approval.approveConfirm", {
             no: String(row.pk).slice(0, 8).toUpperCase()
           }),
@@ -51,8 +51,9 @@ export function pendingRowButtons(
             cancelButtonText: t("buttons.cancel"),
             inputPlaceholder: t("approval.commentPlaceholder")
           }
-        ).catch(() => ({ value: null as string | null }));
-        if (value === null) return;
+        );
+        if (!answer) return;
+        const value = answer.value;
         loading.value = true;
         handleOperation({
           t,

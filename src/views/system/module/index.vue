@@ -5,6 +5,7 @@ import {
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
 import { useSystemModule } from "./utils/hook";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 
 defineOptions({
   name: "SystemModule" // 必须定义，用于菜单自动匹配组件
@@ -16,6 +17,7 @@ const {
   loadError,
   saving,
   data,
+  dirty,
   draftPreset,
   draftEnabled,
   moduleLevelKey,
@@ -33,6 +35,9 @@ const {
   copyText,
   load
 } = useSystemModule();
+
+/** 裁剪草稿未保存时离开页面先确认（保存/恢复基线后 dirty 自动复位） */
+useDesignerGuard({ dirty, namespace: "systemModule" });
 
 /** 模块清单列：等级/状态/开关为复杂单元格，走具名插槽渲染 */
 const moduleColumns = computed<ReadonlyColumn[]>(() => [

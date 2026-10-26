@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import {
   getScreenCommandState,
   sendScreenCommand,
@@ -62,7 +63,7 @@ const loadState = async (syncTargetOnLoad = true) => {
   // 异常时抛 unhandled rejection 且面板以默认态静默呈现，用户误判为展示端 auto）
   const res = await getScreenCommandState(props.row.pk).catch(error => ({
     code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error),
+    detail: normalizeError(error).detail,
     data: { state: state.value }
   }));
   if (!isSuccess(res)) {
@@ -80,7 +81,7 @@ const apply = async (payload: ScreenCommandPayload) => {
     // 异常归一为可读失败结果：避免请求异常时函数抛出、按钮 loading 悬挂
     const res = await sendScreenCommand(props.row.pk, payload).catch(error => ({
       code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
+      detail: normalizeError(error).detail,
       data: { state: state.value }
     }));
     if (isSuccess(res)) {

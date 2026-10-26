@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
 import { downloadBlob } from "@/utils/download";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePrompt } from "@/hooks/useMessageBox";
 import { useUserStoreHook } from "@/store/modules/user";
 import { exportPlan, type SavedPlan } from "../utils/plan-service";
 
@@ -24,6 +24,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const confirm = useConfirm();
+const prompt = usePrompt();
 const currentUsername = useUserStoreHook().username;
 
 /** 当前选中项（按主键，允许本人与共享方案同名共存） */
@@ -50,35 +51,29 @@ const sharedOnSave = ref(false);
 const fileInput = ref<HTMLInputElement>();
 
 async function onSave() {
-  try {
-    const { value } = await ElMessageBox.prompt(
-      t("codegen.planSavePrompt"),
-      t("codegen.planSave"),
-      { inputPattern: /\S+/, inputErrorMessage: t("codegen.planNameRequired") }
-    );
-    emit("save", value.trim(), sharedOnSave.value);
-  } catch {
-    // 用户取消
-  }
+  const result = await prompt(
+    t("codegen.planSavePrompt"),
+    t("codegen.planSave"),
+    { inputPattern: /\S+/, inputErrorMessage: t("codegen.planNameRequired") }
+  );
+  if (!result?.value.trim()) return;
+  emit("save", result.value.trim(), sharedOnSave.value);
 }
 
 async function onRename() {
   const plan = selectedPlan.value;
   if (!plan) return notifyEmpty();
-  try {
-    const { value } = await ElMessageBox.prompt(
-      t("codegen.planRenamePrompt"),
-      t("codegen.planRename"),
-      {
-        inputValue: plan.name,
-        inputPattern: /\S+/,
-        inputErrorMessage: t("codegen.planNameRequired")
-      }
-    );
-    emit("update", plan.pk, { name: value.trim() });
-  } catch {
-    // 用户取消
-  }
+  const result = await prompt(
+    t("codegen.planRenamePrompt"),
+    t("codegen.planRename"),
+    {
+      inputValue: plan.name,
+      inputPattern: /\S+/,
+      inputErrorMessage: t("codegen.planNameRequired")
+    }
+  );
+  if (!result?.value.trim()) return;
+  emit("update", plan.pk, { name: result.value.trim() });
 }
 
 async function onToggleShared() {

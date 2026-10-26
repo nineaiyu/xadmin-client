@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useSendVerifyCode } from "./hooks";
-import Motion from "@/views/login/utils/motion";
+import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";

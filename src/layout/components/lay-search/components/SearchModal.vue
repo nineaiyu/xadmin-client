@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
 import { match } from "pinyin-pro";
@@ -316,7 +317,7 @@ function handleDrag(item: dragItem) {
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     v-model="show"
     :before-close="handleClose"
     :show-close="false"
@@ -440,7 +441,7 @@ function handleDrag(item: dragItem) {
     <template #footer>
       <SearchFooter :total="resultOptions.length" />
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>
 
 <style lang="scss" scoped>

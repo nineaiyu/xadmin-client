@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 /**
  * 全局身份二次验证对话框（命令式服务，见 index.ts confirmMfa）。
  * 敏感接口返回 412（type=user_confirm_required）时由 http 层唤起，
@@ -116,7 +117,7 @@ const emit = defineEmits<{ destroy: [] }>();
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     v-model="visible"
     :title="$t('mfa.confirmTitle')"
     :width="dialogSize('sm')"
@@ -201,5 +202,5 @@ const emit = defineEmits<{ destroy: [] }>();
         {{ $t("mfa.verify") }}
       </el-button>
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>

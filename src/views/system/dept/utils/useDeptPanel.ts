@@ -10,6 +10,7 @@ import {
   openManageDrawer
 } from "@/components/ReActionPanel";
 import { openPermissionPreview } from "@/components/RePermissionPreview/src/presets";
+import DeptPermissionPreview from "../components/DeptPermissionPreview.vue";
 import { buildDeptActionGroups, type DeptActionAuth } from "./deptActions";
 import { buildDeptMetaItems, buildDeptProfileData } from "./deptPanel";
 import type { DeptRow } from "./types";
@@ -37,7 +38,12 @@ export function useDeptPanel({
 
   /** 部门授权预览抽屉（挂载角色 / 数据权限 / 字段权限 / 成员采样；统一走预览预设表） */
   const openPreview = (row: DeptRow) => {
-    openPermissionPreview({ entity: "dept", row, t });
+    openPermissionPreview({
+      entity: "dept",
+      row,
+      t,
+      component: DeptPermissionPreview
+    });
   };
 
   function openDeptPanel(row: DeptRow) {

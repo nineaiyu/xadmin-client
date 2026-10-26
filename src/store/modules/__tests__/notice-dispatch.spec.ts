@@ -59,7 +59,7 @@ vi.mock("@/utils/desktopNotify", async () => {
   );
   return { ...actual, notifyDesktop: mocks.desktopNotify };
 });
-vi.mock("@/views/system/notice/utils/noticeDetailDialog", () => ({
+vi.mock("@/components/ReNoticeShow/noticeDetailDialog", () => ({
   openNoticeDetailDialog: mocks.openNoticeDetailDialog
 }));
 

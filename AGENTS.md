@@ -45,14 +45,19 @@ pnpm gen:module              # 模块脚手架
    没有批量入口时会出现「能勾选但无动作」的死交互（6 个只读页已补齐）。
 2. **权限从 `auth` 快照来**：默认按钮的显示由框架按 `动作:组件名` 判定；跨资源 / 自定义按钮用
    `hasAuth("动作:组件名")` 显式判定——`getDefaultAuths` 只按组件名拼通用动作清单。
-3. 弹层统一用 `addDialog` / `addDrawer`（ReDialog / ReDrawer）。**新增/编辑表单先按
+3. 弹层统一用 `addDialog` / `addDrawer`（ReDialog / ReDrawer）；随组件生命周期存续的
+   常驻面板用声明式壳 `OverlayDialog` / `OverlayDrawer`（`src/components/overlay/`，同一
+   overlay 内核）。直接写 `<el-dialog>` / `<el-drawer>` 会被 `pnpm check:overlays` 拦下，
+   存量用法登记在 `scripts/declarative-overlays-baseline.json`（只减不增）；确需内联的
+   只读展示型场景在登记表写明理由。**新增/编辑表单先按
    `xadmin-server/docs/architecture/component-handbook.md` §六「表单选型判定」选型**：
    标准模型 CRUD 走元数据表单（`addOrEditOptions`，字段来自后端），只有无模型元数据 /
    schema 不同源 / 元数据表达不了的混合形态才手写 `XxxForm.vue` + `getPayload()`
    （校验失败返回 null 以保持弹层），且必须登记 `scripts/handwritten-forms-exempt.json`
    （`pnpm check:forms` 会拦）；**先 `done()` 关弹层再 `await load*()` 刷新**。
-4. API 调用统一 `.catch(error => ({code: -1, data: null, detail}))` 归一异常，避免 `beforeSure`
-   抛错导致 loading 悬挂。注意：**列表页（RePlusPage/defineListPage）的请求与错误反馈由框架
+4. API 调用统一 `.catch(normalizeError)`（`@/utils/apiError`）归一异常，避免 `beforeSure`
+   抛错导致 loading 悬挂；不要手写 `String(error)` 或同构的 `{code: -1, detail}` 映射。
+   注意：**列表页（RePlusPage/defineListPage）的请求与错误反馈由框架
    内部消化，页面零 try/catch；该归一样板仅手写调用点需要**（全仓手写 `code: -1` 仅个位数）。
 5. **200 + 业务码失败必须页面显式处理**（`res.code === SUCCESS_CODE` 之外的分支要 `ElMessage.error`）——
    http 拦截器只管 4xx/5xx。
@@ -95,7 +100,7 @@ pnpm test:run                                  # vitest（含契约 / 词条 / �
 pnpm typecheck && pnpm lint
 for g in api-routes as-unknown bundle-size color-literals contract contract-usage docs-components \
          entry-closure font-size-literals forms hook-length i18n ledger-ids menu-components \
-         menu-permissions module-cycles openapi-types platform-config quarantine success-code \
+         menu-permissions module-cycles openapi-types overlays platform-config quarantine success-code \
          tables template-root version; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（≤500；ReIcon/data.ts 与 api/types/openapi.d.ts
                                           # 在脚本内 EXEMPT 豁免，其余基线只减不增）

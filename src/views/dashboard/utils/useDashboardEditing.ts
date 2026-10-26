@@ -8,6 +8,7 @@ import {
 } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
 import { createDraftSortable, moveCardInList } from "./dashboardActions";
+import { useDraftDirty } from "./useDraftDirty";
 
 type Translate = (key: string) => string;
 
@@ -28,13 +29,12 @@ export function useDashboardEditing(options: {
   const layoutKey = computed(() =>
     draftLayout.value.map(card => card.id).join("|")
   );
+  const dirty = useDraftDirty(editing, draftLayout, current);
   const rowRef = ref();
-
   const { init: setupSortable, destroy: destroySortable } = createDraftSortable(
     draftLayout,
     () => rowRef.value?.$el as HTMLElement | undefined
   );
-
   const stopEditing = () => {
     if (!editing.value) return;
     editing.value = false;
@@ -103,6 +103,7 @@ export function useDashboardEditing(options: {
   };
 
   return {
+    dirty,
     editing,
     layout,
     layoutKey,

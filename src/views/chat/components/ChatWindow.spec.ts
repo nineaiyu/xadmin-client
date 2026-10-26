@@ -9,7 +9,7 @@ import {
   ElTooltip
 } from "element-plus";
 
-import type { ChatRoomItem } from "@/api/chat";
+import type { ChatPeer, ChatRoomItem } from "@/api/chat";
 
 const mocks = vi.hoisted(() => ({
   message: vi.fn(),
@@ -85,6 +85,7 @@ const mountWindow = (
     room?: ChatRoomItem | null;
     aiHint?: string;
     pendingCount?: number;
+    contacts?: ChatPeer[];
   } = {}
 ) =>
   mount(ChatWindow, {
@@ -115,7 +116,7 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     const wrapper = mountWindow();
     const textarea = wrapper.find('[data-testid="chat-input"] textarea');
     await textarea.setValue("  hello ");
-    await textarea.trigger("keydown.enter");
+    await textarea.trigger("keydown", { key: "Enter" });
 
     expect(wrapper.emitted("send")).toEqual([["hello"]]);
     expect(
@@ -185,5 +186,53 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     expect(wrapper.text()).toContain("chat.newMessages");
     await wrapper.find(".absolute.bottom-40").trigger("click");
     expect(wrapper.emitted("scrollToBottom")).toHaveLength(1);
+  });
+});
+
+describe("@ 提及键盘导航", () => {
+  const peer = {
+    pk: 2,
+    username: "alice",
+    nickname: "Alice",
+    online: true
+  } as ChatPeer;
+
+  it("候选打开时 Enter 选中成员而不是发送，随后 Enter 才发送", async () => {
+    const wrapper = mountWindow({ contacts: [peer] });
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("@");
+    expect(wrapper.text()).toContain("Alice");
+
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("@alice ");
+
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toEqual([["@alice"]]);
+  });
+
+  it("上下键循环高亮候选，Esc 关闭候选后 Enter 正常发送", async () => {
+    const second = {
+      ...peer,
+      pk: 3,
+      username: "bob",
+      nickname: "Bob"
+    } as ChatPeer;
+    const wrapper = mountWindow({ contacts: [peer, second] });
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("@");
+    expect(
+      wrapper.findAll('[role="option"]')[0].attributes("aria-selected")
+    ).toBe("true");
+
+    await textarea.trigger("keydown", { key: "ArrowDown" });
+    expect(
+      wrapper.findAll('[role="option"]')[1].attributes("aria-selected")
+    ).toBe("true");
+
+    await textarea.trigger("keydown", { key: "Escape" });
+    expect(wrapper.findAll('[role="option"]')).toHaveLength(0);
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toEqual([["@"]]);
   });
 });

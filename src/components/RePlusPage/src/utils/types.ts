@@ -183,6 +183,12 @@ interface RePlusPageProps {
   title?: string;
   auth: Partial<ApiAuthProps>;
   /**
+   * 四态策略：framework（默认）在无 list 权限时渲染拒绝态、请求失败时渲染
+   * 错误态 + 重试入口；legacy 维持旧行为（无权限整页空白、失败仅 http 层 toast）。
+   * 存量页面按需显式传 legacy 做过渡，新页面不要关闭。
+   */
+  statePolicy?: "framework" | "legacy";
+  /**
    * 是否有多选框， 一般为第一列
    */
   selection?: boolean;

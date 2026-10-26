@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -115,7 +116,7 @@ watch(visible, open => {
 </script>
 
 <template>
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     :title="
       dept
@@ -170,5 +171,5 @@ watch(visible, open => {
         {{ t("systemMyScope.viewInUserPage") }}
       </el-button>
     </template>
-  </el-drawer>
+  </OverlayDrawer>
 </template>

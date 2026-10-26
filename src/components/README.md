@@ -20,7 +20,7 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 | 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`、`ReScrollbar`（到达态事件）、`ReBackTop`、`ReMessageNotifications`、`ReNoticeShow`、`ReTaskCenterDrawer`、`ReTaskLogDialog`                               |
 | 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReStat`（StatBar/StatGrid）、`ReCollapseParams`（参数折叠）、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`、`ReMenuPermissionTree`                                                                |
 | 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReIconPicker`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm`                                                                                                     |
-| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`                                                                                                                                                                                                                                         |
+| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`；常驻面板的声明式壳 `OverlayDialog` / `OverlayDrawer`（`src/components/overlay/`，与命令式弹层共用滚动锁）                                                                                                                              |
 | 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReResize`（拖拽缩放盒）、`ReTreeLine`（树连接线）、`ReAnimateSelector`（动画选择器）                                                                                                                                        |
 | AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                                                                                                                        |
 | 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`                                                                                                      |
@@ -183,3 +183,21 @@ try {
 - 组件级单测与实现同目录（`__tests__/`），纯逻辑单独成测试文件；
 - 新增组件请同步本文件分组表，并在实现文件头部写清「何时用 / 何时不用」；
 - 依赖使用情况见 `docs/component-dependencies.md`（依赖 → 消费组件映射，用于后续裁剪与升级评估）。
+
+## 七、组件 API 约定
+
+- **emit 一律 camelCase**（如 `optionsChange` / `scrollAt`）：模板侧监听写 kebab
+  （`@options-change`）由 Vue 自动转换；不要在新组件里以 kebab 声明事件名。
+- **v-model 统一 `defineModel()`**：默认模型用 `defineModel<T>()`，具名模型用
+  `defineModel<T>("value")`；不再用 options API 手写 `update:modelValue`。
+  存量 `ReSegmented` 等例外在各组件头部注明，按改动面滚动迁移。
+- **弹层优先 addDialog / addDrawer**（见 `component-handbook.md` §2.2）：一次性表单/确认走命令式；
+  常驻面板 / 组件内部交互走声明式壳 `OverlayDialog` / `OverlayDrawer`（同属 overlay 内核，
+  共用滚动锁与尺寸档位）。直接写 `<el-dialog>` / `<el-drawer>` 会被 `pnpm check:overlays` 拦下，
+  存量登记在 `scripts/declarative-overlays-baseline.json`（只减不增）。
+- **确认交互**：二值确认用 `useConfirm`；输入型确认用 `useMessageBox` 的
+  `usePrompt` / 提示用 `useAlert`，取消/关闭返回 `null` / `false`（不抛错）。
+- **组件关系注记**：`ReSliderCaptcha` 仅 playground 引用（演示保留，不进入业务页）；
+  `ReTableAction` 由 `FlowVersions` 直用（操作列渲染器形态，不强制走 ButtonOperation）；
+  `MessageThreadPanel` 的 15 个 props 是刻意设计（骨架透传的单一契约，勿再增散参数，
+  新增能力优先走 config 对象或插槽）。

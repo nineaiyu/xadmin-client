@@ -238,6 +238,66 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
   ).toEqual([]);
 });
 
+test("a11y 扩面：表单设计器（字段表 + 实时预览）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["表单采集"], "/form-collection/designer/index");
+  const createButton = page.getByRole("button", { name: "新建表单" }).first();
+  await expect(createButton).toBeVisible({ timeout: 15_000 });
+  await createButton.click();
+
+  const dialog = page.locator(".el-dialog").filter({ hasText: "新建表单" });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  // 制造一个真实字段：设计页签的行内编辑 + 属性按钮进入扫描面
+  await dialog.getByRole("button", { name: "添加字段" }).click();
+  const firstRow = dialog.locator(".el-table__row").first();
+  await firstRow.locator("input").first().fill("a11y_field");
+  await firstRow.locator("input").nth(1).fill("无障碍字段");
+
+  const designViolations = await scanBlockingViolations(page);
+  expect(
+    designViolations,
+    `表单设计器（设计页签）a11y 违规：\n${formatViolations(designViolations)}`
+  ).toEqual([]);
+
+  // 实时预览页签：复用填报组件渲染当前未保存 schema，属表单最密集的扫描面
+  await dialog.getByRole("tab", { name: "预览" }).click();
+  const preview = dialog.getByTestId("designer-preview-pane");
+  await expect(preview).toBeVisible({ timeout: 15_000 });
+  await expect(preview.getByLabel("无障碍字段")).toBeVisible({
+    timeout: 15_000
+  });
+
+  const previewViolations = await scanBlockingViolations(page);
+  expect(
+    previewViolations,
+    `表单设计器（实时预览）a11y 违规：\n${formatViolations(previewViolations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：用户新增弹窗（元数据密集表单）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  // 等元数据表单字段就绪再扫（半渲染态没有代表意义）
+  await expect(dialog.getByLabel("用户名")).toBeVisible({ timeout: 15_000 });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `用户新增弹窗 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
 test("a11y 扩面：首页（welcome 卡片）无 critical/serious 违规", async ({
   page
 }) => {

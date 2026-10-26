@@ -2,9 +2,10 @@
 import { computed, nextTick, ref, watch, type Ref } from "vue";
 import PureTable from "@pureadmin/table";
 import { usePlusPage } from "./utils/hook";
-import { RePlusPageProps, type PageColumn } from "./utils/types";
-import { INJECTED_COLUMN_KEYS } from "./utils/constants";
+import { RePlusPageProps } from "./utils/types";
+import { useSearchMetaReady } from "./utils/useSearchMetaReady";
 import ReRecycleBin from "./components/ReRecycleBin.vue";
+import PageState from "./components/PageState.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { cloneDeep, deviceDetection, getKeyList } from "@pureadmin/utils";
@@ -24,6 +25,7 @@ import { DEFAULT_ADAPTIVE_OFFSET_BOTTOM } from "./utils/tableMeasureMath";
 import { resolveOperationRow as resolveOperationRowUtil } from "./utils/operationRow";
 import { useSearchCardCollapse } from "./utils/useSearchCardCollapse";
 import { useListMetaWarning } from "./utils/useListMetaWarning";
+import { usePageState } from "./utils/pageState";
 
 import ButtonOperation, {
   ButtonsCallBackParams
@@ -124,6 +126,7 @@ const {
   searchFields,
   searchColumns,
   loadingStatus,
+  loadError,
   tablePagination,
   tableBarButtons,
   operationButtons,
@@ -150,6 +153,13 @@ const applySavedView = createApplySavedView({
   reload: handleGetData
 });
 
+/**
+ * 框架四态：无 list 权限 → denied；列表请求失败 → error（内联重试）；
+ * 其余交给表格自身的 loading / empty（保留原有表头与批量入口）。
+ * `statePolicy="legacy"` 仅作存量页面过渡：维持「无权限整页空白、失败仅 toast」。
+ */
+const { frameworkState, renderPage } = usePageState(props, loadError);
+
 /** 搜索列类型变化（select/date-picker 等）后自动触发查询（模板内联类型注解会触发 eslint 解析错误，改 script 函数） */
 const onSearchColumnChange = (_: unknown, column: { valueType?: string }) => {
   const canChangeType = ["select", "date-picker", "time-picker", "time-select"];
@@ -168,22 +178,7 @@ const onRowClick = (row: Record<string, unknown>) => emit("rowClick", row);
  * 底部留出可见空白（2026-09-18 用户反馈「搜索框变高」回归修复）。
  * 到达信号与表格列首帧规避共用同一组列装配来源（dynamicColumns / listColumns）。
  */
-/** 是否为框架注入列（选择列 / 操作列）——它们无条件存在，不来自后端元数据 */
-const isInjectedColumn = (column?: PageColumn) =>
-  INJECTED_COLUMN_KEYS.includes(
-    (column?._column?.key ?? "") as (typeof INJECTED_COLUMN_KEYS)[number]
-  );
-
-const searchMetaReady = computed(
-  () =>
-    // 搜索区字段元数据到达（只有 search-fields、无表格列的页面）
-    searchColumns.value.length > 0 ||
-    // 表格列元数据到达：**必须排除框架注入的选择列 / 操作列**。
-    // 不能看 listColumns.length（恒 ≥1）也不能看 tableBarData.dynamicColumns
-    // （初值就是 listColumns 同一数组），否则本判定恒为真——
-    // 元数据缺失警示条与搜索卡片高度占位会双双失效（实测踩过）。
-    listColumns.value.some(column => !isInjectedColumn(column))
-);
+const searchMetaReady = useSearchMetaReady(searchColumns, listColumns);
 
 // 元数据到达前根节点可能尚未渲染（auth 依赖异步数据时）：到达后补偿测量与观察
 watch(searchMetaReady, ready => {
@@ -258,7 +253,7 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="auth?.list" ref="rootRef" class="main re-plus-page">
+  <div v-if="renderPage" ref="rootRef" class="main re-plus-page">
     <el-alert
       v-if="metaMissing"
       class="mb-2"
@@ -269,185 +264,193 @@ defineExpose({
       :title="t('plus.metaMissingTitle')"
       :description="t('plus.metaMissingDetail')"
     />
-    <div
-      v-if="api?.fields"
-      ref="searchCardRef"
-      :class="[
-        're-plus-search-card bg-bg-card w-99/100 px-6 py-3',
-        { 're-plus-search-card--pending': !searchMetaReady }
-      ]"
-    >
-      <PlusSearch
-        v-model="searchFields"
-        :col-props="{
-          xs: 24,
-          sm: 12,
-          md: 6,
-          lg: 6,
-          xl: 6
-        }"
-        :columns="searchColumns as never"
-        :default-values="cloneDeep(defaultValue)"
-        :row-props="{
-          gutter: 24
-        }"
-        :search-loading="loadingStatus"
-        :show-number="deviceDetection() ? 1 : 3"
-        :needValidate="true"
-        label-width="100px"
-        v-bind="plusSearchProps"
-        @change="onSearchColumnChange"
-        @reset="handleReset"
-        @search="handleSearch"
-        @collapse="onSearchCollapse"
-        @keyup.enter="handleSearch"
-      />
-    </div>
-    <div class="re-plus-table-card" :class="tableBarData.renderClass">
-      <el-scrollbar class="max-h-15!">
-        <PureTableBar
-          v-if="tableBar"
-          :columns="listColumns"
-          v-bind="pureTableBarProps"
-          @refresh="handleGetData"
-          @change="handleTableBarChange"
-          @fullscreen="handleFullscreen"
-        >
-          <template #title>
-            <el-space>
-              <p class="font-bold truncate mr-3">
-                {{ title ?? pageTitle }}
-              </p>
-              <div
-                v-if="selectedNum > 0"
-                v-motion-fade
-                class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
-              >
-                <span
-                  class="text-fg-subtle"
-                  style="font-size: var(--font-size-base)"
-                >
-                  {{ t("buttons.selected", { count: selectedNum }) }}
-                </span>
-                <el-button text type="primary" @click="onSelectionCancel">
-                  {{ t("buttons.cancel") }}
-                </el-button>
-              </div>
-            </el-space>
-          </template>
-          <template #buttons>
-            <div class="flex">
-              <div v-if="selectedNum > 0" v-motion-fade class="mr-3 flex">
-                <el-popconfirm
-                  v-if="auth.batchDestroy"
-                  :title="
-                    t('buttons.batchDeleteConfirm', { count: selectedNum })
-                  "
-                  @confirm="handleManyDelete"
-                >
-                  <template #reference>
-                    <el-button
-                      :icon="useRenderIcon(Delete)"
-                      plain
-                      type="danger"
-                    >
-                      {{ t("buttons.batchDestroy") }}
-                    </el-button>
-                  </template>
-                </el-popconfirm>
-              </div>
-              <advanced-filter-entry
-                v-if="advancedFilter && auth?.list"
-                v-model="searchFields"
-                :columns="tableBarData.dynamicColumns as never"
-                @applied="handleGetData"
-              />
-              <saved-views
-                v-if="savedViews && auth?.list"
-                :conditions="searchFields"
-                :ready="searchMetaReady"
-                :columns="tableBarData.dynamicColumns as never"
-                @apply="applySavedView"
-              />
-              <button-operation
-                :show-number="99"
-                v-bind="tableBarButtonsProps"
-                :buttons="tableBarButtons"
-                @clickAction="
-                  data => {
-                    emit('tableBarClickAction', data);
-                  }
-                "
-              />
-              <re-recycle-bin
-                v-if="recycleBinEnabled"
-                :api="recycleBinApi"
-                :locale-name="localeName"
-                :columns="recycleBinColumns"
-                :can-restore="canRecycleRestore"
-                :can-purge="canRecyclePurge"
-                @changed="handleGetData"
-              />
-              <slot name="barButtons" />
-            </div>
-          </template>
-        </PureTableBar>
-      </el-scrollbar>
-      <pure-table
-        ref="tableRef"
-        :class="{ 're-plus-table-layout-pending': tableLayoutPending }"
-        :row-class-name="viewedRowClassName"
-        :adaptiveConfig="{ offsetBottom: 110 }"
-        :columns="tableBarData.dynamicColumns as never"
-        :data="dataList"
-        :header-cell-style="TABLE_HEADER_CELL_STYLE"
-        :loading="loadingStatus"
-        :pagination="tablePagination"
-        :size="tableBarData.size as ComponentSize"
-        adaptive
-        align-whole="center"
-        default-expand-all
-        row-key="pk"
-        table-layout="fixed"
-        v-bind="pureTableProps as object"
-        :tree-props="getTreeProps()"
-        @selection-change="handleSelectionChange"
-        @row-click="onRowClick"
-        @page-size-change="handleSizeChange"
-        @page-current-change="handleCurrentChange"
-        @sort-change="handleSortChange"
+    <PageState
+      v-if="frameworkState !== 'ready'"
+      :state="frameworkState"
+      :error-detail="loadError"
+      @retry="handleGetData"
+    />
+    <template v-if="frameworkState === 'ready'">
+      <div
+        v-if="api?.fields"
+        ref="searchCardRef"
+        :class="[
+          're-plus-search-card bg-bg-card w-99/100 px-6 py-3',
+          { 're-plus-search-card--pending': !searchMetaReady }
+        ]"
       >
-        <template #operation="{ row, index }">
-          <button-operation
-            :row="resolveOperationRow(row, index)"
-            :size="tableBarData.size as ComponentSize"
-            v-bind="operationButtonsProps"
-            :buttons="operationButtons"
-            @clickAction="
-              data => {
-                emit('operationClickAction', data);
-              }
-            "
-          />
-          <slot
-            name="extOperation"
-            v-bind="{
-              row: resolveOperationRow(row, index),
-              size: tableBarData.size
-            }"
-          />
-        </template>
-        <template
-          v-for="item in getKeyList(listColumns, 'slot').filter(x => {
-            return x !== 'operation';
-          })"
-          :key="item"
-          #[item]="{ row, size }"
+        <PlusSearch
+          v-model="searchFields"
+          :col-props="{
+            xs: 24,
+            sm: 12,
+            md: 6,
+            lg: 6,
+            xl: 6
+          }"
+          :columns="searchColumns as never"
+          :default-values="cloneDeep(defaultValue)"
+          :row-props="{
+            gutter: 24
+          }"
+          :search-loading="loadingStatus"
+          :show-number="deviceDetection() ? 1 : 3"
+          :needValidate="true"
+          label-width="100px"
+          v-bind="plusSearchProps"
+          @change="onSearchColumnChange"
+          @reset="handleReset"
+          @search="handleSearch"
+          @collapse="onSearchCollapse"
+          @keyup.enter="handleSearch"
+        />
+      </div>
+      <div class="re-plus-table-card" :class="tableBarData.renderClass">
+        <el-scrollbar class="max-h-15!">
+          <PureTableBar
+            v-if="tableBar"
+            :columns="listColumns"
+            v-bind="pureTableBarProps"
+            @refresh="handleGetData"
+            @change="handleTableBarChange"
+            @fullscreen="handleFullscreen"
+          >
+            <template #title>
+              <el-space>
+                <p class="font-bold truncate mr-3">
+                  {{ title ?? pageTitle }}
+                </p>
+                <div
+                  v-if="selectedNum > 0"
+                  v-motion-fade
+                  class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
+                >
+                  <span
+                    class="text-fg-subtle"
+                    style="font-size: var(--font-size-base)"
+                  >
+                    {{ t("buttons.selected", { count: selectedNum }) }}
+                  </span>
+                  <el-button text type="primary" @click="onSelectionCancel">
+                    {{ t("buttons.cancel") }}
+                  </el-button>
+                </div>
+              </el-space>
+            </template>
+            <template #buttons>
+              <div class="flex">
+                <div v-if="selectedNum > 0" v-motion-fade class="mr-3 flex">
+                  <el-popconfirm
+                    v-if="auth.batchDestroy"
+                    :title="
+                      t('buttons.batchDeleteConfirm', { count: selectedNum })
+                    "
+                    @confirm="handleManyDelete"
+                  >
+                    <template #reference>
+                      <el-button
+                        :icon="useRenderIcon(Delete)"
+                        plain
+                        type="danger"
+                      >
+                        {{ t("buttons.batchDestroy") }}
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </div>
+                <advanced-filter-entry
+                  v-if="advancedFilter && auth?.list"
+                  v-model="searchFields"
+                  :columns="tableBarData.dynamicColumns as never"
+                  @applied="handleGetData"
+                />
+                <saved-views
+                  v-if="savedViews && auth?.list"
+                  :conditions="searchFields"
+                  :ready="searchMetaReady"
+                  :columns="tableBarData.dynamicColumns as never"
+                  @apply="applySavedView"
+                />
+                <button-operation
+                  :show-number="99"
+                  v-bind="tableBarButtonsProps"
+                  :buttons="tableBarButtons"
+                  @clickAction="
+                    data => {
+                      emit('tableBarClickAction', data);
+                    }
+                  "
+                />
+                <re-recycle-bin
+                  v-if="recycleBinEnabled"
+                  :api="recycleBinApi"
+                  :locale-name="localeName"
+                  :columns="recycleBinColumns"
+                  :can-restore="canRecycleRestore"
+                  :can-purge="canRecyclePurge"
+                  @changed="handleGetData"
+                />
+                <slot name="barButtons" />
+              </div>
+            </template>
+          </PureTableBar>
+        </el-scrollbar>
+        <pure-table
+          ref="tableRef"
+          :class="{ 're-plus-table-layout-pending': tableLayoutPending }"
+          :row-class-name="viewedRowClassName"
+          :adaptiveConfig="{ offsetBottom: 110 }"
+          :columns="tableBarData.dynamicColumns as never"
+          :data="dataList"
+          :header-cell-style="TABLE_HEADER_CELL_STYLE"
+          :loading="loadingStatus"
+          :pagination="tablePagination"
+          :size="tableBarData.size as ComponentSize"
+          adaptive
+          align-whole="center"
+          default-expand-all
+          row-key="pk"
+          table-layout="fixed"
+          v-bind="pureTableProps as object"
+          :tree-props="getTreeProps()"
+          @selection-change="handleSelectionChange"
+          @row-click="onRowClick"
+          @page-size-change="handleSizeChange"
+          @page-current-change="handleCurrentChange"
+          @sort-change="handleSortChange"
         >
-          <slot :key="item" :name="item" v-bind="{ row, size }" />
-        </template>
-      </pure-table>
-    </div>
+          <template #operation="{ row, index }">
+            <button-operation
+              :row="resolveOperationRow(row, index)"
+              :size="tableBarData.size as ComponentSize"
+              v-bind="operationButtonsProps"
+              :buttons="operationButtons"
+              @clickAction="
+                data => {
+                  emit('operationClickAction', data);
+                }
+              "
+            />
+            <slot
+              name="extOperation"
+              v-bind="{
+                row: resolveOperationRow(row, index),
+                size: tableBarData.size
+              }"
+            />
+          </template>
+          <template
+            v-for="item in getKeyList(listColumns, 'slot').filter(x => {
+              return x !== 'operation';
+            })"
+            :key="item"
+            #[item]="{ row, size }"
+          >
+            <slot :key="item" :name="item" v-bind="{ row, size }" />
+          </template>
+        </pure-table>
+      </div>
+    </template>
   </div>
 </template>
 

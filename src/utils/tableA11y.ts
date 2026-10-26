@@ -30,7 +30,9 @@ export function syncTableA11y(
   );
   if (tables.length === 0) return 0;
 
-  const desc = root.querySelector<HTMLElement>(`[${TABLE_A11Y_DESC_ATTR}]`);
+  const desc = root.matches(`[${TABLE_A11Y_DESC_ATTR}]`)
+    ? root
+    : root.querySelector<HTMLElement>(`[${TABLE_A11Y_DESC_ATTR}]`);
   const descId = desc ? desc.id || FALLBACK_DESC_ID : "";
 
   tables.forEach(table => {

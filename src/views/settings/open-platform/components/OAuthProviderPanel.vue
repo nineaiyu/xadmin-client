@@ -1,9 +1,10 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
 import { computed, h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { message } from "@/utils/message";
+import { useAlert } from "@/hooks/useMessageBox";
 import OAuthProviderCard from "./OAuthProviderCard.vue";
 import { useOAuthProviders } from "../utils/useOAuthProviders";
 import {
@@ -21,6 +22,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const alert = useAlert();
 const { providers, flavors, loading, saving, loadFailed, load, save, test } =
   useOAuthProviders();
 const rawVisible = ref(false);
@@ -72,7 +74,7 @@ const onTest = async (provider: OAuthProvider) => {
     message(result.detail, { type: "error" });
     return;
   }
-  ElMessageBox.alert(
+  void alert(
     h(
       "pre",
       { class: "whitespace-pre-wrap break-all" },
@@ -136,7 +138,7 @@ onMounted(load);
         @test="onTest"
       />
     </template>
-    <el-dialog
+    <OverlayDialog
       v-model="rawVisible"
       :title="t('oauthProvider.rawMode')"
       width="720px"
@@ -160,6 +162,6 @@ onMounted(load);
           {{ t("oauthProvider.rawApply") }}
         </el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { copyText } from "@/utils/clipboard";
 import { hasAuth } from "@/router/utils";
 import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
@@ -152,7 +153,7 @@ const exportReport = async (command: string) => {
     }
     message(t("systemMonitor.exportDone"), { type: "success" });
   } catch (error) {
-    message(String((error as { detail?: string })?.detail ?? error), {
+    message(normalizeError(error).detail, {
       type: "error"
     });
   } finally {
@@ -304,7 +305,7 @@ onMounted(() => {
         <div
           v-for="item in metricSummaries"
           :key="item.metric"
-          class="flex items-center gap-2 rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-(--el-fill-color-light)"
+          class="flex items-center gap-2 rounded bg-(--el-fill-color-light) px-3 py-1.5 text-sm"
         >
           <span class="text-(--el-text-color-regular)">{{ item.label }}</span>
           <span class="font-medium">{{ item.avg }}</span>

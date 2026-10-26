@@ -2,7 +2,7 @@
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { LOGIN_PAGE, operates } from "../utils/enums";

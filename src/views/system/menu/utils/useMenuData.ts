@@ -32,6 +32,7 @@ export function useMenuData() {
   const {
     rawRows,
     loading,
+    loadError,
     busyPks,
     setBusy,
     getMenuData,
@@ -74,6 +75,7 @@ export function useMenuData() {
   return {
     api,
     loading,
+    loadError,
     treeData,
     flatRows,
     rowIndex,

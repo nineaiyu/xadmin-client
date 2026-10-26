@@ -79,6 +79,11 @@ jobs:
         # RePlusPage；存量基线只减不增（scripts/bare-tables-baseline.json）
         run: pnpm check:tables
 
+      - name: Declarative overlay gate
+        # 弹层选型收口：直接手写 <el-dialog> / <el-drawer> 必须改走 addDialog / addDrawer；
+        # 存量按文件基线只减不增（scripts/declarative-overlays-baseline.json）
+        run: pnpm check:overlays
+
       - name: Quarantine manifest gate
         # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
         # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）

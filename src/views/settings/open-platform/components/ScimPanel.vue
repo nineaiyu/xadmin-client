@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElAlert, ElButton, ElMessageBox } from "element-plus";
+import { ElAlert, ElButton } from "element-plus";
 import { isSuccess } from "@/api/types";
 import { settingsScimApi } from "@/api/system/settings";
 import {
@@ -10,7 +10,10 @@ import {
 } from "@/components/ReReadonlyTable";
 import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
+import { useConfirm } from "@/hooks/useConfirm";
+import { useAlert } from "@/hooks/useMessageBox";
 import { copyText } from "@/utils/clipboard";
+import { normalizeError } from "@/utils/apiError";
 import { formatDateTime } from "@/utils/format";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
@@ -28,6 +31,8 @@ interface SyncRow {
 }
 
 const { t } = useI18n();
+const confirm = useConfirm();
+const alert = useAlert();
 const auth = settingAuth("ScimSetting", true);
 const canRotate = hasAuth("rotateToken:ScimSetting");
 const canSyncStatus = hasAuth("syncStatus:ScimSetting");
@@ -51,7 +56,7 @@ const item = {
 };
 
 const showToken = (token: string) => {
-  ElMessageBox.alert(
+  void alert(
     h("div", { class: "space-y-3" }, [
       h(ElAlert, {
         type: "warning",
@@ -83,6 +88,9 @@ const showToken = (token: string) => {
 };
 
 const rotateToken = async () => {
+  if (!(await confirm(t("settingScim.rotateConfirm"), { danger: true }))) {
+    return;
+  }
   rotating.value = true;
   try {
     const res = await settingsScimApi.rotateToken();
@@ -93,7 +101,7 @@ const rotateToken = async () => {
     showToken(String(res.data?.token ?? ""));
     await loadSyncStatus();
   } catch (error) {
-    message(String(error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     rotating.value = false;
   }

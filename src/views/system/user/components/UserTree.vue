@@ -54,7 +54,7 @@ const buttonClass = computed(() => {
     "text-sm!",
     "reset-margin",
     "text-(--el-text-color-regular)!",
-    "dark:text-white!",
+    "dark:text-(--el-text-color-primary)!",
     "dark:hover:text-primary!"
   ];
 });
@@ -198,7 +198,7 @@ defineExpose({ onTreeReset });
                 'truncate',
                 searchValue.trim().length > 0 &&
                   node.label.includes(searchValue) &&
-                  'text-red-500'
+                  'text-(--el-color-danger)'
               ]"
             >
               {{ node.label }}

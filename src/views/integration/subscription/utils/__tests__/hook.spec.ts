@@ -24,6 +24,10 @@ vi.mock("@/utils/message", () => ({ message: mocks.message }));
 vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => async () => true
 }));
+vi.mock("@/hooks/useMessageBox", () => ({
+  useAlert: () => vi.fn(),
+  closeMessageBox: vi.fn()
+}));
 vi.mock("@/components/RePlusPage", () => ({
   handleOperation: vi.fn(),
   formatPageColumns: (cols: unknown) => cols

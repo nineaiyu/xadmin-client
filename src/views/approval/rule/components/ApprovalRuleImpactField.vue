@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { h } from "vue";
+import { useAlert } from "@/hooks/useMessageBox";
 import {
   approvalRuleApi,
   type ApprovalRuleImpact
@@ -29,6 +29,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const alert = useAlert();
 const loading = ref(false);
 const result = ref<ApprovalRuleImpact | null>(null);
 const error = ref("");
@@ -79,9 +80,9 @@ const showItems = (data: ApprovalRuleImpact) => {
       t("approvalRule.impactNote")
     )
   ]);
-  ElMessageBox.alert(body, t("approvalRule.impactTitle"), {
+  void alert(body, t("approvalRule.impactTitle"), {
     confirmButtonText: t("buttons.close")
-  }).catch(() => undefined);
+  });
 };
 
 const preview = async () => {

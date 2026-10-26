@@ -13,9 +13,10 @@ defineOptions({
 const { t } = useI18n();
 const route = useRoute();
 // 导入记录页签按权限显隐（权限码挂在下载中心菜单下）
+const showExportTab = hasAuth("list:SystemExportRecord");
 const showImportTab = hasAuth("list:SystemImportRecord");
 const tabs = computed(() => [
-  { key: "export", auth: true },
+  { key: "export", auth: showExportTab },
   { key: "import", auth: showImportTab }
 ]);
 // 页签写入 URL（history.replaceState，不触发路由取消在途请求）
@@ -26,7 +27,11 @@ watch(activeTab, key => syncTabQuery(key));
 </script>
 <template>
   <el-tabs v-model="activeTab">
-    <el-tab-pane :label="t('menus.exportRecord')" name="export">
+    <el-tab-pane
+      v-if="showExportTab"
+      :label="t('menus.exportRecord')"
+      name="export"
+    >
       <ExportPanel />
     </el-tab-pane>
     <el-tab-pane

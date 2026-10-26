@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import DataTable from "@/components/DataTable";
@@ -150,7 +151,7 @@ const save = () => {
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     :model-value="modelValue"
     :title="t('dform.optionsEditorTitle')"
     width="720px"
@@ -267,5 +268,5 @@ const save = () => {
         {{ t("buttons.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>

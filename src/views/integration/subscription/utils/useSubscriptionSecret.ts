@@ -1,4 +1,3 @@
-import { ElMessageBox } from "element-plus";
 import type { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import {
@@ -8,12 +7,14 @@ import {
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useAlert } from "@/hooks/useMessageBox";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** 订阅密钥轮换：二次确认 → 只展示一次的新密钥明文 → 行内 has_secret 置真 */
 export function useSubscriptionSecret({ t }: { t: TFunction }) {
   const confirm = useConfirm();
+  const alert = useAlert();
   const rotateSecret = async (row: WebhookSubscriptionItem) => {
     if (
       !(await confirm(t("webhook.rotateSecretConfirm"), {
@@ -28,7 +29,7 @@ export function useSubscriptionSecret({ t }: { t: TFunction }) {
       .catch(normalizeError);
     if (isSuccess(res)) {
       row.has_secret = true;
-      await ElMessageBox.alert(
+      await alert(
         `${t("webhook.rotateSecretHint")}\n${res.data?.secret ?? ""}`,
         t("webhook.rotateSecretTitle"),
         { confirmButtonText: t("webhook.confirm") }

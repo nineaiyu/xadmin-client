@@ -1,5 +1,6 @@
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree } from "@/utils/tree";
 import { buildListParams, splitDateRangeFields } from "./listParams";
@@ -22,6 +23,7 @@ export function createPageRequest({
   routeParams,
   dataList,
   loadingStatus,
+  loadError,
   searchFields,
   tablePagination,
   getColumnData,
@@ -34,6 +36,8 @@ export function createPageRequest({
   routeParams: Record<string, unknown>;
   dataList: Ref<unknown[]>;
   loadingStatus: Ref<boolean>;
+  /** 列表请求失败原因：框架错误态据此渲染重试入口 */
+  loadError: Ref<string>;
   searchFields: Ref<{
     size?: number;
     page?: number;
@@ -65,6 +69,7 @@ export function createPageRequest({
     }
     const requestSeq = ++latestRequestSeq;
     loadingStatus.value = true;
+    loadError.value = "";
 
     // 日期区间字段拆分为 _after/_before（就地写入搜索字段，区间选择器回显共用）
     splitDateRangeFields(searchFields.value);
@@ -116,14 +121,16 @@ export function createPageRequest({
             }
           }
         } else {
+          loadError.value = String(res.detail ?? t("results.failed"));
           message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         }
         emit("searchComplete", { routeParams, searchFields, dataList, res });
         loadingStatus.value = false;
       })
-      .catch(() => {
-        // 过期请求的失败同样忽略；其它失败的提示由 http 层统一给出，此处只收尾 loading
+      .catch(error => {
+        // 过期请求的失败同样忽略；其它失败保留 http 层 toast，同时记录原因供内联错误态重试
         if (requestSeq !== latestRequestSeq) return;
+        loadError.value = normalizeError(error).detail || t("results.failed");
         loadingStatus.value = false;
       });
   };

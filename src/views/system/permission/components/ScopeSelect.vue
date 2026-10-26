@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, isRef, nextTick, ref, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FilterNodeMethodFunction, TreeInstance } from "element-plus";
@@ -154,7 +155,7 @@ function handleConfirm() {
     </el-text>
   </div>
 
-  <el-dialog
+  <OverlayDialog
     v-model="dialogVisible"
     append-to-body
     destroy-on-close
@@ -225,7 +226,7 @@ function handleConfirm() {
         {{ t("buttons.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>
 
 <style lang="scss" scoped>

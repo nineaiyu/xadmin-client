@@ -54,8 +54,13 @@ const props = withDefaults(
   }
 );
 
-/** 具名插槽：列插槽名由 columns[].slot 声明，expand 为展开行内容 */
-defineSlots<Record<string, ((_scope: RecordType) => unknown) | undefined>>();
+/** 具名插槽：列插槽名由 columns[].slot 声明，expand 为展开行内容；作用域与 el-table-column 一致 */
+defineSlots<
+  Record<
+    string,
+    ((_scope: { row: RecordType; $index: number }) => unknown) | undefined
+  >
+>();
 
 const emit = defineEmits<{ "page-change": [page: number] }>();
 

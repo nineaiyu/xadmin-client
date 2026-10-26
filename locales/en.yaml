@@ -1099,6 +1099,8 @@ oauth:
 
 plus:
   fileLink: File link
+  noListPermission: You do not have permission to view this page. Contact an administrator.
+  retry: Retry
   metaMissingTitle: Failed to load column configuration
   metaMissingDetail: "The search and table columns of this page are generated from backend metadata, which is currently unavailable. Please refresh and retry; if it persists, contact the administrator (common causes: page not registered, serializer fields not declared, or missing page permission)."
   detailBlankTitle: Detail data is empty
@@ -2568,6 +2570,7 @@ chat:
   offline: Offline
   onlineCount: "{count} online"
   connecting: Connecting...
+  uploading: Uploading attachment...
   enterHint: Enter to send, Shift + Enter for a new line
   mentionHint: Type {'@'} to mention an online member
   loadMore: Load earlier messages
@@ -2655,6 +2658,7 @@ chat:
 
 login:
   confirm: Confirm
+  typeItSingleElement: Make sure there is exactly one element with the 'type-it' class
   captchaImage: Captcha image
   captchaRefresh: Click to refresh the captcha
   verifyCodeRequired: Please request a verification code first
@@ -2708,6 +2712,7 @@ login:
   smsVerify: SMS Auth
 
 welcome:
+  noOperateLog: No operation logs yet
   aiDailyTitle: AI Daily Report
   aiDailyPending: Pending approvals
   aiDailyAlerts: Monitor alerts
@@ -3387,6 +3392,11 @@ mask:
 dashboard:
   moveUp: Move card up
   moveDown: Move card down
+  unsaved: Unsaved layout changes
+  leaveConfirm: Unsaved layout changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay on this dashboard
+  refreshing: Refreshing linked data
   datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   exportImage: Export image
   drillViewData: View data
@@ -4197,6 +4207,7 @@ aiConfig:
   capabilities: Capabilities
   probed_at: Probed at
 dform:
+  removeFieldConfirm: Delete field "{name}"? Fields referenced by formulas/linkages are validated or dropped on save; reconfigure after deletion.
   editOptions: "Edit options"
   optionsEditorTitle: "Edit complex options"
   optionValue: "Option value"
@@ -4212,6 +4223,10 @@ dform:
   detailFallback: Failed to load details, showing list data instead
   noApprovalNeeded: No approval required
   designerTitle: Form Design
+  designTab: Design
+  previewTab: Preview
+  previewHint: Live preview of the current design (including unsaved fields and linkages). Fill it in to test the behavior; nothing is submitted
+  previewEmpty: Add a field to preview the fill-in experience here
   fillTitle: Available Forms
   withdraw: Withdraw
   withdrawConfirm: Withdraw the approval request for "{name}"? You will need to submit it again
@@ -4629,6 +4644,10 @@ oauthAuthorize:
   pkceOptional: This app does not require PKCE
 
 systemModule:
+  unsaved: Unsaved trimming changes
+  leaveConfirm: Module trimming changes are not saved. Leave and discard them?
+  leave: Leave
+  stay: Stay
   currentPreset: Current effective preset
   enabledSummary: "{enabled} / {total} modules enabled"
   restartTip: Trimming takes effect after a service restart; disabling only hides entry points and APIs, and never deletes data
@@ -4710,6 +4729,49 @@ pickerShortcuts:
   thisYear: This year
 
 playground:
+  desc:
+    ReText: "Truncated text + tippy tooltip (expandable)"
+    ReEmpty: "Empty state (hint / icon / size options)"
+    ReResult: "Generic result state (info/success/warning/danger/offline)"
+    ReStat: "Stat bar StatBar / stat grid StatGrid"
+    ReCountTo: "Number rolling animation (normal + bounce)"
+    ReJsonViewer: "JSON tree viewer (lazy vue-json-pretty)"
+    ReSkeleton: "Skeleton screen (text / fill variants)"
+    ReScrollbar: "Enhanced scrollbar (reach events + mask)"
+    ReCol: "Grid column (pureadmin upstream)"
+    ReSplitPane: "Draggable split pane"
+    ReResize: "Resize box (eight handles)"
+    ReCollapseParams: "Collapsible params panel (name/value/description)"
+    RePage: "Generic page shell (header + content + footer)"
+    ReNavDrawer: "Navigation drawer"
+    ReIconPicker: "Icon picker (thin ReIcon wrapper)"
+    ReAnimateSelector: "animate.css animation selector"
+    ReImageVerify: "Image captcha (self-contained canvas)"
+    ReSliderCaptcha: "Slider captcha (keyboard + touch accessible)"
+    ReSendVerifyCode: "Send verification code (countdown button, needs backend)"
+    ReCropper: "Image cropping"
+    RePictureUpload: "Crop-preview image upload"
+    ReApiSelect: "Remote data select / tree select (incl. ReApiTreeSelect)"
+    RePlusSearch: "Entity search select"
+    ReDialog: "Unified dialog entry (component + command API)"
+    ReDrawer: "Unified drawer entry (component + command API)"
+    ReStateContainer: "loading/empty/error/ready four-state container"
+    ReMfaConfirm: "Command-style MFA confirmation dialog"
+    ReNoticeShow: "Notice display"
+    ReMessageNotifications: "Message notifications"
+    ReTaskCenterDrawer: "Task center drawer"
+    ReTaskLogDialog: "Task log dialog"
+    ReReadonlyTable: "Read-only compact key/value table"
+    ReRenderContent: "Content renderer (string/component/VNode → VNode)"
+    ReIcon: "Offline icon renderer + useRenderIcon"
+    ReMenuPermissionTree: "Menu permission tree"
+    RePermissionPreview: "Permission preview"
+    ReActionPanel: "Entity management action drawer"
+    ReTreeLine: "el-tree / el-tree-v2 connector lines"
+    ReBackTop: "Back to top (native button)"
+    RePlusPage: "Metadata-driven list page ecosystem (incl. ReRecycleBin)"
+    RePureTableBar: "Table toolbar (for {'@'}pureadmin/table)"
+    ReTableAction: "Table action column (primary + more menu)"
   intro: "{count} in-house components; Sample = interactive, Docs = handbook"
   searchPlaceholder: Search by name or purpose
   noMatch: No matching component
@@ -4745,6 +4807,14 @@ playground:
   paramOwnerDesc: On-call owner
   verifyState: State
 codegen:
+  unsaved: Unsaved generator configuration
+  leaveConfirm: Generator configuration has unsaved changes. Leave and discard them?
+  leave: Leave
+  stay: Stay
+  modelsLoadFailed: Failed to load models
+  planLoadFailed: Failed to load the field plan
+  previewLoadFailed: Failed to preview artifacts
+  downloadFailed: Failed to download generated code
   aiDraft: AI Draft
   aiDraftTitle: AI Field Draft
   aiDraftLabel: Page description
@@ -4888,6 +4958,7 @@ settingOpenPlatform:
 settingScim:
   rotateToken: Generate / Rotate Token
   rotateHint: The previous token becomes invalid immediately; the new token is shown only once.
+  rotateConfirm: The previous token will be invalidated immediately and the IdP must be updated. Generate a new token?
   rotateTitle: SCIM Token
   tokenOnce: Copy it and configure it in the IdP now; it cannot be viewed again after closing.
   rotateFailed: Token rotation failed

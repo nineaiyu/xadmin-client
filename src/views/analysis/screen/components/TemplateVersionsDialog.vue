@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -83,7 +84,7 @@ const columns = computed<ReadonlyColumn[]>(() => [
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     :model-value="modelValue"
     :title="`${t('dataScreen.templateVersions')} · ${templateName}`"
     :width="dialogSize('md')"
@@ -116,7 +117,7 @@ const columns = computed<ReadonlyColumn[]>(() => [
         </el-button>
       </template>
     </ReReadonlyTable>
-  </el-dialog>
+  </OverlayDialog>
 </template>
 
 <style lang="scss" scoped>

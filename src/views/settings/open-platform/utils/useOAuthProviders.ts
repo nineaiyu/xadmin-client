@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import { settingsOAuthProviderApi } from "@/api/system/settings";
 import {
   normalizeProvider,
@@ -55,7 +56,7 @@ export function useOAuthProviders() {
       ).map(normalizeProvider);
       return { ok: true, detail: "" };
     } catch (error) {
-      return { ok: false, detail: String(error) };
+      return { ok: false, detail: normalizeError(error).detail };
     } finally {
       saving.value = false;
     }
@@ -75,7 +76,7 @@ export function useOAuthProviders() {
       }
       return { ok: true, detail: res.detail || "", data: res.data };
     } catch (error) {
-      return { ok: false, detail: String(error), data: null };
+      return { ok: false, detail: normalizeError(error).detail, data: null };
     }
   };
 

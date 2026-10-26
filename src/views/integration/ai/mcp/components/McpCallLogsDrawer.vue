@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import DataTable from "@/components/DataTable";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import {
   mcpCallLogApi,
   type McpCallLogItem,
@@ -47,13 +48,7 @@ const load = async () => {
         // 服务端 ok 是布尔过滤器（?ok=false 取失败行）：传 "failed" 会被当空值忽略
         ...(outcome.value === "all" ? {} : { ok: outcome.value === "ok" })
       })
-      .catch(
-        (error: { detail?: string; message?: string } | null | undefined) => ({
-          code: -1,
-          data: null,
-          detail: error?.detail ?? error?.message
-        })
-      );
+      .catch(normalizeError);
     if (!isSuccess(res)) {
       rows.value = [];
       total.value = 0;

@@ -1099,6 +1099,8 @@ oauth:
 
 plus:
   fileLink: 文件连接
+  noListPermission: 当前账号没有该页面的查看权限，请联系管理员授权
+  retry: 重试
   metaMissingTitle: 页面列配置加载失败
   metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成，当前未获取到。请刷新页面重试；若持续出现，请联系管理员（常见原因：页面未正确注册、序列化器未声明字段、当前账号缺少页面权限点）。
   detailBlankTitle: 详情数据为空
@@ -2568,6 +2570,7 @@ chat:
   offline: 离线
   onlineCount: "在线 {count} 人"
   connecting: 连接中…
+  uploading: 正在上传附件…
   enterHint: 回车发送，Shift + 回车换行
   mentionHint: 输入 {'@'} 可提及在线成员
   loadMore: 加载更早的消息
@@ -2655,6 +2658,7 @@ chat:
 
 login:
   confirm: 确定
+  typeItSingleElement: 请确保有且只有一个 class 为 'type-it' 的元素
   captchaImage: 图形验证码
   captchaRefresh: 点击刷新图形验证码
   verifyCodeRequired: 请先获取验证码
@@ -2708,6 +2712,7 @@ login:
   smsVerify: 短信验证
 
 welcome:
+  noOperateLog: 暂无操作日志
   aiDailyTitle: AI 日报
   aiDailyPending: 待办审批
   aiDailyAlerts: 监控告警
@@ -3387,6 +3392,11 @@ mask:
 dashboard:
   moveUp: 上移卡片
   moveDown: 下移卡片
+  unsaved: 有未保存的布局改动
+  leaveConfirm: 有未保存的布局改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在当前仪表盘
+  refreshing: 联动刷新中
   datasetsLoadFailed: 数据集列表加载失败，请刷新页面重试
   exportImage: 导出图片
   drillViewData: 查看明细
@@ -4195,6 +4205,7 @@ aiConfig:
   capabilities: 能力画像
   probed_at: 探测时间
 dform:
+  removeFieldConfirm: 删除字段「{name}」？被公式/联动引用的字段会在保存时校验或剔除，删除后需重新配置。
   editOptions: "编辑选项"
   optionsEditorTitle: "编辑复杂选项"
   optionValue: "选项值"
@@ -4206,6 +4217,10 @@ dform:
   detailFallback: 详情加载失败，当前展示列表数据
   noApprovalNeeded: 无需审批
   designerTitle: 表单设计
+  designTab: 设计
+  previewTab: 预览
+  previewHint: 实时预览当前设计（含未保存的字段与联动）；可试填验证效果，预览内容不会提交
+  previewEmpty: 添加字段后可在此实时预览填写效果
   fillTitle: 可填表单
   withdraw: 撤回
   withdrawConfirm: 确定撤回「{name}」的审批申请吗？撤回后需重新提交
@@ -4625,6 +4640,10 @@ oauthAuthorize:
   pkceOptional: 该应用未强制 PKCE
 
 systemModule:
+  unsaved: 有未保存的裁剪改动
+  leaveConfirm: 模块裁剪草稿尚未保存，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在当前页
   currentPreset: 当前生效预设
   enabledSummary: "已启用 {enabled} / {total} 个模块"
   restartTip: 模块裁剪保存后需重启进程生效；关闭模块只隐藏入口与接口，不删除任何数据
@@ -4706,6 +4725,49 @@ pickerShortcuts:
   thisYear: 本年
 
 playground:
+  desc:
+    ReText: "省略文本 + tippy 提示（可展开）"
+    ReEmpty: "空态（可配次级提示 / 图标 / 尺寸档）"
+    ReResult: "通用结果态（info/success/warning/danger/offline）"
+    ReStat: "统计条 StatBar / 统计网格 StatGrid"
+    ReCountTo: "数字滚动动画（普通 + 回弹两形态）"
+    ReJsonViewer: "JSON 树查看（懒加载 vue-json-pretty）"
+    ReSkeleton: "骨架屏（text / fill 两变体）"
+    ReScrollbar: "增强滚动条（到达态事件 + 遮罩）"
+    ReCol: "栅格列（pureadmin 上游件）"
+    ReSplitPane: "可拖拽分栏容器"
+    ReResize: "拖拽缩放盒（八向手柄）"
+    ReCollapseParams: "参数折叠面板（名称/值/说明三列）"
+    RePage: "通用页面骨架（页头 + 内容 + 页脚）"
+    ReNavDrawer: "导航抽屉"
+    ReIconPicker: "图标选择器（薄封装 ReIcon）"
+    ReAnimateSelector: "animate.css 动画选择器"
+    ReImageVerify: "图形验证码（canvas 自包含）"
+    ReSliderCaptcha: "滑块验证码（键盘 + 触屏可达）"
+    ReSendVerifyCode: "验证码发送（倒计时按钮，需后端配置接口）"
+    ReCropper: "图片裁剪"
+    RePictureUpload: "图片裁剪预览上传"
+    ReApiSelect: "远程取数下拉 / 树选（含 ReApiTreeSelect）"
+    RePlusSearch: "实体搜索下拉"
+    ReDialog: "统一弹窗出口（组件注册 + 命令式 API）"
+    ReDrawer: "统一抽屉出口（组件注册 + 命令式 API）"
+    ReStateContainer: "loading/empty/error/ready 四态收敛"
+    ReMfaConfirm: "命令式唤起身份二次验证对话框"
+    ReNoticeShow: "通知展示"
+    ReMessageNotifications: "消息通知"
+    ReTaskCenterDrawer: "任务中心抽屉"
+    ReTaskLogDialog: "任务日志弹窗"
+    ReReadonlyTable: "只读少列键值表"
+    ReRenderContent: "内容渲染器（字符串/组件/VNode → VNode）"
+    ReIcon: "离线图标渲染 + useRenderIcon"
+    ReMenuPermissionTree: "菜单权限树"
+    RePermissionPreview: "权限预览"
+    ReActionPanel: "实体管理动作抽屉"
+    ReTreeLine: "el-tree / el-tree-v2 连接线"
+    ReBackTop: "回到顶部（自实现原生 button）"
+    RePlusPage: "元数据驱动列表页生态（含 ReRecycleBin）"
+    RePureTableBar: "表格工具栏（配 {'@'}pureadmin/table）"
+    ReTableAction: "表格操作列（主操作 + 更多下拉）"
   intro: "共 {count} 个自研组件；「样例」可交互，「文档」看组件手册"
   searchPlaceholder: 搜索组件名或用途
   noMatch: 没有匹配的组件
@@ -4741,6 +4803,14 @@ playground:
   paramOwnerDesc: 值班负责人
   verifyState: 状态
 codegen:
+  unsaved: 有未保存的生成配置
+  leaveConfirm: 生成器配置有未保存改动，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在当前页
+  modelsLoadFailed: 模型清单加载失败
+  planLoadFailed: 字段计划加载失败
+  previewLoadFailed: 产物预览失败
+  downloadFailed: 代码下载失败
   aiDraft: AI 起草
   aiDraftTitle: AI 字段草案
   aiDraftLabel: 页面描述
@@ -4884,6 +4954,7 @@ settingOpenPlatform:
 settingScim:
   rotateToken: 生成/轮换令牌
   rotateHint: 轮换后旧令牌立即失效，新令牌只展示一次。
+  rotateConfirm: 轮换后旧令牌立即失效，IdP 需同步更新；确定生成新令牌吗？
   rotateTitle: SCIM 令牌
   tokenOnce: 请立即复制并配置到 IdP；关闭后无法再次查看。
   rotateFailed: 令牌轮换失败

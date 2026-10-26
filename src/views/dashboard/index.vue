@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import type { DashboardCard } from "@/api/dataset/datasets";
 import {
   REALTIME_REFRESH_SECONDS,
@@ -62,6 +63,7 @@ const {
 } = view;
 
 const {
+  dirty,
   editing,
   layout,
   layoutKey,
@@ -74,8 +76,22 @@ const {
   toggleEdit,
   updateDraft
 } = useDashboardEditing({ t, current, dashboards });
-// 切换仪表盘先退出编辑（未保存草稿随之放弃），与「保存才提交」的草稿语义一致
-setSwitchGuard(stopEditing);
+const { confirmLeave } = useDesignerGuard({
+  dirty,
+  namespace: "dashboard",
+  mode: "dialog"
+});
+/** 切换仪表盘前先收口编辑态：草稿有改动时确认，取消则保持当前盘 */
+setSwitchGuard(async () => {
+  if (dirty.value && !(await confirmLeave())) return false;
+  stopEditing();
+});
+
+/** 编辑 / 退出编辑：退出路径复用同一 dirty 守卫（取消不再静默丢草稿） */
+const onToggleEdit = async () => {
+  if (editing.value && dirty.value && !(await confirmLeave())) return;
+  toggleEdit();
+};
 
 /* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
 const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
@@ -208,7 +224,7 @@ onMounted(async () => {
       :exporting-snapshot="exportingSnapshot"
       @select="selectDashboard"
       @create="openCreateDashboard"
-      @toggle-edit="toggleEdit"
+      @toggle-edit="onToggleEdit"
       @save="saveLayout"
       @remove="removeDashboard"
       @settings="openDashboardSettings"

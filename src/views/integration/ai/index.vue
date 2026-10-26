@@ -54,6 +54,8 @@ const canUseConsole = computed(
 
 const status = ref<AiStatus | null>(null);
 const tools = ref<AiToolsResult | null>(null);
+/** 工具清单加载失败（无缓存值时）：显式提示 + 重试入口，避免入口静默消失 */
+const toolsFailed = ref(false);
 /** 状态拉取失败（尚无可渲染的状态时）显示显式错误态而非整页空白 */
 const statusFailed = ref(false);
 
@@ -69,6 +71,7 @@ const openToolCatalog = () => {
 };
 
 const loadStatus = async () => {
+  toolsFailed.value = false;
   // 状态与工具清单并行拉取（两者独立渲染，串行只是历史写法的两段 RTT）
   const [res, toolRes] = await Promise.all([
     aiAssistantApi.status().catch(() => null),
@@ -88,8 +91,10 @@ const loadStatus = async () => {
   if (canExecute.value) {
     if (toolRes && isSuccess(toolRes)) {
       tools.value = toolRes.data as AiToolsResult;
+      toolsFailed.value = false;
     } else if (!tools.value) {
       // 工具清单失败且无缓存值：显式提示（此前静默，工具数恒显示 0 无从判断）
+      toolsFailed.value = true;
       message(t("ai.toolsLoadFailed"), { type: "warning" });
     }
   }
@@ -254,6 +259,18 @@ onActivated(() => {
         show-icon
         :title="t('ai.statusDegraded')"
       />
+      <el-alert
+        v-if="toolsFailed && canExecute"
+        class="mb-2"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('ai.toolsLoadFailed')"
+      >
+        <el-button link type="primary" size="small" @click="loadStatus">
+          {{ t("ai.retry") }}
+        </el-button>
+      </el-alert>
       <div
         v-if="tools?.tools.length"
         class="mb-2 flex justify-end"

@@ -6,7 +6,7 @@ import NoticeList from "./components/NoticeList.vue";
 import BellIcon from "~icons/lucide/bell";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem, ListItem } from "@/layout/components/lay-notice/data";
-import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
+import { openNoticeDetailDialog } from "@/components/ReNoticeShow/noticeDetailDialog";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";

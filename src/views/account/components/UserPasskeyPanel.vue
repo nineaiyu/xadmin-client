@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import { isPasskeySupported } from "@/utils/webauthn";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePrompt } from "@/hooks/useMessageBox";
 import type { RecordType } from "plus-pro-components";
 import {
   ReReadonlyTable,
@@ -26,6 +26,7 @@ import { normalizeError } from "@/utils/apiError";
 const { t } = useI18n();
 const { registerPasskey } = useWebAuthn();
 const confirm = useConfirm();
+const prompt = usePrompt();
 
 const loading = ref(false);
 const registering = ref(false);
@@ -37,7 +38,7 @@ const load = async () => {
     const res = await passkeyApi.list({ page: 1, size: 50 });
     if (isSuccess(res)) rows.value = res.data?.results ?? [];
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -48,21 +49,11 @@ const register = async () => {
     message(t("passkey.unsupported"), { type: "warning" });
     return;
   }
-  let name = "";
-  try {
-    const input = await ElMessageBox.prompt(
-      t("passkey.namePlaceholder"),
-      t("passkey.add"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        inputValue: ""
-      }
-    );
-    name = String(input.value ?? "").trim();
-  } catch {
-    return;
-  }
+  const input = await prompt(t("passkey.namePlaceholder"), t("passkey.add"), {
+    inputValue: ""
+  });
+  if (!input) return;
+  const name = input.value.trim();
   registering.value = true;
   try {
     const ok = await registerPasskey({
@@ -71,7 +62,7 @@ const register = async () => {
     });
     if (ok) await load();
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     registering.value = false;
   }

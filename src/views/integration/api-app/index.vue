@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Info from "~icons/ri/information-line";
@@ -55,7 +56,7 @@ const {
       :operationButtonsProps="operationButtonsProps"
     />
 
-    <el-dialog
+    <OverlayDialog
       v-model="credentialDialog"
       :title="t('apiApp.credentialTitle')"
       :width="dialogSize('md')"
@@ -116,7 +117,7 @@ const {
           {{ t("apiApp.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
 
     <ApiUsageDrawer
       v-model="usageVisible"

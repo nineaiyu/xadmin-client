@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 /**
  * 卡片下钻明细抽屉：展示卡片数据集的明细行，支持按点击的维度值过滤。
  * 数据走 execute 的请求级 filters（与数据集定义 filters 叠加，同口径校验）；
@@ -92,7 +93,7 @@ function reload() {
 </script>
 
 <template>
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     :title="title"
     size="60%"
@@ -154,5 +155,5 @@ function reload() {
         </div>
       </div>
     </div>
-  </el-drawer>
+  </OverlayDrawer>
 </template>

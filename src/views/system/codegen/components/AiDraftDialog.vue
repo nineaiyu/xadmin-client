@@ -1,10 +1,12 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { MagicStick } from "@element-plus/icons-vue";
 import DataTable from "@/components/DataTable";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import {
   systemCodeGenApi,
   type CodegenAiDraftResult,
@@ -56,13 +58,7 @@ const runDraft = async () => {
     // 不能只让按钮从 loading 恢复（200 + 业务码与网络异常同一出口）
     const res = await systemCodeGenApi
       .aiDraft({ model: props.model, description: description.value.trim() })
-      .catch(
-        (error: { detail?: string; message?: string } | null | undefined) => ({
-          code: -1,
-          data: null,
-          detail: error?.detail ?? error?.message
-        })
-      );
+      .catch(normalizeError);
     if (!isSuccess(res) || !res.data) {
       message(String(res?.detail || t("results.failed")), { type: "error" });
       return;
@@ -114,7 +110,7 @@ defineExpose({ open });
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     v-model="visible"
     :title="t('codegen.aiDraftTitle')"
     width="640px"
@@ -219,5 +215,5 @@ defineExpose({ open });
         {{ t("codegen.aiDraftApply", { count: adoptedFields.length }) }}
       </el-button>
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>

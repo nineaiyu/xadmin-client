@@ -10,10 +10,10 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { MagicStick, Download } from "@element-plus/icons-vue";
-import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { hasAuth } from "@/router/utils";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { isSuccess } from "@/api/types";
-import { downloadByData } from "@pureadmin/utils";
 import { systemCodeGenApi } from "@/api/system/codegen";
 import RePage from "@/components/RePage";
 import type {
@@ -27,22 +27,17 @@ import {
   buildBatchPayload,
   buildPayload,
   defaultFormState,
-  normalizeFormState,
   type CodegenFormState
 } from "./utils/payload";
-import {
-  importPlan,
-  listPlans,
-  removePlan,
-  savePlan,
-  type SavedPlan
-} from "./utils/plan-service";
+import { useCodegenPlans } from "./utils/useCodegenPlans";
+import { useCodegenDownload } from "./utils/useCodegenDownload";
 import BaseConfig from "./components/BaseConfig.vue";
 import OptionSwitches from "./components/OptionSwitches.vue";
 import FieldConfigTable from "./components/FieldConfigTable.vue";
 import AiDraftDialog from "./components/AiDraftDialog.vue";
 import ArtifactPreview from "./components/ArtifactPreview.vue";
 import SavedPlans from "./components/SavedPlans.vue";
+import CodegenLoadError from "./components/CodegenLoadError.vue";
 
 defineOptions({ name: "SystemCodeGen" });
 
@@ -98,14 +93,14 @@ function applyAiDraft(overrides: CodegenFieldOverride[]) {
   state.fields = [...(pkRow ? [pkRow] : []), ...adopted, ...untouched];
 }
 
+const modelsError = ref("");
+const planError = ref("");
 const previewLoading = ref(false);
-const downloadLoading = ref(false);
+const previewError = ref("");
 const artifacts = ref<CodegenArtifact[]>([]);
 /** 实时预览：首次手动预览后，表单/字段变更自动防抖刷新右侧产物 */
 const autoPreview = ref(true);
 const hasPreviewed = ref(false);
-
-const savedPlans = ref<SavedPlan[]>([]);
 
 const canPreview = computed(
   () => Boolean(state.model) && hasAuth("preview:SystemCodeGen")
@@ -123,10 +118,18 @@ const selectedLabel = computed(
 async function loadModels() {
   if (!canLoadModels) return;
   modelsLoading.value = true;
+  modelsError.value = "";
   try {
-    // http 层失败已统一提示，归一为 null：模型下拉保持空态
-    const res = await systemCodeGenApi.models().catch(() => null);
-    if (res && isSuccess(res)) models.value = res.data ?? [];
+    const res = await systemCodeGenApi.models().catch(error => {
+      modelsError.value = normalizeError(error).detail || t("results.failed");
+      return null;
+    });
+    if (!res) return;
+    if (!isSuccess(res)) {
+      modelsError.value = String(res.detail ?? t("results.failed"));
+      return;
+    }
+    models.value = res.data ?? [];
   } finally {
     modelsLoading.value = false;
   }
@@ -142,10 +145,17 @@ async function loadPlan(label: string) {
   if (!label) return;
   if (!canLoadFields) return;
   planLoading.value = true;
+  planError.value = "";
   try {
-    // http 层失败已统一提示，归一为 null：计划区保持空态
-    const res = await systemCodeGenApi.modelFields(label).catch(() => null);
-    if (!res || !isSuccess(res) || !res.data) return;
+    const res = await systemCodeGenApi.modelFields(label).catch(error => {
+      planError.value = normalizeError(error).detail || t("results.failed");
+      return null;
+    });
+    if (!res) return;
+    if (!isSuccess(res) || !res.data) {
+      planError.value = String(res.detail ?? t("results.failed"));
+      return;
+    }
     planData.value = res.data;
     if (pendingPlanState.value) {
       // 载入保存方案：命名与字段配置以方案为准（仅保留当前模型仍存在的字段）
@@ -160,10 +170,27 @@ async function loadPlan(label: string) {
       state.frontend_dir = res.data.defaults.frontend_dir;
       fieldTableRef.value?.rebuild(res.data);
     }
+    // 模型计划装配完成即基线：后续字段/命名改动才触发离开确认
+    baselineSignature.value = payloadSignature.value;
   } finally {
     planLoading.value = false;
   }
 }
+
+const {
+  savedPlans,
+  refreshPlans,
+  onSavePlan,
+  onLoadPlan,
+  onUpdatePlan,
+  onRemovePlan,
+  onImportPlans
+} = useCodegenPlans({
+  t,
+  state,
+  pendingPlanState,
+  loadPlan
+});
 
 function buildSinglePayload(): CodegenPayload {
   return buildPayload(state);
@@ -172,12 +199,20 @@ function buildSinglePayload(): CodegenPayload {
 async function runPreview() {
   if (!state.model) return;
   previewLoading.value = true;
+  previewError.value = "";
   try {
-    // http 层失败已统一提示，归一为 null：产物区保持上次内容
     const res = await systemCodeGenApi
       .preview(buildSinglePayload())
-      .catch(() => null);
-    if (!res || !isSuccess(res)) return;
+      .catch(error => {
+        previewError.value =
+          normalizeError(error).detail || t("results.failed");
+        return null;
+      });
+    if (!res) return;
+    if (!isSuccess(res)) {
+      previewError.value = String(res.detail ?? t("results.failed"));
+      return;
+    }
     artifacts.value = res.data ?? [];
   } finally {
     previewLoading.value = false;
@@ -193,6 +228,27 @@ async function handlePreview() {
 /** 实时预览：载荷签名变化 → 600ms 防抖静默刷新（模型切换由 loadPlan 清场，不触发） */
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 const payloadSignature = computed(() => JSON.stringify(buildSinglePayload()));
+/** 当前模型计划装配完成时的载荷快照：与实时载荷比较判定草稿是否改动 */
+const baselineSignature = ref("");
+const dirty = computed(
+  () =>
+    mode.value === "single" &&
+    Boolean(state.model) &&
+    payloadSignature.value !== baselineSignature.value
+);
+useDesignerGuard({ dirty, namespace: "codegen" });
+
+const { downloadLoading, downloadError, handleDownload } = useCodegenDownload({
+  t,
+  mode,
+  batchModels,
+  state,
+  payloadSignature,
+  baselineSignature,
+  buildSinglePayload,
+  buildBatchPayload: () => buildBatchPayload(batchModels.value, state)
+});
+
 watch(payloadSignature, () => {
   if (mode.value !== "single" || !hasPreviewed.value || !autoPreview.value)
     return;
@@ -205,108 +261,6 @@ watch(payloadSignature, () => {
 onBeforeUnmount(() => {
   if (previewTimer) clearTimeout(previewTimer);
 });
-
-async function handleDownload() {
-  if (mode.value === "batch" && !batchModels.value.length) {
-    message(t("codegen.batchPickFirst"), { type: "warning" });
-    return;
-  }
-  if (mode.value === "single" && !state.model) return;
-  downloadLoading.value = true;
-  try {
-    const payload =
-      mode.value === "batch"
-        ? buildBatchPayload(batchModels.value, state)
-        : buildSinglePayload();
-    // http 层失败已统一提示，归一为 null：直接收尾，不触发下载
-    const res = await systemCodeGenApi.download(payload).catch(() => null);
-    if (!res) return;
-    // 文件名与后端 download 同口径：单模型 generated-{model}.zip（点转连字符）；
-    // 批量载荷无 model 字段，后端按其缺省值 codegen 命名
-    const name =
-      mode.value === "batch"
-        ? "generated-codegen.zip"
-        : `generated-${state.model.replace(".", "-")}.zip`;
-    downloadByData(res.data, name);
-    message(t("codegen.downloadStarted"), { type: "success" });
-  } finally {
-    downloadLoading.value = false;
-  }
-}
-
-// ------------------------------------------------------------- 生成方案（服务端存储）
-async function refreshPlans() {
-  savedPlans.value = await listPlans();
-}
-
-async function onSavePlan(name: string, isShared: boolean) {
-  try {
-    savedPlans.value = await savePlan(
-      name,
-      { ...state, fields: [...state.fields] },
-      isShared
-    );
-    message(t("codegen.planSaved"), { type: "success" });
-  } catch (error) {
-    message(
-      `${t("codegen.planSaveFailed")}：${error instanceof Error ? error.message : error}`,
-      { type: "error" }
-    );
-  }
-}
-
-function onLoadPlan(plan: SavedPlan) {
-  const restored = normalizeFormState(plan.state);
-  pendingPlanState.value = restored;
-  Object.assign(state, restored);
-  state.fields = [...restored.fields];
-  if (state.model) void loadPlan(state.model);
-  message(t("codegen.planLoaded"), { type: "success" });
-}
-
-async function onUpdatePlan(
-  pk: string,
-  patch: { name?: string; is_shared?: boolean }
-) {
-  try {
-    const res = await systemCodeGenApi.planUpdate(pk, patch);
-    if (!res || !isSuccess(res)) {
-      throw new Error(String(res?.detail ?? t("codegen.planOperationFailed")));
-    }
-    await refreshPlans();
-    message(t("codegen.planUpdated"), { type: "success" });
-  } catch (error) {
-    message(
-      `${t("codegen.planUpdateFailed")}：${error instanceof Error ? error.message : error}`,
-      { type: "error" }
-    );
-  }
-}
-
-async function onRemovePlan(pk: string) {
-  try {
-    savedPlans.value = await removePlan(pk);
-    message(t("codegen.planDeleted"), { type: "success" });
-  } catch (error) {
-    message(
-      `${t("codegen.planDeleteFailed")}：${error instanceof Error ? error.message : error}`,
-      { type: "error" }
-    );
-  }
-}
-
-async function onImportPlans(json: string) {
-  try {
-    await importPlan(json);
-    await refreshPlans();
-    message(t("codegen.planImported"), { type: "success" });
-  } catch (error) {
-    message(
-      `${t("codegen.planImportFailed")}：${error instanceof Error ? error.message : error}`,
-      { type: "error" }
-    );
-  }
-}
 
 onMounted(() => {
   loadModels();
@@ -358,6 +312,12 @@ onMounted(() => {
             :closable="false"
             show-icon
             class="mb-2!"
+          />
+          <CodegenLoadError
+            v-if="modelsError"
+            :title="t('codegen.modelsLoadFailed')"
+            :detail="modelsError"
+            @retry="loadModels"
           />
           <BaseConfig
             v-if="mode === 'single'"
@@ -418,6 +378,12 @@ onMounted(() => {
                 </span>
               </el-tooltip>
             </div>
+            <CodegenLoadError
+              v-if="planError"
+              :title="t('codegen.planLoadFailed')"
+              :detail="planError"
+              @retry="loadPlan(state.model)"
+            />
             <FieldConfigTable
               v-show="planData"
               ref="fieldTableRef"
@@ -454,6 +420,15 @@ onMounted(() => {
                 {{ t("codegen.autoPreview") }}
               </el-checkbox>
             </el-form-item>
+            <div v-if="downloadError" class="mt-2">
+              <el-alert
+                type="error"
+                :closable="false"
+                show-icon
+                :title="t('codegen.downloadFailed')"
+                :description="downloadError"
+              />
+            </div>
           </template>
           <el-form-item v-else class="mt-3!">
             <el-button
@@ -467,6 +442,15 @@ onMounted(() => {
               {{ t("codegen.batchDownload") }}
             </el-button>
           </el-form-item>
+          <div v-if="downloadError" class="mt-2">
+            <el-alert
+              type="error"
+              :closable="false"
+              show-icon
+              :title="t('codegen.downloadFailed')"
+              :description="downloadError"
+            />
+          </div>
         </el-col>
         <!-- 右：产物预览 -->
         <el-col :xs="24" :md="14">
@@ -478,6 +462,19 @@ onMounted(() => {
             class="mb-2!"
           />
           <template v-if="mode === 'single'">
+            <div v-if="previewError" class="mb-2 flex items-start gap-2">
+              <el-alert
+                class="flex-1"
+                type="error"
+                :closable="false"
+                show-icon
+                :title="t('codegen.previewLoadFailed')"
+                :description="previewError"
+              />
+              <el-button link type="primary" @click="runPreview">
+                {{ t("plus.retry") }}
+              </el-button>
+            </div>
             <ArtifactPreview
               v-if="artifacts.length"
               :artifacts="artifacts"

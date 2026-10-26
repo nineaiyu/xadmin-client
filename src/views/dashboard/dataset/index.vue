@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
 import DataTable from "@/components/DataTable";
 import { ref } from "vue";
@@ -49,7 +50,7 @@ const {
     />
 
     <!-- 执行预览：只读展示弹窗（既定保留手写场景），明细 / 聚合双视图 -->
-    <el-dialog
+    <OverlayDialog
       v-model="previewDialog"
       :title="t('dataDataset.preview')"
       :width="dialogSize('lg')"
@@ -197,6 +198,6 @@ const {
           :image-size="72"
         />
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

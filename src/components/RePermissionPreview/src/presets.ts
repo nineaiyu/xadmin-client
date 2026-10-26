@@ -2,10 +2,6 @@ import { h, type Component } from "vue";
 import type { useI18n } from "vue-i18n";
 import { addDrawer } from "@/components/ReDrawer";
 import { drawerSize, type DrawerSizeName } from "@/components/ReDialog/size";
-import RolePermissionPreview from "@/views/system/role/components/RolePermissionPreview.vue";
-import PermissionPreview from "@/views/system/user/components/PermissionPreview.vue";
-import PostPermissionPreview from "@/views/system/post/components/PostPermissionPreview.vue";
-import DeptPermissionPreview from "@/views/system/dept/components/DeptPermissionPreview.vue";
 import { PREVIEW_FETCHERS } from "./fetchers";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -15,37 +11,35 @@ export type PermissionPreviewEntity = "user" | "dept" | "role" | "post";
 export type PreviewPreset = {
   titleKey: string;
   size: DrawerSizeName;
-  component: Component;
   fetch: (pk: string) => Promise<unknown>;
 };
 
 /**
- * 权限预览预设表：四个实体只差抽屉标题 / 宽度 / 内容组件与取数端点，
- * 页面侧统一经 `openPermissionPreview` 打开，不再各自拼 addDrawer 参数。
+ * 权限预览预设表：四个实体只差抽屉标题 / 宽度与取数端点，页面侧统一经
+ * `openPermissionPreview` 打开，不再各自拼 addDrawer 参数。
+ *
+ * 内容组件由页面层（views/system/<domain>/utils/*Preview）传入：组件库不反向
+ * 依赖 views 层，`check:module-cycles` 的 FORBIDDEN_EDGES 守护该方向。
  */
 export const PREVIEW_PRESETS = {
   user: {
     titleKey: "permissionPreview.userTitle",
     size: "xl",
-    component: PermissionPreview,
     fetch: PREVIEW_FETCHERS.user
   },
   dept: {
     titleKey: "permissionPreview.deptTitle",
     size: "xl",
-    component: DeptPermissionPreview,
     fetch: PREVIEW_FETCHERS.dept
   },
   role: {
     titleKey: "permissionPreview.roleTitle",
     size: "lg",
-    component: RolePermissionPreview,
     fetch: PREVIEW_FETCHERS.role
   },
   post: {
     titleKey: "permissionPreview.postTitle",
     size: "lg",
-    component: PostPermissionPreview,
     fetch: PREVIEW_FETCHERS.post
   }
 } satisfies Record<PermissionPreviewEntity, PreviewPreset>;
@@ -54,11 +48,13 @@ export const PREVIEW_PRESETS = {
 export function openPermissionPreview({
   entity,
   row,
-  t
+  t,
+  component
 }: {
   entity: PermissionPreviewEntity;
   row: { pk?: string | number };
   t: TFunction;
+  component: Component;
 }) {
   const preset = PREVIEW_PRESETS[entity] as PreviewPreset | undefined;
   if (!preset) return;
@@ -67,6 +63,6 @@ export function openPermissionPreview({
     size: drawerSize(preset.size),
     destroyOnClose: true,
     hideFooter: true,
-    contentRenderer: () => h(preset.component, { row })
+    contentRenderer: () => h(component, { row })
   });
 }

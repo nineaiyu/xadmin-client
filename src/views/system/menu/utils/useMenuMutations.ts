@@ -10,6 +10,7 @@
 import type { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { toPayload } from "./normalize";
 import { displayTitle } from "./useMenuFilter";
 import { removeMenuRows, setMenuRowsActive } from "./menuMutationBatch";
@@ -79,7 +80,7 @@ export function useMenuMutations({
       return true;
     } catch (error) {
       patchRows(new Map([[String(row.pk), { is_active: previous }]]));
-      message(String((error as { detail?: string })?.detail ?? error), {
+      message(normalizeError(error).detail, {
         type: "error"
       });
       return false;

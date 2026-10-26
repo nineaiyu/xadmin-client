@@ -122,7 +122,9 @@ const itemTagType = (itemStatus: string) =>
       >
         <span>
           {{ t("systemMonitor.alertsFiring") }}：
-          <b :class="firing > 0 ? 'text-red-500' : ''">{{ firing }}</b>
+          <b :class="firing > 0 ? 'text-(--el-color-danger)' : ''">{{
+            firing
+          }}</b>
         </span>
         <span>{{ t("systemMonitor.checkedAt") }}：{{ checkedAt }}</span>
       </div>

@@ -25,7 +25,9 @@ const keep = computed(() => {
 const normalComp = computed(() => !keep.value && props.currComp);
 
 watch(useMultiTagsStoreHook().multiTags, (tags: RouteConfigs[]) => {
-  if (!Array.isArray(tags) || !keep.value) {
+  // 清理不依赖当前路由形态：关掉 iframe 页签时用户可能正停在普通页面，
+  // 若以 keep 为门禁则缓存组件与远端资源会一直驻留到下次进入 iframe 路由
+  if (!Array.isArray(tags)) {
     return;
   }
   const iframeTags = tags.filter(i => i.meta?.frameSrc);

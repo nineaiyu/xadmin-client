@@ -6,7 +6,7 @@
  * `useMfaVerify`，与敏感操作确认弹窗共用同一份实现。
  */
 import { computed } from "vue";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { LoginMfaRequired } from "@/api/mfa";
 import { loginMfaSendCodeApi, loginMfaVerifyApi } from "@/api/mfa";

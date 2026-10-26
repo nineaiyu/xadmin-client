@@ -11,6 +11,7 @@ import {
 } from "@/utils/appearancePack";
 import { downloadBlob } from "@/utils/download";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import { systemConfigApi } from "@/api/system/config/system";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import { packErrorMessage } from "./appearancePackMessages";
@@ -74,7 +75,7 @@ export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
     if (!confirmed) return;
     const listRes = await systemConfigApi
       .list<SiteConfigRow>({ key: SITE_CONFIG_KEY })
-      .catch(error => ({ code: -1, data: null, detail: String(error) }));
+      .catch(normalizeError);
     const row = listRes.data?.results?.find(
       item => item.key === SITE_CONFIG_KEY
     );
@@ -86,7 +87,7 @@ export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
       .partialUpdate(row.pk, {
         value: mergeAppearanceConfig(row.value ?? {}, parsed.config)
       })
-      .catch(error => ({ code: -1, data: null, detail: String(error) }));
+      .catch(normalizeError);
     if (!isSuccess(patchRes)) {
       message(patchRes.detail || t("layout.appearancePackImportFailed"), {
         type: "error"
@@ -94,9 +95,7 @@ export function useAppearancePackActions(deps: { contentKey: Ref<number> }) {
       return;
     }
     // 失效配置缓存（与系统配置管理页同一动作）→ 重同步 → 重挂载快照型组件
-    await systemConfigApi
-      .invalid(row.pk)
-      .catch(error => ({ code: -1, data: null, detail: String(error) }));
+    await systemConfigApi.invalid(row.pk).catch(normalizeError);
     await siteConfig.getSiteConfig();
     deps.contentKey.value += 1;
     message(t("layout.appearancePackImported"), { type: "success" });

@@ -161,7 +161,11 @@ usePreferenceAttributes();
 const { lock } = useLockScreen();
 useLayoutShortcutKeys({
   lock,
-  toggleSidebar: () => useAppStoreHook().toggleSideBar(),
+  toggleSidebar: () => {
+    // full-content 布局不渲染侧栏；此时写持久化折叠态会让切回其他布局时侧栏意外收起
+    if (fullContent.value) return;
+    useAppStoreHook().toggleSideBar();
+  },
   openPreferences: () => emitter.emit("openPanel" as never),
   logout: () => useUserStoreHook().logOut()
 });
@@ -278,10 +282,12 @@ function toggle(device: string, bool: boolean) {
 let isAutoCloseSidebar = true;
 
 useResizeObserver(appWrapperRef, entries => {
-  if (isMobile) return;
   const entry = entries[0];
   const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
+  // 视口尺寸无条件同步（SettingStretch 等消费方在移动端也需真实尺寸）；
+  // 移动端的自动折叠/布局回落逻辑仍跳过，避免覆写桌面偏好
   useAppStoreHook().setViewportSize({ width, height });
+  if (isMobile) return;
   if (width <= BREAKPOINTS.md) {
     // 窄屏临时回落竖排：只改运行时 body 属性，不覆写持久化布局偏好——
     // 否则窄屏下刷新页面会把用户的 mix / horizontal 选择永久覆盖成 vertical

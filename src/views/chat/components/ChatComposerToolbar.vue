@@ -23,6 +23,8 @@ defineProps<{
   canUpload: boolean;
   /** 未选会话 / 上传中：禁用附件入口 */
   disabled: boolean;
+  /** 上传进行中：按钮显示 loading，避免点击后无反馈 */
+  uploading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -68,6 +70,7 @@ function detectAttachmentKind(
       v-if="canUpload"
       text
       :disabled="disabled"
+      :loading="uploading"
       :icon="useRenderIcon(PictureIcon)"
       :title="t('chat.attachImage')"
       data-testid="chat-attach-image"
@@ -77,6 +80,7 @@ function detectAttachmentKind(
       v-if="canUpload"
       text
       :disabled="disabled"
+      :loading="uploading"
       :icon="useRenderIcon(PaperclipIcon)"
       :title="t('chat.attachFile')"
       data-testid="chat-attach-file"
