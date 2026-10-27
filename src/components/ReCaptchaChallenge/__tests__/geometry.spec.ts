@@ -5,6 +5,7 @@ import {
   displayAngle,
   moveToAngle,
   moveToPuzzleX,
+  pieceGeometry,
   sliderMax,
   toNaturalPoint
 } from "../src/geometry";
@@ -21,6 +22,43 @@ describe("交互式验证码几何映射", () => {
     expect(moveToPuzzleX(127, 254, 320, 56)).toBe(132);
     expect(moveToPuzzleX(500, 254, 320, 56)).toBe(264);
     expect(moveToPuzzleX(10, 0, 320, 56)).toBe(0);
+  });
+
+  it("拼块视觉位移与提交答案同源（视觉对齐即命中目标 x）", () => {
+    // 弹窗 440px / 设置页预览 310px / 宽容器 640px 三种真实形态：
+    // 修复前视觉用 displayX*scale、答案用另一套自然 px 映射，容器宽度与滑条
+    // 宽度不等时按视觉对齐的答案会偏 6%~12%，超过后端 4px 容差。
+    const cases = [
+      { naturalWidth: 320, pieceSize: 56, stageWidth: 440, sliderWidth: 440 },
+      { naturalWidth: 320, pieceSize: 56, stageWidth: 310, sliderWidth: 310 },
+      { naturalWidth: 640, pieceSize: 56, stageWidth: 300, sliderWidth: 300 }
+    ];
+    for (const item of cases) {
+      const maxMoveX = sliderMax(item.sliderWidth);
+      const movable = item.naturalWidth - item.pieceSize;
+      for (const ratio of [0, 0.25, 0.5, 0.75, 1]) {
+        const targetX = ratio * movable;
+        // 用户把拼块拖到缺口上方 => 滑条位移按同一比例给出
+        const moveX = ratio * maxMoveX;
+        const layout = pieceGeometry(
+          moveX,
+          maxMoveX,
+          item.naturalWidth,
+          item.pieceSize,
+          item.stageWidth
+        );
+        // 视觉位置换算回自然坐标必须等于提交答案
+        expect(layout.leftPx / layout.scale).toBeCloseTo(layout.answerX, 6);
+        // 视觉对齐的答案落在后端 4px 容差内
+        expect(Math.abs(layout.answerX - targetX)).toBeLessThanOrEqual(4);
+      }
+    }
+  });
+
+  it("滑杆拖到末端时拼块停在可移动宽度上限", () => {
+    const layout = pieceGeometry(254, 254, 320, 56, 440);
+    expect(layout.answerX).toBe(264);
+    expect(layout.leftPx).toBeCloseTo(264 * (440 / 320), 6);
   });
 
   it("滑杆映射旋转角 -180~180", () => {

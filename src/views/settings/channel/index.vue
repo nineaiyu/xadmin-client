@@ -1,14 +1,15 @@
 <script lang="ts" setup>
 // 系统设置 → 通知渠道：邮件、钉钉、企业微信、飞书、Webhook 的出站配置。
 // IM 渠道用 ?channel= 收敛后端字段面与测试目标，各页签只读写自己的凭据。
+import { computed } from "vue";
+
 import {
   settingsEmailApi,
   settingsNotifyImApi,
   settingsNotifyWebhookApi
 } from "@/api/system/settings";
-import { computed } from "vue";
 import Setting from "@/views/settings/components/settings-shell/index.vue";
-import { settingsPane } from "@/views/settings/components/settings-shell/types";
+import type { settingsPane } from "@/views/settings/components/settings-shell/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 defineOptions({

@@ -194,6 +194,8 @@ const refreshDiagnostics = () => {
 watch(() => props.refreshKey, refreshDiagnostics);
 
 const handleSubmitSettings = (data: FieldValues) => {
+  // 回车/连点会重复提交：上一次未结束前直接忽略（按钮 loading 挡不住表单回车）
+  if (submitLoading.value) return;
   emit("submit", data);
   if (props.autoSubmit) {
     submitLoading.value = true;
@@ -221,7 +223,7 @@ const handleSubmitSettings = (data: FieldValues) => {
   }
 };
 const handleTest = () => {
-  if (props.auth.test) {
+  if (props.auth.test && !testLoading.value && !submitLoading.value) {
     testLoading.value = true;
     handleOperation({
       t,
@@ -289,7 +291,7 @@ const handleTest = () => {
     >
       <template #footer="{ handleSubmit }">
         <el-button v-if="auth.partialUpdate" @click="getData"
-          >{{ t("buttons.reset") }}
+          >{{ t("setting.reload") }}
         </el-button>
 
         <el-button

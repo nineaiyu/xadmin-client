@@ -26,7 +26,10 @@ const REGISTRY = path.join(
   "scripts",
   "declarative-overlays-baseline.json"
 );
-const OVERLAY = /<el-(?:dialog|drawer)(?![-A-Za-z0-9_])/g;
+// 覆盖模板字面量、PascalCase 组件与 h(ElDialog) 渲染函数三种形态
+const OVERLAY =
+  /(?:<el-(?:dialog|drawer)(?![-A-Za-z0-9_])|<El(?:Dialog|Drawer)(?![\w])|\bh\(\s*El(?:Dialog|Drawer)\b)/g;
+const SOURCE_EXT = new Set([".vue", ".tsx", ".jsx"]);
 
 const reportOnly = process.argv.includes("--report");
 
@@ -35,13 +38,19 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) rows.push(...walk(full));
-    else if (entry.endsWith(".vue")) rows.push(full);
+    else if (SOURCE_EXT.has(path.extname(entry))) rows.push(full);
   }
   return rows;
 }
 
 const rel = file => path.relative(ROOT, file).split(path.sep).join("/");
 const read = file => readFileSync(file, "utf-8");
+/** 注释里的同形字符串不算违规（避免文档示例触发误报） */
+const stripComments = source =>
+  source
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
 
 const registry = JSON.parse(read(REGISTRY)).files;
 const violations = [];
@@ -50,7 +59,7 @@ const hits = [];
 
 for (const file of walk(SRC_DIR)) {
   const key = rel(file);
-  const count = (read(file).match(OVERLAY) ?? []).length;
+  const count = (stripComments(read(file)).match(OVERLAY) ?? []).length;
   if (!count) continue;
   hits.push({ key, count, exempt: Object.hasOwn(registry, key) });
   const entry = registry[key];

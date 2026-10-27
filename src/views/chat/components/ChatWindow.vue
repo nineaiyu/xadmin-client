@@ -412,7 +412,8 @@ watch(
       </div>
       <div class="mt-2 flex-bc">
         <div class="text-xs text-(--el-text-color-secondary)">
-          <span v-if="uploading">{{ t("chat.uploading") }}</span>
+          <span v-if="activeStreaming">{{ t("chat.streamingHint") }}</span>
+          <span v-else-if="uploading">{{ t("chat.uploading") }}</span>
           <span v-else-if="isAiRoom && aiEnabled">{{ aiHint }}</span>
           <span v-else>{{ t("chat.enterHint") }}</span>
         </div>
@@ -420,6 +421,7 @@ watch(
           type="primary"
           :icon="useRenderIcon(SendIcon)"
           :disabled="!room || !draft.trim() || Boolean(activeStreaming)"
+          :title="activeStreaming ? t('chat.streamingHint') : undefined"
           data-testid="chat-send"
           @click="submit"
         >

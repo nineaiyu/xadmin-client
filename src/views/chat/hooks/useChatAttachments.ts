@@ -6,6 +6,7 @@ import {
   type ChatAttachmentKind
 } from "@/api/chat";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { MessageAction } from "@/utils/websocket/protocol";
 import type { WS } from "@/utils/websocket";
@@ -56,8 +57,9 @@ export function useChatAttachments(deps: {
         });
       }
     } catch (error) {
-      const detail = (error as { detail?: string })?.detail;
-      message(String(detail || t("chat.uploadFailed")), { type: "warning" });
+      message(normalizeError(error).detail || t("chat.uploadFailed"), {
+        type: "warning"
+      });
     } finally {
       uploading.value = 0;
     }

@@ -357,6 +357,7 @@ captchaChallenge:
   retryHint: Verification failed, {count} attempts left
   success: Verified
   verifyFailed: Verification failed, please try again
+  signFailed: Security signature failed; retry or use HTTPS
   loadFailed: Failed to load the challenge, please retry
   puzzleAlt: Slide puzzle captcha
   rotateAlt: Rotate captcha
@@ -375,6 +376,10 @@ captchaChallenge:
   powHint: The check runs locally; passwords and input are never collected
   powRunning: Running security check…
   powFailed: Security check failed, please retry
+  loading: Loading verification code…
+  unsupportedType: Unsupported challenge type; click Refresh to get another
+  clickStageKeyboard: Click the captcha image (arrow keys move the cursor, Enter places a point, Backspace undoes)
+  notReady: The captcha component is not ready, please retry
   imageHint: Enter the characters shown in the image
   imageAlt: Image captcha
   imagePlaceholder: Enter the characters
@@ -1133,6 +1138,7 @@ plus:
   fileLink: File link
   noListPermission: You do not have permission to view this page. Contact an administrator.
   retry: Retry
+  resetAndRetry: Reset filters and retry
   metaMissingTitle: Failed to load column configuration
   metaMissingDetail: "The search and table columns of this page are generated from backend metadata, which is currently unavailable. Please refresh and retry; if it persists, contact the administrator (common causes: page not registered, serializer fields not declared, or missing page permission)."
   detailBlankTitle: Detail data is empty
@@ -2608,6 +2614,7 @@ chat:
   onlineCount: "{count} online"
   connecting: Connecting...
   uploading: Uploading attachment...
+  streamingHint: AI is answering; you can send again when it finishes
   enterHint: Enter to send, Shift + Enter for a new line
   mentionHint: Type {'@'} to mention an online member
   loadMore: Load earlier messages
@@ -2910,6 +2917,7 @@ setting:
   category: Setting category
   is_active: Is active
   encrypted: Encrypted
+  reload: Reload
 
 settingBasic:
   title: Basic Settings
@@ -2950,12 +2958,15 @@ settingCaptcha:
   previewClick: Word click
   previewWordorder: Word order
   previewIcon: Icon click
+  previewImage: Image characters
+  previewPow: Proof of work
   refreshPreview: Refresh preview
   previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
   previewFailed: Failed to load preview
+  previewDenied: No preview permission (requires the matching preview permission code)
   interactiveBehaviorHint: Word order is a new behavior verification type; enable it under Interactive types below. PoW and stricter difficulty are issued automatically by Risk Policy according to the risk decision.
   risk: Risk Policy
-  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; off keeps current behavior (difficulty and PoW for behavior verification are enabled here)
+  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; default is enforce (reverse-proxy deployments must configure TRUSTED_PROXY_IPS first)
   riskGuideTitle: How to configure
   riskGuide1: "Start with shadow: score and log only, no behavior change; observe at least 3 days and 1000 verifications, then switch to enforce."
   riskGuide2: "Thresholds are score bands: below allow -> no puzzle; allow to light -> click + PoW; light to hard -> normal puzzle; hard to deny -> hard puzzle; at deny -> reject. Keep 20/40/70/90 unless you have data."
@@ -2963,8 +2974,17 @@ settingCaptcha:
   riskRules: Rule scores
   riskRulesDesc: Tune the score and switch of the 16 explainable rules (effective immediately after save)
   riskRuleScore: Score
+  riskRulePriority: Priority
   riskRuleEnabled: Enabled
   riskRuleSave: Save rules
+  riskRuleReload: Discard changes
+  unsaved: Risk rules have unsaved changes
+  leaveConfirm: Risk rules have unsaved changes that will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay on this page
+  riskRuleRetry: Retry
+  riskRulesEmpty: No rules
+  riskRulesLoadFailed: Failed to load rules
   riskRulesSaved: Rules saved
   riskRulesFailed: Failed to save rules
   riskCompliance: "Privacy notice: only environment digests and behavior hashes are collected; passwords, input content and cookies are never collected or sent to third parties. Logs are kept for 30 days by default and IPs only as network-prefix hashes."
@@ -2984,8 +3004,10 @@ settingCaptcha:
   dataTotal: Total
   dataPassed: Passed
   dataTrend: Hourly trend
+  dataTrendNote: Showing the latest {count} points (the full window still feeds the summary above)
   dataLog: Verification logs
   dataEmpty: No data yet
+  dataRetry: Retry
   dataRefresh: Refresh
   dataRiskMode: Risk mode
   dataRetention: Logs retained for {days} days

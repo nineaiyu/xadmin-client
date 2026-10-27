@@ -79,7 +79,8 @@ const {
 const { confirmLeave } = useDesignerGuard({
   dirty,
   namespace: "dashboard",
-  mode: "dialog"
+  // 编辑态是页面内联态：路由离开/刷新同样需要守卫（dialog 模式只做弹窗合并）
+  mode: "page"
 });
 /** 切换仪表盘前先收口编辑态：草稿有改动时确认，取消则保持当前盘 */
 setSwitchGuard(async () => {

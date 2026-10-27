@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { ReImageCaptcha } from "@/components/ReImageCaptcha";
@@ -11,7 +11,7 @@ import type { CaptchaSubmitPayload } from "./types";
 
 defineOptions({ name: "ReCaptchaPanel" });
 
-defineProps<{
+const props = defineProps<{
   challenge: CaptchaChallengeData | null;
   loading: boolean;
   submitting: boolean;
@@ -28,20 +28,11 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const childRef = ref<{
-  reset?: () => void;
-  markSuccess?: () => void;
-} | null>(null);
-
-function reset() {
-  childRef.value?.reset?.();
-}
-
-function markSuccess() {
-  childRef.value?.markSuccess?.();
-}
-
-defineExpose({ reset, markSuccess });
+/** 已知题型：服务端新增题型而前端未升级时给出可读提示，而不是永久空白 */
+const KNOWN_TYPES = ["image", "slide", "rotate", "click", "wordorder", "icon"];
+const unknownType = computed(
+  () => !!props.challenge && !KNOWN_TYPES.includes(props.challenge.type)
+);
 </script>
 
 <template>
@@ -85,27 +76,25 @@ defineExpose({ reset, markSuccess });
       type="error"
       :closable="false"
       show-icon
+      role="alert"
       :title="error"
     />
 
     <div v-loading="loading || submitting" class="re-captcha-panel__body">
-      <template v-if="challenge">
+      <template v-if="challenge && !unknownType">
         <ReImageCaptcha
           v-if="challenge.type === 'image'"
-          ref="childRef"
           :challenge="challenge"
           :submitting="submitting"
           @submit="emit('submit', $event)"
         />
         <ReCaptchaPuzzle
           v-else-if="challenge.type === 'slide'"
-          ref="childRef"
           :challenge="challenge"
           @submit="emit('submit', $event)"
         />
         <ReRotateCaptcha
           v-else-if="challenge.type === 'rotate'"
-          ref="childRef"
           :challenge="challenge"
           @submit="emit('submit', $event)"
         />
@@ -115,13 +104,16 @@ defineExpose({ reset, markSuccess });
             challenge.type === 'wordorder' ||
             challenge.type === 'icon'
           "
-          ref="childRef"
           :challenge="challenge"
           @submit="emit('submit', $event)"
         />
       </template>
-      <div v-else class="re-captcha-panel__placeholder">
-        {{ error || t("captchaChallenge.loadFailed") }}
+      <div v-else-if="!error" class="re-captcha-panel__placeholder">
+        {{
+          unknownType
+            ? t("captchaChallenge.unsupportedType")
+            : t("captchaChallenge.loading")
+        }}
       </div>
 
       <Transition name="captcha-success">

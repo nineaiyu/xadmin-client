@@ -116,7 +116,9 @@ export function createOnlineButtons({
           loading.value = true;
           handleOperation({
             t,
-            apiReq: api.batchForceLogout(pks),
+            apiReq: api.batchForceLogout(
+              pks.map((pk: string | number) => String(pk))
+            ),
             success() {
               tableRef.value?.handleGetData();
             },

@@ -52,6 +52,26 @@ export function useCodegenDownload({
         if (!downloadError.value) downloadError.value = t("results.failed");
         return;
       }
+      // 200 + 业务失败（JSON 错误体被当作 blob 下载）不能当成功：
+      // 否则会下载一个 .zip 后缀的 JSON 并提示「已开始下载」
+      const contentType = String(res.headers?.["content-type"] || "");
+      if (contentType.includes("application/json")) {
+        let detail = "";
+        try {
+          const payload = JSON.parse(await (res.data as Blob).text()) as {
+            detail?: string;
+          };
+          detail = String(payload?.detail || "");
+        } catch {
+          detail = "";
+        }
+        downloadError.value = detail || t("results.failed");
+        return;
+      }
+      if (!res.data || (res.data as Blob).size === 0) {
+        downloadError.value = t("results.failed");
+        return;
+      }
       const name =
         mode.value === "batch"
           ? "generated-codegen.zip"

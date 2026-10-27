@@ -12,6 +12,7 @@ import { isSuccess } from "@/api/types";
 import { buildDirectoryParams } from "../utils/directoryParams";
 import { usePagedList } from "@/hooks/usePagedList";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { addDrawer } from "@/components/ReDrawer";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Search from "~icons/ri/search-line";
@@ -86,7 +87,8 @@ const loadMembers = async (resetPage = false) => {
 
 /** 标签候选来自 search-fields 元数据（tag 下拉 choices），不额外要求标签中心权限 */
 async function loadTagOptions() {
-  const res = await directoryApi.fields().catch(() => null);
+  // 元数据失败为可选能力降级（标签下拉缺失）：归一异常，不产生 unhandled rejection
+  const res = await directoryApi.fields().catch(normalizeError);
   if (!res || !isSuccess(res)) return;
   const field = res.data?.find(item => item.key === "tag");
   tagOptions.value = (field?.choices ?? []).map(choice => ({

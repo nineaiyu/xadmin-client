@@ -22,6 +22,26 @@ export function moveToPuzzleX(
   return clamp(moveX / maxMoveX, 0, 1) * Math.max(naturalWidth - pieceSize, 0);
 }
 
+/**
+ * 拼块布局：视觉位移与提交答案必须同源。
+ *
+ * 用户看到拼块在 `leftPx` 处，提交的答案就是该位置换算回自然像素的
+ * `answerX`（`leftPx / scale`）。若两者分别用「滑条 px」与「自然 px」
+ * 两套映射，容器宽度与滑条宽度不等时按视觉对齐的答案会偏移 6%~12%，
+ * 超过后端 4px 容差——滑动拼图在大部分位置必失败。
+ */
+export function pieceGeometry(
+  moveX: number,
+  maxMoveX: number,
+  naturalWidth: number,
+  pieceSize: number,
+  stageWidth: number
+): { answerX: number; leftPx: number; scale: number } {
+  const answerX = moveToPuzzleX(moveX, maxMoveX, naturalWidth, pieceSize);
+  const scale = naturalWidth > 0 ? stageWidth / naturalWidth : 0;
+  return { answerX, leftPx: answerX * scale, scale };
+}
+
 /** 滑杆位移 -> 旋转角（-180° ~ 180°，与后端答案口径一致） */
 export function moveToAngle(moveX: number, maxMoveX: number): number {
   if (maxMoveX <= 0) return 0;

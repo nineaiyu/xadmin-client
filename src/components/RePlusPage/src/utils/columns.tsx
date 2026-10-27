@@ -195,9 +195,14 @@ export function useBaseColumns(localeName: string) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }
     } else if (apiFields) {
-      const res = await apiFields(fieldsParams);
-      searchColumns.value.splice(0, searchColumns.value.length);
-      formatSearchColumns(res.data);
+      try {
+        const res = await apiFields(fieldsParams);
+        searchColumns.value.splice(0, searchColumns.value.length);
+        formatSearchColumns(res.data);
+      } catch {
+        // search-fields 失败不阻断列表：保持空搜索区，请求层已统一提示；
+        // 不重抛可避免调用方出现 unhandled rejection
+      }
       if (fieldsCallback) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }

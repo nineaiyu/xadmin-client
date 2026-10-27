@@ -22,11 +22,12 @@ const code = ref("");
 const solving = ref(false);
 const localError = ref("");
 
-const audioUrl = computed(() =>
-  props.challenge.audio
-    ? `/api/identity/auth/captcha/audio/${props.challenge.challenge_id}`
-    : ""
-);
+/** 音频地址与 axios baseURL 同源：部署到独立 API 域/子路径时仍可播放 */
+const audioUrl = computed(() => {
+  if (!props.challenge.audio) return "";
+  const prefix = import.meta.env.VITE_API_DOMAIN || "";
+  return `${prefix}/api/identity/auth/captcha/audio/${props.challenge.challenge_id}`;
+});
 
 async function submit() {
   const value = code.value.trim();

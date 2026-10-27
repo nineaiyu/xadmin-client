@@ -22,6 +22,7 @@ import {
   type TokenInfo
 } from "@/api/auth";
 import { cloneDeep } from "@pureadmin/utils";
+import { message } from "@/utils/message";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
 import RememberLogin from "./RememberLogin.vue";
@@ -133,7 +134,9 @@ const {
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
-  if (!formEl || !basicLoginEnabled.value) return;
+  // 回车监听挂在 document 上：挑战期间重复回车会共享同一个 pending Promise，
+  // 票据一到就发两次登录（第二次必失败并刷新掉刚成功的登录态）
+  if (!formEl || !basicLoginEnabled.value || loading.value) return;
   await formEl.validate(async valid => {
     if (!valid) {
       loading.value = false;
@@ -149,6 +152,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       try {
         const ticket = await captchaChallengeRef.value?.open();
         if (!ticket) {
+          // 组件未挂载（无反馈会像按钮坏了）；用户取消走 reject 分支，保持静默
+          message(t("captchaChallenge.notReady"), { type: "error" });
           loading.value = false;
           return;
         }

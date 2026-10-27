@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/audit/logs/login";
 import { isSuccess } from "@/api/types";
 import { formatDateTime } from "@/utils";
+import { normalizeError } from "@/utils/apiError";
 import type { RecordType } from "plus-pro-components";
 
 /**
@@ -22,14 +23,16 @@ const { t } = useI18n();
 const rows = ref<RecordType[]>([]);
 const loading = ref(true);
 const loadFailed = ref(false);
+const loadError = ref("");
 
 onMounted(async () => {
   const res = await loginLogApi
     .list({ creator_id: props.userPk, page: 1, size: 5 })
-    .catch(() => null);
+    .catch(normalizeError);
   loading.value = false;
-  if (!res || !isSuccess(res)) {
+  if (!isSuccess(res)) {
     loadFailed.value = true;
+    loadError.value = String(res.detail || "");
     return;
   }
   rows.value = res.data?.results ?? [];
@@ -52,7 +55,7 @@ function detailOf(row: RecordType): string {
       v-else-if="loadFailed"
       type="warning"
       :closable="false"
-      :title="t('systemUser.loginRecordsLoadFailed')"
+      :title="loadError || t('systemUser.loginRecordsLoadFailed')"
     />
     <el-empty
       v-else-if="!rows.length"

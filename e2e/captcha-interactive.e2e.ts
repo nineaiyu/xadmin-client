@@ -145,6 +145,11 @@ async function solveChallenge(
     expect(pieceBox!.width).toBeGreaterThan(stageBox!.width * 0.95);
     const x = Number(meta.answer.x);
     await dragSlider(page, x / Math.max(meta.width - meta.pieceSize, 1));
+    // 视觉与答案同源守护：拼块落点必须与答案比例一致（否则真人按视觉对齐必失败）
+    const movedBox = await piece.boundingBox();
+    if (!movedBox || !stageBox) throw new Error("拼块几何读取失败");
+    const visualRatio = (movedBox.x - stageBox.x) / stageBox.width;
+    expect(Math.abs(visualRatio - x / meta.width)).toBeLessThan(0.02);
     return;
   }
   if (meta.type === "rotate") {

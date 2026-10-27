@@ -56,7 +56,7 @@ const riskItem: settingItemProps = {
 
 /**
  * 验证码设置（与短信设置同构）：
- * - 总配置：全局开关 + 当前使用的验证码类型；
+ * - 总配置：全局开关（题型池与启用项在「题型与难度」页签，不在此处）；
  * - 图片题型 / 题型与难度：各类型独立页签 + 只读预览，后续新增类型按同一模式扩展；
  * - 验证数据：观测大盘 + 日志列表（独立权限位，未授权时不渲染页签）。
  */
@@ -65,6 +65,16 @@ const canViewData = computed(
     hasAuth("list:SecurityCaptchaStats") || hasAuth("list:SecurityCaptchaLog")
 );
 const canViewRisk = computed(() => hasAuth("retrieve:SecurityCaptchaRisk"));
+const canViewImage = computed(
+  () =>
+    hasAuth("retrieve:SecurityCaptchaCode") ||
+    hasAuth("preview:SecurityCaptchaCode")
+);
+const canViewInteractive = computed(
+  () =>
+    hasAuth("retrieve:SecurityCaptchaInteractive") ||
+    hasAuth("preview:SecurityCaptchaInteractive")
+);
 
 const panes = computed<Array<settingsPane>>(() => [
   {
@@ -77,16 +87,24 @@ const panes = computed<Array<settingsPane>>(() => [
       localeName: "settingSecurity"
     }
   },
-  {
-    key: "image",
-    label: t("settingCaptcha.image"),
-    desc: t("settingCaptcha.imageDesc")
-  },
-  {
-    key: "interactive",
-    label: t("settingCaptcha.interactive"),
-    desc: t("settingCaptcha.interactiveDesc")
-  },
+  ...(canViewImage.value
+    ? [
+        {
+          key: "image",
+          label: t("settingCaptcha.image"),
+          desc: t("settingCaptcha.imageDesc")
+        }
+      ]
+    : []),
+  ...(canViewInteractive.value
+    ? [
+        {
+          key: "interactive",
+          label: t("settingCaptcha.interactive"),
+          desc: t("settingCaptcha.interactiveDesc")
+        }
+      ]
+    : []),
   ...(canViewRisk.value
     ? [
         {

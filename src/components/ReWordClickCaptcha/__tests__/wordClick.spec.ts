@@ -13,6 +13,7 @@ const i18n = createI18n({
         clickHint: "请按提示顺序依次点击图中文字",
         tipAlt: "点选文字提示",
         clickStage: "点选验证码图片",
+        clickStageKeyboard: "点选验证码图片（键盘可操作）",
         clickAlt: "文字点选验证码",
         selected: "已选 {count}/{total}",
         resetSelection: "重选",
@@ -74,6 +75,30 @@ describe("ReWordClickCaptcha", () => {
         ]
       }
     });
+  });
+
+  it("键盘：方向键移动准星 + Enter 落点，提交 input=keyboard", async () => {
+    const wrapper = mount(ReWordClickCaptcha, {
+      props: { challenge: CHALLENGE },
+      global: { plugins: [i18n], stubs }
+    });
+    const stage = wrapper.find(".re-word-click__stage");
+    await stage.trigger("focus");
+    await stage.trigger("keydown", { key: "ArrowRight" });
+    await stage.trigger("keydown", { key: "Enter" });
+    await stage.trigger("keydown", { key: "ArrowDown" });
+    await stage.trigger("keydown", { key: "Enter" });
+    await stage.trigger("keydown", { key: "Enter" });
+    expect(wrapper.text()).toContain("已选 3/3");
+
+    const buttons = wrapper.findAll("button");
+    await buttons[buttons.length - 1].trigger("click");
+    const payload = wrapper.emitted("submit")?.[0]?.[0] as {
+      input: string;
+      answer: { points: unknown[] };
+    };
+    expect(payload.input).toBe("keyboard");
+    expect(payload.answer.points).toHaveLength(3);
   });
 
   it("未选满时确认不可用", () => {

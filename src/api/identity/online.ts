@@ -9,7 +9,11 @@ type ForceLogoutResult = {
 type BatchForceLogoutResult = {
   code: number;
   detail: string;
-  data: { users: number; channels: number };
+  data: {
+    users: number;
+    channels: number;
+    failures?: { pk: string; reason: string }[];
+  };
 };
 
 /** 在线用户（WS 会话）管理 */
@@ -24,12 +28,12 @@ class UserOnlineApi extends BaseApi {
     );
   };
 
-  /** 批量强制下线（按选中行去重用户） */
-  batchForceLogout = (pks: Array<string | number>) => {
+  /** 批量强制下线（显式 session_pks，禁止再按主键类型猜测用户/日志语义） */
+  batchForceLogout = (sessionPks: string[]) => {
     return this.request<BatchForceLogoutResult>(
       "post",
       {},
-      pks,
+      { session_pks: sessionPks },
       `${this.baseApi}/batch-force-logout`
     );
   };

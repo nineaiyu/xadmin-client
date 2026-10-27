@@ -10,7 +10,7 @@ import { login, openMenuPath } from "./helpers";
  * - 只阻断 critical / serious 级违规，moderate 及以下不阻断，避免门禁常红失去信号；
  * - 已登记豁免（ALLOWED_VIOLATIONS）针对「第三方组件结构问题 / 需产品决策的主题对比度」，
  *   按规则 + 选择器摘要匹配，同一违规出现**新的命中节点**仍会阻断；
- * - 扩大白名单必须在 docs/accessibility-audit.md 待办里登记跟踪项，禁止静默放行。
+ * - 扩大白名单必须在 `ALLOWED_VIOLATIONS` 注释与 `e2e/README.md` 登记跟踪项，禁止静默放行。
  */
 
 const IMPACT_BLOCKING = new Set(["critical", "serious"]);
@@ -32,7 +32,7 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  * （多值标签渲染器 el-scrollbar 补 tabindex）、`svg-img-alt`（Iconify 渲染层统一
  * aria-hidden 后无命中）、`aria-roles .bar`（无命中）。
  *
- * 新增豁免必须先到 `docs/accessibility-audit.md` 登记跟踪项，禁止静默放行；
+ * 新增豁免必须先在 `ALLOWED_VIOLATIONS` 注释与 `e2e/README.md` 登记跟踪项，禁止静默放行；
  * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理。
  */
 const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {};

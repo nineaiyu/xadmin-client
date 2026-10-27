@@ -7,9 +7,11 @@ defineOptions({ name: "RePlusPageState" });
 defineProps<{
   state: "denied" | "error" | "ready";
   errorDetail: string;
+  /** 错误可能由筛选参数引起：提供「重置筛选并重试」自救入口 */
+  canReset?: boolean;
 }>();
 
-const emit = defineEmits<{ retry: [] }>();
+const emit = defineEmits<{ retry: []; reset: [] }>();
 
 const { t } = useI18n();
 </script>
@@ -31,9 +33,12 @@ const { t } = useI18n();
         :title="t('reState.error')"
         :description="errorDetail"
       />
-      <div class="mt-3 text-center">
+      <div class="mt-3 flex-c gap-2">
         <el-button type="primary" @click="emit('retry')">
           {{ t("plus.retry") }}
+        </el-button>
+        <el-button v-if="canReset" @click="emit('reset')">
+          {{ t("plus.resetAndRetry") }}
         </el-button>
       </div>
     </template>

@@ -65,8 +65,16 @@ defineExpose({ stageEl });
       :class="{ 'setting-preview__stage--plain': !padded }"
       :style="height ? { height } : undefined"
       :data-testid="testid"
+      role="status"
+      aria-live="polite"
+      :aria-busy="loading || undefined"
     >
-      <p v-if="empty" class="setting-preview__empty" :data-testid="emptyTestid">
+      <p
+        v-if="empty"
+        class="setting-preview__empty"
+        :data-testid="emptyTestid"
+        role="status"
+      >
         {{ emptyText }}
       </p>
       <slot v-else />

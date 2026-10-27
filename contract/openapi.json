@@ -1985,12 +1985,12 @@
         "type": "string"
       },
       "CAPTCHACLICKCHARSETEnum": {
-        "description": "* `simplified` - Simplified Chinese characters\n* `traditional` - Traditional Chinese characters\n* `mixed` - Mixed simplified / traditional per challenge\n* `ascii` - 字母数字",
+        "description": "* `simplified` - 简体中文字符\n* `traditional` - 繁体中文字符\n* `mixed` - 每道题简繁混合\n* `ascii` - 字母数字",
         "enum": ["simplified", "traditional", "mixed", "ascii"],
         "type": "string"
       },
       "CAPTCHAENABLEDTYPESEnum": {
-        "description": "* `image` - Image characters (fallback)\n* `slide` - 滑动拼图\n* `rotate` - 旋转回正\n* `click` - 文字点选\n* `wordorder` - 语序点选\n* `icon` - Icon click",
+        "description": "* `image` - 图片字符（回退）\n* `slide` - 滑动拼图\n* `rotate` - 旋转回正\n* `click` - 文字点选\n* `wordorder` - 语序点选\n* `icon` - 图标点选",
         "enum": ["image", "slide", "rotate", "click", "wordorder", "icon"],
         "type": "string"
       },
@@ -2022,6 +2022,12 @@
             "type": "string"
           },
           "env": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaptchaEnv"
+              }
+            ],
+            "nullable": true,
             "title": "客户端环境包"
           },
           "hp": {
@@ -2053,7 +2059,7 @@
       "CaptchaChallengeOut": {
         "properties": {
           "audio": {
-            "title": "Audio available",
+            "title": "音频可用",
             "type": "boolean"
           },
           "background": {
@@ -2078,7 +2084,7 @@
             "type": "integer"
           },
           "length": {
-            "title": "Image answer length",
+            "title": "图片答案长度",
             "type": "integer"
           },
           "piece": {
@@ -2095,6 +2101,11 @@
           "tip": {
             "title": "点选提示图",
             "type": "string"
+          },
+          "ts": {
+            "description": "服务端时间戳（秒）；verify 加签时以它为 gen_time，避免客户端时钟偏差",
+            "title": "服务器时间",
+            "type": "integer"
           },
           "ttl": {
             "title": "有效期（秒）",
@@ -2135,6 +2146,81 @@
           }
         },
         "required": ["code", "data"],
+        "type": "object"
+      },
+      "CaptchaEnv": {
+        "description": "客户端环境包；字段与前端 captchaSignal/env.ts 对齐，畸形结构直接 400。",
+        "properties": {
+          "canvas": {
+            "maxLength": 128,
+            "title": "Canvas 摘要",
+            "type": "string"
+          },
+          "cores": {
+            "maximum": 256,
+            "minimum": 0,
+            "title": "CPU 核心数",
+            "type": "integer"
+          },
+          "fp": {
+            "maxLength": 128,
+            "title": "客户端指纹",
+            "type": "string"
+          },
+          "language": {
+            "maxLength": 64,
+            "title": "语言",
+            "type": "string"
+          },
+          "plugins": {
+            "maximum": 1000,
+            "minimum": 0,
+            "title": "插件数量",
+            "type": "integer"
+          },
+          "reduced_motion": {
+            "title": "减少动态效果",
+            "type": "boolean"
+          },
+          "referer": {
+            "title": "存在 Referer",
+            "type": "boolean"
+          },
+          "screen": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaptchaScreen"
+              }
+            ],
+            "nullable": true,
+            "title": "大屏"
+          },
+          "timezone": {
+            "maxLength": 64,
+            "title": "时区",
+            "type": "string"
+          },
+          "touch": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "触摸点数",
+            "type": "integer"
+          },
+          "v": {
+            "maximum": 10,
+            "minimum": 0,
+            "title": "环境版本",
+            "type": "integer"
+          },
+          "webdriver": {
+            "type": "boolean"
+          },
+          "webgl": {
+            "maxLength": 128,
+            "title": "WebGL 摘要",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CaptchaImagePreviewData": {
@@ -2250,6 +2336,7 @@
           },
           "asset_id": {
             "readOnly": true,
+            "title": "资产 ID",
             "type": "string"
           },
           "attempts": {
@@ -2453,6 +2540,7 @@
         "type": "object"
       },
       "CaptchaRuleUpdateItem": {
+        "description": "规则可写字段：分值 / 开关 / 优先级。\n\n``params`` 当前无运行时消费点（规则判据固定实现），因此不开放写入——\n可编辑但永不生效会让运营误以为调过窗口/阈值。分值与分数域一致限制在\n[-100, 100]，避免误填极端值把全站推向 allow/deny。",
         "properties": {
           "code": {
             "maxLength": 32,
@@ -2463,9 +2551,6 @@
             "title": "启用",
             "type": "boolean"
           },
-          "params": {
-            "title": "参数"
-          },
           "priority": {
             "maximum": 9999,
             "minimum": 1,
@@ -2473,11 +2558,50 @@
             "type": "integer"
           },
           "score": {
+            "maximum": 100,
+            "minimum": -100,
             "title": "分值",
             "type": "integer"
           }
         },
         "required": ["code"],
+        "type": "object"
+      },
+      "CaptchaScreen": {
+        "description": "客户端屏幕信息（只用于风险信号，数值越界/类型错误在入口即拒绝）。",
+        "properties": {
+          "availHeight": {
+            "maximum": 20000,
+            "minimum": 0,
+            "title": "可用高度",
+            "type": "integer"
+          },
+          "availWidth": {
+            "maximum": 20000,
+            "minimum": 0,
+            "title": "可用宽度",
+            "type": "integer"
+          },
+          "dpr": {
+            "format": "double",
+            "maximum": 10,
+            "minimum": 0,
+            "title": "设备像素比",
+            "type": "number"
+          },
+          "height": {
+            "maximum": 20000,
+            "minimum": 0,
+            "title": "屏幕高度",
+            "type": "integer"
+          },
+          "width": {
+            "maximum": 20000,
+            "minimum": 0,
+            "title": "屏幕宽度",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "CaptchaStats": {
@@ -2487,6 +2611,7 @@
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsAssetRow"
             },
+            "title": "按资产",
             "type": "array"
           },
           "by_decision": {
@@ -2519,7 +2644,7 @@
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsRiskBucket"
             },
-            "title": "Risk score distribution",
+            "title": "风险分值分布",
             "type": "array"
           },
           "summary": {
@@ -2541,27 +2666,28 @@
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsTopEntity"
             },
+            "title": "指纹 Top",
             "type": "array"
           },
           "top_ips": {
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsTopEntity"
             },
-            "title": "Top IP hashes",
+            "title": "IP 哈希 Top",
             "type": "array"
           },
           "top_reasons": {
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsTopReason"
             },
-            "title": "Top deny reasons",
+            "title": "拦截原因 Top",
             "type": "array"
           },
           "top_ua": {
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsTopEntity"
             },
-            "title": "Top UA classes",
+            "title": "UA 类别 Top",
             "type": "array"
           },
           "trend": {
@@ -2597,6 +2723,7 @@
       "CaptchaStatsAssetRow": {
         "properties": {
           "asset_id": {
+            "title": "资产 ID",
             "type": "string"
           },
           "pass_rate": {
@@ -2641,6 +2768,7 @@
             "type": "boolean"
           },
           "pow_enabled": {
+            "title": "启用 PoW",
             "type": "boolean"
           },
           "retention_days": {
@@ -2655,7 +2783,7 @@
             "additionalProperties": {
               "type": "integer"
             },
-            "title": "Decision thresholds",
+            "title": "决策阈值",
             "type": "object"
           }
         },
@@ -2693,7 +2821,7 @@
       "CaptchaStatsRiskBucket": {
         "properties": {
           "bucket": {
-            "title": "Score bucket",
+            "title": "分值区间",
             "type": "string"
           },
           "total": {
@@ -2715,11 +2843,12 @@
             "type": "integer"
           },
           "deny": {
-            "title": "Deny count",
+            "title": "拦截次数",
             "type": "integer"
           },
           "deny_rate": {
             "format": "double",
+            "title": "拦截率",
             "type": "number"
           },
           "latency_p50": {
@@ -2783,7 +2912,7 @@
       "CaptchaStatsTopReason": {
         "properties": {
           "reason": {
-            "title": "Reason code",
+            "title": "原因码",
             "type": "string"
           },
           "total": {
@@ -2837,6 +2966,11 @@
       },
       "CaptchaTrackPoint": {
         "properties": {
+          "ev": {
+            "maxLength": 16,
+            "title": "轨迹事件",
+            "type": "string"
+          },
           "t": {
             "format": "double",
             "title": "时间戳（毫秒）",
@@ -2878,6 +3012,12 @@
             "type": "string"
           },
           "env": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaptchaEnv"
+              }
+            ],
+            "nullable": true,
             "title": "客户端环境包"
           },
           "gen_time": {
@@ -3200,7 +3340,7 @@
           },
           "timezone": {
             "default": "Asia/Shanghai",
-            "title": "时间",
+            "title": "时区",
             "type": "string"
           }
         },
@@ -9774,7 +9914,7 @@
           },
           "timezone": {
             "default": "Asia/Shanghai",
-            "title": "时间",
+            "title": "时区",
             "type": "string"
           }
         },
@@ -12638,13 +12778,6 @@
             },
             "title": "噪声函数",
             "type": "array"
-          },
-          "CAPTCHA_TIMEOUT": {
-            "description": "图片验证码过期时间",
-            "maximum": 10080,
-            "minimum": 1,
-            "title": "验证码过期时间 (分)",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -12666,9 +12799,9 @@
         "properties": {
           "CAPTCHA_BACKGROUND_PACK": {
             "default": "builtin",
-            "description": "builtin = bundled manifest (procedural when empty); procedural = disable photo pack",
+            "description": "builtin = 内置清单（为空时程序化生成）；procedural = 禁用图片包",
             "maxLength": 64,
-            "title": "Background pack",
+            "title": "背景图包",
             "type": "string"
           },
           "CAPTCHA_CHALLENGE_TTL": {
@@ -12696,16 +12829,16 @@
           },
           "CAPTCHA_ENABLED_TYPES": {
             "default": ["slide", "rotate", "click"],
-            "description": "Challenge types eligible for random selection; image stays opt-in fallback",
+            "description": "参与随机抽取的题型；图片题仅作显式回退",
             "items": {
               "$ref": "#/components/schemas/CAPTCHAENABLEDTYPESEnum"
             },
-            "title": "Enabled captcha types",
+            "title": "启用的验证码题型",
             "type": "array"
           },
           "CAPTCHA_IMAGE_FALLBACK_ENABLED": {
             "default": true,
-            "description": "Expose the image type as an accessibility fallback; it never enters the random pool",
+            "description": "将图片题型作为无障碍回退开放；不进入随机池",
             "title": "图片验证码回退",
             "type": "boolean"
           },
@@ -12718,8 +12851,8 @@
           },
           "CAPTCHA_POW_FOR_IMAGE_FALLBACK": {
             "default": true,
-            "description": "Require a low-difficulty PoW before accepting an image fallback challenge",
-            "title": "PoW for image fallback",
+            "description": "接受图片回退题前要求低难度 PoW",
+            "title": "图片回退 PoW",
             "type": "boolean"
           },
           "CAPTCHA_ROTATE_SIZE": {
@@ -12835,10 +12968,10 @@
           },
           "CAPTCHA_POW_BITS_ALLOW": {
             "default": 16,
-            "description": "Silent PoW difficulty for low-risk allow decisions; default 16",
+            "description": "低风险 allow 决策的静默 PoW 难度；默认 16",
             "maximum": 24,
             "minimum": 1,
-            "title": "PoW bits (allow)",
+            "title": "PoW 位数（allow）",
             "type": "integer"
           },
           "CAPTCHA_POW_BITS_HARD": {
@@ -12867,13 +13000,13 @@
           },
           "CAPTCHA_POW_ENABLED": {
             "default": true,
-            "description": "Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis",
+            "description": "allow/light 决策下发 PoW 挑战；关闭会削弱算力轴",
             "title": "启用工作量证明",
             "type": "boolean"
           },
           "CAPTCHA_POW_IP_BUDGET": {
             "default": 600,
-            "description": "单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒",
+            "description": "单 IP 每小时 PoW 出题预算；0 = 不限；超出后降级为其他已启用题型（不直接拒绝）",
             "maximum": 100000,
             "minimum": 0,
             "title": "单 IP 每小时 PoW 预算",
@@ -12893,7 +13026,7 @@
               }
             ],
             "default": "enforce",
-            "description": "off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
+            "description": "off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
             "title": "风险模式"
           },
           "CAPTCHA_RISK_PROXY_CIDRS": {
@@ -12905,7 +13038,7 @@
           },
           "CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS": {
             "default": true,
-            "description": "将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启",
+            "description": "将 RFC1918 与回环地址视为可信（enforce 下无题直过）；仅在已配置 TRUSTED_PROXY_IPS 时生效",
             "title": "信任私网",
             "type": "boolean"
           },
@@ -12943,15 +13076,15 @@
           },
           "CAPTCHA_STRICT_BINDING": {
             "default": true,
-            "description": "Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket",
-            "title": "Strict ticket binding",
+            "description": "消费票据时要求 sid cookie 与 X-Captcha-Fp 指纹一致",
+            "title": "严格票据绑定",
             "type": "boolean"
           },
           "CAPTCHA_TICKET_AUDIENCE": {
             "default": "",
-            "description": "Deployment identifier bound into tickets; empty = site URL / first allowed host",
+            "description": "绑定到票据的部署标识；空 = 站点 URL / 首个允许的 Host",
             "maxLength": 255,
-            "title": "Ticket audience",
+            "title": "票据 audience",
             "type": "string"
           }
         },
@@ -15861,20 +15994,9 @@
             },
             "title": "噪声函数",
             "type": "array"
-          },
-          "CAPTCHA_TIMEOUT": {
-            "description": "图片验证码过期时间",
-            "maximum": 10080,
-            "minimum": 1,
-            "title": "验证码过期时间 (分)",
-            "type": "integer"
           }
         },
-        "required": [
-          "CAPTCHA_BACKGROUND_COLOR",
-          "CAPTCHA_FOREGROUND_COLOR",
-          "CAPTCHA_TIMEOUT"
-        ],
+        "required": ["CAPTCHA_BACKGROUND_COLOR", "CAPTCHA_FOREGROUND_COLOR"],
         "type": "object"
       },
       "SecurityCaptchaGeneral": {
@@ -15894,9 +16016,9 @@
         "properties": {
           "CAPTCHA_BACKGROUND_PACK": {
             "default": "builtin",
-            "description": "builtin = bundled manifest (procedural when empty); procedural = disable photo pack",
+            "description": "builtin = 内置清单（为空时程序化生成）；procedural = 禁用图片包",
             "maxLength": 64,
-            "title": "Background pack",
+            "title": "背景图包",
             "type": "string"
           },
           "CAPTCHA_CHALLENGE_TTL": {
@@ -15924,16 +16046,16 @@
           },
           "CAPTCHA_ENABLED_TYPES": {
             "default": ["slide", "rotate", "click"],
-            "description": "Challenge types eligible for random selection; image stays opt-in fallback",
+            "description": "参与随机抽取的题型；图片题仅作显式回退",
             "items": {
               "$ref": "#/components/schemas/CAPTCHAENABLEDTYPESEnum"
             },
-            "title": "Enabled captcha types",
+            "title": "启用的验证码题型",
             "type": "array"
           },
           "CAPTCHA_IMAGE_FALLBACK_ENABLED": {
             "default": true,
-            "description": "Expose the image type as an accessibility fallback; it never enters the random pool",
+            "description": "将图片题型作为无障碍回退开放；不进入随机池",
             "title": "图片验证码回退",
             "type": "boolean"
           },
@@ -15946,8 +16068,8 @@
           },
           "CAPTCHA_POW_FOR_IMAGE_FALLBACK": {
             "default": true,
-            "description": "Require a low-difficulty PoW before accepting an image fallback challenge",
-            "title": "PoW for image fallback",
+            "description": "接受图片回退题前要求低难度 PoW",
+            "title": "图片回退 PoW",
             "type": "boolean"
           },
           "CAPTCHA_ROTATE_SIZE": {
@@ -16063,10 +16185,10 @@
           },
           "CAPTCHA_POW_BITS_ALLOW": {
             "default": 16,
-            "description": "Silent PoW difficulty for low-risk allow decisions; default 16",
+            "description": "低风险 allow 决策的静默 PoW 难度；默认 16",
             "maximum": 24,
             "minimum": 1,
-            "title": "PoW bits (allow)",
+            "title": "PoW 位数（allow）",
             "type": "integer"
           },
           "CAPTCHA_POW_BITS_HARD": {
@@ -16095,13 +16217,13 @@
           },
           "CAPTCHA_POW_ENABLED": {
             "default": true,
-            "description": "Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis",
+            "description": "allow/light 决策下发 PoW 挑战；关闭会削弱算力轴",
             "title": "启用工作量证明",
             "type": "boolean"
           },
           "CAPTCHA_POW_IP_BUDGET": {
             "default": 600,
-            "description": "单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒",
+            "description": "单 IP 每小时 PoW 出题预算；0 = 不限；超出后降级为其他已启用题型（不直接拒绝）",
             "maximum": 100000,
             "minimum": 0,
             "title": "单 IP 每小时 PoW 预算",
@@ -16121,7 +16243,7 @@
               }
             ],
             "default": "enforce",
-            "description": "off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
+            "description": "off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
             "title": "风险模式"
           },
           "CAPTCHA_RISK_PROXY_CIDRS": {
@@ -16133,7 +16255,7 @@
           },
           "CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS": {
             "default": true,
-            "description": "将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启",
+            "description": "将 RFC1918 与回环地址视为可信（enforce 下无题直过）；仅在已配置 TRUSTED_PROXY_IPS 时生效",
             "title": "信任私网",
             "type": "boolean"
           },
@@ -16171,15 +16293,15 @@
           },
           "CAPTCHA_STRICT_BINDING": {
             "default": true,
-            "description": "Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket",
-            "title": "Strict ticket binding",
+            "description": "消费票据时要求 sid cookie 与 X-Captcha-Fp 指纹一致",
+            "title": "严格票据绑定",
             "type": "boolean"
           },
           "CAPTCHA_TICKET_AUDIENCE": {
             "default": "",
-            "description": "Deployment identifier bound into tickets; empty = site URL / first allowed host",
+            "description": "绑定到票据的部署标识；空 = 站点 URL / 首个允许的 Host",
             "maxLength": 255,
-            "title": "Ticket audience",
+            "title": "票据 audience",
             "type": "string"
           }
         },
@@ -44821,6 +44943,9 @@
               }
             },
             "description": ""
+          },
+          "404": {
+            "description": "任务不存在或不属于当前用户（同口径，避免枚举）"
           }
         },
         "security": [
@@ -51516,48 +51641,108 @@
     },
     "/api/identity/online/batch-force-logout": {
       "post": {
-        "description": "批量强制下线（按选中行的用户去重后踢全部会话）",
+        "description": "批量强制下线（按选中行的用户去重后踢全部会话）\n\n入参两种形态，禁止按主键类型猜测语义（历史实现把整数同时当用户主键与\n登录日志主键取并集，会误踢无关用户）：\n\n- ``{\"session_pks\": [...], \"user_pks\": [...]}``：显式区分会话行与用户；\n- ``[...]``：旧版数组形态，只接受**会话行主键（UUID）**。",
         "operationId": "api_identity_online_batch_force_logout_create",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "items": {
-                  "type": "string"
+                "description": "session_pks=会话行主键；user_pks=会话所属用户主键。不接受未标注类型的混合数组（整数不再被猜测为用户/登录日志主键）。",
+                "properties": {
+                  "session_pks": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "user_pks": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  }
                 },
-                "type": "array"
+                "type": "object"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "items": {
-                  "type": "string"
+                "description": "session_pks=会话行主键；user_pks=会话所属用户主键。不接受未标注类型的混合数组（整数不再被猜测为用户/登录日志主键）。",
+                "properties": {
+                  "session_pks": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "user_pks": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  }
                 },
-                "type": "array"
+                "type": "object"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "items": {
-                  "type": "string"
+                "description": "session_pks=会话行主键；user_pks=会话所属用户主键。不接受未标注类型的混合数组（整数不再被猜测为用户/登录日志主键）。",
+                "properties": {
+                  "session_pks": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "user_pks": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  }
                 },
-                "type": "array"
+                "type": "object"
               }
             },
             "text/csv": {
               "schema": {
-                "items": {
-                  "type": "string"
+                "description": "session_pks=会话行主键；user_pks=会话所属用户主键。不接受未标注类型的混合数组（整数不再被猜测为用户/登录日志主键）。",
+                "properties": {
+                  "session_pks": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "user_pks": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  }
                 },
-                "type": "array"
+                "type": "object"
               }
             },
             "text/xlsx": {
               "schema": {
-                "items": {
-                  "type": "string"
+                "description": "session_pks=会话行主键；user_pks=会话所属用户主键。不接受未标注类型的混合数组（整数不再被猜测为用户/登录日志主键）。",
+                "properties": {
+                  "session_pks": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "user_pks": {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  }
                 },
-                "type": "array"
+                "type": "object"
               }
             }
           }
@@ -51568,11 +51753,28 @@
               "application/json": {
                 "schema": {
                   "properties": {
+                    "channels": {
+                      "type": "number"
+                    },
                     "code": {
                       "type": "number"
                     },
                     "detail": {
                       "type": "string"
+                    },
+                    "failures": {
+                      "items": {
+                        "properties": {
+                          "pk": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
                     },
                     "requestId": {
                       "type": "string"

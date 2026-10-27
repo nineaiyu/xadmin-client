@@ -7,6 +7,8 @@ import {
   type CaptchaStatsData
 } from "@/api/system/settings";
 import { defineListPage } from "@/components/RePlusPage";
+import { hasAuth } from "@/router/utils";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 验证码「验证数据」页签：大盘聚合 + 观测日志列表。
@@ -30,15 +32,30 @@ export function useCaptchaData() {
 
   const stats = ref<CaptchaStatsData | null>(null);
   const statsLoading = ref(false);
+  const statsError = ref("");
   const hours = ref(24);
+  const canViewStats = hasAuth("list:SecurityCaptchaStats");
 
   async function loadStats() {
+    if (!canViewStats) {
+      stats.value = null;
+      statsLoading.value = false;
+      statsError.value = "";
+      return;
+    }
     statsLoading.value = true;
+    statsError.value = "";
     try {
       const res = await settingsCaptchaStatsApi.stats(hours.value);
-      stats.value = isSuccess(res) ? res.data : null;
-    } catch {
+      if (isSuccess(res)) {
+        stats.value = res.data;
+      } else {
+        stats.value = null;
+        statsError.value = String(res.detail || "");
+      }
+    } catch (error) {
       stats.value = null;
+      statsError.value = normalizeError(error).detail;
     } finally {
       statsLoading.value = false;
     }
@@ -51,5 +68,14 @@ export function useCaptchaData() {
 
   onMounted(loadStats);
 
-  return { ...page, stats, statsLoading, hours, loadStats, changeWindow };
+  return {
+    ...page,
+    stats,
+    statsLoading,
+    statsError,
+    hours,
+    canViewStats,
+    loadStats,
+    changeWindow
+  };
 }

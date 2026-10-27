@@ -148,7 +148,7 @@ describe("ReCaptchaChallenge 编排", () => {
         input: "pointer"
       })
     );
-    vi.advanceTimersByTime(500);
+    vi.advanceTimersByTime(1100);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-1");
   });
@@ -173,12 +173,14 @@ describe("ReCaptchaChallenge 编排", () => {
     expect(mocks.verify).toHaveBeenCalledTimes(1);
     expect(mocks.challenge).toHaveBeenCalledTimes(2);
     expect(wrapper.text()).not.toContain("还可尝试");
+    // 答错必须有可读文案（此前只抖动 + 换题，用户以为页面卡住）
+    expect(wrapper.text()).toContain("验证失败");
 
     wrapper
       .findComponent({ name: "ReCaptchaPuzzle" })
       .vm.$emit("submit", { answer: { x: 100 }, track: TRACK });
     await flushPromises();
-    vi.advanceTimersByTime(500);
+    vi.advanceTimersByTime(1100);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-2");
   });
@@ -244,7 +246,7 @@ describe("ReCaptchaChallenge 编排", () => {
     });
     await flushPromises();
     vi.useFakeTimers();
-    vi.advanceTimersByTime(500);
+    vi.advanceTimersByTime(1100);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-image");
   });
@@ -280,9 +282,34 @@ describe("ReCaptchaChallenge 编排", () => {
     expect(payload.type).toBe("pow");
     expect(payload.pow_answer.nonce).toBeDefined();
     vi.useFakeTimers();
-    vi.advanceTimersByTime(500);
+    vi.advanceTimersByTime(1100);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-pow");
+  });
+
+  it("verify 加签使用服务端 ts 作为 gen_time（客户端时钟偏差不致命）", async () => {
+    vi.stubGlobal("crypto", webcrypto);
+    const serverTime = 1700000000;
+    mocks.challenge.mockResolvedValue({
+      code: 1000,
+      data: { ...CHALLENGE, ck: "session-key", ts: serverTime }
+    });
+    mocks.verify.mockResolvedValue({ code: 1000, data: { passed: false } });
+    const wrapper = mountChallenge();
+    void vmOf(wrapper).open();
+    await flushPromises();
+    wrapper.findComponent({ name: "ReCaptchaPuzzle" }).vm.$emit("submit", {
+      answer: { x: 12 },
+      track: [
+        { x: 0, y: 0, t: 0 },
+        { x: 12, y: 0, t: 200 }
+      ],
+      input: "keyboard"
+    });
+    await vi.waitFor(() => expect(mocks.verify).toHaveBeenCalled());
+    const payload = mocks.verify.mock.calls[0][0];
+    expect(payload.gen_time).toBe(serverTime);
+    expect(payload.sign).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("bind 展示方式：真正挂载到指定容器，而不是弹窗", async () => {

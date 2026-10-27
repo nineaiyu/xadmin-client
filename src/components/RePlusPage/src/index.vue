@@ -268,7 +268,9 @@ defineExpose({
       v-if="frameworkState !== 'ready'"
       :state="frameworkState"
       :error-detail="loadError"
+      :can-reset="frameworkState === 'error'"
       @retry="handleGetData"
+      @reset="handleReset"
     />
     <template v-if="frameworkState === 'ready'">
       <div

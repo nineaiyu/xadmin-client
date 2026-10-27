@@ -73,8 +73,14 @@ describe("UserLoginTimeline", () => {
     expect(wrapper.find(".empty").text()).toBe("systemUser.noLoginRecords");
   });
 
-  it("接口失败时显示可读告警", async () => {
+  it("接口失败时显示可读告警（优先展示归一后的失败原因）", async () => {
     state.list.mockRejectedValue(new Error("network"));
+    const wrapper = await mountTimeline();
+    expect(wrapper.find(".alert").text()).toBe("network");
+  });
+
+  it("失败原因缺失时回退通用文案", async () => {
+    state.list.mockRejectedValue({ detail: "" });
     const wrapper = await mountTimeline();
     expect(wrapper.find(".alert").text()).toBe(
       "systemUser.loginRecordsLoadFailed"

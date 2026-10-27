@@ -143,6 +143,8 @@ async function loadPlan(label: string) {
   artifacts.value = [];
   hasPreviewed.value = false;
   if (!label) return;
+  // 先落基线：无字段权限或计划请求失败时不应把「刚选完模型」判成未保存改动
+  baselineSignature.value = payloadSignature.value;
   if (!canLoadFields) return;
   planLoading.value = true;
   planError.value = "";

@@ -12,7 +12,7 @@ import {
   shouldSample
 } from "@/utils/captchaSignal/track";
 import {
-  moveToPuzzleX,
+  pieceGeometry,
   sliderMax
 } from "@/components/ReCaptchaChallenge/src/geometry";
 
@@ -55,12 +55,22 @@ const scale = computed(() =>
   naturalWidth.value ? stageWidth.value / naturalWidth.value : 1
 );
 const maxMove = computed(() => sliderMax(sliderWidth.value));
+// 视觉位移与提交答案同源：leftPx / scale === answerX
+const geometry = computed(() =>
+  pieceGeometry(
+    displayX.value,
+    maxMove.value,
+    naturalWidth.value,
+    pieceSize.value,
+    stageWidth.value
+  )
+);
 
 const pieceStyle = computed(() => ({
   // 后端返回的是整幅透明画布（拼块 x 已归零、保留真实 y）：
   // 必须按底图同宽叠加，否则整幅画布被缩到拼块尺寸，视觉上只剩一个小点
   width: `${naturalWidth.value * scale.value}px`,
-  left: `${displayX.value * scale.value}px`
+  left: `${geometry.value.leftPx}px`
 }));
 
 function pushTrack(t: number, ev?: string) {
@@ -102,14 +112,8 @@ function onEnd() {
       track.value.at(-1)?.t ?? 0
     );
   }
-  const answerX = moveToPuzzleX(
-    displayX.value,
-    maxMove.value,
-    naturalWidth.value,
-    pieceSize.value
-  );
   emit("submit", {
-    answer: { x: Math.round(answerX) },
+    answer: { x: Math.round(geometry.value.answerX) },
     track: [...track.value],
     input: inputMode
   });

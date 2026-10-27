@@ -6598,7 +6598,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 批量强制下线（按选中行的用户去重后踢全部会话） */
+        /**
+         * @description 批量强制下线（按选中行的用户去重后踢全部会话）
+         *
+         *     入参两种形态，禁止按主键类型猜测语义（历史实现把整数同时当用户主键与
+         *     登录日志主键取并集，会误踢无关用户）：
+         *
+         *     - ``{"session_pks": [...], "user_pks": [...]}``：显式区分会话行与用户；
+         *     - ``[...]``：旧版数组形态，只接受**会话行主键（UUID）**。
+         */
         post: operations["api_identity_online_batch_force_logout_create"];
         delete?: never;
         options?: never;
@@ -15704,20 +15712,20 @@ export interface components {
          */
         CAPTCHACHALLENGEFUNCTEnum: "captcha.helpers.random_char_challenge" | "captcha.helpers.math_challenge";
         /**
-         * @description * `simplified` - Simplified Chinese characters
-         *     * `traditional` - Traditional Chinese characters
-         *     * `mixed` - Mixed simplified / traditional per challenge
+         * @description * `simplified` - 简体中文字符
+         *     * `traditional` - 繁体中文字符
+         *     * `mixed` - 每道题简繁混合
          *     * `ascii` - 字母数字
          * @enum {string}
          */
         CAPTCHACLICKCHARSETEnum: "simplified" | "traditional" | "mixed" | "ascii";
         /**
-         * @description * `image` - Image characters (fallback)
+         * @description * `image` - 图片字符（回退）
          *     * `slide` - 滑动拼图
          *     * `rotate` - 旋转回正
          *     * `click` - 文字点选
          *     * `wordorder` - 语序点选
-         *     * `icon` - Icon click
+         *     * `icon` - 图标点选
          * @enum {string}
          */
         CAPTCHAENABLEDTYPESEnum: "image" | "slide" | "rotate" | "click" | "wordorder" | "icon";
@@ -15744,7 +15752,7 @@ export interface components {
              */
             action?: string;
             /** 客户端环境包 */
-            env?: unknown;
+            env?: components["schemas"]["CaptchaEnv"] | null;
             /** 蜜罐字段 */
             hp?: string;
             /** 验证码场景 */
@@ -15764,7 +15772,7 @@ export interface components {
             type?: components["schemas"]["TypeEnum"];
         };
         CaptchaChallengeOut: {
-            /** Audio available */
+            /** 音频可用 */
             audio?: boolean;
             /** 底图 */
             background?: string;
@@ -15779,7 +15787,7 @@ export interface components {
             count?: number;
             /** 图片高度 */
             height?: number;
-            /** Image answer length */
+            /** 图片答案长度 */
             length?: number;
             /** 拼图块 */
             piece?: string;
@@ -15789,6 +15797,11 @@ export interface components {
             pow?: unknown;
             /** 点选提示图 */
             tip?: string;
+            /**
+             * 服务器时间
+             * @description 服务端时间戳（秒）；verify 加签时以它为 gen_time，避免客户端时钟偏差
+             */
+            ts?: number;
             /** 有效期（秒） */
             ttl: number;
             /** 验证码题型 */
@@ -15804,6 +15817,34 @@ export interface components {
             detail?: string;
             /** 错误码 */
             error?: string;
+        };
+        /** @description 客户端环境包；字段与前端 captchaSignal/env.ts 对齐，畸形结构直接 400。 */
+        CaptchaEnv: {
+            /** Canvas 摘要 */
+            canvas?: string;
+            /** CPU 核心数 */
+            cores?: number;
+            /** 客户端指纹 */
+            fp?: string;
+            /** 语言 */
+            language?: string;
+            /** 插件数量 */
+            plugins?: number;
+            /** 减少动态效果 */
+            reduced_motion?: boolean;
+            /** 存在 Referer */
+            referer?: boolean;
+            /** 大屏 */
+            screen?: components["schemas"]["CaptchaScreen"] | null;
+            /** 时区 */
+            timezone?: string;
+            /** 触摸点数 */
+            touch?: number;
+            /** 环境版本 */
+            v?: number;
+            webdriver?: boolean;
+            /** WebGL 摘要 */
+            webgl?: string;
         };
         CaptchaImagePreviewData: {
             /** 预览图片 */
@@ -15851,6 +15892,7 @@ export interface components {
         CaptchaLog: {
             /** 操作 */
             readonly action: string;
+            /** 资产 ID */
             readonly asset_id: string;
             /** 尝试次数 */
             readonly attempts: number;
@@ -15931,20 +15973,42 @@ export interface components {
             /** 规则 */
             rules: components["schemas"]["CaptchaRuleUpdateItem"][];
         };
+        /**
+         * @description 规则可写字段：分值 / 开关 / 优先级。
+         *
+         *     ``params`` 当前无运行时消费点（规则判据固定实现），因此不开放写入——
+         *     可编辑但永不生效会让运营误以为调过窗口/阈值。分值与分数域一致限制在
+         *     [-100, 100]，避免误填极端值把全站推向 allow/deny。
+         */
         CaptchaRuleUpdateItem: {
             /** 规则编码 */
             code: string;
             /** 启用 */
             enabled?: boolean;
-            /** 参数 */
-            params?: unknown;
             /** 优先级 */
             priority?: number;
             /** 分值 */
             score?: number;
         };
+        /** @description 客户端屏幕信息（只用于风险信号，数值越界/类型错误在入口即拒绝）。 */
+        CaptchaScreen: {
+            /** 可用高度 */
+            availHeight?: number;
+            /** 可用宽度 */
+            availWidth?: number;
+            /**
+             * 设备像素比
+             * Format: double
+             */
+            dpr?: number;
+            /** 屏幕高度 */
+            height?: number;
+            /** 屏幕宽度 */
+            width?: number;
+        };
         /** @description 验证码数据大盘（时间窗聚合，只读）。 */
         CaptchaStats: {
+            /** 按资产 */
             by_asset: components["schemas"]["CaptchaStatsAssetRow"][];
             /** 按决策 */
             by_decision: components["schemas"]["CaptchaStatsDecisionRow"][];
@@ -15954,7 +16018,7 @@ export interface components {
             generated_at: number;
             /** 策略快照 */
             policy: components["schemas"]["CaptchaStatsPolicy"];
-            /** Risk score distribution */
+            /** 风险分值分布 */
             risk_distribution: components["schemas"]["CaptchaStatsRiskBucket"][];
             /** 汇总 */
             summary: components["schemas"]["CaptchaStatsSummary"];
@@ -15962,12 +16026,13 @@ export interface components {
             telemetry: {
                 [key: string]: number;
             };
+            /** 指纹 Top */
             top_fingerprints: components["schemas"]["CaptchaStatsTopEntity"][];
-            /** Top IP hashes */
+            /** IP 哈希 Top */
             top_ips: components["schemas"]["CaptchaStatsTopEntity"][];
-            /** Top deny reasons */
+            /** 拦截原因 Top */
             top_reasons: components["schemas"]["CaptchaStatsTopReason"][];
-            /** Top UA classes */
+            /** UA 类别 Top */
             top_ua: components["schemas"]["CaptchaStatsTopEntity"][];
             /** 小时趋势 */
             trend: components["schemas"]["CaptchaStatsTrendPoint"][];
@@ -15975,6 +16040,7 @@ export interface components {
             window_hours: number;
         };
         CaptchaStatsAssetRow: {
+            /** 资产 ID */
             asset_id: string;
             /**
              * 通过率
@@ -15997,12 +16063,13 @@ export interface components {
             failure_ladder: string;
             /** 日志开关 */
             log_enabled: boolean;
+            /** 启用 PoW */
             pow_enabled: boolean;
             /** 保留天数 */
             retention_days: number;
             /** 风险模式 */
             risk_mode: string;
-            /** Decision thresholds */
+            /** 决策阈值 */
             thresholds: {
                 [key: string]: number;
             };
@@ -16017,7 +16084,7 @@ export interface components {
             error?: string;
         };
         CaptchaStatsRiskBucket: {
-            /** Score bucket */
+            /** 分值区间 */
             bucket: string;
             /** 数量 */
             total: number;
@@ -16027,9 +16094,12 @@ export interface components {
             challenge: number;
             /** 票据消费 */
             consume: number;
-            /** Deny count */
+            /** 拦截次数 */
             deny: number;
-            /** Format: double */
+            /**
+             * 拦截率
+             * Format: double
+             */
             deny_rate: number;
             /** 校验 P50 耗时（毫秒） */
             latency_p50: number;
@@ -16057,7 +16127,7 @@ export interface components {
             ua_class?: string;
         };
         CaptchaStatsTopReason: {
-            /** Reason code */
+            /** 原因码 */
             reason: string;
             /** 数量 */
             total: number;
@@ -16084,6 +16154,8 @@ export interface components {
             type: string;
         };
         CaptchaTrackPoint: {
+            /** 轨迹事件 */
+            ev?: string;
             /**
              * 时间戳（毫秒）
              * Format: double
@@ -16113,7 +16185,7 @@ export interface components {
             /** 挑战 ID */
             challenge_id: string;
             /** 客户端环境包 */
-            env?: unknown;
+            env?: components["schemas"]["CaptchaEnv"] | null;
             /**
              * 生成时间
              * @description 客户端时间戳（秒）；在 verify 签名时间窗内校验
@@ -16317,7 +16389,7 @@ export interface components {
             /** ID */
             readonly pk: number;
             /**
-             * 时间
+             * 时区
              * @default Asia/Shanghai
              */
             timezone: string;
@@ -19757,7 +19829,7 @@ export interface components {
             /** ID */
             readonly pk?: number;
             /**
-             * 时间
+             * 时区
              * @default Asia/Shanghai
              */
             timezone: string;
@@ -21669,11 +21741,6 @@ export interface components {
              *     ]
              */
             CAPTCHA_NOISE_FUNCTIONS: components["schemas"]["CAPTCHANOISEFUNCTIONSEnum"][];
-            /**
-             * 验证码过期时间 (分)
-             * @description 图片验证码过期时间
-             */
-            CAPTCHA_TIMEOUT?: number;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         PatchedSecurityCaptchaGeneral: {
@@ -21687,8 +21754,8 @@ export interface components {
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         PatchedSecurityCaptchaInteractive: {
             /**
-             * Background pack
-             * @description builtin = bundled manifest (procedural when empty); procedural = disable photo pack
+             * 背景图包
+             * @description builtin = 内置清单（为空时程序化生成）；procedural = 禁用图片包
              * @default builtin
              */
             CAPTCHA_BACKGROUND_PACK: string;
@@ -21708,8 +21775,8 @@ export interface components {
              */
             CAPTCHA_CLICK_RADIUS: number;
             /**
-             * Enabled captcha types
-             * @description Challenge types eligible for random selection; image stays opt-in fallback
+             * 启用的验证码题型
+             * @description 参与随机抽取的题型；图片题仅作显式回退
              * @default [
              *       "slide",
              *       "rotate",
@@ -21719,7 +21786,7 @@ export interface components {
             CAPTCHA_ENABLED_TYPES: components["schemas"]["CAPTCHAENABLEDTYPESEnum"][];
             /**
              * 图片验证码回退
-             * @description Expose the image type as an accessibility fallback; it never enters the random pool
+             * @description 将图片题型作为无障碍回退开放；不进入随机池
              * @default true
              */
             CAPTCHA_IMAGE_FALLBACK_ENABLED: boolean;
@@ -21729,8 +21796,8 @@ export interface components {
              */
             CAPTCHA_MAX_ATTEMPTS: number;
             /**
-             * PoW for image fallback
-             * @description Require a low-difficulty PoW before accepting an image fallback challenge
+             * 图片回退 PoW
+             * @description 接受图片回退题前要求低难度 PoW
              * @default true
              */
             CAPTCHA_POW_FOR_IMAGE_FALLBACK: boolean;
@@ -21824,8 +21891,8 @@ export interface components {
              */
             CAPTCHA_LOG_RETENTION_DAYS: number;
             /**
-             * PoW bits (allow)
-             * @description Silent PoW difficulty for low-risk allow decisions; default 16
+             * PoW 位数（allow）
+             * @description 低风险 allow 决策的静默 PoW 难度；默认 16
              * @default 16
              */
             CAPTCHA_POW_BITS_ALLOW: number;
@@ -21849,13 +21916,13 @@ export interface components {
             CAPTCHA_POW_BITS_MAX: number;
             /**
              * 启用工作量证明
-             * @description Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis
+             * @description allow/light 决策下发 PoW 挑战；关闭会削弱算力轴
              * @default true
              */
             CAPTCHA_POW_ENABLED: boolean;
             /**
              * 单 IP 每小时 PoW 预算
-             * @description 单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒
+             * @description 单 IP 每小时 PoW 出题预算；0 = 不限；超出后降级为其他已启用题型（不直接拒绝）
              * @default 600
              */
             CAPTCHA_POW_IP_BUDGET: number;
@@ -21867,7 +21934,7 @@ export interface components {
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)
+             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
@@ -21883,7 +21950,7 @@ export interface components {
             CAPTCHA_RISK_PROXY_CIDRS: string;
             /**
              * 信任私网
-             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；仅在已配置 TRUSTED_PROXY_IPS 时生效
              * @default true
              */
             CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
@@ -21912,14 +21979,14 @@ export interface components {
              */
             CAPTCHA_RISK_T_LIGHT: number;
             /**
-             * Strict ticket binding
-             * @description Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket
+             * 严格票据绑定
+             * @description 消费票据时要求 sid cookie 与 X-Captcha-Fp 指纹一致
              * @default true
              */
             CAPTCHA_STRICT_BINDING: boolean;
             /**
-             * Ticket audience
-             * @description Deployment identifier bound into tickets; empty = site URL / first allowed host
+             * 票据 audience
+             * @description 绑定到票据的部署标识；空 = 站点 URL / 首个允许的 Host
              * @default
              */
             CAPTCHA_TICKET_AUDIENCE: string;
@@ -23766,11 +23833,6 @@ export interface components {
              *     ]
              */
             CAPTCHA_NOISE_FUNCTIONS: components["schemas"]["CAPTCHANOISEFUNCTIONSEnum"][];
-            /**
-             * 验证码过期时间 (分)
-             * @description 图片验证码过期时间
-             */
-            CAPTCHA_TIMEOUT: number;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         SecurityCaptchaGeneral: {
@@ -23784,8 +23846,8 @@ export interface components {
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         SecurityCaptchaInteractive: {
             /**
-             * Background pack
-             * @description builtin = bundled manifest (procedural when empty); procedural = disable photo pack
+             * 背景图包
+             * @description builtin = 内置清单（为空时程序化生成）；procedural = 禁用图片包
              * @default builtin
              */
             CAPTCHA_BACKGROUND_PACK: string;
@@ -23805,8 +23867,8 @@ export interface components {
              */
             CAPTCHA_CLICK_RADIUS: number;
             /**
-             * Enabled captcha types
-             * @description Challenge types eligible for random selection; image stays opt-in fallback
+             * 启用的验证码题型
+             * @description 参与随机抽取的题型；图片题仅作显式回退
              * @default [
              *       "slide",
              *       "rotate",
@@ -23816,7 +23878,7 @@ export interface components {
             CAPTCHA_ENABLED_TYPES: components["schemas"]["CAPTCHAENABLEDTYPESEnum"][];
             /**
              * 图片验证码回退
-             * @description Expose the image type as an accessibility fallback; it never enters the random pool
+             * @description 将图片题型作为无障碍回退开放；不进入随机池
              * @default true
              */
             CAPTCHA_IMAGE_FALLBACK_ENABLED: boolean;
@@ -23826,8 +23888,8 @@ export interface components {
              */
             CAPTCHA_MAX_ATTEMPTS: number;
             /**
-             * PoW for image fallback
-             * @description Require a low-difficulty PoW before accepting an image fallback challenge
+             * 图片回退 PoW
+             * @description 接受图片回退题前要求低难度 PoW
              * @default true
              */
             CAPTCHA_POW_FOR_IMAGE_FALLBACK: boolean;
@@ -23921,8 +23983,8 @@ export interface components {
              */
             CAPTCHA_LOG_RETENTION_DAYS: number;
             /**
-             * PoW bits (allow)
-             * @description Silent PoW difficulty for low-risk allow decisions; default 16
+             * PoW 位数（allow）
+             * @description 低风险 allow 决策的静默 PoW 难度；默认 16
              * @default 16
              */
             CAPTCHA_POW_BITS_ALLOW: number;
@@ -23946,13 +24008,13 @@ export interface components {
             CAPTCHA_POW_BITS_MAX: number;
             /**
              * 启用工作量证明
-             * @description Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis
+             * @description allow/light 决策下发 PoW 挑战；关闭会削弱算力轴
              * @default true
              */
             CAPTCHA_POW_ENABLED: boolean;
             /**
              * 单 IP 每小时 PoW 预算
-             * @description 单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒
+             * @description 单 IP 每小时 PoW 出题预算；0 = 不限；超出后降级为其他已启用题型（不直接拒绝）
              * @default 600
              */
             CAPTCHA_POW_IP_BUDGET: number;
@@ -23964,7 +24026,7 @@ export interface components {
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)
+             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
@@ -23980,7 +24042,7 @@ export interface components {
             CAPTCHA_RISK_PROXY_CIDRS: string;
             /**
              * 信任私网
-             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；仅在已配置 TRUSTED_PROXY_IPS 时生效
              * @default true
              */
             CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
@@ -24009,14 +24071,14 @@ export interface components {
              */
             CAPTCHA_RISK_T_LIGHT: number;
             /**
-             * Strict ticket binding
-             * @description Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket
+             * 严格票据绑定
+             * @description 消费票据时要求 sid cookie 与 X-Captcha-Fp 指纹一致
              * @default true
              */
             CAPTCHA_STRICT_BINDING: boolean;
             /**
-             * Ticket audience
-             * @description Deployment identifier bound into tickets; empty = site URL / first allowed host
+             * 票据 audience
+             * @description 绑定到票据的部署标识；空 = 站点 URL / 首个允许的 Host
              * @default
              */
             CAPTCHA_TICKET_AUDIENCE: string;
@@ -36804,6 +36866,13 @@ export interface operations {
                     };
                 };
             };
+            /** @description 任务不存在或不属于当前用户（同口径，避免枚举） */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     api_identity_account_risks_search_columns_retrieve: {
@@ -39754,11 +39823,26 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": string[];
-                "application/x-www-form-urlencoded": string[];
-                "multipart/form-data": string[];
-                "text/csv": string[];
-                "text/xlsx": string[];
+                "application/json": {
+                    session_pks?: string[];
+                    user_pks?: number[];
+                };
+                "application/x-www-form-urlencoded": {
+                    session_pks?: string[];
+                    user_pks?: number[];
+                };
+                "multipart/form-data": {
+                    session_pks?: string[];
+                    user_pks?: number[];
+                };
+                "text/csv": {
+                    session_pks?: string[];
+                    user_pks?: number[];
+                };
+                "text/xlsx": {
+                    session_pks?: string[];
+                    user_pks?: number[];
+                };
             };
         };
         responses: {
@@ -39768,8 +39852,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        channels?: number;
                         code?: number;
                         detail?: string;
+                        failures?: {
+                            pk?: string;
+                            reason?: string;
+                        }[];
                         requestId?: string;
                         timestamp?: string;
                         users?: number;

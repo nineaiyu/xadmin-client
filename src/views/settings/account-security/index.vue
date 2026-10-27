@@ -9,7 +9,7 @@ import {
   settingsVerifyCodeApi
 } from "@/api/system/settings";
 import Setting from "@/views/settings/components/settings-shell/index.vue";
-import { settingsPane } from "@/views/settings/components/settings-shell/types";
+import type { settingsPane } from "@/views/settings/components/settings-shell/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 defineOptions({

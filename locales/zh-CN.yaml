@@ -357,6 +357,7 @@ captchaChallenge:
   retryHint: 验证未通过，还可尝试 {count} 次
   success: 验证通过
   verifyFailed: 验证失败，请重试
+  signFailed: 安全校验签名失败，请重试或使用 HTTPS 访问
   loadFailed: 验证码加载失败，请重试
   puzzleAlt: 滑动拼图验证码
   rotateAlt: 旋转验证码
@@ -375,6 +376,10 @@ captchaChallenge:
   powHint: 验证过程在本地完成，不采集密码与输入内容
   powRunning: 正在安全检查…
   powFailed: 安全检查失败，请重试
+  loading: 正在加载验证码…
+  unsupportedType: 当前验证码类型不受支持，请点击「换一题」
+  clickStageKeyboard: 点选验证码图片（方向键移动准星，回车落点，退格撤销）
+  notReady: 验证码组件未就绪，请重试
   imageHint: 请输入图片中的字符
   imageAlt: 图片验证码
   imagePlaceholder: 请输入图片中的字符
@@ -1133,6 +1138,7 @@ plus:
   fileLink: 文件连接
   noListPermission: 当前账号没有该页面的查看权限，请联系管理员授权
   retry: 重试
+  resetAndRetry: 重置筛选并重试
   metaMissingTitle: 页面列配置加载失败
   metaMissingDetail: 本页面的搜索列与表格列由后端元数据生成，当前未获取到。请刷新页面重试；若持续出现，请联系管理员（常见原因：页面未正确注册、序列化器未声明字段、当前账号缺少页面权限点）。
   detailBlankTitle: 详情数据为空
@@ -2608,6 +2614,7 @@ chat:
   onlineCount: "在线 {count} 人"
   connecting: 连接中…
   uploading: 正在上传附件…
+  streamingHint: AI 正在回答，完成后可继续发送
   enterHint: 回车发送，Shift + 回车换行
   mentionHint: 输入 {'@'} 可提及在线成员
   loadMore: 加载更早的消息
@@ -2910,6 +2917,7 @@ setting:
   category: 设置分类
   is_active: 启用状态
   encrypted: 加密存储
+  reload: 重新加载
 
 settingBasic:
   title: 基本设置
@@ -2950,12 +2958,15 @@ settingCaptcha:
   previewClick: 文字点选
   previewWordorder: 语序点选
   previewIcon: 图标点选
+  previewImage: 图片字符
+  previewPow: 算力题
   refreshPreview: 刷新预览
   previewTip: 预览基于已保存配置；仅用于查看样式，不会提交验证
   previewFailed: 预览加载失败
+  previewDenied: 没有预览权限（需要对应的 preview 权限点）
   interactiveBehaviorHint: 语序点选为新增行为验证题型，需在下方「交互式题型」中勾选后生效；PoW 算力题与难度收紧由「风险策略」按风险档自动下发。
   risk: 风险策略
-  riskDesc: 风险分级模式、阈值、算力与处置阶梯；信任网段复用「登录安全」白名单；默认 off 保持现状（行为验证的难度与 PoW 也在此启用）
+  riskDesc: 风险分级模式、阈值、算力与处置阶梯；信任网段复用「登录安全」白名单；默认 enforce（反代部署需先配置 TRUSTED_PROXY_IPS）
   riskGuideTitle: 风险策略怎么配
   riskGuide1: 首次上线先选 shadow：只评分、只记日志，不改变放行；观察至少 3 天且累计 1000 次验证，确认误拦可接受后再切 enforce。
   riskGuide2: 阈值就是分数区间：低于放行阈值→无题直过；放行~轻验证→点击 + PoW；轻验证~难题→常规题；难题~拒绝→难题；达到拒绝阈值→直接拒绝。不确定时保持默认 20/40/70/90。
@@ -2963,8 +2974,17 @@ settingCaptcha:
   riskRules: 规则分值
   riskRulesDesc: 调整 16 条可解释规则的分值与开关（保存后即时生效）
   riskRuleScore: 分值
+  riskRulePriority: 优先级
   riskRuleEnabled: 启用
   riskRuleSave: 保存规则
+  riskRuleReload: 放弃修改
+  unsaved: 风险规则有未保存的修改
+  leaveConfirm: 风险规则有未保存的修改，离开后将丢失，确认离开？
+  leave: 直接离开
+  stay: 留在当前页面
+  riskRuleRetry: 重试
+  riskRulesEmpty: 暂无规则数据
+  riskRulesLoadFailed: 规则加载失败
   riskRulesSaved: 规则已保存
   riskRulesFailed: 规则保存失败
   riskCompliance: 合规告知：仅采集环境摘要与行为特征（哈希），不采集密码、输入内容或 Cookie，不向第三方发送；日志默认保留 30 天，IP 只保留网段哈希。
@@ -2984,8 +3004,10 @@ settingCaptcha:
   dataTotal: 共
   dataPassed: 通过
   dataTrend: 小时趋势
+  dataTrendNote: 仅展示最近 {count} 个时间点（完整窗口数据仍参与上方汇总）
   dataLog: 验证日志
   dataEmpty: 暂无数据
+  dataRetry: 重试
   dataRefresh: 刷新
   dataRiskMode: 风险档
   dataRetention: 日志保留 {days} 天

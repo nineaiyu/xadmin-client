@@ -133,10 +133,8 @@ export type CaptchaTrackPoint = {
   x: number;
   y: number;
   t: number;
-  /** 事件类型（move/down/up/click）：信号层用于区分轨迹阶段 */
+  /** 事件类型（move/down/up/click/keyboard）：信号层用于区分轨迹阶段 */
   ev?: string;
-  /** 按下到抬起的时长（毫秒），仅首点携带 */
-  dur?: number;
 };
 
 export type CaptchaPowChallenge = {
@@ -144,6 +142,8 @@ export type CaptchaPowChallenge = {
   challenge: string;
   difficulty_bits: number;
   expire: number;
+  /** 相对有效期（秒）：客户端优先按收到时刻 + ttl 计时 */
+  ttl?: number;
 };
 
 export type CaptchaChallengeData = {
@@ -161,6 +161,8 @@ export type CaptchaChallengeData = {
   /** 图片题是否提供音频回退 */
   audio?: boolean;
   ttl: number;
+  /** 服务端时间戳（秒）：verify 加签以此为 gen_time，避免客户端时钟偏差 */
+  ts?: number;
   /** 一次性验签会话密钥：verify 需据此加签 */
   ck?: string;
   /** allow / light / 图片回退的算力题面（图片题需随答案一起提交） */

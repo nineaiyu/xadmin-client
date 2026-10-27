@@ -11,6 +11,7 @@ import {
   moveToAngle,
   sliderMax
 } from "@/components/ReCaptchaChallenge/src/geometry";
+import { isKeyboardEvent } from "@/utils/captchaSignal/track";
 
 defineOptions({ name: "ReRotateCaptcha" });
 
@@ -32,6 +33,7 @@ const moveX = ref(0);
 const verified = ref(false);
 const track = ref<CaptchaTrackPoint[]>([]);
 let startedAt = 0;
+let inputMode: "pointer" | "keyboard" = "pointer";
 
 useResizeObserver(sliderHostRef, entries => {
   sliderWidth.value = entries[0]?.contentRect.width ?? 0;
@@ -51,10 +53,15 @@ function onStart() {
   track.value = [];
   startedAt = Date.now();
   moveX.value = 0;
+  inputMode = "pointer";
   pushTrack(0);
 }
 
-function onMove(payload: { moveX: number }) {
+function onMove(payload: {
+  event: PointerEvent | KeyboardEvent;
+  moveX: number;
+}) {
+  if (isKeyboardEvent(payload.event)) inputMode = "keyboard";
   moveX.value = payload.moveX;
   if (!startedAt) startedAt = Date.now();
   pushTrack(Date.now() - startedAt);
@@ -72,7 +79,8 @@ function onEnd() {
   }
   emit("submit", {
     answer: { angle: angle.value },
-    track: [...track.value]
+    track: [...track.value],
+    input: inputMode
   });
 }
 

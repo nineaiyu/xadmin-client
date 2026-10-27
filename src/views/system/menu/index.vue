@@ -110,6 +110,7 @@ const emptyText = computed(() =>
 
       <div class="menu-page__scroll" :style="{ height: `${height}px` }">
         <el-tree
+          v-if="!loadError"
           ref="treeRef"
           v-loading="loading"
           :allow-drop="allowDrop"

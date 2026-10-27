@@ -61,9 +61,16 @@ describe("verifySign（与后端 captcha/tickets.py 同口径）", () => {
     expect(second).not.toBe(first);
   });
 
-  it("能力探测反映 crypto.subtle 是否存在", () => {
-    expect(verifySignSupported()).toBe(true);
+  it("无 crypto.subtle 时回退纯 JS，签名仍与 node:crypto 一致", async () => {
+    // http + 内网 IP（非安全上下文）没有 subtle：不得因此丧失加签能力
     vi.stubGlobal("crypto", undefined);
-    expect(verifySignSupported()).toBe(false);
+    expect(verifySignSupported()).toBe(true);
+    await expect(answerDigest({ x: 123 })).resolves.toBe(
+      nodeDigest({ x: 123 })
+    );
+    await expect(hmacSha256Hex("ck-key", "hello|world")).resolves.toBe(
+      nodeSign("ck-key", "hello|world")
+    );
+    expect(randomNonce()).toMatch(/^[0-9a-f]{32}$/);
   });
 });
