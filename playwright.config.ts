@@ -55,7 +55,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI
-    ? [["list"], ["html", { open: "never" }]]
+    ? [["list"], ["github"], ["html", { open: "never" }]]
     : [["list"]],
   outputDir: "./test-results",
   use: {
