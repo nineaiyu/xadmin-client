@@ -2931,22 +2931,28 @@ settingLdap:
 
 settingCaptcha:
   general: 验证码总配置
-  generalDesc: 全局开关与当前使用的验证码类型；关闭后所有场景不再要求验证码
+  generalDesc: 全局开关与当前使用的验证码类型；交互式即行为验证（滑动 / 旋转 / 点选 / 语序），关闭后所有场景不再要求验证码
   image: 图片验证码
   imageDesc: 图片字符验证码的生成方式、长度、字体、颜色与噪点
   imagePreviewTitle: 图片验证码预览
   interactive: 交互式验证码
-  interactiveDesc: 滑动拼图 / 旋转回正 / 文字点选：题型、容差、有效期、尺寸与无障碍回退
+  interactiveDesc: 行为验证题型（滑动拼图 / 旋转回正 / 文字点选 / 语序点选）：题型、容差、有效期、尺寸与无障碍回退
   interactivePreviewTitle: 交互式验证码预览
   previewType: 预览题型
   previewSlide: 滑动拼图
   previewRotate: 旋转回正
   previewClick: 文字点选
+  previewWordorder: 语序点选
   refreshPreview: 刷新预览
   previewTip: 预览基于已保存配置；仅用于查看样式，不会提交验证
   previewFailed: 预览加载失败
+  interactiveBehaviorHint: 语序点选为新增行为验证题型，需在下方「交互式题型」中勾选后生效；PoW 算力题与难度收紧由「风险策略」按风险档自动下发。
   risk: 风险策略
-  riskDesc: 风险分级模式、阈值、算力与处置阶梯；信任网段复用「登录安全」白名单；默认 off 保持现状
+  riskDesc: 风险分级模式、阈值、算力与处置阶梯；信任网段复用「登录安全」白名单；默认 off 保持现状（行为验证的难度与 PoW 也在此启用）
+  riskGuideTitle: 风险策略怎么配
+  riskGuide1: 首次上线先选 shadow：只评分、只记日志，不改变放行；观察至少 3 天且累计 1000 次验证，确认误拦可接受后再切 enforce。
+  riskGuide2: 阈值就是分数区间：低于放行阈值→无题直过；放行~轻验证→点击 + PoW；轻验证~难题→常规题；难题~拒绝→难题；达到拒绝阈值→直接拒绝。不确定时保持默认 20/40/70/90。
+  riskGuide3: 内网/回环默认信任；办公网请加入「登录安全」白名单。失败阶梯 3/8/20 = 第 3 次强制难题 / 第 8 次冷却 15 分钟 / 第 20 次冷却 1 小时。
   riskRules: 规则分值
   riskRulesDesc: 调整 16 条可解释规则的分值与开关（保存后即时生效）
   riskRuleScore: 分值

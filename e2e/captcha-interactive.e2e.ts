@@ -259,6 +259,13 @@ test("验证码设置页：总配置 + 图片/交互式分页签渲染", async (
   ]) {
     await expect(page.getByText(label).first()).toBeVisible();
   }
+
+  // 行为验证新增题型：语序点选可预览
+  await page.getByTestId("captcha-preview-type").click();
+  await page.getByRole("option", { name: "语序点选" }).click();
+  await expect(page.locator(".re-word-click__stage")).toBeVisible({
+    timeout: 15_000
+  });
 });
 
 test("验证码设置页：验证数据页签渲染大盘与日志列表", async ({ page }) => {

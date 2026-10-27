@@ -65,6 +65,21 @@ onMounted(load);
 <template>
   <SettingItem v-bind="props.item" />
 
+  <el-alert
+    class="mt-4"
+    type="info"
+    :closable="false"
+    show-icon
+    data-testid="captcha-risk-guide"
+  >
+    <template #title>{{ t("settingCaptcha.riskGuideTitle") }}</template>
+    <ul class="captcha-risk__guide">
+      <li>{{ t("settingCaptcha.riskGuide1") }}</li>
+      <li>{{ t("settingCaptcha.riskGuide2") }}</li>
+      <li>{{ t("settingCaptcha.riskGuide3") }}</li>
+    </ul>
+  </el-alert>
+
   <section
     v-loading="loading"
     class="mt-4 rounded-lg border border-(--el-border-color-lighter) p-3"
@@ -128,5 +143,12 @@ onMounted(load);
 <style lang="scss" scoped>
 .captcha-risk__score {
   width: 104px;
+}
+
+.captcha-risk__guide {
+  padding-left: 1.25rem;
+  margin: var(--space-1) 0 0;
+  line-height: 1.6;
+  list-style: disc;
 }
 </style>

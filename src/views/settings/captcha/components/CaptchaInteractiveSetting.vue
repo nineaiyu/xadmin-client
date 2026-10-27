@@ -31,7 +31,8 @@ const version = ref(0);
 const previewTypes = computed(() => [
   { value: "slide" as const, label: t("settingCaptcha.previewSlide") },
   { value: "rotate" as const, label: t("settingCaptcha.previewRotate") },
-  { value: "click" as const, label: t("settingCaptcha.previewClick") }
+  { value: "click" as const, label: t("settingCaptcha.previewClick") },
+  { value: "wordorder" as const, label: t("settingCaptcha.previewWordorder") }
 ]);
 
 /** 预览基于已保存配置：保存后由页面递增 refreshKey 自动刷新 */
@@ -114,12 +115,22 @@ onMounted(load);
       <ReWordClickCaptcha v-else :key="previewKey" :challenge="challenge" />
     </div>
   </SettingPreview>
+  <p class="captcha-preview__hint">
+    {{ t("settingCaptcha.interactiveBehaviorHint") }}
+  </p>
   <SettingItem v-bind="props.item" />
 </template>
 
 <style lang="scss" scoped>
 .captcha-preview__select {
   width: 132px;
+}
+
+.captcha-preview__hint {
+  margin-top: var(--space-2);
+  font-size: var(--el-font-size-small);
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
 }
 
 /* 舞台内固定内容列：拼图 / 点选按底图 320 宽，旋转按 240 宽，

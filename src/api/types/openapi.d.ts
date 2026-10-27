@@ -21809,78 +21809,91 @@ export interface components {
             /**
              * 告警拦截率
              * Format: double
+             * @description 窗口内 deny 占比达到该值时触发告警（0~1）
              * @default 0.5
              */
             CAPTCHA_ALERT_DENY_RATE: number;
             /**
              * 启用告警
+             * @description 拦截率或同 IP 挑战突增超过阈值时发送站点通知
              * @default true
              */
             CAPTCHA_ALERT_ENABLED: boolean;
             /**
              * 告警最小样本数
+             * @description 窗口内样本数不足时不告警，避免低流量误报
              * @default 50
              */
             CAPTCHA_ALERT_MIN_SAMPLES: number;
             /**
              * 告警窗口（分钟）
+             * @description 告警统计窗口；同一窗口同类告警只发一次
              * @default 10
              */
             CAPTCHA_ALERT_WINDOW_MINUTES: number;
             /**
              * 验证码失败联动登录锁定
+             * @description 验证码失败达到阶梯阈值时同时锁定登录账号；默认关闭，避免误锁
              * @default false
              */
             CAPTCHA_FAILURE_LINK_LOCK: boolean;
             /**
              * 失败阶梯
-             * @description 例如 3,8,20；0,0,0 停用
+             * @description 失败阶梯：3,8,20 表示第 3 次强制难题、第 8 次冷却 15 分钟、第 20 次冷却 1 小时；0,0,0 停用
              * @default 3,8,20
              */
             CAPTCHA_FAIL_STEP: string;
             /**
              * 启用蜜罐
+             * @description 前端隐藏诱饵字段；被填写即判定自动化并拒绝（零误杀）
              * @default true
              */
             CAPTCHA_HONEYPOT_ENABLED: boolean;
             /**
              * 观测日志保留期（天）
+             * @description CaptchaLog 保留天数；0 = 永久保留；每日 beat 任务清理过期行
              * @default 30
              */
             CAPTCHA_LOG_RETENTION_DAYS: number;
             /**
              * PoW 位数（难题）
+             * @description hard 档 PoW 前导零位数；默认 20，受位数上限约束
              * @default 20
              */
             CAPTCHA_POW_BITS_HARD: number;
             /**
              * PoW 位数（轻验证）
+             * @description light 档 PoW 前导零位数；18 约需数万次哈希，越高越慢
              * @default 18
              */
             CAPTCHA_POW_BITS_LIGHT: number;
             /**
              * PoW 位数上限
+             * @description 服务端硬上限（最大 24）；防止把服务端变成算力放大器
              * @default 20
              */
             CAPTCHA_POW_BITS_MAX: number;
             /**
              * 启用工作量证明
+             * @description light 档是否下发 PoW 算力题；关闭后 light 退化为常规题
              * @default true
              */
             CAPTCHA_POW_ENABLED: boolean;
             /**
              * 单 IP 每小时 PoW 预算
+             * @description 单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒
              * @default 600
              */
             CAPTCHA_POW_IP_BUDGET: number;
             /**
              * 机房网段（CIDR）
+             * @description 机房 / 云网段，逗号分隔 CIDR；命中加 20 分；留空不启用
              * @default
              */
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off 保持现状；shadow 只记录决策；enforce 实际执行
+             * @description off = 风险层不运行；shadow = 只评分记日志、不改变放行；enforce = 按决策执行（建议先跑 shadow ≥3 天）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
@@ -21890,32 +21903,37 @@ export interface components {
             CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
             /**
              * 代理网段（CIDR）
+             * @description 已知代理 / TOR 出口网段，逗号分隔 CIDR；命中加 30 分；留空不启用
              * @default
              */
             CAPTCHA_RISK_PROXY_CIDRS: string;
             /**
              * 信任私网
-             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启
              * @default true
              */
             CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
             /**
              * 放行阈值
+             * @description 分数低于该值：无题直接发票（allow）；默认 20
              * @default 20
              */
             CAPTCHA_RISK_T_ALLOW: number;
             /**
              * 拒绝阈值
+             * @description 分数达到该值：直接拒绝，响应与答案错误同形（deny）；默认 90
              * @default 90
              */
             CAPTCHA_RISK_T_DENY: number;
             /**
              * 难题阈值
+             * @description 分数达到该值：难题型 / 语序点选，容差收紧（hard）；默认 70
              * @default 70
              */
             CAPTCHA_RISK_T_HARD: number;
             /**
              * 轻验证阈值
+             * @description 分数达到该值：一次点击 + PoW（light）；默认 40，必须大于放行阈值
              * @default 40
              */
             CAPTCHA_RISK_T_LIGHT: number;
@@ -23867,78 +23885,91 @@ export interface components {
             /**
              * 告警拦截率
              * Format: double
+             * @description 窗口内 deny 占比达到该值时触发告警（0~1）
              * @default 0.5
              */
             CAPTCHA_ALERT_DENY_RATE: number;
             /**
              * 启用告警
+             * @description 拦截率或同 IP 挑战突增超过阈值时发送站点通知
              * @default true
              */
             CAPTCHA_ALERT_ENABLED: boolean;
             /**
              * 告警最小样本数
+             * @description 窗口内样本数不足时不告警，避免低流量误报
              * @default 50
              */
             CAPTCHA_ALERT_MIN_SAMPLES: number;
             /**
              * 告警窗口（分钟）
+             * @description 告警统计窗口；同一窗口同类告警只发一次
              * @default 10
              */
             CAPTCHA_ALERT_WINDOW_MINUTES: number;
             /**
              * 验证码失败联动登录锁定
+             * @description 验证码失败达到阶梯阈值时同时锁定登录账号；默认关闭，避免误锁
              * @default false
              */
             CAPTCHA_FAILURE_LINK_LOCK: boolean;
             /**
              * 失败阶梯
-             * @description 例如 3,8,20；0,0,0 停用
+             * @description 失败阶梯：3,8,20 表示第 3 次强制难题、第 8 次冷却 15 分钟、第 20 次冷却 1 小时；0,0,0 停用
              * @default 3,8,20
              */
             CAPTCHA_FAIL_STEP: string;
             /**
              * 启用蜜罐
+             * @description 前端隐藏诱饵字段；被填写即判定自动化并拒绝（零误杀）
              * @default true
              */
             CAPTCHA_HONEYPOT_ENABLED: boolean;
             /**
              * 观测日志保留期（天）
+             * @description CaptchaLog 保留天数；0 = 永久保留；每日 beat 任务清理过期行
              * @default 30
              */
             CAPTCHA_LOG_RETENTION_DAYS: number;
             /**
              * PoW 位数（难题）
+             * @description hard 档 PoW 前导零位数；默认 20，受位数上限约束
              * @default 20
              */
             CAPTCHA_POW_BITS_HARD: number;
             /**
              * PoW 位数（轻验证）
+             * @description light 档 PoW 前导零位数；18 约需数万次哈希，越高越慢
              * @default 18
              */
             CAPTCHA_POW_BITS_LIGHT: number;
             /**
              * PoW 位数上限
+             * @description 服务端硬上限（最大 24）；防止把服务端变成算力放大器
              * @default 20
              */
             CAPTCHA_POW_BITS_MAX: number;
             /**
              * 启用工作量证明
+             * @description light 档是否下发 PoW 算力题；关闭后 light 退化为常规题
              * @default true
              */
             CAPTCHA_POW_ENABLED: boolean;
             /**
              * 单 IP 每小时 PoW 预算
+             * @description 单 IP 每小时 PoW 验证预算；0 = 不限；超出后该 IP 的 PoW 请求被拒
              * @default 600
              */
             CAPTCHA_POW_IP_BUDGET: number;
             /**
              * 机房网段（CIDR）
+             * @description 机房 / 云网段，逗号分隔 CIDR；命中加 20 分；留空不启用
              * @default
              */
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off 保持现状；shadow 只记录决策；enforce 实际执行
+             * @description off = 风险层不运行；shadow = 只评分记日志、不改变放行；enforce = 按决策执行（建议先跑 shadow ≥3 天）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
@@ -23948,32 +23979,37 @@ export interface components {
             CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
             /**
              * 代理网段（CIDR）
+             * @description 已知代理 / TOR 出口网段，逗号分隔 CIDR；命中加 30 分；留空不启用
              * @default
              */
             CAPTCHA_RISK_PROXY_CIDRS: string;
             /**
              * 信任私网
-             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）；除非办公网已进白名单，否则保持开启
              * @default true
              */
             CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
             /**
              * 放行阈值
+             * @description 分数低于该值：无题直接发票（allow）；默认 20
              * @default 20
              */
             CAPTCHA_RISK_T_ALLOW: number;
             /**
              * 拒绝阈值
+             * @description 分数达到该值：直接拒绝，响应与答案错误同形（deny）；默认 90
              * @default 90
              */
             CAPTCHA_RISK_T_DENY: number;
             /**
              * 难题阈值
+             * @description 分数达到该值：难题型 / 语序点选，容差收紧（hard）；默认 70
              * @default 70
              */
             CAPTCHA_RISK_T_HARD: number;
             /**
              * 轻验证阈值
+             * @description 分数达到该值：一次点击 + PoW（light）；默认 40，必须大于放行阈值
              * @default 40
              */
             CAPTCHA_RISK_T_LIGHT: number;

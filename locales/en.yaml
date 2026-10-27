@@ -2931,22 +2931,28 @@ settingLdap:
 
 settingCaptcha:
   general: Captcha General
-  generalDesc: Global switch and the captcha type in use; when disabled, no scene requires a captcha
+  generalDesc: Global switch and the captcha type in use; interactive means behavior verification (slide / rotate / click / word order); when disabled, no scene requires a captcha
   image: Image Captcha
   imageDesc: Generation mode, length, font, colors and noise of the image character captcha
   imagePreviewTitle: Image Captcha Preview
   interactive: Interactive Captcha
-  interactiveDesc: "Slide puzzle / rotate / word click: types, tolerances, TTL, sizes and accessibility fallback"
+  interactiveDesc: "Behavior verification types (slide puzzle / rotate / word click / word order): types, tolerances, TTL, sizes and accessibility fallback"
   interactivePreviewTitle: Interactive Captcha Preview
   previewType: Preview type
   previewSlide: Slide puzzle
   previewRotate: Rotate upright
   previewClick: Word click
+  previewWordorder: Word order
   refreshPreview: Refresh preview
   previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
   previewFailed: Failed to load preview
+  interactiveBehaviorHint: Word order is a new behavior verification type; enable it under Interactive types below. PoW and stricter difficulty are issued automatically by Risk Policy according to the risk decision.
   risk: Risk Policy
-  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; off keeps current behavior
+  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; off keeps current behavior (difficulty and PoW for behavior verification are enabled here)
+  riskGuideTitle: How to configure
+  riskGuide1: "Start with shadow: score and log only, no behavior change; observe at least 3 days and 1000 verifications, then switch to enforce."
+  riskGuide2: "Thresholds are score bands: below allow -> no puzzle; allow to light -> click + PoW; light to hard -> normal puzzle; hard to deny -> hard puzzle; at deny -> reject. Keep 20/40/70/90 unless you have data."
+  riskGuide3: Private networks and loopback are trusted by default; add office networks to the login-security whitelist. Ladder 3/8/20 = force hard / 15 min cooldown / 1 hour cooldown.
   riskRules: Rule scores
   riskRulesDesc: Tune the score and switch of the 16 explainable rules (effective immediately after save)
   riskRuleScore: Score

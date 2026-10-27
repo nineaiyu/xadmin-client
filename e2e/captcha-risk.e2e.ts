@@ -262,6 +262,9 @@ test("验证码设置页：风险策略页签渲染配置与规则表", async ({
   await login(page);
   await page.goto("/#/settings/captcha");
   await page.getByRole("tab", { name: "风险策略", exact: true }).click();
+  await expect(page.getByTestId("captcha-risk-guide")).toBeVisible({
+    timeout: 15_000
+  });
   await expect(page.getByTestId("captcha-risk-rules")).toBeVisible({
     timeout: 15_000
   });
