@@ -9748,6 +9748,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/captcha/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的列表 */
+        get: operations["api_settings_captcha_log_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/log/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_settings_captcha_log_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/log/search-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的查询字段 */
+        get: operations["api_settings_captcha_log_search_fields_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/captcha/preview": {
         parameters: {
             query?: never;
@@ -9765,6 +9816,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settings/captcha/risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的详情 */
+        get: operations["api_settings_captcha_risk_retrieve"];
+        /** @description 整体更新{cls}信息 */
+        put: operations["api_settings_captcha_risk_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description 部分更新{cls}信息 */
+        patch: operations["api_settings_captcha_risk_partial_update"];
+        trace?: never;
+    };
+    "/api/settings/captcha/risk/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 风险规则列表与更新 */
+        get: operations["api_settings_captcha_risk_rules_retrieve"];
+        /** @description 风险规则列表与更新 */
+        put: operations["api_settings_captcha_risk_rules_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/risk/search-columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 获取{cls}的展示字段 */
+        get: operations["api_settings_captcha_risk_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/settings/captcha/search-columns": {
         parameters: {
             query?: never;
@@ -9774,6 +9879,23 @@ export interface paths {
         };
         /** @description 获取{cls}的展示字段 */
         get: operations["api_settings_captcha_search_columns_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/captcha/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description 读取时间窗聚合 */
+        get: operations["api_settings_captcha_stats_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -15608,9 +15730,10 @@ export interface components {
          * @description * `slide` - 滑动拼图
          *     * `rotate` - 旋转回正
          *     * `click` - 文字点选
+         *     * `wordorder` - 语序点选
          * @enum {string}
          */
-        CAPTCHAINTERACTIVETYPESEnum: "slide" | "rotate" | "click";
+        CAPTCHAINTERACTIVETYPESEnum: "slide" | "rotate" | "click" | "wordorder";
         /**
          * @description * `image` - 图片验证码
          *     * `interactive` - 交互式验证码
@@ -15624,7 +15747,25 @@ export interface components {
          * @enum {string}
          */
         CAPTCHANOISEFUNCTIONSEnum: "captcha.helpers.noise_null" | "captcha.helpers.noise_arcs" | "captcha.helpers.noise_dots";
+        /**
+         * @description * `off` - 关闭（保持现状）
+         *     * `shadow` - 影子（只评分留痕）
+         *     * `enforce` - 强制执行决策
+         * @enum {string}
+         */
+        CAPTCHARISKMODEEnum: "off" | "shadow" | "enforce";
         CaptchaChallengeIn: {
+            /** 账号哈希 */
+            account?: string;
+            /**
+             * 服务端动作
+             * @description 出题换票的意图动作（scene 登记表内）；动作绑定开启时必填
+             */
+            action?: string;
+            /** 客户端环境包 */
+            env?: unknown;
+            /** 蜜罐字段 */
+            hp?: string;
             /** 验证码场景 */
             scene: components["schemas"]["SceneEnum"];
             /**
@@ -15634,28 +15775,55 @@ export interface components {
              *     * `slide` - slide
              *     * `rotate` - rotate
              *     * `click` - click
+             *     * `pow` - pow
+             *     * `wordorder` - wordorder
              */
             type?: components["schemas"]["TypeEnum"];
         };
         CaptchaChallengeOut: {
             /** 底图 */
-            background: string;
+            background?: string;
             /** 挑战 ID */
-            challenge_id: string;
+            challenge_id?: string;
+            /**
+             * 会话密钥
+             * @description 一次性验签会话密钥；仅在启用 verify 加签时下发
+             */
+            ck?: string;
             /** 点选数量 */
             count?: number;
+            /**
+             * 风险决策
+             * @description 仅在 enforce 档下发；绝不包含风险分
+             *
+             *     * `allow` - allow
+             *     * `light` - light
+             *     * `challenge` - challenge
+             *     * `hard` - hard
+             *     * `deny` - deny
+             */
+            decision?: components["schemas"]["DecisionEnum"];
+            /** 难度 */
+            difficulty?: components["schemas"]["DifficultyEnum"];
             /** 图片高度 */
             height?: number;
             /** 拼图块 */
             piece?: string;
             /** 拼图块尺寸 */
             piece_size?: number;
+            /** 工作量证明题面 */
+            pow?: unknown;
+            /**
+             * 一次性票据
+             * @description 风险决策放行（无题直过）时下发
+             */
+            ticket?: string;
             /** 点选提示图 */
             tip?: string;
             /** 有效期（秒） */
             ttl: number;
             /** 验证码题型 */
-            type: components["schemas"]["TypeEnum"];
+            type?: components["schemas"]["TypeEnum"];
             /** 图片宽度 */
             width?: number;
         };
@@ -15669,9 +15837,9 @@ export interface components {
             error?: string;
         };
         CaptchaImagePreviewData: {
-            /** Preview image */
+            /** 预览图片 */
             image: string;
-            /** Answer length */
+            /** 答案长度 */
             length: number;
         };
         CaptchaImagePreviewResponse: {
@@ -15710,6 +15878,228 @@ export interface components {
             /** 详情 */
             detail?: string;
         };
+        /** @description 验证码观测日志（只读，供元数据协议列表页消费）。 */
+        CaptchaLog: {
+            /** 操作 */
+            readonly action: string;
+            /** 尝试次数 */
+            readonly attempts: number;
+            /** 浏览器 */
+            readonly browser: string;
+            /** 决策 */
+            readonly decision: string;
+            /** 难度 */
+            readonly difficulty: string;
+            /** 环境版本 */
+            readonly env_version: string;
+            /** 指纹哈希 */
+            readonly fp_hash: string;
+            /** IP 哈希 */
+            readonly ip_hash: string;
+            /** 密钥 ID */
+            readonly key_id: string;
+            /** 耗时（毫秒） */
+            readonly latency_ms: number;
+            /** 风险模式 */
+            readonly mode: string;
+            /** 是否通过 */
+            readonly passed: boolean;
+            /**
+             * Phase
+             * @description null
+             */
+            readonly phase: {
+                label?: string;
+                value?: string;
+            };
+            /**
+             * 主键ID
+             * Format: uuid
+             */
+            readonly pk: string;
+            /** 工作量证明位数 */
+            readonly pow_bits: number | null;
+            /** 风险原因 */
+            readonly risk_reasons: unknown;
+            /** 风险分 */
+            readonly risk_score: number | null;
+            /** 场景 */
+            readonly scene: string;
+            /**
+             * 事件时间
+             * Format: date-time
+             */
+            readonly ts: string;
+            /** 验证码题型 */
+            readonly type: string;
+            /** UA 类别 */
+            readonly ua_class: string;
+            /** 影子决策 */
+            readonly would_decision: string;
+        };
+        /** @description 风险规则（只读展示 + 可调分/开关/优先级）。 */
+        CaptchaRule: {
+            /** 规则编码 */
+            readonly code: string;
+            /** 启用 */
+            enabled?: boolean;
+            /** 规则名称 */
+            readonly name: string;
+            /** 参数 */
+            params?: unknown;
+            /** 优先级 */
+            priority?: number;
+            /**
+             * 作用域
+             * @description 空 = 全部场景
+             */
+            readonly scope: string;
+            /** 分值 */
+            score?: number;
+        };
+        CaptchaRuleUpdate: {
+            /** 规则 */
+            rules: components["schemas"]["CaptchaRuleUpdateItem"][];
+        };
+        CaptchaRuleUpdateItem: {
+            /** 规则编码 */
+            code: string;
+            /** 启用 */
+            enabled?: boolean;
+            /** 参数 */
+            params?: unknown;
+            /** 优先级 */
+            priority?: number;
+            /** 分值 */
+            score?: number;
+        };
+        /** @description 验证码数据大盘（时间窗聚合，只读）。 */
+        CaptchaStats: {
+            /** 按决策 */
+            by_decision: components["schemas"]["CaptchaStatsDecisionRow"][];
+            /** 按题型 */
+            by_type: components["schemas"]["CaptchaStatsTypeRow"][];
+            /** 生成时间 */
+            generated_at: number;
+            /** 策略快照 */
+            policy: components["schemas"]["CaptchaStatsPolicy"];
+            /** Risk score distribution */
+            risk_distribution: components["schemas"]["CaptchaStatsRiskBucket"][];
+            /** 汇总 */
+            summary: components["schemas"]["CaptchaStatsSummary"];
+            /** 遥测健康度 */
+            telemetry: {
+                [key: string]: number;
+            };
+            top_fingerprints: components["schemas"]["CaptchaStatsTopEntity"][];
+            /** Top IP hashes */
+            top_ips: components["schemas"]["CaptchaStatsTopEntity"][];
+            /** Top deny reasons */
+            top_reasons: components["schemas"]["CaptchaStatsTopReason"][];
+            /** Top UA classes */
+            top_ua: components["schemas"]["CaptchaStatsTopEntity"][];
+            /** 小时趋势 */
+            trend: components["schemas"]["CaptchaStatsTrendPoint"][];
+            /** 时间窗（小时） */
+            window_hours: number;
+        };
+        CaptchaStatsDecisionRow: {
+            /** 决策 */
+            decision: string;
+            /** 数量 */
+            total: number;
+        };
+        CaptchaStatsPolicy: {
+            /** 失败阶梯 */
+            failure_ladder: string;
+            /** 日志开关 */
+            log_enabled: boolean;
+            pow_enabled: boolean;
+            /** 保留天数 */
+            retention_days: number;
+            /** 风险模式 */
+            risk_mode: string;
+            /** Decision thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
+        };
+        CaptchaStatsResponse: {
+            /** 业务码 */
+            code: number;
+            data: components["schemas"]["CaptchaStats"];
+            /** 详情 */
+            detail?: string;
+            /** 错误码 */
+            error?: string;
+        };
+        CaptchaStatsRiskBucket: {
+            /** Score bucket */
+            bucket: string;
+            /** 数量 */
+            total: number;
+        };
+        CaptchaStatsSummary: {
+            /** 出题次数 */
+            challenge: number;
+            /** 票据消费 */
+            consume: number;
+            /** Deny count */
+            deny: number;
+            /** Format: double */
+            deny_rate: number;
+            /** 校验 P50 耗时（毫秒） */
+            latency_p50: number;
+            /**
+             * 通过率
+             * Format: double
+             */
+            pass_rate: number;
+            /** 校验次数 */
+            verify: number;
+            /** 校验失败 */
+            verify_failed: number;
+            /** 校验通过 */
+            verify_passed: number;
+        };
+        /** @description TopN 实体行：ip_hash / fp_hash / ua_class 三选一（按查询字段投影）。 */
+        CaptchaStatsTopEntity: {
+            /** 指纹哈希 */
+            fp_hash?: string;
+            /** IP 哈希 */
+            ip_hash?: string;
+            /** 数量 */
+            total: number;
+            /** UA 类别 */
+            ua_class?: string;
+        };
+        CaptchaStatsTopReason: {
+            /** Reason code */
+            reason: string;
+            /** 数量 */
+            total: number;
+        };
+        CaptchaStatsTrendPoint: {
+            /** 小时分桶 */
+            hour: string;
+            /** 通过次数 */
+            passed: number;
+            /** 校验次数 */
+            total: number;
+        };
+        CaptchaStatsTypeRow: {
+            /**
+             * 通过率
+             * Format: double
+             */
+            pass_rate: number;
+            /** 通过次数 */
+            passed: number;
+            /** 校验次数 */
+            total: number;
+            /** 验证码题型 */
+            type: string;
+        };
         CaptchaTrackPoint: {
             /**
              * 时间戳（毫秒）
@@ -15728,12 +16118,48 @@ export interface components {
             y: number;
         };
         CaptchaVerifyIn: {
+            /** 账号哈希 */
+            account?: string;
+            /**
+             * 服务端动作
+             * @description 票据绑定的服务端动作常量
+             */
+            action?: string;
             /** 答案 */
             answer: unknown;
             /** 挑战 ID */
             challenge_id: string;
+            /** 客户端环境包 */
+            env?: unknown;
+            /**
+             * 生成时间
+             * @description 客户端时间戳（秒）；在 verify 签名时间窗内校验
+             */
+            gen_time?: number;
+            /** 蜜罐字段 */
+            hp?: string;
+            /**
+             * 输入方式
+             * @description 键盘操作不得按脚本特征扣分
+             *
+             *     * `pointer` - pointer
+             *     * `keyboard` - keyboard
+             */
+            input?: components["schemas"]["InputEnum"];
+            /**
+             * 随机数
+             * @description 绑定签名 verify 请求的一次性随机串
+             */
+            nonce?: string;
+            /** 工作量证明答案 */
+            pow_answer?: unknown;
             /** 验证码场景 */
             scene: components["schemas"]["SceneEnum"];
+            /**
+             * 签名
+             * @description 以 ck 为密钥对规范化 verify 载荷的 HMAC 签名
+             */
+            sign?: string;
             /** 指针轨迹 */
             track?: components["schemas"]["CaptchaTrackPoint"][];
             /** 验证码题型 */
@@ -16225,6 +16651,15 @@ export interface components {
                 value?: string;
             };
         };
+        /**
+         * @description * `allow` - allow
+         *     * `light` - light
+         *     * `challenge` - challenge
+         *     * `hard` - hard
+         *     * `deny` - deny
+         * @enum {string}
+         */
+        DecisionEnum: "allow" | "light" | "challenge" | "hard" | "deny";
         Dept: {
             /**
              * 自动绑定
@@ -16322,6 +16757,13 @@ export interface components {
             /** 移除管理员 */
             remove?: string[];
         };
+        /**
+         * @description * `easy` - easy
+         *     * `normal` - normal
+         *     * `hard` - hard
+         * @enum {string}
+         */
+        DifficultyEnum: "easy" | "normal" | "hard";
         /**
          * @description 可打标对象的序列化器混入：只读 ``tags`` 字段（列表/详情通用）。
          *
@@ -16891,6 +17333,12 @@ export interface components {
              */
             readonly updated_time: string | null;
         };
+        /**
+         * @description * `pointer` - pointer
+         *     * `keyboard` - keyboard
+         * @enum {string}
+         */
+        InputEnum: "pointer" | "keyboard";
         IntervalSchedule: {
             /**
              * 周期数
@@ -18026,6 +18474,30 @@ export interface components {
             code?: number;
             data?: {
                 results?: components["schemas"]["Book"][];
+                total?: number;
+            };
+            detail?: string;
+        };
+        PaginatedCaptchaLogList: {
+            code?: number;
+            data?: {
+                results?: components["schemas"]["CaptchaLog"][];
+                total?: number;
+            };
+            detail?: string;
+        };
+        PaginatedCaptchaRuleList: {
+            code?: number;
+            data?: {
+                results?: components["schemas"]["CaptchaRule"][];
+                total?: number;
+            };
+            detail?: string;
+        };
+        PaginatedCaptchaStatsResponseList: {
+            code?: number;
+            data?: {
+                results?: components["schemas"]["CaptchaStatsResponse"][];
                 total?: number;
             };
             detail?: string;
@@ -21332,6 +21804,122 @@ export interface components {
              */
             CAPTCHA_TRACK_CHECK_ENABLED: boolean;
         };
+        /** @description 风险策略：模式 / 阈值 / 算力 / 阶梯 / 告警 / 保留期。 */
+        PatchedSecurityCaptchaRisk: {
+            /**
+             * 告警拦截率
+             * Format: double
+             * @default 0.5
+             */
+            CAPTCHA_ALERT_DENY_RATE: number;
+            /**
+             * 启用告警
+             * @default true
+             */
+            CAPTCHA_ALERT_ENABLED: boolean;
+            /**
+             * 告警最小样本数
+             * @default 50
+             */
+            CAPTCHA_ALERT_MIN_SAMPLES: number;
+            /**
+             * 告警窗口（分钟）
+             * @default 10
+             */
+            CAPTCHA_ALERT_WINDOW_MINUTES: number;
+            /**
+             * 验证码失败联动登录锁定
+             * @default false
+             */
+            CAPTCHA_FAILURE_LINK_LOCK: boolean;
+            /**
+             * 失败阶梯
+             * @description 例如 3,8,20；0,0,0 停用
+             * @default 3,8,20
+             */
+            CAPTCHA_FAIL_STEP: string;
+            /**
+             * 启用蜜罐
+             * @default true
+             */
+            CAPTCHA_HONEYPOT_ENABLED: boolean;
+            /**
+             * 观测日志保留期（天）
+             * @default 30
+             */
+            CAPTCHA_LOG_RETENTION_DAYS: number;
+            /**
+             * PoW 位数（难题）
+             * @default 20
+             */
+            CAPTCHA_POW_BITS_HARD: number;
+            /**
+             * PoW 位数（轻验证）
+             * @default 18
+             */
+            CAPTCHA_POW_BITS_LIGHT: number;
+            /**
+             * PoW 位数上限
+             * @default 20
+             */
+            CAPTCHA_POW_BITS_MAX: number;
+            /**
+             * 启用工作量证明
+             * @default true
+             */
+            CAPTCHA_POW_ENABLED: boolean;
+            /**
+             * 单 IP 每小时 PoW 预算
+             * @default 600
+             */
+            CAPTCHA_POW_IP_BUDGET: number;
+            /**
+             * 机房网段（CIDR）
+             * @default
+             */
+            CAPTCHA_RISK_DATACENTER_CIDRS: string;
+            /**
+             * 风险模式
+             * @description off 保持现状；shadow 只记录决策；enforce 实际执行
+             *
+             *     * `off` - 关闭（保持现状）
+             *     * `shadow` - 影子（只评分留痕）
+             *     * `enforce` - 强制执行决策
+             * @default off
+             */
+            CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
+            /**
+             * 代理网段（CIDR）
+             * @default
+             */
+            CAPTCHA_RISK_PROXY_CIDRS: string;
+            /**
+             * 信任私网
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）
+             * @default true
+             */
+            CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
+            /**
+             * 放行阈值
+             * @default 20
+             */
+            CAPTCHA_RISK_T_ALLOW: number;
+            /**
+             * 拒绝阈值
+             * @default 90
+             */
+            CAPTCHA_RISK_T_DENY: number;
+            /**
+             * 难题阈值
+             * @default 70
+             */
+            CAPTCHA_RISK_T_HARD: number;
+            /**
+             * 轻验证阈值
+             * @default 40
+             */
+            CAPTCHA_RISK_T_LIGHT: number;
+        };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         PatchedSecurityLoginAuth: {
             /**
@@ -23274,6 +23862,122 @@ export interface components {
              */
             CAPTCHA_TRACK_CHECK_ENABLED: boolean;
         };
+        /** @description 风险策略：模式 / 阈值 / 算力 / 阶梯 / 告警 / 保留期。 */
+        SecurityCaptchaRisk: {
+            /**
+             * 告警拦截率
+             * Format: double
+             * @default 0.5
+             */
+            CAPTCHA_ALERT_DENY_RATE: number;
+            /**
+             * 启用告警
+             * @default true
+             */
+            CAPTCHA_ALERT_ENABLED: boolean;
+            /**
+             * 告警最小样本数
+             * @default 50
+             */
+            CAPTCHA_ALERT_MIN_SAMPLES: number;
+            /**
+             * 告警窗口（分钟）
+             * @default 10
+             */
+            CAPTCHA_ALERT_WINDOW_MINUTES: number;
+            /**
+             * 验证码失败联动登录锁定
+             * @default false
+             */
+            CAPTCHA_FAILURE_LINK_LOCK: boolean;
+            /**
+             * 失败阶梯
+             * @description 例如 3,8,20；0,0,0 停用
+             * @default 3,8,20
+             */
+            CAPTCHA_FAIL_STEP: string;
+            /**
+             * 启用蜜罐
+             * @default true
+             */
+            CAPTCHA_HONEYPOT_ENABLED: boolean;
+            /**
+             * 观测日志保留期（天）
+             * @default 30
+             */
+            CAPTCHA_LOG_RETENTION_DAYS: number;
+            /**
+             * PoW 位数（难题）
+             * @default 20
+             */
+            CAPTCHA_POW_BITS_HARD: number;
+            /**
+             * PoW 位数（轻验证）
+             * @default 18
+             */
+            CAPTCHA_POW_BITS_LIGHT: number;
+            /**
+             * PoW 位数上限
+             * @default 20
+             */
+            CAPTCHA_POW_BITS_MAX: number;
+            /**
+             * 启用工作量证明
+             * @default true
+             */
+            CAPTCHA_POW_ENABLED: boolean;
+            /**
+             * 单 IP 每小时 PoW 预算
+             * @default 600
+             */
+            CAPTCHA_POW_IP_BUDGET: number;
+            /**
+             * 机房网段（CIDR）
+             * @default
+             */
+            CAPTCHA_RISK_DATACENTER_CIDRS: string;
+            /**
+             * 风险模式
+             * @description off 保持现状；shadow 只记录决策；enforce 实际执行
+             *
+             *     * `off` - 关闭（保持现状）
+             *     * `shadow` - 影子（只评分留痕）
+             *     * `enforce` - 强制执行决策
+             * @default off
+             */
+            CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
+            /**
+             * 代理网段（CIDR）
+             * @default
+             */
+            CAPTCHA_RISK_PROXY_CIDRS: string;
+            /**
+             * 信任私网
+             * @description 将 RFC1918 与回环地址视为可信（enforce 下无题直过）
+             * @default true
+             */
+            CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: boolean;
+            /**
+             * 放行阈值
+             * @default 20
+             */
+            CAPTCHA_RISK_T_ALLOW: number;
+            /**
+             * 拒绝阈值
+             * @default 90
+             */
+            CAPTCHA_RISK_T_DENY: number;
+            /**
+             * 难题阈值
+             * @default 70
+             */
+            CAPTCHA_RISK_T_HARD: number;
+            /**
+             * 轻验证阈值
+             * @default 40
+             */
+            CAPTCHA_RISK_T_LIGHT: number;
+        };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
         SecurityLoginAuth: {
             /**
@@ -23836,9 +24540,11 @@ export interface components {
          * @description * `slide` - slide
          *     * `rotate` - rotate
          *     * `click` - click
+         *     * `pow` - pow
+         *     * `wordorder` - wordorder
          * @enum {string}
          */
-        TypeEnum: "slide" | "rotate" | "click";
+        TypeEnum: "slide" | "rotate" | "click" | "pow" | "wordorder";
         /**
          * @description 可打标对象的序列化器混入：只读 ``tags`` 字段（列表/详情通用）。
          *
@@ -36706,6 +37412,7 @@ export interface operations {
                             access?: boolean;
                             basic?: {
                                 captcha?: boolean;
+                                captcha_flow?: string;
                                 captcha_image_fallback?: boolean;
                                 captcha_mode?: string;
                                 captcha_types?: string[];
@@ -36908,6 +37615,7 @@ export interface operations {
                     "application/json": {
                         code?: number;
                         data?: {
+                            captcha_flow?: string;
                             captcha_image_fallback?: boolean;
                             captcha_mode?: string;
                             captcha_required?: boolean;
@@ -37172,6 +37880,7 @@ export interface operations {
                         data?: {
                             access?: boolean;
                             captcha?: boolean;
+                            captcha_flow?: string;
                             captcha_image_fallback?: boolean;
                             captcha_mode?: string;
                             captcha_types?: string[];
@@ -46021,6 +46730,142 @@ export interface operations {
             };
         };
     };
+    api_settings_captcha_log_list: {
+        parameters: {
+            query?: {
+                action?: string;
+                browser?: string;
+                created_time_after?: string;
+                created_time_before?: string;
+                creator?: number;
+                decision?: string;
+                dept_belong?: string;
+                description?: string;
+                modifier?: number;
+                /** @description 用于排序结果的字段。 */
+                ordering?: string;
+                /** @description 分页结果集中的页码。 */
+                page?: number;
+                passed?: boolean;
+                /**
+                 * @description * `challenge` - 签发挑战
+                 *     * `verify` - 答案校验
+                 *     * `consume` - 票据消费
+                 *     * `decision` - 风险决策
+                 */
+                phase?: "challenge" | "consume" | "decision" | "verify";
+                pk?: number;
+                scene?: string;
+                /** @description 每页返回的结果数量。 */
+                size?: number;
+                spm?: unknown;
+                ts?: string;
+                type?: string;
+                ua_class?: string;
+                updated_time_after?: string;
+                updated_time_before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCaptchaLogList"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_log_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_settings_captcha_log_search_fields_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
     api_settings_captcha_preview_create: {
         parameters: {
             query?: never;
@@ -46036,6 +46881,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaptchaImagePreviewResponse"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaRisk"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SecurityCaptchaRisk"];
+                "application/x-www-form-urlencoded": components["schemas"]["SecurityCaptchaRisk"];
+                "multipart/form-data": components["schemas"]["SecurityCaptchaRisk"];
+                "text/csv": components["schemas"]["SecurityCaptchaRisk"];
+                "text/xlsx": components["schemas"]["SecurityCaptchaRisk"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaRisk"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSecurityCaptchaRisk"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSecurityCaptchaRisk"];
+                "multipart/form-data": components["schemas"]["PatchedSecurityCaptchaRisk"];
+                "text/csv": components["schemas"]["PatchedSecurityCaptchaRisk"];
+                "text/xlsx": components["schemas"]["PatchedSecurityCaptchaRisk"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityCaptchaRisk"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_rules_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCaptchaRuleList"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_rules_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaptchaRuleUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["CaptchaRuleUpdate"];
+                "multipart/form-data": components["schemas"]["CaptchaRuleUpdate"];
+                "text/csv": components["schemas"]["CaptchaRuleUpdate"];
+                "text/xlsx": components["schemas"]["CaptchaRuleUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCaptchaRuleList"];
+                };
+            };
+        };
+    };
+    api_settings_captcha_risk_search_columns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            choices?: {
+                                label?: string;
+                                pk?: string;
+                                value?: string;
+                            }[];
+                            choices_truncated?: boolean;
+                            default?: unknown;
+                            help_text?: string;
+                            input_type?: string;
+                            key?: string;
+                            label?: string;
+                            lookups?: string[];
+                            max_length?: number;
+                            max_value?: number;
+                            min_value?: number;
+                            multiple?: boolean;
+                            read_only?: boolean;
+                            required?: boolean;
+                            sortable?: boolean;
+                            step?: number;
+                            table_show?: number;
+                            write_only?: boolean;
+                        }[];
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
                 };
             };
         };
@@ -46084,6 +47096,34 @@ export interface operations {
                         requestId?: string;
                         timestamp?: string;
                     };
+                };
+            };
+        };
+    };
+    api_settings_captcha_stats_list: {
+        parameters: {
+            query?: {
+                /** @description Aggregation window in hours (1-168, default 24) */
+                hours?: number;
+                /** @description 用于排序结果的字段。 */
+                ordering?: string;
+                /** @description 分页结果集中的页码。 */
+                page?: number;
+                /** @description 每页返回的结果数量。 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCaptchaStatsResponseList"];
                 };
             };
         };

@@ -17,6 +17,7 @@ defineOptions({ name: "ReRotateCaptcha" });
 defineProps<{
   challenge: CaptchaChallengeData;
   sliderText?: string;
+  difficulty?: "easy" | "normal" | "hard";
 }>();
 
 const emit = defineEmits<{
@@ -91,7 +92,7 @@ defineExpose({ reset, markSuccess });
 </script>
 
 <template>
-  <div class="re-rotate-captcha">
+  <div class="re-rotate-captcha" :data-difficulty="difficulty ?? 'normal'">
     <div class="re-rotate-captcha__stage">
       <img
         class="re-rotate-captcha__image"

@@ -23,6 +23,7 @@ import {
 import { refreshAccessToken } from "./refreshToken";
 import { message } from "@/utils/message";
 import { announce } from "@/utils/announcer";
+import { getCaptchaFingerprint } from "@/utils/captchaSignal/env";
 import { downloadByData } from "@pureadmin/utils";
 import {
   parseDownloadEnvelopeError,
@@ -316,6 +317,10 @@ class PureHttp {
         config: PureHttpRequestConfig
       ): Promise<InternalAxiosRequestConfig> => {
         setApiLanguage(config);
+        // 票据弱绑定：业务请求携带环境指纹（服务端只存哈希，缺失时跳过比对）
+        if (typeof window !== "undefined" && config.headers) {
+          config.headers["X-Captcha-Fp"] = getCaptchaFingerprint();
+        }
         // 开启进度条动画
         NProgress.start();
         // 敏感操作审批重发：同指纹请求携带暂存的审批令牌（审批通过后重发即消费）。

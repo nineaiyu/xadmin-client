@@ -10,6 +10,7 @@ defineOptions({ name: "ReWordClickCaptcha" });
 
 const props = defineProps<{
   challenge: CaptchaChallengeData;
+  difficulty?: "easy" | "normal" | "hard";
 }>();
 
 const emit = defineEmits<{
@@ -78,7 +79,7 @@ defineExpose({ reset, markSuccess });
 </script>
 
 <template>
-  <div class="re-word-click">
+  <div class="re-word-click" :data-difficulty="difficulty ?? 'normal'">
     <p class="re-word-click__hint">{{ t("captchaChallenge.clickHint") }}</p>
     <div class="re-word-click__tip-row">
       <img

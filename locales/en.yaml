@@ -368,6 +368,13 @@ captchaChallenge:
   resetSelection: Reselect
   confirm: Confirm
   imageFallback: Use image captcha
+  close: Close
+  powTitle: Security check
+  powTip: One click completes the check; no image recognition required
+  powAction: Verify
+  powHint: The check runs locally; passwords and input are never collected
+  powRunning: Running security check…
+  powFailed: Security check failed, please retry
 
 backTop:
   text: Back to top
@@ -2716,7 +2723,7 @@ login:
   tickPrivacy: Please tick Privacy Policy
   readAccept: I have read it carefully and accept
   privacyPolicy: Privacy Policy
-  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
+  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Human verification collects browser environment digests and behavior features (used only to distinguish humans from automation; IP/UA are never stored in plaintext, passwords and input are never collected, no cookies are written, and nothing is sent to third parties); logs are kept for 30 days by default. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
   getVerifyCode: Get VerifyCode
   info: Seconds
   usernameReg: Please enter username
@@ -2938,6 +2945,49 @@ settingCaptcha:
   refreshPreview: Refresh preview
   previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
   previewFailed: Failed to load preview
+  risk: Risk Policy
+  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; off keeps current behavior
+  riskRules: Rule scores
+  riskRulesDesc: Tune the score and switch of the 16 explainable rules (effective immediately after save)
+  riskRuleScore: Score
+  riskRuleEnabled: Enabled
+  riskRuleSave: Save rules
+  riskRulesSaved: Rules saved
+  riskRulesFailed: Failed to save rules
+  riskCompliance: "Privacy notice: only environment digests and behavior hashes are collected; passwords, input content and cookies are never collected or sent to third parties. Logs are kept for 30 days by default and IPs only as network-prefix hashes."
+  data: Verification Data
+  dataDesc: Verification volume, pass rate, type and decision distribution; logs keep 30 days with hashes and categories only (no plain IP / UA)
+  dataWindow: Time window
+  dataHour24: Last 24 hours
+  dataHour72: Last 3 days
+  dataHour168: Last 7 days
+  dataChallenge: Challenges
+  dataVerify: Verifications
+  dataPassRate: Pass rate
+  dataConsume: Tickets consumed
+  dataByType: Pass rate by type
+  dataByDecision: Decision distribution
+  dataTotal: Total
+  dataPassed: Passed
+  dataTrend: Hourly trend
+  dataLog: Verification logs
+  dataEmpty: No data yet
+  dataRefresh: Refresh
+  dataRiskMode: Risk mode
+  dataRetention: Logs retained for {days} days
+  dataDenyRate: Deny rate
+  dataLatencyP50: Verify P50 latency
+  dataThresholds: Thresholds
+  dataRiskDistribution: Risk score distribution
+  dataTopReasons: Top deny reasons
+  dataTopIps: Top suspicious IP prefixes
+  dataTopFingerprints: Top suspicious fingerprints
+  dataTopUa: Top suspicious UA classes
+  decisionAllow: Allow
+  decisionLight: Light
+  decisionChallenge: Challenge
+  decisionHard: Hard
+  decisionDeny: Deny
 
 settingSecurity:
   login: Login Safe

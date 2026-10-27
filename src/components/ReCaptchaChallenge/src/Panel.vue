@@ -102,18 +102,23 @@ defineExpose({ reset, markSuccess });
           v-if="challenge.type === 'slide'"
           ref="childRef"
           :challenge="challenge"
+          :difficulty="challenge.difficulty"
           @submit="emit('submit', $event)"
         />
         <ReRotateCaptcha
           v-else-if="challenge.type === 'rotate'"
           ref="childRef"
           :challenge="challenge"
+          :difficulty="challenge.difficulty"
           @submit="emit('submit', $event)"
         />
         <ReWordClickCaptcha
-          v-else-if="challenge.type === 'click'"
+          v-else-if="
+            challenge.type === 'click' || challenge.type === 'wordorder'
+          "
           ref="childRef"
           :challenge="challenge"
+          :difficulty="challenge.difficulty"
           @submit="emit('submit', $event)"
         />
       </template>
@@ -122,7 +127,12 @@ defineExpose({ reset, markSuccess });
       </div>
 
       <Transition name="captcha-success">
-        <div v-if="success" class="re-captcha-panel__success">
+        <div
+          v-if="success"
+          class="re-captcha-panel__success"
+          role="status"
+          aria-live="polite"
+        >
           <span class="re-captcha-panel__success-text">
             {{ t("captchaChallenge.success") }}
           </span>

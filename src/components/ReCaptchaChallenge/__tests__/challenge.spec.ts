@@ -1,3 +1,4 @@
+import { createHash, createHmac, webcrypto } from "node:crypto";
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createI18n } from "vue-i18n";
@@ -87,9 +88,9 @@ const stubs = {
   }
 };
 
-const mountChallenge = () =>
+const mountChallenge = (extraProps: Record<string, unknown> = {}) =>
   mount(ReCaptchaChallenge, {
-    props: { scene: "login", types: ["slide"], inline: true },
+    props: { scene: "login", types: ["slide"], inline: true, ...extraProps },
     global: { plugins: [i18n], stubs }
   });
 
@@ -104,6 +105,7 @@ const vmOf = (wrapper: ReturnType<typeof mountChallenge>) =>
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("ReCaptchaChallenge 编排", () => {
@@ -119,22 +121,24 @@ describe("ReCaptchaChallenge 编排", () => {
     const pending = vmOf(wrapper).open();
     await flushPromises();
 
-    expect(mocks.challenge).toHaveBeenCalledWith({
-      scene: "login",
-      type: "slide"
-    });
+    expect(mocks.challenge).toHaveBeenCalledWith(
+      expect.objectContaining({ scene: "login", type: "slide" })
+    );
     wrapper
       .findComponent({ name: "ReCaptchaPuzzle" })
       .vm.$emit("submit", { answer: { x: 100 }, track: TRACK });
     await flushPromises();
 
-    expect(mocks.verify).toHaveBeenCalledWith({
-      challenge_id: "c1",
-      type: "slide",
-      scene: "login",
-      answer: { x: 100 },
-      track: TRACK
-    });
+    expect(mocks.verify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        challenge_id: "c1",
+        type: "slide",
+        scene: "login",
+        answer: { x: 100 },
+        track: TRACK,
+        input: "pointer"
+      })
+    );
     vi.advanceTimersByTime(500);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-1");
@@ -192,5 +196,100 @@ describe("ReCaptchaChallenge 编排", () => {
     await wrapper.find(".re-captcha-panel__head button").trigger("click");
     await flushPromises();
     expect(mocks.challenge).toHaveBeenCalledTimes(2);
+  });
+
+  it("allow 无题直过：challenge 直接返回票据并静默 resolve", async () => {
+    mocks.challenge.mockResolvedValue({
+      code: 1000,
+      data: { ticket: "ticket-allow" }
+    });
+    const wrapper = mountChallenge();
+    const pending = vmOf(wrapper).open();
+    await flushPromises();
+    await expect(pending).resolves.toBe("ticket-allow");
+    expect(mocks.verify).not.toHaveBeenCalled();
+  });
+
+  it("light/pow：点击验证后求解 PoW 并换票", async () => {
+    vi.stubGlobal("crypto", webcrypto);
+    mocks.challenge.mockResolvedValue({
+      code: 1000,
+      data: {
+        challenge_id: "p1",
+        type: "pow",
+        ttl: 120,
+        decision: "light",
+        pow: {
+          algorithm: "sha256",
+          challenge: "abc",
+          difficulty_bits: 4,
+          expire: 0
+        }
+      }
+    });
+    mocks.verify.mockResolvedValue({
+      code: 1000,
+      data: { passed: true, ticket: "ticket-pow" }
+    });
+    const wrapper = mountChallenge();
+    const pending = vmOf(wrapper).open();
+    await flushPromises();
+    await wrapper.find('[data-testid="captcha-pow-solve"]').trigger("click");
+    await vi.waitFor(() => expect(mocks.verify).toHaveBeenCalledTimes(1), {
+      timeout: 3000
+    });
+    const payload = mocks.verify.mock.calls[0][0];
+    expect(payload.type).toBe("pow");
+    expect(payload.pow_answer.nonce).toBeDefined();
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(500);
+    await flushPromises();
+    await expect(pending).resolves.toBe("ticket-pow");
+  });
+
+  it("float 展示方式：浮层打开并可关闭取消", async () => {
+    mocks.challenge.mockResolvedValue({ code: 1000, data: CHALLENGE });
+    const wrapper = mountChallenge({ inline: false, display: "float" });
+    const pending = vmOf(wrapper).open();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="captcha-float"]').exists()).toBe(true);
+    vmOf(wrapper).reset();
+    await expect(pending).rejects.toThrow("captcha-cancelled");
+  });
+
+  it("verify 携带意图动作；下发 ck 时附带 gen_time/nonce/sign", async () => {
+    vi.stubGlobal("crypto", webcrypto);
+    mocks.challenge.mockResolvedValue({
+      code: 1000,
+      data: { ...CHALLENGE, ck: "ck-session-key" }
+    });
+    mocks.verify.mockResolvedValue({
+      code: 1000,
+      data: { passed: true, ticket: "ticket-signed" }
+    });
+
+    const wrapper = mountChallenge({ action: "identity.login.basic" });
+    void vmOf(wrapper).open();
+    await flushPromises();
+    const before = Math.floor(Date.now() / 1000);
+    wrapper
+      .findComponent({ name: "ReCaptchaPuzzle" })
+      .vm.$emit("submit", { answer: { x: 100 }, track: TRACK });
+    // WebCrypto 完成回调落在线程池 macrotask，需等待 mock 实际被调用
+    await vi.waitFor(() => expect(mocks.verify).toHaveBeenCalledTimes(1));
+    await flushPromises();
+
+    const payload = mocks.verify.mock.calls[0][0];
+    expect(payload.action).toBe("identity.login.basic");
+    expect([before, before + 1]).toContain(payload.gen_time);
+    expect(payload.nonce).toMatch(/^[0-9a-f]{32}$/);
+    const digest = createHash("sha256")
+      .update(JSON.stringify({ x: 100 }))
+      .digest("hex");
+    const expected = createHmac("sha256", "ck-session-key")
+      .update(`c1|slide|login|${digest}|${payload.gen_time}`)
+      .digest("hex");
+    expect(payload.sign).toBe(expected);
+    wrapper.unmount();
   });
 });

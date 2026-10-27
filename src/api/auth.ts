@@ -131,13 +131,30 @@ export type CaptchaResult = {
 };
 
 /** 交互式验证码题型 / 场景（与后端 captcha.const 的枚举保持一致） */
-export type CaptchaType = "slide" | "rotate" | "click";
+export type CaptchaType = "slide" | "rotate" | "click" | "pow" | "wordorder";
 export type CaptchaScene =
   "login" | "register" | "reset" | "bind_email" | "bind_phone" | "invite";
 export type CaptchaMode = "image" | "interactive";
 
 /** 拖动 / 点击采样点：坐标为题目图片的自然像素，t 为毫秒时间戳 */
-export type CaptchaTrackPoint = { x: number; y: number; t: number };
+export type CaptchaTrackPoint = {
+  x: number;
+  y: number;
+  t: number;
+  /** 事件类型（move/down/up/click）：信号层用于区分轨迹阶段 */
+  ev?: string;
+  /** 按下到抬起的时长（毫秒），仅首点携带 */
+  dur?: number;
+};
+
+export type CaptchaDecision = "allow" | "light" | "challenge" | "hard" | "deny";
+
+export type CaptchaPowChallenge = {
+  algorithm: "sha256";
+  challenge: string;
+  difficulty_bits: number;
+  expire: number;
+};
 
 export type CaptchaChallengeData = {
   challenge_id: string;
@@ -150,6 +167,14 @@ export type CaptchaChallengeData = {
   piece_size?: number;
   count?: number;
   ttl: number;
+  /** 一次性验签会话密钥：仅风险层非 off 档下发，verify 需据此加签 */
+  ck?: string;
+  /** enforce 档：allow 时直接带票据（无题直过） */
+  ticket?: string;
+  decision?: CaptchaDecision;
+  difficulty?: "easy" | "normal" | "hard";
+  /** light / pow 档的算力题面 */
+  pow?: CaptchaPowChallenge;
 };
 
 export type CaptchaVerifyData = {
@@ -182,6 +207,7 @@ export type AuthInfoResult = {
     captcha_mode?: CaptchaMode;
     captcha_types?: CaptchaType[];
     captcha_image_fallback?: boolean;
+    captcha_flow?: "always" | "adaptive";
     token?: boolean;
     encrypted?: boolean;
     lifetime?: number;
@@ -215,6 +241,7 @@ export type AuthCapabilitiesResult = {
       captcha_mode: CaptchaMode;
       captcha_types: CaptchaType[];
       captcha_image_fallback: boolean;
+      captcha_flow?: "always" | "adaptive";
       token: boolean;
       encrypted: boolean;
     };
@@ -238,6 +265,7 @@ export type InviteValidateResult = {
     captcha_mode?: CaptchaMode;
     captcha_types?: CaptchaType[];
     captcha_image_fallback?: boolean;
+    captcha_flow?: "always" | "adaptive";
   };
 };
 

@@ -107,9 +107,14 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 
 > **以下组件已全部接入真实页面**：`ReScrollbar` → AI 控制台左栏 `AiFeatureNav`（功能导航滚动区，经 `label` 下发可访问名）；`ReCollapseParams` → 监控「告警阈值设置」弹窗 `ThresholdForm`（名称列支持可选 `label`）；`ReRenderContent` → `AiResultTable` 单元格；`ReIconPicker` → 菜单管理 `MenuFormBasic` 与代码生成 `BaseConfig` 的图标字段；`ReBackTop` → 布局内容区（`lay-content` 与 `layout/index.vue` 两分支）。下方表格的「接入条件」为原始交付口径，保留备查。
 >
-> 验证码组件族：图片码 `ReImageVerify` 与交互式 `ReCaptchaChallenge`（弹层内按题型分发
-> `ReCaptchaPuzzle` / `ReRotateCaptcha` / `ReWordClickCaptcha`）由 `CAPTCHA_MODE` 切换；
-> 交互式答案由服务端校验并换一次性 ticket，前端只负责采集坐标 / 角度 / 轨迹。
+> 验证码组件族：图片码 `ReImageVerify` 与交互式 `ReCaptchaChallenge`（按题型分发
+> `ReCaptchaPuzzle` / `ReRotateCaptcha` / `ReWordClickCaptcha` / `wordorder` 复用点选 /
+> `ReCaptchaPow` 无感点击）由 `CAPTCHA_MODE` 与风险档位切换。`ReCaptchaChallenge` 支持
+> 四种展示方式：`popup`（默认弹窗）/ `inline`（内联，兼容旧 `inline` prop）/ `float`
+> （右下浮层）/ `bind`（由调用方持有 ref 调 `open()` 自定义触发器，对齐极验 bind 模式）。
+> 交互式答案由服务端校验并换一次性 ticket；前端只负责采集坐标 / 角度 / 轨迹 / 环境摘要，
+> 风险层启用时附带 Web Crypto 签名；`light` 档点击后由 Web Worker 求解 PoW（CSP 允许
+> `worker-src blob:`，Worker 不可用降级主线程分片并上报 degraded）。
 > 基础滑条 `ReSliderCaptcha`（含键盘可达与触屏支持）是拼图 / 旋转题的拖杆基座。
 
 | 组件               | 用法示例                                                                       | 说明                                                                                                                                                                                                                                                                                                                                                     |

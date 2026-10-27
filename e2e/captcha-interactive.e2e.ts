@@ -260,3 +260,20 @@ test("验证码设置页：总配置 + 图片/交互式分页签渲染", async (
     await expect(page.getByText(label).first()).toBeVisible();
   }
 });
+
+test("验证码设置页：验证数据页签渲染大盘与日志列表", async ({ page }) => {
+  await login(page);
+  await page.goto("/#/settings/captcha");
+
+  await page.getByRole("tab", { name: "验证数据", exact: true }).click();
+  await expect(page.getByTestId("captcha-data-setting")).toBeVisible({
+    timeout: 15_000
+  });
+  // 大盘聚合：策略快照 + 汇总卡片 + 日志列表（元数据协议）
+  await expect(page.getByTestId("captcha-data-mode")).toBeVisible();
+  await expect(page.getByTestId("captcha-data-summary")).toBeVisible();
+  await expect(page.getByTestId("captcha-data-by-type")).toBeVisible();
+  await expect(page.locator(".el-table").last()).toBeVisible({
+    timeout: 15_000
+  });
+});

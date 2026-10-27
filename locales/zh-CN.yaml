@@ -368,6 +368,13 @@ captchaChallenge:
   resetSelection: 重选
   confirm: 确认
   imageFallback: 使用图片验证码
+  close: 关闭
+  powTitle: 安全检查
+  powTip: 点击一次即可完成验证，无需识别图片
+  powAction: 点击验证
+  powHint: 验证过程在本地完成，不采集密码与输入内容
+  powRunning: 正在安全检查…
+  powFailed: 安全检查失败，请重试
 
 backTop:
   text: 回到顶部
@@ -2716,7 +2723,7 @@ login:
   tickPrivacy: 请勾选隐私政策
   readAccept: 我已仔细阅读并接受
   privacyPolicy: 《隐私政策》
-  privacyPolicyBody: "本系统仅在你注册与使用过程中收集必要信息：账号名、手机号或邮箱（用于身份识别与验证码送达）、登录凭证（密码仅以不可逆加密形式保存）以及基本操作日志（用于安全审计）。上述信息仅用于账号管理与系统安全，不用于广告推送，亦不对外提供；如需导出或删除账号数据，请联系管理员处理。"
+  privacyPolicyBody: "本系统仅在你注册与使用过程中收集必要信息：账号名、手机号或邮箱（用于身份识别与验证码送达）、登录凭证（密码仅以不可逆加密形式保存）以及基本操作日志（用于安全审计）。人机验证会采集浏览器环境摘要与操作行为特征（仅用于区分真人与自动化，不以明文保存 IP / UA，不采集密码或输入内容，不写入 Cookie，不向任何第三方发送），日志默认保留 30 天。上述信息仅用于账号管理与系统安全，不用于广告推送，亦不对外提供；如需导出或删除账号数据，请联系管理员处理。"
   getVerifyCode: 获取验证码
   info: 秒后重新获取
   usernameReg: 请输入账号
@@ -2938,6 +2945,49 @@ settingCaptcha:
   refreshPreview: 刷新预览
   previewTip: 预览基于已保存配置；仅用于查看样式，不会提交验证
   previewFailed: 预览加载失败
+  risk: 风险策略
+  riskDesc: 风险分级模式、阈值、算力与处置阶梯；信任网段复用「登录安全」白名单；默认 off 保持现状
+  riskRules: 规则分值
+  riskRulesDesc: 调整 16 条可解释规则的分值与开关（保存后即时生效）
+  riskRuleScore: 分值
+  riskRuleEnabled: 启用
+  riskRuleSave: 保存规则
+  riskRulesSaved: 规则已保存
+  riskRulesFailed: 规则保存失败
+  riskCompliance: 合规告知：仅采集环境摘要与行为特征（哈希），不采集密码、输入内容或 Cookie，不向第三方发送；日志默认保留 30 天，IP 只保留网段哈希。
+  data: 验证数据
+  dataDesc: 验证量、通过率、题型与决策分布；日志保留 30 天，仅存哈希与类别（不含明文 IP / UA）
+  dataWindow: 统计时间窗
+  dataHour24: 最近 24 小时
+  dataHour72: 最近 3 天
+  dataHour168: 最近 7 天
+  dataChallenge: 出题次数
+  dataVerify: 校验次数
+  dataPassRate: 校验通过率
+  dataConsume: 票据消费
+  dataByType: 各题型通过率
+  dataByDecision: 决策分布
+  dataTotal: 共
+  dataPassed: 通过
+  dataTrend: 小时趋势
+  dataLog: 验证日志
+  dataEmpty: 暂无数据
+  dataRefresh: 刷新
+  dataRiskMode: 风险档
+  dataRetention: 日志保留 {days} 天
+  dataDenyRate: 拦截率
+  dataLatencyP50: 校验 P50 耗时
+  dataThresholds: 阈值
+  dataRiskDistribution: 风险分分布
+  dataTopReasons: 拦截原因 TopN
+  dataTopIps: 可疑 IP 段 TopN
+  dataTopFingerprints: 可疑指纹 TopN
+  dataTopUa: 可疑 UA 类 TopN
+  decisionAllow: 放行
+  decisionLight: 轻验证
+  decisionChallenge: 常规题
+  decisionHard: 难题
+  decisionDeny: 拒绝
 
 settingSecurity:
   login: 登录安全配置

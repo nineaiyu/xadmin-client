@@ -7,6 +7,11 @@ import ReSliderCaptcha from "@/components/ReSliderCaptcha";
 import type { CaptchaChallengeData, CaptchaTrackPoint } from "@/api/auth";
 import type { CaptchaSubmitPayload } from "@/components/ReCaptchaChallenge/src/types";
 import {
+  buildTrackPoint,
+  isKeyboardEvent,
+  shouldSample
+} from "@/utils/captchaSignal/track";
+import {
   moveToPuzzleX,
   sliderMax
 } from "@/components/ReCaptchaChallenge/src/geometry";
@@ -16,6 +21,7 @@ defineOptions({ name: "ReCaptchaPuzzle" });
 const props = defineProps<{
   challenge: CaptchaChallengeData;
   sliderText?: string;
+  difficulty?: "easy" | "normal" | "hard";
 }>();
 
 const emit = defineEmits<{
@@ -32,6 +38,8 @@ const displayX = ref(0);
 const verified = ref(false);
 const track = ref<CaptchaTrackPoint[]>([]);
 let startedAt = 0;
+let lastSampleAt = 0;
+let inputMode: "pointer" | "keyboard" = "pointer";
 
 useResizeObserver(stageRef, entries => {
   stageWidth.value = entries[0]?.contentRect.width ?? 0;
@@ -55,30 +63,39 @@ const pieceStyle = computed(() => ({
   left: `${displayX.value * scale.value}px`
 }));
 
-function pushTrack(t: number) {
-  track.value.push({ x: displayX.value, y: 0, t });
+function pushTrack(t: number, ev?: string) {
+  track.value.push(buildTrackPoint(displayX.value, 0, t, ev));
 }
 
 function onStart() {
   track.value = [];
   startedAt = Date.now();
   displayX.value = 0;
-  pushTrack(0);
+  inputMode = "pointer";
+  lastSampleAt = 0;
+  pushTrack(0, "down");
 }
 
 function onMove(payload: {
   event: PointerEvent | KeyboardEvent;
   moveX: number;
 }) {
+  if (isKeyboardEvent(payload.event)) {
+    inputMode = "keyboard";
+  }
   displayX.value = payload.moveX;
   if (!startedAt) startedAt = Date.now();
-  pushTrack(Date.now() - startedAt);
+  const now = Date.now();
+  if (inputMode === "keyboard" || shouldSample(now, lastSampleAt)) {
+    lastSampleAt = now;
+    pushTrack(now - startedAt, inputMode === "keyboard" ? "keyboard" : "move");
+  }
 }
 
 function onEnd() {
   const elapsed = startedAt ? Date.now() - startedAt : 0;
   if (track.value.length < 2) {
-    pushTrack(Math.max(elapsed, 1));
+    pushTrack(Math.max(elapsed, 1), "up");
   } else {
     track.value[track.value.length - 1].t = Math.max(
       elapsed,
@@ -93,7 +110,8 @@ function onEnd() {
   );
   emit("submit", {
     answer: { x: Math.round(answerX) },
-    track: [...track.value]
+    track: [...track.value],
+    input: inputMode
   });
 }
 
@@ -113,7 +131,7 @@ defineExpose({ reset, markSuccess });
 </script>
 
 <template>
-  <div class="re-captcha-puzzle">
+  <div class="re-captcha-puzzle" :data-difficulty="difficulty ?? 'normal'">
     <div
       ref="stageRef"
       class="re-captcha-puzzle__stage"

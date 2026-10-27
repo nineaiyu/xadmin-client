@@ -9,7 +9,10 @@ import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { ReImageVerify } from "@/components/ReImageVerify";
-import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
+import {
+  CAPTCHA_ACTION_LOGIN,
+  ReCaptchaChallenge
+} from "@/components/ReCaptchaChallenge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { handleOperation } from "@/components/RePlusPage";
 import Lock from "~icons/ri/lock-fill";
@@ -357,6 +360,8 @@ onMounted(() => {
         v-if="interactiveCaptcha"
         ref="captchaChallengeRef"
         scene="login"
+        :action="CAPTCHA_ACTION_LOGIN"
+        :account="ruleForm.username"
         :types="captchaTypes"
         :image-fallback="capabilities?.basic?.captcha_image_fallback === true"
       />

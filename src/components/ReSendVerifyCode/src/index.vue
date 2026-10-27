@@ -5,7 +5,10 @@ import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
-import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
+import {
+  ReCaptchaChallenge,
+  verifyCodeSendAction
+} from "@/components/ReCaptchaChallenge";
 import type { CaptchaMode, CaptchaScene, CaptchaType } from "@/api/auth";
 import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
 import Email from "~icons/ep/message";
@@ -88,6 +91,8 @@ const phone = ref({ code: "+86", phone: "" });
 const captchaScene = computed<CaptchaScene>(
   () => (props.category || "login") as CaptchaScene
 );
+/** 发码意图动作：按场景派生（服务端登记表同口径） */
+const captchaAction = computed(() => verifyCodeSendAction(captchaScene.value));
 </script>
 
 <template>
@@ -194,6 +199,7 @@ const captchaScene = computed<CaptchaScene>(
       v-if="interactiveCaptcha"
       ref="challengeRef"
       :scene="captchaScene"
+      :action="captchaAction"
       :types="verifyCodeConfig.captcha_types"
       :image-fallback="verifyCodeConfig.captcha_image_fallback === true"
     />

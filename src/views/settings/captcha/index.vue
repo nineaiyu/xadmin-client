@@ -10,11 +10,15 @@ import type {
 import {
   settingsCaptchaApi,
   settingsCaptchaGeneralApi,
-  settingsCaptchaInteractiveApi
+  settingsCaptchaInteractiveApi,
+  settingsCaptchaRiskApi
 } from "@/api/system/settings";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
+import { hasAuth } from "@/router/utils";
 import CaptchaImageSetting from "./components/CaptchaImageSetting.vue";
 import CaptchaInteractiveSetting from "./components/CaptchaInteractiveSetting.vue";
+import CaptchaDataSetting from "./components/CaptchaDataSetting.vue";
+import CaptchaRiskSetting from "./components/CaptchaRiskSetting.vue";
 
 defineOptions({
   name: "SettingCaptcha"
@@ -44,11 +48,24 @@ const interactiveItem: settingItemProps = {
   }
 };
 
+const riskItem: settingItemProps = {
+  auth: settingAuth("SecurityCaptchaRisk"),
+  api: settingsCaptchaRiskApi,
+  localeName: "settingCaptcha"
+};
+
 /**
  * 验证码设置（与短信设置同构）：
  * - 总配置：全局开关 + 当前使用的验证码类型；
- * - 图片验证码 / 交互式验证码：各类型独立页签 + 只读预览，后续新增类型按同一模式扩展。
+ * - 图片验证码 / 交互式验证码：各类型独立页签 + 只读预览，后续新增类型按同一模式扩展；
+ * - 验证数据：观测大盘 + 日志列表（独立权限位，未授权时不渲染页签）。
  */
+const canViewData = computed(
+  () =>
+    hasAuth("list:SecurityCaptchaStats") || hasAuth("list:SecurityCaptchaLog")
+);
+const canViewRisk = computed(() => hasAuth("retrieve:SecurityCaptchaRisk"));
+
 const panes = computed<Array<settingsPane>>(() => [
   {
     key: "general",
@@ -69,7 +86,25 @@ const panes = computed<Array<settingsPane>>(() => [
     key: "interactive",
     label: t("settingCaptcha.interactive"),
     desc: t("settingCaptcha.interactiveDesc")
-  }
+  },
+  ...(canViewRisk.value
+    ? [
+        {
+          key: "risk",
+          label: t("settingCaptcha.risk"),
+          desc: t("settingCaptcha.riskDesc")
+        }
+      ]
+    : []),
+  ...(canViewData.value
+    ? [
+        {
+          key: "data",
+          label: t("settingCaptcha.data"),
+          desc: t("settingCaptcha.dataDesc")
+        }
+      ]
+    : [])
 ]);
 </script>
 
@@ -86,6 +121,12 @@ const panes = computed<Array<settingsPane>>(() => [
         :item="interactiveItem"
         :refresh-key="interactivePreviewRefresh"
       />
+    </template>
+    <template #risk>
+      <CaptchaRiskSetting :item="riskItem" />
+    </template>
+    <template #data>
+      <CaptchaDataSetting />
     </template>
   </setting>
 </template>

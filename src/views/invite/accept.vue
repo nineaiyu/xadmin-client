@@ -13,7 +13,10 @@ import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
 import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
-import { ReCaptchaChallenge } from "@/components/ReCaptchaChallenge";
+import {
+  CAPTCHA_ACTION_INVITE_ACCEPT,
+  ReCaptchaChallenge
+} from "@/components/ReCaptchaChallenge";
 import type { CaptchaMode, CaptchaType } from "@/api/auth";
 
 defineOptions({
@@ -262,6 +265,7 @@ async function submit() {
           v-if="interactiveCaptcha"
           ref="captchaChallengeRef"
           scene="invite"
+          :action="CAPTCHA_ACTION_INVITE_ACCEPT"
           :types="captchaTypes"
           :image-fallback="captchaImageFallback"
         />
