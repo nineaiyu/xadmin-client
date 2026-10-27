@@ -12,7 +12,6 @@ defineProps<{
   loading: boolean;
   submitting: boolean;
   error: string;
-  attemptsLeft: number | null;
   success: boolean;
   imageFallback?: boolean;
   shake?: boolean;
@@ -47,7 +46,6 @@ defineExpose({
     :loading="loading"
     :submitting="submitting"
     :error="error"
-    :attempts-left="attemptsLeft"
     :success="success"
     :image-fallback="imageFallback"
     :shake="shake"

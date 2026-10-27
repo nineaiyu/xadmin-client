@@ -6,8 +6,7 @@ import {
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
-import type { CaptchaMode, CaptchaType } from "@/api/auth";
-import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import type { CaptchaType } from "@/api/auth";
 import { isEmpty } from "@pureadmin/utils";
 import { buildEmailRule } from "@/utils/rules/email";
 import { buildPhoneRule } from "@/utils/rules/phone";
@@ -24,8 +23,6 @@ export interface SendVerifyFormData {
   token: string;
   phone?: string;
   email?: string;
-  captcha_key?: string;
-  captcha_code?: string;
   captcha_ticket?: string;
   verify_code?: string;
   verify_token?: string;
@@ -34,7 +31,6 @@ export interface SendVerifyFormData {
 
 export const useSendVerifyCode = (
   formDataRef: Ref<FormInstance | undefined>,
-  captchaRef: Ref<{ getImgCode?: () => void } | undefined>,
   challengeRef: Ref<
     { open?: () => Promise<string>; reset?: () => void } | undefined
   >,
@@ -57,8 +53,6 @@ export const useSendVerifyCode = (
     phone: "",
     email: "",
     target: "",
-    captcha_key: "",
-    captcha_code: "",
     captcha_ticket: "",
     verify_code: "",
     verify_token: undefined
@@ -69,7 +63,6 @@ export const useSendVerifyCode = (
   const verifyCodeConfig = reactive<{
     access: boolean;
     captcha: boolean;
-    captcha_mode: CaptchaMode;
     captcha_types: CaptchaType[];
     captcha_image_fallback: boolean;
     token: boolean;
@@ -80,7 +73,6 @@ export const useSendVerifyCode = (
   }>({
     access: false,
     captcha: false,
-    captcha_mode: "image",
     captcha_types: [],
     captcha_image_fallback: false,
     token: false,
@@ -90,14 +82,7 @@ export const useSendVerifyCode = (
     rate: 60
   });
 
-  /** 无障碍回退：显式切换图片码后，本组件后续发送不再弹交互式挑战 */
-  const imageFallback = ref(false);
-  const interactiveCaptcha = computed(
-    () =>
-      verifyCodeConfig.captcha &&
-      verifyCodeConfig.captcha_mode === "interactive" &&
-      !imageFallback.value
-  );
+  const captchaEnabled = computed(() => verifyCodeConfig.captcha);
 
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
@@ -128,31 +113,6 @@ export const useSendVerifyCode = (
         requiredMessage: transformI18n($t("login.emailReg")),
         formatMessage: transformI18n($t("login.emailCorrectReg"))
       })
-    ],
-    captcha_code: [
-      {
-        required: true,
-
-        validator: (rule, value, callback) => {
-          // 交互式验证码没有行内字符输入：由挑战弹层换取 ticket，行内规则直接放行
-          if (interactiveCaptcha.value) {
-            callback();
-            return;
-          }
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-          } else if (
-            useLoginPageStoreHook().verifyCodeLength !== value?.length
-          ) {
-            callback(
-              new Error(transformI18n($t("login.verifyCodeCorrectReg")))
-            );
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
     ],
     verify_code: [
       {
@@ -204,8 +164,6 @@ export const useSendVerifyCode = (
       form_type: formData.value.form_type,
       token: formData.value.token,
       target: formData.value[formData.value.form_type],
-      captcha_key: formData.value.captcha_key,
-      captcha_code: formData.value.captcha_code,
       captcha_ticket: formData.value.captcha_ticket
     };
   };
@@ -218,21 +176,17 @@ export const useSendVerifyCode = (
       formDataRef.value,
       [
         formData.value.form_type,
-        "captcha_code",
         formData.value.form_type === "phone" ? "phone" : "email"
       ],
       verifyCodeConfig.rate,
       async interval => {
         formData.value.captcha_ticket = "";
-        if (interactiveCaptcha.value) {
+        if (captchaEnabled.value) {
           try {
             formData.value.captcha_ticket =
               (await challengeRef.value?.open?.()) ?? "";
-          } catch (error) {
-            if ((error as Error)?.message === "captcha-image-fallback") {
-              imageFallback.value = true;
-            }
-            // 用户取消 / 切换回退：不进入冷却，保持可重试
+          } catch {
+            // 用户取消挑战：不进入冷却，保持可重试
             return;
           }
           if (!formData.value.captcha_ticket) return;
@@ -262,13 +216,11 @@ export const useSendVerifyCode = (
             initToken();
             formData.value.captcha_ticket = "";
             challengeRef.value?.reset?.();
-            if (!interactiveCaptcha.value) captchaRef.value?.getImgCode?.();
           },
           failed() {
             initToken();
             formData.value.captcha_ticket = "";
             challengeRef.value?.reset?.();
-            if (!interactiveCaptcha.value) captchaRef.value?.getImgCode?.();
           }
         });
       }
@@ -318,8 +270,7 @@ export const useSendVerifyCode = (
     formRules,
     isDisabled,
     verifyCodeConfig,
-    interactiveCaptcha,
-    imageFallback,
+    captchaEnabled,
     configFailed,
     reloadConfig: loadConfig,
     handleSendCode,

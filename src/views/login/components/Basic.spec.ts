@@ -7,7 +7,6 @@ type TestCapabilities = {
   basic: {
     enabled: boolean;
     captcha: boolean;
-    captcha_mode: "image" | "interactive";
     captcha_types: string[];
     captcha_image_fallback: boolean;
     token: boolean;
@@ -28,7 +27,6 @@ const state = vi.hoisted(() => ({
     basic: {
       enabled: true,
       captcha: false,
-      captcha_mode: "image",
       captcha_types: [],
       captcha_image_fallback: false,
       token: false,
@@ -104,10 +102,6 @@ const stubs = {
   ElResult: { name: "ElResult", template: "<div class='result-stub' />" },
   Motion: { name: "Motion", template: "<div><slot /></div>" },
   RememberLogin: { name: "RememberLogin", template: "<div />" },
-  ReImageVerify: {
-    name: "ReImageVerify",
-    template: "<div class='image-captcha-stub' />"
-  },
   ReCaptchaChallenge: {
     name: "ReCaptchaChallenge",
     template: "<div class='challenge-stub' />"
@@ -175,29 +169,24 @@ describe("登录方式入口按能力清单过滤", () => {
   });
 });
 
-describe("交互式验证码形态", () => {
-  it("interactive 模式：隐藏图片码行内输入，挂载挑战编排组件", async () => {
+describe("统一验证码形态", () => {
+  it("captcha 开启：挂载挑战编排组件，不再渲染行内图片码", async () => {
     state.capabilities.basic.captcha = true;
-    state.capabilities.basic.captcha_mode = "interactive";
-    state.capabilities.basic.captcha_types = ["slide", "click"];
+    state.capabilities.basic.captcha_types = ["slide", "click", "image"];
     const wrapper = mountBasic();
     await flushPromises();
 
     expect(wrapper.find(".challenge-stub").exists()).toBe(true);
     expect(wrapper.find(".image-captcha-stub").exists()).toBe(false);
     state.capabilities.basic.captcha = false;
-    state.capabilities.basic.captcha_mode = "image";
     state.capabilities.basic.captcha_types = [];
   });
 
-  it("image 模式：保留图片验证码行内输入", async () => {
-    state.capabilities.basic.captcha = true;
-    state.capabilities.basic.captcha_mode = "image";
+  it("captcha 关闭：不挂载挑战组件", async () => {
+    state.capabilities.basic.captcha = false;
     const wrapper = mountBasic();
     await flushPromises();
 
-    expect(wrapper.find(".image-captcha-stub").exists()).toBe(true);
     expect(wrapper.find(".challenge-stub").exists()).toBe(false);
-    state.capabilities.basic.captcha = false;
   });
 });

@@ -6,7 +6,7 @@ import type { AuthCapabilitiesResult } from "@/api/auth";
 import type { loginPageType } from "../types";
 
 /**
- * 登录页 UI 态 store：登录页子页面切换、免登录勾选与天数、图形验证码长度。
+ * 登录页 UI 态 store：登录页子页面切换、免登录勾选与天数。
  *
  * 从 user store 拆出（登录页交互态与认证身份解耦）：登录/注册/登出等认证
  * 行为仍归 user store，本 store 只承载登录页状态、无请求副作用。子页面编号与
@@ -24,8 +24,6 @@ export const useLoginPageStore = defineStore("pure-login-page", {
     isRemembered: false,
     // 登录页的免登录存储几天，默认7天
     loginDay: 7,
-    // 前端生成的验证码（按实际需求替换）
-    verifyCodeLength: 0,
     // 能力清单未拉取时为 null，外壳就绪前不渲染子页（避免首帧闪「服务已禁止」）
     capabilities: null,
     capabilitiesStatus: "loading"
@@ -39,10 +37,6 @@ export const useLoginPageStore = defineStore("pure-login-page", {
     /** 更新能力清单加载状态（失败/重试时由外壳调用） */
     SET_CAPABILITIES_STATUS(status: loginPageType["capabilitiesStatus"]) {
       this.capabilitiesStatus = status;
-    },
-    /** 存储前端生成的验证码 */
-    SET_VERIFY_CODE_LENGTH(length: number) {
-      this.verifyCodeLength = length;
     },
     /** 存储登录页面显示哪个组件 */
     SET_CURRENT_PAGE(value: number) {

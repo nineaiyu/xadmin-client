@@ -19,7 +19,7 @@ async function patchSetting(page: Page, path: string, data: object) {
   expect(resp.ok(), `${path} PATCH ${resp.status()}`).toBeTruthy();
 }
 
-async function waitForMode(page: Page, mode: "image" | "interactive") {
+async function waitForTypes(page: Page, types: string[]) {
   await expect
     .poll(
       async () => {
@@ -27,11 +27,11 @@ async function waitForMode(page: Page, mode: "image" | "interactive") {
           `${FRONT_URL}/api/identity/auth/capabilities`
         );
         const body = await resp.json().catch(() => ({}));
-        return body?.data?.basic?.captcha_mode;
+        return body?.data?.basic?.captcha_types;
       },
       { timeout: 15_000 }
     )
-    .toBe(mode);
+    .toEqual(types);
 }
 
 async function enableInteractive(
@@ -40,18 +40,17 @@ async function enableInteractive(
   imageFallback = false
 ) {
   await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true,
-    CAPTCHA_MODE: "interactive"
+    CAPTCHA_ENABLED: true
   });
   await patchSetting(page, "/api/settings/captcha/interactive", {
-    CAPTCHA_INTERACTIVE_TYPES: [type],
+    CAPTCHA_ENABLED_TYPES: [type],
     CAPTCHA_TRACK_CHECK_ENABLED: true,
     CAPTCHA_IMAGE_FALLBACK_ENABLED: imageFallback
   });
   await patchSetting(page, "/api/settings/login/auth", {
     SECURITY_LOGIN_CAPTCHA_ENABLED: true
   });
-  await waitForMode(page, "interactive");
+  await waitForTypes(page, imageFallback ? [type, "image"] : [type]);
   // 两个设置键经 Redis 热更异步生效：等回退开关也到位，避免首屏拿到旧能力
   await expect
     .poll(
@@ -67,19 +66,18 @@ async function enableInteractive(
     .toBe(imageFallback);
 }
 
-async function restoreImageMode(page: Page) {
+async function restoreDefaults(page: Page) {
   await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true,
-    CAPTCHA_MODE: "image"
+    CAPTCHA_ENABLED: true
   });
   await patchSetting(page, "/api/settings/captcha/interactive", {
-    CAPTCHA_INTERACTIVE_TYPES: [...TYPES],
+    CAPTCHA_ENABLED_TYPES: [...TYPES],
     CAPTCHA_IMAGE_FALLBACK_ENABLED: false
   });
   await patchSetting(page, "/api/settings/login/auth", {
     SECURITY_LOGIN_CAPTCHA_ENABLED: false
   });
-  await waitForMode(page, "image");
+  await waitForTypes(page, [...TYPES]);
 }
 
 /** 从挑战面板读取题目元数据（答案不落 DOM） */
@@ -95,9 +93,10 @@ async function readChallenge(page: Page) {
     pieceSize: Number(el.getAttribute("data-piece-size") ?? 56)
   }));
   const resp = await page.request.get(
-    `${FRONT_URL}/api/identity/auth/captcha/inspect?challenge_id=${meta.id}`
+    `${FRONT_URL}/api/identity/auth/captcha/inspect?challenge_id=${meta.id}`,
+    { headers: { "X-Captcha-Inspect-Token": "e2e-captcha-inspect-token" } }
   );
-  expect(resp.ok(), "inspect 端点应仅在 E2E 档挂载").toBeTruthy();
+  expect(resp.ok(), "inspect 端点应仅在 E2E 档挂载且 token 匹配").toBeTruthy();
   const body = await resp.json();
   return { ...meta, answer: body.data.answer as Record<string, unknown> };
 }
@@ -198,7 +197,7 @@ test("交互式验证码：三种题型均可通过真实 UI 登录", async ({ p
     }
   } finally {
     await page.context().addCookies(adminCookies);
-    await restoreImageMode(page).catch(() => undefined);
+    await restoreDefaults(page).catch(() => undefined);
   }
 });
 
@@ -219,17 +218,21 @@ test("无障碍回退：开启后可从挑战切换到图片码", async ({ page 
     const panel = page.getByTestId("captcha-panel");
     await expect(panel).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: "使用图片验证码" }).click();
-    await expect(panel).not.toBeVisible();
-    await expect(page.getByAltText("图形验证码")).toBeVisible({
+    await expect(panel).toBeVisible();
+    await expect(panel).toHaveAttribute("data-challenge-type", "image");
+    await expect(page.getByAltText("图片验证码")).toBeVisible({
       timeout: 10_000
     });
+    await expect(page.getByTestId("captcha-image-input")).toBeVisible();
   } finally {
     await page.context().addCookies(adminCookies);
-    await restoreImageMode(page).catch(() => undefined);
+    await restoreDefaults(page).catch(() => undefined);
   }
 });
 
-test("验证码设置页：总配置 + 图片/交互式分页签渲染", async ({ page }) => {
+test("验证码设置页：总配置 + 图片题型/题型与难度分页签渲染", async ({
+  page
+}) => {
   await login(page);
   await page.goto("/#/settings/captcha");
 
@@ -237,17 +240,16 @@ test("验证码设置页：总配置 + 图片/交互式分页签渲染", async (
   await expect(page.getByText("启用验证码").first()).toBeVisible({
     timeout: 15_000
   });
-  await expect(page.getByText("验证码模式").first()).toBeVisible();
 
-  // 图片验证码页签：预览图自动加载
-  await page.getByRole("tab", { name: "图片验证码", exact: true }).click();
+  // 图片题型页签：预览图自动加载
+  await page.getByRole("tab", { name: "图片题型", exact: true }).click();
   await expect(page.getByText("图片算法模式").first()).toBeVisible();
   await expect(page.getByTestId("captcha-image-preview")).toBeVisible({
     timeout: 15_000
   });
 
-  // 交互式验证码页签：预览组件自动加载
-  await page.getByRole("tab", { name: "交互式验证码", exact: true }).click();
+  // 题型与难度页签：预览组件自动加载
+  await page.getByRole("tab", { name: "题型与难度", exact: true }).click();
   await expect(page.getByTestId("captcha-interactive-preview")).toBeVisible();
   await expect(page.locator(".re-captcha-puzzle__stage")).toBeVisible();
   for (const label of [

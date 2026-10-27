@@ -38,6 +38,14 @@ vi.mock("@/components/ReWordClickCaptcha", () => ({
     template: "<div class='click-stub' />"
   }
 }));
+vi.mock("@/components/ReImageCaptcha", () => ({
+  ReImageCaptcha: {
+    name: "ReImageCaptcha",
+    props: ["challenge", "submitting"],
+    emits: ["submit"],
+    template: "<div class='image-stub' />"
+  }
+}));
 
 import { ReCaptchaChallenge } from "../index";
 
@@ -53,7 +61,8 @@ const i18n = createI18n({
         retryHint: "验证未通过，还可尝试 {count} 次",
         success: "验证通过",
         verifyFailed: "验证失败，请重试",
-        loadFailed: "验证码加载失败，请重试"
+        loadFailed: "验证码加载失败，请重试",
+        imageFallback: "使用图片验证码"
       }
     }
   }
@@ -144,14 +153,11 @@ describe("ReCaptchaChallenge 编排", () => {
     await expect(pending).resolves.toBe("ticket-1");
   });
 
-  it("校验失败下发剩余次数，可继续提交直到通过", async () => {
+  it("校验失败不暴露剩余次数，自动换题后可再次提交", async () => {
     vi.useFakeTimers();
     mocks.challenge.mockResolvedValue({ code: 1000, data: CHALLENGE });
     mocks.verify
-      .mockResolvedValueOnce({
-        code: 1000,
-        data: { passed: false, attempts_left: 2 }
-      })
+      .mockResolvedValueOnce({ code: 1000, data: { passed: false } })
       .mockResolvedValueOnce({
         code: 1000,
         data: { passed: true, ticket: "ticket-2" }
@@ -160,14 +166,17 @@ describe("ReCaptchaChallenge 编排", () => {
     const wrapper = mountChallenge();
     const pending = vmOf(wrapper).open();
     await flushPromises();
-    const child = wrapper.findComponent({ name: "ReCaptchaPuzzle" });
-
-    child.vm.$emit("submit", { answer: { x: 1 }, track: TRACK });
+    wrapper
+      .findComponent({ name: "ReCaptchaPuzzle" })
+      .vm.$emit("submit", { answer: { x: 1 }, track: TRACK });
     await flushPromises();
-    expect(wrapper.text()).toContain("还可尝试 2 次");
     expect(mocks.verify).toHaveBeenCalledTimes(1);
+    expect(mocks.challenge).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).not.toContain("还可尝试");
 
-    child.vm.$emit("submit", { answer: { x: 100 }, track: TRACK });
+    wrapper
+      .findComponent({ name: "ReCaptchaPuzzle" })
+      .vm.$emit("submit", { answer: { x: 100 }, track: TRACK });
     await flushPromises();
     vi.advanceTimersByTime(500);
     await flushPromises();
@@ -198,16 +207,46 @@ describe("ReCaptchaChallenge 编排", () => {
     expect(mocks.challenge).toHaveBeenCalledTimes(2);
   });
 
-  it("allow 无题直过：challenge 直接返回票据并静默 resolve", async () => {
-    mocks.challenge.mockResolvedValue({
+  it("图片回退：点击按钮后按 type=image 重新拉题并提交 code+pow_answer", async () => {
+    const imageChallenge = {
+      challenge_id: "i1",
+      type: "image" as const,
+      background: "data:image/png;base64,x",
+      width: 120,
+      height: 40,
+      length: 4,
+      audio: false,
+      ttl: 120
+    };
+    mocks.challenge.mockResolvedValue({ code: 1000, data: imageChallenge });
+    mocks.verify.mockResolvedValue({
       code: 1000,
-      data: { ticket: "ticket-allow" }
+      data: { passed: true, ticket: "ticket-image" }
     });
-    const wrapper = mountChallenge();
+    const wrapper = mountChallenge({
+      types: ["slide", "image"],
+      imageFallback: true
+    });
     const pending = vmOf(wrapper).open();
     await flushPromises();
-    await expect(pending).resolves.toBe("ticket-allow");
-    expect(mocks.verify).not.toHaveBeenCalled();
+    const fallbackButton = wrapper
+      .findAll("button")
+      .find(button => button.text().includes("使用图片验证码"));
+    await fallbackButton?.trigger("click");
+    await flushPromises();
+    expect(mocks.challenge).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: "image" })
+    );
+    wrapper.findComponent({ name: "ReImageCaptcha" }).vm.$emit("submit", {
+      answer: { code: "1234" },
+      track: [],
+      input: "keyboard"
+    });
+    await flushPromises();
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(500);
+    await flushPromises();
+    await expect(pending).resolves.toBe("ticket-image");
   });
 
   it("light/pow：点击验证后求解 PoW 并换票", async () => {
@@ -218,7 +257,6 @@ describe("ReCaptchaChallenge 编排", () => {
         challenge_id: "p1",
         type: "pow",
         ttl: 120,
-        decision: "light",
         pow: {
           algorithm: "sha256",
           challenge: "abc",
@@ -245,6 +283,61 @@ describe("ReCaptchaChallenge 编排", () => {
     vi.advanceTimersByTime(500);
     await flushPromises();
     await expect(pending).resolves.toBe("ticket-pow");
+  });
+
+  it("bind 展示方式：真正挂载到指定容器，而不是弹窗", async () => {
+    mocks.challenge.mockResolvedValue({ code: 1000, data: CHALLENGE });
+    const target = document.createElement("div");
+    target.id = "captcha-bind-slot";
+    document.body.appendChild(target);
+    const wrapper = mountChallenge({
+      inline: false,
+      display: "bind",
+      target: "#captcha-bind-slot"
+    });
+    const pending = vmOf(wrapper).open();
+    await flushPromises();
+    expect(
+      document.querySelector("#captcha-bind-slot [data-testid='captcha-bound']")
+    ).not.toBeNull();
+    expect(wrapper.find(".el-overlay").exists()).toBe(false);
+    vmOf(wrapper).reset();
+    await expect(pending).rejects.toThrow("captcha-cancelled");
+    expect(
+      document.querySelector("#captcha-bind-slot [data-testid='captcha-bound']")
+    ).toBeNull();
+    target.remove();
+  });
+
+  it("pow 校验失败换题时不把 type=pow 回传给 challenge", async () => {
+    vi.stubGlobal("crypto", webcrypto);
+    mocks.challenge.mockResolvedValue({
+      code: 1000,
+      data: {
+        challenge_id: "p-fail",
+        type: "pow",
+        ttl: 120,
+        pow: {
+          algorithm: "sha256",
+          challenge: "abc",
+          difficulty_bits: 4,
+          expire: 0
+        }
+      }
+    });
+    mocks.verify.mockResolvedValue({ code: 1000, data: { passed: false } });
+    const wrapper = mountChallenge();
+    void vmOf(wrapper).open();
+    await flushPromises();
+    await wrapper.find('[data-testid="captcha-pow-solve"]').trigger("click");
+    await vi.waitFor(() => expect(mocks.verify).toHaveBeenCalledTimes(1), {
+      timeout: 3000
+    });
+    await vi.waitFor(() => expect(mocks.challenge).toHaveBeenCalledTimes(2), {
+      timeout: 3000
+    });
+    expect(mocks.challenge.mock.calls[1][0].type).not.toBe("pow");
+    wrapper.unmount();
   });
 
   it("float 展示方式：浮层打开并可关闭取消", async () => {

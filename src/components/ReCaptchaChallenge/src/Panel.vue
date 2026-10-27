@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
+import { ReImageCaptcha } from "@/components/ReImageCaptcha";
 import { ReCaptchaPuzzle } from "@/components/ReCaptchaPuzzle";
 import { ReRotateCaptcha } from "@/components/ReRotateCaptcha";
 import { ReWordClickCaptcha } from "@/components/ReWordClickCaptcha";
@@ -15,7 +16,6 @@ defineProps<{
   loading: boolean;
   submitting: boolean;
   error: string;
-  attemptsLeft: number | null;
   success: boolean;
   imageFallback?: boolean;
   shake?: boolean;
@@ -87,38 +87,36 @@ defineExpose({ reset, markSuccess });
       show-icon
       :title="error"
     />
-    <el-alert
-      v-else-if="attemptsLeft !== null && attemptsLeft > 0"
-      class="mb-3!"
-      type="warning"
-      :closable="false"
-      show-icon
-      :title="t('captchaChallenge.retryHint', { count: attemptsLeft })"
-    />
 
     <div v-loading="loading || submitting" class="re-captcha-panel__body">
       <template v-if="challenge">
-        <ReCaptchaPuzzle
-          v-if="challenge.type === 'slide'"
+        <ReImageCaptcha
+          v-if="challenge.type === 'image'"
           ref="childRef"
           :challenge="challenge"
-          :difficulty="challenge.difficulty"
+          :submitting="submitting"
+          @submit="emit('submit', $event)"
+        />
+        <ReCaptchaPuzzle
+          v-else-if="challenge.type === 'slide'"
+          ref="childRef"
+          :challenge="challenge"
           @submit="emit('submit', $event)"
         />
         <ReRotateCaptcha
           v-else-if="challenge.type === 'rotate'"
           ref="childRef"
           :challenge="challenge"
-          :difficulty="challenge.difficulty"
           @submit="emit('submit', $event)"
         />
         <ReWordClickCaptcha
           v-else-if="
-            challenge.type === 'click' || challenge.type === 'wordorder'
+            challenge.type === 'click' ||
+            challenge.type === 'wordorder' ||
+            challenge.type === 'icon'
           "
           ref="childRef"
           :challenge="challenge"
-          :difficulty="challenge.difficulty"
           @submit="emit('submit', $event)"
         />
       </template>

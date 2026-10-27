@@ -4,12 +4,11 @@ import { useSendVerifyCode } from "./hooks";
 import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import {
   ReCaptchaChallenge,
   verifyCodeSendAction
 } from "@/components/ReCaptchaChallenge";
-import type { CaptchaMode, CaptchaScene, CaptchaType } from "@/api/auth";
+import type { CaptchaScene, CaptchaType } from "@/api/auth";
 import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
 import Email from "~icons/ep/message";
 import Keyhole from "~icons/ri/shield-keyhole-line";
@@ -20,7 +19,6 @@ defineOptions({ name: "ReSendVerifyCode" });
 interface VerifyCodeConfig {
   access: boolean;
   captcha: boolean;
-  captcha_mode?: CaptchaMode;
   captcha_types?: CaptchaType[];
   captcha_image_fallback?: boolean;
   token: boolean;
@@ -52,7 +50,6 @@ const emit = defineEmits<{
   configReqEnd: [];
 }>();
 const formDataRef = ref<FormInstance>();
-const captchaRef = ref();
 const challengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
 
 function getRef() {
@@ -66,19 +63,12 @@ const {
   formRules,
   isDisabled,
   verifyCodeConfig,
-  interactiveCaptcha,
+  captchaEnabled,
   configFailed,
   reloadConfig,
   handleSendCode,
   fetchSuggestions
-} = useSendVerifyCode(
-  formDataRef,
-  captchaRef,
-  challengeRef,
-  formData,
-  props,
-  emit
-);
+} = useSendVerifyCode(formDataRef, challengeRef, formData, props, emit);
 
 defineExpose({ getRef, handleSendCode });
 
@@ -150,28 +140,6 @@ const captchaAction = computed(() => verifyCodeSendAction(captchaScene.value));
       </el-tabs>
     </Motion>
 
-    <Motion
-      v-if="
-        verifyCodeConfig.access &&
-        verifyCodeConfig.captcha &&
-        !interactiveCaptcha
-      "
-      :delay="200"
-    >
-      <el-form-item prop="captcha_code">
-        <el-input
-          v-model="formData.captcha_code"
-          :placeholder="t('login.verifyCode')"
-          :prefix-icon="useRenderIcon(Keyhole)"
-          clearable
-        >
-          <template #append>
-            <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
-          </template>
-        </el-input>
-      </el-form-item>
-    </Motion>
-
     <Motion v-if="['email', 'phone'].includes(formData.form_type)" :delay="100">
       <el-form-item prop="verify_code">
         <div class="w-full flex justify-between">
@@ -196,7 +164,7 @@ const captchaAction = computed(() => verifyCodeSendAction(captchaScene.value));
       </el-form-item>
     </Motion>
     <ReCaptchaChallenge
-      v-if="interactiveCaptcha"
+      v-if="captchaEnabled"
       ref="challengeRef"
       :scene="captchaScene"
       :action="captchaAction"

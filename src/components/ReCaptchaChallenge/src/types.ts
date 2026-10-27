@@ -7,7 +7,10 @@ import type {
 } from "@/api/auth";
 
 export type CaptchaAnswer =
-  { x: number } | { angle: number } | { points: { x: number; y: number }[] };
+  | { x: number }
+  | { angle: number }
+  | { points: { x: number; y: number }[] }
+  | { code: string; pow_answer?: { nonce: string } };
 
 export type CaptchaSubmitPayload = {
   answer: CaptchaAnswer | { nonce: string; degraded?: boolean };
@@ -16,15 +19,24 @@ export type CaptchaSubmitPayload = {
   input?: "pointer" | "keyboard";
 };
 
+export type CaptchaDisplay = "popup" | "inline" | "float" | "bind";
+
 export type ReCaptchaChallengeProps = {
   scene: CaptchaScene;
   /** 意图动作常量（服务端 scene 登记表内的值；绑定开启时后端要求必填） */
   action?: string;
+  /** 账号维度风险信号（仅登录场景；服务端只存哈希） */
+  account?: string;
   /** 当前启用题型（来自 capabilities / verify 配置）；为空时由服务端随机 */
   types?: CaptchaType[];
   title?: string;
+  /** 展示方式：弹窗 / 内联 / 浮层 / 绑定到指定容器 */
+  display?: CaptchaDisplay;
+  /** bind 模式目标：CSS 选择器或 DOM 元素 */
+  target?: string | HTMLElement;
   /** 无障碍回退：是否展示「使用图片验证码」入口 */
   imageFallback?: boolean;
+  /** @deprecated 等价 display="inline" */
   inline?: boolean;
 };
 

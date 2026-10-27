@@ -122,19 +122,11 @@ export type TempTokenResult = {
   lifetime?: number;
 };
 
-export type CaptchaResult = {
-  code: number;
-  detail: string;
-  captcha_image: string;
-  captcha_key: string;
-  length: number;
-};
-
-/** 交互式验证码题型 / 场景（与后端 captcha.const 的枚举保持一致） */
-export type CaptchaType = "slide" | "rotate" | "click" | "pow" | "wordorder";
+/** 统一人机验证题型 / 场景（与后端 captcha.const 的枚举保持一致） */
+export type CaptchaType =
+  "image" | "slide" | "rotate" | "click" | "pow" | "wordorder" | "icon";
 export type CaptchaScene =
   "login" | "register" | "reset" | "bind_email" | "bind_phone" | "invite";
-export type CaptchaMode = "image" | "interactive";
 
 /** 拖动 / 点击采样点：坐标为题目图片的自然像素，t 为毫秒时间戳 */
 export type CaptchaTrackPoint = {
@@ -146,8 +138,6 @@ export type CaptchaTrackPoint = {
   /** 按下到抬起的时长（毫秒），仅首点携带 */
   dur?: number;
 };
-
-export type CaptchaDecision = "allow" | "light" | "challenge" | "hard" | "deny";
 
 export type CaptchaPowChallenge = {
   algorithm: "sha256";
@@ -166,14 +156,14 @@ export type CaptchaChallengeData = {
   height?: number;
   piece_size?: number;
   count?: number;
+  /** 图片题答案长度（用于输入提示） */
+  length?: number;
+  /** 图片题是否提供音频回退 */
+  audio?: boolean;
   ttl: number;
-  /** 一次性验签会话密钥：仅风险层非 off 档下发，verify 需据此加签 */
+  /** 一次性验签会话密钥：verify 需据此加签 */
   ck?: string;
-  /** enforce 档：allow 时直接带票据（无题直过） */
-  ticket?: string;
-  decision?: CaptchaDecision;
-  difficulty?: "easy" | "normal" | "hard";
-  /** light / pow 档的算力题面 */
+  /** allow / light / 图片回退的算力题面（图片题需随答案一起提交） */
   pow?: CaptchaPowChallenge;
 };
 
@@ -181,7 +171,6 @@ export type CaptchaVerifyData = {
   passed: boolean;
   ticket?: string;
   expires_in?: number;
-  attempts_left?: number;
 };
 
 export type CaptchaChallengeResult = {
@@ -194,7 +183,7 @@ export type CaptchaVerifyResult = {
   code: number;
   detail: string;
   data: CaptchaVerifyData;
-  /** 失败语义：captcha_invalid / captcha_exhausted（HTTP 400 时下发） */
+  /** 失败语义：captcha_invalid（HTTP 400 时下发，所有失败同形） */
   error?: string;
 };
 
@@ -204,7 +193,6 @@ export type AuthInfoResult = {
   data: {
     access: boolean;
     captcha?: boolean;
-    captcha_mode?: CaptchaMode;
     captcha_types?: CaptchaType[];
     captcha_image_fallback?: boolean;
     captcha_flow?: "always" | "adaptive";
@@ -238,7 +226,6 @@ export type AuthCapabilitiesResult = {
     basic: {
       enabled: boolean;
       captcha: boolean;
-      captcha_mode: CaptchaMode;
       captcha_types: CaptchaType[];
       captcha_image_fallback: boolean;
       captcha_flow?: "always" | "adaptive";
@@ -262,7 +249,6 @@ export type InviteValidateResult = {
     username: string;
     encrypted?: boolean;
     captcha_required?: boolean;
-    captcha_mode?: CaptchaMode;
     captcha_types?: CaptchaType[];
     captcha_image_fallback?: boolean;
     captcha_flow?: "always" | "adaptive";
@@ -317,17 +303,7 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 图形验证码 */
-  captcha = () => {
-    return this.request<CaptchaResult>(
-      "get",
-      {},
-      undefined,
-      "/api/identity/auth/captcha"
-    );
-  };
-
-  /** 交互式验证码：获取挑战（答案永不下发） */
+  /** 统一人机验证：获取挑战（答案永不下发） */
   captchaChallenge = (data?: object) => {
     return this.request<CaptchaChallengeResult>(
       "post",
@@ -337,7 +313,7 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 交互式验证码：校验并换取一次性 ticket */
+  /** 统一人机验证：校验并换取一次性 ticket */
   captchaVerify = (data?: object) => {
     return this.request<CaptchaVerifyResult>(
       "post",
@@ -431,7 +407,6 @@ export const loginVerifyCodeApi = (data?: object) =>
 export const loginCapabilitiesApi = () => authApi.loginCapabilities();
 
 export const getTempTokenApi = () => authApi.tempToken();
-export const getCaptchaApi = () => authApi.captcha();
 export const captchaChallengeApi = (data?: object) =>
   authApi.captchaChallenge(data);
 export const captchaVerifyApi = (data?: object) => authApi.captchaVerify(data);

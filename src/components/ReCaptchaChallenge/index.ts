@@ -6,6 +6,7 @@ import {
 } from "./src/actions";
 import type {
   CaptchaAnswer,
+  CaptchaDisplay,
   CaptchaSubmitPayload,
   ReCaptchaChallengeProps
 } from "./src/types";
@@ -16,4 +17,9 @@ export {
   ReCaptchaChallenge,
   verifyCodeSendAction
 };
-export type { CaptchaAnswer, CaptchaSubmitPayload, ReCaptchaChallengeProps };
+export type {
+  CaptchaAnswer,
+  CaptchaDisplay,
+  CaptchaSubmitPayload,
+  ReCaptchaChallengeProps
+};

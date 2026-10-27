@@ -125,12 +125,6 @@ export const PLAYGROUND_ENTRIES: PlaygroundEntry[] = [
     demo: "/playground/input"
   },
   {
-    name: "ReImageVerify",
-    category: "input",
-    description: "playground.desc.ReImageVerify",
-    demo: "/playground/input"
-  },
-  {
     name: "ReSliderCaptcha",
     category: "input",
     description: "playground.desc.ReSliderCaptcha",

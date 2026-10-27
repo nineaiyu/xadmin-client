@@ -375,6 +375,12 @@ captchaChallenge:
   powHint: 验证过程在本地完成，不采集密码与输入内容
   powRunning: 正在安全检查…
   powFailed: 安全检查失败，请重试
+  imageHint: 请输入图片中的字符
+  imageAlt: 图片验证码
+  imagePlaceholder: 请输入图片中的字符
+  imageSubmit: 提交验证
+  imageAudio: 播放音频验证码
+  imagePowHint: 提交前会自动完成一次安全检查
 
 backTop:
   text: 回到顶部
@@ -2932,17 +2938,18 @@ settingLdap:
 settingCaptcha:
   general: 验证码总配置
   generalDesc: 全局开关与当前使用的验证码类型；交互式即行为验证（滑动 / 旋转 / 点选 / 语序），关闭后所有场景不再要求验证码
-  image: 图片验证码
-  imageDesc: 图片字符验证码的生成方式、长度、字体、颜色与噪点
-  imagePreviewTitle: 图片验证码预览
-  interactive: 交互式验证码
-  interactiveDesc: 行为验证题型（滑动拼图 / 旋转回正 / 文字点选 / 语序点选）：题型、容差、有效期、尺寸与无障碍回退
+  image: 图片题型
+  imageDesc: 图片字符题型（仅作回退/显式请求）的生成方式、长度、字体、颜色与噪点
+  imagePreviewTitle: 图片题型预览
+  interactive: 题型与难度
+  interactiveDesc: 统一协议下的题型、容差、有效期、尺寸与图片回退
   interactivePreviewTitle: 交互式验证码预览
   previewType: 预览题型
   previewSlide: 滑动拼图
   previewRotate: 旋转回正
   previewClick: 文字点选
   previewWordorder: 语序点选
+  previewIcon: 图标点选
   refreshPreview: 刷新预览
   previewTip: 预览基于已保存配置；仅用于查看样式，不会提交验证
   previewFailed: 预览加载失败
@@ -2972,6 +2979,7 @@ settingCaptcha:
   dataPassRate: 校验通过率
   dataConsume: 票据消费
   dataByType: 各题型通过率
+  dataByAsset: 各背景资产通过率
   dataByDecision: 决策分布
   dataTotal: 共
   dataPassed: 通过

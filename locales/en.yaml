@@ -375,6 +375,12 @@ captchaChallenge:
   powHint: The check runs locally; passwords and input are never collected
   powRunning: Running security check…
   powFailed: Security check failed, please retry
+  imageHint: Enter the characters shown in the image
+  imageAlt: Image captcha
+  imagePlaceholder: Enter the characters
+  imageSubmit: Verify
+  imageAudio: Play audio captcha
+  imagePowHint: A security check runs automatically before submission
 
 backTop:
   text: Back to top
@@ -2932,17 +2938,18 @@ settingLdap:
 settingCaptcha:
   general: Captcha General
   generalDesc: Global switch and the captcha type in use; interactive means behavior verification (slide / rotate / click / word order); when disabled, no scene requires a captcha
-  image: Image Captcha
-  imageDesc: Generation mode, length, font, colors and noise of the image character captcha
-  imagePreviewTitle: Image Captcha Preview
-  interactive: Interactive Captcha
-  interactiveDesc: "Behavior verification types (slide puzzle / rotate / word click / word order): types, tolerances, TTL, sizes and accessibility fallback"
+  image: Image type
+  imageDesc: Generation mode, length, font, colors and noise for the image-character type (fallback / explicit only)
+  imagePreviewTitle: Image type preview
+  interactive: Challenge types
+  interactiveDesc: "Unified protocol types, tolerances, TTL, sizes and image fallback"
   interactivePreviewTitle: Interactive Captcha Preview
   previewType: Preview type
   previewSlide: Slide puzzle
   previewRotate: Rotate upright
   previewClick: Word click
   previewWordorder: Word order
+  previewIcon: Icon click
   refreshPreview: Refresh preview
   previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
   previewFailed: Failed to load preview
@@ -2972,6 +2979,7 @@ settingCaptcha:
   dataPassRate: Pass rate
   dataConsume: Tickets consumed
   dataByType: Pass rate by type
+  dataByAsset: Pass rate by background asset
   dataByDecision: Decision distribution
   dataTotal: Total
   dataPassed: Passed

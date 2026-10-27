@@ -1,5 +1,5 @@
 /**
- * 风险分级 E2E：enforce 档的无题直过与 light（PoW 点击）路径。
+ * 风险分级 E2E：enforce 档的 allow 静默 PoW 与 light（PoW 点击）路径。
  *
  * 配置经设置端点热更，用例幂等：结束后恢复 off + image + 登录验证码关闭。
  * 仅 chromium/webkit 双浏览器跑，依赖 tests/settings_e2e.py 的 RISK_MODE=off 基线。
@@ -10,7 +10,7 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Cookie, type Page } from "@playwright/test";
 
-import { FRONT_URL, login, loginWithForm } from "./helpers";
+import { ADMIN, FRONT_URL, login, loginWithForm } from "./helpers";
 
 const ENV = {
   v: 1,
@@ -72,11 +72,10 @@ async function waitForFlow(page: Page, flow: "always" | "adaptive") {
 
 async function configure(page: Page, risk: object) {
   await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true,
-    CAPTCHA_MODE: "interactive"
+    CAPTCHA_ENABLED: true
   });
   await patchSetting(page, "/api/settings/captcha/interactive", {
-    CAPTCHA_INTERACTIVE_TYPES: ["slide", "rotate", "click", "wordorder"],
+    CAPTCHA_ENABLED_TYPES: ["slide", "rotate", "click", "wordorder"],
     CAPTCHA_TRACK_CHECK_ENABLED: true
   });
   await patchSetting(page, "/api/settings/login/auth", {
@@ -97,8 +96,7 @@ async function restore(page: Page) {
     CAPTCHA_FAIL_STEP: "3,8,20"
   });
   await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true,
-    CAPTCHA_MODE: "image"
+    CAPTCHA_ENABLED: true
   });
   await patchSetting(page, "/api/settings/login/auth", {
     SECURITY_LOGIN_CAPTCHA_ENABLED: false
@@ -119,13 +117,20 @@ test.describe("验证码风险分级 enforce", () => {
     await restore(page).catch(() => undefined);
   });
 
-  test("可信网段：enforce 下无题直过登录", async ({ page }) => {
+  test("可信网段：enforce 下静默 PoW 后登录", async ({ page }) => {
     await configure(page, {
       CAPTCHA_RISK_MODE: "enforce",
       CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: true
     });
 
-    await loginWithForm(page);
+    await page.context().clearCookies();
+    await page.goto("/#/login");
+    await page.getByPlaceholder("账号").fill(ADMIN.username);
+    await page.getByPlaceholder("密码").fill(ADMIN.password);
+    await page.getByRole("button", { name: "登录", exact: true }).click();
+
+    // allow 不再直接发票：UI 只出现一次「点击验证」的静默 PoW
+    await page.getByTestId("captcha-pow-solve").click();
     await expect(page.locator(".el-menu").first()).toBeVisible({
       timeout: 15_000
     });
@@ -140,19 +145,21 @@ test.describe("验证码风险分级 enforce", () => {
     });
 
     const riskyEnv = { ...ENV, webdriver: true, timezone: "Not/AZone" };
+    // 唯一账号维度隔离失败阶梯计数：双浏览器共享 Redis，避免上一轮失败计数导致冷却
+    const account = `e2e-fail-ladder-${Date.now()}`;
     const first = await postJson(
       page,
       "/api/identity/auth/captcha/challenge",
       {
         scene: "login",
         action: "identity.login.basic",
-        env: riskyEnv
+        env: riskyEnv,
+        account
       },
       PLAIN_HEADERS
     );
     expect(first.ok()).toBeTruthy();
     const firstData = (await first.json()).data;
-    expect(firstData.decision).toBe("hard");
     expect(firstData.type).toBe("wordorder");
 
     const answer = { points: [] };
@@ -164,6 +171,7 @@ test.describe("验证码风险分级 enforce", () => {
       answer,
       action: "identity.login.basic",
       env: riskyEnv,
+      account,
       gen_time: genTime,
       nonce: randomBytes(16).toString("hex")
     };
@@ -192,13 +200,13 @@ test.describe("验证码风险分级 enforce", () => {
       {
         scene: "login",
         action: "identity.login.basic",
-        env: ENV
+        env: ENV,
+        account
       },
       PLAIN_HEADERS
     );
     expect(next.ok()).toBeTruthy();
     const nextData = (await next.json()).data;
-    expect(nextData.decision).toBe("hard");
     expect(nextData.type).toBe("wordorder");
   });
 

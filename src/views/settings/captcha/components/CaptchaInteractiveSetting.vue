@@ -32,7 +32,8 @@ const previewTypes = computed(() => [
   { value: "slide" as const, label: t("settingCaptcha.previewSlide") },
   { value: "rotate" as const, label: t("settingCaptcha.previewRotate") },
   { value: "click" as const, label: t("settingCaptcha.previewClick") },
-  { value: "wordorder" as const, label: t("settingCaptcha.previewWordorder") }
+  { value: "wordorder" as const, label: t("settingCaptcha.previewWordorder") },
+  { value: "icon" as const, label: t("settingCaptcha.previewIcon") }
 ]);
 
 /** 预览基于已保存配置：保存后由页面递增 refreshKey 自动刷新 */

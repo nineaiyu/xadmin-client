@@ -3,7 +3,6 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReIconPicker from "@/components/ReIconPicker";
 import ReAnimateSelector from "@/components/ReAnimateSelector";
-import ReImageVerify from "@/components/ReImageVerify";
 import ReSliderCaptcha from "@/components/ReSliderCaptcha";
 
 /** 输入类组件活样例 + props 速查（全部为纯前端自包含组件，无业务 API 依赖） */
@@ -14,8 +13,6 @@ const { t } = useI18n();
 const iconValue = ref("ep/edit");
 const animateValue = ref("");
 const verifyPassed = ref(false);
-// ReImageVerify 的 v-model 是验证码串（parent 拿输入值与其比对），不是布尔
-const imageCode = ref("");
 </script>
 
 <template>
@@ -50,23 +47,6 @@ const imageCode = ref("");
     </el-row>
 
     <el-row :gutter="12">
-      <el-col :xs="24" :md="12">
-        <el-card shadow="never" class="mb-3">
-          <template #header>
-            <span class="font-medium">ReImageVerify</span>
-            <code class="ml-2 text-xs text-fg-muted"
-              >v-model: 当前验证码串（parent 拿输入值与其比对）· expose:
-              getImgCode()</code
-            >
-          </template>
-          <div class="w-60">
-            <ReImageVerify v-model="imageCode" />
-          </div>
-          <p class="mt-2 text-xs text-fg-muted">
-            v-model = {{ imageCode || "-" }}
-          </p>
-        </el-card>
-      </el-col>
       <el-col :xs="24" :md="12">
         <el-card shadow="never" class="mb-3">
           <template #header>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
@@ -12,12 +12,11 @@ import { isSuccess } from "@/api/types";
 import { passwordRulesCheck } from "@/utils";
 import { AesEncrypted } from "@/utils/aes";
 import { message } from "@/utils/message";
-import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
 import {
   CAPTCHA_ACTION_INVITE_ACCEPT,
   ReCaptchaChallenge
 } from "@/components/ReCaptchaChallenge";
-import type { CaptchaMode, CaptchaType } from "@/api/auth";
+import type { CaptchaType } from "@/api/auth";
 
 defineOptions({
   name: "InviteAccept"
@@ -33,24 +32,12 @@ const state = ref<"loading" | "pending" | "accepted" | "invalid" | "error">(
 );
 const form = reactive({ password: "", confirm: "" });
 const submitting = ref(false);
-/** 服务端图形验证码：key 由图片接口下发，code 由用户输入，激活时一并提交 */
-const captchaKey = ref("");
-const captchaCode = ref("");
-/** 交互式验证码：题型与一次性 ticket（与图片码二选一，由服务端模式决定） */
-const captchaMode = ref<CaptchaMode>("image");
+/** 统一人机验证：题型与一次性 ticket */
 const captchaTypes = ref<CaptchaType[]>([]);
 const captchaTicket = ref("");
 const captchaChallengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
-/** 无障碍回退：显式切换图片码后，本次激活不再弹交互式挑战 */
-const imageFallback = ref(false);
 const captchaImageFallback = ref(false);
 const captchaRequired = ref(true);
-const interactiveCaptcha = computed(
-  () =>
-    captchaRequired.value &&
-    captchaMode.value === "interactive" &&
-    !imageFallback.value
-);
 /** 后端下发的密码安全规则（匿名端点），提交前做与注册/改密同口径的预检 */
 const passwordRules = ref<PasswordRule[]>([]);
 const rulesLoadFailed = ref(false);
@@ -94,9 +81,9 @@ const load = async () => {
     return;
   }
   encrypted.value = Boolean(res?.data?.encrypted);
-  captchaMode.value =
-    res?.data?.captcha_mode === "interactive" ? "interactive" : "image";
   captchaTypes.value = res?.data?.captcha_types ?? [];
+  captchaImageFallback.value = res?.data?.captcha_image_fallback === true;
+  captchaRequired.value = res?.data?.captcha_required !== false;
   const next = res?.data?.state;
   state.value =
     next === "pending"
@@ -130,16 +117,10 @@ async function submit() {
     message(msg, { type: "warning" });
     return;
   }
-  if (captchaRequired.value && !interactiveCaptcha.value) {
-    if (!captchaKey.value || !captchaCode.value.trim()) {
-      message(t("invite.captchaRequired"), { type: "warning" });
-      return;
-    }
-  }
   submitting.value = true;
   try {
     captchaTicket.value = "";
-    if (interactiveCaptcha.value) {
+    if (captchaRequired.value) {
       try {
         captchaTicket.value = (await captchaChallengeRef.value?.open()) ?? "";
       } catch {
@@ -159,8 +140,6 @@ async function submit() {
     const res = await inviteAcceptApi({
       token: token.value,
       password,
-      captcha_key: captchaKey.value,
-      captcha_code: captchaCode.value.trim(),
       captcha_ticket: captchaTicket.value
     }).catch(() => null);
     if (!res) return;
@@ -174,7 +153,6 @@ async function submit() {
     message(String(res.detail || t("results.failed")), { type: "error" });
   } finally {
     submitting.value = false;
-    captchaCode.value = "";
     captchaTicket.value = "";
     captchaChallengeRef.value?.reset();
   }
@@ -238,20 +216,6 @@ async function submit() {
             @keyup.enter="submit"
           />
         </el-form-item>
-        <el-form-item
-          v-if="captchaRequired && !interactiveCaptcha"
-          :label="t('invite.captcha')"
-        >
-          <div class="flex w-full items-center gap-2">
-            <el-input
-              v-model="captchaCode"
-              :placeholder="t('invite.captchaPlaceholder')"
-              maxlength="8"
-              data-testid="invite-captcha"
-            />
-            <ReImageVerify v-model="captchaKey" />
-          </div>
-        </el-form-item>
         <el-button
           class="w-full"
           type="primary"
@@ -262,7 +226,7 @@ async function submit() {
           {{ t("invite.submit") }}
         </el-button>
         <ReCaptchaChallenge
-          v-if="interactiveCaptcha"
+          v-if="captchaRequired"
           ref="captchaChallengeRef"
           scene="invite"
           :action="CAPTCHA_ACTION_INVITE_ACCEPT"

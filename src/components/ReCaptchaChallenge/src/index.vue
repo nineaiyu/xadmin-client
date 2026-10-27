@@ -13,7 +13,7 @@ import type {
 } from "@/api/auth";
 import { collectCaptchaEnv } from "@/utils/captchaSignal/env";
 import { solvePow } from "@/utils/captchaSignal/pow";
-import type { CaptchaSubmitPayload } from "./types";
+import type { CaptchaDisplay, CaptchaSubmitPayload } from "./types";
 import {
   buildVerifySign,
   randomNonce,
@@ -23,8 +23,6 @@ import ReCaptchaBody from "./ReCaptchaBody.vue";
 
 defineOptions({ name: "ReCaptchaChallenge" });
 
-type CaptchaDisplay = "popup" | "inline" | "float" | "bind";
-
 const props = withDefaults(
   defineProps<{
     scene: CaptchaScene;
@@ -33,8 +31,13 @@ const props = withDefaults(
     account?: string;
     types?: CaptchaType[];
     title?: string;
-    /** 展示方式：弹窗 / 内联 / 浮层 / 绑定触发（bind 由调用方 ref.open() 打开） */
+    /** 展示方式：弹窗 / 内联 / 浮层 / 绑定到指定容器（bind 由调用方 ref.open() 打开） */
     display?: CaptchaDisplay;
+    /**
+     * bind 模式的目标容器：CSS 选择器或 DOM 元素。
+     * 不传时回退为在当前组件位置内联渲染，保证调用方不会拿到一个不可见的挑战。
+     */
+    target?: string | HTMLElement;
     /** @deprecated 兼容旧调用：等价 display="inline" */
     inline?: boolean;
     imageFallback?: boolean;
@@ -45,6 +48,7 @@ const props = withDefaults(
     types: () => [],
     title: "",
     display: undefined,
+    target: "",
     inline: false,
     imageFallback: false
   }
@@ -52,34 +56,70 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   success: [ticket: string];
-  fallbackImage: [];
 }>();
 
 const { t } = useI18n();
 const visible = ref(false);
 const inlineActive = ref(false);
 const floatActive = ref(false);
+const boundActive = ref(false);
 const loading = ref(false);
 const submitting = ref(false);
 const powSolving = ref(false);
 const challenge = ref<CaptchaChallengeData | null>(null);
 const error = ref("");
-const attemptsLeft = ref<number | null>(null);
 const success = ref(false);
 const shake = ref(false);
 const honeyPot = ref("");
+const bodyBindings = computed(() => ({
+  challenge: challenge.value,
+  loading: loading.value,
+  submitting: submitting.value || powSolving.value,
+  error: error.value,
+  success: success.value,
+  imageFallback: props.imageFallback,
+  shake: shake.value
+}));
 
-const renderMode = computed<"popup" | "inline" | "float">(() => {
-  const mode = props.display || (props.inline ? "inline" : "popup");
-  return mode === "bind" ? "popup" : mode;
-});
+const renderMode = computed<CaptchaDisplay>(
+  () => props.display || (props.inline ? "inline" : "popup")
+);
+const bindTarget = ref<string | HTMLElement>("");
+
+function resolveBindTarget() {
+  const target = props.target;
+  if (!target) {
+    bindTarget.value = "";
+    return;
+  }
+  if (typeof target !== "string") {
+    bindTarget.value = target;
+    return;
+  }
+  bindTarget.value =
+    typeof document === "undefined"
+      ? ""
+      : document.querySelector<HTMLElement>(target) || "";
+}
+
+function reloadType(): CaptchaType | undefined {
+  // pow 是决策下发的临时题型，不能作为下一次 challenge 的 type 参数
+  return challenge.value?.type && challenge.value.type !== "pow"
+    ? challenge.value.type
+    : undefined;
+}
 
 let pending: Promise<string> | null = null;
 let resolvePending: ((_ticket: string) => void) | null = null;
 let rejectPending: ((_reason: Error) => void) | null = null;
 
 function isActive() {
-  return visible.value || inlineActive.value || floatActive.value;
+  return (
+    visible.value ||
+    inlineActive.value ||
+    floatActive.value ||
+    boundActive.value
+  );
 }
 
 function clearPending() {
@@ -91,18 +131,25 @@ function clearPending() {
 function activate() {
   if (renderMode.value === "inline") inlineActive.value = true;
   else if (renderMode.value === "float") floatActive.value = true;
-  else visible.value = true;
+  else if (renderMode.value === "bind") {
+    resolveBindTarget();
+    boundActive.value = true;
+  } else visible.value = true;
 }
 
 function deactivate() {
   visible.value = false;
   inlineActive.value = false;
   floatActive.value = false;
+  boundActive.value = false;
+  bindTarget.value = "";
 }
 
+/** 图片题型只作为显式回退，不参与常规随机；由用户点击「使用图片验证码」触发 */
 function pickType(): CaptchaType | undefined {
-  if (!props.types.length) return undefined;
-  return props.types[Math.floor(Math.random() * props.types.length)];
+  const candidates = props.types.filter(type => type !== "image");
+  if (!candidates.length) return undefined;
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function errorDetail(value: unknown): string {
@@ -119,30 +166,24 @@ function triggerShake() {
   }, 450);
 }
 
-async function loadChallenge() {
+async function loadChallenge(type?: CaptchaType) {
   loading.value = true;
   error.value = "";
-  attemptsLeft.value = null;
   success.value = false;
   shake.value = false;
   challenge.value = null;
   try {
-    const type = pickType();
+    const selected = type ?? pickType();
     const res = await captchaChallengeApi({
       scene: props.scene,
       action: props.action,
       account: props.account,
       env: collectCaptchaEnv(),
       hp: honeyPot.value,
-      ...(type ? { type } : {})
+      ...(selected ? { type: selected } : {})
     });
     if (!isSuccess(res)) {
       error.value = res.detail || t("captchaChallenge.loadFailed");
-      return;
-    }
-    // allow 无题直过：响应直接带票据，UI 完全不出现
-    if (res.data.ticket) {
-      finish(res.data.ticket);
       return;
     }
     challenge.value = res.data;
@@ -232,7 +273,7 @@ async function onSubmit(payload: CaptchaSubmitPayload) {
     const res = await captchaVerifyApi(await buildVerifyPayload(payload));
     if (!isSuccess(res)) {
       error.value = res.detail || t("captchaChallenge.verifyFailed");
-      await loadChallenge();
+      await loadChallenge(reloadType());
       return;
     }
     const data = res.data;
@@ -242,14 +283,14 @@ async function onSubmit(payload: CaptchaSubmitPayload) {
       setTimeout(() => finish(ticket), 400);
       return;
     }
-    attemptsLeft.value = data.attempts_left ?? null;
+    // 失败响应不携带剩余次数（防探测）：直接换题，保持可重试
     triggerShake();
-    if (!data.attempts_left) await loadChallenge();
+    await loadChallenge(reloadType());
   } catch (err) {
     // HTTP 400（无效 / 耗尽）已由 http 层提示；这里直接换题，避免留一张死题
     error.value = errorDetail(err);
     triggerShake();
-    if (isActive()) await loadChallenge();
+    if (isActive()) await loadChallenge(reloadType());
   } finally {
     submitting.value = false;
   }
@@ -271,25 +312,20 @@ async function onPowSolve() {
 
 function refresh() {
   if (!loading.value && !submitting.value && !success.value) {
-    void loadChallenge();
+    void loadChallenge(reloadType());
   }
 }
 
-/** 无障碍回退：关闭挑战并以专用错误拒绝，消费方据此切换到图片码 */
+/** 无障碍回退：不再切换模式，直接向服务端请求图片题型（同一 ticket 流程） */
 function useImageFallback() {
-  emit("fallbackImage");
-  if (!rejectPending) return;
-  const reject = rejectPending;
-  clearPending();
-  deactivate();
-  reject(new Error("captcha-image-fallback"));
+  if (loading.value || submitting.value || success.value) return;
+  void loadChallenge("image");
 }
 
 function reset() {
   deactivate();
   challenge.value = null;
   error.value = "";
-  attemptsLeft.value = null;
   success.value = false;
   if (rejectPending) cancel();
 }
@@ -305,17 +341,58 @@ defineExpose({ open, reset, refresh, close: cancel });
     autocomplete="off"
     aria-hidden="true"
   />
+  <Teleport v-if="renderMode === 'bind' && bindTarget" :to="bindTarget">
+    <div
+      v-if="boundActive"
+      class="re-captcha-challenge__bound"
+      role="dialog"
+      :aria-label="title || t('captchaChallenge.title')"
+      data-testid="captcha-bound"
+    >
+      <button
+        class="re-captcha-challenge__close"
+        type="button"
+        :aria-label="t('captchaChallenge.close')"
+        @click="cancel"
+      >
+        ×
+      </button>
+      <ReCaptchaBody
+        v-bind="bodyBindings"
+        @submit="onSubmit"
+        @refresh="refresh"
+        @fallback="useImageFallback"
+        @solve="onPowSolve"
+      />
+    </div>
+  </Teleport>
+  <div
+    v-else-if="renderMode === 'bind' && boundActive"
+    class="re-captcha-challenge__bound"
+    role="dialog"
+    :aria-label="title || t('captchaChallenge.title')"
+    data-testid="captcha-bound"
+  >
+    <button
+      class="re-captcha-challenge__close"
+      type="button"
+      :aria-label="t('captchaChallenge.close')"
+      @click="cancel"
+    >
+      ×
+    </button>
+    <ReCaptchaBody
+      v-bind="bodyBindings"
+      @submit="onSubmit"
+      @refresh="refresh"
+      @fallback="useImageFallback"
+      @solve="onPowSolve"
+    />
+  </div>
   <ReCaptchaBody
-    v-if="renderMode === 'inline' && inlineActive"
+    v-else-if="renderMode === 'inline' && inlineActive"
     class="re-captcha-challenge__inline"
-    :challenge="challenge"
-    :loading="loading"
-    :submitting="submitting || powSolving"
-    :error="error"
-    :attempts-left="attemptsLeft"
-    :success="success"
-    :image-fallback="imageFallback"
-    :shake="shake"
+    v-bind="bodyBindings"
     @submit="onSubmit"
     @refresh="refresh"
     @fallback="useImageFallback"
@@ -337,14 +414,7 @@ defineExpose({ open, reset, refresh, close: cancel });
       ×
     </button>
     <ReCaptchaBody
-      :challenge="challenge"
-      :loading="loading"
-      :submitting="submitting || powSolving"
-      :error="error"
-      :attempts-left="attemptsLeft"
-      :success="success"
-      :image-fallback="imageFallback"
-      :shake="shake"
+      v-bind="bodyBindings"
       @submit="onSubmit"
       @refresh="refresh"
       @fallback="useImageFallback"
@@ -362,14 +432,7 @@ defineExpose({ open, reset, refresh, close: cancel });
     @close="cancel"
   >
     <ReCaptchaBody
-      :challenge="challenge"
-      :loading="loading"
-      :submitting="submitting || powSolving"
-      :error="error"
-      :attempts-left="attemptsLeft"
-      :success="success"
-      :image-fallback="imageFallback"
-      :shake="shake"
+      v-bind="bodyBindings"
       @submit="onSubmit"
       @refresh="refresh"
       @fallback="useImageFallback"
@@ -385,6 +448,15 @@ defineExpose({ open, reset, refresh, close: cancel });
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+.re-captcha-challenge__bound {
+  position: relative;
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--el-bg-color);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
 }
 
 .re-captcha-challenge__inline {

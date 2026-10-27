@@ -8,7 +8,6 @@ import type { FormInstance } from "element-plus";
 import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { ReImageVerify } from "@/components/ReImageVerify";
 import {
   CAPTCHA_ACTION_LOGIN,
   ReCaptchaChallenge
@@ -17,7 +16,6 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { handleOperation } from "@/components/RePlusPage";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import Keyhole from "~icons/ri/shield-keyhole-line";
 import {
   getTempTokenApi,
   type LoginResultData,
@@ -38,10 +36,7 @@ defineOptions({
   name: "BasicLogin"
 });
 
-const captchaRef = ref();
 const captchaChallengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
-/** 无障碍回退：用户显式切换为图片码后，本次会话不再弹交互式挑战 */
-const imageFallback = ref(false);
 const ruleFormRef = ref<FormInstance>();
 const { t } = useI18n();
 const loginPageStore = useLoginPageStoreHook();
@@ -64,11 +59,8 @@ const basicLoginEnabled = computed(
 const resetEnabled = computed(
   () => capabilities.value?.reset?.enabled === true
 );
-const interactiveCaptcha = computed(
-  () =>
-    capabilities.value?.basic?.captcha === true &&
-    capabilities.value?.basic?.captcha_mode === "interactive" &&
-    !imageFallback.value
+const captchaEnabled = computed(
+  () => capabilities.value?.basic?.captcha === true
 );
 const captchaTypes = computed(
   () => capabilities.value?.basic?.captcha_types ?? []
@@ -89,8 +81,6 @@ const ruleForm = reactive({
   username: "",
   password: "",
   token: "",
-  captcha_key: "",
-  captcha_code: "",
   captcha_ticket: ""
 });
 
@@ -127,7 +117,6 @@ const refreshLoginResources = () => {
   void initToken(true);
   ruleForm.captcha_ticket = "";
   captchaChallengeRef.value?.reset();
-  if (!interactiveCaptcha.value) captchaRef.value?.getImgCode();
 };
 
 const {
@@ -155,8 +144,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
     // 提交前等 token 就绪（就绪后瞬时返回；失败路径见下方回调的强制刷新）。
     await initToken();
-    // 交互式验证码：提交前弹出挑战，换取一次性 ticket 随登录体提交
-    if (interactiveCaptcha.value) {
+    // 统一人机验证：提交前换取一次性 ticket 随登录体提交
+    if (captchaEnabled.value) {
       try {
         const ticket = await captchaChallengeRef.value?.open();
         if (!ticket) {
@@ -164,11 +153,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           return;
         }
         ruleForm.captcha_ticket = ticket;
-      } catch (error) {
+      } catch {
         loading.value = false;
-        if ((error as Error)?.message === "captcha-image-fallback") {
-          imageFallback.value = true;
-        }
         return;
       }
     }
@@ -264,27 +250,6 @@ onMounted(() => {
               />
             </el-form-item>
           </Motion>
-
-          <Motion
-            v-if="capabilities?.basic?.captcha && !interactiveCaptcha"
-            :delay="200"
-          >
-            <el-form-item prop="captcha_code">
-              <el-input
-                v-model="ruleForm.captcha_code"
-                :placeholder="t('login.verifyCode')"
-                :prefix-icon="useRenderIcon(Keyhole)"
-                clearable
-              >
-                <template v-slot:append>
-                  <ReImageVerify
-                    ref="captchaRef"
-                    v-model="ruleForm.captcha_key"
-                  />
-                </template>
-              </el-input>
-            </el-form-item>
-          </Motion>
         </div>
         <!-- 账号密码登录被关闭：给出可读说明，隐藏无字段可填的提交按钮；
              验证码/第三方入口仍在下方渲染，不把用户困在空表单里 -->
@@ -357,7 +322,7 @@ onMounted(() => {
         <LoginPrivacyNotice />
       </Motion>
       <ReCaptchaChallenge
-        v-if="interactiveCaptcha"
+        v-if="captchaEnabled"
         ref="captchaChallengeRef"
         scene="login"
         :action="CAPTCHA_ACTION_LOGIN"

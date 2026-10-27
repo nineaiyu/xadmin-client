@@ -105,7 +105,7 @@ export const settingsCaptchaGeneralApi = new ViewBaseApi(
   "/api/settings/captcha/general"
 );
 
-/** 图片验证码预览（只读，不写 CaptchaStore） */
+/** 图片验证码预览（只读，不写挑战缓存） */
 export type CaptchaImagePreviewResult = {
   code: number;
   detail: string;
@@ -178,6 +178,13 @@ export type CaptchaStatsTypeRow = {
   pass_rate: number;
 };
 
+export type CaptchaStatsAssetRow = {
+  asset_id: string;
+  total: number;
+  passed: number;
+  pass_rate: number;
+};
+
 export type CaptchaStatsDecisionRow = { decision: string; total: number };
 
 export type CaptchaStatsTrendPoint = {
@@ -212,6 +219,7 @@ export type CaptchaStatsData = {
   policy: CaptchaStatsPolicy;
   summary: CaptchaStatsSummary;
   by_type: CaptchaStatsTypeRow[];
+  by_asset: CaptchaStatsAssetRow[];
   by_decision: CaptchaStatsDecisionRow[];
   risk_distribution: CaptchaStatsRiskBucket[];
   top_reasons: CaptchaStatsTopReason[];

@@ -87,6 +87,13 @@ const typeRows = computed(() =>
   }))
 );
 
+const assetRows = computed(() =>
+  (stats.value?.by_asset ?? []).map(row => ({
+    ...row,
+    label: row.asset_id || "-"
+  }))
+);
+
 const decisionRows = computed(() => {
   const rows = stats.value?.by_decision ?? [];
   const total = rows.reduce((sum, row) => sum + row.total, 0);
@@ -210,6 +217,30 @@ function decisionLabel(decision: string) {
           class="flex-bc gap-3 py-1 text-sm"
         >
           <span class="w-24 shrink-0">{{ row.label }}</span>
+          <span class="text-xs text-(--el-text-color-secondary)">
+            {{ t("settingCaptcha.dataTotal") }} {{ row.total }} ·
+            {{ t("settingCaptcha.dataPassed") }} {{ row.passed }}
+          </span>
+          <span class="font-medium">
+            {{ Math.round(row.pass_rate * 100) }}%
+          </span>
+        </div>
+      </section>
+
+      <section
+        v-if="assetRows.length"
+        class="rounded-lg border border-(--el-border-color-lighter) p-3"
+        data-testid="captcha-data-by-asset"
+      >
+        <h4 class="mb-2 text-sm font-medium">
+          {{ t("settingCaptcha.dataByAsset") }}
+        </h4>
+        <div
+          v-for="row in assetRows"
+          :key="row.asset_id"
+          class="flex-bc gap-3 py-1 text-sm"
+        >
+          <span class="max-w-40 truncate">{{ row.label }}</span>
           <span class="text-xs text-(--el-text-color-secondary)">
             {{ t("settingCaptcha.dataTotal") }} {{ row.total }} ·
             {{ t("settingCaptcha.dataPassed") }} {{ row.passed }}

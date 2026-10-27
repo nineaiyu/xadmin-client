@@ -1985,18 +1985,13 @@
         "type": "string"
       },
       "CAPTCHACLICKCHARSETEnum": {
-        "description": "* `chinese` - 常用汉字\n* `ascii` - 字母数字",
-        "enum": ["chinese", "ascii"],
+        "description": "* `simplified` - Simplified Chinese characters\n* `traditional` - Traditional Chinese characters\n* `mixed` - Mixed simplified / traditional per challenge\n* `ascii` - 字母数字",
+        "enum": ["simplified", "traditional", "mixed", "ascii"],
         "type": "string"
       },
-      "CAPTCHAINTERACTIVETYPESEnum": {
-        "description": "* `slide` - 滑动拼图\n* `rotate` - 旋转回正\n* `click` - 文字点选\n* `wordorder` - 语序点选",
-        "enum": ["slide", "rotate", "click", "wordorder"],
-        "type": "string"
-      },
-      "CAPTCHAMODEEnum": {
-        "description": "* `image` - 图片验证码\n* `interactive` - 交互式验证码",
-        "enum": ["image", "interactive"],
+      "CAPTCHAENABLEDTYPESEnum": {
+        "description": "* `image` - Image characters (fallback)\n* `slide` - 滑动拼图\n* `rotate` - 旋转回正\n* `click` - 文字点选\n* `wordorder` - 语序点选\n* `icon` - Icon click",
+        "enum": ["image", "slide", "rotate", "click", "wordorder", "icon"],
         "type": "string"
       },
       "CAPTCHANOISEFUNCTIONSEnum": {
@@ -2048,7 +2043,7 @@
                 "$ref": "#/components/schemas/TypeEnum"
               }
             ],
-            "description": "留空则由服务端从启用题型中随机选择\n\n* `slide` - slide\n* `rotate` - rotate\n* `click` - click\n* `pow` - pow\n* `wordorder` - wordorder",
+            "description": "留空则由服务端从启用题型中随机选择\n\n* `image` - image\n* `slide` - slide\n* `rotate` - rotate\n* `click` - click\n* `pow` - pow\n* `wordorder` - wordorder\n* `icon` - icon",
             "title": "验证码题型"
           }
         },
@@ -2057,6 +2052,10 @@
       },
       "CaptchaChallengeOut": {
         "properties": {
+          "audio": {
+            "title": "Audio available",
+            "type": "boolean"
+          },
           "background": {
             "title": "底图",
             "type": "string"
@@ -2074,25 +2073,12 @@
             "title": "点选数量",
             "type": "integer"
           },
-          "decision": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DecisionEnum"
-              }
-            ],
-            "description": "仅在 enforce 档下发；绝不包含风险分\n\n* `allow` - allow\n* `light` - light\n* `challenge` - challenge\n* `hard` - hard\n* `deny` - deny",
-            "title": "风险决策"
-          },
-          "difficulty": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DifficultyEnum"
-              }
-            ],
-            "title": "难度"
-          },
           "height": {
             "title": "图片高度",
+            "type": "integer"
+          },
+          "length": {
+            "title": "Image answer length",
             "type": "integer"
           },
           "piece": {
@@ -2105,11 +2091,6 @@
           },
           "pow": {
             "title": "工作量证明题面"
-          },
-          "ticket": {
-            "description": "风险决策放行（无题直过）时下发",
-            "title": "一次性票据",
-            "type": "string"
           },
           "tip": {
             "title": "点选提示图",
@@ -2267,6 +2248,10 @@
             "title": "操作",
             "type": "string"
           },
+          "asset_id": {
+            "readOnly": true,
+            "type": "string"
+          },
           "attempts": {
             "readOnly": true,
             "title": "尝试次数",
@@ -2387,6 +2372,7 @@
         },
         "required": [
           "action",
+          "asset_id",
           "attempts",
           "browser",
           "decision",
@@ -2497,6 +2483,12 @@
       "CaptchaStats": {
         "description": "验证码数据大盘（时间窗聚合，只读）。",
         "properties": {
+          "by_asset": {
+            "items": {
+              "$ref": "#/components/schemas/CaptchaStatsAssetRow"
+            },
+            "type": "array"
+          },
           "by_decision": {
             "items": {
               "$ref": "#/components/schemas/CaptchaStatsDecisionRow"
@@ -2585,6 +2577,7 @@
           }
         },
         "required": [
+          "by_asset",
           "by_decision",
           "by_type",
           "generated_at",
@@ -2599,6 +2592,28 @@
           "trend",
           "window_hours"
         ],
+        "type": "object"
+      },
+      "CaptchaStatsAssetRow": {
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "pass_rate": {
+            "format": "double",
+            "title": "通过率",
+            "type": "number"
+          },
+          "passed": {
+            "title": "通过次数",
+            "type": "integer"
+          },
+          "total": {
+            "title": "校验次数",
+            "type": "integer"
+          }
+        },
+        "required": ["asset_id", "pass_rate", "passed", "total"],
         "type": "object"
       },
       "CaptchaStatsDecisionRow": {
@@ -2928,10 +2943,6 @@
       },
       "CaptchaVerifyOut": {
         "properties": {
-          "attempts_left": {
-            "title": "剩余尝试次数",
-            "type": "integer"
-          },
           "expires_in": {
             "title": "票据有效期（秒）",
             "type": "integer"
@@ -3702,11 +3713,6 @@
         ],
         "type": "object"
       },
-      "DecisionEnum": {
-        "description": "* `allow` - allow\n* `light` - light\n* `challenge` - challenge\n* `hard` - hard\n* `deny` - deny",
-        "enum": ["allow", "light", "challenge", "hard", "deny"],
-        "type": "string"
-      },
       "Dept": {
         "properties": {
           "auto_bind": {
@@ -3891,11 +3897,6 @@
           }
         },
         "type": "object"
-      },
-      "DifficultyEnum": {
-        "description": "* `easy` - easy\n* `normal` - normal\n* `hard` - hard",
-        "enum": ["easy", "normal", "hard"],
-        "type": "string"
       },
       "Directory": {
         "description": "可打标对象的序列化器混入：只读 ``tags`` 字段（列表/详情通用）。\n\n依赖视图声明 ``prefetch_related_fields = (\"tagged_items__tag\",)`` 消除 N+1。",
@@ -12656,16 +12657,6 @@
             "description": "全局开关；关闭后所有场景不再要求验证码",
             "title": "启用验证码",
             "type": "boolean"
-          },
-          "CAPTCHA_MODE": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CAPTCHAMODEEnum"
-              }
-            ],
-            "default": "image",
-            "description": "所有场景使用的验证码类型；新增类型可按独立页签扩展\n\n* `image` - 图片验证码\n* `interactive` - 交互式验证码",
-            "title": "验证码模式"
           }
         },
         "type": "object"
@@ -12673,6 +12664,13 @@
       "PatchedSecurityCaptchaInteractive": {
         "description": "与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。",
         "properties": {
+          "CAPTCHA_BACKGROUND_PACK": {
+            "default": "builtin",
+            "description": "builtin = bundled manifest (procedural when empty); procedural = disable photo pack",
+            "maxLength": 64,
+            "title": "Background pack",
+            "type": "string"
+          },
           "CAPTCHA_CHALLENGE_TTL": {
             "default": 120,
             "maximum": 600,
@@ -12686,7 +12684,7 @@
                 "$ref": "#/components/schemas/CAPTCHACLICKCHARSETEnum"
               }
             ],
-            "default": "chinese",
+            "default": "simplified",
             "title": "点选字符集"
           },
           "CAPTCHA_CLICK_RADIUS": {
@@ -12696,20 +12694,20 @@
             "title": "点选命中半径（像素）",
             "type": "integer"
           },
+          "CAPTCHA_ENABLED_TYPES": {
+            "default": ["slide", "rotate", "click"],
+            "description": "Challenge types eligible for random selection; image stays opt-in fallback",
+            "items": {
+              "$ref": "#/components/schemas/CAPTCHAENABLEDTYPESEnum"
+            },
+            "title": "Enabled captcha types",
+            "type": "array"
+          },
           "CAPTCHA_IMAGE_FALLBACK_ENABLED": {
-            "default": false,
-            "description": "交互式模式下允许用户切换为图片验证码（无障碍回退；对 OCR 的防护较弱）",
+            "default": true,
+            "description": "Expose the image type as an accessibility fallback; it never enters the random pool",
             "title": "图片验证码回退",
             "type": "boolean"
-          },
-          "CAPTCHA_INTERACTIVE_TYPES": {
-            "default": ["slide", "rotate", "click"],
-            "description": "交互式模式下启用的题型",
-            "items": {
-              "$ref": "#/components/schemas/CAPTCHAINTERACTIVETYPESEnum"
-            },
-            "title": "交互式题型",
-            "type": "array"
           },
           "CAPTCHA_MAX_ATTEMPTS": {
             "default": 3,
@@ -12717,6 +12715,12 @@
             "minimum": 1,
             "title": "单题最大尝试次数",
             "type": "integer"
+          },
+          "CAPTCHA_POW_FOR_IMAGE_FALLBACK": {
+            "default": true,
+            "description": "Require a low-difficulty PoW before accepting an image fallback challenge",
+            "title": "PoW for image fallback",
+            "type": "boolean"
           },
           "CAPTCHA_ROTATE_SIZE": {
             "default": [240, 240],
@@ -12829,6 +12833,14 @@
             "title": "观测日志保留期（天）",
             "type": "integer"
           },
+          "CAPTCHA_POW_BITS_ALLOW": {
+            "default": 16,
+            "description": "Silent PoW difficulty for low-risk allow decisions; default 16",
+            "maximum": 24,
+            "minimum": 1,
+            "title": "PoW bits (allow)",
+            "type": "integer"
+          },
           "CAPTCHA_POW_BITS_HARD": {
             "default": 20,
             "description": "hard 档 PoW 前导零位数；默认 20，受位数上限约束",
@@ -12855,7 +12867,7 @@
           },
           "CAPTCHA_POW_ENABLED": {
             "default": true,
-            "description": "light 档是否下发 PoW 算力题；关闭后 light 退化为常规题",
+            "description": "Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis",
             "title": "启用工作量证明",
             "type": "boolean"
           },
@@ -12880,8 +12892,8 @@
                 "$ref": "#/components/schemas/CAPTCHARISKMODEEnum"
               }
             ],
-            "default": "off",
-            "description": "off = 风险层不运行；shadow = 只评分记日志、不改变放行；enforce = 按决策执行（建议先跑 shadow ≥3 天）\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
+            "default": "enforce",
+            "description": "off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
             "title": "风险模式"
           },
           "CAPTCHA_RISK_PROXY_CIDRS": {
@@ -12928,6 +12940,19 @@
             "minimum": 0,
             "title": "轻验证阈值",
             "type": "integer"
+          },
+          "CAPTCHA_STRICT_BINDING": {
+            "default": true,
+            "description": "Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket",
+            "title": "Strict ticket binding",
+            "type": "boolean"
+          },
+          "CAPTCHA_TICKET_AUDIENCE": {
+            "default": "",
+            "description": "Deployment identifier bound into tickets; empty = site URL / first allowed host",
+            "maxLength": 255,
+            "title": "Ticket audience",
+            "type": "string"
           }
         },
         "type": "object"
@@ -15860,16 +15885,6 @@
             "description": "全局开关；关闭后所有场景不再要求验证码",
             "title": "启用验证码",
             "type": "boolean"
-          },
-          "CAPTCHA_MODE": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CAPTCHAMODEEnum"
-              }
-            ],
-            "default": "image",
-            "description": "所有场景使用的验证码类型；新增类型可按独立页签扩展\n\n* `image` - 图片验证码\n* `interactive` - 交互式验证码",
-            "title": "验证码模式"
           }
         },
         "type": "object"
@@ -15877,6 +15892,13 @@
       "SecurityCaptchaInteractive": {
         "description": "与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。",
         "properties": {
+          "CAPTCHA_BACKGROUND_PACK": {
+            "default": "builtin",
+            "description": "builtin = bundled manifest (procedural when empty); procedural = disable photo pack",
+            "maxLength": 64,
+            "title": "Background pack",
+            "type": "string"
+          },
           "CAPTCHA_CHALLENGE_TTL": {
             "default": 120,
             "maximum": 600,
@@ -15890,7 +15912,7 @@
                 "$ref": "#/components/schemas/CAPTCHACLICKCHARSETEnum"
               }
             ],
-            "default": "chinese",
+            "default": "simplified",
             "title": "点选字符集"
           },
           "CAPTCHA_CLICK_RADIUS": {
@@ -15900,20 +15922,20 @@
             "title": "点选命中半径（像素）",
             "type": "integer"
           },
+          "CAPTCHA_ENABLED_TYPES": {
+            "default": ["slide", "rotate", "click"],
+            "description": "Challenge types eligible for random selection; image stays opt-in fallback",
+            "items": {
+              "$ref": "#/components/schemas/CAPTCHAENABLEDTYPESEnum"
+            },
+            "title": "Enabled captcha types",
+            "type": "array"
+          },
           "CAPTCHA_IMAGE_FALLBACK_ENABLED": {
-            "default": false,
-            "description": "交互式模式下允许用户切换为图片验证码（无障碍回退；对 OCR 的防护较弱）",
+            "default": true,
+            "description": "Expose the image type as an accessibility fallback; it never enters the random pool",
             "title": "图片验证码回退",
             "type": "boolean"
-          },
-          "CAPTCHA_INTERACTIVE_TYPES": {
-            "default": ["slide", "rotate", "click"],
-            "description": "交互式模式下启用的题型",
-            "items": {
-              "$ref": "#/components/schemas/CAPTCHAINTERACTIVETYPESEnum"
-            },
-            "title": "交互式题型",
-            "type": "array"
           },
           "CAPTCHA_MAX_ATTEMPTS": {
             "default": 3,
@@ -15921,6 +15943,12 @@
             "minimum": 1,
             "title": "单题最大尝试次数",
             "type": "integer"
+          },
+          "CAPTCHA_POW_FOR_IMAGE_FALLBACK": {
+            "default": true,
+            "description": "Require a low-difficulty PoW before accepting an image fallback challenge",
+            "title": "PoW for image fallback",
+            "type": "boolean"
           },
           "CAPTCHA_ROTATE_SIZE": {
             "default": [240, 240],
@@ -16033,6 +16061,14 @@
             "title": "观测日志保留期（天）",
             "type": "integer"
           },
+          "CAPTCHA_POW_BITS_ALLOW": {
+            "default": 16,
+            "description": "Silent PoW difficulty for low-risk allow decisions; default 16",
+            "maximum": 24,
+            "minimum": 1,
+            "title": "PoW bits (allow)",
+            "type": "integer"
+          },
           "CAPTCHA_POW_BITS_HARD": {
             "default": 20,
             "description": "hard 档 PoW 前导零位数；默认 20，受位数上限约束",
@@ -16059,7 +16095,7 @@
           },
           "CAPTCHA_POW_ENABLED": {
             "default": true,
-            "description": "light 档是否下发 PoW 算力题；关闭后 light 退化为常规题",
+            "description": "Issue a PoW challenge for allow/light decisions; disabling it weakens the cost axis",
             "title": "启用工作量证明",
             "type": "boolean"
           },
@@ -16084,8 +16120,8 @@
                 "$ref": "#/components/schemas/CAPTCHARISKMODEEnum"
               }
             ],
-            "default": "off",
-            "description": "off = 风险层不运行；shadow = 只评分记日志、不改变放行；enforce = 按决策执行（建议先跑 shadow ≥3 天）\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
+            "default": "enforce",
+            "description": "off = risk layer disabled; shadow = score and log only; enforce = apply decisions (default for the hardened profile)\n\n* `off` - 关闭（保持现状）\n* `shadow` - 影子（只评分留痕）\n* `enforce` - 强制执行决策",
             "title": "风险模式"
           },
           "CAPTCHA_RISK_PROXY_CIDRS": {
@@ -16132,6 +16168,19 @@
             "minimum": 0,
             "title": "轻验证阈值",
             "type": "integer"
+          },
+          "CAPTCHA_STRICT_BINDING": {
+            "default": true,
+            "description": "Require matching sid cookie and X-Captcha-Fp fingerprint when consuming a ticket",
+            "title": "Strict ticket binding",
+            "type": "boolean"
+          },
+          "CAPTCHA_TICKET_AUDIENCE": {
+            "default": "",
+            "description": "Deployment identifier bound into tickets; empty = site URL / first allowed host",
+            "maxLength": 255,
+            "title": "Ticket audience",
+            "type": "string"
           }
         },
         "type": "object"
@@ -17006,8 +17055,16 @@
         "type": "object"
       },
       "TypeEnum": {
-        "description": "* `slide` - slide\n* `rotate` - rotate\n* `click` - click\n* `pow` - pow\n* `wordorder` - wordorder",
-        "enum": ["slide", "rotate", "click", "pow", "wordorder"],
+        "description": "* `image` - image\n* `slide` - slide\n* `rotate` - rotate\n* `click` - click\n* `pow` - pow\n* `wordorder` - wordorder\n* `icon` - icon",
+        "enum": [
+          "image",
+          "slide",
+          "rotate",
+          "click",
+          "pow",
+          "wordorder",
+          "icon"
+        ],
         "type": "string"
       },
       "UploadFile": {
@@ -46177,9 +46234,6 @@
                             "captcha_image_fallback": {
                               "type": "boolean"
                             },
-                            "captcha_mode": {
-                              "type": "string"
-                            },
                             "captcha_types": {
                               "items": {
                                 "type": "string"
@@ -46289,48 +46343,6 @@
         "tags": ["LoginCapabilitiesAPIView"]
       }
     },
-    "/api/identity/auth/captcha": {
-      "get": {
-        "description": "获取图形验证码",
-        "operationId": "api_identity_auth_captcha_retrieve",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "captcha_image": {
-                      "type": "string"
-                    },
-                    "captcha_key": {
-                      "type": "string"
-                    },
-                    "code": {
-                      "type": "number"
-                    },
-                    "detail": {
-                      "type": "string"
-                    },
-                    "length": {
-                      "type": "number"
-                    },
-                    "requestId": {
-                      "type": "string"
-                    },
-                    "timestamp": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": ["CaptchaAPIView"]
-      }
-    },
     "/api/identity/auth/captcha/challenge": {
       "post": {
         "description": "获取交互式验证码挑战",
@@ -46438,12 +46450,6 @@
             "application/json": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -46461,12 +46467,6 @@
             "application/x-www-form-urlencoded": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -46484,12 +46484,6 @@
             "multipart/form-data": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -46507,12 +46501,6 @@
             "text/csv": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -46530,12 +46518,6 @@
             "text/xlsx": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -46601,9 +46583,6 @@
                         },
                         "captcha_image_fallback": {
                           "type": "boolean"
-                        },
-                        "captcha_mode": {
-                          "type": "string"
                         },
                         "captcha_required": {
                           "type": "boolean"
@@ -47119,9 +47098,6 @@
                         "captcha_image_fallback": {
                           "type": "boolean"
                         },
-                        "captcha_mode": {
-                          "type": "string"
-                        },
                         "captcha_types": {
                           "items": {
                             "type": "string"
@@ -47213,12 +47189,6 @@
             "application/json": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -47238,12 +47208,6 @@
             "application/x-www-form-urlencoded": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -47263,12 +47227,6 @@
             "multipart/form-data": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -47288,12 +47246,6 @@
             "text/csv": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -47313,12 +47265,6 @@
             "text/xlsx": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -50514,12 +50460,6 @@
             "application/json": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -50540,12 +50480,6 @@
             "application/x-www-form-urlencoded": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -50566,12 +50500,6 @@
             "multipart/form-data": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -50592,12 +50520,6 @@
             "text/csv": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
@@ -50618,12 +50540,6 @@
             "text/xlsx": {
               "schema": {
                 "properties": {
-                  "captcha_code": {
-                    "type": "string"
-                  },
-                  "captcha_key": {
-                    "type": "string"
-                  },
                   "captcha_ticket": {
                     "type": "string"
                   },
