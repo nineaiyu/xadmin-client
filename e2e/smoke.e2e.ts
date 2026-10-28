@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   BACKEND_URL,
   getAccessToken,
+  HIGH_LOAD,
   login,
   logout,
   openList,
@@ -156,6 +157,10 @@ test("角色权限：新增保存 → 列表可见 → 删除 @smoke", async ({ 
 });
 
 test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page }) => {
+  // 高负载档必须 slow()（×3 = 180s）：整用例从登录到授权树勾选回显，
+  // 末条断言窗口本身就是 60s——CI 冷启动曾三次全卡在整用例 60s 上限
+  // （断言还没跑完就超时，finally 清理连带失败）；本地串行快，不放宽
+  if (HIGH_LOAD) test.slow();
   const roleName = `e2e编辑回显角色_${Date.now()}`;
   await login(page);
 
@@ -203,7 +208,7 @@ test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page })
     // 回显：详情里的授权（field 为 {menuPk: [fieldPk]} 字典）必须落到树勾选态；
     // 修复前字典未归一化 → form.vue push 抛错、initData 不执行 → 勾选全丢
     // 6 路并行 + 双浏览器同机跑时授权树（菜单全量 + 字段合成，700+ 节点）渲染很慢：
-    // 15s/30s 都踩过线，给到 60s（用例在 HIGH_LOAD 下已 test.slow()，断言强度不变）
+    // 15s/30s 都踩过线，给到 60s（整用例预算由上方 HIGH_LOAD 的 test.slow() 放宽）
     await expect(dialog.locator(".el-checkbox.is-checked").first()).toBeVisible(
       {
         timeout: 60_000
