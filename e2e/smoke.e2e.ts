@@ -157,10 +157,10 @@ test("角色权限：新增保存 → 列表可见 → 删除 @smoke", async ({ 
 });
 
 test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page }) => {
-  // 高负载档必须 slow()（×3 = 180s）：整用例从登录到授权树勾选回显，
-  // 末条断言窗口本身就是 60s——CI 冷启动曾三次全卡在整用例 60s 上限
-  // （断言还没跑完就超时，finally 清理连带失败）；本地串行快，不放宽
-  if (HIGH_LOAD) test.slow();
+  // 高负载档显式放宽整用例预算（5 分钟）：授权树（菜单全量 + 字段合成，
+  // 700+ 节点非虚拟渲染）在 CI 冷启动 2 核 runner 上渲染 + 详情回显极慢，
+  // 60s 整用例 / 180s slow 都三连撞线——树可见但勾选回显未在窗口内完成
+  if (HIGH_LOAD) test.setTimeout(300_000);
   const roleName = `e2e编辑回显角色_${Date.now()}`;
   await login(page);
 
@@ -208,10 +208,10 @@ test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page })
     // 回显：详情里的授权（field 为 {menuPk: [fieldPk]} 字典）必须落到树勾选态；
     // 修复前字典未归一化 → form.vue push 抛错、initData 不执行 → 勾选全丢
     // 6 路并行 + 双浏览器同机跑时授权树（菜单全量 + 字段合成，700+ 节点）渲染很慢：
-    // 15s/30s 都踩过线，给到 60s（整用例预算由上方 HIGH_LOAD 的 test.slow() 放宽）
+    // 15s/30s/60s 在 CI 冷启动都踩过线，HIGH_LOAD 给 120s（整用例预算见上方 setTimeout）
     await expect(dialog.locator(".el-checkbox.is-checked").first()).toBeVisible(
       {
-        timeout: 60_000
+        timeout: HIGH_LOAD ? 120_000 : 60_000
       }
     );
   } finally {
