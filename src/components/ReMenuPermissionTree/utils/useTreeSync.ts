@@ -1,4 +1,4 @@
-import { nextTick, ref, type Ref } from "vue";
+import { nextTick, ref, watch, type Ref } from "vue";
 import type { TreeInstance } from "element-plus";
 import {
   collectSelectionPayload,
@@ -80,6 +80,12 @@ export function useTreeSync(deps: {
     pendingKeys.value = keys.map(String);
     applyPending();
   }
+
+  // el-tree 实例晚于数据就绪（700+ 节点 vnode 渲染在慢环境跨多个 tick，
+  // `v-if="treeData.length"` 的实例创建晚于 applyPending 的 nextTick）：
+  // 实例到位后补应用缓冲的回显——否则 setCheckedKeys 落空且无重试，
+  // 勾选态静默丢失（CI 冷启动下编辑弹层回显三连挂的根因）
+  watch(treeRef, () => applyPending());
 
   return {
     selection,
