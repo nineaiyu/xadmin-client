@@ -39,7 +39,10 @@ export const useSendVerifyCode = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
   emit: (...args: any[]) => void
 ) => {
-  const { isDisabled, text } = useVerifyCode();
+  // 发送倒计时与按钮禁用必须读同一个实例：再调用一次 useVerifyCode() 会拿到
+  // 全新状态（冷却不生效/文本不更新），模块级单例时代被掩盖
+  const verifyCode = useVerifyCode();
+  const { isDisabled, text } = verifyCode;
   const { t } = useI18n();
   const $slots = useSlots();
   const access = computed(
@@ -172,7 +175,7 @@ export const useSendVerifyCode = (
     callback?: ((data: { [key: string]: unknown }) => void) | null
   ) => {
     formData.value.verify_token = undefined;
-    useVerifyCode().start(
+    verifyCode.start(
       formDataRef.value,
       [
         formData.value.form_type,

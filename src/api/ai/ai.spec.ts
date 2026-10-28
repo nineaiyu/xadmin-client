@@ -56,6 +56,16 @@ describe("aiProfileApi 档案管理", () => {
     );
   });
 
+  it("testResult 按 task_id 回读连通性结论（GET 查询参数）", () => {
+    aiProfileApi.testResult("p1", "t-1");
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/ai/profiles/p1/test-result",
+      { params: { task_id: "t-1" }, data: {} },
+      {}
+    );
+  });
+
   it("probe 透传能力探测载荷（缺省空对象）", () => {
     aiProfileApi.probe("p1", { capabilities: ["json"], vision: true });
     expect(requestMock).toHaveBeenLastCalledWith(

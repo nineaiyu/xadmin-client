@@ -6,12 +6,16 @@ import { useRouter } from "vue-router";
 import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { useSaveShortcut } from "@/hooks/useSaveShortcut";
 import { hasAuth } from "@/router/utils";
+import { isSuccess } from "@/api/types";
 import type { DatasetItem } from "@/api/dataset/datasets";
 import {
+  listReportVersions,
   type ReportDesign,
   type ReportDesignComponent,
   type ReportItem
 } from "@/api/dataset/analysis";
+import { VersionHistoryDialog } from "@/components/VersionHistoryDialog";
+import type { VersionHistoryRow } from "@/components/VersionHistoryDialog";
 import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import ReportDesignSidebar from "./components/ReportDesignSidebar.vue";
 import ReportTablePreview from "./components/ReportTablePreview.vue";
@@ -25,6 +29,7 @@ import {
 import { useDesignMutations } from "./utils/useDesignMutations";
 import { useReportBootstrap } from "./utils/useReportBootstrap";
 import { useReportPersistence } from "./utils/useReportPersistence";
+import { createReportVersionActions } from "./utils/reportVersions";
 
 defineOptions({ name: "DataReportDesigner" });
 
@@ -154,6 +159,33 @@ const { save, running, runNow } = useReportPersistence({
   components
 });
 
+/* ---------------- 历史版本（保存即记一版，可回滚） ---------------- */
+const versionsVisible = ref(false);
+const { rollbackTo } = createReportVersionActions({
+  t,
+  report,
+  dataset,
+  design,
+  saving,
+  dirty,
+  readonly,
+  datasetMissing
+});
+
+async function loadVersions(): Promise<VersionHistoryRow[]> {
+  if (!report.value) return [];
+  const res = await listReportVersions(report.value.pk);
+  if (!isSuccess(res)) throw new Error(res.detail ?? "");
+  return (res.data ?? []) as VersionHistoryRow[];
+}
+
+async function onRollback(version: number) {
+  if (await rollbackTo(version)) {
+    versionsVisible.value = false;
+    refreshData();
+  }
+}
+
 /* ---------------- 未保存守卫 / 快捷键 ---------------- */
 useDesignerGuard({ dirty, namespace: "dataReport" });
 
@@ -198,6 +230,14 @@ const back = () => {
         @click="preview = !preview"
       >
         {{ preview ? t("dataReport.editMode") : t("dataReport.preview") }}
+      </el-button>
+      <el-button
+        v-if="!readonly"
+        size="small"
+        data-testid="designer-versions"
+        @click="versionsVisible = true"
+      >
+        {{ t("dataReport.versionHistory") }}
       </el-button>
       <el-button size="small" @click="back">
         {{ t("dataReport.backToList") }}
@@ -308,6 +348,13 @@ const back = () => {
         </span>
       </aside>
     </div>
+
+    <VersionHistoryDialog
+      v-model="versionsVisible"
+      :title="t('dataReport.versionHistory')"
+      :load="loadVersions"
+      @rollback="onRollback"
+    />
   </div>
 </template>
 

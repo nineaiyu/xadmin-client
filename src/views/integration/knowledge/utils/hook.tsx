@@ -6,6 +6,7 @@ import { useKnowledgeActions } from "./useKnowledgeActions";
 import { useKnowledgeBuild } from "./useKnowledgeBuild";
 import { useKnowledgeColumns } from "./useKnowledgeColumns";
 import { useKnowledgeButtons } from "./useKnowledgeButtons";
+import { createIngestPoll } from "./ingestPoll";
 
 /**
  * 知识库页装配：列表走 RePlusPage 标准 CRUD 口径，行操作收敛进「管理文档」抽屉：
@@ -44,27 +45,12 @@ export function useKnowledge(
 
   const refresh = () => tableRef.value?.handleGetData();
 
-  /** 摄取轮询：上传后任务在后台重建分块，短暂轮询列表同步状态 */
-  let ingestPollTimer: number | undefined;
-  let ingestPollCount = 0;
-  const scheduleIngestPoll = () => {
-    ingestPollCount = 0;
-    if (ingestPollTimer) window.clearInterval(ingestPollTimer);
-    ingestPollTimer = window.setInterval(() => {
-      ingestPollCount += 1;
-      refresh();
-      if (ingestPollCount >= 10 && ingestPollTimer) {
-        window.clearInterval(ingestPollTimer);
-        ingestPollTimer = undefined;
-      }
-    }, 2000);
-  };
-  onUnmounted(() => {
-    if (ingestPollTimer) window.clearInterval(ingestPollTimer);
-  });
+  // 摄取轮询：上传后任务在后台重建分块，终态自停（实现见 ingestPoll.ts）
+  const ingestPoll = createIngestPoll(refresh);
+  onUnmounted(ingestPoll.stop);
 
   const { openUpload, openKnowledgePanel, syncRepo, batchToggle } =
-    useKnowledgeActions({ t, tableRef, afterUpload: scheduleIngestPoll });
+    useKnowledgeActions({ t, tableRef, afterUpload: ingestPoll.start });
 
   const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 

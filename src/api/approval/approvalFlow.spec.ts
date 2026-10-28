@@ -43,19 +43,19 @@ describe("approvalFlowApi 流程定义", () => {
     );
   });
 
-  it("rollback 把版本号与备注放在查询参数上（POST 动作端点）", () => {
+  it("rollback 把版本号与备注放在 body 上（后端 rollback 读 request.data）", () => {
     approvalFlowApi.rollback("f1", 3, "回滚原因");
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/approval/approval-flows/f1/rollback",
-      { params: { version: 3, remark: "回滚原因" }, data: {} },
+      { params: {}, data: { version: 3, remark: "回滚原因" } },
       {}
     );
     approvalFlowApi.rollback("f1", 3);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/approval/approval-flows/f1/rollback",
-      { params: { version: 3, remark: undefined }, data: {} },
+      { params: {}, data: { version: 3, remark: undefined } },
       {}
     );
   });

@@ -1,5 +1,6 @@
 import { computed, ref, type Ref } from "vue";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
+import type { FreeDesign } from "./freeLayout";
 
 /**
  * 方向键撤销点的合并键：只含窗格与动作语义段（移动/缩放），不含具体按键——
@@ -10,6 +11,12 @@ export function nudgeCoalesceKey(pk: string, resize: boolean): string {
   return `nudge-${pk}-${resize ? "size" : "move"}`;
 }
 
+/** 撤销点快照：窗格 + 画幅（自由画布替换模板会同时改两者，只存窗格则画幅回不去） */
+export interface PaneHistoryState {
+  panes: ScreenLayoutPane[];
+  design?: FreeDesign;
+}
+
 /**
  * 大屏窗格布局的撤销 / 重做历史（增删改与拖拽手势共用一个撤销点栈）。
  *
@@ -17,16 +24,21 @@ export function nudgeCoalesceKey(pk: string, resize: boolean): string {
  *   （如逐字输入文本 / 步进器连点 / 拖拽步进）：800ms 内同 key 的变更并入
  *   上一个历史点；
  * - `resetCoalesce` 在保存成功后调用，切断跨保存的编辑合并；
+ * - 自由画布传入 `design` 后，画幅（设计宽高）一并进快照并随撤销/重做还原：
+ *   替换模板、改画幅与窗格调整共享同一撤销栈；
  * - 恢复时布局整体替换为快照，选中窗格随快照消失时清空选中。
  */
 export function usePaneHistory({
   panes,
+  design,
   selectedPk,
   selection,
   markDirty,
   limit = 50
 }: {
   panes: Ref<ScreenLayoutPane[]>;
+  /** 自由画布的设计画幅（栅格画布不传：其布局不含画幅维度） */
+  design?: Ref<FreeDesign>;
   /** 单选模式的选择（栅格画布）：恢复后按「窗格是否仍存在」清理 */
   selectedPk?: Ref<string>;
   /** 多选模式的选择（自由画布）：恢复后按集合裁剪（多选下不能只看主选） */
@@ -34,12 +46,23 @@ export function usePaneHistory({
   markDirty: () => void;
   limit?: number;
 }) {
-  const past = ref<ScreenLayoutPane[][]>([]);
-  const future = ref<ScreenLayoutPane[][]>([]);
+  const past = ref<PaneHistoryState[]>([]);
+  const future = ref<PaneHistoryState[]>([]);
   let coalesceKey = "";
   let coalesceAt = 0;
 
-  const snapshot = () => panes.value.map(pane => ({ ...pane }));
+  const snapshot = (): PaneHistoryState => ({
+    panes: panes.value.map(pane => ({ ...pane })),
+    ...(design ? { design: { ...design.value } } : {})
+  });
+
+  /** 恢复快照：画幅先于窗格（窗格坐标以画幅为边界，避免瞬时越界重排） */
+  function restore(state: PaneHistoryState) {
+    if (design && state.design) design.value = state.design;
+    panes.value = state.panes;
+    pruneSelection();
+    markDirty();
+  }
 
   /** 恢复后清理已消失的选中（被撤销掉的窗格不能再留在选区内） */
   function pruneSelection() {
@@ -75,18 +98,14 @@ export function usePaneHistory({
     const prev = past.value.pop();
     if (!prev) return;
     future.value.push(snapshot());
-    panes.value = prev;
-    pruneSelection();
-    markDirty();
+    restore(prev);
   }
 
   function redo() {
     const next = future.value.pop();
     if (!next) return;
     past.value.push(snapshot());
-    panes.value = next;
-    pruneSelection();
-    markDirty();
+    restore(next);
   }
 
   function resetCoalesce() {

@@ -201,17 +201,22 @@ test("菜单管理：生成权限码为干跑预览（可关闭且不落库）",
   const dialog = page.locator(".el-dialog:visible").first();
   await expect(dialog).toBeVisible({ timeout: 15_000 });
 
-  // 选择后端视图 → dry_run 预览表出现「新建/覆盖」明细
+  // 选择后端视图 → dry_run 预览表出现「新建/覆盖」明细。
+  // 不取首项：视图清单顺序由路由扫描决定，首项可能是无权限面的 APIView
+  // （UserRoutesAPIView），空预览会让用例误判；固定选有动作面的 UserViewSet，
+  // 并关闭「跳过已存在数据」保证表格恒有行（全存在时展示「覆盖」）。
+  await dialog.locator(".el-switch").first().click();
   await dialog.locator(".el-select").first().click();
   await page
     .locator(".el-select-dropdown:visible .el-select-dropdown__item")
+    .filter({ hasText: "UserViewSet" })
     .first()
     .click();
   await page.keyboard.press("Escape");
   await expect(dialog.locator(".el-table__row").first()).toBeVisible({
     timeout: 15_000
   });
-  await expect(dialog).toContainText("将新建");
+  await expect(dialog).toContainText(/将新建|将覆盖/);
 
   // 取消：不落库（真正的写入由后端 permissions 接口承担，前端只发 dry_run）
   await dialog.getByRole("button", { name: "取消" }).click();

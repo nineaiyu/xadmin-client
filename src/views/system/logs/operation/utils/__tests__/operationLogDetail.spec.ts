@@ -1,14 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { SUCCESS_CODE } from "@/api/types";
 import { useOperationLog } from "../hook";
 
 /**
- * 操作日志详情抽屉全量兜底单测。
- *
- * 核心回归：列表行 body / response_result 为有界预览（附 `*_truncated` 标记），
- * 详情抽屉打开前须按标记经 retrieve 拉全量回填；未截断不额外请求，
- * 拉取失败回退列表行预览且不阻断抽屉打开。
+ * 操作日志详情正文口径（LOG-P1-01）：
+ * 后端 retrieve / 导出与列表同级，body / response_result 只有有界预览；
+ * 详情抽屉直接复用列表行（changes 全量 + 正文预览标记），不再二次拉取。
  */
 
 const state = vi.hoisted(() => ({
@@ -42,64 +39,22 @@ vi.mock("vue-i18n", () => ({
 vi.mock("@/views/system/hooks", () => ({ goUserDetail: vi.fn() }));
 vi.mock("@/utils/message", () => ({ message: state.messageMock }));
 
-describe("useOperationLog detailRowFetch 详情全量兜底", () => {
-  it("命中 body 截断标记时拉取详情端点回填全量", async () => {
-    const fullRow = { pk: "9", body: { full: true }, body_truncated: false };
-    state.retrieveMock.mockResolvedValue({
-      code: SUCCESS_CODE,
-      detail: "ok",
-      data: fullRow
-    });
-    const { detailRowFetch } = useOperationLog();
-    const extra = await detailRowFetch({ pk: "9", body_truncated: true });
-    expect(state.retrieveMock).toHaveBeenCalledWith("9");
-    expect(extra).toEqual(fullRow);
-  });
-
-  it("命中 response_result 截断标记时同样拉取全量", async () => {
-    state.retrieveMock.mockResolvedValue({
-      code: SUCCESS_CODE,
-      detail: "ok",
-      data: { pk: "9", response_result: { ok: 1 } }
-    });
+describe("useOperationLog detailRowFetch 详情正文口径", () => {
+  it("截断标记不再触发 retrieve（后端 retrieve 同为有界预览）", async () => {
     const { detailRowFetch } = useOperationLog();
     const extra = await detailRowFetch({
       pk: "9",
+      body_truncated: true,
       response_result_truncated: true
     });
-    expect(state.retrieveMock).toHaveBeenCalledTimes(1);
-    expect(extra).toEqual({ pk: "9", response_result: { ok: 1 } });
+    expect(extra).toBeNull();
+    expect(state.retrieveMock).not.toHaveBeenCalled();
   });
 
-  it("未截断时不发起额外请求（列表预览够用）", async () => {
+  it("普通行同样直接使用列表数据", async () => {
     const { detailRowFetch } = useOperationLog();
     const extra = await detailRowFetch({ pk: "9" });
+    expect(extra).toBeNull();
     expect(state.retrieveMock).not.toHaveBeenCalled();
-    expect(extra).toBeNull();
-  });
-
-  it("业务失败经消息出口提示并回退行数据（返回 null 不阻断抽屉）", async () => {
-    state.retrieveMock.mockResolvedValue({
-      code: 1001,
-      detail: "permission denied"
-    });
-    const { detailRowFetch } = useOperationLog();
-    const extra = await detailRowFetch({ pk: "9", body_truncated: true });
-    expect(state.messageMock).toHaveBeenCalledWith(
-      "results.failed，permission denied",
-      { type: "error" }
-    );
-    expect(extra).toBeNull();
-  });
-
-  it("请求异常静默回退行数据（异常提示由 http 拦截器统一出口）", async () => {
-    state.retrieveMock.mockRejectedValue(new Error("network down"));
-    const { detailRowFetch } = useOperationLog();
-    const extra = await detailRowFetch({
-      pk: "9",
-      response_result_truncated: true
-    });
-    expect(extra).toBeNull();
-    expect(state.messageMock).not.toHaveBeenCalled();
   });
 });

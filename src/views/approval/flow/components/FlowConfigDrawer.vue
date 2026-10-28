@@ -101,6 +101,13 @@ async function save() {
     if (isSuccess(res)) {
       message(t("systemApprovalFlow.saveSuccess"), { type: "success" });
       props.onSaved?.();
+      // 快照刷新为已保存状态：否则 emit("close") 时 isDirty 恒真，
+      // 保存成功的关闭也会被「未保存变更」守卫拦下
+      initialSnapshot.value = JSON.stringify({
+        basic,
+        fields: fields.value,
+        nodes: nodes.value
+      });
       emit("close");
       return;
     }

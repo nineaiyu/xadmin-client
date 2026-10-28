@@ -6,6 +6,7 @@ import { MenuChoices } from "@/views/system/constants";
 import {
   MENU_FORM_KEY,
   dirFormRules,
+  menuFormReadonly,
   menuFormRules,
   permissionFormRules,
   type MenuFormContext
@@ -72,7 +73,9 @@ const rules = ref(cloneDeep(rulesFor(props.model.menuType)));
 const activeGroups = ref<string[]>(["basic"]);
 const cascadeInactive = ref(false);
 
-const disabled = computed(() => !props.auth?.partialUpdate);
+// 编辑态判 partialUpdate、新增态判 create：只有 create 码的角色能看到「新增」，
+// 打开后整个表单禁用会让该功能不可用（断言见 utils/__tests__/formContext.spec.ts）
+const disabled = computed(() => menuFormReadonly(props.isAdd, props.auth));
 
 const menuTypeChoices = computed<MenuChoiceItem[]>(() => {
   const list = props.choicesDict?.["menu_type"];

@@ -8,7 +8,7 @@ import type { DatasetItem } from "@/api/dataset/datasets";
  * 指标卡窗格的属性段（自 PaneInspector 拆分，行数门禁）。
  *
  * sum/avg 取值列限定数据集数值列（与服务端校验同口径，避免保存被 400 打回）；
- * 切换数据集时取值列清空重选（列集合随数据集变化）。
+ * 切换数据集时聚合口径重置为 count、取值列清空重选（列集合随数据集变化）。
  */
 defineOptions({ name: "ScreenPaneMetricFields" });
 
@@ -50,9 +50,15 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
   });
 };
 
-/** 切换数据集：取值列清空重选（列集合随数据集变化） */
+/**
+ * 切换数据集：取值列清空重选（列集合随数据集变化），聚合口径一并重置为 count。
+ *
+ * 保留 sum/avg 而取值列待选是「中间态」：新数据集可能没有数值列（sum/avg 无解），
+ * 服务端对 sum/avg 缺 value_field 直接拒绝（screen_layout.py）——带病保存会让
+ * 整张画布 400。重置为 count 是任何数据集下都合法的最小闭面。
+ */
 const onMetricDatasetChange = (pk: string) => {
-  emit("update", { dataset: pk, value_field: undefined });
+  emit("update", { dataset: pk, metric: "count", value_field: undefined });
 };
 </script>
 

@@ -308,11 +308,12 @@ export async function confirmMenuDelete(
   });
 }
 
-/** 批量启停前的后果说明（停用目录会让子级被提升为顶级菜单） */
+/** 批量启停前的后果说明（目录会级联页面，权限点不受影响） */
 export async function confirmBatchActive(
   rows: MenuRow[],
   isActive: boolean,
-  t: TFunction
+  t: TFunction,
+  cascadeCount = 0
 ): Promise<boolean> {
   if (!rows.length) return false;
   const confirm = useConfirm();
@@ -328,6 +329,20 @@ export async function confirmBatchActive(
         : t("systemMenu.confirm.inactiveCount", { count: rows.length })
     )
   ];
+  if (cascadeCount > 0) {
+    blocks.push(
+      h(
+        "div",
+        { class: "text-sm text-[var(--el-text-color-secondary)]" },
+        t(
+          isActive
+            ? "systemMenu.confirm.cascadeActiveHint"
+            : "systemMenu.confirm.cascadeInactiveHint",
+          { count: cascadeCount }
+        )
+      )
+    );
+  }
   if (!isActive && directories.length) {
     blocks.push(
       h(

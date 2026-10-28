@@ -164,7 +164,14 @@ function contentProps(options: DialogOptions) {
       v-bind="contentProps(options)"
       :is="options.contentRenderer?.({ options, index })"
       @change="(values: unknown) => handleChange(options, index, values)"
-      @close="(args: ArgsType) => handleClose(options, index, args)"
+      @close="
+        (args: ArgsType) =>
+          // 内容组件主动关闭同样走 beforeClose 守卫（与遮罩/ESC/右上角关闭同口径）：
+          // 未保存改动的确认不能因关闭入口不同而被绕过；done(true) = 取消关闭
+          handleBeforeClose(options, (cancel?: boolean) => {
+            if (!cancel) handleClose(options, index, args);
+          })
+      "
     />
     <!-- footer -->
     <template v-if="!options?.hideFooter" #footer>

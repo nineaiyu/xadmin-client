@@ -25,11 +25,32 @@ export function useRole() {
   // 授权树数据源：菜单全量缓存 + 模型字段合成节点注入
   const { menuTreeData, menuDenied, menuError } = useRoleMenuTree();
 
+  // 编辑回显依赖 retrieve：列表行的 menu 恒为空（列表口径不带授权），
+  // 缺 retrieve 的角色打开编辑会看到空树，保存即清空该角色全部菜单授权（数据损坏）。
+  // 与授权树不可用同口径禁用编辑；新增不依赖回显，不受影响。
+  // 能力位先快照：门控会就地关闭 auth.update/partialUpdate，若直接用 auth 计算，
+  // 关闭后 editNeedsRetrieve 立即变 false，警告条也随之消失（用户只看到按钮没了）。
+  const canEditByPermission = Boolean(auth.partialUpdate || auth.update);
+  const canRetrieve = Boolean(auth.retrieve);
+  const editNeedsRetrieve = computed(() => canEditByPermission && !canRetrieve);
+
+  watch(
+    editNeedsRetrieve,
+    value => {
+      if (!value) return;
+      auth.update = false;
+      // 编辑按钮的显示条件是 (partialUpdate || update)：只关 update 仍会露出口子
+      auth.partialUpdate = false;
+    },
+    { immediate: true }
+  );
+
   // 授权树不可用（缺 list:SystemMenu 或菜单列表加载失败）时禁用新增/编辑：
   // 空树上保存会清空角色授权，比「不能编辑」危险得多
   const menuAlert = computed(() => {
     if (menuDenied.value) return t("systemRole.menuTreeDenied");
     if (menuError.value) return t("systemRole.menuTreeLoadFailed");
+    if (editNeedsRetrieve.value) return t("systemRole.editRetrieveDenied");
     return "";
   });
 
@@ -37,7 +58,9 @@ export function useRole() {
     menuAlert,
     value => {
       if (!value) return;
-      auth.create = false;
+      // 只有授权树不可用（缺 list:SystemMenu / 加载失败）才关闭新增：
+      // 缺 retrieve 是「无法回显」而非「不能创建」，新增不依赖回显
+      if (menuDenied.value || menuError.value) auth.create = false;
       auth.update = false;
       // 编辑按钮的显示条件是 (partialUpdate || update)：只关 update 仍会露出口子
       auth.partialUpdate = false;

@@ -33,12 +33,12 @@ class ApprovalFlowApi extends BaseApi {
     );
   };
 
-  /** 回滚到历史版本：快照写回活定义并落新版本 */
+  /** 回滚到历史版本：快照写回活定义并落新版本（载荷走 body，后端读 request.data） */
   rollback = (pk: string, version: number, remark?: string) => {
     return this.request<BaseResult>(
       "post",
-      { version, remark },
       {},
+      { version, remark },
       `${this.baseApi}/${pk}/rollback`
     );
   };

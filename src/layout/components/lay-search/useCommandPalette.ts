@@ -1,19 +1,19 @@
-import { computed, onBeforeUnmount } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { onKeyStroke } from "@vueuse/core";
 import { hasAuth } from "@/router/utils";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { QUICK_ACTIONS } from "./commandPaletteRegistry";
 import { createNavController } from "./commandPaletteNav";
 import { isPaletteShortcut } from "./commandPaletteShortcut";
+import { resetActiveWhenClosed, whenPaletteOpen } from "./paletteGuard";
 import type { CommandPaletteOptions } from "./commandPaletteTypes";
 
 export type { CommandPaletteOptions } from "./commandPaletteTypes";
 
 /**
- * 命令面板：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航。
- * 与顶栏搜索合流（不新建重复组件）：无关键字时「快捷动作」参与 ↑↓/Enter，
- * 有候选时菜单结果与全局搜索分组按同一导航指针串联，鼠标点击仍走原有高亮逻辑。
- * 动作注册表见 commandPaletteRegistry.ts，键盘导航见 commandPaletteNav.ts。
+ * 命令面板：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航（与顶栏搜索合流）。
+ * 无关键字时「快捷动作」参与 ↑↓/Enter；有候选时菜单结果与全局搜索分组按同一
+ * 导航指针串联。注册表见 commandPaletteRegistry.ts，导航见 commandPaletteNav.ts。
  */
 export function useCommandPalette(options: CommandPaletteOptions) {
   const {
@@ -82,27 +82,27 @@ export function useCommandPalette(options: CommandPaletteOptions) {
     runQuickAction
   });
 
-  // 键盘绑定：Esc 由弹窗自身处理
-  const stopEnter = onKeyStroke("Enter", nav.handleEnter);
-  const stopUp = onKeyStroke("ArrowUp", nav.handleUp);
-  const stopDown = onKeyStroke("ArrowDown", nav.handleDown);
-  const stopCmdK = onKeyStroke(
-    (event: KeyboardEvent) => {
-      // 快捷键总开关 / 全局搜索键位关闭后：仍可从顶栏入口打开面板
-      if (!isPaletteShortcut(event)) return;
-      event.preventDefault();
-      nav.activeNav.value = "";
-      show.value = true;
-    },
-    { eventName: "keydown" }
-  );
-
-  onBeforeUnmount(() => {
-    stopEnter();
-    stopUp();
-    stopDown();
-    stopCmdK();
-  });
+  // FE-UI-P1-04：关闭即清激活项（复开不残留）；Enter/↑↓ 全局监听必须判面板
+  // 可见，否则关闭后任意输入框按 Enter 会执行上次激活项（意外跳路由/切主题）。
+  // 守卫本身是纯函数（paletteGuard.ts），单测直测不依赖挂载。
+  watch(show, resetActiveWhenClosed(nav.activeNav));
+  const whenOpen = (handler: () => void) => whenPaletteOpen(show, handler);
+  const stops = [
+    onKeyStroke("Enter", whenOpen(nav.handleEnter)),
+    onKeyStroke("ArrowUp", whenOpen(nav.handleUp)),
+    onKeyStroke("ArrowDown", whenOpen(nav.handleDown)),
+    // 快捷键总开关 / 全局搜索键位关闭后仍可从顶栏入口打开面板
+    onKeyStroke(
+      (event: KeyboardEvent) => isPaletteShortcut(event),
+      (event: KeyboardEvent) => {
+        event.preventDefault();
+        nav.activeNav.value = "";
+        show.value = true;
+      },
+      { eventName: "keydown" }
+    )
+  ];
+  onBeforeUnmount(() => stops.forEach(stop => stop()));
 
   return {
     commandItems,

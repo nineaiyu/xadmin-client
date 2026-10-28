@@ -1,6 +1,15 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
+
 import { createSseStream, type SseStreamEvents } from "@/utils/sse";
+
+/** 连通性测试任务：提交与回读共用同一形状（PENDING/STARTED 表示仍在执行） */
+export type ConnectivityTaskResult = DetailResult<{
+  task_id: string;
+  state: string;
+  ok?: boolean;
+  detail?: string;
+}>;
 
 /** AI 使用/二开助手 */
 export type AiStatus = {
@@ -246,13 +255,23 @@ class AiProfileApi extends BaseApi {
       `${this.baseApi}/${pk}/deactivate`
     );
   };
-  /** 按档案持久化值真实 ping 一次 LLM */
+  /** 按档案持久化值真实 ping 一次 LLM（外呼已在 celery 执行，返回 task_id） */
   test = (pk: string) => {
-    return this.request<DetailResult>(
+    return this.request<ConnectivityTaskResult>(
       "post",
       {},
       {},
       `${this.baseApi}/${pk}/test`
+    );
+  };
+
+  /** 连通性测试结论回读（task_id 来自 test，PENDING/STARTED 表示仍在执行） */
+  testResult = (pk: string, taskId: string) => {
+    return this.request<ConnectivityTaskResult>(
+      "get",
+      { task_id: taskId },
+      {},
+      `${this.baseApi}/${pk}/test-result`
     );
   };
   /** 能力探测：JSON / 原生工具调用 / 思考内容（可选多模态），结果落档案画像 */

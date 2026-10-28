@@ -970,6 +970,7 @@ taskCenter:
   cancelConfirm: 取消后任务将在安全点停止（运行中的导出/导入会在下一个检查点结束），是否继续？
   cancelDone: 已取消
   rerun: 重跑
+  rerunConfirm: 确认重新执行？会新建一条记录并重新派发
   rerunDone: 已提交重跑
   colTimeCost: 耗时
   deleteConfirm: 确认删除这条执行历史？
@@ -2051,6 +2052,7 @@ systemRole:
   preview: 授权预览
   menuTreeDenied: 缺少菜单列表权限（list:SystemMenu），授权树不可用，已禁用新增与编辑，避免保存后清空角色权限
   menuTreeLoadFailed: 菜单列表加载失败，授权树不可用，已禁用新增与编辑，请刷新页面重试
+  editRetrieveDenied: 缺少角色详情权限（retrieve:SystemRole），编辑无法回显现有授权，已禁用编辑，避免保存后清空角色权限
 
 # 角色菜单权限配置树
 rolePermission:
@@ -2340,13 +2342,19 @@ systemMenu:
     unsaved: 当前菜单有未保存的修改，确定要放弃吗？
     activeTitle: 批量启用
     inactiveTitle: 批量停用
-    activeCount: "将启用 { count } 个节点（含选中目录的后代）"
-    inactiveCount: "将停用 { count } 个节点（含选中目录的后代）"
-    inactiveDirectoryHint: 停用目录不会级联停用子菜单：父级不可见时子菜单会被提升为顶级
+    activeCount: "已勾选 { count } 个节点"
+    inactiveCount: "已勾选 { count } 个节点"
+    cascadeActiveHint: "将同时启用 { count } 个子级页面"
+    cascadeInactiveHint: "将同时停用 { count } 个子级页面"
+    inactiveDirectoryHint: 停用目录会一并停用其下页面；权限点保持原状态（权限点状态不受菜单启停影响）
   result:
     enabled: "已启用「{ title }」"
     disabled: "已停用「{ title }」"
     batchActive: "已更新 { count } 个菜单状态"
+    batchMixedTypes: 勾选中包含不同类型的菜单节点，批量启停仅支持同一类型
+    batchPermissionMixed: 权限点不能与菜单/目录混合批量启停（权限点状态不受菜单启停影响）
+    batchFailed: "{ count } 条全部失败"
+    batchPartial: "部分成功：{ ok } 条已更新，{ failed } 条失败"
     sorted: 排序已保存
   preview:
     action: 动作
@@ -3292,6 +3300,7 @@ systemApprovalDelegation:
   status_expired: 已过期
   status_disabled: 已停用
   flowOptionsLoadFailed: 流程目录加载失败，暂时只能选择「全部流程」
+  flowRequired: 请选择委托流程（不选将被视为「全部流程」，范围会被静默放大）
   allFlows: 全部流程
   delegator: 委托人
   delegator_name: 委托人
@@ -3550,6 +3559,7 @@ dashboard:
   remove: 删除
   empty: 暂无仪表盘，点击「新建仪表盘」开始
   addCard: 添加卡片
+  cardLimitReached: 单个仪表盘最多 {count} 张卡片
   dataset: 数据集
   cardTitle: 卡片标题
   chartType: 图表类型
@@ -3777,6 +3787,7 @@ dataScreen:
   pasteNothing: 没有可插入的窗格（剪贴板为空或引用均不可见）
   insertSkipped: 已跳过 {n} 个引用不可见的窗格
   insertTruncated: 画布窗格已达上限，已截断 {n} 个窗格
+  mediaPanesDropped: 已跳过 {n} 个未填地址的媒体窗格（画布中保留，补齐地址后再保存）
   templateMenu: 应用模板
   templateApplyReplace: 替换应用
   templateApplyAppend: 追加应用
@@ -3813,6 +3824,9 @@ dataScreen:
   templateRollbackFailed: 回滚失败（只有创建者可以回滚）
   templateVersionEmpty: 暂无历史版本
   templateVersionColumn: 版本
+  versionMode: 画布模式
+  versionHistory: 历史版本
+  versionRolledBack: 已回滚到大屏版本 {n}
   updatedTime: 最近更新
   pasteCloud: 云端粘贴
   clipboardCloudEmpty: 云端剪贴板还是空的（先在另一台设备复制一次）
@@ -3831,6 +3845,7 @@ dataScreen:
   templateImportEmpty: 没有可导入的窗格（坐标或类型缺失）
   templateImportTooLarge: 文件过大，已取消导入
   templateImported: 已导入 {n} 个窗格
+  templateImportSkipped: 已跳过 {n} 个无法识别的窗格（未知类型或必填项缺失）
   tplPromo: 宣传屏
   tplPromoTitle: 标题
   tplPromoSubtitle: 副标题 / 说明
@@ -4042,6 +4057,17 @@ dataReport:
   valueField: 度量字段
   valueFieldTip: sum/avg 聚合的数值来源字段（仅数值列可选）
   valueFieldRequired: 请选择度量字段
+  versionHistory: 历史版本
+  versionRolledBack: 已回滚到第 {n} 版
+  versionComponents: "{n} 个组件"
+
+versionHistory:
+  version: 版本
+  time: 保存时间
+  rollback: 回滚
+  rollbackConfirm: 确认回滚到第 {n} 版？当前内容将被替换。
+  empty: 暂无历史版本
+  loadFailed: 版本历史加载失败
 
 webhook:
   urlInvalid: 回调地址需以 http:// 或 https:// 开头
@@ -4314,6 +4340,8 @@ aiConfig:
   deactivateConfirm: 确定停用该档案吗？该用途将回落到对话档案或历史配置。
   deactivateDone: 档案已停用
   testOk: 连接成功
+  testFailed: 连接失败
+  testTimeout: 测试超时
   actions: 操作
 
   AI_ASSISTANT_ENABLED: 启用 AI 助手

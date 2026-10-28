@@ -15,6 +15,7 @@ import {
   canPlace,
   cellFromOffset,
   clampBox,
+  dropUnconfiguredMediaPanes,
   findSlot,
   genPaneId,
   isValidPaneImageUrl,
@@ -308,6 +309,40 @@ describe("视频与自定义 HTML 窗格", () => {
       pk: "h1",
       type: "html",
       url: "https://a.com/embed"
+    });
+  });
+});
+
+describe("空 URL 媒体窗格保存预检", () => {
+  it("未填地址的 image/video/html 被剔除，已填与非媒体窗格保留", () => {
+    const panes = [
+      pane("i1", { x: 0, y: 0, w: 3, h: 3 }, "image"),
+      pane("i2", { x: 3, y: 0, w: 3, h: 3 }, "image"),
+      pane("v1", { x: 0, y: 3, w: 6, h: 4 }, "video"),
+      pane("v2", { x: 0, y: 7, w: 6, h: 4 }, "video"),
+      pane("h1", { x: 0, y: 11, w: 6, h: 4 }, "html"),
+      pane("h2", { x: 0, y: 15, w: 6, h: 4 }, "html"),
+      pane("t1", { x: 0, y: 19, w: 6, h: 2 }, "text")
+    ];
+    panes[0].url = "/media/a.png";
+    panes[1].url = "";
+    panes[2].url = "https://cdn.example.com/a.mp4";
+    panes[3].url = "  ";
+    panes[4].url = "https://a.com/embed";
+    panes[5].url = undefined;
+    const { panes: kept, dropped } = dropUnconfiguredMediaPanes(panes);
+    expect(kept.map(item => item.pk)).toEqual(["i1", "v1", "h1", "t1"]);
+    expect(dropped).toBe(3);
+  });
+
+  it("全配齐或全非媒体窗格：原样返回、剔除数为 0", () => {
+    const panes = [
+      pane("t1", { x: 0, y: 0, w: 6, h: 2 }, "text"),
+      pane("d1", { x: 0, y: 2, w: 6, h: 4 }, "dashboard")
+    ];
+    expect(dropUnconfiguredMediaPanes(panes)).toEqual({
+      panes,
+      dropped: 0
     });
   });
 });

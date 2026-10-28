@@ -7,10 +7,13 @@ export type ApprovalDelegationImpact = {
   delegator_pending: number;
   delegate_pending: number;
   items: Array<{
+    /** 审批实例 pk（一行任务所属实例） */
     pk: string;
-    module: string;
-    path: string;
-    method: string;
+    /** 节点任务 pk（影响面按任务粒度列出） */
+    task_pk: string;
+    node_name: string;
+    title: string;
+    flow: string;
     applicant: string;
   }>;
   note: string;

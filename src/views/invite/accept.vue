@@ -44,18 +44,33 @@ const rulesLoadFailed = ref(false);
 /** 传输加密开关：预检下发，开启时激活提交的 password 为令牌作密钥的密文 */
 const encrypted = ref(false);
 
-/** 令牌不再留在地址栏（Referer/历史记录/日志不落凭据）；页面内仍持有原文 */
+/**
+ * 令牌不再留在地址栏（Referer/历史记录/日志不落凭据）；页面内仍持有原文。
+ *
+ * 两种路由模式都要处理：hash 模式（`#/invite/accept?token=`）与 h5 模式
+ * （`/invite/accept?token=`）——只清 hash 会让 history 模式的令牌留在地址栏。
+ */
 function stripTokenFromAddressBar() {
-  if (!location.hash.includes("token=")) return;
-  const [path, query = ""] = location.hash.replace(/^#/, "").split("?");
-  const params = new URLSearchParams(query);
-  if (!params.has("token")) return;
-  params.delete("token");
-  const search = params.toString();
+  const hashHasToken = location.hash.includes("token=");
+  const searchParams = new URLSearchParams(location.search);
+  const searchHasToken = searchParams.has("token");
+  if (!hashHasToken && !searchHasToken) return;
+
+  searchParams.delete("token");
+  const search = searchParams.toString();
+
+  let hash = location.hash;
+  if (hashHasToken) {
+    const [path, query = ""] = hash.replace(/^#/, "").split("?");
+    const hashParams = new URLSearchParams(query);
+    hashParams.delete("token");
+    const hashQuery = hashParams.toString();
+    hash = `#${path}${hashQuery ? `?${hashQuery}` : ""}`;
+  }
   history.replaceState(
     history.state,
     "",
-    `${location.pathname}${location.search}#${path}${search ? `?${search}` : ""}`
+    `${location.pathname}${search ? `?${search}` : ""}${hash}`
   );
 }
 

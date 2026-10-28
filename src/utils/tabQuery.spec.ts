@@ -87,3 +87,20 @@ describe("syncTabQuery", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+describe("resolveInitialPane 兜底权限收敛（FE-UI-P1-01）", () => {
+  const panes = [
+    { key: "export", auth: false },
+    { key: "import", auth: true }
+  ];
+
+  it("兜底键无权限时回落首个有权限页签（不再首屏空白）", () => {
+    expect(resolveInitialPane(panes, "", "export")).toBe("import");
+    expect(resolveInitialPane(panes, "export", "export")).toBe("import");
+  });
+
+  it("query 命中有权限页签直达；全部无权限维持 fallback", () => {
+    expect(resolveInitialPane(panes, "import", "export")).toBe("import");
+    expect(resolveInitialPane([{ key: "a", auth: false }], "", "a")).toBe("a");
+  });
+});

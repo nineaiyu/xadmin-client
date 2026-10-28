@@ -374,8 +374,11 @@
       height: var(--nav-item-height);
       line-height: var(--nav-item-height);
       color: var(--pure-theme-menu-text);
-      background-color: var(--pure-theme-sub-menu-bg);
 
+      /* 顶层项保持透明（悬停才出浅背景，见 `.sidebar-container` 的 transparent 规则）：
+         此处若统一铺 `--pure-theme-sub-menu-bg`，同特异性的后写规则会把顶层项
+         也刷成实心底色，悬停装饰失去「默认无背景」的对比。嵌套层底色由
+         `.el-sub-menu .el-menu-item` 单独给出。 */
       &:hover {
         color: var(--pure-theme-menu-title-hover);
         background-color: var(--pure-theme-menu-hover);

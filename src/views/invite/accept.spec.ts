@@ -9,7 +9,7 @@ import {
   ElFormItem,
   ElInput
 } from "element-plus";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AesDecrypted } from "@/utils/aes";
 
 const mocks = vi.hoisted(() => ({
@@ -62,6 +62,11 @@ beforeEach(() => {
     vi.stubGlobal("crypto", webcrypto);
   }
   mocks.challengeOpen.mockResolvedValue("ticket-1");
+});
+
+afterEach(() => {
+  // 地址栏清理用例会改写 URL：每个用例后复位，避免污染后续断言
+  history.replaceState({}, "", "/");
 });
 
 const mountPage = async () => {
@@ -178,6 +183,43 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     expect(payload.token).toBe("tok-1");
     expect(payload.password).not.toBe("Str0ng!pwd");
     expect(await AesDecrypted("tok-1", payload.password)).toBe("Str0ng!pwd");
+  });
+
+  it("h5 路由模式：地址栏 token 同样被清理（其余参数保留）", async () => {
+    mocks.inviteValidateApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { state: "pending" }
+    });
+    mocks.rulesPasswordApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { password_rules: MIN_LENGTH_RULES }
+    });
+    history.replaceState({}, "", "/invite/accept?token=tok-h5&from=mail");
+    await mountPage();
+
+    expect(window.location.search).not.toContain("token=");
+    expect(window.location.search).toContain("from=mail");
+  });
+
+  it("hash 路由模式：hash 内 token 被清理（其余查询保留）", async () => {
+    mocks.inviteValidateApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { state: "pending" }
+    });
+    mocks.rulesPasswordApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { password_rules: MIN_LENGTH_RULES }
+    });
+    history.replaceState(
+      {},
+      "",
+      "/?x=1#/invite/accept?token=tok-hash&from=mail"
+    );
+    await mountPage();
+
+    expect(window.location.hash).not.toContain("token=");
+    expect(window.location.hash).toContain("from=mail");
+    expect(window.location.search).toContain("x=1");
   });
 
   it("用户取消人机挑战时不发起激活请求", async () => {

@@ -202,9 +202,11 @@ test("角色权限：编辑弹层回显授权树勾选 @smoke", async ({ page })
     });
     // 回显：详情里的授权（field 为 {menuPk: [fieldPk]} 字典）必须落到树勾选态；
     // 修复前字典未归一化 → form.vue push 抛错、initData 不执行 → 勾选全丢
+    // 6 路并行 + 双浏览器同机跑时授权树（菜单全量 + 字段合成，700+ 节点）渲染很慢：
+    // 15s/30s 都踩过线，给到 60s（用例在 HIGH_LOAD 下已 test.slow()，断言强度不变）
     await expect(dialog.locator(".el-checkbox.is-checked").first()).toBeVisible(
       {
-        timeout: 15_000
+        timeout: 60_000
       }
     );
   } finally {

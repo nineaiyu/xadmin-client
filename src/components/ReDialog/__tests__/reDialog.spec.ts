@@ -2,7 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { ElButton, ElDialog, ElPopconfirm } from "element-plus";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { h, nextTick } from "vue";
+import { defineComponent, h, nextTick } from "vue";
 
 import {
   addDialog,
@@ -138,6 +138,45 @@ describe("ReDialog 弹层容器", () => {
 
     expect(beforeClose).toHaveBeenCalledTimes(1);
     // 守卫未 done：弹层保持打开
+    expect(dialogStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0]();
+    await nextTick();
+    expect(dialogStore.value[0]?.visible).toBe(false);
+  });
+
+  it("内容组件 emit close 同样走 beforeClose 守卫", async () => {
+    const beforeClose = vi.fn((_done: () => void) => undefined);
+    const Content = defineComponent({
+      emits: ["close"],
+      setup(_props, { emit }) {
+        return () =>
+          h(
+            "button",
+            {
+              class: "spec-content-close",
+              onClick: () => emit("close", { command: "close" })
+            },
+            "关闭"
+          );
+      }
+    });
+    mountContainer();
+    addDialog({
+      title: "内容关闭",
+      contentRenderer: () => h(Content),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    (
+      document.querySelector(".spec-content-close") as HTMLElement | null
+    )?.click();
+    await nextTick();
+
+    // 守卫未 done：弹层保持打开（历史缺陷：内容组件 @close 直穿 handleClose）
+    expect(beforeClose).toHaveBeenCalledTimes(1);
     expect(dialogStore.value[0]?.visible).toBe(true);
 
     beforeClose.mock.calls[0]![0]();

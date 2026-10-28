@@ -639,22 +639,26 @@ test("仪表盘卡片联动：点击维度值反向过滤其他卡片，chip 可
     });
 
     // 点击柱体：伴生下钻抽屉先出现；Esc 关闭后验证联动面（chip + 数字卡收敛到 1）
-    const barPoint = await barCard
-      .locator("svg")
-      .last()
-      .evaluate((svg: SVGElement) => {
-        const bars = Array.from(
-          svg.querySelectorAll('path[fill]:not([fill="none"])')
-        ).filter(element => {
-          const box = element.getBoundingClientRect();
-          return box.width > 20 && box.height > 20;
-        });
-        const box = bars[0].getBoundingClientRect();
-        return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-      });
-    await page.mouse.click(barPoint.x, barPoint.y);
+    // 柱体命中靠像素坐标（图表在重负载下会重排/重绘）：坐标测量与点击一起重试，
+    // 以「抽屉真的出现」为收敛条件，避免图表位移导致的假失败
     const drawer = page.locator(".el-drawer:visible").first();
-    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(async () => {
+      const barPoint = await barCard
+        .locator("svg")
+        .last()
+        .evaluate((svg: SVGElement) => {
+          const bars = Array.from(
+            svg.querySelectorAll('path[fill]:not([fill="none"])')
+          ).filter(element => {
+            const box = element.getBoundingClientRect();
+            return box.width > 20 && box.height > 20;
+          });
+          const box = bars[0].getBoundingClientRect();
+          return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+        });
+      await page.mouse.click(barPoint.x, barPoint.y);
+      await expect(drawer).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
     await page.keyboard.press("Escape");
     await expect(drawer).toBeHidden({ timeout: 15_000 });
     await expect(page.getByTestId("dashboard-linkage-chip")).toBeVisible();

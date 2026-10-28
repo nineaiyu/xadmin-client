@@ -160,7 +160,7 @@ defineExpose({ open });
         <div
           v-for="(warning, index) in result.warnings"
           :key="index"
-          class="text-xs leading-5 break-all"
+          class="text-xs/5 break-all"
         >
           {{ warning }}
         </div>

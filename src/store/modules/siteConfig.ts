@@ -81,6 +81,13 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         configure: cloneDeep(Storage.getData("configure", this.nameSpace) ?? {})
       };
     },
+    /** 本地偏好快照（getSiteConfig 的在途改动比对基准） */
+    readLocalPreferences() {
+      return {
+        layout: cloneDeep(Storage.getData("layout", this.nameSpace) ?? {}),
+        configure: cloneDeep(Storage.getData("configure", this.nameSpace) ?? {})
+      };
+    },
     /**
      * 恢复默认：清除个人偏好配置行（`DELETE` 用户配置），重载后回落到站点生效值
      * （多数键 = 管理员统一的站点配置，站点级外观 9 键本就是系统配置）。
@@ -290,6 +297,10 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     },
     async getSiteConfig() {
       const { configApi } = await import("@/api/config");
+      // 请求发出前的本地偏好：响应在途期间用户改了偏好时，晚到响应不回写这两个
+      // 命名空间（否则整包 GET 会把用户刚改的主题/布局静默回滚），只同步 locale、
+      // 站点级配置与「服务端值」快照，让自动保存把用户改动推上去
+      const before = this.readLocalPreferences();
       return new Promise<PlatformConfigs>((resolve, reject) => {
         configApi
           .getSiteConfig()
@@ -417,13 +428,32 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
                     config.ShortcutPreferencesKeys ?? "mod+,",
                   shortcutLogoutKeys: config.ShortcutLogoutKeys ?? ""
                 }
-              } as PlatformConfigs;
+              };
+              // configObj 是「本地存储形状」（locale/layout/configure 三段），与服务端
+              // PlatformConfigs 的扁平大写键不同形：写入经 setSiteConfig 按键映射
               setConfig(config as PlatformConfigs);
-              this.setSiteConfig(configObj);
-              // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
-              this.capturePreferenceBaseline();
-              // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
-              this.captureSyncedSnapshot();
+              const after = this.readLocalPreferences();
+              const localChanged =
+                !isEqual(before.layout, after.layout) ||
+                !isEqual(before.configure, after.configure);
+              if (localChanged) {
+                // 用户改动优先：只落 locale（站点级语言不受偏好面板实时改动影响），
+                // 基线保持请求前的值（面板「撤销」仍能回到服务端旧值）
+                this.setSiteConfig({
+                  locale: configObj.locale
+                } as unknown as PlatformConfigs);
+                // 快照记服务端值：当前本地值与之不同 → 自动保存会提案用户改动
+                this.syncedSnapshot = {
+                  layout: cloneDeep(configObj.layout),
+                  configure: cloneDeep(configObj.configure)
+                };
+              } else {
+                this.setSiteConfig(configObj as unknown as PlatformConfigs);
+                // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
+                this.capturePreferenceBaseline();
+                // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
+                this.captureSyncedSnapshot();
+              }
               resolve(config as PlatformConfigs);
             } else {
               reject(config);

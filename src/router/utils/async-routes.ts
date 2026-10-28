@@ -86,24 +86,14 @@ function handleAsyncRoutes(routeList: RouteRecordRaw[], authList: string[]) {
   addPathMatch();
 }
 
-/** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
-function initRouter(loadConfig: boolean = false): Promise<Router> {
-  if (loadConfig) {
-    useSiteConfigStoreHook().getSiteConfig();
-  }
-  useUserStoreHook()
-    .getUserInfo()
-    .then(() => {
-      useUserStoreHook().messageHandler();
-    })
-    .catch(error => {
-      // 用户信息拉取失败（凭证失效/网络异常）：不建立 WS，避免半登录态下无谓的重连风暴
-      console.error("get user info failed", error);
-    });
-
-  // 拉取失败（后端 5xx/网络异常）必须向调用方抛出而非吞掉：
-  // 否则本 Promise 永不 settle，登录按钮永久 loading、刷新后停留在无菜单的兜底路由。
-  // 兜底在调用方：登录/注册态跳 /error/500（静态路由，返回按钮重新触发本函数即重试）
+/**
+ * 注册异步路由（站点配置就绪后才执行）。
+ *
+ * 拉取失败（后端 5xx/网络异常）必须向调用方抛出而非吞掉：否则返回的 Promise
+ * 永不 settle，登录按钮永久 loading、刷新后停留在无菜单的兜底路由。兜底在调用方：
+ * 登录/注册态跳 /error/500（静态路由，返回按钮重新触发 initRouter 即重试）。
+ */
+function resolveRoutes(): Promise<Router> {
   const fetchRoutes = () =>
     getAsyncRoutes()
       .then(({ data, auths, version }) => {
@@ -141,6 +131,30 @@ function initRouter(loadConfig: boolean = false): Promise<Router> {
     });
   }
   return fetchRoutes().then(() => router);
+}
+
+/** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
+function initRouter(loadConfig: boolean = false): Promise<Router> {
+  // 站点配置严格先于路由注册：fire-and-forget 的整包 GET 会晚于用户登录后的偏好
+  // 改动落盘，路由先渲染也会让设置面板短暂显示服务端旧值。此处串行等待
+  // （失败仅告警，不阻断路由），并在 store 侧保留「在途改动不被回写」的保护。
+  const siteConfigReady = loadConfig
+    ? useSiteConfigStoreHook()
+        .getSiteConfig()
+        .catch(error => console.warn("Failed to refresh site config:", error))
+    : Promise.resolve();
+  return siteConfigReady.then(() => {
+    void useUserStoreHook()
+      .getUserInfo()
+      .then(() => {
+        useUserStoreHook().messageHandler();
+      })
+      .catch(error => {
+        // 用户信息拉取失败（凭证失效/网络异常）：不建立 WS，避免半登录态下无谓的重连风暴
+        console.error("get user info failed", error);
+      });
+    return resolveRoutes();
+  });
 }
 
 /** 每次页面会话仅做一次快照版本校验（失败按退避重试覆盖） */

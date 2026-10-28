@@ -59,12 +59,18 @@ export function useReportPersistence(deps: {
     deps.saving.value = true;
     try {
       const payload = normalizeDesign(deps.design.value, deps.dataset.value);
+      // 乐观锁基线：把本次看到的设计版本原样回传，他人先保存时后端拒绝后写覆盖
+      const baseVersion = deps.report.value.design_version;
       const res = await reportApi
-        .partialUpdate(deps.report.value.pk, { design: payload })
+        .partialUpdate<ReportItem>(deps.report.value.pk, {
+          design: payload,
+          ...(baseVersion !== undefined ? { base_version: baseVersion } : {})
+        })
         .catch(normalizeError);
       if (isSuccess(res)) {
         deps.design.value = payload;
         deps.dirty.value = false;
+        if (res.data) deps.report.value = { ...deps.report.value, ...res.data };
         message(t("dataReport.designSaved"), { type: "success" });
         return;
       }

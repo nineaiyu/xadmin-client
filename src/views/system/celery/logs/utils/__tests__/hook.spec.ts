@@ -58,6 +58,17 @@ import { useTaskExecution } from "../hook";
 type Button = {
   code: string;
   onClick: (scope: { row: unknown }) => unknown;
+  show?: boolean | ((row: unknown) => boolean);
+  confirm?: { title?: string | ((row: unknown) => string) };
+};
+
+const getButton = (code: string): Button => {
+  const { operationButtonsProps } = useTaskExecution();
+  const buttons = (operationButtonsProps as { value: { buttons?: Button[] } })
+    .value.buttons as Button[];
+  const button = buttons.find(item => item.code === code);
+  expect(button, `${code} 按钮应存在`).toBeTruthy();
+  return button as Button;
 };
 
 const getDownloadButton = (): Button => {
@@ -107,5 +118,30 @@ describe("useTaskExecution 产物下载", () => {
     await expect(
       button.onClick({ row: { pk: "e-2", product_type: "export" } })
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("TASK-P1-02 取消/重跑二次确认", () => {
+  it("取消带确认文案（复用调度任务的取消口径），且按 can_cancel 显隐", () => {
+    const button = getButton("cancel");
+    expect(button.confirm?.title).toBe("taskCenter.cancelConfirm");
+    // t 在单测里被替换为原样返回 key（含插值参数时仍是 key）
+    expect(typeof button.show).toBe("function");
+    const show = button.show as (row: unknown) => boolean;
+    expect(show({ can_cancel: true })).toBe(true);
+    expect(show({ can_cancel: false })).toBe(false);
+  });
+
+  it("重跑带确认文案，且按 can_rerun 能力位显隐", () => {
+    const button = getButton("rerun");
+    expect(button.confirm?.title).toBe("taskCenter.rerunConfirm");
+    const show = button.show as (row: unknown) => boolean;
+    expect(show({ can_rerun: true })).toBe(true);
+    expect(show({ can_rerun: false })).toBe(false);
+  });
+
+  it("删除按钮同样保留确认（同页三条破坏性操作口径一致）", () => {
+    const button = getButton("delete");
+    expect(button.confirm?.title).toBe("systemTaskExecution.deleteConfirmLog");
   });
 });

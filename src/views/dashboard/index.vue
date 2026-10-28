@@ -24,6 +24,7 @@ import { useDashboardView } from "./utils/useDashboardView";
 import { useCardDrill } from "./utils/useCardDrill";
 import { useDashboardLinkage } from "./utils/useDashboardLinkage";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
+import { DASHBOARD_MAX_CARDS } from "./utils/cardLimits";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { syncSelectInputsA11y } from "@/utils/tableA11y";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
@@ -76,6 +77,10 @@ const {
   toggleEdit,
   updateDraft
 } = useDashboardEditing({ t, current, dashboards });
+/** 卡片数量上限（与后端 DASHBOARD_MAX_CARDS 同口径）：达到后禁用「添加卡片」 */
+const cardLimitReached = computed(
+  () => layout.value.length >= DASHBOARD_MAX_CARDS
+);
 const { confirmLeave } = useDesignerGuard({
   dirty,
   namespace: "dashboard",
@@ -315,7 +320,19 @@ onMounted(async () => {
           </el-card>
         </el-col>
       </el-row>
-      <el-button v-if="editing" class="w-40!" @click="openCardDialog">
+      <el-button
+        v-if="editing"
+        class="w-40!"
+        :disabled="cardLimitReached"
+        :title="
+          cardLimitReached
+            ? t('dashboard.cardLimitReached', {
+                count: DASHBOARD_MAX_CARDS
+              })
+            : undefined
+        "
+        @click="openCardDialog"
+      >
         {{ t("dashboard.addCard") }}
       </el-button>
     </template>

@@ -6,6 +6,10 @@ import type { RecordType } from "plus-pro-components";
 import type { BaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
 import { resourcesIDCacheApi } from "@/api/common";
+import {
+  applySelectedExportScope,
+  buildExportSearchParams
+} from "./listParams";
 import ExportData from "../components/ExportData.vue";
 import ImportData from "../components/ImportData.vue";
 import ImportValidateResult from "../components/ImportValidateResult.vue";
@@ -78,16 +82,24 @@ export const handleExportData = (options: exportDataOptions) => {
         if (formData.range === "all") {
           await exportBy(formData);
         } else if (formData.range === "search" && searchFields) {
-          // 在副本上拼导出参数：直接写 searchFields 会污染列表页的查询条件
-          await exportBy({
-            ...toRaw(searchFields.value),
-            type: formData["type"]
-          });
+          // 参数归一（区间拆分 / pk 扁平化 / 剔分页）见 buildExportSearchParams：
+          // 在副本上变换，直接写 searchFields 会污染列表页查询条件
+          await exportBy(
+            buildExportSearchParams(toRaw(searchFields.value), formData["type"])
+          );
         } else if (formData.range === "selected") {
           const res = await resourcesIDCacheApi(formData.pks);
-          formData["spm"] = res.spm;
-          delete formData.pks;
-          await exportBy(formData);
+          if (!isSuccess(res) || !res.spm) {
+            // 换 spm 失败不得退化成全量导出（spm 缺失 = 范围条件整体丢失，
+            // 把「选中」静默放大为「全部」）；pks 保留供重试
+            ok = false;
+            failed(res?.detail ?? t("results.failed"));
+          } else {
+            const scope = applySelectedExportScope(formData, res.spm);
+            formData["spm"] = res.spm;
+            delete formData.pks;
+            await exportBy(scope.params);
+          }
         }
       } catch {
         // HTTP 异常（拦截器已 toast）：视为失败，保持弹窗可重试

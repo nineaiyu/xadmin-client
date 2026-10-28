@@ -141,6 +141,12 @@ function getCheckedMenu(pk?: string) {
       });
     return;
   }
+  if (pk) {
+    // 编辑态缺 retrieve：无法回显现有授权（列表行 menu 恒为空），空树上提交
+    // 会清空角色全部授权——按回显失败遮罩树并禁止交互（列表页已禁编辑，此处兜底）
+    handleLoadFailed();
+    return;
+  }
   applyInitialChecked();
 }
 

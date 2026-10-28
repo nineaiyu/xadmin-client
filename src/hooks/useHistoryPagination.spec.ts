@@ -50,6 +50,30 @@ describe("useHistoryPagination", () => {
     expect(scrollToBottom).toHaveBeenCalled();
   });
 
+  it("过期首屏响应被丢弃：切会话后旧会话慢响应不写入（FE-DATA-P1-04）", async () => {
+    let resolveA: (value: ReturnType<typeof page>) => void = () => undefined;
+    const fetchPage = vi
+      .fn<FetchPage>()
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveA = resolve;
+          })
+      )
+      .mockResolvedValueOnce(page([11], false));
+    const { loadHistory, messages, scrollToBottom } = setup(fetchPage);
+
+    const slow = loadHistory("room-a");
+    await loadHistory("room-b");
+    expect(messages.value.map(item => item.id)).toEqual([11]);
+
+    // A 的响应后到：不得覆盖 B 的消息，也不得触发滚动
+    resolveA(page([3, 4], true));
+    await slow;
+    expect(messages.value.map(item => item.id)).toEqual([11]);
+    expect(scrollToBottom).toHaveBeenCalledTimes(1);
+  });
+
   it("上翻按首条 id 作游标前插旧页并更新 hasMore", async () => {
     const fetchPage = vi
       .fn<FetchPage>()

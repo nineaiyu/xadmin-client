@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import tree from "./components/UserTree.vue";
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useUser } from "./utils/hook";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
@@ -37,8 +37,12 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
   minPercent: 10
 });
 
-/** 列表页配置：桌面分栏与移动堆叠两分支共用同一份（避免双份维护漂移） */
-const plusPageProps = {
+/**
+ * 列表页配置：桌面分栏与移动堆叠两分支共用同一份（避免双份维护漂移）。
+ * 必须用 reactive：`addOrEditOptions` / 两个按钮组是 shallowRef，普通对象经
+ * `v-bind` 传给子组件时不会解包，页面级表单定制与自定义按钮会整体失效。
+ */
+const plusPageProps = reactive({
   api,
   auth,
   addOrEditOptions,
@@ -47,7 +51,7 @@ const plusPageProps = {
   localeName: "systemUser",
   operationButtonsProps,
   tableBarButtonsProps
-};
+});
 </script>
 
 <template>

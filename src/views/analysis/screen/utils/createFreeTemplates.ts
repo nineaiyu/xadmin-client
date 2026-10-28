@@ -141,7 +141,11 @@ export function createFreeTemplates(deps: {
 
   /* ---------------- 本地模板 ---------------- */
 
-  /** 保存当前自由画布为本地模板（名称由 UI 收集；空名称 / 空画布给出可读提示） */
+  /**
+   * 保存当前自由画布为本地模板（名称由 UI 收集；空名称 / 空画布给出可读提示）。
+   * 入口区分：有选区按选区保存，无选区回落**全量画布**（与团队模板口径、
+   * 「保存为模板」按钮文案一致），画布本身为空才报 empty。
+   */
   function saveCurrent(name: string): boolean {
     const result = saveTemplate({
       name,
@@ -170,11 +174,17 @@ export function createFreeTemplates(deps: {
       message(deps.t("dataScreen.templateMissing"), { type: "warning" });
       return false;
     }
-    if (mode === "replace") deps.design.value = clampDesign(template.design);
+    // 替换模式「先插入成功再落画幅」：画幅随插入一起参与夹取（design override），
+    // 插入失败（如引用全不可见）不动画幅——先改画幅后插失败会留下
+    // 「旧窗格 + 新画幅」的脱节态；撤销点由插入链路记录，撤销时画幅与窗格一起回退
+    const nextDesign =
+      mode === "replace" ? clampDesign(template.design) : undefined;
     const inserted = deps.inserter.insert(templatePanes(template), {
-      replace: mode === "replace"
+      replace: mode === "replace",
+      design: nextDesign
     });
     if (inserted === 0) return false;
+    if (nextDesign) deps.design.value = nextDesign;
     message(deps.t("dataScreen.templateApplied", { name: template.name }), {
       type: "success"
     });
@@ -183,7 +193,8 @@ export function createFreeTemplates(deps: {
 
   /**
    * 导入 JSON：解析（不信任外部文件）→ 走同一条插入链路。
-   * 形状不对只提示不落数据；窗格被丢弃的数量由插入链路统一计数提示。
+   * 形状不对只提示不落数据；解析期丢弃的窗格（未知类型 / 必填项缺失）与插入期
+   * 丢弃的窗格（引用不可见 / 超上限）都计数提示，不静默丢。
    */
   function importJson(raw: string, mode: TemplateApplyMode): boolean {
     const parsed = parseTemplateJson(raw);
@@ -191,12 +202,23 @@ export function createFreeTemplates(deps: {
       message(deps.t(templateImportKey(parsed.error)), { type: "warning" });
       return false;
     }
-    if (mode === "replace")
-      deps.design.value = clampDesign(parsed.value.design);
+    if (parsed.value.skipped > 0) {
+      message(
+        deps.t("dataScreen.templateImportSkipped", {
+          n: parsed.value.skipped
+        }),
+        { type: "warning" }
+      );
+    }
+    // 与 apply 同口径：先插入成功再落画幅（替换模式），失败不动画幅
+    const nextDesign =
+      mode === "replace" ? clampDesign(parsed.value.design) : undefined;
     const inserted = deps.inserter.insert(parsed.value.panes, {
-      replace: mode === "replace"
+      replace: mode === "replace",
+      design: nextDesign
     });
     if (inserted === 0) return false;
+    if (nextDesign) deps.design.value = nextDesign;
     message(deps.t("dataScreen.templateImported", { n: inserted }), {
       type: "success"
     });

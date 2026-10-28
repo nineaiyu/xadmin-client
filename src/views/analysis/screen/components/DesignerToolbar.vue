@@ -38,6 +38,7 @@ const emit = defineEmits<{
   refresh: [];
   preview: [];
   clear: [];
+  versions: [];
   back: [];
   save: [];
 }>();
@@ -139,6 +140,14 @@ const locked = () => props.preview || props.readonly;
       @click="emit('clear')"
     >
       {{ t("dataScreen.clearLayout") }}
+    </el-button>
+    <el-button
+      v-if="!readonly"
+      size="small"
+      data-testid="designer-versions"
+      @click="emit('versions')"
+    >
+      {{ t("dataScreen.versionHistory") }}
     </el-button>
     <el-button size="small" @click="emit('back')">
       {{ t("dataScreen.backToList") }}

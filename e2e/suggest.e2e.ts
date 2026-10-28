@@ -151,6 +151,25 @@ test("审批委托：代理人远程联想 + 委托人弹窗选择 → 保存 �
     .fill("2026-09-25 08:00:00");
   await page.keyboard.press("Enter");
 
+  // 流程范围（必选）：后端契约里空数组 = 「全部流程」，表单改为显式必选，
+  // 不选会被校验拦下（抽屉不关闭）。此处按产品语义选第一个真实流程。
+  const flowItem = dialog.locator(".el-form-item:has-text('流程范围')").first();
+  // 空多选框的 input 被占位文案层遮挡：点 wrapper 打开下拉；
+  // 候选项按本控件的 aria-controls 定位——页面上同时存在代理人联想下拉，
+  // 按「第一个可见项」会点到正在关闭的那个
+  await flowItem.locator(".el-select__wrapper").first().click();
+  const flowListId = await flowItem
+    .locator(".el-select__input")
+    .first()
+    .getAttribute("aria-controls");
+  const flowOption = page
+    .locator(`[id="${flowListId}"] .el-select-dropdown__item`)
+    .first();
+  await expect(flowOption).toBeVisible({ timeout: 10_000 });
+  await flowOption.click();
+  // 多选下拉选中后仍展开：点标题区收起，避免遮挡底部按钮（Esc 会连抽屉一起关）
+  await dialog.locator(".el-dialog__header").first().click();
+
   await dialog
     .getByRole("button", { name: /保存|确定/ })
     .first()

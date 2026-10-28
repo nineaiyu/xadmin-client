@@ -1,47 +1,19 @@
-import { isSuccess } from "@/api/types";
-import { message } from "@/utils/message";
-import { operationLogApi } from "@/api/audit/logs/operation";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
- * 详情抽屉全量兜底（自 hook.tsx 抽出）：列表行的 body / response_result 为
- * 有界预览（附 `*_truncated` 标记），命中标记时经 retrieve 拉全量回填，抽屉
- * 打开即为完整正文；未截断不额外请求。失败经消息出口提示并回退列表行预览
- * （返回 null 不阻断抽屉）。
+ * 详情抽屉正文口径（LOG-P1-01）：retrieve / 导出与列表同级，body /
+ * response_result 只有有界预览，不再提供全量正文出口。列表行已是详情可用的
+ * 最终形态（changes 全量、正文预览 + `*_truncated` 标记），无需二次拉取。
+ *
+ * 保留该入口（detailRowFetch 契约）返回 null：RePlusPage 回退列表行渲染。
  */
 export async function fetchOperationLogDetail({
-  t,
-  row
+  row: _row
 }: {
   t: TFunction;
   row: Record<string, unknown>;
 }) {
-  // 正文按配置（OPERATION_LOG_FIELD_MAX=0）未落库：给可读占位，不按空串当「未截断」
-  if (row.body_dropped || row.response_result_dropped) {
-    const dropped = t("logsOperation.bodyDropped");
-    return {
-      ...row,
-      body: row.body_dropped ? dropped : row.body,
-      response_result: row.response_result_dropped
-        ? dropped
-        : row.response_result
-    };
-  }
-  const truncated = Boolean(
-    row.body_truncated || row.response_result_truncated
-  );
-  const pk = row.pk;
-  if (!truncated || pk == null) return null;
-  try {
-    const res = await operationLogApi.retrieve(pk as number | string);
-    if (isSuccess(res) && res.data) {
-      return res.data as Record<string, unknown>;
-    }
-    message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-  } catch {
-    // 请求异常已由 http 拦截器统一提示，这里回退列表行预览
-  }
   return null;
 }

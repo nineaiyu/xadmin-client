@@ -970,6 +970,7 @@ taskCenter:
   cancelConfirm: The task will stop at the next safe point (running exports/imports finish the current checkpoint). Continue?
   cancelDone: Cancelled
   rerun: Rerun
+  rerunConfirm: Run again? A new record will be created and dispatched
   rerunDone: Rerun submitted
   colTimeCost: Time cost
   deleteConfirm: Delete this execution record?
@@ -2051,6 +2052,7 @@ systemRole:
   preview: Grant Preview
   menuTreeDenied: Missing the menu list permission (list:SystemMenu). The permission tree is unavailable, so create and edit are disabled to avoid clearing role grants on save
   menuTreeLoadFailed: Failed to load the menu list. The permission tree is unavailable, so create and edit are disabled; refresh the page and try again
+  editRetrieveDenied: Missing the role detail permission (retrieve:SystemRole). Existing grants cannot be echoed in the edit dialog, so edit is disabled to avoid clearing role grants on save
 
 # Role menu permission tree
 rolePermission:
@@ -2340,13 +2342,19 @@ systemMenu:
     unsaved: This menu has unsaved changes. Discard them?
     activeTitle: Batch enable
     inactiveTitle: Batch disable
-    activeCount: "{ count } node(s) will be enabled (including descendants of selected directories)"
-    inactiveCount: "{ count } node(s) will be disabled (including descendants of selected directories)"
-    inactiveDirectoryHint: "Disabling a directory does not cascade: when the parent is hidden its children are promoted to top level"
+    activeCount: "{ count } node(s) selected"
+    inactiveCount: "{ count } node(s) selected"
+    cascadeActiveHint: "{ count } child page(s) will be enabled as well"
+    cascadeInactiveHint: "{ count } child page(s) will be disabled as well"
+    inactiveDirectoryHint: "Disabling a directory also disables its pages; permission codes keep their state (menu activation does not affect them)"
   result:
     enabled: "Enabled { title }"
     disabled: "Disabled { title }"
     batchActive: "{ count } menu(s) updated"
+    batchMixedTypes: Selection contains mixed menu node types; batch activate only supports a single type
+    batchPermissionMixed: Permission codes cannot be batch updated together with menus or directories (their state is independent of menu activation)
+    batchFailed: "All { count } items failed"
+    batchPartial: "Partially applied: { ok } updated, { failed } failed"
     sorted: Order saved
   preview:
     action: Action
@@ -3292,6 +3300,7 @@ systemApprovalDelegation:
   status_expired: Expired
   status_disabled: Disabled
   flowOptionsLoadFailed: Failed to load the flow catalog; only "All flows" is available for now
+  flowRequired: Select the flows to delegate (leaving it empty would be treated as "All flows" and silently widen the scope)
   allFlows: All flows
   delegator: Delegator
   delegator_name: Delegator
@@ -3550,6 +3559,7 @@ dashboard:
   remove: Remove
   empty: No dashboards yet, click "New Dashboard" to start
   addCard: Add Card
+  cardLimitReached: A dashboard supports at most {count} cards
   dataset: Dataset
   cardTitle: Card Title
   chartType: Chart Type
@@ -3777,6 +3787,7 @@ dataScreen:
   pasteNothing: Nothing to paste (empty clipboard or all references are invisible)
   insertSkipped: Skipped {n} pane(s) with invisible references
   insertTruncated: Pane limit reached, {n} pane(s) truncated
+  mediaPanesDropped: Skipped {n} media pane(s) with empty URL (kept on canvas; fill the URL and save again)
   templateMenu: Apply template
   templateApplyReplace: Replace with
   templateApplyAppend: Append
@@ -3813,6 +3824,9 @@ dataScreen:
   templateRollbackFailed: Rollback failed (only the creator can roll back)
   templateVersionEmpty: No version history yet
   templateVersionColumn: Version
+  versionMode: Canvas mode
+  versionHistory: Version history
+  versionRolledBack: Rolled back to screen version {n}
   updatedTime: Updated
   pasteCloud: Paste from cloud
   clipboardCloudEmpty: The cloud clipboard is empty (copy something on another device first)
@@ -3831,6 +3845,7 @@ dataScreen:
   templateImportEmpty: No importable pane (missing coordinates or type)
   templateImportTooLarge: File too large — import cancelled
   templateImported: Imported {n} panes
+  templateImportSkipped: Skipped {n} unrecognizable pane(s) (unknown type or missing required fields)
   tplPromo: Promo screen
   tplPromoTitle: Title
   tplPromoSubtitle: Subtitle / description
@@ -4042,6 +4057,17 @@ dataReport:
   valueField: Measure field
   valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
   valueFieldRequired: Please select a measure field
+  versionHistory: Version history
+  versionRolledBack: Rolled back to version {n}
+  versionComponents: "{n} components"
+
+versionHistory:
+  version: Version
+  time: Saved at
+  rollback: Roll back
+  rollbackConfirm: Roll back to version {n}? The current content will be replaced.
+  empty: No version history yet
+  loadFailed: Failed to load version history
 
 webhook:
   urlInvalid: Callback URL must start with http:// or https://
@@ -4316,6 +4342,8 @@ aiConfig:
   deactivateConfirm: Deactivate this profile? This purpose will fall back to the chat profile or the legacy config.
   deactivateDone: Profile deactivated
   testOk: Connected
+  testFailed: Connection failed
+  testTimeout: Test timed out
   actions: Actions
 
   AI_ASSISTANT_ENABLED: Enable AI assistant

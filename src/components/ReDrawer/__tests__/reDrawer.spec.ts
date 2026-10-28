@@ -123,6 +123,34 @@ describe("ReDrawer 抽屉容器", () => {
     expect(drawerStore.value[0]?.visible).toBe(false);
   });
 
+  it("内容组件 emit('close') 同样走 beforeClose；done(true) 取消关闭", async () => {
+    const beforeClose = vi.fn((done: (cancel?: boolean) => void) => done(true));
+    const Content = {
+      name: "DrawerContent",
+      emits: ["close"],
+      template:
+        "<button class='spec-close' @click=\"$emit('close', { command: 'close' })\">关</button>"
+    };
+    mountContainer();
+    addDrawer({
+      title: "编辑",
+      contentRenderer: () => h(Content),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    (document.querySelector(".spec-close") as HTMLElement).click();
+    await nextTick();
+    expect(beforeClose).toHaveBeenCalledTimes(1);
+    // done(true) = 取消关闭：抽屉保持打开
+    expect(drawerStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0](false);
+    await nextTick();
+    expect(drawerStore.value[0]?.visible).toBe(false);
+  });
+
   it("收起的抽屉若内容已销毁则不报错（destroyOnClose 关闭态直接出栈）", async () => {
     mountContainer();
     addDrawer({

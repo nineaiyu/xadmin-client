@@ -37,20 +37,27 @@ export function useTaskExecutionButtons({
         confirm: { title: t("systemTaskExecution.deleteConfirmLog") }
       },
       {
+        // 取消是协作式终止：执行中的任务会被要求停下，已产生的中间结果丢弃，
+        // 误触代价与删除同级 → 与 delete 同口径二次确认（同页删除已有 confirm）
         text: t("taskCenter.cancel"),
         code: "cancel",
         props: { type: "warning", link: true },
         index: -40,
+        // 复用调度任务的既有取消文案（语义一致：在安全点停止）
+        confirm: { title: t("taskCenter.cancelConfirm") },
         show: (row: RecordType) =>
           canCancel && !!asExecutionRow(row).can_cancel,
         onClick: ({ row }) =>
           actions.runCenterAction(asExecutionRow(row), "cancel")
       },
       {
+        // 重跑会新建一条执行记录并重新派发（导出/导入类还会重跑一遍重任务），
+        // 同样需要确认，避免列表里连点重复触发
         text: t("taskCenter.rerun"),
         code: "rerun",
         props: { type: "primary", link: true },
         index: -30,
+        confirm: { title: t("taskCenter.rerunConfirm") },
         show: (row: RecordType) => canRerun && !!asExecutionRow(row).can_rerun,
         onClick: ({ row }) =>
           actions.runCenterAction(asExecutionRow(row), "rerun")

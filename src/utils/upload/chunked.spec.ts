@@ -79,6 +79,36 @@ describe("uploadFileChunked", () => {
     });
   });
 
+  it("服务端钳制 chunk_size 后按服务端口径重算分片数（尾部不上传即截断）", async () => {
+    // 服务端把 chunk_size 钳到 plan 的一半：totalChunks 必须重算为 6 片，
+    // 否则沿用 plan 口径的 3 片会让后半文件永远不上传（FE-DATA-P1-13）
+    const serverHalf = Math.floor(MIN_CHUNK_SIZE / 2);
+    chunkInit.mockResolvedValue(
+      OK({
+        session: "clamp",
+        chunk_size: serverHalf,
+        created: true,
+        received: []
+      })
+    );
+    chunkPart.mockResolvedValue(OK({ received_count: 1 }));
+    chunkComplete.mockResolvedValue(OK({ file_id: "f-clamp" }));
+
+    const file = makeFile();
+    const result = await uploadFileChunked(file, {
+      chunkSize: MIN_CHUNK_SIZE,
+      md5: "md5"
+    });
+
+    expect(chunkPart).toHaveBeenCalledTimes(6);
+    // 首片与末片按 serverChunkSize 位移，覆盖全文件（末片 = 余数）
+    const lastStart = 5 * serverHalf;
+    const lastPart = chunkPart.mock.calls[5][2] as Blob;
+    expect(lastPart.size).toBe(file.size - lastStart);
+    expect(chunkComplete).toHaveBeenCalled();
+    expect(result.session).toBe("clamp");
+  });
+
   it("续传命中：跳过已收分片并上报 resumed", async () => {
     chunkInit.mockResolvedValue(
       OK({

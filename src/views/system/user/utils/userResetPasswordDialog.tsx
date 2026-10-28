@@ -105,23 +105,29 @@ export function openUserResetPasswordDialog({
       </>
     ),
     closeCallBack: () => (pwdForm.newPwd = ""),
-    beforeSure: done => {
+    beforeSure: (done, { closeLoading }) => {
       ruleFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-          const password = await AesEncrypted(row.username, pwdForm.newPwd);
-          api
-            .resetPassword(row.pk, { password })
-            .then(res => {
-              if (isSuccess(res)) {
-                message(t("results.success"), { type: "success" });
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            })
-            // 关闭弹框收口到 settle：请求异常（http 层已提示）不能悬挂按钮 loading
-            .finally(() => done());
+        if (!valid) {
+          // 校验不过也要收口 loading：否则保存按钮永久转圈（弹层保留供修正）
+          closeLoading();
+          return;
+        }
+        const password = await AesEncrypted(row.username, pwdForm.newPwd);
+        try {
+          const res = await api.resetPassword(row.pk, { password });
+          if (isSuccess(res)) {
+            message(t("results.success"), { type: "success" });
+            done();
+          } else {
+            // 业务失败保持弹层（失败保弹层约定）：提示后输入不丢、可重试
+            message(`${t("results.failed")}，${res.detail}`, {
+              type: "error"
+            });
+            closeLoading();
+          }
+        } catch {
+          // 请求异常（http 层已提示）：停 loading 但保持弹层，不能悬挂转圈
+          closeLoading();
         }
       });
     }

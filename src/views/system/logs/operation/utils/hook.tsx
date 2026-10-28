@@ -7,7 +7,7 @@ import { fetchOperationLogDetail } from "./operationLogDetail";
 
 /**
  * 操作日志：列渲染见 operationLogColumns.tsx（列表列与详情抽屉列），
- * 详情全量兜底见 operationLogDetail.ts。
+ * 详情正文口径见 operationLogDetail.ts（有界预览，无全文二次拉取）。
  */
 export function useOperationLog() {
   // 审计表百万行级：顺序翻页走 keyset（cursor），跳页/改排序自动回退 page 模式
@@ -20,7 +20,7 @@ export function useOperationLog() {
         width: 140,
         buttons: [
           {
-            // 全量正文需要 retrieve：仅 list 权限时隐藏详情入口，避免点了 403
+            // 详情端点独立权限：仅 list 权限时隐藏详情入口，避免点了 403
             code: "detail",
             update: true,
             show: () => Boolean(auth.retrieve)

@@ -4,7 +4,16 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import { choiceValue } from "@/utils/dict";
-import { type ScreenItem, type ScreenLayoutMode } from "@/api/dataset/analysis";
+import { isSuccess } from "@/api/types";
+import { message } from "@/utils/message";
+import {
+  listScreenVersions,
+  type ScreenChoiceValue,
+  type ScreenItem,
+  type ScreenLayoutMode
+} from "@/api/dataset/analysis";
+import { VersionHistoryDialog } from "@/components/VersionHistoryDialog";
+import type { VersionHistoryRow } from "@/components/VersionHistoryDialog";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 import DesignerToolbar from "./components/DesignerToolbar.vue";
 import FreeCanvasToolbar from "./components/FreeCanvasToolbar.vue";
@@ -15,6 +24,7 @@ import PaneInspector from "./components/PaneInspector.vue";
 import MultiSelectInspector from "./components/MultiSelectInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
 import { useScreenPersistence } from "./utils/useScreenPersistence";
+import { createScreenVersionActions } from "./utils/screenVersions";
 import { useDesignerActions } from "./utils/useDesignerActions";
 import { useDesignerBootstrap } from "./utils/useDesignerBootstrap";
 import { usePaneHistory } from "./utils/history";
@@ -54,6 +64,19 @@ const saving = ref(false);
 const dirty = ref(false);
 const clock = ref("");
 const loading = ref(true);
+const versionsVisible = ref(false);
+
+async function loadVersions(): Promise<VersionHistoryRow[]> {
+  if (!screen.value) return [];
+  const res = await listScreenVersions(screen.value.pk);
+  if (!isSuccess(res)) throw new Error(res.detail ?? "");
+  return (res.data ?? []) as VersionHistoryRow[];
+}
+
+const versionMeta = (row: VersionHistoryRow) =>
+  choiceValue(row.layout_mode as ScreenChoiceValue) === "free"
+    ? t("dataScreen.modeFree")
+    : t("dataScreen.modeGrid");
 
 const gridBoardRef = ref<GridBoardHandle>(null);
 const freeBoardRef = ref<InstanceType<typeof FreeCanvasBoard> | null>(null);
@@ -66,8 +89,12 @@ const readonly = computed(
 const locked = computed(() => preview.value || readonly.value);
 const isFree = computed(() => mode.value === "free");
 
+/** 编辑序号：markDirty 单调递增；保存发起时快照，成功回调只在序号未前进时清 dirty
+ *  （防保存 RTT 内的新编辑被误判「已保存」，见 useScreenPersistence） */
+let editSeq = 0;
 const markDirty = () => {
   dirty.value = true;
+  editSeq += 1;
 };
 
 /** 大屏主题（深色缺省 / 浅色 / 跟随站点）：编辑中即时预览，与投屏同一套解析 */
@@ -129,6 +156,7 @@ const gridHistory = usePaneHistory({
 });
 const freeHistory = usePaneHistory({
   panes: freePanes,
+  design: freeDesign,
   selection: freeSelection,
   markDirty
 });
@@ -169,7 +197,8 @@ const { save, clearCanvas } = useScreenPersistence({
     theme: themeValue.value,
     theme_color: themeColorValue.value
   }),
-  freePayload: () => free.toPayload(),
+  freePayload: panes => free.toPayload(panes),
+  editSeq: () => editSeq,
   pushHistory: () => pushHistory(),
   resetCoalesce: () => {
     gridHistory.resetCoalesce();
@@ -179,6 +208,14 @@ const { save, clearCanvas } = useScreenPersistence({
     grid.clearSelection();
     free.clearSelection();
   }
+});
+
+const { rollbackTo } = createScreenVersionActions({
+  t,
+  screen,
+  saving,
+  readonly,
+  preview
 });
 
 /* 模式分派动作（一行分派与「仅自由模式」口径收口在 useDesignerActions，行数门禁抽出） */
@@ -254,6 +291,23 @@ const refreshData = () => {
   Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
 };
 
+/** 回滚成功：把服务端恢复的两份载荷重新装进编辑器（模式/选中一并重置） */
+async function onRollback(version: number) {
+  const updated = await rollbackTo(version);
+  if (!updated) return;
+  mode.value = choiceValue(updated.layout_mode) === "free" ? "free" : "grid";
+  grid.load(updated.layout ?? []);
+  free.load(updated.free_layout ?? {});
+  grid.clearSelection();
+  free.clearSelection();
+  dirty.value = false;
+  versionsVisible.value = false;
+  message(t("dataScreen.versionRolledBack", { n: version }), {
+    type: "success"
+  });
+  refreshData();
+}
+
 const back = () => {
   router.push("/analysis/screen/index");
 };
@@ -291,6 +345,7 @@ const back = () => {
       @refresh="refreshData"
       @preview="preview = !preview"
       @clear="clearCanvas"
+      @versions="versionsVisible = true"
       @back="back"
       @save="save"
     />
@@ -404,6 +459,15 @@ const back = () => {
         }}</span>
       </aside>
     </div>
+
+    <VersionHistoryDialog
+      v-model="versionsVisible"
+      :title="t('dataScreen.versionHistory')"
+      :load="loadVersions"
+      :meta-label="t('dataScreen.versionMode')"
+      :meta-text="versionMeta"
+      @rollback="onRollback"
+    />
   </div>
 </template>
 

@@ -66,17 +66,32 @@ const stageStyle = computed(() => ({
       :data-scale="scale.toFixed(4)"
       data-testid="screen-free-stage"
     >
-      <ScreenPane
-        v-for="pane in panes"
+      <!-- 与设计器同源的窗格定位包裹层：设计器经 ReResize 按 x/y/w/h 摆放
+           （自由模式 ScreenPane 自身 inset:0 只负责填满包裹层），投屏缺这层
+           会让全部窗格铺满舞台并互相覆盖。数组顺序即层级，与设计器 z 序一致。 -->
+      <div
+        v-for="(pane, index) in panes"
         :key="pane.pk"
-        :ref="setPaneRef?.(pane.pk)"
-        layout="free"
-        play-animation
-        :pane="pane"
-        :cards="paneCards(pane)"
-        :clock="clock"
-        :dashboard-name="paneTitle(pane)"
-      />
+        class="screen-free__pane-box"
+        :style="{
+          left: `${pane.x}px`,
+          top: `${pane.y}px`,
+          width: `${pane.w}px`,
+          height: `${pane.h}px`,
+          zIndex: index + 1
+        }"
+        :data-testid="`screen-free-pane-box-${pane.pk}`"
+      >
+        <ScreenPane
+          :ref="setPaneRef?.(pane.pk)"
+          layout="free"
+          play-animation
+          :pane="pane"
+          :cards="paneCards(pane)"
+          :clock="clock"
+          :dashboard-name="paneTitle(pane)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -99,5 +114,9 @@ const stageStyle = computed(() => ({
   position: relative;
   flex: none;
   transform-origin: center;
+}
+
+.screen-free__pane-box {
+  position: absolute;
 }
 </style>

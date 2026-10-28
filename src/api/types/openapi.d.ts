@@ -666,6 +666,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_ai_mcp_call_logs_export_data_retrieve"];
         put?: never;
@@ -993,9 +997,30 @@ export interface paths {
         /**
          * @description 档案连通性探测
          *
-         *     api_key 用已存密钥
+         *     api_key 用已存密钥；外呼下沉 celery，返回 task_id 供 test-result 回读
          */
         post: operations["api_ai_profiles_test_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/profiles/{id}/test-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description 连通性探测结果
+         *
+         *     按 task_id 回读异步探测结论：PENDING/STARTED 表示仍在执行
+         */
+        get: operations["api_ai_profiles_test_result_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1122,8 +1147,11 @@ export interface paths {
         /**
          * @description 委托停用影响面
          *
-         *     当前在途审批单中挂在该委托人或代理人名下的待办。停用委托不会自动改派既有待办（建单/进节点时已按快照分配），
-         *     这里只把「哪些在途单会受影响」显式列出，供停用前确认。
+         *     在途流程实例当前节点挂在该委托人或代理人名下的待办任务（与委托展开同一实体：
+         *     引擎的唯一消费点是流程节点候选人替换，见 conditions.py::_expand_delegations）。
+         *     停用委托不会自动改派既有待办（建单/进节点时已按快照分配），这里只把「哪些在途
+         *     待办会受影响」显式列出，供停用前确认；代理人名下只统计经本委托人代审而来的任务
+         *     （delegate_from = 委托人）。
          */
         get: operations["api_approval_approval_delegations_impact_retrieve"];
         put?: never;
@@ -1441,6 +1469,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_approval_approval_instances_export_data_retrieve"];
         put?: never;
@@ -2317,6 +2349,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_audit_logs_login_export_data_retrieve"];
         put?: never;
@@ -2423,6 +2459,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_audit_logs_operation_export_data_retrieve"];
         put?: never;
@@ -2568,6 +2608,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_audit_mask_rules_export_data_retrieve"];
         put?: never;
@@ -3481,6 +3525,8 @@ export interface paths {
          *     行级数据权限随调用者过滤，fail-closed
          *
          *     ``count_only=true``：仅取行数（数字卡场景，跳过行物化）。
+         *     ``max_rows``：预览侧行数上限（与数据集 row_limit 取小者下推 SQL），
+         *     报表预览按展示口径收数，不在前端物化后切片（REP-P1-01）。
          *     ``filters``：请求级行过滤（卡片下钻），与数据集定义 filters 叠加，
          *     校验口径同保存侧（``validate_filters``：字段白名单 + op 白名单 + 类型），
          *     并按浏览者字段权限收敛（无该列权限即 1001，防隐藏列布尔预言机）。
@@ -3591,6 +3637,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_dataset_dynamic_form_submissions_export_data_retrieve"];
         put?: never;
@@ -3923,6 +3973,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_dataset_form_data_export_data_retrieve"];
         put?: never;
@@ -4171,6 +4225,27 @@ export interface paths {
         patch: operations["api_dataset_reports_partial_update"];
         trace?: never;
     };
+    "/api/dataset/reports/{id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description 回滚报表设计版本
+         *
+         *     恢复历史设计并再记一版（回滚可逆）
+         */
+        post: operations["api_dataset_reports_rollback_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dataset/reports/{id}/run": {
         parameters: {
             query?: never;
@@ -4186,6 +4261,27 @@ export interface paths {
          *     预创建 ExportRecord 并按契约派发
          */
         post: operations["api_dataset_reports_run_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dataset/reports/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description 报表设计版本历史
+         *
+         *     只读，最新在前；历史属于作者工作台，与回滚同一归属口径
+         */
+        get: operations["api_dataset_reports_versions_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4558,6 +4654,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dataset/screens/{id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description 回滚大屏布局版本
+         *
+         *     恢复两份画布载荷与模式，并再记一版（回滚可逆）
+         */
+        post: operations["api_dataset_screens_rollback_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dataset/screens/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description 大屏布局版本历史
+         *
+         *     只读，最新在前；历史属于作者工作台，与回滚同一归属口径
+         */
+        get: operations["api_dataset_screens_versions_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/demo/book": {
         parameters: {
             query?: never;
@@ -4621,6 +4759,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_demo_book_export_data_retrieve"];
         put?: never;
@@ -5973,6 +6115,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_identity_dept_export_data_retrieve"];
         put?: never;
@@ -6642,6 +6788,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_identity_online_export_data_retrieve"];
         put?: never;
@@ -7445,6 +7595,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_identity_role_export_data_retrieve"];
         put?: never;
@@ -7990,6 +8144,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_identity_user_export_data_retrieve"];
         put?: never;
@@ -10576,6 +10734,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_settings_setting_export_data_retrieve"];
         put?: never;
@@ -10948,6 +11110,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_config_system_export_data_retrieve"];
         put?: never;
@@ -11193,6 +11359,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_config_user_export_data_retrieve"];
         put?: never;
@@ -11644,6 +11814,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_dict_export_data_retrieve"];
         put?: never;
@@ -11930,6 +12104,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_field_export_data_retrieve"];
         put?: never;
@@ -12116,7 +12294,13 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 批量修改{cls} */
+        /**
+         * @description 批量修改菜单
+         *
+         *     权限点与菜单/目录的启停语义不同：权限点代表动作授权，由角色与字段权限
+         *     链路独立消费，停用权限点会让授权面静默失效。两类节点混批一律拒绝，
+         *     避免前端级联或第三方客户端把权限点随目录一起停用。
+         */
         post: operations["api_system_menu_batch_update_create"];
         delete?: never;
         options?: never;
@@ -12169,6 +12353,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_menu_export_data_retrieve"];
         put?: never;
@@ -12786,6 +12974,10 @@ export interface paths {
          * @description 导出{cls}数据
          *
          *     type=csv|xlsx，缺省 xlsx
+         *
+         *     走流式渲染（见 import_export/streaming.py）：逐行序列化 + 逐行落临时文件 +
+         *     文件响应，峰值内存不随导出行数增长；不再经 DRF 把全量列表与整本工作簿同时
+         *     驻留内存。旧渲染器仍服务导入模板（``template=import``，含下拉校验）。
          */
         get: operations["api_system_permission_export_data_retrieve"];
         put?: never;
@@ -18351,7 +18543,8 @@ export interface components {
          *     详情抽屉直接渲染列表行（本视图集历史上无 retrieve），「变更历史」弹窗
          *     逐行读取 changes 渲染 old/new 对照——因此 changes 保留全量不裁剪；
          *     body / response_result 只保留预览，截断时附 ``*_truncated`` 标记
-         *     （键恒在，向后兼容）。全量口径由 retrieve / 导出经 OperationLogSerializer 承载。
+         *     （键恒在，向后兼容）。截断与脱敏由基类 to_representation 统一承载，
+         *     retrieve / 导出与列表同级（LOG-P1-01）。
          */
         OperationLogList: {
             /**
@@ -21222,6 +21415,7 @@ export interface components {
         };
         /** @description 定时报表。执行以创建者权限上下文进行（menu 上下文为空 = 仅全局授权）。 */
         PatchedReport: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -21248,6 +21442,8 @@ export interface components {
              * @description 报表设计载荷（为空 = 存量单表导出）
              */
             design?: unknown;
+            /** 设计版本 */
+            readonly design_version?: number;
             /**
              * 频率
              * @description null
@@ -21498,6 +21694,7 @@ export interface components {
         };
         /** @description 大屏模板。可见性同 Dataset（personal/shared）；创建者与超管可改。 */
         PatchedScreen: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -21536,6 +21733,8 @@ export interface components {
                 label?: string;
                 value?: string;
             };
+            /** 布局版本 */
+            readonly layout_version?: number;
             /** 名称 */
             name?: string;
             /**
@@ -23035,6 +23234,7 @@ export interface components {
         };
         /** @description 定时报表。执行以创建者权限上下文进行（menu 上下文为空 = 仅全局授权）。 */
         Report: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -23061,6 +23261,8 @@ export interface components {
              * @description 报表设计载荷（为空 = 存量单表导出）
              */
             design?: unknown;
+            /** 设计版本 */
+            readonly design_version: number;
             /**
              * 频率
              * @description null
@@ -23355,6 +23557,7 @@ export interface components {
         };
         /** @description 大屏模板。可见性同 Dataset（personal/shared）；创建者与超管可改。 */
         Screen: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -23393,6 +23596,8 @@ export interface components {
                 label?: string;
                 value?: string;
             };
+            /** 布局版本 */
+            readonly layout_version: number;
             /** 名称 */
             name: string;
             /**
@@ -24569,8 +24774,6 @@ export interface components {
             readonly usage_count: number;
         };
         TaskExecution: {
-            /** 位置参数 */
-            readonly args: unknown;
             /** 可取消 */
             readonly can_cancel: boolean;
             /**
@@ -24595,8 +24798,6 @@ export interface components {
              * Format: date-time
              */
             readonly date_start: string | null;
-            /** 关键字参数 */
-            readonly kwargs: unknown;
             /** 任务名称 */
             readonly name: string;
             /** 周期任务 */
@@ -27200,6 +27401,33 @@ export interface operations {
                 "text/xlsx": components["schemas"]["AiProfile"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_ai_profiles_test_result_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 AI 配置档案 的 UUID 字符串。 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -34283,6 +34511,41 @@ export interface operations {
             };
         };
     };
+    api_dataset_reports_rollback_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 报表 的 UUID 字符串。 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Report"];
+                "application/x-www-form-urlencoded": components["schemas"]["Report"];
+                "multipart/form-data": components["schemas"]["Report"];
+                "text/csv": components["schemas"]["Report"];
+                "text/xlsx": components["schemas"]["Report"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
     api_dataset_reports_run_create: {
         parameters: {
             query?: never;
@@ -34302,6 +34565,33 @@ export interface operations {
                 "text/xlsx": components["schemas"]["Report"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_dataset_reports_versions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 报表 的 UUID 字符串。 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -35319,6 +35609,68 @@ export interface operations {
                 "text/xlsx": components["schemas"]["ScreenCommand"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_dataset_screens_rollback_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 大屏 的 UUID 字符串。 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Screen"];
+                "application/x-www-form-urlencoded": components["schemas"]["Screen"];
+                "multipart/form-data": components["schemas"]["Screen"];
+                "text/csv": components["schemas"]["Screen"];
+                "text/xlsx": components["schemas"]["Screen"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_dataset_screens_versions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标识此 大屏 的 UUID 字符串。 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

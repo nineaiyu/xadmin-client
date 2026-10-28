@@ -1,8 +1,12 @@
 import { AesEncrypted } from "@/utils/aes";
-import { handleTree } from "@/utils/tree";
 import { ref, shallowRef } from "vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
-import { buildUserFormRules } from "./userFormRules";
+import {
+  buildDeptColumn,
+  buildInviteColumn,
+  buildPasswordColumn,
+  buildUserFormRulesResolver
+} from "./userFormColumns";
 import type { useI18n } from "vue-i18n";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
@@ -33,75 +37,28 @@ export function useUserFormOptions({
         }
       },
       columns: {
-        password: ({ column, isAdd }) => {
-          if (!isAdd) {
-            column["hideInForm"] = true;
-          }
-          return column;
-        },
-        invite: ({ column, isAdd }) => {
-          // 一步邀请：新建时可选「邀请激活」——创建后立即发邀请邮件（用户自行设置密码），
-          // 免去「先建号（管理员设密码）再点行操作邀请」的两步；编辑场景不展示
-          inviteMode.value = false;
-          if (!isAdd) {
-            column["hideInForm"] = true;
-          }
-          column["valueType"] = "switch";
-          column["fieldProps"] = {
-            ...column["fieldProps"],
-            onChange: (value: unknown) => {
-              inviteMode.value = Boolean(value);
-            }
-          };
-          return column;
-        },
-        dept: ({ column }) => {
-          column["valueType"] = "cascader";
-          column["fieldProps"] = {
-            ...column["fieldProps"],
-            ...{
-              props: {
-                value: "pk",
-                label: "name",
-                emitPath: false,
-                checkStrictly: true
-              }
-            }
-          };
-          column["options"] = handleTree(
-            column._column?.choices ?? [],
-            "pk",
-            "parent_id"
-          );
-          return column;
-        }
+        password: buildPasswordColumn,
+        invite: ctx => buildInviteColumn({ ...ctx, inviteMode }),
+        dept: buildDeptColumn
       },
       formProps: {
-        rules: ({
-          rawFormProps: { rules }
-        }: {
-          rawFormProps: { rules: RecordType };
-        }) => {
-          // 密码/手机号动态校验规则见 userFormRules.ts（一步邀请模式下密码非必填）
-          Object.assign(
-            rules,
-            buildUserFormRules({ t, passwordRules, inviteMode })
-          );
-          return rules;
-        }
+        rules: buildUserFormRulesResolver({ t, passwordRules, inviteMode })
       },
-      beforeSubmit: async ({ formData, formOptions: { isAdd } }) => {
-        if (isAdd && formData.invite) {
+      beforeSubmit: async ({ formData, formOptions: { isAdd, rawRow } }) => {
+        if (!isAdd || rawRow?.pk) {
+          // 编辑态密码字段隐藏（改密走「重置密码」独立入口），不提交空值/旧值
+          delete formData["password"];
+          return formData;
+        }
+        if (formData.invite) {
           // 邀请模式：不提交密码（服务端置不可用，由被邀请人从邮件链接自行设置）
           delete formData["password"];
           return formData;
         }
-        if (isAdd) {
-          formData["password"] = await AesEncrypted(
-            formData.username,
-            formData.password
-          );
-        }
+        formData["password"] = await AesEncrypted(
+          formData.username,
+          formData.password
+        );
         return formData;
       }
     }

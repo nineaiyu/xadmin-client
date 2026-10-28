@@ -28,6 +28,10 @@ export function useNoticeRead() {
       return listColumnsFormat(columns);
     },
     buttons: ({ t, api, auth, tableRef }) => {
+      // 能力位快照：本 hook 末尾会把 page.auth.destroy 关掉（避免框架默认
+      // 「删除」入口与「移除」重叠），而函数型 show 逐次求值读实时值——
+      // 不快照的话「移除」按钮恒不渲染（后端 Destroy 能力实际存在）
+      const canDestroy = Boolean(auth.destroy);
       const removeNoticeRead = createNoticeReadRemove({ t, api, tableRef });
 
       const operationButtonsProps = shallowRef<OperationProps>({
@@ -45,10 +49,7 @@ export function useNoticeRead() {
             text: t("noticeRead.remove"),
             props: { type: "danger", link: true },
             show: row =>
-              canRemoveNoticeReadRow(
-                row as NoticeReadRow,
-                Boolean(auth.destroy)
-              ),
+              canRemoveNoticeReadRow(row as NoticeReadRow, canDestroy),
             onClick({ row }) {
               removeNoticeRead(row as NoticeReadRow);
             }

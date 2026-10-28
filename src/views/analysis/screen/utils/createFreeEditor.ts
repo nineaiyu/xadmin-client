@@ -107,7 +107,9 @@ export function createFreeEditor(deps: {
     selection.value = [];
   }
 
-  const toPayload = () => buildFreeLayout(panes.value, design.value);
+  /** 自由载荷组装：默认取当前窗格，可传入预检后的清单覆盖（保存前剔除未配置媒体） */
+  const toPayload = (override?: readonly ScreenLayoutPane[]) =>
+    buildFreeLayout(override ?? panes.value, design.value);
 
   /* ---------------- 选择 ---------------- */
 

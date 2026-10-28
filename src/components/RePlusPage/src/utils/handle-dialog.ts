@@ -10,6 +10,7 @@ import { cloneDeep } from "lodash-es";
 import { message } from "@/utils/message";
 import { h, nextTick, ref, type Component, type Ref } from "vue";
 import { scrollToFirstError } from "@/hooks/useFormScrollToError";
+import { stripHiddenFormFields } from "./hiddenFormFields";
 import type { PlusFormProps, RecordType } from "plus-pro-components";
 import type { SearchColumnsResult, SearchFieldsResult } from "@/api/types";
 import AddOrEdit from "../components/AddOrEdit.vue";
@@ -377,7 +378,12 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
             formOptions
           })
         : undefined;
-      const formData = (submitted as RecordType | undefined) || formInlineData;
+      // 隐藏列（含联动 computed）在提交前剔除：后端 PATCH 语义是「未提交键保留」，
+      // 否则用户把字段隐藏后旧值仍会被写回，表现为「字段消失但值没清」
+      const formData = stripHiddenFormFields(
+        (submitted as RecordType | undefined) || formInlineData,
+        formOptions?.columns
+      );
       formOptions?.saveCallback?.({
         formData,
         formRef: FormRef,

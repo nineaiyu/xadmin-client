@@ -29,8 +29,13 @@ export function syncTabQuery(paneKey: string): void {
 }
 
 /**
- * 解析落地页签：`?tab=` 命中可用页签时直达，非法 / 无权限时回落兜底页签，
+ * 解析落地页签：`?tab=` 命中可用页签时直达；非法 / 无权限时回落兜底页签，
  * 避免落到空白面板（OAuth 绑定回调经 `?tab=oauthBindings` 落地）。
+ *
+ * 兜底页签同样按 `auth` 收敛（FE-UI-P1-01）：写死的 fallback 可能落在
+ * 调用者无权限的页签上（如仅持 import 记录权限的角色落到 export 页），
+ * 此时改为「首个有权限的页签」；全部无权限时才返回 fallback（页面自行
+ * 渲染 denied/空态，两个 pane 的 v-if 都不满足是调用方的授权配置问题）。
  */
 export function resolveInitialPane<T extends { key: string; auth?: boolean }>(
   panes: T[],
@@ -38,7 +43,9 @@ export function resolveInitialPane<T extends { key: string; auth?: boolean }>(
   fallback: string
 ): string {
   const key = String(queryTab ?? "");
-  return panes.some(item => item.key === key && item.auth !== false)
-    ? key
-    : fallback;
+  if (panes.some(item => item.key === key && item.auth !== false)) {
+    return key;
+  }
+  const firstVisible = panes.find(item => item.auth !== false);
+  return firstVisible ? firstVisible.key : fallback;
 }

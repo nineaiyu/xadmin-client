@@ -123,8 +123,11 @@ export type ScreenItem = {
   theme?: ScreenChoiceValue;
   /** 大屏主题色（hex，如 #006be6）：空 = 跟随站点主色 */
   theme_color?: string;
+  /** 布局版本（保存布局时递增；乐观锁基线用 updated_time） */
+  layout_version?: number;
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
+  updated_time?: string;
 };
 
 /**
@@ -178,6 +181,9 @@ export type ReportItem = {
   value_field: string;
   /** 报表设计：空 = 存量口径 */
   design?: ReportDesign;
+  /** 设计版本（保存设计时递增；乐观锁基线用 updated_time） */
+  design_version?: number;
+  updated_time?: string;
   frequency: "daily" | "weekly" | "monthly";
   send_time: string;
   weekday: number;
@@ -271,6 +277,60 @@ export const rollbackScreenTemplate = (pk: string, version: number) =>
     {},
     { version },
     `${screenTemplateApi.baseApi}/${pk}/rollback`
+  );
+
+/** 大屏本体布局历史版本（只读；回滚目标选择用） */
+export type ScreenVersionItem = {
+  pk: string;
+  version: number;
+  layout?: ScreenLayoutPane[];
+  layout_mode?: ScreenChoiceValue;
+  free_layout?: Partial<ScreenFreeLayout>;
+  created_time?: string;
+};
+
+/** 大屏布局历史版本列表（最新在前） */
+export const listScreenVersions = (pk: string) =>
+  screenApi.request<DataListResult<ScreenVersionItem>>(
+    "get",
+    {},
+    {},
+    `${screenApi.baseApi}/${pk}/versions`
+  );
+
+/** 回滚大屏布局到指定版本（回滚本身也会记一版，可再回滚回来） */
+export const rollbackScreen = (pk: string, version: number) =>
+  screenApi.request<DetailResult<ScreenItem>>(
+    "post",
+    {},
+    { version },
+    `${screenApi.baseApi}/${pk}/rollback`
+  );
+
+/** 报表设计历史版本（只读；回滚目标选择用） */
+export type ReportVersionItem = {
+  pk: string;
+  version: number;
+  design?: ReportDesign;
+  created_time?: string;
+};
+
+/** 报表设计历史版本列表（最新在前） */
+export const listReportVersions = (pk: string) =>
+  reportApi.request<DataListResult<ReportVersionItem>>(
+    "get",
+    {},
+    {},
+    `${reportApi.baseApi}/${pk}/versions`
+  );
+
+/** 回滚报表设计到指定版本（回滚本身也会记一版，可再回滚回来） */
+export const rollbackReport = (pk: string, version: number) =>
+  reportApi.request<DetailResult<ReportItem>>(
+    "post",
+    {},
+    { version },
+    `${reportApi.baseApi}/${pk}/rollback`
   );
 
 /** 云端剪贴板（按用户单槽）：跨设备复制粘贴 */

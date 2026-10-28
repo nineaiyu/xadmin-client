@@ -32,6 +32,7 @@ const {
       :addOrEditOptions="addOrEditOptions"
       :listColumnsFormat="listColumnsFormat"
       :operationButtonsProps="operationButtonsProps"
+      :selection="false"
       recycleBin
     />
   </div>

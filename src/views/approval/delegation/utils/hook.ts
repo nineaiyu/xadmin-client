@@ -47,7 +47,8 @@ export function useApprovalDelegation() {
   const { flowNames, flowOptions } = useDelegationFlowOptions(t);
   const baseColumnsFormat = buildDelegationFormColumns({
     flowOptions,
-    isSuperuser: Boolean(userStore.is_superuser)
+    isSuperuser: Boolean(userStore.is_superuser),
+    t
   });
 
   const switchLoadMap = ref({});

@@ -103,7 +103,15 @@ function contentProps(options: DrawerOptions) {
       :is="options.contentRenderer?.({ options, index })"
       v-bind="contentProps(options)"
       @change="(values: unknown) => handleChange(options, index, values)"
-      @close="(args: ArgsType) => handleClose(options, index, args)"
+      @close="
+        (args: ArgsType) =>
+          // 内容组件主动关闭同样走 beforeClose 守卫：无 footer 的抽屉
+          // （如流程配置）在这里 emit('close')，绕过守卫会丢未保存改动。
+          // done(true) = 取消关闭（与 el-drawer before-close 语义一致）
+          handleBeforeClose(options, (cancel?: boolean) => {
+            if (!cancel) handleClose(options, index, args);
+          })
+      "
     />
     <!-- footer  -->
     <template v-if="!options?.hideFooter" #footer>

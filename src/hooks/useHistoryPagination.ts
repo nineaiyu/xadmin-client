@@ -39,19 +39,29 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
 
+  /** 首屏历史请求令牌：只允许最新一次 loadHistory 回填（FE-DATA-P1-04） */
+  let historySeq = 0;
+
   async function loadHistory(scope: Scope) {
+    const seq = ++historySeq;
     loadingHistory.value = true;
     messages.value = [];
     pendingCount.value = 0;
     try {
       const page = await fetchPage({ limit: PAGE_SIZE, initial: true }, scope);
+      // 过期响应直接丢弃：快速 A→B 切会话时，A 的慢响应不得把 A 的历史写进
+      // B 的消息区（loadMore 有 scopeForLoadMore 守卫，首屏此前没有）
+      if (seq !== historySeq) return;
       if (page) {
         messages.value = page.results;
         hasMore.value = page.hasMore;
       }
     } finally {
-      loadingHistory.value = false;
+      if (seq === historySeq) {
+        loadingHistory.value = false;
+      }
     }
+    if (seq !== historySeq) return;
     await nextTick();
     scrollToBottom();
   }

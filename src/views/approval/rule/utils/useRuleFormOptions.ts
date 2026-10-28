@@ -42,6 +42,12 @@ export function useRuleFormOptions({
         }
       },
       columns: buildRuleFormColumns({ t, draft, canPreview }),
+      // 合成列（impact_preview）只承载实时预览，不是接口字段：表单模型会收集它的
+      // 初值 true，必须在提交前剔除——否则真实载荷会带上一个后端不认识的键
+      beforeSubmit: ({ formData }: { formData: RecordType }) => {
+        const { impact_preview: _preview, ...rest } = formData;
+        return rest;
+      },
       formProps: {
         rules: {
           // 路径必选：勾选目录与自定义正则合并后为空即拦截（与原手写表单提示一致）

@@ -170,6 +170,6 @@ test("动态表单：金额/选人/级联控件填报主链路", async ({ page }
     .getByRole("row", { name: formName });
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row.getByText("fee: 88.5")).toBeVisible();
-  // 非标量值在提交列表按 JSON 展示（与附件/日期范围同口径）
-  await expect(row.getByText('region: ["华东","上海"]')).toBeVisible();
+  // 标量数组按可读枚举展示（与日期区间同口径；对象/对象数组才走 JSON/行数）
+  await expect(row.getByText("region: 华东、上海")).toBeVisible();
 });

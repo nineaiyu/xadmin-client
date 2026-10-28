@@ -26,7 +26,7 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const rows = ref<Record<string, unknown>[]>([]);
-/** 全量行：limit 变化时只重切展示，不重新请求 */
+/** 已取行（≤ 上限）：limit 变化时优先本地重切，超出已取行数且还有更多数据才补拉 */
 const allRows = ref<Record<string, unknown>[]>([]);
 const available = ref<string[]>([]);
 const total = ref(0);
@@ -56,7 +56,11 @@ const load = async () => {
   loading.value = true;
   errorMsg.value = "";
   try {
-    const res = await datasetApi.execute<ExecuteResult>(props.datasetPk);
+    // max_rows 随载荷下推（服务端取 row_limit 与 max_rows 的小者下推 SQL）：
+    // 预览只物化展示所需行数，不再按数据集 row_limit 全量取回后本地切片
+    const res = await datasetApi.execute<ExecuteResult>(props.datasetPk, {
+      max_rows: props.limit
+    });
     if (!isSuccess(res)) {
       errorMsg.value = String(res.detail ?? t("dataReport.tableLoadFailed"));
       return;
@@ -76,11 +80,15 @@ const load = async () => {
 };
 
 onMounted(load);
-// 行数上限只影响展示裁剪：从已取全量行重切，无需重拉
+// 行数上限变化：先本地重切（缩小上限 / 已取行够用时无需重拉）；
+// 调大后已取行不够且服务端还有更多数据时补拉（max_rows 已下推，本地没有更多行）
 watch(
   () => props.limit,
   limit => {
     rows.value = allRows.value.slice(0, limit);
+    if (limit > allRows.value.length && total.value > allRows.value.length) {
+      load();
+    }
   }
 );
 // 仅数据集切换时重拉

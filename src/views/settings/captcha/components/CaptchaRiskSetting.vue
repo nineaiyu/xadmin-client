@@ -23,7 +23,8 @@ const loading = ref(false);
 const saving = ref(false);
 const loadError = ref("");
 const savedSnapshot = ref("");
-const canEditRules = hasAuth("rules:SecurityCaptchaRisk");
+// 读写拆码后按钮显隐与编辑能力跟随写权限码（rules 仅可查看列表）
+const canEditRules = hasAuth("updateRules:SecurityCaptchaRisk");
 
 function snapshot(rows: CaptchaRule[]): string {
   return JSON.stringify(

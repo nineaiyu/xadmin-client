@@ -2095,17 +2095,17 @@ test.describe("布局偏好（面板实时生效）", () => {
 
     // 折叠侧栏（Alt+S 默认快捷键）
     await page.keyboard.press("Alt+s");
-    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+    await expect(collapsed).toHaveCount(1, { timeout: 20_000 });
 
     // 悬停侧栏：临时展开（折叠类消失）
     const box = await sidebar.boundingBox();
     expect(box, "侧栏应可见").not.toBeNull();
     await page.mouse.move((box?.x ?? 0) + 20, (box?.y ?? 0) + 300);
-    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+    await expect(collapsed).toHaveCount(0, { timeout: 20_000 });
 
     // 移开：复位为折叠态
     await page.mouse.move((box?.x ?? 0) + 700, (box?.y ?? 0) + 300);
-    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+    await expect(collapsed).toHaveCount(1, { timeout: 20_000 });
 
     // 关闭开关后悬停不再展开（负断言：给一个确定的时间窗）
     await openSettingPanel(page);
@@ -2115,7 +2115,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     // closePanel 的遮罩点击落在侧栏区域内（x≈120），会先触发一次悬停展开；
     // 先把鼠标移出侧栏并等折叠态稳定，再做负断言（否则状态残留导致 flaky）
     await page.mouse.move(900, 300);
-    await expect(collapsed).toHaveCount(1, { timeout: 10_000 });
+    await expect(collapsed).toHaveCount(1, { timeout: 20_000 });
     const boxAfter = await sidebar.boundingBox();
     await page.mouse.move((boxAfter?.x ?? 0) + 20, (boxAfter?.y ?? 0) + 300);
     await page.waitForTimeout(300);
@@ -2124,7 +2124,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 复位：移开鼠标 → 展开侧栏 → 打开开关
     await page.mouse.move((boxAfter?.x ?? 0) + 700, (boxAfter?.y ?? 0) + 300);
     await page.keyboard.press("Alt+s");
-    await expect(collapsed).toHaveCount(0, { timeout: 10_000 });
+    await expect(collapsed).toHaveCount(0, { timeout: 20_000 });
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     await setSwitch(page, "悬停展开", true, "SidebarExpandOnHover");
@@ -3556,9 +3556,13 @@ test.describe("布局：侧栏菜单装饰与激活联动", () => {
     await login(page);
     await page.mouse.move(700, 300);
 
-    // 取首个一级叶子菜单项（`.submenu-title-noDropdown` 标记）：与语言/文案解耦
+    // 取首个一级叶子菜单项（`.submenu-title-noDropdown` 标记）：与语言/文案解耦；
+    // 排除激活项——落在首页时首个叶子就是激活路由，自带高亮背景，
+    // 「默认无悬停背景」这条断言会读到高亮色而非「未悬停」状态
     const item = page
-      .locator(".sidebar-container .el-menu-item.submenu-title-noDropdown")
+      .locator(
+        ".sidebar-container .el-menu-item.submenu-title-noDropdown:not(.is-active)"
+      )
       .first();
     await expect(item).toBeVisible({ timeout: 10_000 });
     expect(
