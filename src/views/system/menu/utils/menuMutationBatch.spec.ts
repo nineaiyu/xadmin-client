@@ -55,7 +55,7 @@ function api(): MenuMutationApi {
       code: SUCCESS_CODE,
       data: { success: [], failures: [] }
     })
-  } as unknown as MenuMutationApi;
+  } as MenuMutationApi;
 }
 
 beforeEach(() => {

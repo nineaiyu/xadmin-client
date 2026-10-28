@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 
 // 列装配 / 开关文案会读 i18n：只覆盖 useI18n，保留 createI18n 供 plugins/i18n 初始化
 vi.mock("vue-i18n", async importOriginal => {
@@ -12,12 +12,21 @@ vi.mock("vue-i18n", async importOriginal => {
 
 import { applyBooleanColumnRenderers } from "../plusPageColumnInjection";
 import { builtinFormRenderers } from "../renderers-form";
+import type { PageColumn } from "../types";
 
 const t = (key: string) => key;
 
+/** 渲染器替身输出：只消费 children（VNode 文本或字符串） */
+type Rendered = { children?: unknown } | string;
+type CellRenderer = (scope: Record<string, unknown>) => Rendered;
+
 /** VNode 文本：JSX 空白折叠后 children 可能是数组 */
-const text = (vnode: Record<string, unknown>) =>
-  Array.isArray(vnode.children) ? vnode.children.join("") : vnode.children;
+const text = (vnode: Rendered) =>
+  typeof vnode === "string"
+    ? vnode
+    : Array.isArray(vnode.children)
+      ? vnode.children.join("")
+      : vnode.children;
 const ctx = () => ({
   t,
   te: () => false,
@@ -27,11 +36,8 @@ const ctx = () => ({
 
 /** 逐列断言的单元格渲染（FE-COMP-P2-35）：列表读的是 cellRenderer 的输出文本/属性。 */
 describe("date / datetime 单元格格式化", () => {
-  type CellRenderer = (
-    scope: Record<string, unknown>
-  ) => Record<string, unknown>;
   const makeItem = () =>
-    ({ fieldProps: {} }) as unknown as {
+    ({ fieldProps: {} }) as {
       fieldProps: Record<string, unknown>;
       cellRenderer: CellRenderer;
     };
@@ -93,7 +99,7 @@ describe("boolean 列开关", () => {
         prop: "is_active",
         _column: { key: "is_active", input_type: "boolean" }
       }
-    ]) as never;
+    ]) as Ref<PageColumn[]>;
     applyBooleanColumnRenderers({
       listColumns,
       t: t as never,
@@ -102,9 +108,10 @@ describe("boolean 列开关", () => {
       switchLoadMap: ref({}) as never,
       switchStyle: ref({}) as never
     });
-    return (listColumns as unknown as { value: Record<string, unknown>[] })
-      .value[0].cellRenderer as (scope: Record<string, unknown>) => {
-      props: Record<string, unknown>;
+    const renderer = listColumns.value[0].cellRenderer!;
+    return (scope: Record<string, unknown>) => {
+      const vnode = renderer(scope as never) as { props?: unknown };
+      return { props: (vnode.props ?? {}) as Record<string, unknown> };
     };
   };
 

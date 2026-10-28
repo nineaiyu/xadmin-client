@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { PageColumn } from "@/components/RePlusPage";
 import { buildDelegationFormColumns } from "./delegationFormColumns";
 
-const t = ((key: string) => key) as unknown as (key: string) => string;
+const t = (key: string) => key;
 
 function column(key: string): PageColumn {
   return {
@@ -12,7 +12,7 @@ function column(key: string): PageColumn {
     label: key,
     prop: key,
     fieldProps: {}
-  } as unknown as PageColumn;
+  } as PageColumn;
 }
 
 describe("委托表单列：流程必选规则", () => {

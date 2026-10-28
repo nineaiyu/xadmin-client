@@ -42,9 +42,16 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     autoSavePending: false
   }),
   actions: {
-    setSiteConfig(config: PlatformConfigs) {
+    /**
+     * 按键写入本地存储（带命名空间）。入参是「键值对集合」：既接受
+     * PlatformConfigs 的扁平大写键，也接受本地存储形状（locale/layout/
+     * configure 三段）——两形状不同构，写入方保证键语义，此处只负责遍历。
+     */
+    setSiteConfig(config: Record<string, unknown>) {
       Object.entries(config).forEach(([key, value]) => {
-        Storage.set(`${this.nameSpace}${key}`, value);
+        // responsive-storage 的 set 声明仅收 string，但实现会对 object 做
+        // JSON.stringify（见其 dist/index.mjs）——按真实行为透传
+        Storage.set(`${this.nameSpace}${key}`, value as never);
       });
     },
     /**
@@ -439,16 +446,14 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               if (localChanged) {
                 // 用户改动优先：只落 locale（站点级语言不受偏好面板实时改动影响），
                 // 基线保持请求前的值（面板「撤销」仍能回到服务端旧值）
-                this.setSiteConfig({
-                  locale: configObj.locale
-                } as unknown as PlatformConfigs);
+                this.setSiteConfig({ locale: configObj.locale });
                 // 快照记服务端值：当前本地值与之不同 → 自动保存会提案用户改动
                 this.syncedSnapshot = {
                   layout: cloneDeep(configObj.layout),
                   configure: cloneDeep(configObj.configure)
                 };
               } else {
-                this.setSiteConfig(configObj as unknown as PlatformConfigs);
+                this.setSiteConfig(configObj);
                 // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
                 this.capturePreferenceBaseline();
                 // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
