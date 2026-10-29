@@ -103,6 +103,11 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 | `ReApiSelect` / `ReApiTreeSelect` | `<ReApiSelect :api="roleApi" label-field="name" />`                          | 通用远程下拉（与 `SearchPicker` 的实体会话搜索不同）；共用 `useApiOptions`（缓存 / 重取 / 归一）                                                                                                                                                                                                                          |
 | `ReSliderCaptcha`                 | `<ReSliderCaptcha v-model="passed" @success="onPass" />`                     | 拖到末端通过；键盘可达（方向键步进、`Home`/`End` 直达），触屏 Pointer 事件统一                                                                                                                                                                                                                                            |
 
+**状态口径（防四态碎片化）**：数据区域 / 列表 / 详情块的 loading、empty、error、denied
+一律用 `ReStateContainer`（列表页由 `RePlusPage` 内置 `PageState` 统一承载）；整页导航结果
+（登录被禁用、OAuth 回调失败、403/404/维护页）才用 `ReResult` / `el-result`。禁止用
+`el-empty` / `el-result` 拼数据态，也不要在页面内另写 loading 骨架。
+
 ## 四、增强组件
 
 > **以下组件已全部接入真实页面**：`ReScrollbar` → AI 控制台左栏 `AiFeatureNav`（功能导航滚动区，经 `label` 下发可访问名）；`ReCollapseParams` → 监控「告警阈值设置」弹窗 `ThresholdForm`（名称列支持可选 `label`）；`ReRenderContent` → `AiResultTable` 单元格；`ReIconPicker` → 菜单管理 `MenuFormBasic` 与代码生成 `BaseConfig` 的图标字段；`ReBackTop` → 布局内容区（`lay-content` 与 `layout/index.vue` 两分支）。下方表格的「接入条件」为原始交付口径，保留备查。

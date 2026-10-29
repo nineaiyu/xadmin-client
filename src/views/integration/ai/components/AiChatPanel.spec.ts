@@ -70,6 +70,7 @@ const mountPanel = (
     activeStreaming?: { content: string; reasoning: string } | null;
     groups?: MessageGroup[];
     initialDraft?: { seq: number; text: string } | null;
+    failedDraft?: { seq: number; text: string } | null;
   } = {}
 ) =>
   mount(AiChatPanel, {
@@ -108,6 +109,28 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(wrapper.find('[data-testid="ai-panel-title"]').text()).toBe(
       "数据查询"
     );
+  });
+
+  it("发送失败回填草稿；已有新输入时不覆盖", async () => {
+    const wrapper = mountPanel({
+      failedDraft: { seq: 1, text: "失败的问题" }
+    });
+    await wrapper.vm.$nextTick();
+    expect(
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value
+    ).toBe("失败的问题");
+
+    await wrapper.find('[data-testid="ai-ask-input"]').setValue("新输入");
+    await wrapper.setProps({ failedDraft: { seq: 2, text: "另一个失败" } });
+    expect(
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value
+    ).toBe("新输入");
   });
 
   it("列表壳滚动元素就绪时向上冒泡 scroller（发送后自动到底依赖该元素）", () => {

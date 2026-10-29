@@ -1499,6 +1499,8 @@ systemApprovalFlow:
   formName: Flow Name
   formCode: Flow Code
   formActive: Active
+  initiatorRoles: Initiator Roles
+  initiatorRolesHint: Leave empty to allow all users to initiate
   formSchemaTitle: Form Fields
   formSchemaTip: The dynamic form rendered when submitting; field keys are referenced by node conditions and the "form field" assignee type
   formSchemaLocked: "This flow is bound to a dynamic form; form fields are synced from the bound form (edit in the form designer, read-only here)"

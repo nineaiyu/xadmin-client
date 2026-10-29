@@ -46,7 +46,14 @@ const { loading, handleLoginSuccess } = useLoginFlow();
 
 const onRegister = async () => {
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("login.registerFailed"), { type: "error" });
+    return;
+  }
   // 注册失败是 200 信封里的业务码（账号已存在 / 密码不合规 / 注册关闭）：
   // 必须显式分流，否则会先提示「注册成功」再跳转，用户既看不到失败原因也无法重试。
   try {

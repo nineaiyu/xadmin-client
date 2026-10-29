@@ -233,6 +233,29 @@ export function componentToCard(
   };
 }
 
+/**
+ * 组件 → 卡片对象的按 id 记忆化：模板每次渲染都会调用 componentCard，
+ * 未变化组件必须返回同一引用，否则 ChartCard 的 props 变更会触发全量重拉。
+ */
+export function createComponentCardMemo(
+  datasetPk: () => string,
+  titleOf: (component: ReportDesignComponent) => string
+) {
+  const cache = new Map<
+    string,
+    { signature: string; card: ReturnType<typeof componentToCard> }
+  >();
+  return (component: ReportDesignComponent) => {
+    const pk = datasetPk();
+    const signature = JSON.stringify([pk, titleOf(component), component]);
+    const cached = cache.get(component.id);
+    if (cached?.signature === signature) return cached.card;
+    const card = componentToCard(component, pk, titleOf(component));
+    cache.set(component.id, { signature, card });
+    return card;
+  };
+}
+
 /** 落库前收敛：列去重并按数据集列白名单过滤；组件补齐 span/metric；丢空 id */
 export function normalizeDesign(
   design: ReportDesign,

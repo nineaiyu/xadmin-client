@@ -28,6 +28,8 @@ export type FlowRow = {
   name: string;
   code: string;
   is_active: boolean;
+  /** 可发起角色 code 列表：空 = 所有用户可发起 */
+  initiator_roles?: string[];
   /** 行版本戳：编辑抽屉保存时原样回传作乐观锁基线（后端比对拦截并发覆盖） */
   updated_time?: string;
   form_schema?: Array<{
@@ -278,7 +280,12 @@ export function validateFlowConfig(
 
 /** 编辑态行模型 → 服务端载荷（表单字段 + 顺序化节点列表；baseUpdatedTime 为乐观锁基线） */
 export function buildFlowPayload(
-  basic: { name: string; code: string; is_active: boolean },
+  basic: {
+    name: string;
+    code: string;
+    is_active: boolean;
+    initiator_roles?: string[];
+  },
   fields: FieldRow[],
   nodes: NodeRow[],
   baseUpdatedTime?: string
@@ -287,6 +294,9 @@ export function buildFlowPayload(
     name: basic.name.trim(),
     code: basic.code.trim(),
     is_active: basic.is_active,
+    initiator_roles: (basic.initiator_roles ?? [])
+      .map(item => String(item).trim())
+      .filter(Boolean),
     ...(baseUpdatedTime ? { base_updated_time: baseUpdatedTime } : {}),
     form_schema: fields
       .filter(field => field.key.trim())

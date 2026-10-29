@@ -20,6 +20,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="configUser"
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"

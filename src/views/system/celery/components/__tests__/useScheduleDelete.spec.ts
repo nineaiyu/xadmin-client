@@ -48,7 +48,7 @@ beforeEach(() => {
   showReferences.mockClear();
 });
 
-describe("useScheduleDelete 能力位收回（FE-STATE-P1-03）", () => {
+describe("useScheduleDelete 能力位收回", () => {
   it("批量删除必须一并关闭：框架批删不经过「先查引用再确认」", () => {
     const auth = { destroy: true, batchDestroy: true };
     build(makeApi(), auth);

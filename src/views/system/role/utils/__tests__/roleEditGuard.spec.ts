@@ -55,7 +55,7 @@ beforeEach(() => {
   for (const key of Object.keys(shared.auth)) delete shared.auth[key];
 });
 
-describe("ROLE-P0-01 缺 retrieve 时的编辑守卫", () => {
+describe("缺 retrieve 时的编辑守卫", () => {
   it("有编辑权限但缺 retrieve：收回 update/partialUpdate 并给出警告文案", () => {
     Object.assign(shared.auth, {
       update: true,

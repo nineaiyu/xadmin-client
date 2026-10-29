@@ -44,6 +44,8 @@ const props = defineProps<{
   isNarrow: boolean;
   /** 初始输入内容（命令面板「问 AI」经路由 query 预填）；seq 变化即覆盖 */
   initialDraft?: { seq: number; text: string } | null;
+  /** 发送失败回填的草稿（输入框为空时恢复，避免覆盖用户新输入） */
+  failedDraft?: { seq: number; text: string } | null;
 }>();
 
 const emit = defineEmits<{
@@ -67,6 +69,14 @@ watch(
   payload => {
     if (payload?.text) draft.value = payload.text;
   }
+);
+// 发送失败：乐观气泡被移除时把原草稿回填；用户已输入新内容则不覆盖
+watch(
+  () => props.failedDraft,
+  payload => {
+    if (payload?.text && !draft.value.trim()) draft.value = payload.text;
+  },
+  { immediate: true }
 );
 const scrollEl = ref<HTMLElement | null>(null);
 

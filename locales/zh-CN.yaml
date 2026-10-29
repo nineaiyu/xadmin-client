@@ -1499,6 +1499,8 @@ systemApprovalFlow:
   formName: 流程名称
   formCode: 流程编码
   formActive: 启用
+  initiatorRoles: 可发起角色
+  initiatorRolesHint: 留空表示所有用户可发起
   formSchemaTitle: 表单字段
   formSchemaTip: 发起申请时按此渲染动态表单；字段 key 供节点条件与「表单字段」审批人引用
   formSchemaLocked: 该流程已绑定动态表单，表单字段由绑定表单自动同步维护（在表单设计器中修改，此处只读）

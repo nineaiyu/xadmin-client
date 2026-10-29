@@ -121,7 +121,7 @@ describe("useTaskExecution 产物下载", () => {
   });
 });
 
-describe("TASK-P1-02 取消/重跑二次确认", () => {
+describe("取消/重跑二次确认", () => {
   it("取消带确认文案（复用调度任务的取消口径），且按 can_cancel 显隐", () => {
     const button = getButton("cancel");
     expect(button.confirm?.title).toBe("taskCenter.cancelConfirm");

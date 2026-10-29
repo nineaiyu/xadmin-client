@@ -314,6 +314,7 @@ onActivated(() => {
           :empty-text="emptyText"
           :disabled="!ready || !activeEntry"
           :initial-draft="askPayload"
+          :failed-draft="aiConsole.failedDraft.value"
           :loading-history="aiConsole.loadingHistory.value"
           :has-more="aiConsole.hasMore.value"
           :loading-more="aiConsole.loadingMore.value"

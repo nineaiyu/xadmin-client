@@ -3,7 +3,7 @@ import { nextTick, ref } from "vue";
 import { useListMetaWarning } from "../useListMetaWarning";
 
 /**
- * FE-ROBUST-P1-04：search-columns 拉取失败（断网 / 403）时的降级。
+ * search-columns 拉取失败（断网 / 403）时的降级。
  *
  * 现象是「页面空白但不报错」——用户只看到没有列的空表格。这里锁定两条行为：
  * 1) 列表请求完成后元数据仍缺席 → 给 1.5s 余量后置 metaMissing（模板据此渲染提示条）；

@@ -46,6 +46,9 @@ body[layout="mix"] {
   }
 
   .hideSidebar {
+    @include sidebar-hover-expand($sideBarWidth);
+    @include sidebar-collapse-show-title;
+
     .fixed-header {
       /* 顶栏通栏不随侧栏折叠变窄（侧栏收起后仍占满整宽） */
       width: 100%;

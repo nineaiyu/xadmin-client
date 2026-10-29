@@ -81,7 +81,14 @@ const onLogin = async () => {
     return;
   }
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("results.failed"), { type: "error" });
+    return;
+  }
 
   handleOperation({
     t,

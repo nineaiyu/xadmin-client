@@ -3526,7 +3526,7 @@ export interface paths {
          *
          *     ``count_only=true``：仅取行数（数字卡场景，跳过行物化）。
          *     ``max_rows``：预览侧行数上限（与数据集 row_limit 取小者下推 SQL），
-         *     报表预览按展示口径收数，不在前端物化后切片（REP-P1-01）。
+         *     报表预览按展示口径收数，不在前端物化后切片（按展示口径收数）。
          *     ``filters``：请求级行过滤（卡片下钻），与数据集定义 filters 叠加，
          *     校验口径同保存侧（``validate_filters``：字段白名单 + op 白名单 + 类型），
          *     并按浏览者字段权限收敛（无该列权限即 1001，防隐藏列布尔预言机）。
@@ -15295,6 +15295,7 @@ export interface components {
              *     单对象序列化（无注解）回退为单次 EXISTS。
              */
             readonly form_schema_locked: boolean;
+            initiator_roles?: unknown;
             /**
              * 激活状态
              * @default true
@@ -18541,10 +18542,10 @@ export interface components {
          *
          *     列表表格列不渲染 body / response_result，但行数据仍被前端复用：
          *     详情抽屉直接渲染列表行（本视图集历史上无 retrieve），「变更历史」弹窗
-         *     逐行读取 changes 渲染 old/new 对照——因此 changes 保留全量不裁剪；
+         *     逐行读取 changes 渲染 old/new 对照——changes 超过列表预览上限时截断并置
+         *     ``changes_truncated``（详情/导出仍经同一上限，避免大 diff 放大首屏载荷）；
          *     body / response_result 只保留预览，截断时附 ``*_truncated`` 标记
-         *     （键恒在，向后兼容）。截断与脱敏由基类 to_representation 统一承载，
-         *     retrieve / 导出与列表同级（LOG-P1-01）。
+         *     （键恒在，向后兼容）。截断与脱敏由基类 to_representation 统一承载。
          */
         OperationLogList: {
             /**
@@ -18566,6 +18567,7 @@ export interface components {
             /** 浏览器 */
             readonly browser: string | null;
             changes?: unknown;
+            readonly changes_truncated: boolean;
             /**
              * 创建时间
              * Format: date-time
@@ -19668,6 +19670,7 @@ export interface components {
              *     单对象序列化（无注解）回退为单次 EXISTS。
              */
             readonly form_schema_locked?: boolean;
+            initiator_roles?: unknown;
             /**
              * 激活状态
              * @default true
@@ -21856,7 +21859,7 @@ export interface components {
             /**
              * 绑定邮件
              * @description 允许用户进行绑定邮件
-             * @default true
+             * @default false
              */
             SECURITY_BIND_EMAIL_ACCESS_ENABLED: boolean;
             /**
@@ -21883,7 +21886,7 @@ export interface components {
             /**
              * 绑定手机
              * @description 允许用户绑定手机
-             * @default true
+             * @default false
              */
             SECURITY_BIND_PHONE_ACCESS_ENABLED: boolean;
             /**
@@ -22066,12 +22069,6 @@ export interface components {
              */
             CAPTCHA_ALERT_WINDOW_MINUTES: number;
             /**
-             * 验证码失败联动登录锁定
-             * @description 验证码失败达到阶梯阈值时同时锁定登录账号；默认关闭，避免误锁
-             * @default false
-             */
-            CAPTCHA_FAILURE_LINK_LOCK: boolean;
-            /**
              * 失败阶梯
              * @description 失败阶梯：3,8,20 表示第 3 次强制难题、第 8 次冷却 15 分钟、第 20 次冷却 1 小时；0,0,0 停用
              * @default 3,8,20
@@ -22133,12 +22130,12 @@ export interface components {
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）
+             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（需配置可信代理/客户端 IP）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
              *     * `enforce` - 强制执行决策
-             * @default enforce
+             * @default shadow
              */
             CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
             /**
@@ -23943,7 +23940,7 @@ export interface components {
             /**
              * 绑定邮件
              * @description 允许用户进行绑定邮件
-             * @default true
+             * @default false
              */
             SECURITY_BIND_EMAIL_ACCESS_ENABLED: boolean;
             /**
@@ -23970,7 +23967,7 @@ export interface components {
             /**
              * 绑定手机
              * @description 允许用户绑定手机
-             * @default true
+             * @default false
              */
             SECURITY_BIND_PHONE_ACCESS_ENABLED: boolean;
             /**
@@ -24164,12 +24161,6 @@ export interface components {
              */
             CAPTCHA_ALERT_WINDOW_MINUTES: number;
             /**
-             * 验证码失败联动登录锁定
-             * @description 验证码失败达到阶梯阈值时同时锁定登录账号；默认关闭，避免误锁
-             * @default false
-             */
-            CAPTCHA_FAILURE_LINK_LOCK: boolean;
-            /**
              * 失败阶梯
              * @description 失败阶梯：3,8,20 表示第 3 次强制难题、第 8 次冷却 15 分钟、第 20 次冷却 1 小时；0,0,0 停用
              * @default 3,8,20
@@ -24231,12 +24222,12 @@ export interface components {
             CAPTCHA_RISK_DATACENTER_CIDRS: string;
             /**
              * 风险模式
-             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（强化档默认）
+             * @description off = 关闭风险层；shadow = 仅评分与记录；enforce = 应用决策（需配置可信代理/客户端 IP）
              *
              *     * `off` - 关闭（保持现状）
              *     * `shadow` - 影子（只评分留痕）
              *     * `enforce` - 强制执行决策
-             * @default enforce
+             * @default shadow
              */
             CAPTCHA_RISK_MODE: components["schemas"]["CAPTCHARISKMODEEnum"];
             /**

@@ -50,7 +50,7 @@ describe("useHistoryPagination", () => {
     expect(scrollToBottom).toHaveBeenCalled();
   });
 
-  it("过期首屏响应被丢弃：切会话后旧会话慢响应不写入（FE-DATA-P1-04）", async () => {
+  it("过期首屏响应被丢弃：切会话后旧会话慢响应不写入", async () => {
     let resolveA: (value: ReturnType<typeof page>) => void = () => undefined;
     const fetchPage = vi
       .fn<FetchPage>()

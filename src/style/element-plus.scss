@@ -138,12 +138,13 @@
     }
   }
 
-  .el-dialog__header {
-    display: none;
+  /* 基准字号走令牌，且必须在响应式规则之前（同特异性后写覆盖） */
+  .el-input__inner {
+    font-size: var(--font-size-md);
   }
 
-  .el-input__inner {
-    font-size: 1.2em;
+  .el-dialog__header {
+    display: none;
   }
 
   .el-dialog__footer {

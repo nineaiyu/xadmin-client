@@ -10,5 +10,11 @@ const { api, auth, tableRef } = usePluginNote();
 </script>
 
 <template>
-  <RePlusPage ref="tableRef" :api="api" :auth="auth" locale-name="pluginNote" />
+  <RePlusPage
+    ref="tableRef"
+    :api="api"
+    :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
+    locale-name="pluginNote"
+  />
 </template>

@@ -21,6 +21,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="post"
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"

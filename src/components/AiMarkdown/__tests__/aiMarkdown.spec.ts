@@ -1,10 +1,14 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Component from "../index.vue";
 
 const mountMarkdown = (content: string, streaming = false) =>
   mount(Component, { props: { content, streaming } });
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("AiMarkdown AI 回复 Markdown 渲染", () => {
   it("渲染标题 / 加粗 / 列表 / 表格等常用 Markdown", () => {
@@ -73,5 +77,23 @@ describe("AiMarkdown AI 回复 Markdown 渲染", () => {
     const wrapper = mountMarkdown("正在输出", true);
     expect(wrapper.classes()).toContain("ai-md");
     expect(wrapper.classes()).toContain("ai-md--streaming");
+  });
+
+  it("流式增量按 50ms 合批渲染，结束帧立即补最终内容", async () => {
+    vi.useFakeTimers();
+    const wrapper = mountMarkdown("第一段", true);
+    await wrapper.setProps({ content: "第一段\n\n**第二段**" });
+
+    // 合批窗口内不重渲染（避免每个 delta 全量 parse）
+    expect(wrapper.find("strong").exists()).toBe(false);
+
+    vi.advanceTimersByTime(50);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find("strong").text()).toBe("第二段");
+
+    await wrapper.setProps({ streaming: false });
+    vi.advanceTimersByTime(0);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find("strong").text()).toBe("第二段");
   });
 });

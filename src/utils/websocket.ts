@@ -207,7 +207,7 @@ class WS {
     const int = (this.heartbeat as Heartbeat)?.interval || interval;
     this.send(msg);
     this.timer = setInterval(() => {
-      // 看门狗（FE-ROBUST-P1-02）：连续 3 个周期无任何下行帧判定半开连接——
+      // 看门狗：连续 3 个周期无任何下行帧判定半开连接——
       // NAT/代理静默断流、休眠唤醒后 readyState 仍 OPEN 且永不 onclose，
       // 只能人工刷新。主动 close 走既有 onclose → 退避重连链路自愈。
       if (this.lastFrameAt > 0 && Date.now() - this.lastFrameAt > int * 3) {

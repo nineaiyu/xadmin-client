@@ -15,6 +15,13 @@ vi.mock("plus-pro-components", () => ({
 }));
 vi.mock("@vueuse/core", () => ({ useMediaQuery: () => false }));
 vi.mock("vue-i18n", () => ({
+  createI18n: () => ({
+    global: {
+      t: (key: string) => key,
+      locale: { value: "zh" },
+      setLocaleMessage: vi.fn()
+    }
+  }),
   useI18n: () => ({
     t: (key: string, params?: Record<string, unknown>) =>
       key + (params?.name ? `:${String(params.name)}` : "")

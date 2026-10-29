@@ -56,6 +56,8 @@ const {
   loadDashboards,
   loadDatasets,
   loading,
+  loadFailed,
+  loadError,
   refreshCards,
   refreshKey,
   selectDashboard,
@@ -240,8 +242,20 @@ onMounted(async () => {
       @go-datasets="goDatasetPage"
     />
 
+    <el-result
+      v-if="loadFailed"
+      icon="error"
+      :title="t('dashboard.loadFailed')"
+      :sub-title="loadError"
+    >
+      <template #extra>
+        <el-button type="primary" @click="loadDashboards">
+          {{ t("buttons.reload") }}
+        </el-button>
+      </template>
+    </el-result>
     <ReEmpty
-      v-if="!current"
+      v-else-if="!current"
       :description="t('dashboard.empty')"
       icon="ep/data-line"
     />

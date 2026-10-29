@@ -24,7 +24,7 @@ import {
   REPORT_TABLE_LIMIT,
   designColumns,
   designTableLimit,
-  componentToCard
+  createComponentCardMemo
 } from "./utils/design";
 import { useDesignMutations } from "./utils/useDesignMutations";
 import { useReportBootstrap } from "./utils/useReportBootstrap";
@@ -123,12 +123,10 @@ const componentTitle = (component: ReportDesignComponent) =>
     `dataReport.component${component.type[0].toUpperCase()}${component.type.slice(1)}`
   );
 
-const componentCard = (component: ReportDesignComponent) =>
-  componentToCard(
-    component,
-    dataset.value?.pk ?? "",
-    componentTitle(component)
-  );
+const componentCard = createComponentCardMemo(
+  () => dataset.value?.pk ?? "",
+  componentTitle
+);
 
 /** 装载时序（进场校验 / 详情与数据集清单 / design 回填，见 utils/useReportBootstrap.ts） */
 useReportBootstrap({

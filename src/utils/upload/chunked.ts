@@ -114,7 +114,7 @@ export async function uploadFileChunked(
   onSession?.(session);
   // 会话命中（created=false）即按服务端会话口径续传：已收分片直接跳过
   const serverChunkSize = initRes.data.chunk_size || planChunkSize;
-  // 分片总数以服务端返回的 chunk_size 重算（FE-DATA-P1-13）：init 里的 total_chunks
+  // 分片总数以服务端返回的 chunk_size 重算：init 里的 total_chunks
   // 按客户端 plan 算，服务端钳制 chunk_size 后两者口径不一致——沿用 plan 总数会偏小
   //（尾部不上传，合并产物截断）或偏大（空分片）。init 载荷仅作协商输入，此后一切以
   // 服务端口径为准。

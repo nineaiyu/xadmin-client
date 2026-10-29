@@ -15,6 +15,7 @@ const { api, auth, listColumnsFormat, operationButtonsProps } =
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="false"
     locale-name="systemExportRecord"
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"

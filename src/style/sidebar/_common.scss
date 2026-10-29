@@ -747,3 +747,73 @@
     }
   }
 }
+
+/* 折叠态显示标题（设置面板 →「折叠态显示标题」）：竖排 / 混合 / 顶栏侧栏 /
+   双列次级栏共用同一套规则；此前只在 vertical partial 内实现，其余布局开关无效。 */
+@mixin sidebar-collapse-show-title {
+  .el-menu-item .collapse-show-title-text {
+    display: none;
+  }
+
+  .el-menu--collapse.sidebar-collapse-show-title {
+    > .el-sub-menu.collapse-show-title > .el-sub-menu__title {
+      flex-direction: column;
+      align-items: center;
+      height: auto;
+      min-height: 54px;
+      padding: 8px 0;
+      line-height: 1.4;
+
+      .sub-menu-icon {
+        height: 18px;
+        line-height: 1;
+      }
+
+      > span {
+        visibility: visible;
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-xs);
+        line-height: 1.4;
+        text-align: center;
+        white-space: nowrap;
+      }
+    }
+
+    /* 叶子项被 router-link 包裹（li 非菜单直接子级），选择器不能用直接子级 */
+    .el-menu-item {
+      height: auto;
+      min-height: 54px;
+      line-height: 1.4;
+
+      .el-menu-tooltip__trigger {
+        flex-direction: column;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .collapse-show-title-text {
+        display: block;
+        max-width: 48px;
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-xs);
+        line-height: 1.4;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+/* 折叠态悬停临时展开：四条竖排侧栏布局共用（浮层加宽，不写回存储） */
+@mixin sidebar-hover-expand($expandedWidth) {
+  .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
+    width: $expandedWidth !important;
+    box-shadow: var(--shadow-md);
+  }
+}

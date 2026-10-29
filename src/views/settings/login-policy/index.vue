@@ -18,6 +18,7 @@ const { api, auth, addOrEditOptions, tableBarButtonsProps } = useLoginPolicy();
     <RePlusPage
       :api="api"
       :auth="auth"
+      :selection="false"
       locale-name="systemLoginPolicy"
       :addOrEditOptions="addOrEditOptions"
       :tableBarButtonsProps="tableBarButtonsProps"

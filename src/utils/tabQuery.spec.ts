@@ -88,7 +88,7 @@ describe("syncTabQuery", () => {
   });
 });
 
-describe("resolveInitialPane 兜底权限收敛（FE-UI-P1-01）", () => {
+describe("resolveInitialPane 兜底权限收敛", () => {
   const panes = [
     { key: "export", auth: false },
     { key: "import", auth: true }

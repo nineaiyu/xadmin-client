@@ -16,6 +16,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="systemOnline"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"

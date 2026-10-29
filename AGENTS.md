@@ -138,7 +138,7 @@ node scripts/e2e-run.mjs parallel                                       # 4 路�
   （feat/fix/perf/style/docs/test/refactor/build/ci/chore/revert/wip/workflow/types/release），
   **header ≤ 108 字符**（commitlint 硬规则）。
 - 源码注释 / 测试名 / 基线 JSON 说明字段里**不写台账编号**（`ADR-090` 决策编号、
-  `T03-01` / `O10-2` 一类），需要交代来龙去脉时写一句自足的语义说明。
-  守护：`pnpm check:ledger-ids`。
+  `T03-01` / `O10-2`，以及评审编号 `FE-DATA-P1-04` / `LOG-P1-01` / `C-03` 一类），
+  需要交代来龙去脉时写一句自足的语义说明。守护：`pnpm check:ledger-ids`。
 - 提交前 `git add -A` 全量暂存（避免 lint-staged 在「部分暂存」下污染提交），提交后核对
   `git show --stat` 与 `git status --short`。

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
+import SafeFrame from "@/components/SafeFrame";
 
 defineOptions({ name: "ScreenPaneMediaView" });
 
@@ -60,11 +61,12 @@ const { t } = useI18n();
   </template>
 
   <template v-else-if="pane.type === 'html'">
-    <iframe
+    <SafeFrame
       v-if="pane.url"
       class="screen-pane__iframe"
       :class="{ 'is-locked': editable }"
       :src="pane.url"
+      title="screen-pane"
       sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       referrerpolicy="no-referrer"
       loading="lazy"

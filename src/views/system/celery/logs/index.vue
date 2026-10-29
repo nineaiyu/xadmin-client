@@ -25,6 +25,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="false"
     locale-name="systemTaskExecution"
     :list-columns-format="listColumnsFormat"
     :searchColumnsFormat="searchColumnsFormat"

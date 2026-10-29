@@ -19,6 +19,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="systemTask"
     saved-views
     :base-columns-format="baseColumnsFormat"

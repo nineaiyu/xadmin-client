@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 import { ensureMarkdownHighlight, renderMarkdown } from "./markdown";
 import type { AiMarkdownProps } from "./types";
@@ -26,10 +26,49 @@ const props = withDefaults(defineProps<AiMarkdownProps>(), {
 /** 高亮包加载完成后的重渲染信号 */
 const highlightVersion = ref(0);
 
-const rendered = computed(() => {
-  // 显式读取版本号：高亮包是动态 import，完成后需要触发一次重算
-  void highlightVersion.value;
-  return renderMarkdown(props.content, { highlight: !props.streaming });
+/**
+ * 流式渲染合批：每个 delta 全量跑 markdown-it + DOMPurify 是 O(n²)，
+ * 长回答会持续抢占主线程。流式期间最多每 50ms 渲染一次，结束帧立即渲染。
+ */
+const rendered = ref("");
+const STREAM_RENDER_INTERVAL = 50;
+let renderTimer: ReturnType<typeof setTimeout> | null = null;
+let initialized = false;
+
+function renderNow() {
+  rendered.value = renderMarkdown(props.content, {
+    highlight: !props.streaming
+  });
+}
+
+function scheduleRender() {
+  if (renderTimer !== null) return;
+  renderTimer = setTimeout(() => {
+    renderTimer = null;
+    renderNow();
+  }, STREAM_RENDER_INTERVAL);
+}
+
+watch(
+  [() => props.content, () => props.streaming, () => highlightVersion.value],
+  () => {
+    // 首次挂载立即渲染（历史消息 / 流式首帧都不能空白）；后续流式增量才合批
+    if (props.streaming && initialized) {
+      scheduleRender();
+      return;
+    }
+    if (renderTimer !== null) {
+      clearTimeout(renderTimer);
+      renderTimer = null;
+    }
+    renderNow();
+    initialized = true;
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  if (renderTimer !== null) clearTimeout(renderTimer);
 });
 
 const hasCodeFence = computed(() => /(^|\n)[ \t]*```/.test(props.content));

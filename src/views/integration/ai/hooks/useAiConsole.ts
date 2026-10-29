@@ -52,15 +52,16 @@ export function useAiConsole() {
       scrollToBottom
     });
 
-  const { streaming, activeStreaming, send, abortStream } = useAiConsoleStream({
-    t,
-    feature,
-    atBottom,
-    upsertMessage,
-    pushOptimistic,
-    removeOptimistic,
-    scrollToBottom
-  });
+  const { streaming, activeStreaming, failedDraft, send, abortStream } =
+    useAiConsoleStream({
+      t,
+      feature,
+      atBottom,
+      upsertMessage,
+      pushOptimistic,
+      removeOptimistic,
+      scrollToBottom
+    });
 
   const { nlRunning, runNl, executeAction } = useAiConsoleActions({
     t,
@@ -96,6 +97,7 @@ export function useAiConsole() {
     loadingMore,
     streaming,
     activeStreaming,
+    failedDraft,
     pendingCount,
     scroller,
     nlRunning,

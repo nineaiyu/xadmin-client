@@ -34,7 +34,7 @@ const ctx = () => ({
   apiSearchComponents: new Map()
 });
 
-/** 逐列断言的单元格渲染（FE-COMP-P2-35）：列表读的是 cellRenderer 的输出文本/属性。 */
+/** 逐列断言的单元格渲染：列表读的是 cellRenderer 的输出文本/属性。 */
 describe("date / datetime 单元格格式化", () => {
   const makeItem = () =>
     ({ fieldProps: {} }) as {

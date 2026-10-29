@@ -32,6 +32,7 @@ const {
       ref="tableRef"
       :api="api"
       :auth="auth"
+      :selection="Boolean(auth.batchDestroy)"
       :addOrEditOptions="addOrEditOptions"
       :listColumnsFormat="listColumnsFormat"
       :tableBarButtonsProps="tableBarButtonsProps"

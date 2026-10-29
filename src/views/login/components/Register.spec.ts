@@ -1,10 +1,11 @@
 import { flushPromises, mount } from "@vue/test-utils";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   register: vi.fn(),
   message: vi.fn(),
   handleLoginSuccess: vi.fn(),
+  buildPayload: vi.fn(),
   loading: null as unknown
 }));
 
@@ -32,7 +33,7 @@ vi.mock("../useLoginFlow", async () => {
   return {
     backToBasicPage: () => undefined,
     // 注册提交载荷与密码规则不是本用例的观测点：给最小可用桩
-    buildVerifyCodePayload: async () => ({ verify_token: "token" }),
+    buildVerifyCodePayload: (...args: unknown[]) => state.buildPayload(...args),
     createPasswordFormRules: () => ({}),
     useAuthInfo: () => ({
       authInfo: { access: true, password: [] },
@@ -89,6 +90,25 @@ const submitRegister = async (wrapper: ReturnType<typeof mountRegister>) => {
 };
 
 describe("注册提交", () => {
+  beforeEach(() => {
+    state.buildPayload.mockResolvedValue({ verify_token: "token" });
+    state.message.mockClear();
+    state.handleLoginSuccess.mockClear();
+    state.register.mockReset();
+  });
+
+  it("凭证加密失败：loading 复位并提示，不发起注册请求", async () => {
+    state.buildPayload.mockRejectedValue(new Error("crypto unavailable"));
+
+    await submitRegister(mountRegister());
+
+    expect(state.register).not.toHaveBeenCalled();
+    expect((state.loading as { value: boolean }).value).toBe(false);
+    expect(state.message).toHaveBeenCalledWith("login.registerFailed", {
+      type: "error"
+    });
+  });
+
   it("业务失败（账号已存在/密码不合规）不提示成功、不跳转，展示后端原因", async () => {
     state.register.mockResolvedValue({
       code: 1002,

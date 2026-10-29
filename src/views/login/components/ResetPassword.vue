@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref } from "vue";
 import Motion from "@/components/ReMotion";
+import { message } from "@/utils/message";
 import type { FormInstance } from "element-plus";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
@@ -40,7 +41,14 @@ const onBack = backToBasicPage;
 
 const onSubmit = async () => {
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("results.failed"), { type: "error" });
+    return;
+  }
   handleOperation({
     t,
     apiReq: resetPasswordApi(data),

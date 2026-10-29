@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { resetActiveWhenClosed, whenPaletteOpen } from "../paletteGuard";
 
-describe("whenPaletteOpen（FE-UI-P1-04 全局按键守卫）", () => {
+describe("whenPaletteOpen（全局按键守卫）", () => {
   it("面板关闭时 Enter/↑↓ 处理器不执行（避免在输入框里意外跳路由）", () => {
     const show = ref(false);
     const handler = vi.fn();

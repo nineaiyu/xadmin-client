@@ -10,6 +10,7 @@ import {
   REPORT_TABLE_LIMIT,
   REPORT_TEMPLATES,
   componentToCard,
+  createComponentCardMemo,
   designColumns,
   designTableLimit,
   duplicateComponent,
@@ -293,5 +294,43 @@ describe("组件排序 / 复制", () => {
       span: 6
     });
     expect(built.components?.every(item => Boolean(item.id))).toBe(true);
+  });
+});
+
+describe("createComponentCardMemo（设计器卡片引用稳定）", () => {
+  const component = (overrides: Partial<ReportDesignComponent> = {}) =>
+    ({
+      id: "c1",
+      type: "bar",
+      group_by: "gender",
+      metric: "count",
+      ...overrides
+    }) as ReportDesignComponent;
+
+  it("未变化组件返回同一对象引用（不触发 ChartCard 重拉）", () => {
+    const memo = createComponentCardMemo(
+      () => "ds-1",
+      item => `标题-${item.id}`
+    );
+    const first = memo(component());
+    const second = memo(component());
+    expect(second).toBe(first);
+  });
+
+  it("组件字段、数据集或标题变化时重建卡片", () => {
+    let pk = "ds-1";
+    const memo = createComponentCardMemo(
+      () => pk,
+      item => `标题-${item.id}`
+    );
+    const first = memo(component());
+    const metricChanged = memo(component({ metric: "sum" }));
+    expect(metricChanged).not.toBe(first);
+    expect(metricChanged.metric).toBe("sum");
+
+    pk = "ds-2";
+    const datasetChanged = memo(component({ metric: "sum" }));
+    expect(datasetChanged).not.toBe(metricChanged);
+    expect(datasetChanged.dataset).toBe("ds-2");
   });
 });

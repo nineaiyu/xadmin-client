@@ -68,7 +68,10 @@ dataThemeChange(themeMode.value, { animate: false });
 
 /** el-switch 的 change 载荷为 boolean/string/number，按既有调用口径透传给主题切换 */
 const handleDataThemeChange = (value: string | number | boolean) => {
-  dataThemeChange(value as string);
+  // el-switch 传的是 boolean；themeMode 是字符串枚举（"" / "system" / "light" / "dark"），
+  // 不能把布尔值落进 $storage.layout
+  dataTheme.value = Boolean(value);
+  dataThemeChange();
 };
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();

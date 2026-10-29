@@ -14,6 +14,7 @@ const { api, auth, tableRef, baseColumnsFormat, operationButtonsProps } =
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="false"
     locale-name="configSystem"
     :baseColumnsFormat="baseColumnsFormat"
     :operationButtonsProps="operationButtonsProps"

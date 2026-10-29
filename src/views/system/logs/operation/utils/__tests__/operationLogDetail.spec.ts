@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { useOperationLog } from "../hook";
 
 /**
- * 操作日志详情正文口径（LOG-P1-01）：
- * 后端 retrieve / 导出与列表同级，body / response_result 只有有界预览；
- * 详情抽屉直接复用列表行（changes 全量 + 正文预览标记），不再二次拉取。
+ * 操作日志详情正文口径：
+ * 列表的 changes 已降为有界预览，详情必须按主键 retrieve 取全量变更对照；
+ * 拉取失败回退列表行（返回 null），不阻断抽屉打开。
  */
 
 const state = vi.hoisted(() => ({
@@ -40,21 +40,20 @@ vi.mock("@/views/system/hooks", () => ({ goUserDetail: vi.fn() }));
 vi.mock("@/utils/message", () => ({ message: state.messageMock }));
 
 describe("useOperationLog detailRowFetch 详情正文口径", () => {
-  it("截断标记不再触发 retrieve（后端 retrieve 同为有界预览）", async () => {
+  it("按主键 retrieve 取全量变更（列表 changes 只是预览）", async () => {
     const { detailRowFetch } = useOperationLog();
-    const extra = await detailRowFetch({
-      pk: "9",
-      body_truncated: true,
-      response_result_truncated: true
-    });
-    expect(extra).toBeNull();
-    expect(state.retrieveMock).not.toHaveBeenCalled();
+    const detail = { pk: "9", changes: '[{"field":"name"}]' };
+    state.retrieveMock.mockResolvedValue({ code: 1000, data: detail });
+    const extra = await detailRowFetch({ pk: "9", changes_truncated: true });
+    expect(extra).toEqual(detail);
+    expect(state.retrieveMock).toHaveBeenCalledWith("9");
   });
 
-  it("普通行同样直接使用列表数据", async () => {
+  it("拉取失败回退列表行（返回 null 不阻断抽屉）", async () => {
     const { detailRowFetch } = useOperationLog();
+    state.retrieveMock.mockRejectedValue(new Error("network"));
     const extra = await detailRowFetch({ pk: "9" });
     expect(extra).toBeNull();
-    expect(state.retrieveMock).not.toHaveBeenCalled();
+    expect(state.retrieveMock).toHaveBeenCalledWith("9");
   });
 });

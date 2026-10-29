@@ -74,7 +74,9 @@ function getObjectKeys(obj: Record<string, unknown>) {
       if (value && isObject(value)) {
         stack.push({ obj: value, key: newKey });
       } else {
-        keys.add(key);
+        // 叶子节点必须登记完整点分路径；登记父路径会让
+        // transformI18n("login.logoutSuccess") 永远探测不到而回退原始 key
+        keys.add(newKey);
       }
     }
   }

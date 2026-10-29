@@ -15,6 +15,7 @@ const { api, auth, tableBarButtonsProps, operationButtonsProps } =
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="systemApprovalFlow"
     :allowAsyncExport="false"
     :operationButtonsProps="operationButtonsProps"

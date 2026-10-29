@@ -11,6 +11,7 @@ const { api, auth, addOrEditOptions, baseColumnsFormat, listColumnsFormat } =
   <RePlusPage
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="systemApprovalDelegation"
     :addOrEditOptions="addOrEditOptions"
     :baseColumnsFormat="baseColumnsFormat"

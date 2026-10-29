@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { normalizeMenuRow } from "../normalize";
 
-describe("normalizeMenuRow 详情形态归一（FE-DATA-P1-12）", () => {
+describe("normalizeMenuRow 详情形态归一", () => {
   it("详情接口的对象形态 parent / meta.badge_type 归一为标量", () => {
     const row = normalizeMenuRow({
       pk: 9,

@@ -3,7 +3,7 @@ import { isRef } from "vue";
 import type { RecordType } from "plus-pro-components";
 
 /**
- * 提交前剔除「表单内被隐藏的列」（FE-UI-P2-39）。
+ * 提交前剔除「表单内被隐藏的列」。
  *
  * 背景：`hideInForm` 只控制渲染与布局，表单模型里仍保留该字段的旧值；
  * 后端 PATCH 语义是「未提交键保留」，因此用户把某字段联动隐藏后旧值仍会被写回，

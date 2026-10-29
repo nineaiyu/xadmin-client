@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch, type Ref } from "vue";
 import {
   handleOperation,
   useBaseColumns,
@@ -14,6 +14,7 @@ import { useI18n } from "vue-i18n";
 import { useMediaQuery } from "@vueuse/core";
 import { BREAKPOINTS } from "@/utils/breakpoints";
 import { FORM_SPAN_FULL } from "@/utils/formSpan";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { settingItemProps } from "./types";
 
 defineOptions({
@@ -89,6 +90,20 @@ const addOrEditData = ref<{
   formData: {}
 });
 
+/** 未保存改动：离开路由/刷新前确认，避免设置面板整页改动被静默丢弃 */
+const dirtyForm = computed(
+  () =>
+    Boolean(props.auth.partialUpdate) &&
+    !loadFailed.value &&
+    JSON.stringify(addOrEditData.value.formData) !==
+      JSON.stringify(addOrEditData.value.defaultData)
+);
+useDesignerGuard({
+  dirty: dirtyForm,
+  namespace: `setting:${props.localeName}:${props.title ?? ""}`,
+  mode: "page"
+});
+
 /**
  * PlusForm 列：从框架列元数据逐项派生（plus-pro 必填 prop 补齐；
  * 框架列在 UnwrapRef 映射后按索引访问字段，避免交叉类型属性丢失）
@@ -114,62 +129,60 @@ watch(
 const keepField = (key: string) =>
   !props.fields?.length || props.fields.includes(key);
 
-const getData = () => {
-  if (props.canRead ?? props.auth.retrieve) {
-    loading.value = true;
-    loadFailed.value = false;
-    // 首载并行：列元数据与当前配置同时发起（原先在列回调里串行补发 retrieve，
-    // 两段 RTT 叠加拖慢首屏）；retrieve 异常归一为 null——网络层失败已有统一
-    // 提示，此处不重复弹错，表单按列默认值兜底渲染
-    const retrieveRes = props.api.retrieve(props.queryParams).catch(() => null);
-    // 列请求必须自带收尾：失败时回调不会执行，loading 会永久挂在表单上
-    void getColumnData(
-      props.api.columns,
-      undefined,
-      ({ addOrEditRules, addOrEditColumns, addOrEditDefaultValue }) => {
-        addOrEditData.value.addOrEditRules = cloneDeep(addOrEditRules.value);
-        addOrEditData.value.addOrEditColumns = cloneDeep(
-          addOrEditColumns.value
-        ).filter(column => keepField(column.prop as string));
-        addOrEditData.value.addOrEditColumns.forEach(column => {
-          // 布局：标签左置（右对齐）+ 单列——与弹窗表单（AddOrEdit）同形态；
-          // 后端下发的响应式列宽面向多列表单，这里统一整行，靠表单容器限宽收住控件
-          column["colProps"] = FORM_SPAN_FULL;
-          (column["fieldProps"] as { disabled?: boolean })["disabled"] =
-            !props.auth.partialUpdate;
-          // 消费方列加工口（可选）：E2E 锚点、控件微调等页面级诉求，
-          // 避免各页面复制一份 SettingItem
-          props.columnDecorator?.(column);
-        });
-        addOrEditData.value.formData = pickBy(
-          cloneDeep(addOrEditDefaultValue.value),
-          (_value, key) => keepField(key)
-        );
-
-        retrieveRes
-          .then(res => {
-            if (res && isSuccess(res)) {
-              const payload = (res.data ?? {}) as RecordType;
-              const { effective, ...formValues } = payload;
-              applyEffective(effective);
-              addOrEditData.value.formData = pickBy(formValues, (_value, key) =>
-                keepField(key)
-              );
-              addOrEditData.value.defaultData = cloneDeep(
-                addOrEditData.value.formData
-              );
-            }
-          })
-          .finally(() => {
-            loading.value = false;
-          });
-      },
-      undefined,
-      props.queryParams
-    ).catch(() => {
+const getData = async () => {
+  if (!(props.canRead ?? props.auth.retrieve)) return;
+  loading.value = true;
+  loadFailed.value = false;
+  try {
+    // 两段请求可以并行，但赋值必须等两者都结束：列元数据回调晚到会把
+    // retrieve 已回填的真实配置覆盖成列默认值；retrieve 失败也不能把默认值
+    // 渲染成可保存表单，否则一次网络抖动就会被管理员保存成线上配置
+    const [retrieveRes, columnPayload] = await Promise.all([
+      props.api.retrieve(props.queryParams),
+      new Promise<{
+        addOrEditRules: Ref<Record<string, unknown>>;
+        addOrEditColumns: Ref<PageColumn[]>;
+      }>((resolve, reject) => {
+        void getColumnData(
+          props.api.columns,
+          undefined,
+          payload => resolve(payload),
+          undefined,
+          props.queryParams
+        ).catch(reject);
+      })
+    ]);
+    if (!isSuccess(retrieveRes)) {
       loadFailed.value = true;
-      loading.value = false;
+      return;
+    }
+    const { addOrEditRules, addOrEditColumns } = columnPayload;
+    addOrEditData.value.addOrEditRules = cloneDeep(addOrEditRules.value);
+    addOrEditData.value.addOrEditColumns = cloneDeep(
+      addOrEditColumns.value
+    ).filter(column => keepField(column.prop as string));
+    addOrEditData.value.addOrEditColumns.forEach(column => {
+      // 布局：标签左置（右对齐）+ 单列——与弹窗表单（AddOrEdit）同形态；
+      // 后端下发的响应式列宽面向多列表单，这里统一整行，靠表单容器限宽收住控件
+      column["colProps"] = FORM_SPAN_FULL;
+      (column["fieldProps"] as { disabled?: boolean })["disabled"] =
+        !props.auth.partialUpdate;
+      // 消费方列加工口（可选）：E2E 锚点、控件微调等页面级诉求，
+      // 避免各页面复制一份 SettingItem
+      props.columnDecorator?.(column);
     });
+    const payload = (retrieveRes.data ?? {}) as RecordType;
+    const { effective, ...formValues } = payload;
+    applyEffective(effective);
+    addOrEditData.value.formData = pickBy(formValues, (_value, key) =>
+      keepField(key)
+    );
+    addOrEditData.value.defaultData = cloneDeep(addOrEditData.value.formData);
+  } catch {
+    // 列元数据或 retrieve 任一失败：进入可重试失败态，禁止以默认值保存
+    loadFailed.value = true;
+  } finally {
+    loading.value = false;
   }
 };
 

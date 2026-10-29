@@ -23,6 +23,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="Boolean(auth.batchDestroy)"
     :isTree="true"
     :addOrEditOptions="addOrEditOptions"
     :beforeSearchSubmit="beforeSearchSubmit"

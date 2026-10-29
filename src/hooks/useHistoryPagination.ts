@@ -39,7 +39,7 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
 
-  /** 首屏历史请求令牌：只允许最新一次 loadHistory 回填（FE-DATA-P1-04） */
+  /** 首屏历史请求令牌：只允许最新一次 loadHistory 回填 */
   let historySeq = 0;
 
   async function loadHistory(scope: Scope) {

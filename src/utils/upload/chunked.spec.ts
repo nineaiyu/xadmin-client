@@ -81,7 +81,7 @@ describe("uploadFileChunked", () => {
 
   it("服务端钳制 chunk_size 后按服务端口径重算分片数（尾部不上传即截断）", async () => {
     // 服务端把 chunk_size 钳到 plan 的一半：totalChunks 必须重算为 6 片，
-    // 否则沿用 plan 口径的 3 片会让后半文件永远不上传（FE-DATA-P1-13）
+    // 否则沿用 plan 口径的 3 片会让后半文件永远不上传
     const serverHalf = Math.floor(MIN_CHUNK_SIZE / 2);
     chunkInit.mockResolvedValue(
       OK({

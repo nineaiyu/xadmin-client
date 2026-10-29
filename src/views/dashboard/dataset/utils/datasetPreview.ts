@@ -103,6 +103,9 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
   ) => {
     previewRow.value = row;
     previewMode.value = "rows";
+    // 先清空旧行并关闭弹窗：二次预览失败时不能继续展示上一个数据集的内容
+    preview.value = null;
+    previewDialog.value = false;
     aggregateResult.value = null;
     aggregateForm.group_by = row.columns[0] ?? "";
     aggregateForm.value_field = "";

@@ -1,4 +1,5 @@
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChartCard from "../ChartCard.vue";
@@ -413,5 +414,24 @@ describe("ChartCard 下钻（drillable）", () => {
 
     await wrapper.setProps({ drillable: true });
     expect(onMock).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+});
+
+describe("ChartCard 数据重拉口径（拒绝 deep watch）", () => {
+  it("原位布局/标题变更不重拉；卡片对象替换才重拉", async () => {
+    const card: DashboardCard = { ...NUMBER_CARD };
+    const wrapper = mountCard(card);
+    await flushPromises();
+    const baseline = state.executeMock.mock.calls.length;
+
+    // 拖拽 / 布局编辑常见的是原位改字段：不应触发取数
+    card.title = "改名";
+    await nextTick();
+    expect(state.executeMock.mock.calls.length).toBe(baseline);
+
+    // 配置变更由父级替换对象（数据集/分组等），必须重拉
+    await wrapper.setProps({ card: { ...card, dataset: "ds-2" } });
+    await flushPromises();
+    expect(state.executeMock.mock.calls.length).toBe(baseline + 1);
   });
 });

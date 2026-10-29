@@ -3,13 +3,13 @@ import { clone } from "@pureadmin/utils";
 import { getCurrentScope, onScopeDispose, ref } from "vue";
 
 export const useVerifyCode = () => {
-  // 每个调用方独立状态（FE-COMP-P1-03）：模块级单例会让登录页发码禁用
+  // 每个调用方独立状态：模块级单例会让登录页发码禁用
   // 「绑定邮箱」弹窗的发码按钮（跨场景共享冷却）、重开弹窗仍是禁用态，
   // 且模块级计时器永不随组件卸载清理
   const isDisabled = ref(false);
   const timer = ref<number | null>(null);
   const text = ref("");
-  // 组件卸载即停表（FE-COMP-P1-03）：调用方均在 setup 域内；无作用域的直接
+  // 组件卸载即停表：调用方均在 setup 域内；无作用域的直接
   // 调用（单测/工具函数）跳过注册，避免 Vue 警告
   if (getCurrentScope()) {
     onScopeDispose(() => clearInterval(timer.value ?? undefined));

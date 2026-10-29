@@ -17,6 +17,7 @@ import {
 import FlowFieldsEditor from "./FlowFieldsEditor.vue";
 import FlowNodesEditor from "./FlowNodesEditor.vue";
 import FlowCanvas from "./FlowCanvas.vue";
+import ApproverPicker from "../../components/ApproverPicker.vue";
 
 /**
  * 流程定义配置抽屉（一期：列表式节点编辑，不做拖拽画布）。
@@ -43,7 +44,12 @@ const saving = ref(false);
 // 编辑锁：流程被 dform 绑定后字段由表单侧单向投影（服务端同步落库），流程侧只读
 const formSchemaLocked = computed(() => !!props.flow?.form_schema_locked);
 
-const basic = reactive({ name: "", code: "", is_active: true });
+const basic = reactive({
+  name: "",
+  code: "",
+  is_active: true,
+  initiator_roles: [] as string[]
+});
 const nodes = ref<NodeRow[]>([]);
 const fields = ref<FieldRow[]>([]);
 const canvasRef = ref<{ syncLayout: () => void } | null>(null);
@@ -64,6 +70,7 @@ function initFromFlow() {
   basic.name = flow?.name ?? "";
   basic.code = flow?.code ?? "";
   basic.is_active = flow?.is_active ?? true;
+  basic.initiator_roles = [...(flow?.initiator_roles ?? [])];
   fields.value = (flow?.form_schema ?? []).map(item => ({
     label: item.label ?? "",
     key: item.key,
@@ -147,6 +154,14 @@ defineExpose({ isDirty });
       </el-form-item>
       <el-form-item :label="t('systemApprovalFlow.formActive')">
         <el-switch v-model="basic.is_active" />
+      </el-form-item>
+      <el-form-item :label="t('systemApprovalFlow.initiatorRoles')">
+        <ApproverPicker
+          v-model="basic.initiator_roles"
+          type="role"
+          :fetcher="approvalFlowApi.candidateOptions"
+          :placeholder="t('systemApprovalFlow.initiatorRolesHint')"
+        />
       </el-form-item>
     </el-form>
 

@@ -82,7 +82,7 @@ export function useCommandPalette(options: CommandPaletteOptions) {
     runQuickAction
   });
 
-  // FE-UI-P1-04：关闭即清激活项（复开不残留）；Enter/↑↓ 全局监听必须判面板
+  // 关闭即清激活项（复开不残留）；Enter/↑↓ 全局监听必须判面板
   // 可见，否则关闭后任意输入框按 Enter 会执行上次激活项（意外跳路由/切主题）。
   // 守卫本身是纯函数（paletteGuard.ts），单测直测不依赖挂载。
   watch(show, resetActiveWhenClosed(nav.activeNav));

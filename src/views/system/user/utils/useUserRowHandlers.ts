@@ -10,11 +10,7 @@ import type { RecordType } from "plus-pro-components";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/**
- * 用户行级动作（自 hook.tsx 抽出）：重置 MFA / 强制下线 / 发送通知 /
- * 邀请激活 / 模拟用户。邀请与模拟为高危动作（二次确认）；模拟成功换签后
- * 整页刷新以目标身份重建路由/权限/WS。
- */
+/** 用户行级动作：重置 MFA / 强退 / 通知 / 邀请 / 模拟（后两者二次确认）。 */
 export function useUserRowHandlers({
   t,
   api,
@@ -40,8 +36,17 @@ export function useUserRowHandlers({
     });
   }
 
-  /** 强制下线：终止该用户全部在线会话 */
-  function handleLogout(row: RecordType) {
+  /** 强制下线：吊销该用户全部会话（含 HTTP 令牌），需二次确认 */
+  async function handleLogout(row: RecordType) {
+    if (
+      !(await confirm(
+        t("systemOnline.forceLogoutConfirm", {
+          name: row.username ?? row.pk
+        })
+      ))
+    ) {
+      return;
+    }
     handleOperation({
       t,
       apiReq: api.logout(row.pk, {}),

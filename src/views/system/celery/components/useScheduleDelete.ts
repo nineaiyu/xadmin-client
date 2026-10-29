@@ -39,7 +39,7 @@ export function useScheduleDelete({
 }) {
   const canDelete = Boolean(auth.destroy);
   auth.destroy = false;
-  // 批量删除一并关闭（FE-STATE-P1-03）：框架批删不经过「先查引用再确认」，
+  // 批量删除一并关闭：框架批删不经过「先查引用再确认」，
   // 被引用调度被整批删掉会让任务静默失效
   auth.batchDestroy = false;
   const confirm = useConfirm();

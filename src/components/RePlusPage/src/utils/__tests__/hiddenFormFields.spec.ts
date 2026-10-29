@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { stripHiddenFormFields } from "../hiddenFormFields";
 
 /**
- * 隐藏列提交剔除（FE-UI-P2-39）：
+ * 隐藏列提交剔除：
  * `hideInForm` 只影响渲染，旧值若不剔除会被 PATCH 写回，表现为「字段消失但值没清」。
  */
 describe("stripHiddenFormFields", () => {

@@ -12,7 +12,7 @@ vi.mock("vue-i18n", async importOriginal => {
 import { useBaseColumns } from "../columns";
 
 /**
- * 列元数据请求失败时的兜底（FE-ROBUST-P1-04）。
+ * 列元数据请求失败时的兜底。
  *
  * 契约：search-columns / search-fields 失败都不阻断列表——
  * 1) 对应回调仍执行（页面结束 loading、进入可重试态）；

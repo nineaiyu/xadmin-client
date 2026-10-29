@@ -1,19 +1,26 @@
 import type { useI18n } from "vue-i18n";
+import { operationLogApi } from "@/api/audit/logs/operation";
+import { isSuccess } from "@/api/types";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
- * 详情抽屉正文口径（LOG-P1-01）：retrieve / 导出与列表同级，body /
- * response_result 只有有界预览，不再提供全量正文出口。列表行已是详情可用的
- * 最终形态（changes 全量、正文预览 + `*_truncated` 标记），无需二次拉取。
- *
- * 保留该入口（detailRowFetch 契约）返回 null：RePlusPage 回退列表行渲染。
+ * 详情抽屉口径：列表的 changes 已降为有界预览，详情必须按主键
+ * 重新调用 retrieve 取全量变更对照；正文仍按服务端的同级有界预览输出。
+ * 拉取失败返回 null，RePlusPage 回退列表行，不阻断抽屉打开。
  */
 export async function fetchOperationLogDetail({
-  row: _row
+  row
 }: {
   t: TFunction;
   row: Record<string, unknown>;
 }) {
-  return null;
+  const pk = row.pk;
+  if (pk === undefined || pk === null || pk === "") return null;
+  try {
+    const res = await operationLogApi.retrieve(String(pk));
+    return isSuccess(res) ? (res.data ?? null) : null;
+  } catch {
+    return null;
+  }
 }

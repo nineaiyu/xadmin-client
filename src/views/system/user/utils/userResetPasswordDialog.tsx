@@ -1,4 +1,3 @@
-import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   ElButton,
@@ -10,6 +9,7 @@ import {
 import { addDialog } from "@/components/ReDialog";
 import { deviceDetection } from "@pureadmin/utils";
 import { AesEncrypted } from "@/utils/aes";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { passwordStrengthLevels } from "@/utils/password";
 import { buildPasswordValidator } from "./passwordRules";
 import type { Ref, UnwrapNestedRefs } from "vue";
@@ -45,6 +45,21 @@ export function openUserResetPasswordDialog({
   onGeneratePassword
 }: ResetPasswordDialogOptions) {
   const pwdProgress = passwordStrengthLevels(t);
+  const { beforeSure } = useDialogForm<string>({
+    readPayload: () => pwdForm.newPwd,
+    validate: () =>
+      new Promise<boolean>(resolve =>
+        ruleFormRef.value.validate((valid: boolean) => resolve(valid))
+      ),
+    submit: async password => {
+      const encrypted = await AesEncrypted(row.username, password);
+      return api.resetPassword(row.pk, { password: encrypted });
+    },
+    successText: t("results.success"),
+    onFail: res => {
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+    }
+  });
   addDialog({
     title: t("systemUser.resetPasswd", { user: row.username }),
     width: dialogSize("sm"),
@@ -105,31 +120,6 @@ export function openUserResetPasswordDialog({
       </>
     ),
     closeCallBack: () => (pwdForm.newPwd = ""),
-    beforeSure: (done, { closeLoading }) => {
-      ruleFormRef.value.validate(async (valid: boolean) => {
-        if (!valid) {
-          // 校验不过也要收口 loading：否则保存按钮永久转圈（弹层保留供修正）
-          closeLoading();
-          return;
-        }
-        const password = await AesEncrypted(row.username, pwdForm.newPwd);
-        try {
-          const res = await api.resetPassword(row.pk, { password });
-          if (isSuccess(res)) {
-            message(t("results.success"), { type: "success" });
-            done();
-          } else {
-            // 业务失败保持弹层（失败保弹层约定）：提示后输入不丢、可重试
-            message(`${t("results.failed")}，${res.detail}`, {
-              type: "error"
-            });
-            closeLoading();
-          }
-        } catch {
-          // 请求异常（http 层已提示）：停 loading 但保持弹层，不能悬挂转圈
-          closeLoading();
-        }
-      });
-    }
+    beforeSure
   });
 }
