@@ -11,7 +11,11 @@ vi.mock("@/components/RePlusPage", () => ({
   handleOperation: vi.fn()
 }));
 vi.mock("plus-pro-components", () => ({
-  PlusForm: { name: "PlusForm", template: "<form><slot /></form>" }
+  PlusForm: {
+    name: "PlusForm",
+    props: ["columns", "modelValue", "defaultValues", "rules"],
+    template: "<form><slot /></form>"
+  }
 }));
 vi.mock("@vueuse/core", () => ({ useMediaQuery: () => false }));
 vi.mock("vue-i18n", () => ({
@@ -198,5 +202,61 @@ describe("SettingItem 实际生效状态诊断", () => {
     expect(
       wrapper.find('[data-testid="setting-effective"]').classes()
     ).toContain("el-alert--success");
+  });
+});
+
+describe("SettingItem 表单防浏览器凭据自动填充", () => {
+  it("文本输入关闭自动填充，密码输入使用 new-password", async () => {
+    state.getColumnData.mockImplementation(
+      (
+        _api: unknown,
+        _params: unknown,
+        callback: (payload: {
+          addOrEditRules: { value: Record<string, never> };
+          addOrEditColumns: { value: unknown[] };
+        }) => void
+      ) => {
+        callback({
+          addOrEditRules: { value: {} },
+          addOrEditColumns: {
+            value: [
+              {
+                prop: "LDAP_BIND_DN",
+                valueType: "input",
+                fieldProps: {}
+              },
+              {
+                prop: "LDAP_BIND_PASSWORD",
+                valueType: "input",
+                fieldProps: { type: "password", showPassword: true }
+              },
+              {
+                prop: "LDAP_AUTH_ENABLED",
+                valueType: "radio",
+                fieldProps: {}
+              }
+            ]
+          }
+        });
+        return Promise.resolve();
+      }
+    );
+    const wrapper = mountItem();
+    await flushPromises();
+
+    const columns = wrapper
+      .findComponent({ name: "PlusForm" })
+      .props("columns") as Array<{
+      prop: string;
+      fieldProps: Record<string, unknown>;
+    }>;
+    const byProp = (prop: string) => columns.find(item => item.prop === prop);
+    expect(byProp("LDAP_BIND_DN")?.fieldProps.autocomplete).toBe("off");
+    expect(byProp("LDAP_BIND_PASSWORD")?.fieldProps.autocomplete).toBe(
+      "new-password"
+    );
+    expect(
+      byProp("LDAP_AUTH_ENABLED")?.fieldProps.autocomplete
+    ).toBeUndefined();
   });
 });

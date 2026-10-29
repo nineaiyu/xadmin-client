@@ -1,5 +1,6 @@
 import type { iconType } from "./types";
 import { h, defineComponent, type Component } from "vue";
+import { sanitizeSvgIcon } from "@/utils/sanitize";
 import { FontIcon, IconifyIconOffline } from "../index";
 import LocalIcon from "./localIcon";
 
@@ -32,9 +33,11 @@ export function useRenderIcon(
     let cleanedSvg = svgCache.get(icon);
     if (cleanedSvg === undefined) {
       if (svgCache.size > 200) svgCache.clear();
-      cleanedSvg = icon.replace(
-        /<svg([^>]*)>/,
-        (_, a) => `<svg${a.replace(/\s*(width|height)="[^"]*"/g, "")}>`
+      cleanedSvg = sanitizeSvgIcon(
+        icon.replace(
+          /<svg([^>]*)>/,
+          (_, a) => `<svg${a.replace(/\s*(width|height)="[^"]*"/g, "")}>`
+        )
       );
       svgCache.set(icon, cleanedSvg);
     }

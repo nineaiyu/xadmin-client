@@ -21,7 +21,8 @@ withDefaults(
   }>(),
   {
     title: "embedded-content",
-    sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+    // 不默认给 same-origin：对同源文档等于无沙箱；可信预览场景由调用方显式开启。
+    sandbox: "allow-scripts allow-forms allow-popups",
     referrerpolicy: "strict-origin-when-cross-origin",
     loading: "lazy",
     allow: "",

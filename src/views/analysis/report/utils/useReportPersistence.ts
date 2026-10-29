@@ -1,4 +1,5 @@
 import { ref, type ComputedRef, type Ref } from "vue";
+import { cloneDeep, isEqual } from "lodash-es";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import type { DatasetItem } from "@/api/dataset/datasets";
@@ -57,6 +58,7 @@ export function useReportPersistence(deps: {
       return;
     }
     deps.saving.value = true;
+    const beforeSave = cloneDeep(deps.design.value);
     try {
       const payload = normalizeDesign(deps.design.value, deps.dataset.value);
       // 乐观锁基线：把本次看到的设计版本原样回传，他人先保存时后端拒绝后写覆盖
@@ -68,8 +70,12 @@ export function useReportPersistence(deps: {
         })
         .catch(normalizeError);
       if (isSuccess(res)) {
-        deps.design.value = payload;
-        deps.dirty.value = false;
+        // 保存 RTT 内用户继续编辑时，不能用保存前的 payload 覆盖新改动；
+        // 保持 dirty=true，让用户再保存一次。
+        if (isEqual(deps.design.value, beforeSave)) {
+          deps.design.value = payload;
+          deps.dirty.value = false;
+        }
         if (res.data) deps.report.value = { ...deps.report.value, ...res.data };
         message(t("dataReport.designSaved"), { type: "success" });
         return;

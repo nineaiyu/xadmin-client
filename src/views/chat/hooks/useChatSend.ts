@@ -90,7 +90,12 @@ export function useChatSend(deps: {
       content: item.content,
       client_msg_id: item.client_msg_id
     };
-    if (item.message_type === "image" || item.message_type === "file") {
+    if (
+      item.message_type === "image" ||
+      item.message_type === "file" ||
+      item.message_type === "video" ||
+      item.message_type === "audio"
+    ) {
       // 附件消息重发：沿用已上传的附件引用（服务端幂等，不会重复落库）
       const filePk = item.extra?.file?.pk;
       if (!filePk) {

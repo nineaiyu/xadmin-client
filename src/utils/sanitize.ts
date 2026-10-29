@@ -81,3 +81,18 @@ export function sanitizeHtml(html: string | null | undefined): string {
       /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i
   });
 }
+
+/**
+ * 内联 SVG 图标净化（菜单 icon 字段可来自后台配置）。
+ *
+ * 只放开 SVG 图形标签；DOMPurify 默认剥离 on* 事件属性与 javascript: 协议，
+ * 这里再禁止 script/foreignObject 与 style（避免 CSS url() 夹带外链）。
+ */
+export function sanitizeSvgIcon(svg: string | null | undefined): string {
+  if (!svg) return "";
+  return DOMPurify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    FORBID_TAGS: ["script", "foreignObject"],
+    FORBID_ATTR: ["style"]
+  });
+}

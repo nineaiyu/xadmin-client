@@ -56,13 +56,17 @@ export async function buildScreenZipEntries(
 ): Promise<{ name: string; data: Uint8Array }[]> {
   const { safeFileName } = await import("@/utils/imageExport");
   const files: { name: string; data: Uint8Array }[] = [];
+  const used = new Map<string, number>();
   for (const item of images) {
     const base = safeFileName(
       String(item.title ?? ""),
       `card-${files.length + 1}`
     );
+    const count = (used.get(base) ?? 0) + 1;
+    used.set(base, count);
+    const uniqueBase = count > 1 ? `${base}-${count}` : base;
     files.push({
-      name: `${base}.${item.image.extension}`,
+      name: `${uniqueBase}.${item.image.extension}`,
       data: new Uint8Array(await item.image.blob.arrayBuffer())
     });
   }

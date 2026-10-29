@@ -16853,6 +16853,18 @@ export interface components {
              */
             description: string;
             /**
+             * Field permission mode
+             * @description strict = role without field permission config sees no columns; inherit = no extra pruning
+             * @default {
+             *       "label": "Inherit",
+             *       "value": "inherit"
+             *     }
+             */
+            field_permission_mode: {
+                label?: string;
+                value?: string;
+            };
+            /**
              * 过滤条件
              * @description [{field, op, value}]，op 限白名单
              */
@@ -17824,7 +17836,7 @@ export interface components {
             /** @default [] */
             readonly field: unknown[];
             /** 字段 */
-            fields: {
+            fields?: {
                 [key: string]: unknown;
             };
             /** 激活状态 */
@@ -20295,6 +20307,18 @@ export interface components {
              * @default
              */
             description: string;
+            /**
+             * Field permission mode
+             * @description strict = role without field permission config sees no columns; inherit = no extra pruning
+             * @default {
+             *       "label": "Inherit",
+             *       "value": "inherit"
+             *     }
+             */
+            field_permission_mode: {
+                label?: string;
+                value?: string;
+            };
             /**
              * 过滤条件
              * @description [{field, op, value}]，op 限白名单
@@ -23382,7 +23406,7 @@ export interface components {
                 [key: string]: unknown;
             };
             /** 字段 */
-            fields: {
+            fields?: {
                 [key: string]: unknown;
             };
             /**
@@ -23923,8 +23947,6 @@ export interface components {
             readonly last_login: string | null;
             /** 昵称 */
             readonly nickname: string;
-            /** 密码 */
-            readonly password: string;
             /** 手机 */
             readonly phone: string;
             /** ID */

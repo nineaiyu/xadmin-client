@@ -73,8 +73,8 @@ function nodeClick(value: TreeNodeData) {
 }
 
 /** 递归收集树节点 pk（替代 el-tree 私有 store._getAllNodes） */
-function collectNodePks(nodes?: Tree[]): number[] {
-  const pks: number[] = [];
+function collectNodePks(nodes?: Tree[]): Array<string | number> {
+  const pks: Array<string | number> = [];
   const walk = (list?: Tree[]) => {
     list?.forEach(node => {
       if (node.pk !== undefined && node.pk !== null) pks.push(node.pk);

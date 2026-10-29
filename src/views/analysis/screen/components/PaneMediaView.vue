@@ -67,7 +67,7 @@ const { t } = useI18n();
       :class="{ 'is-locked': editable }"
       :src="pane.url"
       title="screen-pane"
-      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+      sandbox="allow-scripts allow-popups allow-forms"
       referrerpolicy="no-referrer"
       loading="lazy"
       allowfullscreen

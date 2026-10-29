@@ -249,7 +249,12 @@ class WS {
         }
         // 4401 = 未认证（登录失效/被登出）、4403 = 权限拒绝：重连也不会成功，
         // 停止退避循环（否则登出后每 30s 一次无效连接，服务端持续产生拒绝日志）
-        if (event?.code === 4401 || event?.code === 4403) return;
+        if (event?.code === 4401 || event?.code === 4403) {
+          // 清心跳/退避并置 socketOpen=false；否则下一次心跳 send() 会在
+          // CLOSED 状态主动 connect()，权限拒绝后仍周期性重连。
+          this.close();
+          return;
+        }
         // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
         const backoff = Math.min(
           timeout * 2 ** this.reconnectCount,

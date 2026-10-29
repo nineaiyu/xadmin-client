@@ -63,6 +63,17 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
   other: "other"
 };
 
+const SENSITIVE_PARAM_KEYS = new Set([
+  "password",
+  "old_password",
+  "new_password",
+  "token",
+  "secret",
+  "api_key",
+  "access_key",
+  "client_secret"
+]);
+
 const rows = computed(() => {
   if (!props.draft) return [];
   return Object.entries(props.draft.params ?? {})
@@ -70,7 +81,10 @@ const rows = computed(() => {
     .map(([key, value]) => ({
       key,
       label: PARAM_LABELS[key] ? t(PARAM_LABELS[key]) : key,
-      value: formatValue(key, value)
+      value:
+        SENSITIVE_PARAM_KEYS.has(key) && value != null && value !== ""
+          ? "••••••"
+          : formatValue(key, value)
     }));
 });
 

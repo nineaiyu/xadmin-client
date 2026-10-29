@@ -2949,6 +2949,12 @@ settingChannel:
   feishuTitle: 飞书
   webhookTitle: Webhook 通知
 
+settingCommon:
+  unsaved: 有未保存的修改
+  leaveConfirm: 当前设置尚未保存，确定离开吗？
+  leave: 离开
+  stay: 留在本页
+
 settingLdap:
   title: LDAP 目录
   desc: 配置目录连接、用户/部门同步与组角色映射；「测试连接」只验证连接与搜索，不写入用户
@@ -3648,6 +3654,10 @@ dataDataset:
   saveOk: 保存成功
   deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
   dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 |date 标注
+  fieldPermissionMode: 字段权限模式
+  fieldPermissionInherit: 继承（未配置不裁剪）
+  fieldPermissionStrict: 严格（未配置即空结果）
+  fieldPermissionTip: 共享数据集建议使用严格模式；切换前请先运行 dataset_field_permission_audit 巡检
   jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 |number，日期（趋势用）加 |date（值须为 YYYY-MM-DD）"
   exportCsv: 导出 CSV
   previewRows: 明细

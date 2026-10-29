@@ -2,6 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { isSuccess } from "@/api/types";
 import { userApi } from "@/api/identity/user";
 import { translateMenuTitle } from "@/components/RePermissionPreview";
 import { message } from "@/utils/message";
@@ -61,6 +62,13 @@ async function runTrial() {
       model: model.value,
       menu: menuContext.value ? menuContext.value : null
     });
+    if (!isSuccess(res)) {
+      result.value = null;
+      message(String(res.detail ?? t("permissionPreview.trialFailed")), {
+        type: "error"
+      });
+      return;
+    }
     result.value = res.data;
   } catch {
     // 失败（含 403 无码）就地提示，不依赖全局拦截器的静默处理

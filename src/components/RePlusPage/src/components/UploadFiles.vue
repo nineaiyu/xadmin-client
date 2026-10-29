@@ -133,9 +133,9 @@ const uploadRequest = (option: UploadRequestOptions) => {
 watch(
   () => fileList,
   () => {
-    const pks = fileList.value.map(item => {
-      return { pk: item.pk };
-    });
+    const pks = fileList.value
+      .filter(item => item.pk != null)
+      .map(item => ({ pk: item.pk }));
     if (props.multiple) {
       emit("change", pks);
     } else {

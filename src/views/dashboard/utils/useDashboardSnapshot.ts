@@ -1,6 +1,6 @@
 import { ref, type Ref, type ComputedRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { useDark } from "@vueuse/core";
+import { useDark } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import { chartColorScheme } from "@/utils/chartTheme";
 import { useUserStoreHook } from "@/store/modules/user";
@@ -22,7 +22,9 @@ export function useDashboardSnapshot(deps: {
   rowEl: () => HTMLElement | null;
 }) {
   const { t } = useI18n();
-  const dark = useDark();
+  // 必须用 @pureadmin/utils 的 useDark：@vueuse/core 的 useDark 会自行切换
+  // documentElement 的 dark class，进入仪表盘即把站点主题改成黑色。
+  const { isDark: dark } = useDark();
   const exporting = ref(false);
   const { layout, current, cardRefs, rowEl } = deps;
 

@@ -1,6 +1,6 @@
 import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref, type Ref } from "vue";
+import { onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth, usePageAuth } from "@/router/utils";
@@ -49,6 +49,11 @@ export function useReport(tableRef: Ref) {
 
   const { listColumnsFormat } = useReportColumns({ datasets });
   const { openDialog } = useReportDialogs({ datasets, tableRef });
+  const pollControllers = new Set<AbortController>();
+  onUnmounted(() => {
+    pollControllers.forEach(controller => controller.abort());
+    pollControllers.clear();
+  });
 
   const run = async (row: ReportItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;
@@ -61,11 +66,14 @@ export function useReport(tableRef: Ref) {
         (res.data as { task_id?: string } | null)?.task_id ?? ""
       );
       if (taskId) {
+        const controller = new AbortController();
+        pollControllers.add(controller);
         void pollReportRun({
           taskId,
           t,
+          signal: controller.signal,
           onFinished: () => tableRef.value?.handleGetData()
-        });
+        }).finally(() => pollControllers.delete(controller));
       }
       return;
     }

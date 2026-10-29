@@ -35,6 +35,15 @@ test("LDAP 设置：渲染 → 保存 → 连接测试失败可读 → 本地登
     .first();
   await expect(searchBase).toBeVisible();
 
+  // 设置页不是登录表单：浏览器不能把站点登录凭据自动填进绑定 DN/密码
+  // （曾实测 Bind DN 被填成登录账号、密码框被填满，离开时误弹未保存确认）
+  await expect(
+    page.locator(".el-form-item:has-text('绑定 DN') input").first()
+  ).toHaveAttribute("autocomplete", "off");
+  await expect(
+    page.locator(".el-form-item:has-text('绑定密码') input").first()
+  ).toHaveAttribute("autocomplete", "new-password");
+
   // 保存配置（保持默认关闭 LDAP 登录；提交后成功提示）
   await serverUri.fill("ldap://127.0.0.1:3890");
   await searchBase.fill("dc=corp,dc=com");
@@ -51,4 +60,48 @@ test("LDAP 设置：渲染 → 保存 → 连接测试失败可读 → 本地登
   await logout(page);
   await login(page);
   await expect(page.getByRole("menuitem", { name: "系统管理" })).toBeVisible();
+});
+
+test("LDAP 设置：未保存离开提示使用站点文案（不回显 i18n key）", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统设置"], "/settings/ldap");
+
+  const serverUri = page
+    .locator(`.el-form-item:has-text('${LDAP_LABEL.serverUri}') input`)
+    .first();
+  await expect(serverUri).toBeVisible({ timeout: 15_000 });
+  // 只改表单不保存：触发 useDesignerGuard 的 dirty 分支
+  await serverUri.fill("ldap://127.0.0.1:3891");
+
+  // 走真实菜单点击（router.push 单次导航）：直接改 hash 会先改地址再被守卫拦回，
+  // hashchange 往返会让同一个确认框反复重建，点击始终等不到稳定态。
+  await page.getByRole("menuitem", { name: "首页" }).first().click();
+
+  const box = page.locator(".el-message-box");
+  await expect(box).toBeVisible({ timeout: 10_000 });
+  await expect(box).toContainText("当前设置尚未保存");
+  await expect(box).toContainText("有未保存的修改");
+  // 旧实现把 localeName/title 拼进命名空间，弹窗直接显示 setting:... 原始 key
+  await expect(box).not.toContainText("setting:");
+  await expect(box.getByRole("button", { name: "离开" })).toBeVisible();
+  await box.getByRole("button", { name: "留在本页" }).click();
+
+  await expect(box).not.toBeVisible();
+  await expect(page).toHaveURL(/\/settings\/ldap/);
+});
+
+test("LDAP 设置：未修改离开不弹未保存确认", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统设置"], "/settings/ldap");
+
+  const serverUri = page
+    .locator(`.el-form-item:has-text('${LDAP_LABEL.serverUri}') input`)
+    .first();
+  await expect(serverUri).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("menuitem", { name: "首页" }).first().click();
+  await expect(page).toHaveURL(/\/welcome/);
+  await expect(page.locator(".el-message-box")).not.toBeVisible();
 });

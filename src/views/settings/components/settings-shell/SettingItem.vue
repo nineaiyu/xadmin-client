@@ -9,12 +9,13 @@ import {
 } from "@/components/RePlusPage";
 import { PlusForm } from "plus-pro-components";
 import type { FieldValues, PlusColumn, RecordType } from "plus-pro-components";
-import { cloneDeep, pickBy } from "lodash-es";
+import { cloneDeep, isEqual, pickBy } from "lodash-es";
 import { useI18n } from "vue-i18n";
 import { useMediaQuery } from "@vueuse/core";
 import { BREAKPOINTS } from "@/utils/breakpoints";
 import { FORM_SPAN_FULL } from "@/utils/formSpan";
 import { useDesignerGuard } from "@/hooks/useDesignerGuard";
+import { withoutMaskedSecrets } from "../../utils/secretMask";
 import { settingItemProps } from "./types";
 
 defineOptions({
@@ -95,12 +96,14 @@ const dirtyForm = computed(
   () =>
     Boolean(props.auth.partialUpdate) &&
     !loadFailed.value &&
-    JSON.stringify(addOrEditData.value.formData) !==
-      JSON.stringify(addOrEditData.value.defaultData)
+    // 键序不敏感：表单控件可能按列顺序重排对象键，逐字符比较会误报脏
+    !isEqual(addOrEditData.value.formData, addOrEditData.value.defaultData)
 );
 useDesignerGuard({
   dirty: dirtyForm,
-  namespace: `setting:${props.localeName}:${props.title ?? ""}`,
+  // 设置页共用一套离开确认文案；旧实现把 localeName/title 拼进 namespace，
+  // 得到 `setting:settingLdap:` 这类非法 key，弹窗直接显示 i18n key。
+  namespace: "settingCommon",
   mode: "page"
 });
 
@@ -165,8 +168,19 @@ const getData = async () => {
       // 布局：标签左置（右对齐）+ 单列——与弹窗表单（AddOrEdit）同形态；
       // 后端下发的响应式列宽面向多列表单，这里统一整行，靠表单容器限宽收住控件
       column["colProps"] = FORM_SPAN_FULL;
-      (column["fieldProps"] as { disabled?: boolean })["disabled"] =
-        !props.auth.partialUpdate;
+      const fieldProps = column["fieldProps"] as Record<string, unknown>;
+      fieldProps.disabled = !props.auth.partialUpdate;
+      // 设置页不是登录表单：浏览器/密码管理器会把站点登录凭据自动填进
+      // 「文本 + 密码」组合（实测 LDAP 绑定 DN 被填成登录账号、绑定密码被填满），
+      // 既可能把登录密码误存进配置，也会让 dirtyForm 误判为未保存修改。
+      if (fieldProps.type === "password") {
+        fieldProps.autocomplete = "new-password";
+      } else if (
+        column["valueType"] === "input" ||
+        column["valueType"] === "textarea"
+      ) {
+        fieldProps.autocomplete = "off";
+      }
       // 消费方列加工口（可选）：E2E 锚点、控件微调等页面级诉求，
       // 避免各页面复制一份 SettingItem
       props.columnDecorator?.(column);
@@ -240,7 +254,10 @@ const handleTest = () => {
     testLoading.value = true;
     handleOperation({
       t,
-      apiReq: props.api.create(props.queryParams, addOrEditData.value.formData),
+      apiReq: props.api.create(
+        props.queryParams,
+        withoutMaskedSecrets(addOrEditData.value.formData)
+      ),
       requestEnd: () => {
         testLoading.value = false;
       }

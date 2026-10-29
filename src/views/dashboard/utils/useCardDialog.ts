@@ -23,10 +23,18 @@ export function useCardDialog({
 }) {
   const cardFormRef = ref<InstanceType<typeof CardForm>>();
 
+  function newCardId(): string {
+    // HTTP 内网部署没有 secure context，crypto.randomUUID 不存在；保留时间戳+随机的回退。
+    const uuid = globalThis.crypto?.randomUUID?.();
+    return (
+      uuid ?? `card-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    );
+  }
+
   function newCard(): DashboardCard {
     return {
       // 随机 UUID 防撞：毫秒时间戳在快速连建卡片时会重复，后端布局仅要求 id 非空
-      id: crypto.randomUUID(),
+      id: newCardId(),
       dataset: "",
       title: "",
       chart_type: "number",

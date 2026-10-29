@@ -76,7 +76,8 @@ export function useWebhookDelivery(tableRef: Ref) {
             ["failed", "exhausted"].includes(
               statusValue((row as WebhookDeliveryItem)?.status)
             )
-          ) && 10
+          ),
+        index: 10
       }
     ]
   });

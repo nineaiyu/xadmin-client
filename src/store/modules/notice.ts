@@ -138,19 +138,19 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (isMarkdownMessage) {
                 // Markdown 公告：预览用纯文本，禁用 HTML 通道（渲染结果不塞进通知）
                 message = previewText;
-              } else if (data?.notice_type?.value === 0) {
+              } else {
                 // 统一按字符串测试（RegExp.test 本身会 ToString；显式归一消除类型歧义）
+                const raw = String(message ?? "");
                 const isHtml =
                   /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
-                    String(message ?? "")
+                    raw
                   );
                 if (!isHtml) {
                   message = h("i", { style: "color: teal" }, data?.message);
                 } else {
-                  // HTML 分支走 dangerouslyUseHTMLString：先过 DOMPurify 白名单
-                  // 净化（与 NoticeShow/TemplatePreview 等 v-html 消费路径同口径）。
-                  // 服务端入库已 bleach，这里是展示层兜底，防历史脏数据/绕过。
-                  message = sanitizeHtml(String(data?.message ?? ""));
+                  // 任意公告类型走 dangerouslyUseHTMLString 前都必须净化：
+                  // notice_type 不是安全边界（历史脏数据/新增类型同样可能带 HTML）。
+                  message = sanitizeHtml(raw);
                 }
               }
               const options: Partial<NotificationOptions> = {

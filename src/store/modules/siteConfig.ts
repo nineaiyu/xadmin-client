@@ -1,6 +1,7 @@
 import type { PreferenceBaseline } from "@/utils/preferenceDiff";
 
 import { defineStore } from "pinia";
+import { isSuccess } from "@/api/types";
 import { setConfig } from "@/config";
 import Storage from "responsive-storage";
 import { message } from "@/utils/message";
@@ -103,7 +104,11 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      */
     async resetSiteConfig() {
       const { configApi } = await import("@/api/config");
-      configApi.resetSiteConfig().then(() => {
+      configApi.resetSiteConfig().then(res => {
+        if (!isSuccess(res)) {
+          message(transformI18n("layout.saveConfigFailed"), { type: "error" });
+          return;
+        }
         message(transformI18n("layout.resetConfigSuccess"), {
           type: "success"
         });
@@ -248,6 +253,17 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         configApi
           .setSiteConfig(newConfig)
           .then(res => {
+            if (!isSuccess(res)) {
+              // HTTP 200 + 业务码失败（如非超管改站点级键）不能提示成功/写快照，
+              // 否则刷新后配置回退且用户无感知。
+              if (!silent) {
+                message(transformI18n("layout.saveConfigFailed"), {
+                  type: "error"
+                });
+              }
+              reject(res);
+              return;
+            }
             if (!silent) {
               message(transformI18n("layout.saveConfigSuccess"), {
                 type: "success"

@@ -12,7 +12,7 @@ describe("SafeFrame 受控 iframe", () => {
     const frame = wrapper.find("iframe");
     expect(frame.attributes("src")).toBe("https://example.com/embed");
     expect(frame.attributes("sandbox")).toContain("allow-scripts");
-    expect(frame.attributes("sandbox")).toContain("allow-same-origin");
+    expect(frame.attributes("sandbox")).not.toContain("allow-same-origin");
     expect(frame.attributes("referrerpolicy")).toBe(
       "strict-origin-when-cross-origin"
     );

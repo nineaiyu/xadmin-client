@@ -35,6 +35,8 @@ export type DatasetItem = {
   row_limit: number;
   config: { date_field?: string };
   visibility: DatasetVisibility;
+  /** inherit = 未配置字段权限不裁剪；strict = 未配置即空结果（共享数据集默认） */
+  field_permission_mode?: "inherit" | "strict";
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
 };

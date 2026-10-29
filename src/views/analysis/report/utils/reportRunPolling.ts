@@ -12,15 +12,28 @@ const POLL_MAX = 15;
 export async function pollReportRun({
   taskId,
   t,
-  onFinished
+  onFinished,
+  signal
 }: {
   taskId: string;
   t: TFunction;
   onFinished: () => void;
+  signal?: AbortSignal;
 }) {
   for (let attempt = 0; attempt < POLL_MAX; attempt += 1) {
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+    await new Promise<void>(resolve => {
+      const onAbort = () => resolve();
+      signal?.addEventListener("abort", onAbort, { once: true });
+      const timer = setTimeout(() => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      }, POLL_INTERVAL);
+      // 已 abort 时计时器无需保留；Promise 已 resolve，回调为幂等空操作。
+      if (signal?.aborted) clearTimeout(timer);
+    });
+    if (signal?.aborted) return;
     const res = await exportRecordApi.retrieve(taskId).catch(() => null);
+    if (signal?.aborted) return;
     if (!res || !isSuccess(res) || !res.data) return;
     const rawStatus = (res.data as { status?: unknown }).status;
     const status =

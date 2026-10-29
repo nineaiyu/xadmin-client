@@ -2949,6 +2949,12 @@ settingChannel:
   feishuTitle: FeiShu
   webhookTitle: Webhook
 
+settingCommon:
+  unsaved: Unsaved changes
+  leaveConfirm: Current settings are not saved. Leave anyway?
+  leave: Leave
+  stay: Stay on this page
+
 settingLdap:
   title: LDAP Directory
   desc: Configure the directory connection, user/department sync and group-role mapping; "Test connection" only checks connection/search and does not write users
@@ -3648,6 +3654,10 @@ dataDataset:
   saveOk: Saved
   deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
   dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
+  fieldPermissionMode: Field permission mode
+  fieldPermissionInherit: Inherit (no pruning when unconfigured)
+  fieldPermissionStrict: Strict (empty result when unconfigured)
+  fieldPermissionTip: Use strict for shared datasets; run dataset_field_permission_audit before switching
   jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
   exportCsv: Export CSV
   previewRows: Rows

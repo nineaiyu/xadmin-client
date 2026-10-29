@@ -814,3 +814,42 @@ test("仪表盘实时推送：实时档建立 ws/dashboard 连接并收到首帧
     }
   }
 });
+
+test("进入仪表盘不改变站点明暗主题", async ({ page }) => {
+  await login(page);
+  await page.goto(`${FRONT_URL}/#/welcome`);
+  await expect(page.locator(".set-icon").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  const before = await page.evaluate(() => ({
+    dark: document.documentElement.classList.contains("dark"),
+    // 布局态存储键：站点「跟随系统」时随 OS 变化是设计行为，不能拿来当回归
+    themeMode:
+      JSON.parse(localStorage.getItem("responsive-layout") ?? "{}")?.layout
+        ?.themeMode ?? "light"
+  }));
+  // 用相反的系统偏好做诱饵：曾经的实现误用 @vueuse/core 的 useDark，
+  // 挂载即按 OS 偏好改写 html.dark，进入仪表盘会把整站切成黑色。
+  await page.emulateMedia({
+    colorScheme:
+      before.themeMode === "system"
+        ? before.dark
+          ? "dark"
+          : "light"
+        : before.dark
+          ? "light"
+          : "dark"
+  });
+
+  await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
+  await expect(page.getByTestId("dashboard-picker")).toBeVisible({
+    timeout: 15_000
+  });
+  // 等一拍挂载后的副作用（主题若被改写，同步发生在组件 setup 阶段）
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.classList.contains("dark"))
+    )
+    .toBe(before.dark);
+});

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, reactive } from "vue";
+import { computed, reactive, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
@@ -64,8 +64,20 @@ const form = reactive({
   // visibility 序列化为 {value,label} 对象，radio 只接受标量（归一化取 value）
   visibility: (props.row ? choiceValue(props.row.visibility) : "personal") as
     "personal" | "shared",
+  field_permission_mode: (props.row
+    ? choiceValue(props.row.field_permission_mode) || "inherit"
+    : "inherit") as "inherit" | "strict",
   date_field: props.row?.config?.date_field ?? ""
 });
+
+// 新建时从个人切到共享：默认 strict（服务端同样默认；这里避免表单显式提交 inherit
+// 覆盖服务端默认）。用户随后仍可手动改回 inherit。
+watch(
+  () => form.visibility,
+  value => {
+    if (!props.row && value === "shared") form.field_permission_mode = "strict";
+  }
+);
 
 const fieldOptions = computed(() => props.meta.fields[form.bound_model] ?? []);
 
@@ -129,6 +141,7 @@ const getPayload = (): Record<string, unknown> | null => {
     ordering: form.ordering,
     row_limit: Number(form.row_limit) || 1000,
     visibility: form.visibility,
+    field_permission_mode: form.field_permission_mode,
     config: form.date_field ? { date_field: form.date_field } : {}
   };
 };
@@ -276,6 +289,19 @@ defineExpose({ getPayload });
         <el-radio value="personal">{{ t("dataDataset.personal") }}</el-radio>
         <el-radio value="shared">{{ t("dataDataset.shared") }}</el-radio>
       </el-radio-group>
+    </el-form-item>
+    <el-form-item :label="t('dataDataset.fieldPermissionMode')">
+      <el-radio-group v-model="form.field_permission_mode">
+        <el-radio value="inherit">
+          {{ t("dataDataset.fieldPermissionInherit") }}
+        </el-radio>
+        <el-radio value="strict">
+          {{ t("dataDataset.fieldPermissionStrict") }}
+        </el-radio>
+      </el-radio-group>
+      <div class="text-xs text-(--el-text-color-regular)">
+        {{ t("dataDataset.fieldPermissionTip") }}
+      </div>
     </el-form-item>
     <el-form-item :label="t('dataDataset.description')">
       <el-input v-model="form.description" />

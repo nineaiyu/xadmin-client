@@ -148,9 +148,14 @@ const openForm = async (
         columns: props.columns,
         defaultName: options.defaultName
       }),
-    beforeSure: async done => {
+    beforeSure: async (done, { closeLoading }) => {
       const payload = formRef.value?.getPayload?.();
-      if (!payload) return;
+      if (!payload) {
+        // 名称为空等前端校验失败：必须复位 footer loading，否则保存按钮永久
+        // spinner，用户修正后也无法再次提交。
+        closeLoading();
+        return;
+      }
       const request =
         mode === "edit" && options.row
           ? savedViewApi.partialUpdate(options.row.pk, payload)
@@ -162,6 +167,7 @@ const openForm = async (
       const res = await request.catch(fallback);
       if (!isSuccess(res)) {
         message(String(res.detail ?? t("results.failed")), { type: "error" });
+        closeLoading();
         return;
       }
       currentPk.value =
