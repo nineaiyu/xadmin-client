@@ -1575,7 +1575,7 @@ systemApprovalFlow:
   nodeRequired: 至少配置一个审批节点
   nodeNameRequired: 存在未命名的节点
   saveSuccess: 流程已保存
-  routeInvalidDropped: 已忽略无效分支（需填写条件字段，且目标不能是当前节点）
+  routeInvalidDropped: 已忽略无效分支（需填写条件字段，且目标必须是当前节点之后的节点）
 
 systemApprovalInstance:
   commentsNoPermission: 缺少 comments:SystemApprovalInstance 权限，无法查看讨论区

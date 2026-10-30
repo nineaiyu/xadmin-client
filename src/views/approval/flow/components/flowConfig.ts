@@ -195,11 +195,20 @@ export function toNodeRow(node: ApiNode): NodeRow {
   };
 }
 
+/** 分支目标是否合法：必须指向当前节点之后的节点（服务端同口径，禁止自环/回跳）。 */
+export function isValidRouteTarget(
+  target: number,
+  order: number,
+  count: number
+): boolean {
+  return Number.isInteger(target) && target > order && target <= count;
+}
+
 /**
  * 节点重排 / 删除后重映射出口路由 target（target 语义是「目标节点当前 order」）。
  *
  * ``previousOrder`` 是变更前的节点引用快照：按旧 order 找到目标节点，再换算成它的
- * 新 order；目标已被删除或会形成自环时丢弃该路由（保留会指向错误节点或死循环）。
+ * 新 order；目标已被删除、形成自环或变成回跳时丢弃该路由（保留会指向错误节点或死循环）。
  */
 export function remapRouteTargets(
   nodes: NodeRow[],
@@ -211,7 +220,7 @@ export function remapRouteTargets(
       const targetNode = previousOrder[Number(route.target) - 1];
       if (!targetNode) return [];
       const newTarget = nodes.indexOf(targetNode) + 1;
-      if (!newTarget || newTarget === selfOrder) return [];
+      if (!isValidRouteTarget(newTarget, selfOrder, nodes.length)) return [];
       return [{ ...route, target: newTarget }];
     });
   }

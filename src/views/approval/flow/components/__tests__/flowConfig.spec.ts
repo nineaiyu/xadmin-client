@@ -4,6 +4,7 @@ import {
   buildFlowPayload,
   createEmptyNode,
   isNumericConditionValue,
+  isValidRouteTarget,
   remapRouteTargets,
   toNodeRow,
   validateFlowConfig
@@ -136,26 +137,36 @@ describe("节点抄送人（cc_users）", () => {
   });
 });
 
+describe("isValidRouteTarget", () => {
+  it("目标必须落在当前节点之后且不越界", () => {
+    expect(isValidRouteTarget(2, 1, 3)).toBe(true);
+    expect(isValidRouteTarget(1, 1, 3)).toBe(false);
+    expect(isValidRouteTarget(1, 2, 3)).toBe(false);
+    expect(isValidRouteTarget(3, 2, 3)).toBe(true);
+    expect(isValidRouteTarget(4, 2, 3)).toBe(false);
+  });
+});
+
 describe("remapRouteTargets（顺序变更）", () => {
   const buildNodes = () => [
     node({ name: "A", routes: [{ condition: {}, target: 2 }] }),
-    node({ name: "B", routes: [{ condition: {}, target: 1 }] }),
+    node({ name: "B", routes: [{ condition: {}, target: 3 }] }),
     node({ name: "C", routes: [] })
   ];
 
-  it("上移/下移后 target 指向同一业务节点", () => {
+  it("上移/下移后仅保留仍指向后续节点的路由", () => {
     const nodes = buildNodes();
     const previous = nodes.slice();
     // A 下移一位：A↔B
     [nodes[0], nodes[1]] = [nodes[1], nodes[0]];
     remapRouteTargets(nodes, previous);
 
-    // A 原本指向 B（旧 order 2）；B 现在 order 1 → A.target 应为 1
+    // A 原本指向 B（旧 order 2）；B 现在 order 1 → 回跳，路由丢弃
     expect(nodes[1].name).toBe("A");
-    expect(nodes[1].routes[0].target).toBe(1);
-    // B 原本指向 A（旧 order 1）；A 现在 order 2 → B.target 应为 2
+    expect(nodes[1].routes).toEqual([]);
+    // B 原本指向 C（旧 order 3）；C 仍为 order 3 → 保留
     expect(nodes[0].name).toBe("B");
-    expect(nodes[0].routes[0].target).toBe(2);
+    expect(nodes[0].routes[0].target).toBe(3);
   });
 
   it("删除目标节点后指向它的路由被丢弃", () => {
@@ -186,6 +197,6 @@ describe("remapRouteTargets（顺序变更）", () => {
     const previous = nodes.slice();
     remapRouteTargets(nodes, previous);
     expect(nodes[0].routes[0].target).toBe(2);
-    expect(nodes[1].routes[0].target).toBe(1);
+    expect(nodes[1].routes[0].target).toBe(3);
   });
 });

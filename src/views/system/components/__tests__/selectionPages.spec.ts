@@ -33,4 +33,9 @@ describe("列表页勾选列与批量动作权限一致", () => {
     const source = readPage("account-risk/index.vue");
     expect(source).toContain(':selection="Boolean(auth.batchHandle)"');
   });
+
+  it("任务执行历史：批删权限决定勾选列（批量删除入口依赖勾选）", () => {
+    const source = readPage("celery/logs/index.vue");
+    expect(source).toContain(':selection="Boolean(auth.batchDestroy)"');
+  });
 });

@@ -25,7 +25,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="false"
+    :selection="Boolean(auth.batchDestroy)"
     locale-name="systemTaskExecution"
     :list-columns-format="listColumnsFormat"
     :searchColumnsFormat="searchColumnsFormat"

@@ -1575,7 +1575,7 @@ systemApprovalFlow:
   nodeRequired: At least one approval node is required
   nodeNameRequired: Some node has no name
   saveSuccess: Flow saved
-  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target cannot be the current node)
+  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target must be a later node)
 
 systemApprovalInstance:
   commentsNoPermission: Missing comments:SystemApprovalInstance; the discussion is unavailable

@@ -280,7 +280,7 @@ test("驳回后重新提交：按原流程与原内容预填发起弹窗", async
   }
 });
 
-test("流程定义：分支路由 target 可选（非自环）并落库", async ({ page }) => {
+test("流程定义：分支路由只能指向后续节点并落库", async ({ page }) => {
   await login(page);
   const token = await getAccessToken(page);
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -326,7 +326,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
 
     const drawer = page.locator(".el-drawer").last();
     await expect(drawer).toBeVisible({ timeout: 10_000 });
-    const nodeRow = drawer.getByRole("row", { name: /终审B/ });
+    const nodeRow = drawer.getByRole("row", { name: /初审A/ });
     await nodeRow.getByRole("button", { name: "分支" }).click();
 
     const routeDialog = page.locator(".el-dialog").last();
@@ -338,7 +338,7 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
     const editableInputs = routeRow.locator("input:not([readonly])");
     await editableInputs.nth(0).fill("amount");
     await editableInputs.nth(1).fill("100");
-    // target 下拉：非自环节点可选，当前节点（顺序 2）禁用
+    // target 下拉：只能指向后续节点（当前节点「顺序 1」与更早节点均禁用）
     await routeRow.locator(".el-select").nth(1).click();
     const option1 = page
       .locator(".el-select-dropdown__item")
@@ -349,9 +349,9 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
       .filter({ hasText: "顺序 2" })
       .first();
     await expect(option1).toBeVisible({ timeout: 10_000 });
-    await expect(option1).not.toHaveClass(/is-disabled/);
-    await expect(option2).toHaveClass(/is-disabled/);
-    await option1.click();
+    await expect(option1).toHaveClass(/is-disabled/);
+    await expect(option2).not.toHaveClass(/is-disabled/);
+    await option2.click();
     // EP 下拉选中后常以可见态残留并拦截点击：点弹窗标题强制收起（既有教训口径）
     await routeDialog.locator(".el-dialog__header").click();
     await routeDialog.getByRole("button", { name: "保存" }).click();
@@ -366,9 +366,9 @@ test("流程定义：分支路由 target 可选（非自环）并落库", async 
     );
     const nodes = (await detail.json())?.data?.nodes ?? [];
     const target = nodes.find(
-      (node: { name: string }) => node.name === "终审B"
+      (node: { name: string }) => node.name === "初审A"
     );
-    expect(target?.routes?.[0]?.target).toBe(1);
+    expect(target?.routes?.[0]?.target).toBe(2);
   } finally {
     if (flowPk) {
       await page.request
