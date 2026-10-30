@@ -77,8 +77,13 @@ function detailOf(row: RecordType): string {
                 : t("systemUser.loginFailed")
             }}
           </span>
-          <el-tag v-if="row.online" size="small" type="primary">
-            {{ t("systemUser.onlineSessions", { count: row.online }) }}
+          <!-- online 是登录日志的三态字段：true/false 为 WS 会话在线态，-1 表示不适用 -->
+          <el-tag
+            v-if="row.online === true || row.online === false"
+            size="small"
+            :type="row.online ? 'primary' : 'info'"
+          >
+            {{ row.online ? t("labels.online") : t("labels.offline") }}
           </el-tag>
           <span v-if="row.policy_result" class="text-xs text-secondary">
             {{ row.policy_result }}

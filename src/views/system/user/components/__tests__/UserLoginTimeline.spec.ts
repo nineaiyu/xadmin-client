@@ -45,7 +45,7 @@ describe("UserLoginTimeline", () => {
           {
             pk: 1,
             status: true,
-            online: 2,
+            online: true,
             ipaddress: "10.0.0.1",
             city: "北京",
             browser: "Chrome",
@@ -64,7 +64,31 @@ describe("UserLoginTimeline", () => {
     });
     expect(wrapper.text()).toContain("systemUser.loginSucceeded");
     expect(wrapper.text()).toContain("10.0.0.1");
-    expect(wrapper.text()).toContain("systemUser.onlineSessions");
+    expect(wrapper.text()).toContain("labels.online");
+    expect(wrapper.text()).not.toContain("labels.offline");
+  });
+
+  it("WS 会话已断开时显示离线", async () => {
+    state.list.mockResolvedValue({
+      code: 1000,
+      data: { results: [{ pk: 2, status: true, online: false }] }
+    });
+    const wrapper = await mountTimeline();
+
+    expect(wrapper.text()).toContain("labels.offline");
+    expect(wrapper.text()).not.toContain("labels.online");
+  });
+
+  it("online=-1（不适用）不渲染在线/离线标签", async () => {
+    state.list.mockResolvedValue({
+      code: 1000,
+      data: { results: [{ pk: 3, status: true, online: -1 }] }
+    });
+    const wrapper = await mountTimeline();
+
+    // 复现修复前缺陷：-1 为真值，被当成台数渲染出「在线 -1 台」
+    expect(wrapper.find(".tag").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("systemUser.onlineSessions");
   });
 
   it("无记录时显示空态", async () => {
