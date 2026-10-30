@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMenu } from "./utils/hook";
@@ -29,6 +30,7 @@ const {
   rootRef,
   treeRef,
   loading,
+  loadError,
   stats,
   renderedTree,
   currentRow,
@@ -108,6 +110,7 @@ const emptyText = computed(() =>
 
       <div class="menu-page__scroll" :style="{ height: `${height}px` }">
         <el-tree
+          v-if="!loadError"
           ref="treeRef"
           v-loading="loading"
           :allow-drop="allowDrop"
@@ -140,8 +143,31 @@ const emptyText = computed(() =>
           </template>
         </el-tree>
 
+        <ReStateContainer
+          v-if="!loading && loadError"
+          state="error"
+          :error-text="t('reState.error')"
+          :error-detail="loadError"
+          :min-height="200"
+          data-testid="menu-tree-state"
+        >
+          <template #error>
+            <el-alert
+              type="error"
+              :closable="false"
+              show-icon
+              :title="t('reState.error')"
+              :description="loadError"
+            />
+            <div class="mt-3 text-center">
+              <el-button type="primary" @click="onRefresh">
+                {{ t("plus.retry") }}
+              </el-button>
+            </div>
+          </template>
+        </ReStateContainer>
         <ReEmpty
-          v-if="!loading && !visibleTree.length"
+          v-else-if="!loading && !visibleTree.length"
           :description="emptyText"
         />
       </div>

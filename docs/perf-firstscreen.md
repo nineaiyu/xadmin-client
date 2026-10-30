@@ -130,6 +130,66 @@ E2E_BASE_URL=http://127.0.0.1:18899 node scripts/firstscreen-profile.mjs --updat
 在双浏览器全部失败且重试同挂——**稳定失败即真回归**，不是 flaky；定位靠失败快照里
 `el-descriptions` 渲染出「table + 空 rowgroup」这一特征形态。
 
-**非图表页实测**（darwin-local，生产产物 + `csp-page-server` 口径，同 §二 环境）：
+**非图表页实测**（darwin-local，生产产物 + `csp-page-server` 口径，同 §二 环境，2026-10-23 复测）：
 
-<MEASURE_PLACEHOLDER>
+| 页面    | TTFB | FCP    | LCP    | DCL   | TBT  | Long Task | LCP 元素         |
+| ------- | ---- | ------ | ------ | ----- | ---- | --------- | ---------------- |
+| welcome | 1 ms | 172 ms | 244 ms | 49 ms | 0 ms | 1         | 操作日志时间线行 |
+| login   | 4 ms | 120 ms | 120 ms | 51 ms | 0 ms | 0         | 登录页波浪背景图 |
+
+## 六、首屏 LCP 收口（2026-10-23）
+
+**现象**：生产产物 welcome 页 LCP **792 ms**（FCP 172 ms、TBT 0），LCP 元素是操作日志时间线的一行；
+XHR 在 ~210 ms 已全部结束，说明瓶颈不在网络。
+
+**根因**：两组渲染时序叠加——
+
+1. 卡片 `v-motion` 入场初始 `opacity: 0` 且错峰延迟最高 640 ms，LCP 元素要等动画开始才可见；
+2. 活跃用户卡片初始为空数组，数据到达后一次性插入 4 张卡，把下方图表/操作日志整行推下 140 px。
+
+**改动**：
+
+- welcome 卡片移除入场动画（内容首帧可见，不再用 opacity/位移动画）；
+- `createDashboardState` 预分配 4 张活跃用户卡（1/3/7/30 天）占位，数值加载态用骨架；
+- `firstscreen-profile.mjs` 增加 LCP 元素记录（`lcpElement`），基线同步更新。
+
+**结果**（darwin-local，生产产物，多次复测）：
+
+| 指标 | 改动前     | 改动后        | 变化            |
+| ---- | ---------- | ------------- | --------------- |
+| LCP  | 792 ms     | 244–280 ms    | **-65% ~ -69%** |
+| FCP  | 172–184 ms | 172–180 ms    | 持平            |
+| CLS  | 0.0095     | 0.0088–0.0095 | 无回退          |
+| TBT  | 0 ms       | 0 ms          | 持平            |
+
+**复跑**：`pnpm build` + `E2E_BASE_URL=http://127.0.0.1:18899 node scripts/firstscreen-profile.mjs`；
+基线用 `--update` 回写。`perf.e2e.ts` 的 dev 链路数字受登录快路径影响，不作为首屏结论。
+
+## 三、异步大 chunk 审计（2026-10-26）
+
+构建产物 `dist/index.html` 的 modulepreload 闭包**不包含**下列 chunk；入口只保留动态
+import 引用（`grep -Eo '(echarts|ri-|fa-solid|vanilla-jsoneditor)[^" ]*\.js' dist/index.html`
+为空）。因此它们是按需下载，不属于首屏体积问题；本节只评估「首次进入对应页面」是否还能更快。
+
+| chunk                | raw              | gzip             | 加载时机                                            | 结论 |
+| -------------------- | ---------------- | ---------------- | --------------------------------------------------- | ---- |
+| `echarts`            | 1060.8 KB        | 345.6 KB         | 图表页挂载时 `loadEcharts()` 动态加载               | 保留 |
+| `ri` / `fa-solid`    | 749.9 / 631.2 KB | 184.4 / 197.5 KB | 首次命中该图标集（`iconRegistry` 动态 import 子集） | 保留 |
+| `vanilla-jsoneditor` | 639.2 KB         | 176.4 KB         | JSON 字段编辑器/查看器挂载时异步加载                | 保留 |
+
+审计结论：
+
+1. **ECharts**：`src/plugins/echarts.ts` 已按需注册 Line/Bar/Pie + SVG renderer + 6 个组件，
+   但注册入口必须从 `echarts/charts` / `echarts/components` 桶文件取具名导出；ECharts 的
+   `package.json` 将 `lib/chart/*.js` / `lib/component/*.js` 声明为 sideEffects，且 exports
+   未暴露深层 install 路径，桶内未用图表不会被摇掉，因此 345.6 KB 是「已注册图表集」的
+   实际成本。按路由拆 line/bar/pie 需要页面级注册 + 动态注册表，收益只落在首次图表页，
+   复杂度与回归风险不成比例，暂不做。
+2. **vanilla-jsoneditor**：仅在 JSON 字段编辑器/查看器挂载时加载（`JsonInput.vue` 经
+   `defineAsyncComponent` 进入表单渲染链），库本身为单体包，无安全拆分点。
+3. **ri / fa-solid**：子集 JSON 已按图标集懒加载；进一步按 shard 拆分需要同时改
+   `gen-icon-subset` 生成器与 `iconRegistry` 的 icon→shard 映射，属于独立优化项。
+4. 首屏闭包门禁（`pnpm check:bundle-size`）继续作为回归护栏；若图表页 TTI 或首次
+   菜单渲染成为目标，再按上述第 1/3 点单独立项。
+
+> 数据来自本机 `pnpm build`（gzip 列取构建日志）；不同机器只比较趋势。

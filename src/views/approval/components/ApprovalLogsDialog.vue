@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 import { usePagedList } from "@/hooks/usePagedList";
 import { operationLogApi } from "@/api/audit/logs/operation";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 defineOptions({ name: "ApprovalLogsDialog" });
 
@@ -42,6 +46,28 @@ const formatCreator = (creator: LogRow["creator"]) => {
 
 const { t } = useI18n();
 
+const PAGE_SIZE = 10;
+
+/** 相关日志只读列（创建人取 username，不直接绑定嵌套对象） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { prop: "created_time", label: t("logsOperation.created_time"), width: 160 },
+  {
+    prop: "creator",
+    label: t("logsOperation.creator"),
+    width: 120,
+    showOverflowTooltip: true,
+    slot: "creator"
+  },
+  { prop: "method", label: t("logsOperation.method"), width: 90 },
+  {
+    prop: "path",
+    label: t("logsOperation.path"),
+    minWidth: 200,
+    showOverflowTooltip: true
+  },
+  { prop: "status_code", label: t("logsOperation.status_code"), width: 90 }
+]);
+
 // 相关日志分页（异常归一与信封判定见 usePagedList；翻页失败保持现状不清空）
 const {
   loading,
@@ -51,7 +77,7 @@ const {
   load: fetchLogs,
   setPage
 } = usePagedList<LogRow>({
-  pageSize: 10,
+  pageSize: PAGE_SIZE,
   fetch: params =>
     operationLogApi.list({
       ...params,
@@ -62,6 +88,12 @@ const {
     }),
   pickRows: res => (res.data as { results?: LogRow[] } | null)?.results ?? []
 });
+
+const pagination = computed(() => ({
+  total: total.value,
+  page: page.value,
+  pageSize: PAGE_SIZE
+}));
 
 onMounted(fetchLogs);
 </script>
@@ -74,50 +106,17 @@ onMounted(fetchLogs);
       :title="t('approval.relatedLogsTip')"
       class="mb-3"
     />
-    <el-table
-      v-loading="loading"
-      :data="rows"
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="rows"
+      :loading="loading"
+      :pagination="pagination"
       size="small"
       border
       max-height="380"
+      @page-change="setPage"
     >
-      <el-table-column
-        prop="created_time"
-        :label="t('logsOperation.created_time')"
-        width="160"
-      />
-      <el-table-column
-        prop="creator"
-        :label="t('logsOperation.creator')"
-        width="120"
-        show-overflow-tooltip
-      >
-        <template #default="{ row }">{{ formatCreator(row.creator) }}</template>
-      </el-table-column>
-      <el-table-column
-        prop="method"
-        :label="t('logsOperation.method')"
-        width="90"
-      />
-      <el-table-column
-        prop="path"
-        :label="t('logsOperation.path')"
-        min-width="200"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="status_code"
-        :label="t('logsOperation.status_code')"
-        width="90"
-      />
-    </el-table>
-    <el-pagination
-      class="mt-3"
-      layout="prev, pager, next"
-      :total="total"
-      :page-size="10"
-      :current-page="page"
-      @current-change="setPage"
-    />
+      <template #creator="{ row }">{{ formatCreator(row.creator) }}</template>
+    </ReReadonlyTable>
   </div>
 </template>

@@ -201,6 +201,11 @@ const getPayload = (): Record<string, unknown> | null => {
       return null;
     }
   }
+  // IM 渠道同样要求至少一个收件人：服务端 400 前置到表单提示
+  if (imSelected.value && form.im_recipients.length === 0) {
+    message(t("dataReport.imRecipientsRequired"), { type: "warning" });
+    return null;
+  }
   return {
     name: form.name,
     dataset: form.dataset,

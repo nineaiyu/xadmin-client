@@ -8,8 +8,9 @@ const PANE_KEYS = [
   "passkey",
   "oauthBindings",
   "accessToken",
+  "authorizedApps",
   "preferences",
-  "Notifications",
+  "notifications",
   "securityLog"
 ];
 
@@ -35,6 +36,7 @@ describe("createAccountPanes", () => {
       "passkey",
       "oauthBindings",
       "accessToken",
+      "authorizedApps",
       "preferences"
     ]);
   });
@@ -48,7 +50,7 @@ describe("createAccountPanes", () => {
       denied.map(pane => [pane.key, pane.auth])
     );
     expect(deniedAuth["accountManagement"]).toBe(false);
-    expect(deniedAuth["Notifications"]).toBe(false);
+    expect(deniedAuth["notifications"]).toBe(false);
     expect(deniedAuth["securityLog"]).toBe(false);
   });
 

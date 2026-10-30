@@ -1,11 +1,12 @@
 import { flushPromises, mount } from "@vue/test-utils";
-import { ElButton, ElMessageBox } from "element-plus";
+import { ElButton } from "element-plus";
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   message: vi.fn(),
-  confirm: vi.fn()
+  confirm: vi.fn(),
+  prompt: vi.fn()
 }));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -25,6 +26,9 @@ vi.mock("@/utils/webauthn", () => ({
 }));
 vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => mocks.confirm
+}));
+vi.mock("@/hooks/useMessageBox", () => ({
+  usePrompt: () => mocks.prompt
 }));
 // 表格渲染细节不在本 spec 关注面内：桩掉以隔离注册仪式断言
 vi.mock("@/components/ReReadonlyTable", () => ({
@@ -60,9 +64,7 @@ const mountPanel = async () => {
 };
 
 const allowNamePrompt = () => {
-  vi.spyOn(ElMessageBox, "prompt").mockResolvedValue({
-    value: "my key"
-  } as never);
+  mocks.prompt.mockResolvedValue({ value: "my key" });
 };
 
 const credential = {

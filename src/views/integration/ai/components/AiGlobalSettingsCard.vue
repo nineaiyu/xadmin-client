@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { hasAuth } from "@/router/utils";
 import type { PageColumn } from "@/components/RePlusPage";
-import SettingItem from "@/views/settings/components/settings/SettingItem.vue";
-import type { settingItemProps } from "@/views/settings/components/settings/types";
+import SettingItem from "@/views/settings/components/settings-shell/SettingItem.vue";
+import type { settingItemProps } from "@/views/settings/components/settings-shell/types";
 import { aiConfigApi } from "@/api/ai/ai";
 
 /**
@@ -18,12 +18,16 @@ defineOptions({ name: "AiGlobalSettingsCard" });
 
 const canEdit = hasAuth("partialUpdate:AiAssistantConfig");
 const canRead = hasAuth("list:AiAssistantConfig");
+// create 端点是「按当前表单值真实 ping 一次 LLM」：无激活档案时最需要验证回落凭据
+const canTest = hasAuth("create:AiAssistantConfig");
 
 /** 本面板字段白名单（后端 AiAssistantSettingSerializer 字段名） */
 const panelFields = [
   "AI_ASSISTANT_ENABLED",
   "AI_NL_QUERY_ENABLED",
   "AI_ACTION_ENABLED",
+  "AI_DAILY_REPORT_ENABLED",
+  "AI_CODEGEN_DRAFT_ENABLED",
   "AI_NATIVE_TOOLS_ENABLED",
   "AI_STRUCTURED_MAX_TOKENS",
   "AI_QUOTA_USER_DAILY_CALLS",
@@ -36,6 +40,8 @@ const FIELD_TEST_IDS: Record<string, string> = {
   AI_ASSISTANT_ENABLED: "ai-assistant-enabled",
   AI_NL_QUERY_ENABLED: "ai-nl-query-enabled",
   AI_ACTION_ENABLED: "ai-action-enabled",
+  AI_DAILY_REPORT_ENABLED: "ai-daily-report-enabled",
+  AI_CODEGEN_DRAFT_ENABLED: "ai-codegen-draft-enabled",
   AI_NATIVE_TOOLS_ENABLED: "ai-native-tools-enabled",
   AI_STRUCTURED_MAX_TOKENS: "ai-structured-max-tokens",
   AI_QUOTA_USER_DAILY_CALLS: "ai-quota-calls",
@@ -51,9 +57,11 @@ const decorateColumn = (column: PageColumn) => {
 };
 
 const item: settingItemProps = {
+  canRead,
   auth: {
     partialUpdate: canEdit,
-    retrieve: canRead
+    retrieve: canRead,
+    test: canTest
   },
   api: aiConfigApi,
   localeName: "aiConfig",

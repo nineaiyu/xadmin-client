@@ -3,12 +3,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { FieldKeyChoices } from "@/views/system/constants";
-import {
-  getDateTimePickerShortcuts,
-  getPickerShortcuts
-} from "@/components/RePlusPage";
-import SearchPicker from "@/components/SearchPicker";
 import RuleFieldPicker from "./RuleFieldPicker.vue";
+import RuleValueEditor from "./RuleValueEditor.vue";
 import {
   groupRuleTypes,
   ruleDefaultMatch,
@@ -20,7 +16,6 @@ import {
 import {
   parseObjectValue,
   parseRangeValue,
-  SECOND_UNIT_CHOICES,
   toSecondsEditor,
   type SecondsEditor
 } from "./utils/ruleValue";
@@ -345,115 +340,21 @@ defineExpose({ validate });
       </div>
     </div>
 
-    <div class="mt-3 flex flex-col gap-1" data-testid="rule-value">
-      <div class="flex-bc">
-        <span class="rule-edit-label">{{
-          t("systemPermission.editor.value")
-        }}</span>
-        <el-radio-group v-if="!isAll" v-model="exclude" size="small">
-          <el-radio-button :value="false">{{
-            t("systemPermission.excludeInclude")
-          }}</el-radio-button>
-          <el-radio-button :value="true">{{
-            t("systemPermission.excludeExclude")
-          }}</el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <el-text v-if="input === 'none'" type="info" size="small">
-        {{ isAll ? t("systemPermission.editor.summaryAll") : runtimeValueText }}
-      </el-text>
-      <el-date-picker
-        v-else-if="input === 'datetime'"
-        v-model="datetimeValue"
-        class="w-full"
-        :placeholder="t('systemPermission.addValue')"
-        :shortcuts="getDateTimePickerShortcuts()"
-        type="datetime"
-        value-format="YYYY-MM-DD HH:mm:ss"
-      />
-      <el-date-picker
-        v-else-if="input === 'datetimerange'"
-        v-model="rangeValue"
-        class="w-full"
-        :shortcuts="getPickerShortcuts()"
-        type="datetimerange"
-        value-format="YYYY-MM-DD HH:mm:ss"
-      />
-      <div v-else-if="input === 'seconds'" class="flex items-center gap-2">
-        <el-select
-          v-model="secondsEditor.future"
-          class="w-28"
-          :teleported="true"
-        >
-          <el-option
-            :label="t('systemPermission.editor.secondsPast')"
-            :value="false"
-          />
-          <el-option
-            :label="t('systemPermission.editor.secondsFuture')"
-            :value="true"
-          />
-        </el-select>
-        <el-input-number
-          v-model="secondsEditor.amount"
-          class="w-32"
-          :min="1"
-          :max="9999"
-          controls-position="right"
-        />
-        <el-select v-model="secondsEditor.unit" class="w-28">
-          <el-option
-            v-for="unit in SECOND_UNIT_CHOICES"
-            :key="unit"
-            :label="t(`systemPermission.editor.secondsUnit.${unit}`)"
-            :value="unit"
-          />
-        </el-select>
-      </div>
-      <el-input
-        v-else-if="input === 'json'"
-        v-model="jsonValue"
-        :autosize="{ minRows: 2, maxRows: 6 }"
-        :placeholder="t('systemPermission.editor.jsonPlaceholder')"
-        type="textarea"
-      />
-      <SearchPicker
-        v-else-if="input === 'user' && hasAuth('list:SearchUser')"
-        v-model="objectValue"
-        entity="user"
-      />
-      <SearchPicker
-        v-else-if="input === 'dept' && hasAuth('list:SearchDept')"
-        v-model="objectValue"
-        entity="dept"
-      />
-      <SearchPicker
-        v-else-if="input === 'role' && hasAuth('list:SearchRole')"
-        v-model="objectValue"
-        entity="role"
-      />
-      <SearchPicker
-        v-else-if="input === 'menu' && hasAuth('list:SearchMenu')"
-        v-model="objectValue"
-        entity="menu"
-      />
-      <!-- 关联对象类型但缺搜索权限：禁用态提示，避免退化为纯文本取值（裸字符串进规则） -->
-      <el-input
-        v-else-if="objectPickerMissing"
-        disabled
-        :placeholder="t('systemPermission.editor.pickerAuthMissing')"
-      />
-      <el-input
-        v-else
-        v-model="textValue"
-        clearable
-        :placeholder="t('systemPermission.addValue')"
-      />
-      <span v-if="errors.value" class="rule-edit-error">{{
-        errors.value
-      }}</span>
-    </div>
+    <RuleValueEditor
+      v-model:exclude="exclude"
+      v-model:text-value="textValue"
+      v-model:json-value="jsonValue"
+      v-model:datetime-value="datetimeValue"
+      v-model:range-value="rangeValue"
+      v-model:seconds-editor="secondsEditor"
+      v-model:object-value="objectValue"
+      :input="input"
+      :is-all="isAll"
+      :runtime-value-text="runtimeValueText"
+      :type-hint="typeHint"
+      :error="errors.value"
+      :picker-missing="objectPickerMissing"
+    />
 
     <el-alert
       v-if="typeHint"

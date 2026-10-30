@@ -1,23 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { requestMock, uploadMock, postSseMock } = vi.hoisted(() => ({
+const { requestMock, uploadMock, createSseStreamMock } = vi.hoisted(() => ({
   requestMock: vi.fn(),
   uploadMock: vi.fn(),
-  postSseMock: vi.fn()
+  createSseStreamMock: vi.fn()
 }));
 
 vi.mock("@/utils/http", () => ({
   http: { request: requestMock, upload: uploadMock }
 }));
 
-vi.mock("@/utils/sse", () => ({ postSse: postSseMock }));
+vi.mock("@/utils/sse", () => ({ createSseStream: createSseStreamMock }));
 
 import { chatApi, streamAiMessage } from "./index";
 
 /**
- * 聊天室 REST 契约：端点 URL 与载荷（WS 收发不在本层）；AI 流式的
- * SSE 帧分发（meta/reasoning/delta/done/error + 容错）是本文件唯一
- * 带分支的逻辑，逐帧覆盖。
+ * 聊天室 REST 契约：端点 URL 与载荷（WS 收发不在本层）；AI 流式只校验
+ * 端点/载荷/中断信号透传，语义帧分发由 utils/sse.spec 统一覆盖。
  */
 
 describe("chatApi 会话与群聊", () => {
@@ -159,82 +158,22 @@ describe("chatApi 消息与联系人", () => {
   });
 });
 
-describe("streamAiMessage SSE 帧分发", () => {
+describe("streamAiMessage SSE 端点", () => {
   beforeEach(() => {
     requestMock.mockReset();
-    postSseMock.mockReset();
+    createSseStreamMock.mockReset();
   });
 
-  /** 捕获 postSse 收到的 onFrame 回调，模拟服务端推帧 */
-  function emit(frame: { event: string; data?: string }) {
-    const options = postSseMock.mock.calls[0][2];
-    options.onFrame(frame);
-  }
-
-  it("URL 指向 AI 流式端点并透传载荷与 signal", () => {
+  it("URL 指向 AI 流式端点并透传载荷、事件与 signal", () => {
     const controller = new AbortController();
-    streamAiMessage({ room_id: 1, content: "hi" }, {}, controller.signal);
-    expect(postSseMock).toHaveBeenCalledWith(
+    const events = { onDelta: vi.fn() };
+    streamAiMessage({ room_id: 1, content: "hi" }, events, controller.signal);
+
+    expect(createSseStreamMock).toHaveBeenCalledWith(
       "/api/chat/ai/stream",
       { room_id: 1, content: "hi" },
-      expect.objectContaining({ signal: controller.signal })
+      events,
+      controller.signal
     );
-  });
-
-  it("五类事件分发到对应回调", () => {
-    const events = {
-      onMeta: vi.fn(),
-      onReasoning: vi.fn(),
-      onDelta: vi.fn(),
-      onDone: vi.fn(),
-      onError: vi.fn()
-    };
-    streamAiMessage({ content: "hi" }, events);
-
-    emit({ event: "meta", data: '{"question":{"id":1}}' });
-    expect(events.onMeta).toHaveBeenCalledWith({ question: { id: 1 } });
-
-    emit({ event: "reasoning", data: '{"delta":"思考"}' });
-    expect(events.onReasoning).toHaveBeenCalledWith("思考");
-
-    emit({ event: "delta", data: '{"delta":"回答"}' });
-    expect(events.onDelta).toHaveBeenCalledWith("回答");
-
-    emit({
-      event: "done",
-      data: '{"mode":"chat","message":{"id":2}}'
-    });
-    expect(events.onDone).toHaveBeenCalledWith({
-      mode: "chat",
-      message: { id: 2 }
-    });
-
-    emit({ event: "error", data: '{"detail":"boom"}' });
-    expect(events.onError).toHaveBeenCalledWith({
-      detail: "boom",
-      message: undefined
-    });
-  });
-
-  it("坏 JSON 与空帧静默忽略，delta 缺省为空串", () => {
-    const events = {
-      onMeta: vi.fn(),
-      onReasoning: vi.fn(),
-      onDelta: vi.fn(),
-      onDone: vi.fn(),
-      onError: vi.fn()
-    };
-    streamAiMessage({ content: "hi" }, events);
-
-    expect(() => emit({ event: "delta", data: "{bad json" })).not.toThrow();
-    expect(events.onDelta).not.toHaveBeenCalled();
-
-    emit({ event: "delta" });
-    expect(events.onDelta).toHaveBeenCalledWith("");
-
-    emit({ event: "unknown", data: '{"x":1}' });
-    expect(events.onMeta).not.toHaveBeenCalled();
-    expect(events.onDone).not.toHaveBeenCalled();
-    expect(events.onError).not.toHaveBeenCalled();
   });
 });

@@ -7,8 +7,9 @@ import {
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import { useUserStoreHook } from "@/store/modules/user";
 import { openInstanceDetail, openStartInstanceDialog } from "./instanceDialogs";
-import { hasMyTask, statusValue } from "./instanceRowRules";
+import { hasMyTask, isMineCreator, statusValue } from "./instanceRowRules";
 import type { InstanceAuth } from "./useInstanceButtons";
 import Back from "~icons/ep/back";
 import Bell from "~icons/ep/bell";
@@ -103,7 +104,8 @@ export function pendingRowButtons(
     // 通过走弹窗：审批意见选填（随任务落轨迹；后端 comment 字段同口径）
     onClick: ({ row }) => deps.actions.openApprove(row),
     index: 1,
-    show: auth.approve
+    // 列表数据可能已被他人处理：与加签/退回等节点动作统一按 my_task 收敛
+    show: (row: { my_task?: unknown }) => auth.approve && hasMyTask(row)
   };
 
   const rejectButton: OperationButtonsRow = {
@@ -116,7 +118,7 @@ export function pendingRowButtons(
     },
     onClick: ({ row }) => deps.actions.openReject(row),
     index: 2,
-    show: auth.reject
+    show: (row: { my_task?: unknown }) => auth.reject && hasMyTask(row)
   };
 
   const addSignButton: OperationButtonsRow = {
@@ -205,6 +207,8 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
       link: true
     },
     confirm: {
+      // 撤回是不可逆动作：气泡确认的确认钮用危险色（MessageBox 通道用 danger: true）
+      props: { confirmButtonType: "danger" },
       title: (row: { title?: string }) =>
         t("systemApprovalInstance.cancelConfirm", { title: row?.title ?? "" })
     },
@@ -222,7 +226,9 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
       auth.cancel && statusValue(row) === "PENDING"
   };
 
-  /** 催办（我的申请页签）：审批中才可用，通知当前节点审批人（服务端 10 分钟节流） */
+  /** 催办（我的申请页签 / 全部在途里的本人单据）：审批中且申请人本人可见，
+   *  通知当前节点审批人（服务端 10 分钟节流；他人单据催办必 1001） */
+  const userStore = useUserStoreHook();
   const urgeButton: OperationButtonsRow = {
     text: t("systemApprovalInstance.urge"),
     code: "urge",
@@ -233,8 +239,10 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
     },
     onClick: ({ row }) => deps.actions.openUrge(row),
     index: 7,
-    show: (row: { status?: { value?: string } | string }) =>
-      auth.urge && statusValue(row) === "PENDING"
+    show: (row: { status?: { value?: string } | string; creator?: unknown }) =>
+      auth.urge &&
+      statusValue(row) === "PENDING" &&
+      isMineCreator(row, userStore.pk)
   };
 
   /** 重新提交（我的申请页签）：已驳回时按原流程与原表单内容发起新申请 */
@@ -267,7 +275,8 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
         {
           flow: String(flowPk),
           title: row.title,
-          formData: (row.form_data ?? {}) as Record<string, unknown>
+          formData: (row.form_data ?? {}) as Record<string, unknown>,
+          sourceInstance: row.pk ? String(row.pk) : undefined
         }
       );
     },

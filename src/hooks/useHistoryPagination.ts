@@ -39,19 +39,29 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
 
+  /** 首屏历史请求令牌：只允许最新一次 loadHistory 回填 */
+  let historySeq = 0;
+
   async function loadHistory(scope: Scope) {
+    const seq = ++historySeq;
     loadingHistory.value = true;
     messages.value = [];
     pendingCount.value = 0;
     try {
       const page = await fetchPage({ limit: PAGE_SIZE, initial: true }, scope);
+      // 过期响应直接丢弃：快速 A→B 切会话时，A 的慢响应不得把 A 的历史写进
+      // B 的消息区（loadMore 有 scopeForLoadMore 守卫，首屏此前没有）
+      if (seq !== historySeq) return;
       if (page) {
         messages.value = page.results;
         hasMore.value = page.hasMore;
       }
     } finally {
-      loadingHistory.value = false;
+      if (seq === historySeq) {
+        loadingHistory.value = false;
+      }
     }
+    if (seq !== historySeq) return;
     await nextTick();
     scrollToBottom();
   }
@@ -61,6 +71,7 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
     const firstId = messages.value[0]?.id;
     if (!firstId || firstId < 0) return;
     loadingMore.value = true;
+    const seq = historySeq;
     const container = scroller.value;
     const previousHeight = container?.scrollHeight ?? 0;
     const previousTop = container?.scrollTop ?? 0;
@@ -69,6 +80,8 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
         { beforeId: firstId, limit: PAGE_SIZE, initial: false },
         scopeForLoadMore()
       );
+      // 切会话后 loadHistory 已递增 historySeq：A 房的慢响应不得前插进 B 房。
+      if (seq !== historySeq) return;
       if (page) {
         messages.value = [...page.results, ...messages.value];
         hasMore.value = page.hasMore;

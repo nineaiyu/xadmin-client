@@ -6,6 +6,9 @@ import {
   openManageDrawer
 } from "@/components/ReActionPanel";
 import type { AiProfileItem } from "@/api/ai/ai";
+import { aiProfileApi } from "@/api/ai/ai";
+import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import { buildAiProfileData, buildAiProfileMetaItems } from "./aiProfilePanel";
 import { buildAiProfileActionGroups } from "./aiProfileActions";
 
@@ -19,7 +22,7 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  */
 export function useAiProfileManage({
   t,
-  flags: { canProbe, canEdit, canDestroy },
+  flags: { canProbe, canEdit, canDestroy, canRetrieve },
   probeProfile,
   openDialog,
   removeProfile
@@ -29,34 +32,41 @@ export function useAiProfileManage({
     canProbe: boolean;
     canEdit: boolean;
     canDestroy: boolean;
+    canRetrieve: boolean;
   };
   probeProfile: (row: AiProfileItem, withVision?: boolean) => Promise<void>;
   openDialog: (row: AiProfileItem | null) => void;
   removeProfile: (row: AiProfileItem) => Promise<void>;
 }) {
-  const openProfilePanel = (row: AiProfileItem) => {
+  const openProfilePanel = async (row: AiProfileItem) => {
+    // 消费 retrieve 权限：抽屉资料以详情为准（列表行是快照，激活/探测后会过期）
+    let detail = row;
+    if (canRetrieve) {
+      const res = await aiProfileApi.retrieve(row.pk).catch(normalizeError);
+      if (isSuccess(res) && res.data) detail = res.data as AiProfileItem;
+    }
     openManageDrawer({
-      title: t("aiConfig.panelTitle", { name: row.name }),
+      title: t("aiConfig.panelTitle", { name: detail.name }),
       size: drawerSize("md"),
       render: ({ withClosed }) =>
         h(
           ReActionPanel,
           {
-            metaItems: buildAiProfileMetaItems(row, t),
+            metaItems: buildAiProfileMetaItems(detail, t),
             groups: buildAiProfileActionGroups({
               t,
               flags: { canProbe, canEdit, canDestroy },
               handlers: {
-                probe: withClosed(() => probeProfile(row)),
-                probeVision: withClosed(() => probeProfile(row, true)),
-                edit: withClosed(() => openDialog(row)),
-                remove: withClosed(() => removeProfile(row))
+                probe: withClosed(() => probeProfile(detail)),
+                probeVision: withClosed(() => probeProfile(detail, true)),
+                edit: withClosed(() => openDialog(detail)),
+                remove: withClosed(() => removeProfile(detail))
               }
             })
           },
           {
             profile: () =>
-              h(PanelProfile, { profile: buildAiProfileData(row, t) })
+              h(PanelProfile, { profile: buildAiProfileData(detail, t) })
           }
         )
     });

@@ -83,7 +83,21 @@ test.describe("审批规则方法限定", () => {
       await pickOption(page, APPROVER.username);
       await dialog.locator(".el-dialog__header").click();
 
+      // 表单内合成列（impact_preview 等展示态字段）不得进入提交载荷：
+      // 用真实请求抓包断言，而不是只在单测里假设「注入通道会过滤」
+      const submitRequest = page.waitForRequest(
+        req =>
+          req.url().includes("/api/approval/approval-rules") &&
+          req.method() === "POST",
+        { timeout: 20_000 }
+      );
       await dialog.getByRole("button", { name: "保存" }).click();
+      const submitted = JSON.parse((await submitRequest).postData() ?? "{}");
+      expect(submitted, JSON.stringify(submitted)).not.toHaveProperty(
+        "impact_preview"
+      );
+      // 抓包有效性对照：真实业务字段必须在载荷里（否则空载荷也会「通过」）
+      expect(submitted.name).toBe(ruleName);
       await expect(dialog).toBeHidden({ timeout: 15_000 });
 
       // 列表回显：方法限定列（前端词条覆盖服务端英文 label）POST 标签 + 审批级数

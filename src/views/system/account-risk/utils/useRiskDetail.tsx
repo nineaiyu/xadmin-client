@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import { ElAlert, ElDescriptions, ElDescriptionsItem } from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { addDrawer } from "@/components/ReDrawer";
+import { formatDateTime } from "@/utils";
 import { METRIC_LABEL_KEYS, metricEntriesOf, metricText } from "./display";
 
 import { drawerSize } from "@/components/ReDialog/size";
@@ -15,6 +16,7 @@ export function useRiskDetail() {
 
   const openDetail = (row: RecordType) => {
     const detail = (row?.detail ?? {}) as RecordType;
+    const handledBy = (row?.handled_by ?? {}) as RecordType;
     addDrawer({
       title: t("accountRisk.detailTitle", { name: row?.user_display || "-" }),
       size: drawerSize("sm"),
@@ -33,6 +35,17 @@ export function useRiskDetail() {
           h(ElDescriptions, { column: 1, border: true }, () => [
             h(ElDescriptionsItem, { label: t("accountRisk.suggestion") }, () =>
               String(detail.suggestion ?? "-")
+            ),
+            h(ElDescriptionsItem, { label: t("accountRisk.handledBy") }, () =>
+              String(handledBy.username ?? "-")
+            ),
+            h(
+              ElDescriptionsItem,
+              { label: t("accountRisk.handledAt") },
+              () => formatDateTime(row?.handled_at) || "-"
+            ),
+            h(ElDescriptionsItem, { label: t("accountRisk.remark") }, () =>
+              String(row?.remark ?? "-")
             ),
             // 量化指标逐键结构化展示（键名走 i18n，未知键回退原键）
             ...metricEntriesOf(detail).map(([key, value]) =>

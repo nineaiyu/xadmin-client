@@ -14,7 +14,11 @@ export function useBookColumns() {
     formatPageColumns(columns, {
       category: column => {
         column["cellRenderer"] = ({ row }) => {
-          return h(ElTag, { type: "success" }, () => row.category.label);
+          return h(
+            ElTag,
+            { type: "success" },
+            () => row.category?.label ?? "-"
+          );
         };
       },
       status: column => {

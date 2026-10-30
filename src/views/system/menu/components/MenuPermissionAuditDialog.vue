@@ -21,7 +21,7 @@ import Location from "~icons/ep/location";
 
 /**
  * 菜单权限检测：只读展示「正向缺口 / 游离权限点 / 重复权限码 / 角色未配置字段权限」
- * 四类问题的分组表格。
+ * 五类问题的分组表格（含页面自定义动作命名空间提示）。
  *
  * 数据一次拉取、前端只做渲染与本地化建议文案映射；不提供写操作，修复走既有的
  * 「自动批量添加权限」（缺口）、菜单编辑面（游离/重复）或角色页字段白名单
@@ -105,6 +105,13 @@ const groups = computed<AuditGroup[]>(() => [
     type: "info",
     empty: t("systemMenu.permissionAudit.empty.duplicate"),
     rows: result.value?.duplicate ?? []
+  },
+  {
+    key: "custom_action",
+    label: t("systemMenu.permissionAudit.customAction"),
+    type: "info",
+    empty: t("systemMenu.permissionAudit.empty.customAction"),
+    rows: result.value?.custom_action ?? []
   },
   {
     key: "field_unconfigured",

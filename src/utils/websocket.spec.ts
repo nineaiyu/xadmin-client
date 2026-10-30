@@ -16,7 +16,7 @@ class FakeWebSocket {
   url: string;
   readyState = FakeWebSocket.CONNECTING;
   onopen: (() => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((ev?: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((ev: { data: string }) => void) | null = null;
   sent: string[] = [];
@@ -45,6 +45,12 @@ class FakeWebSocket {
   drop() {
     this.readyState = FakeWebSocket.CLOSED;
     this.onclose?.();
+  }
+
+  /** 测试辅助：带关闭码断开（4401/4403 等服务端拒连语义） */
+  dropWithCode(code: number) {
+    this.readyState = FakeWebSocket.CLOSED;
+    this.onclose?.({ code });
   }
 }
 
@@ -131,6 +137,22 @@ describe("WS 重连策略", () => {
       instances[0].drop();
       await vi.advanceTimersByTimeAsync(60000);
       expect(instances).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("4401（未认证）/ 4403（无权限）是终态：不再无限退避重连", async () => {
+    vi.useFakeTimers();
+    try {
+      for (const code of [4401, 4403]) {
+        const { ws, instances } = makeWS();
+        instances[0].dropWithCode(code);
+        await vi.advanceTimersByTimeAsync(60000);
+        expect(instances).toHaveLength(1);
+        // 释放 visibilitychange 监听与计时器（避免干扰后续用例的可见性断言）
+        ws.close();
+      }
     } finally {
       vi.useRealTimers();
     }
@@ -229,6 +251,83 @@ describe("WS 重连策略", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("重连后 onmessage 重绑到新连接（回调不丢，重连不再永久静默）", async () => {
+    vi.useFakeTimers();
+    try {
+      const { ws, instances } = makeWS();
+      const received: unknown[] = [];
+      ws.onMessage(data => received.push(data));
+      instances[0].open();
+      instances[0].onmessage?.({ data: JSON.stringify({ kind: "first" }) });
+      expect(received).toEqual([{ kind: "first" }]);
+
+      // 断线退避重连：新 socket 上的消息仍走同一回调
+      instances[0].drop();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(instances).toHaveLength(2);
+      instances[1].onmessage?.({
+        data: JSON.stringify({ kind: "after-reconnect" })
+      });
+      expect(received).toEqual([
+        { kind: "first" },
+        { kind: "after-reconnect" }
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("心跳看门狗：连续 3 个周期无下行帧主动断开半开连接", async () => {
+    vi.useFakeTimers();
+    try {
+      const { instances } = makeWS({
+        heartbeat: { interval: 1000, message: "ping" }
+      });
+      const socket = instances[0];
+      socket.open();
+      // 正常节奏：每秒有下行帧（pong）→ 不触发看门狗
+      await vi.advanceTimersByTimeAsync(3000);
+      socket.onmessage?.({ data: JSON.stringify({ kind: "pong" }) });
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(socket.readyState).toBe(FakeWebSocket.OPEN);
+
+      // 静默：4 个周期无任何下行帧 → 看门狗主动 close
+      //（真实 WebSocket 的 close 会异步触发 onclose → 退避重连链，链路另有用例覆盖）
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(socket.readyState).toBe(FakeWebSocket.CLOSED);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("心跳看门狗：下行帧持续喂活时不误杀连接", async () => {
+    vi.useFakeTimers();
+    try {
+      const { instances } = makeWS({
+        heartbeat: { interval: 1000, message: "ping" }
+      });
+      const socket = instances[0];
+      socket.open();
+      for (let tick = 0; tick < 8; tick++) {
+        await vi.advanceTimersByTimeAsync(1000);
+        socket.onmessage?.({ data: "pong" });
+      }
+      expect(socket.readyState).toBe(FakeWebSocket.OPEN);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("onMessage 晚于 connect 调用、随后重连：回调在两次连接上都生效", () => {
+    const { ws, instances } = makeWS();
+    const received: unknown[] = [];
+    // 无 socket 时期调用（回调先存实例，connect 时再绑）不抛错
+    expect(() => ws.onMessage(data => received.push(data))).not.toThrow();
+    instances[0].open();
+    instances[0].onmessage?.({ data: JSON.stringify({ n: 1 }) });
+    expect(received).toEqual([{ n: 1 }]);
   });
 
   it("send：OPEN 态浏览器层抛错被兜住不冒泡", () => {

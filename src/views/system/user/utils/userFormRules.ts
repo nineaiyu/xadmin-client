@@ -13,11 +13,17 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 export function buildUserFormRules({
   t,
   passwordRules,
-  inviteMode
+  inviteMode,
+  isAdd
 }: {
   t: TFunction;
   passwordRules: { value: PasswordRule[] };
   inviteMode: { value: boolean };
+  /**
+   * 编辑态密码字段隐藏（不修改密码），隐藏字段不得再触发必填校验。
+   * 仅显式 `false` 视为编辑；缺省按新增处理（上下文缺失时不得放宽新增校验）。
+   */
+  isAdd?: boolean;
 }) {
   return {
     password: [
@@ -27,7 +33,7 @@ export function buildUserFormRules({
           value: string | undefined,
           callback: (error?: Error) => void
         ) => {
-          if (inviteMode.value) {
+          if (isAdd === false || inviteMode.value) {
             callback();
             return;
           }

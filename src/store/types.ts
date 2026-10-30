@@ -1,5 +1,5 @@
 import type { RouteMeta, RouteRecordName } from "vue-router";
-import type { ImpersonatorInfo } from "@/api/auth";
+import type { AuthCapabilitiesResult, ImpersonatorInfo } from "@/api/auth";
 import type { SiteWatermarkConfig } from "@/utils/watermark";
 
 export type cacheType = {
@@ -65,16 +65,18 @@ export type userType = {
   impersonator?: ImpersonatorInfo | null;
 };
 
-/** 登录页 UI 态（子页面切换、免登录勾选与天数、图形验证码长度），与认证身份解耦 */
+/** 登录页 UI 态（子页面切换、免登录勾选与天数），与认证身份解耦 */
 export type loginPageType = {
-  /** 判断登录页面显示哪个组件（0：登录（默认）、1：手机登录、2：二维码登录、3：注册、4：忘记密码） */
+  /** 判断登录页面显示哪个组件（0：账密登录（默认）、1：验证码登录、3：注册、4：忘记密码） */
   currentPage?: number;
-  /** 是否勾选了登录页的免登录 */
+  /** 登录页的免登录 */
   isRemembered?: boolean;
   /** 登录页的免登录存储几天，默认7天 */
   loginDay?: number;
-  /** 前端生成的验证码（按实际需求替换） */
-  verifyCodeLength?: number;
+  /** 登录页能力清单（后端下发,登录页外壳一次性拉取,子页共享）：未就绪为 null */
+  capabilities?: AuthCapabilitiesResult["data"] | null;
+  /** 能力清单加载状态（外壳据此渲染 loading / 失败重试,就绪前不渲染子页） */
+  capabilitiesStatus?: "loading" | "success" | "failed";
 };
 
 /** 站点水印配置 store 态；挂载/刷新由 src/App.vue 观察本字段执行 */

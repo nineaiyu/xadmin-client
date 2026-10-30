@@ -23,7 +23,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="dform"
-    :selection="false"
+    :selection="Boolean(auth.batchDestroy)"
     :listColumnsFormat="listColumnsFormat"
     :detailColumnsFormat="detailColumnsFormat"
     :operationButtonsProps="operationButtonsProps"

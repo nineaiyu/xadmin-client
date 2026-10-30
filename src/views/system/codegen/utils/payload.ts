@@ -89,7 +89,6 @@ export function buildBatchPayload(
 ): CodegenPayload {
   return {
     models,
-    menu_title: state.menu_title.trim() || undefined,
     menu_parent: state.menu_parent || undefined,
     menu_icon: state.menu_icon || undefined,
     with_import_export: state.with_import_export,

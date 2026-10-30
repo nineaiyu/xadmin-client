@@ -297,6 +297,30 @@ test("画布进阶：旋转几何命中 / 视觉盒对齐 / 模板版本回滚 /
   await page.locator(".el-message-box input").last().fill(renamedName);
   await clickBoxButton(page, "保存为模板");
   await expect(page.getByText(/模板已重命名/)).toBeVisible();
+  // 仅布局变更记版：重命名本身不产生新版本
+  const afterRename = await versionsOf(templatePk!);
+  expect(afterRename.map(item => item.version)).toEqual([1]);
+
+  // 通过 API 触发一次布局变更（与设计器保存同口径），生成第二版
+  const templateDetail = await page.request.get(
+    `${BACKEND_URL}/api/dataset/screen-templates/${templatePk}`,
+    { headers: auth(token) }
+  );
+  const templateData = (await templateDetail.json()).data as {
+    free_layout?: { panes?: Record<string, unknown>[] };
+  };
+  const changedLayout = JSON.parse(
+    JSON.stringify(templateData.free_layout ?? {})
+  ) as { panes?: Record<string, unknown>[] };
+  if (Array.isArray(changedLayout.panes) && changedLayout.panes.length) {
+    const firstPane = changedLayout.panes[0];
+    firstPane.x = Number(firstPane.x ?? 0) + 1;
+  }
+  const layoutPatch = await page.request.patch(
+    `${BACKEND_URL}/api/dataset/screen-templates/${templatePk}`,
+    { headers: auth(token), data: { free_layout: changedLayout } }
+  );
+  expect((await layoutPatch.json()).code).toBe(1000);
   const secondVersions = await versionsOf(templatePk!);
   expect(secondVersions.map(item => item.version)).toEqual([2, 1]);
   expect(secondVersions[0].name).toBe(renamedName);

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
 import {
+  ElAlert,
   ElButton,
   ElForm,
   ElFormItem,
@@ -12,7 +13,10 @@ import { useI18n } from "vue-i18n";
 import type { RecordType } from "plus-pro-components";
 
 import { userApi } from "@/api/identity/user";
+import { hasAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
+import { useConfirm } from "@/hooks/useConfirm";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 
 /**
@@ -25,6 +29,8 @@ const props = defineProps<{ row: RecordType; done?: () => void }>();
 const { t } = useI18n();
 
 const PROVIDERS = ["dingtalk", "wecom", "feishu"];
+/** 解绑是独立权限点：只有 imBinding 而没有 imUnbind 的角色不应看到按钮（否则点开必 403） */
+const canUnbind = hasAuth("imUnbind:SystemUser");
 const form = ref({ provider: "dingtalk", subject: "", nickname: "" });
 const bindings = ref<
   Array<{
@@ -35,12 +41,19 @@ const bindings = ref<
   }>
 >([]);
 const loading = ref(false);
+const loadError = ref("");
+const confirm = useConfirm();
 
 async function load() {
-  const res = await userApi.imBindingList(props.row.pk).catch(() => null);
-  if (res && isSuccess(res)) {
+  loadError.value = "";
+  const res = await userApi.imBindingList(props.row.pk).catch(normalizeError);
+  if (isSuccess(res)) {
     bindings.value = res.data ?? [];
+    return;
   }
+  // 加载失败不能显示成「无绑定」：否则管理员会误判并重复代录
+  bindings.value = [];
+  loadError.value = String(res.detail || t("results.failed"));
 }
 
 async function save() {
@@ -65,7 +78,14 @@ async function save() {
 }
 
 async function unbind(provider: string) {
-  const res = await userApi.imUnbind(props.row.pk, provider).catch(() => null);
+  const ok = await confirm(t("imBinding.unbindConfirm", { provider }), {
+    title: t("imBinding.unbind"),
+    danger: true
+  });
+  if (!ok) return;
+  const res = await userApi
+    .imUnbind(props.row.pk, provider)
+    .catch(normalizeError);
   if (isSuccess(res)) {
     message(t("imBinding.unbound"), { type: "success" });
     await load();
@@ -79,6 +99,19 @@ onMounted(load);
 
 <template>
   <div class="im-binding-panel">
+    <ElAlert
+      v-if="loadError"
+      type="error"
+      :title="loadError"
+      :closable="false"
+      class="mb-3"
+    >
+      <template #default>
+        <el-button link type="primary" @click="load">
+          {{ t("buttons.retry") }}
+        </el-button>
+      </template>
+    </ElAlert>
     <el-form :model="form" label-width="110px" class="mb-3">
       <el-form-item :label="t('imBinding.provider')">
         <el-select v-model="form.provider" :style="{ width: '190px' }">
@@ -99,31 +132,36 @@ onMounted(load);
       <el-form-item :label="t('imBinding.nickname')">
         <el-input v-model="form.nickname" />
       </el-form-item>
+      <el-form-item :label="t('imBinding.current')">
+        <div
+          v-if="!loadError && bindings.length === 0"
+          class="text-(--el-text-color-secondary)"
+        >
+          {{ t("imBinding.empty") }}
+        </div>
+        <div
+          v-for="item in bindings"
+          :key="item.pk"
+          class="flex items-center gap-2 mb-1"
+        >
+          <el-tag>{{ item.provider }}</el-tag>
+          <span>{{ item.subject }}</span>
+          <el-button
+            v-if="canUnbind"
+            link
+            type="danger"
+            @click="unbind(item.provider)"
+          >
+            {{ t("imBinding.unbind") }}
+          </el-button>
+        </div>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" :loading="loading" @click="save">
           {{ t("buttons.confirm") }}
         </el-button>
       </el-form-item>
     </el-form>
-    <el-form-item :label="t('imBinding.current')">
-      <div
-        v-if="bindings.length === 0"
-        class="text-(--el-text-color-secondary)"
-      >
-        {{ t("imBinding.empty") }}
-      </div>
-      <div
-        v-for="item in bindings"
-        :key="item.pk"
-        class="flex items-center gap-2 mb-1"
-      >
-        <el-tag>{{ item.provider }}</el-tag>
-        <span>{{ item.subject }}</span>
-        <el-button link type="danger" @click="unbind(item.provider)">
-          {{ t("imBinding.unbind") }}
-        </el-button>
-      </div>
-    </el-form-item>
   </div>
 </template>
 

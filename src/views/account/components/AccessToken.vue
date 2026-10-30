@@ -10,6 +10,8 @@ import {
   type DialogOptions
 } from "@/components/ReDialog";
 import { copyText } from "@/utils/clipboard";
+import { message } from "@/utils/message";
+import { invalidateMetaCache } from "@/utils/metaCache";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useDialogForm } from "@/hooks/useDialogForm";
 import {
@@ -93,7 +95,7 @@ const openPlainToken = (token: string) => {
         h(
           "code",
           {
-            class: "block break-all rounded bg-gray-100 p-2 dark:bg-gray-800"
+            class: "block break-all rounded bg-(--el-fill-color-light) p-2"
           },
           token
         ),
@@ -151,7 +153,7 @@ const openCreate = () => {
 const handleRevoke = (row: RecordType) => {
   void confirm(t("accessToken.revokeConfirm", { name: row.name }), {
     title: t("accessToken.revoke"),
-    confirmButtonClass: "el-button--danger"
+    danger: true
   }).then(ok => {
     if (ok)
       handleOperation({
@@ -192,6 +194,24 @@ const openListEditor = (options: {
   value: string[];
 }) => {
   const editor = reactive({ text: (options.value ?? []).join("\n") });
+  const { beforeSure } = useDialogForm<string[]>({
+    readPayload: () =>
+      editor.text
+        .split("\n")
+        .map(item => item.trim())
+        .filter(Boolean),
+    submit: items =>
+      personalAccessTokenApi.partialUpdate(options.pk, {
+        [options.field]: items
+      }),
+    onSuccess: res => {
+      invalidateMetaCache();
+      message(String(res.detail ?? t("results.success")), { type: "success" });
+      refresh();
+    },
+    onFail: res =>
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" })
+  });
   addDialog({
     title: options.title,
     width: dialogSize("sm"),
@@ -209,24 +229,7 @@ const openListEditor = (options: {
         }),
         h("div", { class: "el-form-item__help w-full! mt-1" }, options.tip)
       ]),
-    beforeSure: (done, { closeLoading }) => {
-      const items = editor.text
-        .split("\n")
-        .map(item => item.trim())
-        .filter(Boolean);
-      handleOperation({
-        t,
-        apiReq: personalAccessTokenApi.partialUpdate(options.pk, {
-          [options.field]: items
-        }),
-        success: () => {
-          done();
-          refresh();
-        },
-        // 确定按钮 loading 收口：失败保持弹窗可重试，避免重复点击
-        requestEnd: closeLoading
-      });
-    }
+    beforeSure
   });
 };
 
@@ -238,6 +241,17 @@ const openScopeEditor = (row: RecordType) => {
   // 编辑态由弹窗自己持有：组件挂载后会把已保存条目分流到勾选/自定义
   const state = reactive<{ value: string[] }>({
     value: [...(row.scopes ?? [])]
+  });
+  const { beforeSure } = useDialogForm<string[]>({
+    readPayload: () => state.value,
+    submit: scopes => personalAccessTokenApi.partialUpdate(row.pk, { scopes }),
+    onSuccess: res => {
+      invalidateMetaCache();
+      message(String(res.detail ?? t("results.success")), { type: "success" });
+      refresh();
+    },
+    onFail: res =>
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" })
   });
   addDialog({
     title: t("accessToken.scope"),
@@ -251,20 +265,7 @@ const openScopeEditor = (row: RecordType) => {
         "onUpdate:modelValue": (value: string[]) => (state.value = value),
         loadOptions: loadPatScopeCatalog
       }),
-    beforeSure: (done, { closeLoading }) => {
-      handleOperation({
-        t,
-        apiReq: personalAccessTokenApi.partialUpdate(row.pk, {
-          scopes: state.value
-        }),
-        success: () => {
-          done();
-          refresh();
-        },
-        // 确定按钮 loading 收口：失败保持弹窗可重试，避免重复点击
-        requestEnd: closeLoading
-      });
-    }
+    beforeSure
   });
 };
 

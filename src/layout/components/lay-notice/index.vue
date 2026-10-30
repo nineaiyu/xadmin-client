@@ -6,14 +6,15 @@ import NoticeList from "./components/NoticeList.vue";
 import BellIcon from "~icons/lucide/bell";
 import { userNoticeReadApi } from "@/api/user/notice";
 import { TabItem, ListItem } from "@/layout/components/lay-notice/data";
-import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
+import { openNoticeDetailDialog } from "@/components/ReNoticeShow/noticeDetailDialog";
 import { useRouter } from "vue-router";
+import { hasAuth } from "@/router/utils";
 import { useI18n } from "vue-i18n";
 import { useNoticeStoreHook } from "@/store/modules/notice";
 import { refreshApprovalBadge, useApprovalBadge } from "@/utils/approvalBadge";
 import { refreshTaskCenter, useTaskCenter } from "@/utils/taskCenter";
 import { buildBadgeSources, sumBadgeSources } from "./badgeSources";
-import { openTaskCenterDrawer } from "@/views/system/components/taskCenterDrawer";
+import { openTaskCenterDrawer } from "@/components/ReTaskCenterDrawer/taskCenterDrawer";
 
 const { t } = useI18n();
 
@@ -66,17 +67,23 @@ const notices = ref<TabItem[]>([
 ]);
 const activeKey = ref();
 
+const canViewNotice = computed(() => hasAuth("list:UserNotice"));
 const getNoticeData = () => {
-  userNoticeReadApi.unread().then(res => {
-    if (isSuccess(res) && res.data) {
-      useNoticeStoreHook().SET_NOTICECOUNT(res.data.total);
-      notices.value = res.data.results;
-      if (notices.value.length > 0) {
-        activeKey.value = notices.value[0].key;
+  userNoticeReadApi
+    .unread()
+    .then(res => {
+      if (isSuccess(res) && res.data) {
+        useNoticeStoreHook().SET_NOTICECOUNT(res.data.total);
+        notices.value = res.data.results;
+        if (notices.value.length > 0) {
+          activeKey.value = notices.value[0].key;
+        }
       }
-    }
-    loading.value = false;
-  });
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      loading.value = false;
+    });
 };
 const router = useRouter();
 const dropdownRef = ref();
@@ -190,10 +197,13 @@ const getLabel = computed(
                用户点开弹层只看到「暂无结果」，无从解释角标数字。 -->
           <el-divider />
           <el-row style="height: 30px; text-align: center">
-            <el-col :span="12">
-              <el-link underline="never" @click="goUserNotice">{{
-                t("layout.more")
-              }}</el-link>
+            <el-col :span="canViewNotice ? 12 : 24">
+              <el-link
+                v-if="canViewNotice"
+                underline="never"
+                @click="goUserNotice"
+                >{{ t("layout.more") }}</el-link
+              >
             </el-col>
             <el-col :span="12">
               <el-tooltip
@@ -266,6 +276,12 @@ const getLabel = computed(
 
   .header-notice-icon {
     font-size: var(--font-size-lg);
+  }
+
+  /* 未读徽标：EP 默认 danger 底 + 白字对比度不足（axe serious），压暗到 dark-3 */
+  :deep(.el-badge__content) {
+    background-color: var(--el-color-danger-dark-3);
+    border-color: var(--el-color-danger-dark-3);
   }
 
   &:hover {

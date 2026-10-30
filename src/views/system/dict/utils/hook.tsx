@@ -1,23 +1,28 @@
-import { reactive, shallowRef, type Ref } from "vue";
-import { useI18n } from "vue-i18n";
+import { shallowRef } from "vue";
 import { dataDictApi } from "@/api/system/dict";
-import { usePageAuth } from "@/router/utils";
 import {
+  defineListPage,
   formatPageColumns,
   type OperationProps,
   type PageTableColumn,
   type RePlusPageProps
 } from "@/components/RePlusPage";
-import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
+import {
+  buildDictSearchColumnsFormat,
+  dictBeforeSearchSubmit
+} from "./dictSearch";
 import { useDictRowActions } from "./useDictRowActions";
 import { buildDictRowButtons } from "./dictRowButtons";
 import { buildDictToolbarButtons } from "./dictToolbarButtons";
 import { buildDictFormColumns } from "./dictFormColumns";
 import {
   dictColorCellRenderer,
+  dictFailureCellRenderer,
   dictLabelCellRenderer,
+  dictLastUsedCellRenderer,
   dictLockedCellRenderer,
-  dictParentCellRenderer
+  dictParentCellRenderer,
+  dictUsageCellRenderer
 } from "./dictCellRenderers";
 
 /**
@@ -27,38 +32,34 @@ import {
  * 工具栏按钮 dictToolbarButtons.ts / 列转换 dictColumnRules /
  * 单元格渲染 dictCellRenderers。
  */
-export function useDataDict(tableRef: Ref) {
-  const api = reactive(dataDictApi);
-  const auth = usePageAuth(["batchActive", "refreshCache", "move"]);
-  const { t } = useI18n();
-
-  // 行内动作：勾选读取、同层排序与新增子项预填
-  const { refresh, getSelectedPks, onMove, onAddChild } = useDictRowActions({
-    t,
-    api,
-    tableRef
+export function useDataDict() {
+  const page = defineListPage({
+    api: dataDictApi,
+    localeName: "dataDict",
+    extraAuth: ["batchActive", "refreshCache", "move"]
   });
+  const { api, auth, tableRef, t } = page;
 
-  // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
-  const { batchUpdateButton } = useBatchUpdate({
-    t,
-    api,
-    tableRef,
-    fields: [
-      {
-        key: "is_active",
-        label: t("dataDict.is_active"),
-        input_type: "boolean"
-      }
-    ]
-  });
+  // 行内动作：勾选读取、同层排序、类型缓存刷新与新增子项预填
+  const { refresh, getSelectedPks, onMove, onAddChild, onRefreshCache } =
+    useDictRowActions({
+      t,
+      api,
+      tableRef
+    });
 
-  /** 行内操作：新增子项 + 上移/下移（编辑/删除/详情为框架内建），见 dictRowButtons.ts */
+  /** 行内操作：新增子项 + 上移/下移 + 刷新本类型缓存（编辑/删除/详情为框架内建），见 dictRowButtons.ts */
   const operationButtonsProps = shallowRef<OperationProps>({
     // showNumber 与 width 放大到 6 / 420，保证六个按钮全部平铺不进「更多」
     showNumber: 6,
     width: 420,
-    buttons: buildDictRowButtons({ t, auth, onAddChild, onMove })
+    buttons: buildDictRowButtons({
+      t,
+      auth,
+      onAddChild,
+      onMove,
+      onRefreshCache
+    })
   });
 
   /** 工具栏：新增类型 + 批量启停 + 刷新缓存，见 dictToolbarButtons.ts */
@@ -69,8 +70,7 @@ export function useDataDict(tableRef: Ref) {
       auth,
       tableRef,
       refresh,
-      getSelectedPks,
-      batchUpdateButton
+      getSelectedPks
     })
   });
 
@@ -81,12 +81,8 @@ export function useDataDict(tableRef: Ref) {
     }
   });
 
-  /** 列表按 sort 升序（与消费端 items 同序）：框架默认 ordering 为 -created_time，
-   * 对「排序即语义」的字典没有意义 */
-  const beforeSearchSubmit = (params: Record<string, unknown>) => ({
-    ...params,
-    ordering: "sort,created_time"
-  });
+  const beforeSearchSubmit = dictBeforeSearchSubmit;
+  const searchColumnsFormat = buildDictSearchColumnsFormat(t);
 
   /** 所属类型列与字典名列共用只读关联展示 */
   const listColumnsFormat = (columns: PageTableColumn[]) =>
@@ -95,14 +91,17 @@ export function useDataDict(tableRef: Ref) {
       parent_code: dictParentCellRenderer,
       label: dictLabelCellRenderer,
       color: dictColorCellRenderer,
-      is_locked: dictLockedCellRenderer(t)
+      is_locked: dictLockedCellRenderer(t),
+      usage_count: dictUsageCellRenderer,
+      last_used_at: dictLastUsedCellRenderer,
+      load_failure_count: dictFailureCellRenderer
     });
 
   return {
-    api,
-    auth,
+    ...page,
     addOrEditOptions,
     beforeSearchSubmit,
+    searchColumnsFormat,
     listColumnsFormat,
     tableBarButtonsProps,
     operationButtonsProps

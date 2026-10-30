@@ -15,7 +15,7 @@ vi.mock("@/store/modules/watermark", () => ({
   useWatermarkStoreHook: () => ({ refreshSiteWatermark: vi.fn() })
 }));
 // 骨架桩：按 panes 渲染面板（与真实骨架同语义）
-vi.mock("@/views/settings/components/settings/index.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/index.vue", () => ({
   default: {
     name: "Setting",
     props: ["panes"],
@@ -26,7 +26,7 @@ vi.mock("@/views/settings/components/settings/index.vue", () => ({
     </div>`
   }
 }));
-vi.mock("@/views/settings/components/settings/SettingItem.vue", () => ({
+vi.mock("@/views/settings/components/settings-shell/SettingItem.vue", () => ({
   default: {
     name: "SettingItem",
     template: "<div data-testid='monitor-item' />"
@@ -40,7 +40,7 @@ vi.mock("./components/WatermarkSetting.vue", () => ({
   }
 }));
 
-import Setting from "@/views/settings/components/settings/index.vue";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
 import WatermarkSetting from "./components/WatermarkSetting.vue";
 import index from "./index.vue";
 
@@ -48,7 +48,7 @@ const mountPage = () => mount(index, { global: {} });
 
 /** Setting 面板装配的 auth 形态（settingItemProps.auth 子集） */
 type TabAuth = { auth?: { partialUpdate?: boolean; retrieve: boolean } };
-type PaneLike = { item?: TabAuth };
+type PaneLike = { key?: string; item?: TabAuth };
 
 const getBasicAuth = (wrapper: ReturnType<typeof mountPage>) =>
   (wrapper.findComponent(Setting).props("panes") as PaneLike[])[0]!.item!.auth!;
@@ -77,18 +77,29 @@ describe("SettingBasic 面板权限位拆分", () => {
     expect(mocks.hasAuth).toHaveBeenCalledWith("retrieve:SettingWatermark");
   });
 
-  it("仅回收水印权限位时不影响基本面板（授权粒度拆分的核心语义）", () => {
+  it("仅回收水印权限位时不影响基本面板，且水印页签不渲染", () => {
     mocks.hasAuth.mockImplementation(
       (code: string) => !code.endsWith(":SettingWatermark")
     );
     const wrapper = mountPage();
 
-    const basicAuth = getBasicAuth(wrapper);
-    const watermarkAuth = getWatermarkAuth(wrapper);
+    expect(getBasicAuth(wrapper).retrieve).toBe(true);
+    expect(wrapper.findComponent(WatermarkSetting).exists()).toBe(false);
+    expect(
+      (wrapper.findComponent(Setting).props("panes") as PaneLike[]).map(
+        pane => pane.key
+      )
+    ).toEqual(["basic", "monitor"]);
+  });
 
-    expect(basicAuth.partialUpdate).toBe(true);
-    expect(basicAuth.retrieve).toBe(true);
-    expect(watermarkAuth.partialUpdate).toBe(false);
-    expect(watermarkAuth.retrieve).toBe(false);
+  it("仅持水印只读权限时水印页签仍渲染", () => {
+    mocks.hasAuth.mockImplementation(
+      (code: string) =>
+        code === "retrieve:SettingWatermark" || code.endsWith(":SettingBasic")
+    );
+    const wrapper = mountPage();
+
+    expect(getWatermarkAuth(wrapper).retrieve).toBe(true);
+    expect(wrapper.findComponent(WatermarkSetting).exists()).toBe(true);
   });
 });

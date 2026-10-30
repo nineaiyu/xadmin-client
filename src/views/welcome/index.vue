@@ -5,10 +5,13 @@ import ReCol from "@/components/ReCol";
 import { ReNormalCountTo } from "@/components/ReCountTo";
 import { useRenderFlicker } from "./components/ReFlicker";
 import ReSkeleton from "@/components/ReSkeleton";
+import ReEmpty from "@/components/ReEmpty";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
+import { AiDailyReportCard } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
+import dayjs from "dayjs";
 
 /** echarts 懒加载就绪后再渲染图表组件（useECharts 在初始化时同步读取 $echarts） */
 const echartsReady = ref(false);
@@ -16,8 +19,6 @@ onMounted(async () => {
   await loadEcharts();
   echartsReady.value = true;
 });
-import dayjs from "dayjs";
-
 defineOptions({
   name: "Welcome"
 });
@@ -29,7 +30,12 @@ const {
   userLoginList,
   operateLogList,
   userActiveList,
-  userRegisterList
+  userRegisterList,
+  scopeLimited,
+  loading,
+  loadFailed,
+  dailyReport,
+  reload
 } = useDashboard();
 let curWeek = ref(1);
 
@@ -49,22 +55,35 @@ const timelineIcons = timelineTones.map(tone =>
 
 <template>
   <div>
+    <el-alert
+      v-if="loadFailed"
+      type="error"
+      :closable="false"
+      show-icon
+      class="mb-4"
+      :title="t('welcome.loadFailed')"
+    >
+      <el-button link type="primary" size="small" @click="reload">
+        {{ t("buttons.reload") }}
+      </el-button>
+    </el-alert>
+    <el-alert
+      v-if="scopeLimited"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="mb-4"
+      :title="t('welcome.dataScopeLimited')"
+    />
+    <!-- 首屏不使用入场动画：内容首帧可见（LCP），位移动画也不计入布局位移（CLS） -->
     <el-row :gutter="24" justify="space-around">
+      <!-- AI 日报卡：开关关闭 / 未授权 / 未配置时 dailyReport 为 null，整卡不渲染（视觉零变更） -->
+      <re-col v-if="dailyReport" :xs="24" class="mb-4.5">
+        <AiDailyReportCard :report="dailyReport" />
+      </re-col>
       <re-col
         v-for="(item, index) in chartData"
         :key="index"
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * (index + 1)
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
         :md="12"
         :sm="12"
         :value="6"
@@ -91,12 +110,14 @@ const timelineIcons = timelineTones.map(tone =>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
-              <p class="font-medium text-(--el-color-success)">
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
+              <p class="font-medium text-(--success-text)">
                 {{ item.percent }}
               </p>
             </div>
@@ -112,25 +133,7 @@ const timelineIcons = timelineTones.map(tone =>
           </div>
         </el-card>
       </re-col>
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * 4
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :md="12"
-        :sm="12"
-        :value="6"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :md="12" :sm="12" :value="6" :xs="24" class="mb-4.5">
         <el-card
           :body-style="{ padding: '0' }"
           class="app-card line-card"
@@ -142,18 +145,6 @@ const timelineIcons = timelineTones.map(tone =>
       <re-col
         v-for="(item, index) in userActiveList"
         :key="index"
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 80 * (index + 1)
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
         :md="12"
         :sm="12"
         :value="6"
@@ -167,22 +158,26 @@ const timelineIcons = timelineTones.map(tone =>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[1]"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
-              <p class="text-sm font-medium text-(--el-color-success-dark-2)">
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
+              <p class="text-sm font-medium text-(--success-text)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
             <div class="w-1/2">
               <ReNormalCountTo
+                v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[2]"
                 :fontSize="'1.6em'"
-                :startVal="100"
+                :startVal="0"
               />
+              <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
               <p class="text-sm font-medium text-(--el-color-primary-dark-2)">
                 {{ t("welcome.activeUser") }}
               </p>
@@ -191,23 +186,7 @@ const timelineIcons = timelineTones.map(tone =>
         </el-card>
       </re-col>
 
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 400
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :value="16"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :value="16" :xs="24" class="mb-4.5">
         <el-card class="app-card bar-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{
@@ -227,34 +206,23 @@ const timelineIcons = timelineTones.map(tone =>
         </el-card>
       </re-col>
 
-      <re-col
-        v-motion
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 640
-          }
-        }"
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :value="8"
-        :xs="24"
-        class="mb-4.5"
-      >
+      <re-col :value="8" :xs="24" class="mb-4.5">
         <el-card class="app-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-md font-medium">{{
               t("welcome.operateLog")
             }}</span>
           </div>
-          <el-scrollbar class="mt-3" max-height="410">
-            <el-timeline>
+          <el-scrollbar class="mt-3" max-height="410" tabindex="0">
+            <ReEmpty
+              v-if="!operateLogList.length"
+              :description="t('welcome.noOperateLog')"
+              :image-size="60"
+            />
+            <el-timeline v-else>
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
-                :key="index"
+                :key="item.pk ?? item.id ?? index"
                 :icon="timelineIcons[index % timelineIcons.length]"
                 :timestamp="
                   dayjs(item.created_time).format('YYYY-MM-DD HH:mm:ss')
@@ -262,9 +230,12 @@ const timelineIcons = timelineTones.map(tone =>
                 center
                 placement="top"
               >
-                <p class="text-fg-muted text-sm">
+                <p
+                  class="truncate text-sm text-fg-muted"
+                  :title="`${item?.creator?.username ?? ''} ${item.method} ${item.module} ${item.system} ${item?.browser ?? ''}`"
+                >
                   {{
-                    `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser}`
+                    `${item?.creator?.username ?? ""} ${item.method} ${item.module} ${item.system} ${item?.browser ?? ""}`
                   }}
                 </p>
               </el-timeline-item>
@@ -286,6 +257,12 @@ const timelineIcons = timelineTones.map(tone =>
   /* el-timeline 每一项上下、左右边距 */
   .el-timeline-item {
     margin: 0 6px;
+  }
+
+  /* 时间线时间戳：EP 缺省 secondary 灰在白底对比度不足 4.5:1
+     （axe color-contrast serious，webkit 渲染临界），正文灰加深一档 */
+  .el-timeline-item__timestamp {
+    color: var(--el-text-color-regular);
   }
 }
 </style>

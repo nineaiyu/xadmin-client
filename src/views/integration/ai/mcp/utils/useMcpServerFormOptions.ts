@@ -1,6 +1,5 @@
 import { shallowRef } from "vue";
 import type { RePlusPageProps } from "@/components/RePlusPage";
-import type { RecordType } from "plus-pro-components";
 import type { useI18n } from "vue-i18n";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -10,16 +9,11 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  * - `auth_token`（write_only）改为密码框：编辑态留空 = 保持不变，占位文案随
  *   `auth_token_set` 状态切换；
  * - `timeout` 补 5~120 边界（模型层无 min/max 声明，旧表单同口径）；
- * - `allowed_tools`（JSONField → JSON 编辑器）改为逗号分隔文本：打开时数组转文本、
- *   提交时按逗号拆分回数组（空串 = 全部禁止）。
+ * - `allowed_tools` 用已同步快照做多选（允许创建未同步工具名），不再手输逗号串。
  */
 export function useMcpServerFormOptions({ t }: { t: TFunction }) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
-      row: {
-        allowed_tools: ({ rawRow }: { rawRow?: RecordType }) =>
-          ((rawRow?.allowed_tools as string[] | undefined) ?? []).join(", ")
-      },
       columns: {
         url: ({ column }) => {
           column.fieldProps = {
@@ -55,13 +49,25 @@ export function useMcpServerFormOptions({ t }: { t: TFunction }) {
           };
           return column;
         },
-        allowed_tools: ({ column }) => {
-          // JSON 编辑器让位给逗号分隔文本：renderField 优先级高于 valueType，需先清空
+        allowed_tools: ({ column, rawRow }) => {
+          // 快照工具优先，历史白名单里未同步的工具名也保留为可选项
+          const names = new Set<string>([
+            ...(
+              (rawRow?.tools_snapshot as { name?: string }[] | undefined) ?? []
+            ).map(tool => String(tool.name ?? "")),
+            ...((rawRow?.allowed_tools as string[] | undefined) ?? [])
+          ]);
           delete column.renderField;
-          column.valueType = "input";
+          column.valueType = "select";
+          column.options = Array.from(names)
+            .filter(Boolean)
+            .map(name => ({ label: name, value: name }));
           column.fieldProps = {
             ...column.fieldProps,
-            placeholder: "echo, search"
+            multiple: true,
+            filterable: true,
+            allowCreate: true,
+            placeholder: t("mcp.formAllowedToolsTip")
           };
           return column;
         }

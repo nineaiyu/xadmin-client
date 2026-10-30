@@ -1,10 +1,15 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { systemUploadFileApi, type FileAccessLogResult } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
+import { formatDateTime } from "@/utils/format";
 import type { RecordType } from "plus-pro-components";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * 文件访问记录：上传 / 下载 / 预览 / 删除四类动作留痕，供溯源与审计。
@@ -29,6 +34,16 @@ const actionLabel = (value: unknown) => {
   const key = ACTION_KEYS[String(value ?? "")];
   return key ? t(key) : String(value ?? "-");
 };
+
+/** 只读列：时间/动作/结果走具名插槽，其余直接取字段 */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { label: t("fileAccess.time"), width: 170, slot: "time" },
+  { prop: "user_display", label: t("fileAccess.user"), width: 120 },
+  { label: t("fileAccess.action"), width: 100, slot: "action" },
+  { prop: "ipaddress", label: t("fileAccess.ipaddress"), width: 140 },
+  { label: t("fileAccess.result"), width: 90, slot: "result" },
+  { prop: "detail", label: t("fileAccess.detail"), minWidth: 160 }
+]);
 
 const load = async () => {
   if (!props.row?.pk) return;
@@ -57,7 +72,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div v-loading="loading">
+  <div>
     <el-alert
       v-if="failed && !loading"
       :closable="false"
@@ -78,43 +93,24 @@ onMounted(load);
         {{ t("fileAccess.total") }}：{{ data.total }}
       </el-tag>
     </div>
-    <el-table :data="data?.results ?? []" border size="small">
-      <el-table-column :label="t('fileAccess.time')" width="170">
-        <template #default="{ row }">
-          {{
-            row.created_time
-              ? String(row.created_time).replace("T", " ").slice(0, 19)
-              : "-"
-          }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="user_display"
-        :label="t('fileAccess.user')"
-        width="120"
-      />
-      <el-table-column :label="t('fileAccess.action')" width="100">
-        <template #default="{ row }">{{
-          actionLabel(row.action?.value)
-        }}</template>
-      </el-table-column>
-      <el-table-column
-        prop="ipaddress"
-        :label="t('fileAccess.ipaddress')"
-        width="140"
-      />
-      <el-table-column :label="t('fileAccess.result')" width="90">
-        <template #default="{ row }">
-          <el-tag :type="row.result ? 'success' : 'danger'" effect="light">
-            {{ row.result ? t("labels.yes") : t("labels.no") }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="detail"
-        :label="t('fileAccess.detail')"
-        min-width="160"
-      />
-    </el-table>
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="data?.results ?? []"
+      :loading="loading"
+      size="small"
+      border
+    >
+      <template #time="{ row }">
+        {{ formatDateTime(row.created_time) || "-" }}
+      </template>
+      <template #action="{ row }">{{
+        actionLabel(row.action?.value)
+      }}</template>
+      <template #result="{ row }">
+        <el-tag :type="row.result ? 'success' : 'danger'" effect="light">
+          {{ row.result ? t("labels.yes") : t("labels.no") }}
+        </el-tag>
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>

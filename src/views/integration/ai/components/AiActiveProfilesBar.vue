@@ -25,6 +25,8 @@ defineOptions({
 const { t } = useI18n();
 
 const loading = ref(false);
+/** 全局开关数据状态：未拿到响应前不渲染「已启用」，避免 403/失败被伪装成 true */
+const settingsState = ref<"loading" | "ready" | "error">("loading");
 const assistantEnabled = ref(true);
 const featureFlags = ref({
   nlQuery: true,
@@ -42,6 +44,7 @@ const load = async () => {
       aiProfileApi.list({ page: 1, size: 100 }).catch(() => null)
     ]);
     if (settingsRes && isSuccess(settingsRes)) {
+      settingsState.value = "ready";
       const data = settingsRes.data as Record<string, unknown>;
       assistantEnabled.value = Boolean(data?.AI_ASSISTANT_ENABLED ?? true);
       featureFlags.value = {
@@ -49,6 +52,8 @@ const load = async () => {
         action: Boolean(data?.AI_ACTION_ENABLED ?? true),
         nativeTools: Boolean(data?.AI_NATIVE_TOOLS_ENABLED ?? true)
       };
+    } else {
+      settingsState.value = "error";
     }
     if (profilesRes && isSuccess(profilesRes)) {
       profiles.value = listAiProfileRows<AiProfileItem>(profilesRes);
@@ -97,25 +102,42 @@ const activePurposes = computed(() => {
     v-loading="loading"
     class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2"
   >
-    <!-- 全局总开关 -->
-    <el-tag :type="assistantEnabled ? 'success' : 'info'" effect="light">
-      {{ t("aiConfig.assistantEnabled") }}：
-      {{
-        assistantEnabled ? t("aiConfig.profileOn") : t("aiConfig.profileOff")
-      }}
-    </el-tag>
-    <!-- 功能开关 -->
-    <el-tag
-      v-for="chip in featureChips"
-      :key="chip.key"
-      :type="chip.on ? 'success' : 'info'"
-      effect="plain"
-      size="small"
+    <!-- 全局总开关：只有拿到真实配置才渲染启用/停用，403/失败显示未知 -->
+    <template v-if="settingsState === 'ready'">
+      <el-tag :type="assistantEnabled ? 'success' : 'info'" effect="light">
+        {{ t("aiConfig.assistantEnabled") }}：
+        {{
+          assistantEnabled ? t("aiConfig.profileOn") : t("aiConfig.profileOff")
+        }}
+      </el-tag>
+      <!-- 功能开关 -->
+      <el-tag
+        v-for="chip in featureChips"
+        :key="chip.key"
+        :type="chip.on ? 'success' : 'info'"
+        effect="plain"
+        size="small"
+      >
+        {{ chip.label }}：{{
+          chip.on ? t("aiConfig.profileOn") : t("aiConfig.profileOff")
+        }}
+      </el-tag>
+    </template>
+    <el-alert
+      v-else-if="settingsState === 'error'"
+      class="w-full"
+      type="warning"
+      :closable="false"
+      show-icon
+      :title="t('aiConfig.statusUnknown')"
     >
-      {{ chip.label }}：{{
-        chip.on ? t("aiConfig.profileOn") : t("aiConfig.profileOff")
-      }}
-    </el-tag>
+      <template #default>
+        <span class="text-sm">{{ t("aiConfig.statusUnknownHint") }}</span>
+        <el-button link type="primary" size="small" @click="load">
+          {{ t("aiConfig.retry") }}
+        </el-button>
+      </template>
+    </el-alert>
     <span class="text-(--el-text-color-secondary) text-sm">
       {{ t("aiConfig.activeProfilesTitle") }}
     </span>

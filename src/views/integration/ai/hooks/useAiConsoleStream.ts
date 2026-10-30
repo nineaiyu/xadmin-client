@@ -1,5 +1,6 @@
 import { computed, ref, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
+import { isAbortError } from "@/utils/sse";
 import type { AiConsoleFeature, AiConsoleMessage } from "@/api/ai/ai";
 import {
   buildSettledHandlers,
@@ -47,6 +48,9 @@ export function useAiConsoleStream({
   let streamAbort: AbortController | null = null;
   /** 本次流是否收到终止帧（done/error）；EOF 未终结 = 服务端异常断流 */
   let settled = false;
+  /** 失败草稿：seq 用于重复失败时也能触发回填（内容相同不丢通知） */
+  const failedDraft = ref<{ seq: number; text: string } | null>(null);
+  let draftSeq = 0;
 
   const handlers = buildSettledHandlers(
     { streaming, atBottom, scrollToBottom, upsertMessage },
@@ -68,6 +72,7 @@ export function useAiConsoleStream({
       if (!settled && !signal.aborted) {
         // 响应正常结束却没有 done/error：服务端流内异常未转 error 帧（历史 KeyError
         // 场景即如此），必须给出可见失败提示，避免界面静默停在「思考中」
+        failedDraft.value = { seq: ++draftSeq, text };
         notifyStreamError(
           new Error("AI stream ended unexpectedly"),
           t(FAILED_KEY[kind]),
@@ -76,6 +81,9 @@ export function useAiConsoleStream({
         );
       }
     } catch (error) {
+      if (!isAbortError(error)) {
+        failedDraft.value = { seq: ++draftSeq, text };
+      }
       notifyStreamError(error, t(FAILED_KEY[kind]), text, removeOptimistic);
     } finally {
       streaming.value = null;
@@ -103,6 +111,7 @@ export function useAiConsoleStream({
   return {
     streaming,
     activeStreaming,
+    failedDraft,
     send,
     abortStream
   };

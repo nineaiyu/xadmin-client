@@ -10,6 +10,14 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 const statusOf = (row: unknown) => (row as SubmissionItem).status?.value ?? "";
 
 /**
+ * 可编辑 / 可删除的状态：仅草稿与驳回态。
+ * 审批中（PENDING）按流程快照推进，终态（APPROVED / CANCELLED）是审批留痕，
+ * 两者都只读——后端 `_creator_guard` 同口径拒绝，前端不再渲染入口。
+ */
+const EDITABLE_STATUSES = new Set(["DRAFT", "REJECTED"]);
+const isEditable = (row: RecordType) => EDITABLE_STATUSES.has(statusOf(row));
+
+/**
  * 我的填报行操作（自 useFormMyColumns.ts 抽出）：行操作全部自定义
  * （详情/编辑/提交/重新提交/删除），故关闭框架默认的编辑与删除按钮；
  * 导出沿用框架工具栏默认按钮。
@@ -25,6 +33,7 @@ export function useFormMyRowButtons({
     canDestroy: boolean;
     canResubmit: boolean;
     canSubmit: boolean;
+    canCancel: boolean;
   };
   actions: {
     openDetail: (row: SubmissionItem) => void;
@@ -32,6 +41,7 @@ export function useFormMyRowButtons({
     submitDraft: (row: SubmissionItem) => void;
     resubmit: (row: SubmissionItem) => void;
     remove: (row: SubmissionItem) => void;
+    cancel: (row: SubmissionItem) => void;
   };
 }) {
   const operationButtonsProps = shallowRef<OperationProps>({
@@ -59,7 +69,7 @@ export function useFormMyRowButtons({
         code: "my-edit",
         props: { type: "primary", link: true },
         index: -40,
-        show: (row: RecordType) => flags.canEdit && statusOf(row) !== "PENDING",
+        show: (row: RecordType) => flags.canEdit && isEditable(row),
         onClick: ({ row }) => actions.openEdit(row as SubmissionItem)
       },
       {
@@ -88,12 +98,22 @@ export function useFormMyRowButtons({
         onClick: ({ row }) => actions.resubmit(row as SubmissionItem)
       },
       {
+        text: t("dform.withdraw"),
+        code: "my-withdraw",
+        props: { type: "warning", link: true },
+        index: -15,
+        show: (row: RecordType) =>
+          flags.canCancel &&
+          statusOf(row) === "PENDING" &&
+          Boolean(row.instance),
+        onClick: ({ row }) => actions.cancel(row as SubmissionItem)
+      },
+      {
         text: t("dform.delete"),
         code: "my-delete",
         props: { type: "danger", link: true },
         index: -10,
-        show: (row: RecordType) =>
-          flags.canDestroy && statusOf(row) !== "PENDING",
+        show: (row: RecordType) => flags.canDestroy && isEditable(row),
         onClick: ({ row }) => actions.remove(row as SubmissionItem)
       }
     ]

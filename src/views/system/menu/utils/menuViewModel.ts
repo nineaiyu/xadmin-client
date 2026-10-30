@@ -37,6 +37,7 @@ export function buildMenuViewModel({
     rootRef,
     treeRef,
     loading: data.loading,
+    loadError: data.loadError,
     stats: data.stats,
     treeData: data.treeData,
     renderedTree,

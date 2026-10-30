@@ -11,7 +11,7 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  */
 export function useAiProfileButtons({
   t,
-  flags: { canCreate, canActivate, canDeactivate, canTest },
+  flags: { canCreate, canActivate, canDeactivate, canTest, canManage },
   activate,
   deactivate,
   testProfile,
@@ -24,6 +24,8 @@ export function useAiProfileButtons({
     canActivate: boolean;
     canDeactivate: boolean;
     canTest: boolean;
+    /** 管理抽屉内是否有任一动作（retrieve/edit/probe/destroy） */
+    canManage: boolean;
   };
   activate: (row: AiProfileItem) => Promise<void>;
   deactivate: (row: AiProfileItem) => Promise<void>;
@@ -67,7 +69,8 @@ export function useAiProfileButtons({
         props: { type: "primary", link: true },
         onClick: ({ row }) => openProfilePanel(row as AiProfileItem),
         index: -15,
-        show: true
+        // 只读角色（仅 list）打开抽屉无任何可用动作，隐藏入口避免死交互
+        show: canManage
       }
     ]
   });

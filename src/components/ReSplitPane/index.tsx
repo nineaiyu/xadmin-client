@@ -1,5 +1,6 @@
 import "./index.css";
 import resizer from "./resizer";
+import { calcSplitPercent, isPercentAllowed } from "./geometry";
 import {
   type PropType,
   defineComponent,
@@ -165,12 +166,10 @@ export default defineComponent({
       const totalOffset = vertical
         ? container.offsetWidth
         : container.offsetHeight;
-      const percents =
-        Math.floor(((currentPage - offset) / totalOffset) * 10000) / 100;
-
+      const percents = calcSplitPercent(currentPage, offset, totalOffset);
       if (
-        percents > props.splitSet.minPercent &&
-        percents < 100 - props.splitSet.minPercent
+        percents !== null &&
+        isPercentAllowed(percents, props.splitSet.minPercent)
       ) {
         applyPercent(percents);
       }

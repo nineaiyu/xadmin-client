@@ -1,9 +1,13 @@
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
+import { usePrompt } from "@/hooks/useMessageBox";
 import ReTableAction from "@/components/ReTableAction";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import {
   approvalFlowApi,
   type FlowVersionRow
@@ -22,6 +26,28 @@ const emit = defineEmits<{ rollback: [] }>();
 const { t } = useI18n();
 const loading = ref(false);
 const rows = ref<FlowVersionRow[]>([]);
+
+/** 版本历史只读列（版本号/动作走插槽） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "version",
+    label: t("systemApprovalFlow.versionNo"),
+    width: 90,
+    align: "center",
+    slot: "version"
+  },
+  {
+    prop: "remark",
+    label: t("systemApprovalFlow.versionRemark"),
+    minWidth: 140
+  },
+  {
+    prop: "created_time",
+    label: t("accessToken.createdTime"),
+    width: 170
+  },
+  { width: 90, align: "center", slot: "actions" }
+]);
 
 const fetchVersions = () => {
   loading.value = true;
@@ -42,8 +68,8 @@ const fetchVersions = () => {
     });
 };
 
-const handleRollback = (version: number) => {
-  ElMessageBox.prompt(
+const handleRollback = async (version: number) => {
+  const answer = await usePrompt()(
     t("systemApprovalFlow.rollbackConfirm", { n: version }),
     t("systemApprovalFlow.rollbackTitle"),
     {
@@ -52,86 +78,66 @@ const handleRollback = (version: number) => {
       inputPlaceholder: t("systemApprovalFlow.rollbackRemark"),
       // 回滚是破坏性操作：确认钮着危险色（useConfirm 同口径；
       // prompt 模式焦点本就在输入框，不存在回车误确认问题）
-      confirmButtonClass: "el-button--danger"
+      danger: true
     }
-  )
-    .then(({ value }) => {
-      approvalFlowApi
-        .rollback(props.flowPk, version, value || "")
-        .then(res => {
-          if (isSuccess(res)) {
-            message(t("systemApprovalFlow.rollbackSuccess"), {
-              type: "success"
-            });
-            emit("rollback");
-            fetchVersions();
-            return;
-          }
-          // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
-          message(String(res.detail || t("results.failed")), {
-            type: "error"
-          });
-        })
-        .catch(() => {
-          /* HTTP 层错误提示由拦截器统一处理 */
-        });
-    })
-    .catch(() => {
-      // 取消确认框：静默
+  );
+  if (!answer) return;
+  const res = await approvalFlowApi
+    .rollback(props.flowPk, version, answer.value || "")
+    .catch(() => null);
+  if (!res) return;
+  if (isSuccess(res)) {
+    message(t("systemApprovalFlow.rollbackSuccess"), {
+      type: "success"
     });
+    emit("rollback");
+    fetchVersions();
+    return;
+  }
+  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败显式提示
+  message(String(res.detail || t("results.failed")), {
+    type: "error"
+  });
 };
 
 onMounted(fetchVersions);
 </script>
 
 <template>
-  <div v-loading="loading">
+  <div>
     <el-alert
       :closable="false"
       type="info"
       :title="t('systemApprovalFlow.versionsTip')"
       class="mb-3"
     />
-    <el-table :data="rows" size="small" border>
-      <el-table-column
-        prop="version"
-        :label="t('systemApprovalFlow.versionNo')"
-        width="90"
-        align="center"
-      >
-        <template #default="{ row }"> v{{ row.version }} </template>
-      </el-table-column>
-      <el-table-column
-        prop="remark"
-        :label="t('systemApprovalFlow.versionRemark')"
-        min-width="140"
-      />
-      <el-table-column
-        prop="created_time"
-        :label="t('accessToken.createdTime')"
-        width="170"
-      />
-      <el-table-column width="90" align="center">
-        <template #default="{ row, $index }">
-          <el-tag v-if="$index === 0" size="small" type="success">
-            {{ t("systemApprovalFlow.versionCurrent") }}
-          </el-tag>
-          <ReTableAction
-            v-else
-            align="center"
-            size="small"
-            :row="row"
-            :actions="[
-              {
-                text: t('systemApprovalFlow.rollbackTitle'),
-                danger: true,
-                auth: 'rollback:SystemApprovalFlow',
-                onClick: () => handleRollback(row.version)
-              }
-            ]"
-          />
-        </template>
-      </el-table-column>
-    </el-table>
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="rows"
+      :loading="loading"
+      size="small"
+      border
+    >
+      <template #version="{ row }"> v{{ row.version }} </template>
+      <template #actions="{ row, $index }">
+        <el-tag v-if="$index === 0" size="small" type="success">
+          {{ t("systemApprovalFlow.versionCurrent") }}
+        </el-tag>
+        <ReTableAction
+          v-else
+          align="center"
+          size="small"
+          :row="row"
+          :actions="[
+            {
+              text: t('systemApprovalFlow.rollbackTitle'),
+              danger: true,
+              auth: 'rollback:SystemApprovalFlow',
+              onClick: () => handleRollback(row.version)
+            }
+          ]"
+        />
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>

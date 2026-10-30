@@ -6,17 +6,18 @@ import { MenuChoices } from "@/views/system/constants";
 import {
   MENU_FORM_KEY,
   dirFormRules,
+  menuFormReadonly,
   menuFormRules,
   permissionFormRules,
   type MenuFormContext
 } from "../utils/formContext";
-import { menuTypeTagType } from "../utils/normalize";
-import { displayTitle, translateTitle } from "../utils/useMenuFilter";
+import { displayTitle } from "../utils/useMenuFilter";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import MenuFormBasic from "./MenuFormBasic.vue";
 import MenuFormNav from "./MenuFormNav.vue";
 import MenuFormExtra from "./MenuFormExtra.vue";
 import MenuFormPermission from "./MenuFormPermission.vue";
+import MenuDrawerHeader from "./MenuDrawerHeader.vue";
 import type {
   MenuAuths,
   MenuChoiceItem,
@@ -72,7 +73,9 @@ const rules = ref(cloneDeep(rulesFor(props.model.menuType)));
 const activeGroups = ref<string[]>(["basic"]);
 const cascadeInactive = ref(false);
 
-const disabled = computed(() => !props.auth?.partialUpdate);
+// 编辑态判 partialUpdate、新增态判 create：只有 create 码的角色能看到「新增」，
+// 打开后整个表单禁用会让该功能不可用（断言见 utils/__tests__/formContext.spec.ts）
+const disabled = computed(() => menuFormReadonly(props.isAdd, props.auth));
 
 const menuTypeChoices = computed<MenuChoiceItem[]>(() => {
   const list = props.choicesDict?.["menu_type"];
@@ -157,12 +160,6 @@ const descendantCount = computed(() => {
   if (form.pk === undefined) return 0;
   return treeIndex.value.get(String(form.pk))?.descendantCount ?? 0;
 });
-
-const typeLabel = computed(
-  () =>
-    menuTypeChoices.value.find(item => item.value === form.menuType)?.label ??
-    ""
-);
 
 // provide 的 context 用 getter 暴露会晚于 props/异步计算到达的字段（树数据、
 // 字典、模型清单等）：reactive 快照会把「传 ref 也停止更新」的隐式契约留给
@@ -252,54 +249,22 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
 
 <template>
   <div class="menu-form">
-    <div class="menu-form__head">
-      <div class="menu-form__head-main">
-        <el-tag
-          :type="menuTypeTagType(form.menuType)"
-          class="menu-form__tag"
-          effect="light"
-          size="small"
-        >
-          {{ typeLabel }}
-        </el-tag>
-        <span class="menu-form__head-title">
-          {{
-            form.title
-              ? translateTitle(form.title)
-              : t("systemMenu.verifyTitle")
-          }}
-        </span>
-      </div>
-      <el-switch
-        v-model="form.isActive"
-        :aria-label="t('labels.status')"
-        :disabled="disabled"
-      />
-    </div>
-
-    <el-breadcrumb
-      v-if="parentChain.length"
-      separator="/"
-      class="menu-form__crumb"
-    >
-      <el-breadcrumb-item v-for="item in parentChain" :key="item.pk">
-        {{ displayTitle(item) }}
-      </el-breadcrumb-item>
-    </el-breadcrumb>
-
-    <el-alert
-      v-if="!form.isActive && descendantCount > 0"
-      :closable="false"
-      show-icon
-      type="warning"
-      :title="t('systemMenu.inactiveDirectoryHint')"
-    >
-      <template #default>
-        <el-checkbox v-model="cascadeInactive" :disabled="disabled">
-          {{ t("systemMenu.cascadeInactive", { count: descendantCount }) }}
-        </el-checkbox>
-      </template>
-    </el-alert>
+    <MenuDrawerHeader
+      v-model:cascade-inactive="cascadeInactive"
+      :menu-type="form.menuType"
+      :type-label="
+        String(
+          menuTypeChoices.find(item => item.value === form.menuType)?.label ??
+            ''
+        )
+      "
+      :title="form.title"
+      :is-active="form.isActive"
+      :disabled="disabled"
+      :parent-chain="parentChain"
+      :descendant-count="descendantCount"
+      @update:is-active="form.isActive = $event"
+    />
 
     <el-form
       ref="formRef"
@@ -356,38 +321,6 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
 
 <style lang="scss" scoped>
 .menu-form {
-  &__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed var(--el-border-color-lighter);
-  }
-
-  &__head-main {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    min-width: 0;
-  }
-
-  &__head-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  &__crumb {
-    margin: 10px 0 4px;
-  }
-
-  /* el-tag 的 light 效果文字色取主题色（小字号白底对比不足）：覆写为 regular */
-  &__tag {
-    --el-tag-text-color: var(--el-text-color-regular);
-  }
-
   &__groups {
     margin-top: 8px;
     border-top: none;

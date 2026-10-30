@@ -46,12 +46,13 @@ class PostApi extends BaseApi {
   };
   /** 岗位成员（查看） */
   members = (pk: number | string) => {
-    return this.request<DetailResult<{ members: PostMemberItem[] }>>(
-      "get",
-      {},
-      {},
-      `${this.baseApi}/${pk}/members`
-    );
+    return this.request<
+      DetailResult<{
+        members: PostMemberItem[];
+        total?: number;
+        truncated?: boolean;
+      }>
+    >("get", {}, {}, `${this.baseApi}/${pk}/members`);
   };
   /** 岗位成员分配：增量 add / remove（幂等） */
   assign = (

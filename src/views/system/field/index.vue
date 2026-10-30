@@ -1,18 +1,17 @@
 <script lang="ts" setup>
 import { useModelField } from "./utils/hook";
-import { ref } from "vue";
 
 defineOptions({
   name: "SystemModelLabelField"
 });
-const tableRef = ref();
 
-const { api, auth, tableBarButtonsProps } = useModelField(tableRef);
+const { api, auth, tableRef, tableBarButtonsProps } = useModelField();
 </script>
 
 <template>
   <RePlusPage
     ref="tableRef"
+    :selection="false"
     :api="api"
     :auth="auth"
     :operation="false"

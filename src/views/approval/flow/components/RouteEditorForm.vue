@@ -2,7 +2,13 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import { CONDITION_OPS, type RouteItem } from "./flowConfig";
+import DataTable from "@/components/DataTable";
+import {
+  CONDITION_OPS,
+  conditionOpLabel,
+  isValidRouteTarget,
+  type RouteItem
+} from "./flowConfig";
 
 /**
  * 节点出口路由编辑（弹窗体系收敛到 ReDialog 的 content 组件形态）。
@@ -17,6 +23,8 @@ const props = defineProps<{
   /** 当前节点序号（1-based）与全部节点数：约束 target 范围与自环 */
   order: number;
   count: number;
+  /** 节点序号 → 名称：目标下拉展示「N. 名称」，避免只看到序号选错 */
+  nodeOptions?: Array<{ order: number; name?: string }>;
   /** 路由副本（编辑中不影响节点，确认后由页面回写） */
   routes: RouteItem[];
 }>();
@@ -24,21 +32,29 @@ const props = defineProps<{
 const { t } = useI18n();
 const routes = ref<RouteItem[]>(props.routes);
 
+/** 目标节点展示名：序号 + 节点名（未命名时只显示序号） */
+const targetLabel = (order: number) => {
+  const name = props.nodeOptions?.find(item => item.order === order)?.name;
+  return name
+    ? `${t("systemApprovalFlow.nodeOrder")} ${order} · ${name}`
+    : `${t("systemApprovalFlow.nodeOrder")} ${order}`;
+};
+
 const addRoute = () => {
+  // 末节点没有可指向的后续节点：按钮已禁用，这里兜底不再追加
+  if (props.order >= props.count) return;
   routes.value.push({
     condition: { field: "", op: "eq", value: "" },
-    target: 1
+    target: props.order + 1
   });
 };
 
-/** 过滤自环与越界 target（与原实现同口径）；残缺行（未填条件字段）同样忽略并提示 */
+/** 过滤自环 / 回跳 / 越界 target；残缺行（未填条件字段）同样忽略并提示 */
 const getRoutes = (): RouteItem[] => {
   const valid = routes.value.filter(
     route =>
       (route.condition?.field ?? "").trim() &&
-      route.target >= 1 &&
-      route.target <= props.count &&
-      route.target !== props.order
+      isValidRouteTarget(route.target, props.order, props.count)
   );
   if (valid.length !== routes.value.length) {
     message(t("systemApprovalFlow.routeInvalidDropped"), { type: "warning" });
@@ -57,7 +73,12 @@ defineExpose({ getRoutes });
       :title="t('systemApprovalFlow.routesTip')"
       class="mb-3"
     />
-    <el-table :data="routes" size="small" border>
+    <DataTable
+      :data="routes"
+      size="small"
+      border
+      :label="t('systemApprovalFlow.routesTitle')"
+    >
       <el-table-column
         :label="t('systemApprovalFlow.conditionField')"
         width="150"
@@ -72,7 +93,7 @@ defineExpose({ getRoutes });
             <el-option
               v-for="op in CONDITION_OPS"
               :key="op"
-              :label="op"
+              :label="conditionOpLabel(op, t)"
               :value="op"
             />
           </el-select>
@@ -92,9 +113,9 @@ defineExpose({ getRoutes });
             <el-option
               v-for="nodeOrder in count"
               :key="nodeOrder"
-              :label="`${t('systemApprovalFlow.nodeOrder')} ${nodeOrder}`"
+              :label="targetLabel(nodeOrder)"
               :value="nodeOrder"
-              :disabled="nodeOrder === props.order"
+              :disabled="nodeOrder <= props.order"
             />
           </el-select>
           <el-button
@@ -108,12 +129,13 @@ defineExpose({ getRoutes });
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-button
       link
       type="primary"
       size="small"
       class="mt-2"
+      :disabled="order >= count"
       @click="addRoute()"
     >
       {{ t("systemApprovalFlow.addRoute") }}

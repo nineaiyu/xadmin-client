@@ -11,6 +11,7 @@
  */
 import { isSuccess } from "@/api/types";
 import { systemUploadFileApi } from "@/api/file/file";
+import { computeFileHash } from "./contentHash";
 
 /** 服务端建议的缺省分片大小（与服务端 DEFAULT_CHUNK_SIZE 对齐，服务端会钳制） */
 export const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024;
@@ -47,6 +48,8 @@ export interface ChunkUploadOptions {
   onProgress?: (percent: number) => void;
   /** 中止信号：abort 后服务端会话保留（可续传），客户端抛 ChunkUploadAbortedError */
   signal?: { aborted: boolean };
+  /** 会话创建回调：供 UI 在用户取消上传时 abort 服务端会话 */
+  onSession?: (session: string) => void;
   /** 客户端可选声明整文件 md5（complete 期服务端一致性校验） */
   md5?: string;
   /** 单片传输失败重试次数（每次重试从该片起始位置整体重传） */
@@ -80,6 +83,7 @@ export async function uploadFileChunked(
     chunkSize = DEFAULT_CHUNK_SIZE,
     onProgress,
     signal,
+    onSession,
     md5,
     partRetries = 2
   } = options;
@@ -89,11 +93,15 @@ export async function uploadFileChunked(
     MAX_CHUNK_SIZE
   );
   const totalChunks = Math.max(1, Math.ceil(file.size / planChunkSize));
+  // 内容指纹是断点续传的会话键：同名同大小但内容不同不能复用会话（否则会拼出
+  // 旧前半 + 新后半）。完整读一遍文件是这项保证的成本，按 1MB 分段摘要。
+  const contentHash = await computeFileHash(file);
   const initRes = await systemUploadFileApi.chunkInit({
     filename: file instanceof File ? file.name : "blob",
     filesize: file.size,
     total_chunks: totalChunks,
     chunk_size: planChunkSize,
+    content_hash: contentHash,
     md5
   });
   if (!isSuccess(initRes) || !initRes.data) {
@@ -103,8 +111,14 @@ export async function uploadFileChunked(
     );
   }
   const session = initRes.data.session;
+  onSession?.(session);
   // 会话命中（created=false）即按服务端会话口径续传：已收分片直接跳过
   const serverChunkSize = initRes.data.chunk_size || planChunkSize;
+  // 分片总数以服务端返回的 chunk_size 重算：init 里的 total_chunks
+  // 按客户端 plan 算，服务端钳制 chunk_size 后两者口径不一致——沿用 plan 总数会偏小
+  //（尾部不上传，合并产物截断）或偏大（空分片）。init 载荷仅作协商输入，此后一切以
+  // 服务端口径为准。
+  const uploadChunkCount = Math.max(1, Math.ceil(file.size / serverChunkSize));
   const received = new Set<number>(
     initRes.data.created ? [] : initRes.data.received
   );
@@ -117,7 +131,7 @@ export async function uploadFileChunked(
   };
 
   let completedBytes = 0;
-  for (let index = 0; index < totalChunks; index++) {
+  for (let index = 0; index < uploadChunkCount; index++) {
     if (signal?.aborted) throw new ChunkUploadAbortedError(session);
     const start = index * serverChunkSize;
     const end = Math.min(start + serverChunkSize, file.size);

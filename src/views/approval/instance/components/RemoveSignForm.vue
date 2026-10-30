@@ -38,7 +38,9 @@ defineExpose({ getPayload });
 
 onMounted(async () => {
   try {
-    const res = await approvalInstanceApi.retrieve(props.pk);
+    const res = await approvalInstanceApi.retrieve(props.pk).catch(() => null);
+    // HTTP 层异常已由拦截器提示，这里只处理 200 + 业务码失败
+    if (!res) return;
     if (isSuccess(res) && res.data) {
       const detail = res.data as {
         tasks?: Array<{
@@ -76,6 +78,8 @@ onMounted(async () => {
             String(task.pk).slice(0, 8).toUpperCase()
         }));
       if (candidates.value.length) form.task = candidates.value[0].pk;
+    } else {
+      message(String(res.detail || t("results.failed")), { type: "warning" });
     }
   } finally {
     loading.value = false;

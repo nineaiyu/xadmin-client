@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { isSuccess } from "@/api/types";
@@ -14,6 +13,10 @@ import {
 } from "@/api/dataset/dform";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * 表单模板选择器：「从模板新建」的数据源。
@@ -54,6 +57,14 @@ const load = async () => {
 const fieldCount = (row: unknown) =>
   (row as DynamicFormItem).schema_fields_count ?? 0;
 
+/** 模板列表只读列（名称/字段数/描述/动作走具名插槽） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  { label: t("dform.name"), minWidth: 150, slot: "name" },
+  { label: t("dform.fieldCount"), width: 80, slot: "fieldCount" },
+  { label: t("dform.description"), minWidth: 150, slot: "description" },
+  { label: t("dform.actions"), width: 130, slot: "actions" }
+]);
+
 /** 模板行点击入口：先取详情补全 schema 全文，再交由调用方预填设计器 */
 const pick = async (row: unknown) => {
   const item = row as DynamicFormItem;
@@ -68,7 +79,7 @@ const pick = async (row: unknown) => {
 const remove = async (row: DynamicFormItem) => {
   if (
     !(await confirm(t("dform.templateRemoveConfirm", { name: row.name }), {
-      confirmButtonClass: "el-button--danger",
+      danger: true,
       draggable: true
     }))
   ) {
@@ -87,52 +98,46 @@ onMounted(load);
 </script>
 
 <template>
-  <div v-loading="loading">
-    <ReEmpty
-      v-if="templates.length === 0"
-      :description="t('dform.noTemplates')"
-      :image-size="60"
-    />
-    <el-table v-else :data="templates" size="small" max-height="360">
-      <el-table-column :label="t('dform.name')" min-width="150">
-        <template #default="{ row }">
-          <span class="font-medium">{{ row.name }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.fieldCount')" width="80">
-        <template #default="{ row }">
-          {{ fieldCount(row) }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.description')" min-width="150">
-        <template #default="{ row }">
-          <span class="text-xs text-(--el-text-color-regular)">{{
-            row.description || "-"
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dform.actions')" width="130">
-        <template #default="{ row }">
-          <el-button
-            link
-            type="primary"
-            size="small"
-            data-testid="template-use"
-            @click="pick(row)"
-          >
-            {{ t("dform.useTemplate") }}
-          </el-button>
-          <el-button
-            v-if="canDestroy"
-            link
-            type="danger"
-            size="small"
-            @click="remove(row as DynamicFormItem)"
-          >
-            {{ t("dform.delete") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+  <div>
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="templates"
+      :loading="loading"
+      size="small"
+      max-height="360"
+      :empty-text="t('dform.noTemplates')"
+    >
+      <template #name="{ row }">
+        <span class="font-medium">{{ row.name }}</span>
+      </template>
+      <template #fieldCount="{ row }">
+        {{ fieldCount(row) }}
+      </template>
+      <template #description="{ row }">
+        <span class="text-xs text-(--el-text-color-regular)">{{
+          row.description || "-"
+        }}</span>
+      </template>
+      <template #actions="{ row }">
+        <el-button
+          link
+          type="primary"
+          size="small"
+          data-testid="template-use"
+          @click="pick(row)"
+        >
+          {{ t("dform.useTemplate") }}
+        </el-button>
+        <el-button
+          v-if="canDestroy && row.is_owner !== false"
+          link
+          type="danger"
+          size="small"
+          @click="remove(row as DynamicFormItem)"
+        >
+          {{ t("dform.delete") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>

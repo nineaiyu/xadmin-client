@@ -26,6 +26,8 @@ export function useApprovalProgress() {
           t,
           no: String(row.pk).slice(0, 8).toUpperCase(),
           steps: (detail.steps ?? []) as Array<RecordType>,
+          // 脱敏后的请求体快照：没有 target_snapshot 的操作类审批据此展示「批的是什么」
+          params: (detail.params ?? null) as Record<string, unknown> | null,
           // 目标对象变更对照（敏感操作审批的目标快照；缺失时弹窗跳过该区块）
           snapshot: (detail.target_snapshot ?? null) as TargetSnapshot | null
         });

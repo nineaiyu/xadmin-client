@@ -4,6 +4,8 @@ import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { datasetApi, type ExecuteResult } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
+import DataTable from "@/components/DataTable";
 
 /**
  * 明细表预览：按设计列（`designColumns`）展示数据集前 N 行。
@@ -25,6 +27,8 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const rows = ref<Record<string, unknown>[]>([]);
+/** 已取行（≤ 上限）：limit 变化时优先本地重切，超出已取行数且还有更多数据才补拉 */
+const allRows = ref<Record<string, unknown>[]>([]);
 const available = ref<string[]>([]);
 const total = ref(0);
 const loading = ref(false);
@@ -53,26 +57,41 @@ const load = async () => {
   loading.value = true;
   errorMsg.value = "";
   try {
-    const res = await datasetApi.execute<ExecuteResult>(props.datasetPk);
+    // max_rows 随载荷下推（服务端取 row_limit 与 max_rows 的小者下推 SQL）：
+    // 预览只物化展示所需行数，不再按数据集 row_limit 全量取回后本地切片
+    const res = await datasetApi.execute<ExecuteResult>(props.datasetPk, {
+      max_rows: props.limit
+    });
     if (!isSuccess(res)) {
       errorMsg.value = String(res.detail ?? t("dataReport.tableLoadFailed"));
       return;
     }
     const result = res.data;
     available.value = result?.columns ?? [];
-    rows.value = (result?.rows ?? []).slice(0, props.limit);
+    allRows.value = result?.rows ?? [];
+    rows.value = allRows.value.slice(0, props.limit);
     total.value = result?.total ?? rows.value.length;
   } catch (error) {
-    errorMsg.value = String(
-      (error as { detail?: string })?.detail ?? t("dataReport.tableLoadFailed")
-    );
+    errorMsg.value =
+      normalizeError(error).detail || String(t("dataReport.tableLoadFailed"));
   } finally {
     loading.value = false;
   }
 };
 
 onMounted(load);
-// 设计列/行数上限变化只影响展示裁剪，无需重拉；仅数据集切换时重拉
+// 行数上限变化：先本地重切（缩小上限 / 已取行够用时无需重拉）；
+// 调大后已取行不够且服务端还有更多数据时补拉（max_rows 已下推，本地没有更多行）
+watch(
+  () => props.limit,
+  limit => {
+    rows.value = allRows.value.slice(0, limit);
+    if (limit > allRows.value.length && total.value > allRows.value.length) {
+      load();
+    }
+  }
+);
+// 仅数据集切换时重拉
 watch(() => props.datasetPk, load);
 
 const notifyFull = () => {
@@ -106,13 +125,14 @@ defineExpose({ load, notifyFull });
       </span>
     </div>
     <p v-if="errorMsg" class="report-table__error">{{ errorMsg }}</p>
-    <el-table
+    <DataTable
       v-else
       v-loading="loading"
       :data="rows"
       size="small"
       height="240"
       border
+      :label="t('dataReport.detailTable')"
     >
       <el-table-column
         v-for="column in visibleColumns"
@@ -124,7 +144,7 @@ defineExpose({ load, notifyFull });
         <template #default="{ row }">{{ cellText(row, column) }}</template>
       </el-table-column>
       <el-table-column v-if="visibleColumns.length === 0" label="—" />
-    </el-table>
+    </DataTable>
   </div>
 </template>
 

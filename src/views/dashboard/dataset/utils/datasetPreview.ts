@@ -1,6 +1,7 @@
 import { computed, reactive, ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { downloadBlob } from "@/utils/download";
 import { datasetApi, type DatasetItem } from "@/api/dataset/datasets";
 import { escapeCsvCell } from "./csv";
 import type { useI18n } from "vue-i18n";
@@ -13,12 +14,7 @@ function downloadCsv(lines: string[], filename: string) {
   const blob = new Blob([`\uFEFF${lines.join("\r\n")}`], {
     type: "text/csv;charset=utf-8"
   });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(filename, blob);
 }
 
 /**
@@ -53,10 +49,11 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
     () => aggregateForm.metric === "sum" || aggregateForm.metric === "avg"
   );
 
-  /** sum/avg 数值字段候选：数据集数值列优先，无元数据回落全列 */
+  /** sum/avg 数值字段候选：数值列 ∩ 执行结果可见列（字段权限裁掉的列不再可选） */
   const aggregateNumericColumns = computed(() => {
     const numeric = previewRow.value?.numeric_columns ?? [];
-    return numeric.length ? numeric : (previewRow.value?.columns ?? []);
+    const visible = new Set(preview.value?.columns ?? []);
+    return numeric.filter(column => visible.has(column));
   });
 
   /** 指标切换：count 不需要取值列；sum/avg 缺省补首个数值列 */
@@ -106,6 +103,9 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
   ) => {
     previewRow.value = row;
     previewMode.value = "rows";
+    // 先清空旧行并关闭弹窗：二次预览失败时不能继续展示上一个数据集的内容
+    preview.value = null;
+    previewDialog.value = false;
     aggregateResult.value = null;
     aggregateForm.group_by = row.columns[0] ?? "";
     aggregateForm.value_field = "";
@@ -113,11 +113,13 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
     try {
       // http 层失败已统一提示，归一为 null：预览弹窗不打开
       const res = await datasetApi.execute(row.pk).catch(() => null);
-      if (res && isSuccess(res)) {
+      if (!res) {
+        message(t("dataDataset.previewNetworkFailed"), { type: "error" });
+      } else if (isSuccess(res) && res.data) {
         preview.value = res.data as never;
         previewDialog.value = true;
-      } else if (res) {
-        // 业务失败（HTTP 层失败已由拦截器提示）：显式归一提示
+      } else {
+        // 业务失败（配置/权限/服务端校验）：优先展示服务端 detail
         message(String(res.detail || t("dataDataset.previewFailed")), {
           type: "warning"
         });

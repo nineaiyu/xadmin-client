@@ -1,22 +1,23 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useUserOnline } from "./utils/hook";
 
 defineOptions({ name: "SystemUserOnline" });
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   listColumnsFormat,
   tableBarButtonsProps,
   operationButtonsProps
-} = useUserOnline(tableRef);
+} = useUserOnline();
 </script>
 <template>
   <RePlusPage
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="hasBatchSelection(auth, ['batchForceLogout:SystemUserOnline'])"
     locale-name="systemOnline"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"

@@ -29,6 +29,11 @@ const content = ref("");
 /** 二进制文件态：选择 pdf/docx 后填充（编辑区随之禁用） */
 const binary = ref<{ type: "pdf" | "docx"; base64: string } | null>(null);
 const fileInput = ref<HTMLInputElement>();
+/** 服务端解析/入库进行中：二进制文档解析耗时较长，给出明确等待提示 */
+const submitting = ref(false);
+const setSubmitting = (value: boolean) => {
+  submitting.value = value;
+};
 
 const isBinaryPicked = computed(() => binary.value !== null);
 const binaryTypeText = computed(() => binary.value?.type.toUpperCase() ?? "");
@@ -104,11 +109,20 @@ const getPayload = (): UploadPayload | null => {
   return { name: name.value.trim(), content: content.value };
 };
 
-defineExpose({ getPayload, isBinaryPicked });
+defineExpose({ getPayload, isBinaryPicked, setSubmitting });
 </script>
 
 <template>
   <div>
+    <el-alert
+      v-if="submitting"
+      class="mb-2"
+      :title="t('aiKnowledge.parsingHint')"
+      type="info"
+      :closable="false"
+      show-icon
+      data-testid="knowledge-upload-parsing"
+    />
     <el-form label-width="90px">
       <el-form-item :label="t('aiKnowledge.name')" required>
         <el-input

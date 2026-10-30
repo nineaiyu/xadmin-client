@@ -6,8 +6,9 @@
  * 用户确认后调用方带 `impact_confirmed=true` 重发删除请求（后端引用保护开关打开时
  * fail-closed 要求显式确认；未打开时该参数无副作用）。
  *
- * 容错：未提供 impact 端点的资源（404/405）或预检异常一律放行（不阻断既有删除），
- * 并按 baseApi 记忆，避免每次删除都多发一次无效请求。
+ * 容错：未提供 impact 端点的资源（404/405）直接放行；其余预检异常（403 无权限 /
+ * 网络错误）不再静默放行，而是弹出「无法预检」确认框——用户取消即中止删除，
+ * 避免「预检失败 = 没有影响面」的误判。
  */
 
 import { h } from "vue";
@@ -55,10 +56,12 @@ const IMPACT_SUPPORTED = new Set([
   "/api/identity/dept",
   "/api/system/dict",
   "/api/dataset/datasets",
+  "/api/dataset/dashboards",
   "/api/approval/approval-flows",
   "/api/dataset/dynamic-forms",
   "/api/dataset/screens",
-  "/api/system/menu"
+  "/api/system/menu",
+  "/api/system/permission"
 ]);
 
 /** 运行期探测失败的资源（404/405 后不再请求，兜底防御） */
@@ -109,8 +112,43 @@ async function showImpactConfirm(
   const confirm = useConfirm();
   return confirm(renderImpact(data, t), {
     title: t("impact.title"),
-    confirmButtonText: t("impact.confirmDelete")
+    confirmButtonText: t("impact.confirmDelete"),
+    danger: true
   });
+}
+
+/**
+ * 预检失败（非 404/405）的显式确认：默认不继续，用户明确选择后才带
+ * `impact_confirmed=true` 删除。文案同时给出补救路径（补授 impact 权限）。
+ */
+async function showImpactUnavailable(t: TFunction): Promise<boolean> {
+  const confirm = useConfirm();
+  return confirm(
+    h("div", [
+      h("div", t("impact.preflightUnavailable")),
+      h(
+        "div",
+        { class: "mt-2 text-sm text-[var(--el-text-color-secondary)]" },
+        t("impact.preflightUnavailableHint")
+      )
+    ]),
+    {
+      title: t("impact.preflightUnavailableTitle"),
+      confirmButtonText: t("impact.continueDelete"),
+      danger: true
+    }
+  );
+}
+
+/** 404/405（资源未提供 impact 路由）：按「不支持预检」放行，不打扰用户 */
+function isImpactEndpointUnavailable(error: unknown): boolean {
+  const e = error as { code?: unknown; detail?: unknown } | null | undefined;
+  const code = Number(e?.code);
+  if (code === 404 || code === 405) return true;
+  const detail = String(e?.detail ?? "").toLowerCase();
+  return ["not found", "not allowed", "method not allowed"].some(token =>
+    detail.includes(token)
+  );
 }
 
 /**
@@ -133,9 +171,13 @@ export async function confirmImpact(
       `${baseApi}/impact`
     );
     data = res?.data;
-  } catch {
-    unsupported.add(baseApi);
-    return true;
+  } catch (error) {
+    // 只有「资源没有该端点」才静默放行；403/网络错误必须让用户显式确认
+    if (isImpactEndpointUnavailable(error)) {
+      unsupported.add(baseApi);
+      return true;
+    }
+    return showImpactUnavailable(t);
   }
   if (!data?.has_impact) return true;
   return showImpactConfirm(data, t);

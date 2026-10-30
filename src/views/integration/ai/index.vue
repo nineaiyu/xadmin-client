@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { computed, h, onActivated, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
@@ -11,13 +12,16 @@ import {
   type AiToolsResult
 } from "@/api/ai/ai";
 import { useAiConsole } from "./hooks/useAiConsole";
+import { resolveAiConsoleReady } from "./utils/aiConsoleState";
 import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
+import { addDrawer } from "@/components/ReDrawer";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
 import ReResult from "@/components/ReResult";
 import AiFeatureNav, {
   type AiFeatureEntry
 } from "./components/AiFeatureNav.vue";
 import AiChatPanel from "./components/AiChatPanel.vue";
+import ToolCatalogDrawer from "./components/ToolCatalogDrawer.vue";
 import DocIcon from "~icons/ep/document";
 import DataIcon from "~icons/ep/data-analysis";
 import ActionIcon from "~icons/ri/terminal-window-line";
@@ -44,17 +48,38 @@ const canAsk = computed(() => hasAuth("ask:AiAssistant"));
 const canInterpret = computed(() => hasAuth("interpret:AiAssistant"));
 const canRun = computed(() => hasAuth("run:AiAssistant"));
 const canExecute = computed(() => hasAuth("actionExecute:AiAssistant"));
+const canUseConsole = computed(
+  () => canAsk.value || canInterpret.value || canExecute.value
+);
 
 const status = ref<AiStatus | null>(null);
 const tools = ref<AiToolsResult | null>(null);
+/** 工具清单加载失败（无缓存值时）：显式提示 + 重试入口，避免入口静默消失 */
+const toolsFailed = ref(false);
 /** 状态拉取失败（尚无可渲染的状态时）显示显式错误态而非整页空白 */
 const statusFailed = ref(false);
 
+/** 工具目录（只读）：命令式抽屉，内容组件只接收工具清单 */
+const openToolCatalog = () => {
+  addDrawer({
+    title: t("ai.toolCatalogTitle"),
+    size: "420px",
+    hideFooter: true,
+    contentRenderer: () =>
+      h(ToolCatalogDrawer, { tools: tools.value?.tools ?? [] })
+  });
+};
+
 const loadStatus = async () => {
+  toolsFailed.value = false;
   // 状态与工具清单并行拉取（两者独立渲染，串行只是历史写法的两段 RTT）
   const [res, toolRes] = await Promise.all([
     aiAssistantApi.status().catch(() => null),
-    aiAssistantApi.tools().catch(() => null)
+    // 工具清单只服务「指令执行」入口；只授 ask 的角色不需要它，
+    // 避免其 403 再叠加一条误导性的「工具加载失败」提示
+    canExecute.value
+      ? aiAssistantApi.tools().catch(() => null)
+      : Promise.resolve(null)
   ]);
   if (res && isSuccess(res)) {
     status.value = res.data as AiStatus;
@@ -63,16 +88,22 @@ const loadStatus = async () => {
     // 重新进入页面（keep-alive）时的失败保留已渲染的控制台，只有无任何状态时才显错误态
     if (!status.value) statusFailed.value = true;
   }
-  if (toolRes && isSuccess(toolRes)) {
-    tools.value = toolRes.data as AiToolsResult;
-  } else if (!tools.value) {
-    // 工具清单失败且无缓存值：显式提示（此前静默，工具数恒显示 0 无从判断）
-    message(t("ai.toolsLoadFailed"), { type: "warning" });
+  if (canExecute.value) {
+    if (toolRes && isSuccess(toolRes)) {
+      tools.value = toolRes.data as AiToolsResult;
+      toolsFailed.value = false;
+    } else if (!tools.value) {
+      // 工具清单失败且无缓存值：显式提示（此前静默，工具数恒显示 0 无从判断）
+      toolsFailed.value = true;
+      message(t("ai.toolsLoadFailed"), { type: "warning" });
+    }
   }
 };
 
 const ready = computed(() =>
-  Boolean(status.value?.enabled && status.value?.configured)
+  // 状态接口不可用（如只授 ask:AiAssistant）时不再把整页判死：
+  // 问答入口本身不依赖 status，允许直接使用，页面顶部给出降级说明
+  resolveAiConsoleReady(status.value, canUseConsole.value)
 );
 
 /** 左栏入口按权限点组装（无权限的入口不出现） */
@@ -154,13 +185,37 @@ function selectFeature(key: AiConsoleFeature) {
   if (isNarrow.value) drawerVisible.value = false;
 }
 
+const route = useRoute();
+const router = useRouter();
+/** 命令面板「问 AI」预填载荷（经 ?q= 携带）：seq 保证同词两次进入也触发预填 */
+const askPayload = ref<{ seq: number; text: string } | null>(null);
+let askSeq = 0;
+
+/** 消费 ?q=：切到问答入口并预填输入框（消费后从 URL 移除，避免刷新重复预填） */
+function consumeAskQuery() {
+  const question =
+    typeof route.query.q === "string" ? route.query.q.trim() : "";
+  if (!question || !canAsk.value) return;
+  aiConsole.feature.value = "docs";
+  askPayload.value = { seq: ++askSeq, text: question };
+  router.replace({ query: { ...route.query, q: undefined } });
+}
+
+let activatedOnce = false;
 onMounted(() => {
   loadStatus();
+  consumeAskQuery();
+  activatedOnce = true;
 });
 
-// keep-alive 页面二次进入不重跑 onMounted：重新拉取状态（配置保存后；面板高度由 hook 重测）
+// keep-alive 二次进入重新拉取状态；首次挂载已由 onMounted 拉取，避免双请求
 onActivated(() => {
+  if (!activatedOnce) {
+    activatedOnce = true;
+    return;
+  }
   loadStatus();
+  consumeAskQuery();
 });
 </script>
 
@@ -168,7 +223,7 @@ onActivated(() => {
   <div ref="pageRef">
     <!-- 控制台面板满宽铺开（不再 pr-[1%]：与聊天室口径一致，四边只保留
          main-content 的 24px 统一边距）；高度按视口实测（useFullHeightPanel） -->
-    <template v-if="statusFailed">
+    <template v-if="statusFailed && !canUseConsole">
       <el-card shadow="never">
         <ReResult status="error" :title="t('ai.statusLoadFailed')">
           <template #extra>
@@ -195,61 +250,94 @@ onActivated(() => {
         </ReResult>
       </el-card>
     </template>
-    <div
-      v-else-if="status"
-      class="ai-console flex overflow-hidden"
-      :style="{
-        height: `${panelHeight}px`,
-        minHeight: `${panelMinHeight}px`
-      }"
-      data-testid="ai-console"
-    >
-      <AiFeatureNav
-        v-if="!isNarrow"
-        class="w-70 shrink-0"
-        :entries="entries"
-        :active="aiConsole.feature.value"
-        :footer="navFooter"
-        @select="selectFeature"
+    <template v-else-if="status || canUseConsole">
+      <el-alert
+        v-if="statusFailed"
+        class="mb-2"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('ai.statusDegraded')"
       />
-
-      <ReNavDrawer v-model="drawerVisible" :narrow="isNarrow">
+      <el-alert
+        v-if="toolsFailed && canExecute"
+        class="mb-2"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('ai.toolsLoadFailed')"
+      >
+        <el-button link type="primary" size="small" @click="loadStatus">
+          {{ t("ai.retry") }}
+        </el-button>
+      </el-alert>
+      <div
+        v-if="tools?.tools.length"
+        class="mb-2 flex justify-end"
+        data-testid="ai-tool-catalog-trigger"
+      >
+        <el-button size="small" @click="openToolCatalog">
+          {{ t("ai.toolCatalog", { count: tools.tools.length }) }}
+        </el-button>
+      </div>
+      <div
+        class="ai-console flex overflow-hidden"
+        :style="{
+          height: `${panelHeight}px`,
+          minHeight: `${panelMinHeight}px`
+        }"
+        data-testid="ai-console"
+      >
         <AiFeatureNav
+          v-if="!isNarrow"
+          class="w-70 shrink-0"
           :entries="entries"
           :active="aiConsole.feature.value"
           :footer="navFooter"
           @select="selectFeature"
         />
-      </ReNavDrawer>
 
-      <AiChatPanel
-        class="grow"
-        :title="activeEntry?.title ?? ''"
-        :subtitle="subtitle"
-        :placeholder="placeholder"
-        :empty-text="emptyText"
-        :disabled="!ready || !activeEntry"
-        :loading-history="aiConsole.loadingHistory.value"
-        :has-more="aiConsole.hasMore.value"
-        :loading-more="aiConsole.loadingMore.value"
-        :groups="aiConsole.messageGroups.value"
-        :active-streaming="aiConsole.activeStreaming.value"
-        :streaming="Boolean(aiConsole.activeStreaming.value)"
-        :pending-count="aiConsole.pendingCount.value"
-        :nl-running="aiConsole.nlRunning.value"
-        :nl-runnable="canRun"
-        :action-executor="aiConsole.executeAction"
-        :is-narrow="isNarrow"
-        @send="aiConsole.send"
-        @stop="aiConsole.abortStream"
-        @load-more="aiConsole.loadMore"
-        @scroll="aiConsole.onScroll"
-        @scroll-to-bottom="aiConsole.scrollToBottom"
-        @scroller="el => (aiConsole.scroller.value = el)"
-        @toggle-nav="drawerVisible = true"
-        @run-nl="dsl => aiConsole.runNl(dsl)"
-      />
-    </div>
+        <ReNavDrawer v-model="drawerVisible" :narrow="isNarrow">
+          <AiFeatureNav
+            :entries="entries"
+            :active="aiConsole.feature.value"
+            :footer="navFooter"
+            @select="selectFeature"
+          />
+        </ReNavDrawer>
+
+        <AiChatPanel
+          class="grow"
+          :title="activeEntry?.title ?? ''"
+          :subtitle="subtitle"
+          :placeholder="placeholder"
+          :empty-text="emptyText"
+          :disabled="!ready || !activeEntry"
+          :initial-draft="askPayload"
+          :failed-draft="aiConsole.failedDraft.value"
+          :loading-history="aiConsole.loadingHistory.value"
+          :has-more="aiConsole.hasMore.value"
+          :loading-more="aiConsole.loadingMore.value"
+          :groups="aiConsole.messageGroups.value"
+          :active-streaming="aiConsole.activeStreaming.value"
+          :streaming="Boolean(aiConsole.activeStreaming.value)"
+          :pending-count="aiConsole.pendingCount.value"
+          :nl-running="aiConsole.nlRunning.value"
+          :nl-runnable="canRun"
+          :action-executor="aiConsole.executeAction"
+          :is-narrow="isNarrow"
+          @send="aiConsole.send"
+          @stop="aiConsole.abortStream"
+          @load-more="aiConsole.loadMore"
+          @scroll="aiConsole.onScroll"
+          @scroll-to-bottom="aiConsole.scrollToBottom"
+          @scroller="el => (aiConsole.scroller.value = el)"
+          @toggle-nav="drawerVisible = true"
+          @run-nl="dsl => aiConsole.runNl(dsl)"
+          @retry="text => aiConsole.send(text)"
+        />
+      </div>
+    </template>
   </div>
 </template>
 

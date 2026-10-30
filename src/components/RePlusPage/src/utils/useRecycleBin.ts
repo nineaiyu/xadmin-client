@@ -17,6 +17,8 @@ export function useRecycleBin(
   const recycleBinEnabled = computed(
     () => !!props.recycleBin && !!props.auth?.recycleList
   );
+  const canRestore = computed(() => !!props.auth?.recycleRestore);
+  const canPurge = computed(() => !!props.auth?.recyclePurge);
 
   const recycleBinColumns = computed<RecycleBinColumn[]>(() => {
     if (Array.isArray(props.recycleBin)) return props.recycleBin;
@@ -39,5 +41,11 @@ export function useRecycleBin(
   // api prop 声明为 Partial<BaseApi> 以宽容各类页面，在此边界收窄
   const recycleBinApi = computed(() => props.api as BaseApi);
 
-  return { recycleBinEnabled, recycleBinColumns, recycleBinApi };
+  return {
+    recycleBinEnabled,
+    recycleBinColumns,
+    recycleBinApi,
+    canRestore,
+    canPurge
+  };
 }

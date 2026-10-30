@@ -1,10 +1,8 @@
-import { h } from "vue";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
+import { openDialog } from "@/components/ReDialog/openDialog";
 import { deviceDetection } from "@pureadmin/utils";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import NoticeShowForm from "@/components/ReNoticeShow";
 import type { userNoticeReadApi } from "@/api/user/notice";
 import type { Ref, UnwrapNestedRefs } from "vue";
 import type { RecordType } from "plus-pro-components";
@@ -17,19 +15,26 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  * 走 router.replace 会整页重挂载、把刚打开的详情弹窗卸载。
  */
 function stripPkFromAddressBar() {
+  const pageParams = new URLSearchParams(location.search);
+  const pageHadPk = pageParams.has("pk");
+  if (pageHadPk) pageParams.delete("pk");
   const hash = location.hash;
   const queryIndex = hash.indexOf("?");
-  if (queryIndex === -1) return;
-  const params = new URLSearchParams(hash.slice(queryIndex + 1));
-  if (!params.has("pk")) return;
-  params.delete("pk");
-  const search = params.toString();
+  const hashParams =
+    queryIndex === -1
+      ? new URLSearchParams()
+      : new URLSearchParams(hash.slice(queryIndex + 1));
+  const hashHadPk = hashParams.has("pk");
+  if (hashHadPk) hashParams.delete("pk");
+  if (!pageHadPk && !hashHadPk) return;
+  const pageSearch = pageParams.toString();
+  const hashSearch = hashParams.toString();
   history.replaceState(
     history.state,
     "",
-    `${location.pathname}${location.search}${hash.slice(0, queryIndex)}${
-      search ? `?${search}` : ""
-    }`
+    `${location.pathname}${pageSearch ? `?${pageSearch}` : ""}${
+      queryIndex === -1 ? hash : hash.slice(0, queryIndex)
+    }${hashSearch ? `?${hashSearch}` : ""}`
   );
 }
 
@@ -39,18 +44,21 @@ function stripPkFromAddressBar() {
 export function createUserNoticeDialog({
   t,
   api,
-  tableRef
+  tableRef,
+  canBatchRead
 }: {
   t: TFunction;
   api: UnwrapNestedRefs<typeof userNoticeReadApi>;
   tableRef: Ref;
+  /** 无 batchRead 权限：打开详情不自动标记已读（避免点开必 403） */
+  canBatchRead: boolean;
 }) {
   return (
     row: RecordType,
     routeParams: RecordType | null = null,
     searchFields: Ref<RecordType> | null = null
   ) => {
-    if (row.unread) {
+    if (row.unread && canBatchRead) {
       // 行内就地已读：失败不阻断弹窗（关闭时列表会刷新）；业务码失败点名提示，
       // HTTP 层异常交由拦截器
       api
@@ -69,29 +77,28 @@ export function createUserNoticeDialog({
       // 铃铛未读点击已改为就地弹窗（不产生 ?pk=），此路径仅兼容历史书签与旧页签。
       stripPkFromAddressBar();
     }
-    addDialog({
+    openDialog({
       title: t("userNotice.showSystemNotice"),
+      component: NoticeShowForm,
       props: {
         formInline: { ...row },
         hasPublish: false
       },
       // 通知为长文本查看：走弹窗尺寸档位最大档（尺寸治理收敛，不再用百分比散值）
-      width: dialogSize("xl"),
-      draggable: true,
-      fullscreen: deviceDetection(),
-      fullscreenIcon: true,
-      closeOnClickModal: false,
+      size: "xl",
       hideFooter: true,
-      contentRenderer: () => h(NoticeShowForm),
-      closeCallBack: () => {
-        if (routeParams?.pk && searchFields) {
-          // 深链进入时列表被 pk 过滤为单条：关闭后清除过滤并重取完整列表
-          searchFields.value.pk = "";
-          tableRef.value.handleGetData();
-          return;
-        }
-        if (row.unread) {
-          tableRef.value.handleGetData();
+      fullscreen: deviceDetection(),
+      extra: {
+        closeCallBack: () => {
+          if (routeParams?.pk && searchFields) {
+            // 深链进入时列表被 pk 过滤为单条：关闭后清除过滤并重取完整列表
+            searchFields.value.pk = "";
+            tableRef.value.handleGetData();
+            return;
+          }
+          if (row.unread) {
+            tableRef.value.handleGetData();
+          }
         }
       }
     });

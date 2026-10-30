@@ -4,7 +4,8 @@
 // 口径（与 AGENTS.md「任务编号不进版本库」一致）：
 //   - 源码注释 / 测试名 / 基线 JSON 说明字段里不写台账编号；
 //   - 台账编号只允许出现在提交信息、docs/ 以及本脚本实现中；
-//   - 禁止形态：ADR-090、T03-01、O10-2、TG-3 一类。
+//   - 禁止形态：ADR-090、T03-01、O10-2、TG-3 一类，
+//     以及评审编号 FE-DATA-P1-04 / LOG-P1-01 / C-03 一类。
 //
 // 用法：
 //   node scripts/check-ledger-ids.mjs            # 门禁（CI 用）
@@ -15,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
-const SCAN_DIRS = ["src", "e2e", "scripts", "tests"];
+const SCAN_DIRS = ["src", "e2e", "scripts", "tests", "contract"];
 const SCAN_ROOT_FILES = [
   "renovate.json",
   "package.json",
@@ -54,7 +55,11 @@ const PATTERNS = [
   /ADR-\d+/,
   /\bT\d{2,}-\d{2,}\b/,
   /\bO\d{1,2}-\d+\b/,
-  /\bTG-\d+\b/
+  /\bTG-\d+\b/,
+  // 评审编号：LOG-P1-01 / FE-DATA-P1-04 / SEC-ID-P0-01 / ROB-APPR-P2-01
+  /\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-P\d+-\d+\b/,
+  // 运行时清偿编号：C-03 / C-31 / C-36
+  /\bC-\d{1,2}\b/
 ];
 
 function walk(dir) {

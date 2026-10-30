@@ -1,24 +1,29 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useNoticeRead } from "./hook";
 
 defineOptions({
   name: "SystemNoticeRead"
 });
 
-const tableRef = ref();
-
-const { api, auth, listColumnsFormat, operationButtonsProps } =
-  useNoticeRead(tableRef);
+const {
+  api,
+  auth,
+  tableRef,
+  listColumnsFormat,
+  operationButtonsProps,
+  tableBarButtonsProps
+} = useNoticeRead();
 </script>
 
 <template>
   <RePlusPage
     ref="tableRef"
+    :selection="false"
     :api="api"
     :auth="auth"
     locale-name="noticeRead"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :tableBarButtonsProps="tableBarButtonsProps"
   />
 </template>

@@ -1,0 +1,21 @@
+{
+  "note": "声明式弹层基线（文件 -> 内联 <el-dialog>/<el-drawer> 处数 + 保留理由，只减不增）。一次性弹层请走 addDialog/addDrawer，常驻面板请走 OverlayDialog/OverlayDrawer；确需内联时在此登记并写明理由。",
+  "files": {
+    "src/components/ReDialog/index.vue": {
+      "count": 1,
+      "reason": "ReDialog 封装本体（overlay 内核）"
+    },
+    "src/components/ReDrawer/index.vue": {
+      "count": 1,
+      "reason": "ReDrawer 封装本体（overlay 内核）"
+    },
+    "src/components/overlay/OverlayDialog.vue": {
+      "count": 1,
+      "reason": "声明式弹层壳本体（overlay 内核，供常驻面板复用滚动锁）"
+    },
+    "src/components/overlay/OverlayDrawer.vue": {
+      "count": 1,
+      "reason": "声明式弹层壳本体（overlay 内核，供常驻面板复用滚动锁）"
+    }
+  }
+}

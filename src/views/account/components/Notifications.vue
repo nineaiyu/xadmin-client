@@ -5,7 +5,7 @@ import { userMsgSubscriptionApi } from "@/api/user/notifications";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import AccountPanel from "./AccountPanel.vue";
-import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
+import MessageNotifications from "@/components/ReMessageNotifications";
 
 defineOptions({
   name: "Notifications"

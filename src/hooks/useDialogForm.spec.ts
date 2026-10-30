@@ -26,6 +26,8 @@ function setup(options?: {
   failType?: "error" | "warning";
   onSuccess?: (res: unknown) => void;
   onFail?: (res: unknown) => void;
+  scrollToError?: false | (() => void);
+  validate?: () => boolean | Promise<boolean>;
 }) {
   const host = options?.hostMissing
     ? undefined
@@ -44,7 +46,9 @@ function setup(options?: {
     successText: options?.successText,
     failType: options?.failType,
     onSuccess: options?.onSuccess,
-    onFail: options?.onFail
+    onFail: options?.onFail,
+    scrollToError: options?.scrollToError,
+    validate: options?.validate
   });
   const done = vi.fn();
   const closeLoading = vi.fn();
@@ -62,6 +66,55 @@ describe("useDialogForm（弹窗表单提交底座）", () => {
     expect(submit).not.toHaveBeenCalled();
     expect(closeLoading).toHaveBeenCalledTimes(1);
     expect(done).not.toHaveBeenCalled();
+  });
+
+  it("payload 为 null：默认尝试滚动到首个错误字段", async () => {
+    const scrollToError = vi.fn();
+    const { beforeSure, done, closeLoading } = setup({
+      payload: null,
+      scrollToError
+    });
+    await beforeSure(done, { closeLoading });
+    expect(scrollToError).toHaveBeenCalledTimes(1);
+    expect(closeLoading).toHaveBeenCalledTimes(1);
+    expect(done).not.toHaveBeenCalled();
+  });
+
+  it("scrollToError=false：校验失败不滚动", async () => {
+    const scrollToError = vi.fn();
+    const { beforeSure, done, closeLoading } = setup({
+      payload: null,
+      scrollToError: false
+    });
+    await beforeSure(done, { closeLoading });
+    expect(scrollToError).not.toHaveBeenCalled();
+    expect(closeLoading).toHaveBeenCalledTimes(1);
+  });
+
+  it("validate 失败：不提交、滚动并收口 loading", async () => {
+    const scrollToError = vi.fn();
+    const { beforeSure, done, closeLoading, submit } = setup({
+      payload: { name: "a" },
+      validate: async () => false,
+      scrollToError
+    });
+    await beforeSure(done, { closeLoading });
+    expect(submit).not.toHaveBeenCalled();
+    expect(scrollToError).toHaveBeenCalledTimes(1);
+    expect(closeLoading).toHaveBeenCalledTimes(1);
+    expect(done).not.toHaveBeenCalled();
+  });
+
+  it("validate 通过后正常提交", async () => {
+    const validate = vi.fn(async () => true);
+    const { beforeSure, done, submit } = setup({
+      payload: { name: "a" },
+      validate
+    });
+    await beforeSure(done, { closeLoading: vi.fn() });
+    expect(validate).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith({ name: "a" });
+    expect(done).toHaveBeenCalledTimes(1);
   });
 
   it("payload 为 undefined 同 null 处理", async () => {

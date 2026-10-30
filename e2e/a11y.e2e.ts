@@ -10,7 +10,7 @@ import { login, openMenuPath } from "./helpers";
  * - 只阻断 critical / serious 级违规，moderate 及以下不阻断，避免门禁常红失去信号；
  * - 已登记豁免（ALLOWED_VIOLATIONS）针对「第三方组件结构问题 / 需产品决策的主题对比度」，
  *   按规则 + 选择器摘要匹配，同一违规出现**新的命中节点**仍会阻断；
- * - 扩大白名单必须在 docs/accessibility-audit.md 待办里登记跟踪项，禁止静默放行。
+ * - 扩大白名单必须在 `ALLOWED_VIOLATIONS` 注释与 `e2e/README.md` 登记跟踪项，禁止静默放行。
  */
 
 const IMPACT_BLOCKING = new Set(["critical", "serious"]);
@@ -32,7 +32,7 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  * （多值标签渲染器 el-scrollbar 补 tabindex）、`svg-img-alt`（Iconify 渲染层统一
  * aria-hidden 后无命中）、`aria-roles .bar`（无命中）。
  *
- * 新增豁免必须先到 `docs/accessibility-audit.md` 登记跟踪项，禁止静默放行；
+ * 新增豁免必须先在 `ALLOWED_VIOLATIONS` 注释与 `e2e/README.md` 登记跟踪项，禁止静默放行；
  * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理。
  */
 const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {};
@@ -235,6 +235,154 @@ test("a11y 扩面：菜单管理页（树行 + 编辑抽屉）无 critical/serio
   expect(
     drawerViolations,
     `菜单编辑抽屉 a11y 违规：\n${formatViolations(drawerViolations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：表单设计器（字段表 + 实时预览）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["表单采集"], "/form-collection/designer/index");
+  const createButton = page.getByRole("button", { name: "新建表单" }).first();
+  await expect(createButton).toBeVisible({ timeout: 15_000 });
+  await createButton.click();
+
+  const dialog = page.locator(".el-dialog").filter({ hasText: "新建表单" });
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  // 制造一个真实字段：设计页签的行内编辑 + 属性按钮进入扫描面
+  await dialog.getByRole("button", { name: "添加字段" }).click();
+  const firstRow = dialog.locator(".el-table__row").first();
+  await firstRow.locator("input").first().fill("a11y_field");
+  await firstRow.locator("input").nth(1).fill("无障碍字段");
+
+  const designViolations = await scanBlockingViolations(page);
+  expect(
+    designViolations,
+    `表单设计器（设计页签）a11y 违规：\n${formatViolations(designViolations)}`
+  ).toEqual([]);
+
+  // 实时预览页签：复用填报组件渲染当前未保存 schema，属表单最密集的扫描面
+  await dialog.getByRole("tab", { name: "预览" }).click();
+  const preview = dialog.getByTestId("designer-preview-pane");
+  await expect(preview).toBeVisible({ timeout: 15_000 });
+  await expect(preview.getByLabel("无障碍字段")).toBeVisible({
+    timeout: 15_000
+  });
+
+  const previewViolations = await scanBlockingViolations(page);
+  expect(
+    previewViolations,
+    `表单设计器（实时预览）a11y 违规：\n${formatViolations(previewViolations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：用户新增弹窗（元数据密集表单）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  // 等元数据表单字段就绪再扫（半渲染态没有代表意义）
+  await expect(dialog.getByLabel("用户名")).toBeVisible({ timeout: 15_000 });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `用户新增弹窗 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：首页（welcome 卡片）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  // 首页侧边栏链接即 #/（路由 /welcome，不在种子菜单里单列）
+  await openMenuPath(page, [], "/");
+  await expect(page.locator("#main-content")).toBeVisible({
+    timeout: 15_000
+  });
+  // 等第一张卡片渲染到位（图表数据异步拉取，半渲染态会扫到瞬态）
+  await expect(page.locator(".el-card").first()).toBeVisible({
+    timeout: 15_000
+  });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `首页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：AI 控制台（左右分栏会话面）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["集成管理"], "/integration/ai/index");
+  // AI 未启用时渲染引导占位、启用时渲染控制台分栏——两种形态都属合法扫描面
+  await expect(
+    page.locator('[data-testid="ai-console"], .el-card').first()
+  ).toBeVisible({ timeout: 15_000 });
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `AI 控制台 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：仪表盘页（图表卡片网格）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await openMenuPath(page, ["数据分析"], "/analysis/dashboard/index");
+  await expect(page.locator('[data-testid="dashboard-cards"]')).toBeVisible({
+    timeout: 15_000
+  });
+  // 图表卡骨架退场后再扫：echarts 入场动画期间半透明元素会拉低对比度（瞬态假违规）
+  await expect(page.locator('[data-testid="chart-card-skeleton"]')).toHaveCount(
+    0,
+    { timeout: 15_000 }
+  );
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `仪表盘页 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+/**
+ * 投屏页（full-content 全屏路由）不挂 Layout：skip-link / a11y-live 等由 Layout
+ * 装配的设施天然缺席（展示场景键盘交互少，非缺陷——2026.10 前端审查 F-3 登记）。
+ * 本用例钉住「无 Layout 时仍守住 a11y 底线」：页面语言、文档标题、主题装配
+ * （bootTheme 在 main.ts 挂载前执行，不依赖 Layout）与 axe 基线扫描。
+ */
+test("a11y 扩面：投屏页（无 Layout 全屏路由）守住语言/标题/主题底线且无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  // 内置示例大屏主键（load_init_json 的「示例-运营大屏」，与 visual 基线同源）
+  await page.goto(
+    "/#/analysis/screen/display?pk=5eed0003-0000-4000-8000-000000000003"
+  );
+  await expect(page.locator(".screen-root")).toBeVisible({
+    timeout: 20_000
+  });
+
+  // 无 Layout 的静态底线：语言与标题不回退为空
+  expect(await page.locator("html").getAttribute("lang")).toBeTruthy();
+  expect(await page.title()).not.toBe("");
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `投屏页 a11y 违规：\n${formatViolations(violations)}`
   ).toEqual([]);
 });
 

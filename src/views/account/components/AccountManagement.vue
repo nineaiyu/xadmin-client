@@ -9,13 +9,20 @@ defineOptions({
   name: "AccountManagement"
 });
 
-const { t, handleChangePassword, handleBindEmailOrPhone, userinfoStore } =
-  useAccountManage();
+const {
+  t,
+  handleChangePassword,
+  handleBindEmailOrPhone,
+  userinfoStore,
+  bindAvailability
+} = useAccountManage();
 const list = computed(() => [
   {
     name: "password",
     title: t("account.password"),
-    button: hasAuth("resetPassword:UserInfo") && t("buttons.update")
+    button: hasAuth("resetPassword:UserInfo") && t("buttons.update"),
+    disabled: false,
+    tip: ""
   },
   {
     name: "phone",
@@ -23,7 +30,9 @@ const list = computed(() => [
     illustrate: userinfoStore.phone
       ? `${t("account.bind")}：${userinfoStore.phone}`
       : t("account.unbound"),
-    button: hasAuth("bind:UserInfo") && t("buttons.update")
+    button: hasAuth("bind:UserInfo") && t("buttons.update"),
+    disabled: !bindAvailability.sms,
+    tip: t("account.smsUnavailable")
   },
   {
     name: "email",
@@ -31,7 +40,9 @@ const list = computed(() => [
     illustrate: userinfoStore.email
       ? `${t("account.bind")}：${userinfoStore.email}`
       : t("account.unbound"),
-    button: hasAuth("bind:UserInfo") && t("buttons.update")
+    button: hasAuth("bind:UserInfo") && t("buttons.update"),
+    disabled: !bindAvailability.email,
+    tip: t("account.emailUnavailable")
   }
 ]);
 
@@ -55,9 +66,23 @@ function onClick(item: RecordType) {
           {{ item.illustrate }}
         </el-text>
       </div>
-      <el-button v-if="item.button" text type="primary" @click="onClick(item)">
-        {{ item.button }}
-      </el-button>
+      <el-tooltip
+        v-if="item.button"
+        :content="item.tip"
+        :disabled="!item.disabled"
+        placement="top"
+      >
+        <span>
+          <el-button
+            text
+            type="primary"
+            :disabled="item.disabled"
+            @click="onClick(item)"
+          >
+            {{ item.button }}
+          </el-button>
+        </span>
+      </el-tooltip>
     </div>
   </AccountPanel>
 </template>

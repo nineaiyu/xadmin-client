@@ -1,10 +1,13 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { useI18n } from "vue-i18n";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { message } from "@/utils/message";
+import { isSuccess } from "@/api/types";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { useUserStoreHook } from "@/store/modules/user";
-import { onMounted, ref } from "vue";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import { computed, onMounted, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import PasswordFields from "./PasswordFields.vue";
@@ -22,6 +25,10 @@ const { t } = useI18n();
 const checked = ref(false);
 /** 隐私政策弹窗：无独立路由，注册页内以对话框展示简要条款 */
 const privacyVisible = ref(false);
+/** 注册入口可用性:能力清单下发(关闭时不渲染注册表单) */
+const registerEnabled = computed(
+  () => useLoginPageStoreHook().capabilities?.register?.enabled === true
+);
 const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
@@ -39,19 +46,32 @@ const { loading, handleLoginSuccess } = useLoginFlow();
 
 const onRegister = async () => {
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
-  useUserStoreHook()
-    .registerByUsername(data)
-    .then(() => {
-      // 注册成功走统一登录流：成功提示、动态路由与 redirect 跳转、loading 收口
-      handleLoginSuccess("register");
-    })
-    .catch(err => {
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("login.registerFailed"), { type: "error" });
+    return;
+  }
+  // 注册失败是 200 信封里的业务码（账号已存在 / 密码不合规 / 注册关闭）：
+  // 必须显式分流，否则会先提示「注册成功」再跳转，用户既看不到失败原因也无法重试。
+  try {
+    const res = await useUserStoreHook().registerByUsername(data);
+    if (!isSuccess(res)) {
       loading.value = false;
-      message(err.detail, {
+      message(String(res?.detail ?? t("login.registerFailed")), {
         type: "warning"
       });
-    });
+      return;
+    }
+    // 注册成功走统一登录流：成功提示、动态路由与 redirect 跳转、loading 收口
+    handleLoginSuccess("register");
+  } catch (err) {
+    loading.value = false;
+    const detail = (err as { detail?: unknown } | null)?.detail;
+    message(String(detail ?? t("login.registerFailed")), { type: "warning" });
+  }
 };
 
 const onBack = backToBasicPage;
@@ -95,7 +115,7 @@ onMounted(() => (configLoading.value = true));
     />
 
     <el-form
-      v-if="authInfo.access"
+      v-if="registerEnabled"
       ref="formDataRef"
       :model="formData"
       :rules="formRules"
@@ -105,7 +125,6 @@ onMounted(() => (configLoading.value = true));
         v-if="formData.verify_token"
         v-model:password="formData.password"
         v-model:repeat-password="formData.repeatPassword"
-        :rules="formRules"
         :password-delay="200"
         :repeat-delay="250"
       />
@@ -123,6 +142,7 @@ onMounted(() => (configLoading.value = true));
       <Motion :delay="350">
         <el-form-item>
           <el-button
+            data-testid="register-submit"
             :loading="loading"
             class="w-full"
             size="default"
@@ -145,7 +165,7 @@ onMounted(() => (configLoading.value = true));
       </el-form-item>
     </Motion>
 
-    <el-dialog
+    <OverlayDialog
       v-model="privacyVisible"
       :title="t('login.privacyPolicy')"
       width="480px"
@@ -159,6 +179,6 @@ onMounted(() => (configLoading.value = true));
           {{ t("login.definite") }}
         </el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

@@ -8,6 +8,7 @@ import {
   getDashBoardTodayOperateTotalApi
 } from "@/api/system/dashboard";
 import { operationLogApi } from "@/api/audit/logs/operation";
+import { aiAssistantApi } from "@/api/ai/ai";
 import { getKeyList } from "@pureadmin/utils";
 import type { DashboardState } from "./dashboardState";
 import type { useI18n } from "vue-i18n";
@@ -25,10 +26,18 @@ export function createDashboardFetchers({
   t: TFunction;
   state: DashboardState;
 }) {
+  /** 数据权限无授权时后端带 scope_limited：聚合一次，页面顶部统一提示 */
+  const markScopeLimited = (res: { scope_limited?: boolean }) => {
+    if (res.scope_limited) state.scopeLimited.value = true;
+  };
+
   const getUserActiveList = () => {
-    getDashBoardUserActiveApi()
+    return getDashBoardUserActiveApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
+          // 重新加载时先清空，避免重复追加历史卡片
+          state.userActiveList.value = [];
           res.data.forEach(item => {
             state.userActiveList.value.push({
               name:
@@ -41,32 +50,37 @@ export function createDashboardFetchers({
           });
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getTodayOperateTotal = () => {
-    getDashBoardTodayOperateTotalApi()
+    return getDashBoardTodayOperateTotalApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
           const results = res.results ?? [];
-          // 空结果时按天取数的下标越界，value 兜底 0
+          // 取趋势窗口最后一天（今天）的计数；空结果兜底 0
+          const counts = getKeyList(results, "count", false);
           state.chartData.value[0] = {
             ...state.chartData.value[0],
-            value: results.length
-              ? getKeyList(results, "count", false)[results.length - 1]
-              : 0,
+            value: counts.length ? counts[counts.length - 1] : 0,
             percent: res.percent > 0 ? `+${res.percent}%` : `${res.percent}%`,
             data: getKeyList(results, "count", false)
           };
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getUserTotal = () => {
-    getDashBoardUserTotalApi()
+    return getDashBoardUserTotalApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
           const results = res.results ?? [];
           state.chartData.value[1] = {
             ...state.chartData.value[1],
@@ -76,13 +90,16 @@ export function createDashboardFetchers({
           };
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getUserLoginTotal = () => {
-    getDashBoardUserLoginTotalApi()
+    return getDashBoardUserLoginTotalApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
           const results = res.results ?? [];
           state.chartData.value[2] = {
             ...state.chartData.value[2],
@@ -92,31 +109,39 @@ export function createDashboardFetchers({
           };
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getUserLoginList = () => {
-    getDashBoardUserLoginTrendApi()
+    return getDashBoardUserLoginTrendApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
           state.userLoginList.value = res.data;
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getUserRegisterList = () => {
-    getDashBoardUserRegisterTrendApi()
+    return getDashBoardUserRegisterTrendApi()
       .then(res => {
         if (isSuccess(res)) {
+          markScopeLimited(res);
           state.userRegisterList.value = res.data;
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
   };
 
   const getOperateLogList = () => {
-    operationLogApi
+    return operationLogApi
       .list({
         page: 1,
         size: 20,
@@ -125,6 +150,24 @@ export function createDashboardFetchers({
       .then(res => {
         if (isSuccess(res)) {
           state.operateLogList.value = res.data?.results ?? [];
+        }
+      })
+      .catch(() => {
+        state.loadFailed.value = true;
+      });
+  };
+
+  /**
+   * AI 日报卡：开关关闭时后端只回 enabled=false（卡不渲染）。失败静默——
+   * 该卡是增强项，不计入 loadFailed（普通用户无 AI 权限时请求根本不发，
+   * 见 hook.tsx 的 hasAuth 门）。
+   */
+  const getDailyReport = () => {
+    return aiAssistantApi
+      .dailyReport()
+      .then(res => {
+        if (isSuccess(res) && res.data?.enabled) {
+          state.dailyReport.value = res.data;
         }
       })
       .catch(() => undefined);
@@ -137,6 +180,7 @@ export function createDashboardFetchers({
     getUserLoginTotal,
     getUserLoginList,
     getUserRegisterList,
-    getOperateLogList
+    getOperateLogList,
+    getDailyReport
   };
 }

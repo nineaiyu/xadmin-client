@@ -45,13 +45,18 @@ export function useFormMySubmissions() {
   const canDestroy = hasAuth("destroy:FormMySubmission");
   const canResubmit = hasAuth("resubmit:FormMySubmission");
   const canSubmit = hasAuth("submit:FormMySubmission");
+  const canCancel = hasAuth("cancel:SystemApprovalInstance");
 
   /** 可填报表单（启用中）：填报卡片数据源 */
+  const formsLoadFailed = ref(false);
   const loadForms = async () => {
+    formsLoadFailed.value = false;
     const res = await submissionApi.availableForms().catch(() => null);
     if (res && isSuccess(res)) {
       forms.value = (res.data ?? []) as FillableFormItem[];
+      return;
     }
+    formsLoadFailed.value = true;
   };
 
   onMounted(loadForms);
@@ -65,6 +70,7 @@ export function useFormMySubmissions() {
       canDestroy,
       canResubmit,
       canSubmit,
+      canCancel,
       actions
     });
 
@@ -73,6 +79,7 @@ export function useFormMySubmissions() {
     auth,
     tableRef,
     forms,
+    formsLoadFailed,
     listColumnsFormat,
     searchColumnsFormat,
     operationButtonsProps,

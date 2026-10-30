@@ -1,24 +1,25 @@
-import { h, reactive, shallowRef, type Ref } from "vue";
+import { h, shallowRef, type Ref } from "vue";
 import { noticeApi } from "@/api/system/notice";
 import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
-import { usePageAuth } from "@/router/utils";
-import { useI18n } from "vue-i18n";
-import { NoticeChoices } from "@/views/system/constants";
-import type { OperationProps } from "@/components/RePlusPage";
-import NoticeShowForm from "@/views/system/components/NoticeShow.vue";
+import { defineListPage, type OperationProps } from "@/components/RePlusPage";
+import { NoticeChoices } from "@/constants/notice";
+import NoticeShowForm from "@/components/ReNoticeShow";
 import type { RecordType } from "plus-pro-components";
+import type { useI18n } from "vue-i18n";
 import { useNoticeFormOptions } from "./useNoticeFormOptions";
 import { useNoticeListColumns } from "./useNoticeListColumns";
+import { createNoticeDetailFetch } from "./noticeDetail";
 import { parseNoticeUserParam } from "./noticeFormRules";
 
 import { dialogSize } from "@/components/ReDialog/size";
-export function useNotice(tableRef: Ref) {
-  const { t } = useI18n();
-
-  const api = reactive(noticeApi);
-
-  const auth = usePageAuth(["publish"]);
+export function useNotice() {
+  const page = defineListPage({
+    api: noticeApi,
+    localeName: "systemNotice",
+    extraAuth: ["publish"]
+  });
+  const { api, auth, tableRef, t } = page;
 
   const operationButtonsProps = shallowRef<OperationProps>(
     buildOperationButtons(t)
@@ -26,6 +27,9 @@ export function useNotice(tableRef: Ref) {
 
   // 列表列渲染（标题/发布开关/已读人数）
   const { listColumnsFormat } = useNoticeListColumns({ t, api, auth });
+
+  /** 详情前取一次原文：行快照可能不含最新正文；失败回退行快照 */
+  const detailRowFetch = createNoticeDetailFetch(api);
 
   // 新增/编辑弹窗列装配与公告接口分流
   const { addOrEditOptions } = useNoticeFormOptions({ api });
@@ -59,11 +63,11 @@ export function useNotice(tableRef: Ref) {
   };
 
   return {
-    api,
-    auth,
+    ...page,
     addOrEditOptions,
     listColumnsFormat,
     operationButtonsProps,
+    detailRowFetch,
     searchComplete
   };
 }

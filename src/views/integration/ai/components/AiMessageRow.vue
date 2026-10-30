@@ -7,7 +7,7 @@ import ChatSystemNotice from "@/components/ChatSystemNotice";
 import ChatTextBubble from "@/components/ChatTextBubble";
 import AiResultTable from "@/components/AiResultTable";
 import MessageActionAttachments from "@/components/MessageActionAttachments";
-import { formatMessageTime } from "@/utils/messageView";
+import { formatMessageTime, pickActionDrafts } from "@/utils/messageView";
 import type { AiActionDraft, AiConsoleMessage } from "@/api/ai/ai";
 import AiNlCard from "./AiNlCard.vue";
 
@@ -27,10 +27,13 @@ const props = defineProps<{
   actionExecutor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
   /** 新增行进入动画标记（尾部追加场景由宿主判定，见 hooks/useListAppendAnimation） */
   fresh?: boolean;
+  /** 生成中禁用重试，避免并发流 */
+  retryDisabled?: boolean;
 }>();
 
 const emit = defineEmits<{
   runNl: [dsl: object];
+  retry: [];
 }>();
 
 const { t } = useI18n();
@@ -40,17 +43,38 @@ const isSystem = computed(() => props.item.role === "system");
 const sources = computed(() => props.item.extra?.sources ?? []);
 const nlResult = computed(() => props.item.extra?.nl ?? null);
 const runResult = computed(() => props.item.extra?.nl_run ?? null);
+/** 该消息是否带可执行卡片（NL 运行 / 动作草稿 / 执行结果）：用于提示“仅最新可执行” */
+const hasExecutable = computed(
+  () =>
+    Boolean(nlResult.value || runResult.value) ||
+    pickActionDrafts(props.item.extra ?? {}).length > 0
+);
+/** 中断/失败消息可重试（发前一条用户提问） */
+const retryable = computed(() =>
+  Boolean(
+    props.item.extra?.partial || (isSystem.value && props.item.extra?.error)
+  )
+);
 
 /** 时间标签走公共格式化口径（与聊天室消息同源） */
 const timeLabel = computed(() => formatMessageTime(props.item.created_time));
 </script>
 
 <template>
-  <ChatSystemNotice
-    v-if="isSystem"
-    :content="item.content"
-    :error="item.extra?.error"
-  />
+  <div v-if="isSystem" class="flex flex-col items-center gap-1">
+    <ChatSystemNotice :content="item.content" :error="item.extra?.error" />
+    <el-button
+      v-if="retryable"
+      link
+      type="primary"
+      size="small"
+      :disabled="retryDisabled"
+      data-testid="ai-retry"
+      @click="emit('retry')"
+    >
+      {{ t("ai.retry") }}
+    </el-button>
+  </div>
   <!-- 系统提示（流内失败降级等）：居中窄条 -->
 
   <!-- 用户消息：主色气泡（与聊天室一致） -->
@@ -90,9 +114,25 @@ const timeLabel = computed(() => formatMessageTime(props.item.created_time));
       />
       <div
         v-if="item.extra?.partial"
+        class="mt-1 flex items-center gap-2 text-xs text-(--el-text-color-secondary)"
+      >
+        <span>{{ t("ai.partialHint") }}: {{ item.extra.partial }}</span>
+        <el-button
+          link
+          type="primary"
+          size="small"
+          :disabled="retryDisabled"
+          data-testid="ai-retry"
+          @click="emit('retry')"
+        >
+          {{ t("ai.retry") }}
+        </el-button>
+      </div>
+      <div
+        v-else-if="hasExecutable && !runnable"
         class="mt-1 text-xs text-(--el-text-color-secondary)"
       >
-        {{ t("ai.partialHint") }}: {{ item.extra.partial }}
+        {{ t("ai.latestOnlyHint") }}
       </div>
     </div>
   </div>

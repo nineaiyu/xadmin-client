@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { postApi } from "@/api/identity/post";
 import type { PostPreviewResult } from "@/api/types/permission-preview";
 import {
+  PREVIEW_FETCHERS,
   PreviewDescriptions,
   PreviewNotes,
   PreviewStatusTag,
@@ -25,7 +25,7 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 const { t } = useI18n();
 
 const { loading, data: preview } = usePermissionPreview<PostPreviewResult>(
-  async pk => (await postApi.preview(pk)).data,
+  PREVIEW_FETCHERS.post,
   () => props.row.pk
 );
 </script>

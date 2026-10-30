@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { FRONT_URL, login } from "./helpers";
 
 /**
  * 账户设置（个人中心）：页签与安全日志。
@@ -131,4 +131,44 @@ test("账户设置（无布局页）：图标与 v-tippy 指令自足，无未�
 
   expect(iconWarnings).toEqual([]);
   expect(directiveWarnings).toEqual([]);
+});
+
+test("账户管理：通道未就绪时绑定更新按钮置灰（受系统配置管理）", async ({
+  page
+}) => {
+  await login(page);
+  // 绑定邮箱开关默认关闭：用例显式开启并在结束后还原，避免依赖种子默认值
+  const bindEmailPath = `${FRONT_URL}/api/settings/bind/email`;
+  const beforeResp = await page.request.get(bindEmailPath);
+  const beforeBody = await beforeResp.json().catch(() => ({}));
+  const previous = Boolean(
+    beforeBody?.data?.SECURITY_BIND_EMAIL_ACCESS_ENABLED
+  );
+  const setBindEmail = async (enabled: boolean) => {
+    const resp = await page.request.patch(bindEmailPath, {
+      data: { SECURITY_BIND_EMAIL_ACCESS_ENABLED: enabled }
+    });
+    expect(resp.ok(), `bind email PATCH ${resp.status()}`).toBeTruthy();
+  };
+  await setBindEmail(true);
+  try {
+    await page.goto("/#/account-settings?tab=accountManagement");
+    await expect(page.locator("h3").first()).toContainText("账户管理", {
+      timeout: 15_000
+    });
+
+    // 行序：密码 / 手机 / 邮箱；E2E 档未配置短信（SMS_ENABLED=False），手机更新必须置灰
+    const rows = page.locator(".account-row");
+    await expect(
+      rows.nth(1).getByRole("button", { name: "更新" })
+    ).toBeDisabled({
+      timeout: 15_000
+    });
+    // 邮件走 locmem 测试后端且绑定开关已开启：邮箱更新保持可用
+    await expect(
+      rows.nth(2).getByRole("button", { name: "更新" })
+    ).toBeEnabled();
+  } finally {
+    await setBindEmail(previous);
+  }
 });

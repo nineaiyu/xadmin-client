@@ -100,20 +100,41 @@ describe("我的模板（localStorage）", () => {
     expect(removeTemplate(mine.id)).toBe(false);
   });
 
-  it("名称为空 / 无窗格 / 数量超限分别给出错误码", () => {
+  it("名称为空 / 无窗格 / 选区全失效 / 数量超限分别给出错误码", () => {
     expect(save("   ")).toEqual({ ok: false, error: "name" });
+    // 空画布（无可保存窗格）才是 empty；选区 pk 全部不存在同理
     expect(
       saveTemplate({
         name: "空的",
         design: FREE_DESIGN_DEFAULTS,
-        panes: [PANE],
+        panes: [],
         pks: []
+      })
+    ).toEqual({ ok: false, error: "empty" });
+    expect(
+      saveTemplate({
+        name: "空选区",
+        design: FREE_DESIGN_DEFAULTS,
+        panes: [PANE],
+        pks: ["ghost"]
       })
     ).toEqual({ ok: false, error: "empty" });
     for (let index = 0; index < FREE_TEMPLATE_LIMIT; index++) {
       expect(save(`模板 ${index}`).ok).toBe(true);
     }
     expect(save("超出上限")).toEqual({ ok: false, error: "limit" });
+  });
+
+  it("无选区（pks 空）回落全量画布，与「保存为模板」按钮口径一致", () => {
+    const result = saveTemplate({
+      name: "全量",
+      design: FREE_DESIGN_DEFAULTS,
+      panes: [PANE],
+      pks: []
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.template.panes).toHaveLength(1);
   });
 
   it("列表 = 内置 + 我的，存储被改坏时按空列表降级", () => {

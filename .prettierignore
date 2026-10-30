@@ -1,3 +1,6 @@
 # 构建期生成物（由 scripts/*.mjs 产出，格式由生成器保证，不参与手工格式化检查）
 src/style/animate-subset.css
 src/components/ReIcon/data/subsets/
+# OpenAPI 全量生成类型：内容与格式由 scripts/gen-openapi-types.mjs 与
+# check:openapi-types 保证，不参与手工格式化门禁
+src/api/types/openapi.d.ts

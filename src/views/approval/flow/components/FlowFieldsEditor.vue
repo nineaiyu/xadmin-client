@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable";
 import { FIELD_TYPES, type FieldRow } from "./flowConfig";
 
 /** 表单字段编辑表格（发起申请时的动态表单定义）；就地编辑父组件传入的行数组。
@@ -25,7 +26,12 @@ function removeField(fields: FieldRow[], index: number) {
 }
 </script>
 <template>
-  <el-table :data="fields" size="small" border>
+  <DataTable
+    :data="fields"
+    size="small"
+    border
+    :label="t('systemApprovalFlow.formSchemaTitle')"
+  >
     <el-table-column :label="t('systemApprovalFlow.fieldLabel')" width="150">
       <template #default="{ row }">
         <el-input v-model="row.label" size="small" :disabled="disabled" />
@@ -90,5 +96,5 @@ function removeField(fields: FieldRow[], index: number) {
         </el-button>
       </template>
     </el-table-column>
-  </el-table>
+  </DataTable>
 </template>

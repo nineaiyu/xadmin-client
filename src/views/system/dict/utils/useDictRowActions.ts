@@ -2,13 +2,15 @@ import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { ApiResult } from "@/api/types";
 import { message } from "@/utils/message";
+import { clearDictCache } from "@/utils/dict";
 import { handleOperation } from "@/components/RePlusPage";
 import type { DictRow } from "./types";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
-/** 同层排序接口形状（api 由 useDataDict 注入 reactive 后的 dataDictApi，避免直连字典 API） */
+/** 同层排序 / 缓存接口形状（api 由 useDataDict 注入 reactive 后的 dataDictApi） */
 type DictApiLike = {
   move: (pk: string | number, direction: "up" | "down") => Promise<ApiResult>;
+  refreshCache: (code?: string) => Promise<ApiResult>;
 };
 
 /**
@@ -56,6 +58,18 @@ export function useDictRowActions({
     });
   };
 
+  /** 行内「刷新本类型缓存」：只失效该类型，避免全量清空影响其他字典 */
+  const onRefreshCache = (row: DictRow) => {
+    handleOperation({
+      t,
+      apiReq: api.refreshCache(row?.code as string | undefined),
+      success() {
+        clearDictCache();
+        refresh();
+      }
+    });
+  };
+
   /** 行内「新增子项」：仅类型行可用，复用 CRUD 弹窗并预填所属类型。
    * 预填值必须是与编辑态一致的 {pk,label} 对象（列表行 parent 即此形态），
    * 传字符串 pk 时下拉回显会裸显 uuid 而匹配不到类型选项 */
@@ -68,6 +82,7 @@ export function useDictRowActions({
     refresh,
     getSelectedPks,
     onMove,
-    onAddChild
+    onAddChild,
+    onRefreshCache
   };
 }

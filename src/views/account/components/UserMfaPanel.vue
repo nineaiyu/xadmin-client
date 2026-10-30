@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 /**
  * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 开关 / 解绑 / 恢复码。
  * - 关闭：仅停用登录二次验证开关，密钥保留，重新开启时校验一次动态码即可（无需重新扫码）；
@@ -76,14 +77,22 @@ const loadRecoveryRemaining = () => {
     .catch(() => {});
 };
 
+const statusLoadFailed = ref(false);
 const loadStatus = () => {
   statusLoading.value = true;
+  statusLoadFailed.value = false;
   otpStatusApi()
     .then(res => {
       if (isSuccess(res)) {
         status.value = res.data;
         if (res.data.bound) loadRecoveryRemaining();
+      } else {
+        statusLoadFailed.value = true;
       }
+    })
+    .catch(() => {
+      // 状态未知时不能落到「未绑定」：禁用绑定入口并给重试
+      statusLoadFailed.value = true;
     })
     .finally(() => (statusLoading.value = false));
 };
@@ -210,7 +219,19 @@ onMounted(loadStatus);
 <template>
   <div v-loading="statusLoading">
     <el-form label-position="top">
-      <el-form-item :label="$t('mfa.otpStatus')">
+      <el-alert
+        v-if="statusLoadFailed"
+        class="mb-3"
+        type="error"
+        :closable="false"
+        show-icon
+        :title="$t('mfa.statusLoadFailed')"
+      >
+        <el-button link type="primary" size="small" @click="loadStatus">
+          {{ $t("buttons.reload") }}
+        </el-button>
+      </el-alert>
+      <el-form-item v-if="!statusLoadFailed" :label="$t('mfa.otpStatus')">
         <div class="w-full">
           <el-tag :type="status.enabled ? 'success' : 'info'">
             {{ statusText() }}
@@ -232,7 +253,10 @@ onMounted(loadStatus);
       </el-form-item>
 
       <!-- 恢复码：已绑定即可查看剩余数量并重新生成（重新生成为敏感操作走全局验证弹窗） -->
-      <el-form-item v-if="status.bound" :label="$t('mfa.recoveryRemaining')">
+      <el-form-item
+        v-if="status.bound && !statusLoadFailed"
+        :label="$t('mfa.recoveryRemaining')"
+      >
         <div class="flex w-full items-center gap-2">
           <el-tag type="info">{{ recoveryRemainText }}</el-tag>
           <el-button
@@ -246,7 +270,7 @@ onMounted(loadStatus);
       </el-form-item>
 
       <!-- 未绑定：发起绑定 → 扫码 → 输码确认 -->
-      <template v-if="!status.bound">
+      <template v-if="!status.bound && !statusLoadFailed">
         <el-form-item v-if="!bindInfo">
           <el-button
             type="primary"
@@ -363,7 +387,7 @@ onMounted(loadStatus);
       </template>
     </el-form>
 
-    <el-dialog
+    <OverlayDialog
       v-model="recoveryDialogVisible"
       :title="$t('mfa.recoveryTitle')"
       :width="dialogSize('sm')"
@@ -394,6 +418,6 @@ onMounted(loadStatus);
           $t("mfa.recoverySaved")
         }}</el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

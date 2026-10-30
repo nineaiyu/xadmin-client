@@ -91,4 +91,5 @@ pnpm test:run             # vitest（含 locale-keys / 渲染器配对等守护�
 | 新增 `el-*` 报 `Failed to resolve component` | 在 `src/plugins/elementPlus.ts` 登记——[dev-pitfalls #13](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/dev-pitfalls.md)                                          |
 | 图标不显示                                   | 图标全离线，只有 `ep` / `ri` / `fa-solid` 集可用——[dev-pitfalls #14](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/dev-pitfalls.md)                              |
 | 切路由后请求莫名失败                         | 路由切换会取消来源页在途请求（`skipRouteCancel` 豁免）——[dev-pitfalls #16](https://github.com/nineaiyu/xadmin-server/blob/dev/docs/dev-pitfalls.md)                        |
+| 需要直连 fetch / SSE                         | 仅允许启动探测（`utils/versionCheck.ts`）与 SSE 流（`utils/sse.ts`）；其余统一走 `BaseApi` / `utils/http`，新增逃逸需在评审中说明理由                                      |
 | WebKit 偶发失败                              | 先隔离单跑该 spec；通过即负载瞬态——[../e2e/README.md](../e2e/README.md)                                                                                                    |

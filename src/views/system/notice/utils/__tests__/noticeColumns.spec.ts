@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 
 import { buildNoticeFormColumns } from "../noticeColumns";
-import { resolveMessageFormat } from "../noticeFormat";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
 
 const mocks = vi.hoisted(() => ({
   confirm: vi.fn()
@@ -10,6 +10,16 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("element-plus", () => ({
   ElMessageBox: { confirm: mocks.confirm }
+}));
+vi.mock("@/hooks/useConfirm", () => ({
+  useConfirm: () => async () => {
+    try {
+      await mocks.confirm();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }));
 vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 vi.mock("@/components/RePlusPage/src/components/WangEditor.vue", () => ({

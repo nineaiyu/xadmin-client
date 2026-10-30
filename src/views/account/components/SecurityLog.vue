@@ -19,7 +19,6 @@ const pureTableProps = { adaptiveConfig: { offsetBottom: 150 } };
 <template>
   <AccountPanel :title="t('account.securityLog')">
     <RePlusPage
-      ref="tableRef"
       :api="api"
       :auth="auth"
       :operation="false"

@@ -10,8 +10,8 @@ import { PureWebSocket } from "@/utils/websocket";
 import { notifyDesktop, stripHtml } from "@/utils/desktopNotify";
 import { sanitizeHtml } from "@/utils/sanitize";
 import { isKioskMeta } from "@/utils/kiosk";
-import { resolveMessageFormat } from "@/views/system/notice/utils/noticeFormat";
-import { openNoticeDetailDialog } from "@/views/system/notice/utils/noticeDetailDialog";
+import { resolveMessageFormat } from "@/utils/noticeFormat";
+import { openNoticeDetailDialog } from "@/components/ReNoticeShow/noticeDetailDialog";
 import { ElNotification } from "element-plus/es/components/notification/index.mjs";
 import type { NotificationOptions, NotificationType } from "element-plus";
 
@@ -138,19 +138,23 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (isMarkdownMessage) {
                 // Markdown 公告：预览用纯文本，禁用 HTML 通道（渲染结果不塞进通知）
                 message = previewText;
-              } else if (data?.notice_type?.value === 0) {
+              } else {
                 // 统一按字符串测试（RegExp.test 本身会 ToString；显式归一消除类型歧义）
+                const raw = String(message ?? "");
                 const isHtml =
                   /<(?=.*? .*?\/ ?>|br|hr|input|!--|wbr)[a-z]+.*?>|<([a-z]+).*?<\/\1>/i.test(
-                    String(message ?? "")
+                    raw
                   );
                 if (!isHtml) {
-                  message = h("i", { style: "color: teal" }, data?.message);
+                  message = h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    data?.message
+                  );
                 } else {
-                  // HTML 分支走 dangerouslyUseHTMLString：先过 DOMPurify 白名单
-                  // 净化（与 NoticeShow/TemplatePreview 等 v-html 消费路径同口径）。
-                  // 服务端入库已 bleach，这里是展示层兜底，防历史脏数据/绕过。
-                  message = sanitizeHtml(String(data?.message ?? ""));
+                  // 任意公告类型走 dangerouslyUseHTMLString 前都必须净化：
+                  // notice_type 不是安全边界（历史脏数据/新增类型同样可能带 HTML）。
+                  message = sanitizeHtml(raw);
                 }
               }
               const options: Partial<NotificationOptions> = {
@@ -173,7 +177,11 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (!quiet)
                 ElNotification({
                   title: `${data?.notice_type?.label}-${data?.title}`,
-                  message: h("i", { style: "color: teal" }, message),
+                  message: h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    message
+                  ),
                   duration: 3000,
                   onClick: () => {
                     router.push({
@@ -189,7 +197,11 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (!quiet)
                 ElNotification({
                   title: `${data?.notice_type?.label}-${data?.title}`,
-                  message: h("i", { style: "color: teal" }, message),
+                  message: h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    message
+                  ),
                   duration: 5000,
                   onClick: () => {
                     router.push({
@@ -203,7 +215,9 @@ export const useNoticeStore = defineStore("pure-notice", {
               onLogout();
               break;
             case "error":
-              console.log(raw);
+              // 服务端下发的错误事件：不入通知浮层（防刷屏），但必须以 warn
+              // 落控制台——此前 console.log 级别的吞错在排查时形同没有日志
+              console.warn("[notice] WebSocket error message:", raw);
               break;
           }
         }

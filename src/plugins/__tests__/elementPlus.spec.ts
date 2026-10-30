@@ -38,6 +38,8 @@ const NON_COMPONENT = new Set([
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap(entry => {
     if (entry === "node_modules" || entry.startsWith(".")) return [];
+    // 测试文件里的 class 断言 / 组件桩不是生产用法，不参与「未注册组件」判定
+    if (entry === "__tests__" || entry.includes(".spec.")) return [];
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) return walk(full);
     return /\.vue$|\.tsx?$/.test(entry) ? [full] : [];

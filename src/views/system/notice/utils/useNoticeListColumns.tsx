@@ -3,7 +3,7 @@ import type { noticeApi } from "@/api/system/notice";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
 import type { useI18n } from "vue-i18n";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 import {
   formatPageColumns,
   isReadonlyCell,
@@ -88,6 +88,10 @@ export function useNoticeListColumns({
           }/${row.read_user_count}`;
           // 回收站只读：不提供「阅读明细」入口
           if (isReadonlyCell(scope)) {
+            return <span>{content}</span>;
+          }
+          // 无接收记录查看权限时降级为纯文本，避免点击无反应的死链
+          if (!hasAuth("list:SystemNoticeRead")) {
             return <span>{content}</span>;
           }
           return (

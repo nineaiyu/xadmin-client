@@ -30,7 +30,9 @@ export function syncTableA11y(
   );
   if (tables.length === 0) return 0;
 
-  const desc = root.querySelector<HTMLElement>(`[${TABLE_A11Y_DESC_ATTR}]`);
+  const desc = root.matches(`[${TABLE_A11Y_DESC_ATTR}]`)
+    ? root
+    : root.querySelector<HTMLElement>(`[${TABLE_A11Y_DESC_ATTR}]`);
   const descId = desc ? desc.id || FALLBACK_DESC_ID : "";
 
   tables.forEach(table => {
@@ -55,10 +57,23 @@ export function syncPaginationA11y(
   root: HTMLElement | null | undefined,
   label: string
 ): number {
+  return syncSelectInputsA11y(root, label, ".el-pagination .el-select__input");
+}
+
+/**
+ * 同步任意容器内 el-select 内部输入框的可访问名（通用形态）。
+ *
+ * EP `el-select` 的 attrs 落在根元素而非内部 combobox 输入框上（框架无 props
+ * 入口），读屏只播「组合框」不播用途；与分页器下拉同一手法在渲染后补名。
+ * selector 由调用方圈定范围（避免误伤同容器其他下拉）。
+ */
+export function syncSelectInputsA11y(
+  root: HTMLElement | null | undefined,
+  label: string,
+  selector = ".el-select__input"
+): number {
   if (!root || !label) return 0;
-  const inputs = root.querySelectorAll<HTMLInputElement>(
-    ".el-pagination .el-select__input"
-  );
+  const inputs = root.querySelectorAll<HTMLInputElement>(selector);
   inputs.forEach(input => {
     if (input.getAttribute("aria-label") !== label) {
       input.setAttribute("aria-label", label);

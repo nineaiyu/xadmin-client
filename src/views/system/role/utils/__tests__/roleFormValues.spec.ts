@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { roleFieldFormValue } from "../roleFormValues";
-import { menuFieldKey } from "../treeKeys";
+import { menuFieldKey } from "@/components/ReMenuPermissionTree/utils/treeKeys";
 
 describe("roleFieldFormValue", () => {
   it("passes through array field values unchanged", () => {

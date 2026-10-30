@@ -1,6 +1,7 @@
 import { h, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { goUserDetail } from "@/views/system/hooks";
+import DataTable from "@/components/DataTable";
 import {
   formatPageColumns,
   type PageColumn,
@@ -130,8 +131,11 @@ export function useOperationLogColumns({
           column.render = (value: unknown) => {
             const rows = parseChanges(value);
             if (!rows.length) return <span>—</span>;
+            // el-table 的 data/size/border 属透传 attrs（DataTable 仅声明 label/desc），
+            // JSX 对透传 attrs 走严格属性检查，经展开传入
+            const tableAttrs = { data: rows, size: "small", border: true };
             return (
-              <el-table data={rows} size="small" border>
+              <DataTable {...tableAttrs} label={t("logsOperation.changes")}>
                 <el-table-column
                   prop="field"
                   label={t("logsOperation.changesField")}
@@ -150,9 +154,17 @@ export function useOperationLogColumns({
                   min-width="180"
                   show-overflow-tooltip
                 />
-              </el-table>
+              </DataTable>
             );
           };
+          break;
+        case "method":
+          // 列表把 method 合并进 path；详情保持独立列时用标签展示，避免裸串
+          column.render = (value: unknown) => (
+            <el-tag size="small" effect="plain">
+              {String(value ?? "—")}
+            </el-tag>
+          );
           break;
       }
     });

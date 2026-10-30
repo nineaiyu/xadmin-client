@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildModulePayload,
+  diffModuleDraft,
   initModuleDraft,
   isModuleDraftDirty,
   moduleLevelKey,
@@ -112,5 +113,48 @@ describe("模块草稿语义", () => {
         presets: PRESETS
       })
     ).toEqual({ preset: "core", enable: ["chat"], disable: [] });
+  });
+
+  it("保存确认的变更摘要按启用集合与预设计算", () => {
+    const data = payload();
+    data.modules.push({
+      id: "ai",
+      label: "AI",
+      level: "optional",
+      depends: [],
+      menus: 1,
+      routes: 1,
+      enabled: true,
+      note: ""
+    });
+    const allIds = data.modules.map(row => row.id);
+    expect(
+      diffModuleDraft({
+        data,
+        draftPreset: "full",
+        draftEnabled: new Set(["chat"]),
+        allIds
+      })
+    ).toEqual({
+      presetChanged: false,
+      from: "full",
+      to: "full",
+      enable: [],
+      disable: ["ai"]
+    });
+    expect(
+      diffModuleDraft({
+        data,
+        draftPreset: "core",
+        draftEnabled: new Set(["chat", "ai"]),
+        allIds
+      })
+    ).toEqual({
+      presetChanged: true,
+      from: "full",
+      to: "core",
+      enable: [],
+      disable: []
+    });
   });
 });

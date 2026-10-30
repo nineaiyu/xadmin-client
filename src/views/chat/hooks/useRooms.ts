@@ -29,6 +29,8 @@ export function useRooms() {
   const activeRoomId = ref<number>(0);
   const loadingRooms = ref(false);
   const loadingContacts = ref(false);
+  /** 会话列表加载失败（区别于「真的没有会话」：失败时展示重试而不是空态） */
+  const roomsError = ref(false);
 
   const activeRoom = computed(
     () => rooms.value.find(room => room.id === activeRoomId.value) ?? null
@@ -43,8 +45,9 @@ export function useRooms() {
   async function loadRooms() {
     loadingRooms.value = true;
     try {
-      const res = await chatApi.roomList();
-      if (isSuccess(res)) {
+      const res = await chatApi.roomList().catch(() => null);
+      if (res && isSuccess(res)) {
+        roomsError.value = false;
         const data = res.data;
         rooms.value = data?.rooms ?? [];
         aiEnabled.value = !!data?.ai_enabled;
@@ -53,6 +56,9 @@ export function useRooms() {
         if (!activeRoomId.value && rooms.value.length) {
           activeRoomId.value = rooms.value[0].id;
         }
+      } else {
+        // 网络/业务失败不能伪装成「暂无会话」：左栏会给出失败文案 + 重试
+        roomsError.value = true;
       }
     } finally {
       loadingRooms.value = false;
@@ -62,8 +68,8 @@ export function useRooms() {
   async function loadContacts() {
     loadingContacts.value = true;
     try {
-      const res = await chatApi.contacts();
-      if (isSuccess(res)) contacts.value = res.data?.results ?? [];
+      const res = await chatApi.contacts().catch(() => null);
+      if (res && isSuccess(res)) contacts.value = res.data?.results ?? [];
     } finally {
       loadingContacts.value = false;
     }
@@ -93,6 +99,7 @@ export function useRooms() {
     unreadTotal,
     loadingRooms,
     loadingContacts,
+    roomsError,
     loadRooms,
     loadContacts,
     upsertRoom: (room: ChatRoomItem) => upsertRoom(rooms.value, room),

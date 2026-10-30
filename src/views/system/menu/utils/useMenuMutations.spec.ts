@@ -62,6 +62,10 @@ function makeDeps(api = fakeApi()) {
   };
 }
 
+function mutationsOf(deps: Parameters<typeof useMenuMutations>[0]) {
+  return useMenuMutations(deps);
+}
+
 function makeRow(overrides: Partial<MenuRow> = {}): MenuRow {
   // 走生产同款 normalizeMenuRow 装配（避免部分对象直接断言成 MenuRow）
   const base = normalizeMenuRow({
@@ -216,6 +220,20 @@ describe("useMenuMutations", () => {
       expect(deps.dropRows).toHaveBeenCalledWith(["1", "2"]);
     });
 
+    it("批量入口只选 1 行也走 batchDestroy（不降级到单删权限点）", async () => {
+      vi.mocked(confirmMenuDelete).mockResolvedValue(true);
+      const deps = makeDeps(
+        fakeApi({ batchDestroy: vi.fn().mockResolvedValue(OK) })
+      );
+      const mutations = useMenuMutations(deps);
+      const ok = await mutations.removeRows([makeRow({ pk: 1 })], true);
+      expect(ok).toBe(true);
+      expect(deps.api.batchDestroy).toHaveBeenCalledWith([1], {
+        impact_confirmed: true
+      });
+      expect(deps.api.destroy).not.toHaveBeenCalled();
+    });
+
     it("多行走 batchDestroy", async () => {
       vi.mocked(confirmMenuDelete).mockResolvedValue(true);
       const deps = makeDeps(
@@ -240,32 +258,74 @@ describe("useMenuMutations", () => {
   });
 
   describe("setRowsActive", () => {
-    it("批量启停：目标行 + 后代去重后提交，并本地打补丁", async () => {
+    it("批量启停：目标行 + 后代去重后提交，按 success 回写本地补丁", async () => {
       vi.mocked(confirmBatchActive).mockResolvedValue(true);
       const deps = makeDeps(
-        fakeApi({ batchUpdate: vi.fn().mockResolvedValue(OK) })
+        fakeApi({
+          batchUpdate: vi.fn().mockResolvedValue({
+            code: SUCCESS_CODE,
+            data: { success: ["1", "2"], failures: [] }
+          })
+        })
       );
       const mutations = useMenuMutations(deps);
+      // 目录级联页面；页面下的权限点不随菜单启停（授权面独立）
       const parent = makeRow({
         pk: 1,
+        menuType: 0,
         children: [
-          makeRow({ pk: "2", children: [makeRow({ pk: "3", children: [] })] })
+          makeRow({
+            pk: "2",
+            menuType: 1,
+            children: [makeRow({ pk: "3", menuType: 2, children: [] })]
+          })
         ]
       });
-      const ok = await mutations.setRowsActive(
-        [parent, makeRow({ pk: "2" })],
-        false
-      );
+      const ok = await mutations.setRowsActive([parent], false);
       expect(ok).toBe(true);
-      expect(deps.api.batchUpdate).toHaveBeenCalledWith(["1", "2", "3"], {
+      expect(deps.api.batchUpdate).toHaveBeenCalledWith(["1", "2"], {
         is_active: false
       });
       expect(deps.patchRows).toHaveBeenCalledWith(
         new Map([
           ["1", { is_active: false }],
-          ["2", { is_active: false }],
-          ["3", { is_active: false }]
+          ["2", { is_active: false }]
         ])
+      );
+    });
+
+    it("批量启停：跨 menu_type 混选直接拒绝，不调接口", async () => {
+      vi.mocked(confirmBatchActive).mockResolvedValue(true);
+      const batchUpdate = vi.fn();
+      const deps = makeDeps(fakeApi({ batchUpdate }));
+      const ok = await mutationsOf(deps).setRowsActive(
+        [makeRow({ pk: 1, menuType: 1 }), makeRow({ pk: "2", menuType: 0 })],
+        true
+      );
+      expect(ok).toBe(false);
+      expect(batchUpdate).not.toHaveBeenCalled();
+    });
+
+    it("批量启停：部分失败只回写成功行并告警", async () => {
+      vi.mocked(confirmBatchActive).mockResolvedValue(true);
+      const deps = makeDeps(
+        fakeApi({
+          batchUpdate: vi.fn().mockResolvedValue({
+            code: SUCCESS_CODE,
+            data: {
+              success: ["1"],
+              failures: [{ pk: "2", reason: "无权限" }]
+            }
+          })
+        })
+      );
+      const ok = await mutationsOf(deps).setRowsActive(
+        [makeRow({ pk: 1 }), makeRow({ pk: "2" })],
+        true
+      );
+      expect(ok).toBe(false);
+      expect(deps.patchRows).toHaveBeenCalledWith(
+        new Map([["1", { is_active: true }]])
       );
     });
 

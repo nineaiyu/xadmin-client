@@ -1,5 +1,5 @@
 <template>
-  <el-config-provider :locale="currentLocale">
+  <el-config-provider :locale="currentLocale" :size="globalUiSize">
     <router-view />
     <ReDialog />
     <ReDrawer />
@@ -43,7 +43,7 @@ import { checkUpdatesEnabled } from "@/utils/autoUpdate";
 // 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
 
 export default defineComponent({
-  name: "app",
+  name: "App",
   components: {
     // 组件名由 ElConfigProvider.name 动态给出（运行时必然为字符串）
     [ElConfigProvider.name as string]: ElConfigProvider,
@@ -84,6 +84,11 @@ export default defineComponent({
         pk: userStore.pk,
         time: watermarkTime.value
       })
+    );
+    // 界面密度偏好（default / small）：全部未显式指定 size 的 EP 组件继承
+    // （表格侧 RePlusPage 显式传 size，由 useTablePrefs 的缺省值跟随本偏好）
+    const globalUiSize = computed<"default" | "small">(() =>
+      $storage.configure?.uiSize === "small" ? "small" : "default"
     );
     const currentLocale = computed(() => {
       return $storage.locale?.locale === "zh"
@@ -199,7 +204,8 @@ export default defineComponent({
     );
 
     return {
-      currentLocale
+      currentLocale,
+      globalUiSize
     };
   }
 });

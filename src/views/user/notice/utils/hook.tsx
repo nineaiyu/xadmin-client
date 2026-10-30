@@ -51,7 +51,12 @@ export function useUserNotice(tableRef: Ref) {
     });
   }
 
-  const showDialog = createUserNoticeDialog({ t, api, tableRef });
+  const showDialog = createUserNoticeDialog({
+    t,
+    api,
+    tableRef,
+    canBatchRead: auth.batchRead
+  });
 
   const searchComplete = ({
     routeParams,
@@ -72,7 +77,10 @@ export function useUserNotice(tableRef: Ref) {
       routeParams.pk !== "" &&
       dataList.value.length > 0
     ) {
-      showDialog(dataList.value[0], routeParams, searchFields);
+      const target =
+        dataList.value.find(row => String(row.pk) === String(routeParams.pk)) ??
+        dataList.value[0];
+      showDialog(target, routeParams, searchFields);
     }
   };
 

@@ -16,7 +16,7 @@ defineProps<ChatTextBubbleProps>();
     class="rounded-lg px-3 py-2 text-sm wrap-break-word whitespace-pre-wrap"
     :class="
       mine
-        ? 'bg-(--el-color-primary) text-white'
+        ? 'bg-(--el-color-primary) text-(--el-color-white)'
         : 'bg-(--el-fill-color-light) text-(--el-text-color-primary)'
     "
   >

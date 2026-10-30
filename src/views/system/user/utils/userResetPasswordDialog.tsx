@@ -1,4 +1,3 @@
-import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import {
   ElButton,
@@ -10,6 +9,7 @@ import {
 import { addDialog } from "@/components/ReDialog";
 import { deviceDetection } from "@pureadmin/utils";
 import { AesEncrypted } from "@/utils/aes";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { passwordStrengthLevels } from "@/utils/password";
 import { buildPasswordValidator } from "./passwordRules";
 import type { Ref, UnwrapNestedRefs } from "vue";
@@ -45,6 +45,21 @@ export function openUserResetPasswordDialog({
   onGeneratePassword
 }: ResetPasswordDialogOptions) {
   const pwdProgress = passwordStrengthLevels(t);
+  const { beforeSure } = useDialogForm<string>({
+    readPayload: () => pwdForm.newPwd,
+    validate: () =>
+      new Promise<boolean>(resolve =>
+        ruleFormRef.value.validate((valid: boolean) => resolve(valid))
+      ),
+    submit: async password => {
+      const encrypted = await AesEncrypted(row.username, password);
+      return api.resetPassword(row.pk, { password: encrypted });
+    },
+    successText: t("results.success"),
+    onFail: res => {
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+    }
+  });
   addDialog({
     title: t("systemUser.resetPasswd", { user: row.username }),
     width: dialogSize("sm"),
@@ -105,25 +120,6 @@ export function openUserResetPasswordDialog({
       </>
     ),
     closeCallBack: () => (pwdForm.newPwd = ""),
-    beforeSure: done => {
-      ruleFormRef.value.validate(async (valid: boolean) => {
-        if (valid) {
-          const password = await AesEncrypted(row.username, pwdForm.newPwd);
-          api
-            .resetPassword(row.pk, { password })
-            .then(res => {
-              if (isSuccess(res)) {
-                message(t("results.success"), { type: "success" });
-              } else {
-                message(`${t("results.failed")}，${res.detail}`, {
-                  type: "error"
-                });
-              }
-            })
-            // 关闭弹框收口到 settle：请求异常（http 层已提示）不能悬挂按钮 loading
-            .finally(() => done());
-        }
-      });
-    }
+    beforeSure
   });
 }

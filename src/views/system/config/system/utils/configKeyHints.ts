@@ -79,7 +79,13 @@ export function createConfigKeyRenderField({
               type: t(registeredTypeLabelKey(hit.type))
             })
           )
-        : null
+        : current
+          ? h(
+              "div",
+              { class: "text-xs leading-5 text-(--el-text-color-secondary)" },
+              t("configSystem.unregisteredKeyTip")
+            )
+          : null
     ]);
   };
 }

@@ -56,7 +56,12 @@ export function createNavActions({
   }
 
   function resolvePath(route: menuType) {
-    if (!route.children) return console.error(errorInfo);
+    if (!route.children) {
+      // 菜单数据缺 children（配置面异常）：生产静默降级返回空路径，
+      // 开发期保留控制台诊断
+      if (import.meta.env.DEV) console.error(errorInfo);
+      return "";
+    }
     const httpReg = /^http(s?):\/\//;
     const routeChildPath = route.children[0]?.path;
     if (httpReg.test(routeChildPath ?? "")) {

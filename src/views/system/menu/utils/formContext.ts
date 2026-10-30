@@ -17,6 +17,16 @@ import type {
   ModelTreeItem
 } from "./types";
 
+/**
+ * 抽屉表单只读判定：新增态判 create、编辑态判 partialUpdate。
+ *
+ * 一律按 partialUpdate 判会把「只有新增权限」的角色连新增表单也锁死——
+ * 按钮能点开、打开后整表单禁用，等于功能不可用（有建无编的镜像问题）。
+ */
+export function menuFormReadonly(isAdd: boolean, auth?: MenuAuths): boolean {
+  return isAdd ? !auth?.create : !auth?.partialUpdate;
+}
+
 export interface MenuFormContext {
   /** 表单模型（就地读写） */
   model: MenuFormModel;

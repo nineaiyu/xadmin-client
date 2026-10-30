@@ -1,8 +1,8 @@
 import vue from "@vitejs/plugin-vue";
 import svgLoader from "vite-svg-loader";
 import Icons from "unplugin-icons/vite";
-import type { PluginOption } from "vite";
-import { pathResolve } from "./utils.ts";
+import type { Plugin, PluginOption } from "vite";
+import { parse as parseYaml } from "yaml";
 import { viteBuildInfo } from "./info.ts";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import tailwindcss from "@tailwindcss/vite";
@@ -11,9 +11,20 @@ import { configCompressPlugin } from "./compress.ts";
 import { viteCssLayerPlugin } from "./cssLayer.ts";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteRemove from "unplugin-remove/vite";
-import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { codeInspectorPlugin } from "code-inspector-plugin";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
+
+/** YAML 语言包 → 普通 JS 对象（Vite 原生不解析 YAML；语言包由应用自己 createI18n）。 */
+const yamlLoader: Plugin = {
+  name: "xadmin:yaml-loader",
+  transform(code, id) {
+    if (!id.endsWith(".yaml") && !id.endsWith(".yml")) return;
+    return {
+      code: `export default ${JSON.stringify(parseYaml(code))}`,
+      map: null
+    };
+  }
+};
 
 export async function getPluginsList(
   VITE_CDN: boolean,
@@ -21,6 +32,7 @@ export async function getPluginsList(
 ): Promise<PluginOption[]> {
   const lifecycle = process.env.npm_lifecycle_event;
   return [
+    yamlLoader,
     // 把 Element Plus 的 CSS 包进 `@layer el`（层顺序见 src/style/tailwind.css 首行），
     // 使 Tailwind 工具类可覆盖其组件样式；自身样式无层，覆写行为不受影响。
     viteCssLayerPlugin({ packageName: "element-plus", layerName: "el" }),
@@ -28,9 +40,6 @@ export async function getPluginsList(
     vue(),
     // jsx、tsx语法支持
     vueJsx(),
-    VueI18nPlugin({
-      include: [pathResolve("../locales/**")]
-    }),
     /**
      * 在页面上按住组合键时，鼠标在页面移动即会在 DOM 上出现遮罩层并显示相关信息，点击一下将自动打开 IDE 并将光标定位到元素对应的代码位置
      * Mac 默认组合键 Option + Shift

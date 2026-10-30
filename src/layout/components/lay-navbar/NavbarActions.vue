@@ -131,7 +131,9 @@ const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
         :aria-label="t('buttons.userMenu')"
       >
         <img :src="userAvatar" :alt="username" :style="avatarsStyle" />
-        <p v-if="username" class="dark:text-white">{{ username }}</p>
+        <p v-if="username" class="dark:text-(--el-color-white)">
+          {{ username }}
+        </p>
       </span>
       <template #dropdown>
         <el-dropdown-menu class="logout">

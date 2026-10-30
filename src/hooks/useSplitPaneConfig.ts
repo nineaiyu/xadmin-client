@@ -5,9 +5,9 @@ import {
   SAVE_DEBOUNCE_MS,
   createSplitPaneStorage,
   type SplitPaneOptions
-} from "./splitPaneStorage";
+} from "./internal/splitPaneStorage";
 
-export type { SplitPaneOptions } from "./splitPaneStorage";
+export type { SplitPaneOptions } from "./internal/splitPaneStorage";
 
 /**
  * 分栏宽度持久化：`localStorage 即时层 + WEB_SITE_CONFIG.SplitPanes 跨设备层`。

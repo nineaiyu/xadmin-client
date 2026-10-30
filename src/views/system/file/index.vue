@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { h, ref } from "vue";
+import { h } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDrawer, type DrawerOptions } from "@/components/ReDrawer";
 import { drawerSize } from "@/components/ReDialog/size";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useSystemUploadFile } from "./utils/hook";
 import FileStatsBar from "./components/FileStatsBar.vue";
 import FileStatsPanel from "./components/FileStatsPanel.vue";
@@ -12,11 +13,11 @@ defineOptions({
 });
 
 const { t } = useI18n();
-const tableRef = ref();
 
 const {
   api,
   auth,
+  tableRef,
   stats,
   searchColumnsFormat,
   listColumnsFormat,
@@ -24,7 +25,7 @@ const {
   tableBarButtonsProps,
   operationButtonsProps,
   selectionChange
-} = useSystemUploadFile(tableRef);
+} = useSystemUploadFile();
 
 /**
  * 统计详情走抽屉：分类分布/上传趋势等重型图表常驻顶部会把文件列表挤出首屏，
@@ -61,6 +62,7 @@ const openStatsDetail = () => {
       :api="api"
       :auth="auth"
       locale-name="systemUploadFile"
+      :selection="hasBatchSelection(auth, ['assign:Tag'])"
       saved-views
       advanced-filter
       :searchColumnsFormat="searchColumnsFormat"

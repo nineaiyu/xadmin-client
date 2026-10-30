@@ -2,7 +2,12 @@
 import { computed, h, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
-import { addDialog, type DialogOptions } from "@/components/ReDialog";
+import {
+  addDialog,
+  closeDialog,
+  type DialogOptions
+} from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
 import {
@@ -16,8 +21,6 @@ import AiIcon from "~icons/ep/cpu";
 import BellIcon from "~icons/ep/bell";
 import BellFilledIcon from "~icons/ep/bell-filled";
 import GroupIcon from "~icons/ep/user-filled";
-import PictureIcon from "~icons/ep/picture";
-import PaperclipIcon from "~icons/ep/paperclip";
 import {
   type ChatAttachmentKind,
   type ChatMessageItem,
@@ -28,8 +31,9 @@ import MessageThreadPanel from "@/components/MessageThreadPanel";
 import MessageTimeDivider from "@/components/MessageTimeDivider";
 import AiStreamingBubble from "@/components/AiStreamingBubble";
 import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
+import { useChatMention } from "../hooks/useChatMention";
 import MessageBubble from "./MessageBubble.vue";
-import ChatEmojiPanel from "./ChatEmojiPanel.vue";
+import ChatComposerToolbar from "./ChatComposerToolbar.vue";
 import ChatGroupMembersPanel from "./ChatGroupMembersPanel.vue";
 
 /**
@@ -57,6 +61,8 @@ const props = defineProps<{
   /** AI 流式回答（SSE）：roomId 为归属会话，reasoning/content 为已到达增量 */
   streaming: { roomId: number; content: string; reasoning: string } | null;
   connected: boolean;
+  /** WS 4403：无聊天室权限，停止显示“连接中” */
+  denied?: boolean;
   pendingCount: number;
   isNarrow: boolean;
   /** 附件上传中（禁用重复触发） */
@@ -94,6 +100,8 @@ const desktopOn = ref(desktopNotifyEnabled());
 const isAiRoom = computed(() => props.room?.room_type === "ai");
 const isPublicRoom = computed(() => props.room?.room_type === "public");
 const isGroupRoom = computed(() => props.room?.room_type === "group");
+/** 群成员列表是独立能力：无 members:ChatRoom 时不渲染入口（服务端同样 fail-closed） */
+const canViewMembers = computed(() => hasAuth("members:ChatRoom"));
 const onlineCount = computed(
   () => props.contacts.filter(item => item.online).length
 );
@@ -128,26 +136,19 @@ const placeholder = computed(() => {
   return t("chat.inputPlaceholder");
 });
 
-/** 输入末尾的 `@片段`：用于弹出在线成员联想 */
-const mentionQuery = computed(() => {
-  if (isAiRoom.value) return null;
-  const matched = /@([\w.\-]*)$/.exec(draft.value);
-  return matched ? matched[1].toLowerCase() : null;
+/** `@` 成员联想（候选口径与选中替换见 hooks/useChatMention.ts，行数门禁抽出） */
+const {
+  mentionCandidates,
+  mentionIndex,
+  insertMention,
+  moveMention,
+  chooseMention,
+  dismissMentions
+} = useChatMention({
+  draft,
+  room: computed(() => props.room),
+  contacts: computed(() => props.contacts)
 });
-
-const mentionCandidates = computed(() => {
-  if (mentionQuery.value === null) return [];
-  return props.contacts
-    .filter(peer => {
-      const name = (peer.username || "").toLowerCase();
-      return !mentionQuery.value || name.includes(mentionQuery.value);
-    })
-    .slice(0, 6);
-});
-
-function insertMention(peer: ChatPeer) {
-  draft.value = draft.value.replace(/@([\w.\-]*)$/, `@${peer.username} `);
-}
 
 /** 表情包：在光标处插入（无选区时追加末尾），插入后恢复焦点与光标位置 */
 function insertEmoji(emoji: string) {
@@ -163,38 +164,9 @@ function insertEmoji(emoji: string) {
   });
 }
 
-/* ---------------- 附件消息（图片 / 文件） ---------------- */
-
-const imageInput = ref<HTMLInputElement | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
-/** 附件入口按权限点收敛（上传走文件中心策略，服务端同样 fail-closed） */
+/** 附件入口按权限点收敛（上传走文件中心策略，服务端同样 fail-closed）；
+ *  入口与隐藏选择器见 ChatComposerToolbar（行数门禁抽出） */
 const canUploadAttachment = computed(() => hasAuth("upload:ChatMessage"));
-
-/** 唤起系统选择器（隐藏 input 作为唯一入口，避免额外弹层组件） */
-function pickAttachment(kind: "image" | "file") {
-  if (!props.room || props.uploading) return;
-  (kind === "image" ? imageInput.value : fileInput.value)?.click();
-}
-
-function onAttachmentChange(event: Event, kind: "image" | "file") {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  // 清空 value：允许连续选择同一文件（否则 change 不再触发）
-  input.value = "";
-  if (file) emit("sendAttachment", file, detectAttachmentKind(file, kind));
-}
-
-/** 上传种类按 MIME 分流（音视频消息）：图片入口保持原判定，文件入口按 MIME 细分
- * （video/audio 走对应消息类型，其余为文件下载语义；与服务端 MIME 判定同口径） */
-function detectAttachmentKind(
-  file: File,
-  fallback: "image" | "file"
-): ChatAttachmentKind {
-  if (fallback === "image") return "image";
-  if (file.type.startsWith("video/")) return "video";
-  if (file.type.startsWith("audio/")) return "audio";
-  return "file";
-}
 
 /** 桌面通知开关（全站生效）：开启时按需申请权限，拒绝则保持关闭并提示 */
 async function toggleDesktopNotify() {
@@ -219,10 +191,10 @@ async function toggleDesktopNotify() {
 /** 打开群成员管理面板（弹层体系统一收敛：addDialog + 内容组件） */
 function openMembersDialog() {
   const room = props.room;
-  if (!room) return;
+  if (!room || !canViewMembers.value) return;
   const options: DialogOptions = {
     title: t("chat.groupMembers"),
-    width: "480px",
+    width: dialogSize("md"),
     destroyOnClose: true,
     hideFooter: true,
     closeOnClickModal: false,
@@ -230,7 +202,9 @@ function openMembersDialog() {
       h(ChatGroupMembersPanel, {
         room,
         onRoomChanged: (next: ChatRoomItem) => emit("roomChanged", next),
-        onLeft: (roomId: number) => emit("left", roomId)
+        onLeft: (roomId: number) => emit("left", roomId),
+        // 面板底部自绘「关闭」按钮 emit close；弹窗体系统一由 closeDialog 收口
+        onClose: () => closeDialog(options, 0)
       })
   };
   addDialog(options);
@@ -249,11 +223,41 @@ const { isFresh } = useListAppendAnimation(() =>
 );
 
 function submit() {
+  // 流式回答期间禁用发送：否则草稿被清空后 sendAi 直接早退，消息会静默丢失
+  if (activeStreaming.value) return;
   const content = draft.value.trim();
   if (!content) return;
   draft.value = "";
   // 由父组件按当前会话类型路由到「普通发送」或「AI 提问」
   emit("send", content);
+}
+
+/** 输入区键盘：@ 候选打开时上下键/Enter/Esc 由候选接管，否则 Enter 发送 */
+function onComposerKeydown(event: Event | KeyboardEvent) {
+  if (!(event instanceof KeyboardEvent)) return;
+  // 输入法组词确认（isComposing / 229）期间回车只用于选词，不发送
+  if (event.isComposing || event.keyCode === 229) return;
+  if (mentionCandidates.value.length) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      moveMention(event.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      chooseMention();
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      dismissMentions();
+      return;
+    }
+  }
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    submit();
+  }
 }
 
 // 切换会话时清空草稿（避免把 A 会话的内容发到 B 会话）。
@@ -299,14 +303,17 @@ watch(
       <el-icon v-if="isAiRoom" class="text-(--el-color-primary)">
         <component :is="useRenderIcon(AiIcon)" />
       </el-icon>
-      <el-tag v-if="!connected" size="small" type="warning">
+      <el-tag v-if="denied" size="small" type="danger">
+        {{ t("chat.noPermission") }}
+      </el-tag>
+      <el-tag v-else-if="!connected" size="small" type="warning">
         {{ t("chat.connecting") }}
       </el-tag>
     </template>
 
     <template #actions>
       <el-button
-        v-if="isGroupRoom"
+        v-if="isGroupRoom && canViewMembers"
         link
         data-testid="chat-group-members"
         :aria-label="t('chat.groupMembers')"
@@ -366,11 +373,18 @@ watch(
       <div
         v-if="mentionCandidates.length"
         class="mb-2 rounded border border-solid border-(--divider) p-1"
+        role="listbox"
+        aria-label="@"
       >
         <div
-          v-for="peer in mentionCandidates"
+          v-for="(peer, index) in mentionCandidates"
           :key="peer.pk"
           class="sidebar-item cursor-pointer rounded px-2 py-1 text-sm"
+          :class="{
+            'bg-(--el-fill-color-light)': index === mentionIndex
+          }"
+          role="option"
+          :aria-selected="index === mentionIndex"
           @click="insertMention(peer)"
         >
           {{ peer.nickname || peer.username }}
@@ -382,61 +396,34 @@ watch(
 
       <!-- data-testid 挂原生 div：Element Plus 的 el-input（textarea 形态）不保证属性透传到内部 textarea -->
       <div ref="inputWrap" data-testid="chat-input">
-        <div class="flex items-center gap-1 pb-1">
-          <ChatEmojiPanel @select="insertEmoji" />
-          <el-button
-            v-if="canUploadAttachment"
-            text
-            :disabled="!room || uploading"
-            :icon="useRenderIcon(PictureIcon)"
-            :title="t('chat.attachImage')"
-            data-testid="chat-attach-image"
-            @click="pickAttachment('image')"
-          />
-          <el-button
-            v-if="canUploadAttachment"
-            text
-            :disabled="!room || uploading"
-            :icon="useRenderIcon(PaperclipIcon)"
-            :title="t('chat.attachFile')"
-            data-testid="chat-attach-file"
-            @click="pickAttachment('file')"
-          />
-          <!-- 隐藏文件选择器：图片限 image/*；文件不限制（扩展名策略由服务端 fail-closed 把关） -->
-          <input
-            ref="imageInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            data-testid="chat-image-input"
-            @change="onAttachmentChange($event, 'image')"
-          />
-          <input
-            ref="fileInput"
-            type="file"
-            class="hidden"
-            data-testid="chat-file-input"
-            @change="onAttachmentChange($event, 'file')"
-          />
-        </div>
+        <ChatComposerToolbar
+          :can-upload="canUploadAttachment"
+          :disabled="!room || uploading"
+          :uploading="uploading"
+          @emoji="insertEmoji"
+          @send-attachment="(file, kind) => emit('sendAttachment', file, kind)"
+        />
         <el-input
           v-model="draft"
           type="textarea"
           :autosize="{ minRows: 2, maxRows: 4 }"
           :placeholder="placeholder"
           :disabled="!room"
-          @keydown.enter.exact.prevent="submit"
+          @keydown="onComposerKeydown"
         />
       </div>
       <div class="mt-2 flex-bc">
         <div class="text-xs text-(--el-text-color-secondary)">
-          <span v-if="isAiRoom && aiEnabled">{{ aiHint }}</span>
+          <span v-if="activeStreaming">{{ t("chat.streamingHint") }}</span>
+          <span v-else-if="uploading">{{ t("chat.uploading") }}</span>
+          <span v-else-if="isAiRoom && aiEnabled">{{ aiHint }}</span>
           <span v-else>{{ t("chat.enterHint") }}</span>
         </div>
         <el-button
           type="primary"
           :icon="useRenderIcon(SendIcon)"
-          :disabled="!room || !draft.trim()"
+          :disabled="!room || !draft.trim() || Boolean(activeStreaming)"
+          :title="activeStreaming ? t('chat.streamingHint') : undefined"
           data-testid="chat-send"
           @click="submit"
         >

@@ -1,4 +1,5 @@
 import { webcrypto } from "node:crypto";
+import { h } from "vue";
 import { flushPromises, mount } from "@vue/test-utils";
 import {
   ElAlert,
@@ -8,7 +9,7 @@ import {
   ElFormItem,
   ElInput
 } from "element-plus";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AesDecrypted } from "@/utils/aes";
 
 const mocks = vi.hoisted(() => ({
@@ -16,7 +17,8 @@ const mocks = vi.hoisted(() => ({
   inviteAcceptApi: vi.fn(),
   rulesPasswordApi: vi.fn(),
   message: vi.fn(),
-  routerPush: vi.fn()
+  routerPush: vi.fn(),
+  challengeOpen: vi.fn()
 }));
 
 vi.mock("vue-router", () => ({
@@ -35,8 +37,20 @@ vi.mock("@/utils", async () => {
   const { passwordRulesCheck } = await import("@/utils/password");
   return { passwordRulesCheck };
 });
+vi.mock("@/components/ReCaptchaChallenge", () => ({
+  CAPTCHA_ACTION_INVITE_ACCEPT: "invite.accept",
+  ReCaptchaChallenge: {
+    name: "ReCaptchaChallenge",
+    setup(_props: unknown, { expose }: { expose: (api: object) => void }) {
+      expose({
+        open: () => mocks.challengeOpen(),
+        reset: vi.fn()
+      });
+      return () => h("div", { class: "challenge-stub" });
+    }
+  }
+}));
 
-import ReSliderTranslateCaptcha from "@/components/ReSliderTranslateCaptcha";
 import InviteAccept from "./accept.vue";
 
 const SUCCESS_CODE = 1000;
@@ -47,6 +61,12 @@ beforeEach(() => {
   if (!globalThis.crypto?.subtle) {
     vi.stubGlobal("crypto", webcrypto);
   }
+  mocks.challengeOpen.mockResolvedValue("ticket-1");
+});
+
+afterEach(() => {
+  // 地址栏清理用例会改写 URL：每个用例后复位，避免污染后续断言
+  history.replaceState({}, "", "/");
 });
 
 const mountPage = async () => {
@@ -64,26 +84,10 @@ const setInput = async (wrapper: Awaited<ReturnType<typeof mountPage>>) => {
   await wrapper.find('[data-testid="invite-confirm"]').setValue("Str0ng!pwd");
 };
 
-/**
- * 完成拼图人机校验（ReSliderTranslateCaptcha 的 v-model）：匿名激活入口按
- * 「一次提交一次校验」放行，测试态直接置为通过。
- */
-const passSlider = async (wrapper: Awaited<ReturnType<typeof mountPage>>) => {
-  wrapper
-    .findComponent(ReSliderTranslateCaptcha)
-    .vm.$emit("update:modelValue", true);
-  await flushPromises();
-};
-
 const submit = async (wrapper: Awaited<ReturnType<typeof mountPage>>) => {
-  await passSlider(wrapper);
   await wrapper.find('[data-testid="invite-submit"]').trigger("click");
   await flushPromises();
 };
-
-/** 直接触发提交（不经过 helper 的滑块步骤）时使用 */
-const clickSubmit = (wrapper: Awaited<ReturnType<typeof mountPage>>) =>
-  wrapper.find('[data-testid="invite-submit"]').trigger("click");
 
 describe("InviteAccept 激活密码规则前置校验", () => {
   it("规则不合规时本地拦截提示，不发起激活请求", async () => {
@@ -108,7 +112,7 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     expect(mocks.inviteAcceptApi).not.toHaveBeenCalled();
   });
 
-  it("密码合规且两次一致时放行激活请求", async () => {
+  it("密码合规且人机 ticket 获取成功时放行激活请求", async () => {
     mocks.inviteValidateApi.mockResolvedValue({
       code: SUCCESS_CODE,
       data: { state: "pending" }
@@ -127,7 +131,8 @@ describe("InviteAccept 激活密码规则前置校验", () => {
 
     expect(mocks.inviteAcceptApi).toHaveBeenCalledWith({
       token: "tok-1",
-      password: "Str0ng!pwd"
+      password: "Str0ng!pwd",
+      captcha_ticket: "ticket-1"
     });
     expect(mocks.message).toHaveBeenCalledWith("ok", { type: "success" });
   });
@@ -165,10 +170,7 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     });
     const wrapper = await mountPage();
     await setInput(wrapper);
-    await passSlider(wrapper);
-    await clickSubmit(wrapper);
-    // v2 加密走 WebCrypto（完成回调为宏任务，flushPromises 只冲刷微任务），
-    // 以轮询等待加密完成后的激活请求
+    await submit(wrapper);
     await vi.waitFor(() =>
       expect(mocks.inviteAcceptApi).toHaveBeenCalledTimes(1)
     );
@@ -179,12 +181,11 @@ describe("InviteAccept 激活密码规则前置校验", () => {
       password: string;
     };
     expect(payload.token).toBe("tok-1");
-    // 密文不等于明文，且服务端可用同一令牌密钥解出原密码（密文格式由加密层自适应）
     expect(payload.password).not.toBe("Str0ng!pwd");
     expect(await AesDecrypted("tok-1", payload.password)).toBe("Str0ng!pwd");
   });
 
-  it("未完成拼图人机校验时本地拦截，不发起激活请求", async () => {
+  it("h5 路由模式：地址栏 token 同样被清理（其余参数保留）", async () => {
     mocks.inviteValidateApi.mockResolvedValue({
       code: SUCCESS_CODE,
       data: { state: "pending" }
@@ -193,18 +194,52 @@ describe("InviteAccept 激活密码规则前置校验", () => {
       code: SUCCESS_CODE,
       data: { password_rules: MIN_LENGTH_RULES }
     });
+    history.replaceState({}, "", "/invite/accept?token=tok-h5&from=mail");
+    await mountPage();
+
+    expect(window.location.search).not.toContain("token=");
+    expect(window.location.search).toContain("from=mail");
+  });
+
+  it("hash 路由模式：hash 内 token 被清理（其余查询保留）", async () => {
+    mocks.inviteValidateApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { state: "pending" }
+    });
+    mocks.rulesPasswordApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { password_rules: MIN_LENGTH_RULES }
+    });
+    history.replaceState(
+      {},
+      "",
+      "/?x=1#/invite/accept?token=tok-hash&from=mail"
+    );
+    await mountPage();
+
+    expect(window.location.hash).not.toContain("token=");
+    expect(window.location.hash).toContain("from=mail");
+    expect(window.location.search).toContain("x=1");
+  });
+
+  it("用户取消人机挑战时不发起激活请求", async () => {
+    mocks.inviteValidateApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { state: "pending" }
+    });
+    mocks.rulesPasswordApi.mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { password_rules: MIN_LENGTH_RULES }
+    });
+    mocks.challengeOpen.mockRejectedValue(new Error("captcha-cancelled"));
     const wrapper = await mountPage();
     await setInput(wrapper);
-    await clickSubmit(wrapper);
-    await flushPromises();
+    await submit(wrapper);
 
-    expect(mocks.message).toHaveBeenCalledWith("invite.captchaRequired", {
-      type: "warning"
-    });
     expect(mocks.inviteAcceptApi).not.toHaveBeenCalled();
   });
 
-  it("提交收尾复位滑块（一次提交一次校验）", async () => {
+  it("一次提交一次 ticket：失败后再次提交会重新获取", async () => {
     mocks.inviteValidateApi.mockResolvedValue({
       code: SUCCESS_CODE,
       data: { state: "pending" }
@@ -213,7 +248,6 @@ describe("InviteAccept 激活密码规则前置校验", () => {
       code: SUCCESS_CODE,
       data: { password_rules: MIN_LENGTH_RULES }
     });
-    // 业务失败（HTTP 200 + 非 1000）：表单保留，便于验证「一次提交一次校验」
     mocks.inviteAcceptApi.mockResolvedValue({
       code: 2001,
       detail: "邀请链接无效或已过期"
@@ -222,15 +256,11 @@ describe("InviteAccept 激活密码规则前置校验", () => {
     await setInput(wrapper);
     await submit(wrapper);
     expect(mocks.inviteAcceptApi).toHaveBeenCalledTimes(1);
+    expect(mocks.challengeOpen).toHaveBeenCalledTimes(1);
 
-    // 收尾已复位：不重新滑动即被拦截
-    await clickSubmit(wrapper);
-    await flushPromises();
-    expect(mocks.inviteAcceptApi).toHaveBeenCalledTimes(1);
-
-    // 重新滑动后可再次提交
     await submit(wrapper);
     expect(mocks.inviteAcceptApi).toHaveBeenCalledTimes(2);
+    expect(mocks.challengeOpen).toHaveBeenCalledTimes(2);
   });
 
   it("预检下发 encrypted=false 时提交体保持明文", async () => {
@@ -252,7 +282,8 @@ describe("InviteAccept 激活密码规则前置校验", () => {
 
     expect(mocks.inviteAcceptApi).toHaveBeenCalledWith({
       token: "tok-1",
-      password: "Str0ng!pwd"
+      password: "Str0ng!pwd",
+      captcha_ticket: "ticket-1"
     });
   });
 });

@@ -4,12 +4,14 @@ import { handleOperation, type RePlusPageProps } from "@/components/RePlusPage";
 import { applyServerErrors } from "@/components/RePlusPage/src/utils/serverErrors";
 import { message } from "@/utils/message";
 import { LEAVE_DRAFT_SAVED_CODE, leaveApi } from "@/api/approval/leave";
+import { buildLeaveSaveRequest } from "./leaveSave";
+import { buildLeaveFormColumns } from "./leaveFormColumns";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 请假新增加载/编辑弹层选项（自 hook.tsx 抽出，行数门禁）：字段控件定制
- * （事由多行、天数半天步进、起止日期 valueFormat）与保存回调（新增即提交）。
+ * （事由多行、天数半天步进、起止日期联动）与保存回调（新增即提交）。
  */
 export function useLeaveFormOptions({
   t,
@@ -20,57 +22,32 @@ export function useLeaveFormOptions({
 }) {
   const addOrEditOptions = shallowRef<RePlusPageProps["addOrEditOptions"]>({
     props: {
-      columns: {
-        // 事由用多行输入（后端是 CharField，默认渲染单行）
-        reason: ({ column }) => {
-          column.valueType = "textarea";
-          column["fieldProps"] = {
-            ...(column["fieldProps"] ?? {}),
-            autosize: { minRows: 3 }
-          };
-          return column;
-        },
-        // 天数支持半天步进（后端 DecimalField 1 位小数）
-        days: ({ column }) => {
-          column.valueType = "input-number";
-          column["fieldProps"] = {
-            ...(column["fieldProps"] ?? {}),
-            min: 0.5,
-            step: 0.5,
-            precision: 1
-          };
-          return column;
-        },
-        start_date: ({ column }) => {
-          column.fieldProps = {
-            ...(column["fieldProps"] ?? {}),
-            valueFormat: "YYYY-MM-DD"
-          };
-          return column;
-        },
-        end_date: ({ column }) => {
-          column.fieldProps = {
-            ...(column["fieldProps"] ?? {}),
-            valueFormat: "YYYY-MM-DD"
-          };
-          return column;
-        }
-      },
+      // 新增即 create→submit：按钮文案必须明确「保存并提交」，不能写「保存」
+      sureBtnText: t("leaveApply.saveAndSubmit"),
+      columns: buildLeaveFormColumns(t),
       saveCallback: ({
         formData,
         done,
         closeLoading,
         formRef,
+        formOptions,
         setActiveName,
         success: notifySuccess,
         failed: notifyFailed
       }) => {
+        // 新增 = create（保存即提交）；编辑 = partialUpdate（原 pk），
+        // 否则改一次日期就会新建一张重复请假单
+        const apiReq = buildLeaveSaveRequest(
+          leaveApi,
+          formData,
+          formOptions?.isAdd
+        );
         // 新增即提交：成功 / 已存草稿 / 失败三种口径分别提示（覆盖框架默认保存回调）
         handleOperation({
           t,
           showSuccessMsg: false,
           showFailedMsg: false,
-          apiReq: leaveApi.create(formData),
+          apiReq,
           success: res => {
             refresh();
             notifySuccess(String(res?.detail || t("leaveApply.submitSuccess")));

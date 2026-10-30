@@ -1,6 +1,6 @@
 import { isSuccess } from "@/api/types";
 import { fetchAllRows } from "@/utils/fetchAllRows";
-import { onMounted, reactive, ref, type Ref } from "vue";
+import { onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth, usePageAuth } from "@/router/utils";
@@ -8,6 +8,7 @@ import { message } from "@/utils/message";
 import { reportApi, runReport, type ReportItem } from "@/api/dataset/analysis";
 import { datasetApi, listRows, type DatasetItem } from "@/api/dataset/datasets";
 import { normalizeError } from "@/utils/apiError";
+import { pollReportRun } from "./reportRunPolling";
 import { useReportColumns } from "./useReportColumns";
 import { useReportDialogs } from "./useReportDialogs";
 import { useReportButtons } from "./useReportButtons";
@@ -48,6 +49,11 @@ export function useReport(tableRef: Ref) {
 
   const { listColumnsFormat } = useReportColumns({ datasets });
   const { openDialog } = useReportDialogs({ datasets, tableRef });
+  const pollControllers = new Set<AbortController>();
+  onUnmounted(() => {
+    pollControllers.forEach(controller => controller.abort());
+    pollControllers.clear();
+  });
 
   const run = async (row: ReportItem, loading?: { value: boolean }) => {
     if (loading) loading.value = true;
@@ -56,6 +62,19 @@ export function useReport(tableRef: Ref) {
     if (isSuccess(res)) {
       message(t("dataReport.runOk"), { type: "success" });
       tableRef.value?.handleGetData();
+      const taskId = String(
+        (res.data as { task_id?: string } | null)?.task_id ?? ""
+      );
+      if (taskId) {
+        const controller = new AbortController();
+        pollControllers.add(controller);
+        void pollReportRun({
+          taskId,
+          t,
+          signal: controller.signal,
+          onFinished: () => tableRef.value?.handleGetData()
+        }).finally(() => pollControllers.delete(controller));
+      }
       return;
     }
     if (res.detail) message(String(res.detail), { type: "warning" });

@@ -12,6 +12,7 @@ import {
   type KnowledgeDocumentDetail,
   type KnowledgeDocumentItem
 } from "@/api/ai/knowledge";
+import { formatDateTime } from "@/utils/format";
 
 /**
  * 知识库「管理文档」抽屉：文档资料 + 启停/删除动作 + 全文与分块清单。
@@ -89,7 +90,8 @@ const activeLabel = computed(() =>
         </el-tag>
       </div>
       <div class="doc-meta">
-        {{ t("aiKnowledge.syncedAt") }}: {{ row.synced_at || "-" }}
+        {{ t("aiKnowledge.syncedAt") }}:
+        {{ formatDateTime(row.synced_at) || "-" }}
       </div>
       <div class="doc-path">{{ row.path }}</div>
     </template>

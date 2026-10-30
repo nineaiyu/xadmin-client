@@ -31,8 +31,7 @@ export function buildDictToolbarButtons({
   auth,
   tableRef,
   refresh,
-  getSelectedPks,
-  batchUpdateButton
+  getSelectedPks
 }: {
   t: TFunction;
   api: DictToolbarApi;
@@ -40,7 +39,6 @@ export function buildDictToolbarButtons({
   tableRef: Ref;
   refresh: () => void;
   getSelectedPks: () => Array<string | number> | null | undefined;
-  batchUpdateButton: OperationButtonsRow;
 }): OperationButtonsRow[] {
   /** 批量启停按钮工厂：启用/停用仅差布尔参数、文案与配色，取数与回执链路共用一份 */
   const batchActiveButton = (
@@ -110,7 +108,6 @@ export function buildDictToolbarButtons({
       },
       show: auth.refreshCache,
       index: 3
-    },
-    batchUpdateButton
+    }
   ];
 }

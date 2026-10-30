@@ -10,6 +10,7 @@
 import type { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { toPayload } from "./normalize";
 import { displayTitle } from "./useMenuFilter";
 import { removeMenuRows, setMenuRowsActive } from "./menuMutationBatch";
@@ -79,7 +80,7 @@ export function useMenuMutations({
       return true;
     } catch (error) {
       patchRows(new Map([[String(row.pk), { is_active: previous }]]));
-      message(String((error as { detail?: string })?.detail ?? error), {
+      message(normalizeError(error).detail, {
         type: "error"
       });
       return false;
@@ -89,8 +90,8 @@ export function useMenuMutations({
   };
 
   /** 删除（含级联说明与影响面预检，见 menuMutationBatch） */
-  const removeRows = (rows: MenuRow[]) =>
-    removeMenuRows({ api, t, rows, dropRows });
+  const removeRows = (rows: MenuRow[], batch = rows.length > 1) =>
+    removeMenuRows({ api, t, rows, dropRows, batch });
 
   /** 批量启停（见 menuMutationBatch） */
   const setRowsActive = (rows: MenuRow[], isActive: boolean) =>

@@ -1,8 +1,9 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { type periodicTaskApi, taskExecutionApi } from "@/api/task/task";
-import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
+import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 import { buildTaskRowButtons } from "./taskRowButtons";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { Ref } from "vue";
@@ -46,11 +47,13 @@ export function useTaskRowActions({
 
   /** 打开该定时任务最近一次执行的日志 */
   const openLatestLog = async (row: TaskRow) => {
-    const res = await taskExecutionApi.list({
-      periodic_task: row?.pk ?? row?.id,
-      page: 1,
-      size: 1
-    });
+    const res = await taskExecutionApi
+      .list({
+        periodic_task: row?.pk ?? row?.id,
+        page: 1,
+        size: 1
+      })
+      .catch(normalizeError);
     const latest = res.data?.results?.[0] as
       { pk: string; name: string } | undefined;
     if (!latest) {

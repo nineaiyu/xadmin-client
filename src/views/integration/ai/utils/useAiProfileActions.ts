@@ -4,6 +4,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
 import { aiProfileApi, type AiProfileItem } from "@/api/ai/ai";
 import { normalizeError } from "@/utils/apiError";
+import { runProfileTest } from "./aiProfileTest";
 
 /**
  * AI 档案在线处置动作：激活/停用/删除（统一二次确认）+ 连通性测试 + 能力探测。
@@ -21,9 +22,15 @@ export function useAiProfileActions({
   const confirmThen = async (
     confirmText: string,
     action: () => Promise<{ code: number; detail?: string }>,
-    doneText: string
+    doneText: string,
+    danger = false
   ) => {
-    if (!(await confirm(confirmText, { title: t("aiConfig.profileTitle") }))) {
+    if (
+      !(await confirm(confirmText, {
+        title: t("aiConfig.profileTitle"),
+        danger
+      }))
+    ) {
       return;
     }
     // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
@@ -54,17 +61,17 @@ export function useAiProfileActions({
     confirmThen(
       t("aiConfig.deleteConfirm"),
       () => aiProfileApi.destroy(row.pk),
-      t("aiConfig.deleteDone")
+      t("aiConfig.deleteDone"),
+      true
     );
 
-  const testProfile = async (row: AiProfileItem) => {
-    const res = await aiProfileApi.test(row.pk);
-    if (isSuccess(res)) {
-      message(String(res.detail ?? t("aiConfig.testOk")), { type: "success" });
-    } else if (res.detail) {
-      message(String(res.detail), { type: "warning" });
-    }
-  };
+  /** 连通性测试：提交/轮询流程在 aiProfileTest（纯流程），此处只接文案 */
+  const testProfile = (row: AiProfileItem) =>
+    runProfileTest(row.pk, {
+      ok: t("aiConfig.testOk"),
+      fail: t("aiConfig.testFailed"),
+      timeout: t("aiConfig.testTimeout")
+    });
 
   /** 能力探测：结果落档案画像，前端按能力项提示（不阻断使用）
    *  withVision=true 追加多模态探测（默认按钮不触发，避免无多模态模型上的无谓等待） */

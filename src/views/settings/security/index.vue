@@ -1,21 +1,16 @@
 <script lang="ts" setup>
+// 系统设置 → 登录安全：登录方式/防护、登录限制、MFA 与安全拦截 IP。
+// 注册、找回密码、密码规则、账号绑定与验证码策略已归入「账号安全」页。
 import {
-  settingsBindEmailApi,
-  settingsBindPhoneApi,
   settingsBlockIpApi,
-  settingsCaptchaApi,
   settingsLoginAuthApi,
   settingsLoginLimitApi,
-  settingsMfaApi,
-  settingsPasswordApi,
-  settingsRegisterAuthApi,
-  settingsResetPasswordCodeApi,
-  settingsVerifyCodeApi
+  settingsMfaApi
 } from "@/api/system/settings";
 import { computed, ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import Setting from "@/views/settings/components/settings/index.vue";
-import { settingsPane } from "@/views/settings/components/settings/types";
+import Setting from "@/views/settings/components/settings-shell/index.vue";
+import { settingsPane } from "@/views/settings/components/settings-shell/types";
 import { settingAuth } from "@/views/settings/utils/settingAuth";
 
 import { useI18n } from "vue-i18n";
@@ -24,26 +19,8 @@ defineOptions({
   name: "SettingSecurity"
 });
 
-/** 面板键取各配置域标题（code/captcha/...），与 i18n 片段一一对应 */
+/** 面板键取各配置域标题（login/limit/mfa/...），与 i18n 片段一一对应 */
 const settingData = computed<Array<settingsPane>>(() => [
-  {
-    key: "code",
-    item: {
-      auth: settingAuth("SecurityVerifyCode"),
-      api: settingsVerifyCodeApi,
-      localeName: "settingSecurity",
-      title: "code"
-    }
-  },
-  {
-    key: "captcha",
-    item: {
-      auth: settingAuth("SecurityCaptchaCode"),
-      api: settingsCaptchaApi,
-      localeName: "settingSecurity",
-      title: "captcha"
-    }
-  },
   {
     key: "login",
     item: {
@@ -70,51 +47,6 @@ const settingData = computed<Array<settingsPane>>(() => [
       localeName: "settingSecurity",
       title: "mfa"
     }
-  },
-  {
-    key: "register",
-    item: {
-      auth: settingAuth("SecurityRegisterAuth"),
-      api: settingsRegisterAuthApi,
-      localeName: "settingSecurity",
-      title: "register"
-    }
-  },
-  {
-    key: "resetPassword",
-    item: {
-      auth: settingAuth("SecurityResetPasswordAuth"),
-      api: settingsResetPasswordCodeApi,
-      localeName: "settingSecurity",
-      title: "resetPassword"
-    }
-  },
-  {
-    key: "passwordRule",
-    item: {
-      auth: settingAuth("SecurityPasswordRule"),
-      api: settingsPasswordApi,
-      localeName: "settingSecurity",
-      title: "passwordRule"
-    }
-  },
-  {
-    key: "bindEmail",
-    item: {
-      auth: settingAuth("SecurityBindEmailAuth"),
-      api: settingsBindEmailApi,
-      localeName: "settingSecurity",
-      title: "bindEmail"
-    }
-  },
-  {
-    key: "bindPhone",
-    item: {
-      auth: settingAuth("SecurityBindPhoneAuth"),
-      api: settingsBindPhoneApi,
-      localeName: "settingSecurity",
-      title: "bindPhone"
-    }
   }
 ]);
 const auth = ref({
@@ -138,8 +70,6 @@ const panes = computed<Array<settingsPane>>(() => [
   <setting :panes="panes">
     <template #blockIp>
       <RePlusPage
-        ref="tableRef"
-        :title="t('settingSecurity.blockIp')"
         :api="api"
         :auth="auth"
         locale-name="settingSecurity"

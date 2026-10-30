@@ -6,7 +6,7 @@
  * 的 setCheckedKeys）要的是合成键数组，这里统一归一化（键约定见 ./treeKeys.ts）。
  */
 
-import { menuFieldKey } from "./treeKeys";
+import { menuFieldKey } from "@/components/ReMenuPermissionTree/utils/treeKeys";
 
 export function roleFieldFormValue(field: unknown): Array<string | number> {
   if (Array.isArray(field)) {

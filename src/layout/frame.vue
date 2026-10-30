@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { ref, unref, watch, onMounted, nextTick } from "vue";
+import SafeFrame from "@/components/SafeFrame";
 
 defineOptions({
   name: "LayFrame"
@@ -18,7 +19,7 @@ const { t } = useI18n();
 const loading = ref(true);
 const currentRoute = useRoute();
 const frameSrc = ref<string>("");
-const frameRef = ref<HTMLElement | null>(null);
+const frameRef = ref<InstanceType<typeof SafeFrame> | null>(null);
 const fallbackTimer = ref<number | null>(null);
 
 if (unref(currentRoute.meta)?.frameSrc) {
@@ -44,7 +45,7 @@ type FrameHostElement = HTMLElement & {
 
 function init() {
   nextTick(() => {
-    const iframe = unref(frameRef);
+    const iframe = unref(frameRef)?.frame;
     if (!iframe) return;
     const _frame = iframe as FrameHostElement;
     if (_frame.attachEvent) {
@@ -100,7 +101,15 @@ onMounted(() => {
     :element-loading-text="t('status.hsLoad')"
     class="frame content-flush"
   >
-    <iframe ref="frameRef" :src="frameSrc" class="frame-iframe" />
+    <SafeFrame
+      ref="frameRef"
+      :src="frameSrc"
+      title="route-frame"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+      referrerpolicy="same-origin"
+      loading="eager"
+      class="frame-iframe"
+    />
   </div>
 </template>
 

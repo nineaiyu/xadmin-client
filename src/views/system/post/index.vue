@@ -1,19 +1,20 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { usePosts } from "./utils/hook";
 
 defineOptions({
   name: "SystemPost" // 必须定义，用于菜单自动匹配组件
 });
 
-const tableRef = ref();
 const {
   api,
   auth,
+  tableRef,
   addOrEditOptions,
   listColumnsFormat,
-  operationButtonsProps
-} = usePosts(tableRef);
+  operationButtonsProps,
+  tableBarButtonsProps
+} = usePosts();
 </script>
 
 <template>
@@ -21,9 +22,12 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="hasBatchSelection(auth, ['batchUpdate:SystemPost'])"
     locale-name="post"
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
+    :tableBarButtonsProps="tableBarButtonsProps"
+    recycleBin
   />
 </template>

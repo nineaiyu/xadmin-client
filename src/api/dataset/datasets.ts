@@ -35,6 +35,8 @@ export type DatasetItem = {
   row_limit: number;
   config: { date_field?: string };
   visibility: DatasetVisibility;
+  /** inherit = 未配置字段权限不裁剪；strict = 未配置即空结果（共享数据集默认） */
+  field_permission_mode?: "inherit" | "strict";
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
 };
@@ -56,7 +58,8 @@ export type ExecuteResult = {
 export type AggregateResult = {
   name: string;
   metric: string;
-  series: { name: string; value: number }[];
+  /** raw：分组原始值（卡片下钻过滤依据；趋势/单桶序列无该字段） */
+  series: { name: string; raw?: unknown; value: number }[];
 };
 
 /** metric：指标卡（无分组单值聚合，count = 行总数；与数据集聚合同口径） */

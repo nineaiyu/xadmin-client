@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import { systemUploadFileApi } from "@/api/file/file";
 import { getDictItems } from "@/utils/dict";
 import type { PageColumn } from "@/components/RePlusPage";
@@ -20,6 +21,7 @@ export function useFileQuotaStats({ hasStatsAuth }: { hasStatsAuth: boolean }) {
     // fresh=true 走 ?no_cache=1 旁路服务端短缓存（上传后立即刷新场景）
     systemUploadFileApi
       .stats(fresh ? { no_cache: "1" } : undefined)
+      .catch(normalizeError)
       .then(res => {
         if (isSuccess(res)) stats.value = res.data as FileStats;
       });

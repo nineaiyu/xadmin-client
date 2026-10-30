@@ -2,6 +2,10 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { TrialResult } from "@/api/types/permission-preview";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 defineOptions({ name: "TrialResultPanel" });
 
@@ -57,6 +61,35 @@ const scopeModeTexts = computed<Record<string, string>>(() => ({
 const hasSelectionInfo = computed(() =>
   Boolean(props.result.grants?.some(grant => grant.selected !== undefined))
 );
+
+/** 生效授权诊断只读列（选中列随后端能力出现） */
+const grantColumns = computed<ReadonlyColumn[]>(() => {
+  const columns: ReadonlyColumn[] = [
+    {
+      label: t("permissionPreview.diagnosisSource"),
+      width: 110,
+      slot: "source"
+    },
+    {
+      label: t("permissionPreview.diagnosisName"),
+      minWidth: 160,
+      slot: "name"
+    },
+    {
+      label: t("permissionPreview.diagnosisKind"),
+      width: 130,
+      slot: "kind"
+    }
+  ];
+  if (hasSelectionInfo.value) {
+    columns.push({
+      label: t("permissionPreview.diagnosisSelected"),
+      width: 90,
+      slot: "selected"
+    });
+  }
+  return columns;
+});
 </script>
 
 <template>
@@ -124,60 +157,41 @@ const hasSelectionInfo = computed(() =>
         :title="`${t('permissionPreview.grantDiagnosis')}（${props.result.grants.length}）`"
         name="grants"
       >
-        <el-table :data="props.result.grants" border size="small">
-          <el-table-column
-            :label="t('permissionPreview.diagnosisSource')"
-            width="110"
-          >
-            <template #default="{ row }">
-              <el-tag
-                :type="row.source === 'draft' ? 'warning' : 'info'"
-                size="small"
-              >
-                {{ sourceTexts[row.source] ?? row.source }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('permissionPreview.diagnosisName')"
-            min-width="160"
-          >
-            <template #default="{ row }">
-              <span>{{ row.name }}</span>
-              <span
-                v-if="row.dept_name"
-                class="text-(--el-text-color-secondary)"
-              >
-                （{{ row.dept_name }}）
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('permissionPreview.diagnosisKind')"
-            width="130"
-          >
-            <template #default="{ row }">
-              <el-tag :type="kindTagType(row.kind)" size="small">
-                {{ kindTexts[row.kind] ?? row.kind }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            v-if="hasSelectionInfo"
-            :label="t('permissionPreview.diagnosisSelected')"
-            width="90"
-          >
-            <template #default="{ row }">
-              <el-tag :type="row.selected ? 'success' : 'info'" size="small">
-                {{
-                  row.selected
-                    ? t("permissionPreview.yes")
-                    : t("permissionPreview.no")
-                }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
+        <ReReadonlyTable
+          :columns="grantColumns"
+          :rows="props.result.grants ?? []"
+          border
+          size="small"
+        >
+          <template #source="{ row }">
+            <el-tag
+              :type="row.source === 'draft' ? 'warning' : 'info'"
+              size="small"
+            >
+              {{ sourceTexts[row.source] ?? row.source }}
+            </el-tag>
+          </template>
+          <template #name="{ row }">
+            <span>{{ row.name }}</span>
+            <span v-if="row.dept_name" class="text-(--el-text-color-secondary)">
+              （{{ row.dept_name }}）
+            </span>
+          </template>
+          <template #kind="{ row }">
+            <el-tag :type="kindTagType(row.kind)" size="small">
+              {{ kindTexts[row.kind] ?? row.kind }}
+            </el-tag>
+          </template>
+          <template #selected="{ row }">
+            <el-tag :type="row.selected ? 'success' : 'info'" size="small">
+              {{
+                row.selected
+                  ? t("permissionPreview.yes")
+                  : t("permissionPreview.no")
+              }}
+            </el-tag>
+          </template>
+        </ReReadonlyTable>
       </el-collapse-item>
     </el-collapse>
     <el-input

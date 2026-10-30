@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import {
   FieldValues,
@@ -37,13 +37,22 @@ const props = withDefaults(defineProps<AddOrEditFormProps>(), {
 });
 
 const formData = ref(props.formInline);
+const confirmUnbind = computed({
+  get: () => Boolean(formData.value.confirm_unbind),
+  set: value => {
+    formData.value.confirm_unbind = value;
+  }
+});
 
 const data = ref({
   username: ""
 });
 
 const sendCodeReqSuccess = ({ extra }: { extra?: Record<string, unknown> }) => {
-  if (extra?.username) {
+  const conflict = Boolean(extra?.username);
+  formData.value.has_bind_conflict = conflict;
+  if (!conflict) formData.value.confirm_unbind = false;
+  if (conflict) {
     data.value = Object.assign({}, extra) as { username: string };
   }
 };
@@ -58,8 +67,9 @@ const sendCodeReqSuccess = ({ extra }: { extra?: Record<string, unknown> }) => {
     />
     <div v-if="data.username">
       <el-divider />
+      <!-- 占满内容区但不超过 500px：窄屏弹窗内随容器收缩（原 min-w-[500px] 会横向溢出） -->
       <plus-descriptions
-        class="mix-w-[500px]"
+        class="w-full max-w-[500px]"
         :columns="columns"
         :data="data"
         :column="1"
@@ -79,6 +89,9 @@ const sendCodeReqSuccess = ({ extra }: { extra?: Record<string, unknown> }) => {
             <el-text type="success" size="large">{{ data.username }} </el-text>
             {{ t("userinfo.bindInfo") }}
           </el-text>
+          <el-checkbox v-model="confirmUnbind" class="mt-2">
+            {{ t("userinfo.confirmUnbind") }}
+          </el-checkbox>
         </template>
       </plus-descriptions>
     </div>

@@ -29,6 +29,7 @@
   "TagsStyle": "chrome",
   "HeaderAutoHide": false,
   "CompactMode": false,
+  "UiSize": "default",
   "Radius": "default",
   "FontScale": "default",
   "FontScaleCustom": 14,

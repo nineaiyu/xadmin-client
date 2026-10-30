@@ -46,9 +46,9 @@ export const QUICK_ACTIONS = [
 
 export type QuickActionItem = (typeof QUICK_ACTIONS)[number];
 
-/** 导航目标：快捷动作 / 菜单结果 / 全局搜索分组 / 历史记录 */
+/** 导航目标：快捷动作 / 菜单结果 / 全局搜索分组 / 问 AI / 历史记录 */
 export type NavTarget = {
   key: string;
-  kind: "command" | "result" | "global" | "history";
+  kind: "command" | "result" | "global" | "askAi" | "history";
   payload: unknown;
 };

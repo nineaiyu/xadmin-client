@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CONFIG_PATH = join(ROOT, "public/platform-config.json");
 const RESPONSIVE_PATH = join(ROOT, "src/utils/responsive.ts");
-const SITE_CONFIG_PATH = join(ROOT, "src/store/modules/siteConfig.ts");
+const SITE_CONFIG_PATH = join(ROOT, "src/store/modules/siteConfigFields.ts");
 
 /** 无运行时消费的键 → 原因（新增必须给出理由） */
 const CONSUME_EXEMPT = new Map([
@@ -80,9 +80,8 @@ const injected = new Set(
   [...respSrc.matchAll(/config\.([A-Z]\w+)/g)].map(m => m[1])
 );
 const patched = new Set(
-  [
-    ...siteSrc.matchAll(/^\s+[A-Z]\w+:\s*(?:configure|layout|locale)\.(\w+)/gm)
-  ].map(m => camel(m[1]))
+  // 偏好注册表行格式：[服务端键, 本地 key, 缺省值]
+  [...siteSrc.matchAll(/\[\s*"[A-Z]\w+",\s*"(\w+)",/g)].map(m => camel(m[1]))
 );
 const notSynced = [...injected].filter(
   key => !patched.has(camel(key)) && !SYNC_EXEMPT.has(key)

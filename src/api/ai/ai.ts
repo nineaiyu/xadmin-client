@@ -1,6 +1,15 @@
 import { BaseApi, ViewBaseApi } from "@/api/base";
 import type { DetailResult } from "@/api/types";
-import { postSse, type SseFrame } from "@/utils/sse";
+
+import { createSseStream, type SseStreamEvents } from "@/utils/sse";
+
+/** 连通性测试任务：提交与回读共用同一形状（PENDING/STARTED 表示仍在执行） */
+export type ConnectivityTaskResult = DetailResult<{
+  task_id: string;
+  state: string;
+  ok?: boolean;
+  detail?: string;
+}>;
 
 /** AI 使用/二开助手 */
 export type AiStatus = {
@@ -76,6 +85,26 @@ export type AiToolItem = {
 
 export type AiToolsResult = { action_enabled: boolean; tools: AiToolItem[] };
 
+/** AI 日报卡（首页）：指标实时聚合 + 最近一期 LLM 摘要（缓存） */
+export type AiDailyReport = {
+  enabled: boolean;
+  metrics?: {
+    approval_pending: number;
+    monitor_firing: number;
+    error_requests_24h: number;
+    task_failed_24h: number;
+    ai_calls_24h: number;
+    ai_tokens_24h: number;
+  };
+  /** 异常项点击直达路径（router.push 用；与菜单种子同源） */
+  links?: Record<string, string>;
+  summary?: string;
+  /** 摘要生成失败的可读原因（摘要为空时提示降级） */
+  summary_error?: string;
+  /** 摘要生成时间（ISO；空 = 尚未生成） */
+  generated_at?: string;
+};
+
 /** 调用观测：近 N 天聚合（数据源 OperationLog auth_type=ai） */
 export type AiMetrics = {
   days: number;
@@ -102,6 +131,8 @@ export type NlInterpretResult = {
   dsl: NlQueryDsl;
   dataset_name: string;
   preview_count: number;
+  /** 预览探测命中上限（计数为下限，展示为「≥N」） */
+  preview_capped?: boolean;
   mode: string;
 };
 
@@ -114,13 +145,7 @@ export const aiConfigApi = new ViewBaseApi("/api/ai/assistant/config");
  * - `onDelta`：正式回答增量；
  * - `onError`：流内失败（响应头已发出，带下发光；门禁类错误由 postSse 抛 SseError）。
  */
-export interface AiStreamEvents<TDone> {
-  onMeta?: (data: Record<string, unknown>) => void;
-  onReasoning?: (delta: string) => void;
-  onDelta?: (delta: string) => void;
-  onDone?: (data: TDone) => void;
-  onError?: (data: { detail: string }) => void;
-}
+export type AiStreamEvents<TDone> = SseStreamEvents<TDone>;
 
 /** 通用 AI 流式请求：POST + SSE 逐帧分发（助手页文档问答 / NL 查数解释共用）。 */
 function streamRequest<TDone>(
@@ -129,30 +154,7 @@ function streamRequest<TDone>(
   events: AiStreamEvents<TDone>,
   signal?: AbortSignal
 ): Promise<void> {
-  return postSse(url, body, {
-    signal,
-    onFrame: (frame: SseFrame) => {
-      let payload: unknown = {};
-      try {
-        payload = frame.data ? JSON.parse(frame.data) : {};
-      } catch {
-        return;
-      }
-      if (frame.event === "meta") {
-        events.onMeta?.(payload as Record<string, unknown>);
-      } else if (frame.event === "reasoning") {
-        events.onReasoning?.(
-          String((payload as { delta?: unknown }).delta ?? "")
-        );
-      } else if (frame.event === "delta") {
-        events.onDelta?.(String((payload as { delta?: unknown }).delta ?? ""));
-      } else if (frame.event === "done") {
-        events.onDone?.(payload as TDone);
-      } else if (frame.event === "error") {
-        events.onError?.(payload as { detail: string });
-      }
-    }
-  });
+  return createSseStream<TDone>(url, body, events, signal);
 }
 
 /** AI 配置档案：多套凭据 + 采样/行为参数，激活唯一 */
@@ -255,13 +257,23 @@ class AiProfileApi extends BaseApi {
       `${this.baseApi}/${pk}/deactivate`
     );
   };
-  /** 按档案持久化值真实 ping 一次 LLM */
+  /** 按档案持久化值真实 ping 一次 LLM（外呼已在 celery 执行，返回 task_id） */
   test = (pk: string) => {
-    return this.request<DetailResult>(
+    return this.request<ConnectivityTaskResult>(
       "post",
       {},
       {},
       `${this.baseApi}/${pk}/test`
+    );
+  };
+
+  /** 连通性测试结论回读（task_id 来自 test，PENDING/STARTED 表示仍在执行） */
+  testResult = (pk: string, taskId: string) => {
+    return this.request<ConnectivityTaskResult>(
+      "get",
+      { task_id: taskId },
+      {},
+      `${this.baseApi}/${pk}/test-result`
     );
   };
   /** 能力探测：JSON / 原生工具调用 / 思考内容（可选多模态），结果落档案画像 */
@@ -382,6 +394,15 @@ class AiAssistantApi extends BaseApi {
   /** 统一工具目录（MCP tools/list 等价：当前用户可执行的全部系统动作） */
   tools = () => {
     return this.request<DetailResult>("get", {}, {}, `${this.baseApi}/tools`);
+  };
+  /** 首页 AI 日报卡（指标实时 + 摘要缓存；开关关闭时 enabled=false） */
+  dailyReport = () => {
+    return this.request<DetailResult<AiDailyReport>>(
+      "get",
+      {},
+      {},
+      `${this.baseApi}/daily-report`
+    );
   };
   /** 指令执行草稿（流式）：思考增量 + done 带 drafts（多步串联）/ draft（单动作兜底）/ 澄清消息 */
   actionInterpretStream = (

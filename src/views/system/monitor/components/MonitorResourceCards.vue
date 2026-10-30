@@ -11,7 +11,8 @@ import { formatRate } from "../utils/format";
 type ResourceCard = {
   key: string;
   label: string;
-  value: number;
+  /** null = 未获取到采集值（接口失败/尚未加载），不能按 0 渲染 */
+  value: number | null;
   suffix: string;
   ring: boolean;
 };
@@ -37,7 +38,7 @@ const { t } = useI18n();
     <el-card v-for="card in cards" :key="card.key" shadow="hover">
       <div class="text-sm text-(--el-text-color-regular)">{{ card.label }}</div>
       <el-progress
-        v-if="card.ring"
+        v-if="card.ring && card.value !== null"
         class="mt-2"
         type="dashboard"
         :percentage="Math.min(100, Math.round(Number(card.value) || 0))"
@@ -47,9 +48,19 @@ const { t } = useI18n();
       >
         <span class="text-lg">{{ card.value }}{{ card.suffix }}</span>
       </el-progress>
+      <div
+        v-else-if="card.ring"
+        class="mt-2 flex-c h-30 flex-col gap-1"
+        data-testid="monitor-card-unknown"
+      >
+        <span class="text-3xl font-medium">—</span>
+        <el-tag type="info" size="small">
+          {{ t("systemMonitor.valueUnavailable") }}
+        </el-tag>
+      </div>
       <div v-else class="mt-2 flex-c h-30">
         <span class="text-3xl font-medium">
-          {{ card.value }}{{ card.suffix }}
+          {{ card.value ?? "—" }}{{ card.value === null ? "" : card.suffix }}
         </span>
       </div>
     </el-card>
@@ -73,8 +84,8 @@ const { t } = useI18n();
         <div class="text-xs text-(--el-text-color-secondary)">
           {{
             t("systemMonitor.netTotal", {
-              sent: netRates.sentTotal ?? 0,
-              recv: netRates.recvTotal ?? 0
+              sent: netRates.sentTotal ?? "—",
+              recv: netRates.recvTotal ?? "—"
             })
           }}
         </div>

@@ -28,6 +28,8 @@ const { t, te } = useI18n();
 
 const scopeGroups = ref<ScopeGroup[]>([]);
 const scopeLoading = ref(false);
+/** 目录加载失败：不再静默只剩自定义正则 */
+const scopeError = ref(false);
 const pathSelected = ref<string[]>([]);
 const customPaths = ref("");
 
@@ -81,9 +83,13 @@ const emitValue = () => {
 
 const loadScopeGroups = async () => {
   scopeLoading.value = true;
+  scopeError.value = false;
   try {
     const res = await loadPatScopeCatalog();
-    if (!isSuccess(res) || !res.data?.groups) return;
+    if (!isSuccess(res) || !res.data?.groups) {
+      scopeError.value = true;
+      return;
+    }
     scopeGroups.value = res.data.groups.map(group => {
       const seen = new Set<string>();
       const options = (group.options ?? [])
@@ -99,6 +105,7 @@ const loadScopeGroups = async () => {
     splitValue(props.modelValue ?? []);
   } catch {
     // 目录拉取失败不阻塞：自定义区仍可写路径正则
+    scopeError.value = true;
   } finally {
     scopeLoading.value = false;
   }
@@ -122,6 +129,26 @@ onMounted(async () => {
 
 <template>
   <div v-loading="scopeLoading" class="w-full">
+    <el-alert
+      v-if="scopeError"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="mb-2"
+      :title="t('approvalRule.pathCatalogLoadFailed')"
+    >
+      <el-button link type="primary" @click="loadScopeGroups">
+        {{ t("approvalRule.retry") }}
+      </el-button>
+    </el-alert>
+    <el-alert
+      v-else-if="!scopeLoading && !scopeGroups.length"
+      type="info"
+      :closable="false"
+      show-icon
+      class="mb-2"
+      :title="t('approvalRule.pathCatalogEmpty')"
+    />
     <el-select
       v-model="pathSelected"
       multiple

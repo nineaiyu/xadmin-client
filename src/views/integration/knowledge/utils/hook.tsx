@@ -1,4 +1,4 @@
-import { reactive, type Ref } from "vue";
+import { onUnmounted, reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { knowledgeApi } from "@/api/ai/knowledge";
@@ -6,6 +6,7 @@ import { useKnowledgeActions } from "./useKnowledgeActions";
 import { useKnowledgeBuild } from "./useKnowledgeBuild";
 import { useKnowledgeColumns } from "./useKnowledgeColumns";
 import { useKnowledgeButtons } from "./useKnowledgeButtons";
+import { createIngestPoll } from "./ingestPoll";
 
 /**
  * 知识库页装配：列表走 RePlusPage 标准 CRUD 口径，行操作收敛进「管理文档」抽屉：
@@ -24,7 +25,10 @@ import { useKnowledgeButtons } from "./useKnowledgeButtons";
  * - useKnowledgeColumns  列渲染；
  * - useKnowledgeButtons  工具栏与行操作按钮装配。
  */
-export function useKnowledge(tableRef: Ref) {
+export function useKnowledge(
+  tableRef: Ref,
+  hasSelection: Ref<boolean> = ref(false)
+) {
   const { t } = useI18n();
   const auth = usePageAuth("AiKnowledge");
   auth.create = false;
@@ -34,6 +38,7 @@ export function useKnowledge(tableRef: Ref) {
   const canCreate = hasAuth("create:AiKnowledge");
   const canSync = hasAuth("syncRepo:AiKnowledge");
   const canBatchToggle = hasAuth("batchToggle:AiKnowledge");
+  const canRetrieve = hasAuth("retrieve:AiKnowledge");
   const canBuildEmbeddings = hasAuth("buildEmbeddings:AiKnowledge");
   // 批量删除走框架内建入口（勾选行后工具栏出现），由 auth.batchDestroy 控制显示，
   // 后端 batch-destroy 只删上传文档并清理分块
@@ -41,16 +46,25 @@ export function useKnowledge(tableRef: Ref) {
 
   const refresh = () => tableRef.value?.handleGetData();
 
+  // 摄取轮询：上传后任务在后台重建分块，终态自停（实现见 ingestPoll.ts）
+  const ingestPoll = createIngestPoll(refresh);
+  onUnmounted(ingestPoll.stop);
+
   const { openUpload, openKnowledgePanel, syncRepo, batchToggle } =
-    useKnowledgeActions({ t, tableRef });
+    useKnowledgeActions({ t, tableRef, afterUpload: ingestPoll.start });
 
   const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 
-  const { listColumnsFormat } = useKnowledgeColumns({ t, openKnowledgePanel });
+  const { listColumnsFormat } = useKnowledgeColumns({
+    t,
+    openKnowledgePanel,
+    canRetrieve
+  });
 
   const { tableBarButtonsProps, operationButtonsProps } = useKnowledgeButtons({
     t,
     flags: { canCreate, canSync, canBatchToggle, canBuildEmbeddings },
+    hasSelection,
     openUpload,
     syncRepo,
     buildEmbeddings,

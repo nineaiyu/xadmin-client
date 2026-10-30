@@ -8,6 +8,7 @@ import {
   toggleClass
 } from "./themeColorScheme";
 import { createAppReset } from "./appReset";
+import { normalizeThemeMode } from "./themeMode";
 import { withCircleReveal } from "@/utils/viewTransition";
 
 /**
@@ -48,7 +49,7 @@ export function useDataThemeChange() {
    * 服务——初始化时播放会表现为打开页面即全屏从左上角铺开的无意义动画。
    */
   function dataThemeChange(overall?: string, options?: { animate?: boolean }) {
-    themeMode.value = overall ?? "";
+    themeMode.value = normalizeThemeMode(overall);
     if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
       setLayoutThemeColor("default", false);
     } else {

@@ -13,6 +13,12 @@ type DashBoardResult = {
   percent: number;
   count: number;
   results?: Array<DashboardTrendItem>;
+  /** 数据权限无授权导致统计为空集（≠ 真实 0） */
+  scope_limited?: boolean;
+};
+
+type DashboardListResult<T> = DataListResult<T> & {
+  scope_limited?: boolean;
 };
 
 /** 欢迎页统计面板：六个只读统计动作（无请求体 GET，查询参数经 formatParams 收口） */
@@ -36,7 +42,7 @@ class DashboardApi extends BaseApi {
   };
 
   userRegisterTrend = (params?: object) => {
-    return this.request<DataListResult<DashboardTrendItem>>(
+    return this.request<DashboardListResult<DashboardTrendItem>>(
       "get",
       params,
       undefined,
@@ -45,7 +51,7 @@ class DashboardApi extends BaseApi {
   };
 
   userLoginTrend = (params?: object) => {
-    return this.request<DataListResult<DashboardTrendItem>>(
+    return this.request<DashboardListResult<DashboardTrendItem>>(
       "get",
       params,
       undefined,
@@ -55,7 +61,7 @@ class DashboardApi extends BaseApi {
 
   /** 行结构为 [天数, 注册数, 活跃数] 的数字数组 */
   userActive = (params?: object) => {
-    return this.request<DataListResult<number[]>>(
+    return this.request<DashboardListResult<number[]>>(
       "get",
       params,
       undefined,

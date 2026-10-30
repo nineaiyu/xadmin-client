@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
+import ReEmpty from "@/components/ReEmpty";
+import DataTable from "@/components/DataTable";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDataset } from "./utils/hook";
@@ -28,7 +31,8 @@ const {
   needsAggregateValue,
   onAggregateMetricChange,
   runAggregatePreview,
-  exportAggregateCsv
+  exportAggregateCsv,
+  canAggregate
 } = useDataset(tableRef);
 </script>
 
@@ -46,7 +50,7 @@ const {
     />
 
     <!-- 执行预览：只读展示弹窗（既定保留手写场景），明细 / 聚合双视图 -->
-    <el-dialog
+    <OverlayDialog
       v-model="previewDialog"
       :title="t('dataDataset.preview')"
       :width="dialogSize('lg')"
@@ -56,7 +60,7 @@ const {
           <el-radio-button value="rows">
             {{ t("dataDataset.previewRows") }}
           </el-radio-button>
-          <el-radio-button value="aggregate">
+          <el-radio-button v-if="canAggregate" value="aggregate">
             {{ t("dataDataset.previewAggregate") }}
           </el-radio-button>
         </el-radio-group>
@@ -77,7 +81,11 @@ const {
         <div class="mb-2 text-sm text-(--el-text-color-regular)">
           {{ t("dataDataset.total") }}: {{ preview?.total ?? 0 }}
         </div>
-        <el-table :data="preview?.rows ?? []" max-height="380">
+        <DataTable
+          :data="preview?.rows ?? []"
+          max-height="380"
+          :label="t('dataDataset.preview')"
+        >
           <el-table-column
             v-for="col in preview?.columns ?? []"
             :key="col"
@@ -92,7 +100,7 @@ const {
               {{ formatPreviewCell(row[col]) }}
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </template>
 
       <!-- 聚合视图：分组 / 指标 / 数值字段 / 时间粒度 → 序列表（与图表数据源同口径） -->
@@ -165,11 +173,12 @@ const {
             {{ t("dataDataset.exportCsv") }}
           </el-button>
         </div>
-        <el-table
+        <DataTable
           v-if="aggregateResult"
           v-loading="aggregateLoading"
           :data="aggregateResult.series"
           max-height="380"
+          :label="t('dataDataset.previewAggregate')"
         >
           <el-table-column
             prop="name"
@@ -182,13 +191,13 @@ const {
             :label="t('dataDataset.metricValue')"
             min-width="120"
           />
-        </el-table>
-        <el-empty
+        </DataTable>
+        <ReEmpty
           v-else
           :description="t('dataDataset.aggregateEmpty')"
           :image-size="72"
         />
       </template>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>

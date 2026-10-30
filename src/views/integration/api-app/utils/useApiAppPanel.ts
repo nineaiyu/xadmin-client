@@ -19,6 +19,7 @@ export function useApiAppPanel({
   confirmRegenerate,
   runCallbackProbe,
   openDialog,
+  openGrants,
   flags
 }: {
   t: ReturnType<typeof useI18n>["t"];
@@ -32,11 +33,13 @@ export function useApiAppPanel({
     state?: { loading: boolean; results: CallbackProbeResult[] }
   ) => Promise<void>;
   openDialog: (row: ApiApplicationItem | null) => void;
+  openGrants: (row: ApiApplicationItem) => void;
   flags: {
     canStats: boolean;
     canRegenerate: boolean;
     canTestCallback: boolean;
     canEdit: boolean;
+    canManageGrants: boolean;
   };
 }) {
   const openApiAppPanel = (row: ApiApplicationItem) => {
@@ -66,7 +69,8 @@ export function useApiAppPanel({
               regenerate: withClosed(() => confirmRegenerate(row)),
               // 回调测试结果在抽屉内展示：不收起抽屉
               testCallback: () => runCallbackProbe(row, probe),
-              edit: withClosed(() => openDialog(row))
+              edit: withClosed(() => openDialog(row)),
+              grants: withClosed(() => openGrants(row))
             }
           })
         })

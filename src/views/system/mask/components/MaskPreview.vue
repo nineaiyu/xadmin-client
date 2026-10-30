@@ -3,10 +3,12 @@ import { isSuccess } from "@/api/types";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { hasAuth } from "@/router/utils";
 import { maskApi } from "@/api/system/mask";
 import { roleApi } from "@/api/identity/role";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { listRows } from "@/api/base";
+import { maskTypeOptions } from "../utils/maskTypeOptions";
 
 defineOptions({
   name: "SystemDataMaskRulePreview"
@@ -20,15 +22,8 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-/** 与后端序列化器 mask_type labeled_choice 取值保持一致 */
-const maskTypeChoices = [
-  { value: "phone", label: t("mask.maskTypePhone") },
-  { value: "idcard", label: t("mask.maskTypeIdcard") },
-  { value: "email", label: t("mask.maskTypeEmail") },
-  { value: "name", label: t("mask.maskTypeName") },
-  { value: "bankcard", label: t("mask.maskTypeBankcard") },
-  { value: "custom", label: t("mask.maskTypeCustom") }
-];
+/** 与后端序列化器 mask_type labeled_choice 取值保持一致（单一前端副本） */
+const maskTypeChoices = computed(() => maskTypeOptions(t));
 
 const rule = props.rule ?? {};
 
@@ -65,6 +60,10 @@ const results = ref<Array<{ input: string; output: string }>>([]);
 const truncated = ref(false);
 /** false = 所选视角角色未命中规则（后端原样回显 output） */
 const applied = ref(true);
+/** 自定义正则非法：后端会回退原值，必须显式提示规则未生效 */
+const invalidPattern = ref(false);
+/** 角色读权限缺失时不拉角色列表，避免每次打开都弹告警 */
+const canReadRoles = hasAuth("list:SystemRole");
 
 /** 列表行 roles 为 [{pk,name}] 形态；兼容裸 pk 形态，取规则绑定角色 pk 集合 */
 const ruleRolePks = (): Array<string | number> => {
@@ -84,6 +83,7 @@ const viewerRoles = ref<Array<string | number>>(ruleRolePks());
 const roleOptions = ref<Array<{ pk: string | number; name: string }>>([]);
 
 onMounted(async () => {
+  if (!canReadRoles) return;
   try {
     const res = await fetchAllRows(roleApi.list);
     if (isSuccess(res) && res.data) {
@@ -113,6 +113,7 @@ const onPreview = () => {
     return;
   }
   loading.value = true;
+  invalidPattern.value = false;
   const previewRule: Record<string, unknown> = {
     mask_type: form.maskType,
     keep_head: form.keepHead,
@@ -132,10 +133,12 @@ const onPreview = () => {
           results: Array<{ input: string; output: string }>;
           truncated?: boolean;
           applied?: boolean;
+          invalid_pattern?: boolean;
         };
         results.value = data.results;
         truncated.value = Boolean(data.truncated);
         applied.value = data.applied !== false;
+        invalidPattern.value = Boolean(data.invalid_pattern);
       } else {
         message(res.detail, { type: "error" });
       }
@@ -219,6 +222,13 @@ const onPreview = () => {
       <el-button type="primary" :loading="loading" @click="onPreview">
         {{ t("mask.previewBtn") }}
       </el-button>
+    </el-form-item>
+    <el-form-item v-if="results.length && invalidPattern">
+      <el-alert
+        type="error"
+        :closable="false"
+        :title="t('mask.previewInvalidPattern')"
+      />
     </el-form-item>
     <el-form-item v-if="results.length && !applied">
       <el-alert

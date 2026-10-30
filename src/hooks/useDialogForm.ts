@@ -1,6 +1,7 @@
 import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
+import { scrollToFirstError } from "@/hooks/useFormScrollToError";
 import type { DataEnvelope } from "@/api/types";
 import type { Ref } from "vue";
 
@@ -44,6 +45,8 @@ export function useDialogForm<TPayload>(options: {
   readPayload?: () => TPayload | null | undefined;
   /** 提交动作：hook 内部统一 `catch(normalizeError)` 归一网络异常 */
   submit: (payload: TPayload) => Promise<DataEnvelope>;
+  /** 可选的表单校验（el-form.validate 包装）；失败时滚动到首个错误并收口 loading */
+  validate?: () => boolean | Promise<boolean>;
   /** 成功提示文案（不传则不提示） */
   successText?: string;
   /** 成功后回调（`done()` 已调用；通常用于刷新列表或读取创建结果 res.data） */
@@ -52,6 +55,11 @@ export function useDialogForm<TPayload>(options: {
   failType?: "error" | "warning";
   /** 自定义失败处理（给定时不做默认 detail 提示） */
   onFail?: (res: DataEnvelope) => void;
+  /**
+   * 校验失败时的错误定位：默认按 formRef 根节点滚动到首个错误项；
+   * 表单根不是 el-form / 需要切页签后再滚动时用回调覆盖；`false` 关闭。
+   */
+  scrollToError?: false | (() => void);
 }) {
   const readPayload =
     options.readPayload ?? (() => options.formRef?.value?.getPayload());
@@ -61,9 +69,26 @@ export function useDialogForm<TPayload>(options: {
    * 校验守卫 → 提交（异常归一）→ 成功 `done()` / 失败提示并 `closeLoading()`。
    */
   async function beforeSure(done: () => void, ctx: BeforeSureContext) {
+    if (options.validate) {
+      const valid = await options.validate();
+      if (!valid) {
+        if (options.scrollToError) options.scrollToError();
+        else if (options.scrollToError !== false && options.formRef?.value) {
+          scrollToFirstError(options.formRef.value);
+        }
+        ctx.closeLoading();
+        return;
+      }
+    }
     const payload = readPayload();
     if (payload === null || payload === undefined) {
-      // 校验未通过：必须复位 loading，否则确定按钮永久转圈
+      // 校验未通过：滚动到首个错误字段（长表单不靠 toast 猜位置），
+      // 并必须复位 loading，否则确定按钮永久转圈
+      if (options.scrollToError) {
+        options.scrollToError();
+      } else if (options.scrollToError !== false && options.formRef?.value) {
+        scrollToFirstError(options.formRef.value);
+      }
       ctx.closeLoading();
       return;
     }

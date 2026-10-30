@@ -5,25 +5,13 @@ import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import type { DashboardCard, DashboardItem } from "@/api/dataset/datasets";
 import { ReResize, type Box } from "@/components/ReResize";
 import ScreenPane from "./ScreenPane.vue";
+import { FREE_MIN_PANE_SIZE, type FreeDesign } from "../utils/freeLayout";
+import type { FreeGridSnap } from "../utils/freeSnap";
 import {
-  FREE_MIN_PANE_SIZE,
-  FREE_PANE_DEFAULTS,
-  freeBoxFromOffset,
-  type FreeDesign
-} from "../utils/freeLayout";
-import {
-  FREE_SNAP_THRESHOLD,
-  snapFreeBox,
-  type FreeGridSnap,
-  type FreeSnapGuide
-} from "../utils/freeSnap";
-import {
-  panesInRect,
-  rectFromPoints,
-  selectionBounds,
-  type FreeRect
-} from "../utils/freeSelect";
-import { parsePaletteDrop } from "../utils/dnd";
+  guideStyle,
+  rectStyle,
+  useFreeBoardGestures
+} from "../utils/freeBoardGestures";
 import { ZOOM_VIEWPORT_PADDING } from "../utils/viewport";
 
 defineOptions({ name: "ScreenFreeCanvasBoard" });
@@ -34,10 +22,8 @@ defineOptions({ name: "ScreenFreeCanvasBoard" });
  *
  * - 窗格由 `ReResize` 承接拖动与八向缩放（父容器约束、最小 16px、按 `scale` 换算增量），
  *   停手落数据；
- * - **多选**：按下即选中（未在选区内则单选，`Shift/⌘` 为加选/减选）；空白处拖拽 = 框选
- *   （矩形与窗格求交）；拖动选区内任一窗格 = **整组跟随**——按「起手快照」统一夹回画幅，
- *   几何在此算好后上抛整组盒模型（组合层只写数据，不重复算几何）；
- * - 吸附参考线：`snap` 钩子（画幅边界 / 中线 + 其他窗格边框与中性线），命中绘制引导线；
+ * - 多选 / 组拖动 / 框选 / 吸附参考线 / 组件库拖放的手势与几何在
+ *   utils/freeBoardGestures.ts（行数门禁抽出），算好后上抛、组合层只写数据；
  * - 组包围盒与框选矩形都画在**画布坐标系**内（随 zoom 一起缩放）。
  */
 const props = defineProps<{
@@ -82,16 +68,6 @@ const viewportEl = ref<HTMLElement>();
 const canvasRef = ref<HTMLElement>();
 defineExpose({ viewportEl, canvasEl: canvasRef });
 
-const guides = ref<FreeSnapGuide[]>([]);
-const marquee = ref<FreeRect | null>(null);
-/** 组拖动起手快照：首次移动时捕获，手势期间不随数据变化（避免夹取累积） */
-let groupStart: {
-  pk: string;
-  boxes: Record<string, Box>;
-  bounds: FreeRect;
-} | null = null;
-let marqueeStart: { x: number; y: number; additive: boolean } | null = null;
-
 const zoom = computed(() => (props.zoom && props.zoom > 0 ? props.zoom : 1));
 const stageStyle = computed(() => ({
   width: `${props.design.design_w * zoom.value + ZOOM_VIEWPORT_PADDING * 2}px`,
@@ -108,182 +84,29 @@ const dashboardName = (pk?: string) =>
 const cardsOf = (pane: ScreenLayoutPane): DashboardCard[] =>
   props.dashboards.find(item => item.pk === pane.dashboard)?.layout ?? [];
 
-const isChosen = (pk: string) => props.selection.includes(pk);
-const groupMode = computed(() => props.selection.length > 1);
-const groupBounds = computed(() =>
-  groupMode.value ? selectionBounds(props.panes, props.selection) : null
-);
-
-/** 指针坐标 → 画布内数据坐标（先减画布矩形起点、再除以缩放因子） */
-function toData(event: PointerEvent | DragEvent): { x: number; y: number } {
-  const canvas = canvasRef.value;
-  if (!canvas) return { x: 0, y: 0 };
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: (event.clientX - rect.left) / zoom.value,
-    y: (event.clientY - rect.top) / zoom.value
-  };
-}
-
-/** 起手快照：组内各窗格的盒模型 + 选区包围盒（组夹取以此为基准） */
-function snapshot(): { boxes: Record<string, Box>; bounds: FreeRect } {
-  const boxes: Record<string, Box> = {};
-  for (const pane of props.panes) {
-    if (isChosen(pane.pk)) {
-      boxes[pane.pk] = { x: pane.x, y: pane.y, w: pane.w, h: pane.h };
-    }
-  }
-  return {
-    boxes,
-    bounds: selectionBounds(props.panes, props.selection) ?? {
-      x: 0,
-      y: 0,
-      w: 0,
-      h: 0
-    }
-  };
-}
-
-/** 整组夹取：任何一个成员都不得越出画幅（越界即整组停住） */
-function clampDelta(bounds: FreeRect, dx: number, dy: number) {
-  return {
-    dx: Math.min(
-      Math.max(dx, -bounds.x),
-      props.design.design_w - (bounds.x + bounds.w)
-    ),
-    dy: Math.min(
-      Math.max(dy, -bounds.y),
-      props.design.design_h - (bounds.y + bounds.h)
-    )
-  };
-}
-
-/** 吸附候选 = 其他窗格；组拖动时再按起手快照做整组夹取 */
-const snapFor = (pk: string) => (box: Box, dir: string) => {
-  const result = snapFreeBox(
-    box,
-    props.panes.filter(pane => pane.pk !== pk),
-    props.design,
-    dir,
-    FREE_SNAP_THRESHOLD,
-    props.gridSnap,
-    // 旋转窗格按视觉盒吸附：把本窗格的旋转角带进去
-    props.panes.find(pane => pane.pk === pk)?.rotate ?? 0
-  );
-  if (dir || !groupMode.value || !isChosen(pk)) return result;
-  const start = groupStart ?? (groupStart = { pk, ...snapshot() });
-  const anchor = start.boxes[pk];
-  if (!anchor) return result;
-  const delta = clampDelta(
-    start.bounds,
-    result.box.x - anchor.x,
-    result.box.y - anchor.y
-  );
-  return {
-    box: { ...result.box, x: anchor.x + delta.dx, y: anchor.y + delta.dy },
-    guides: result.guides
-  };
-};
-
-const onSnapping = (next: unknown[]) => {
-  guides.value = next as FreeSnapGuide[];
-};
-
-const guideStyle = (guide: FreeSnapGuide) =>
-  guide.axis === "x"
-    ? { left: `${guide.position}px` }
-    : { top: `${guide.position}px` };
-
-const rectStyle = (rect: FreeRect) => ({
-  left: `${rect.x}px`,
-  top: `${rect.y}px`,
-  width: `${rect.w}px`,
-  height: `${rect.h}px`
+/** 手势层（选中 / 组拖动 / 框选 / 吸附 / 拖放，见 utils/freeBoardGestures.ts） */
+const {
+  guides,
+  marquee,
+  groupBounds,
+  isChosen,
+  snapFor,
+  onSnapping,
+  onPanePointerDown,
+  onDragging,
+  onDeactivated,
+  onCanvasPointerDown,
+  onDrop
+} = useFreeBoardGestures({
+  panes: computed(() => props.panes),
+  selection: computed(() => props.selection),
+  design: computed(() => props.design),
+  editable: computed(() => props.editable),
+  gridSnap: computed(() => props.gridSnap),
+  zoom,
+  canvasRef,
+  emit
 });
-
-/** 按下即选中：已在选区内保持不动（才能直接整组拖动），Shift/⌘ 为加选/减选 */
-function onPanePointerDown(pk: string, event: PointerEvent) {
-  if (!props.editable || event.button !== 0) return;
-  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-  if (additive) {
-    emit("select", { pk, additive: true });
-    return;
-  }
-  if (!isChosen(pk)) emit("select", { pk, additive: false });
-}
-
-function onDragging(pk: string, x: number, y: number) {
-  if (!groupMode.value || !isChosen(pk) || groupStart?.pk !== pk) return;
-  const anchor = groupStart.boxes[pk];
-  if (!anchor) return;
-  const delta = clampDelta(groupStart.bounds, x - anchor.x, y - anchor.y);
-  const boxes: Record<string, Box> = {};
-  for (const [key, box] of Object.entries(groupStart.boxes)) {
-    boxes[key] = { ...box, x: box.x + delta.dx, y: box.y + delta.dy };
-  }
-  emit("groupMove", { pk, boxes });
-}
-
-function onDeactivated() {
-  guides.value = [];
-  groupStart = null;
-}
-
-/* ---------------- 框选 ---------------- */
-
-function onCanvasPointerDown(event: PointerEvent) {
-  if (!props.editable || event.button !== 0) return;
-  const start = toData(event);
-  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-  marqueeStart = { ...start, additive };
-  if (!additive) emit("select", { pk: "", additive: false });
-  marquee.value = rectFromPoints(start.x, start.y, start.x, start.y);
-  window.addEventListener("pointermove", onMarqueeMove);
-  window.addEventListener("pointerup", onMarqueeUp);
-}
-
-function onMarqueeMove(event: PointerEvent) {
-  if (!marqueeStart) return;
-  if (event.buttons === 0) {
-    onMarqueeUp();
-    return;
-  }
-  const point = toData(event);
-  marquee.value = rectFromPoints(
-    marqueeStart.x,
-    marqueeStart.y,
-    point.x,
-    point.y
-  );
-}
-
-function onMarqueeUp() {
-  const rect = marquee.value;
-  const additive = marqueeStart?.additive ?? false;
-  marqueeStart = null;
-  marquee.value = null;
-  window.removeEventListener("pointermove", onMarqueeMove);
-  window.removeEventListener("pointerup", onMarqueeUp);
-  // 位移过小视为「点击空白」（清空选中已在按下时完成）
-  if (!rect || (rect.w < 4 && rect.h < 4)) return;
-  emit("selectMany", { pks: panesInRect(props.panes, rect), additive });
-}
-
-const onDrop = (event: DragEvent) => {
-  const payload = parsePaletteDrop(event);
-  const canvas = canvasRef.value;
-  if (!payload || !canvas || !props.editable) return;
-  const point = toData(event);
-  emit("drop", {
-    ...payload,
-    box: freeBoxFromOffset(
-      point.x,
-      point.y,
-      FREE_PANE_DEFAULTS[payload.type],
-      props.design
-    )
-  });
-};
 </script>
 
 <template>

@@ -1,19 +1,20 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { passkeyApi } from "@/api/system/security";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import { isPasskeySupported } from "@/utils/webauthn";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePrompt } from "@/hooks/useMessageBox";
 import type { RecordType } from "plus-pro-components";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 
 /**
  * Passkey 凭据管理：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
@@ -26,6 +27,7 @@ import { normalizeError } from "@/utils/apiError";
 const { t } = useI18n();
 const { registerPasskey } = useWebAuthn();
 const confirm = useConfirm();
+const prompt = usePrompt();
 
 const loading = ref(false);
 const registering = ref(false);
@@ -37,7 +39,7 @@ const load = async () => {
     const res = await passkeyApi.list({ page: 1, size: 50 });
     if (isSuccess(res)) rows.value = res.data?.results ?? [];
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -48,21 +50,11 @@ const register = async () => {
     message(t("passkey.unsupported"), { type: "warning" });
     return;
   }
-  let name = "";
-  try {
-    const input = await ElMessageBox.prompt(
-      t("passkey.namePlaceholder"),
-      t("passkey.add"),
-      {
-        confirmButtonText: t("buttons.sure"),
-        cancelButtonText: t("buttons.cancel"),
-        inputValue: ""
-      }
-    );
-    name = String(input.value ?? "").trim();
-  } catch {
-    return;
-  }
+  const input = await prompt(t("passkey.namePlaceholder"), t("passkey.add"), {
+    inputValue: ""
+  });
+  if (!input) return;
+  const name = input.value.trim();
   registering.value = true;
   try {
     const ok = await registerPasskey({
@@ -71,14 +63,14 @@ const register = async () => {
     });
     if (ok) await load();
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     registering.value = false;
   }
 };
 
 const remove = async (row: RecordType) => {
-  if (!(await confirm(t("passkey.removeConfirm")))) return;
+  if (!(await confirm(t("passkey.removeConfirm"), { danger: true }))) return;
   // 异常归一为可读失败结果：删除失败（凭据已被移除等）需给出可读原因
   const res = await passkeyApi.destroy(row?.pk).catch(normalizeError);
   if (isSuccess(res)) {
@@ -89,9 +81,8 @@ const remove = async (row: RecordType) => {
   }
 };
 
-/** 时间展示：服务端 ISO 串统一裁到秒（本地化时区口径由后端下发值决定） */
-const formatTime = (value: unknown) =>
-  value ? String(value).replace("T", " ").slice(0, 19) : "-";
+/** 时间展示：服务端 ISO 串统一转本地可读格式 */
+const formatTime = (value: unknown) => formatDateTime(value as string) || "-";
 
 /** 凭据列：时间与删除动作需格式化，走具名插槽 */
 const columns = computed<ReadonlyColumn[]>(() => [

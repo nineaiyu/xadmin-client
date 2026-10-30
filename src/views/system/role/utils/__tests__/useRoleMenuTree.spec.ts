@@ -31,7 +31,7 @@ vi.mock("@/utils/fetchAllRows", () => ({ fetchAllRows: fetchAllRowsMock }));
 import { useRoleMenuTree } from "../useRoleMenuTree";
 import { menuApi } from "@/api/system/menu";
 import { modelLabelFieldApi } from "@/api/system/field";
-import type { PermissionTreeNode } from "../permissionTree";
+import type { PermissionTreeNode } from "@/components/ReMenuPermissionTree/utils/permissionTree";
 
 const MENU_ROWS = [
   { pk: "m1", name: "系统管理", parent: null },
@@ -77,7 +77,7 @@ describe("useRoleMenuTree 菜单树回填", () => {
     expect(tree[0].children).toHaveLength(1); // 子节点 m2
   });
 
-  it("字段接口失败：菜单树不受影响（catch 静默，只损失字段节点）", async () => {
+  it("字段接口失败：菜单树不受影响，但置位 fieldError 阻止编辑保存", async () => {
     hasAuthMock.mockReturnValue(true);
     fetchAllRowsMock.mockImplementation(async (api: unknown) => {
       if (api === menuApi.list) {
@@ -93,8 +93,9 @@ describe("useRoleMenuTree 菜单树回填", () => {
     expect(tree).toHaveLength(1);
     const menuLeaf = (tree[0].children as PermissionTreeNode[])[0];
     expect(menuLeaf.pk).toBe("m2");
-    // 字段接口失败 → 无注入的字段分组子节点
+    // 字段接口失败 → 无注入的字段分组子节点，且必须标记失败
     expect(menuLeaf.children).toBeUndefined();
+    expect(state.fieldError.value).toBe(true);
   });
 
   it("字段接口成功：绑定模型的叶子菜单注入字段分组节点", async () => {
@@ -135,10 +136,33 @@ describe("useRoleMenuTree 菜单树回填", () => {
       data: null
     });
 
-    mountHost();
+    const state = mountHost();
     await flushPromises();
 
     expect(fetchAllRowsMock).toHaveBeenCalledTimes(1);
     expect(messageMock).toHaveBeenCalled();
+    // 页面据此禁用新增/编辑：空树保存会清空角色授权
+    expect(state.menuError.value).toBe(true);
+  });
+
+  it("无 list:SystemMenu：标记 menuDenied 且不请求菜单", async () => {
+    hasAuthMock.mockReturnValue(false);
+
+    const state = mountHost();
+    await flushPromises();
+
+    expect(state.menuDenied.value).toBe(true);
+    expect(state.menuTreeData.value).toEqual([]);
+    expect(fetchAllRowsMock).not.toHaveBeenCalled();
+  });
+
+  it("菜单请求异常：menuError 置位", async () => {
+    hasAuthMock.mockReturnValue(true);
+    fetchAllRowsMock.mockRejectedValue(new Error("menu api down"));
+
+    const state = mountHost();
+    await flushPromises();
+
+    expect(state.menuError.value).toBe(true);
   });
 });

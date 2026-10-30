@@ -11,6 +11,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { savedViewApi } from "@/api/system/security";
 import { type DetailResult, isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { apiFailure, normalizeError } from "@/utils/apiError";
 import type { RecordType } from "plus-pro-components";
 import type { PageColumn } from "../utils/types";
 import SavedViewMenu from "./SavedViewMenu.vue";
@@ -102,13 +103,11 @@ const applyView = (row: SavedViewRow, silent = false) => {
 };
 
 /** 请求异常归一：HTTP 层错误也要落到业务码分支（否则弹窗 loading 悬挂） */
-const fallback = (
-  error: { detail?: string } | undefined
-): DetailResult<RecordType> => ({
-  code: -1,
-  detail: error?.detail ?? String(t("results.failed")),
-  data: {}
-});
+const fallback = (error: unknown): DetailResult<RecordType> =>
+  apiFailure(
+    normalizeError(error).detail || String(t("results.failed")),
+    {}
+  ) as DetailResult<RecordType>;
 
 let formComponent: Component | null = null;
 
@@ -149,9 +148,14 @@ const openForm = async (
         columns: props.columns,
         defaultName: options.defaultName
       }),
-    beforeSure: async done => {
+    beforeSure: async (done, { closeLoading }) => {
       const payload = formRef.value?.getPayload?.();
-      if (!payload) return;
+      if (!payload) {
+        // 名称为空等前端校验失败：必须复位 footer loading，否则保存按钮永久
+        // spinner，用户修正后也无法再次提交。
+        closeLoading();
+        return;
+      }
       const request =
         mode === "edit" && options.row
           ? savedViewApi.partialUpdate(options.row.pk, payload)
@@ -163,6 +167,7 @@ const openForm = async (
       const res = await request.catch(fallback);
       if (!isSuccess(res)) {
         message(String(res.detail ?? t("results.failed")), { type: "error" });
+        closeLoading();
         return;
       }
       currentPk.value =
@@ -228,7 +233,11 @@ const toggleDefault = async (row: SavedViewRow) => {
 };
 
 const remove = async (row: SavedViewRow) => {
-  if (!(await confirm(t("savedView.deleteConfirm", { name: row.name })))) {
+  if (
+    !(await confirm(t("savedView.deleteConfirm", { name: row.name }), {
+      danger: true
+    }))
+  ) {
     return;
   }
   const res = await savedViewApi.destroy(row.pk).catch(fallback);

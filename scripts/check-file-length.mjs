@@ -22,19 +22,33 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SCAN_DIR = "src";
 const EXTENSIONS = new Set([".ts", ".tsx", ".vue", ".js"]);
 const THRESHOLD = 500;
+// 预警线：达到 90% 阈值即提示拆分计划（不阻断 CI，但计入周报）
+const WARN_THRESHOLD = Math.floor(THRESHOLD * 0.9);
+
+//: >450 行文件的拆分计划（非豁免；登记后仍参与 500 行门禁）
+const SPLIT_PLAN = {
+  "src/components/ReCaptchaChallenge/src/index.vue":
+    "验证码编排下沉 composable（挑战状态 / 提交与重试），模板只留展示",
+  "src/views/system/codegen/index.vue":
+    "字段表与预览下载拆为子组件（字段表格 / 生成结果面板）",
+  "src/views/dashboard/components/ChartCard.vue":
+    "取数与 ECharts 生命周期下沉 useChartCard，模板只留壳",
+  "src/views/system/directory/components/DirectoryMembers.vue":
+    "成员表格与详情抽屉拆分（列表列配置 / 操作编排）",
+  "src/views/system/permission/components/RuleListEditor.vue":
+    "规则行编辑与预览拆为子组件（行状态 / 规则渲染）"
+};
 
 // 数据文件豁免（不计入源码行数口径）
 const EXEMPT = {
-  "src/components/ReIcon/data.ts": "图标数据集（数据文件）"
+  "src/components/ReIcon/data.ts": "图标数据集（数据文件）",
+  "src/api/types/openapi.d.ts":
+    "OpenAPI 全量契约类型（dump_openapi 生成，禁止手改）"
 };
 
 // 存量基线：相对路径 -> 基线行数（只减不增；降到阈值内即可从此表移除）
 // 2026-09-17：存量巨型文件已全部拆分清零（历史 4 处 → 0），保留空表以承接未来回归
-const BASELINE = {
-  // 权限规则编辑表单：值控件类型分派、数据范围与试算逻辑内聚一处，
-  // 无权限降级提示加入后越线 10 行；拆分会切断元数据驱动的上下文，暂登记保留
-  "src/views/system/permission/components/RuleEditForm.vue": 510
-};
+const BASELINE = {};
 
 function walk(dir) {
   const rows = [];
@@ -69,6 +83,21 @@ const oversized = rows
 console.log(
   `文件行数门禁：扫描 ${rows.length} 个源文件，阈值 ${THRESHOLD} 行，超阈值 ${oversized.length} 个（豁免 ${Object.keys(EXEMPT).length} 个数据文件）。`
 );
+const warnings = rows
+  .filter(
+    row =>
+      !EXEMPT[row.rel] && row.lines >= WARN_THRESHOLD && row.lines <= THRESHOLD
+  )
+  .sort((a, b) => b.lines - a.lines);
+if (warnings.length > 0) {
+  console.log(`行数预警（≥${WARN_THRESHOLD} 行，接近 ${THRESHOLD} 阈值）：`);
+  for (const { rel, lines } of warnings) {
+    console.log(
+      `  ${String(lines).padStart(5)} 行  ${rel}${SPLIT_PLAN[rel] ? `（拆分计划：${SPLIT_PLAN[rel]}）` : ""}`
+    );
+  }
+}
+
 for (const { rel, lines } of oversized) {
   let flag = "";
   if (BASELINE[rel] !== undefined) {

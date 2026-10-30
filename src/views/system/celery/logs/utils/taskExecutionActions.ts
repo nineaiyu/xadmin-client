@@ -4,7 +4,7 @@ import { normalizeError } from "@/utils/apiError";
 import { taskCenterApi, type TaskCenterKind } from "@/api/task/task";
 import { exportRecordApi } from "@/api/task/export";
 import { importRecordApi } from "@/api/task/import";
-import { openTaskLogDialog } from "@/views/system/components/taskLogDialog";
+import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { ExecutionRow } from "./taskExecutionTypes";

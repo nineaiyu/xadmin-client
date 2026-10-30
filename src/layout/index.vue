@@ -16,6 +16,7 @@ import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
 import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
 import { createTagsPreferences } from "@/layout/hooks/tagViewsConfig";
+import { resolveChromeHeight } from "@/layout/hooks/chromeHeight";
 import { mixedExtraCollapsed } from "@/layout/hooks/useNavState";
 import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
@@ -129,23 +130,19 @@ const fullContent = computed(() => isFullContent(layoutMode.value));
 /**
  * 固定头部总高（顶栏 + 页签条）：「内容区让位」（lay-content）与「侧栏排在
  * 顶栏下方」的偏移（混合 / 侧边导航，见 style/sidebar）共用同一口径，落到
- * `--layout-chrome-h` 变量上。
+ * `--layout-chrome-h` 变量上。组合输入的纯计算见 hooks/chromeHeight.ts（带
+ * 表驱动单测）。
  * - 隐藏页签：只剩顶栏；隐藏顶栏（CSS 级）：只剩页签条；全屏内容：0。
  */
 const { tagsStyle } = createTagsPreferences();
-const chromeHeight = computed(() => {
-  if (fullContent.value) return "0px";
-  if ($storage?.configure?.hideTabs) {
-    return headerHiddenByConfig.value ? "0px" : "var(--layout-header-h)";
-  }
-  const tags =
-    tagsStyle.value === "chrome"
-      ? "var(--layout-tags-chrome-h)"
-      : "var(--layout-tags-compact-h)";
-  return headerHiddenByConfig.value
-    ? `calc(${tags} - var(--layout-header-h))`
-    : tags;
-});
+const chromeHeight = computed(() =>
+  resolveChromeHeight({
+    fullContent: fullContent.value,
+    hideTabs: Boolean($storage?.configure?.hideTabs),
+    headerHidden: headerHiddenByConfig.value,
+    tagsStyle: tagsStyle.value
+  })
+);
 
 // 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局与全屏内容下无固定头部可隐藏）
 const { hidden: headerHidden } = useHeaderAutoHide(
@@ -164,7 +161,11 @@ usePreferenceAttributes();
 const { lock } = useLockScreen();
 useLayoutShortcutKeys({
   lock,
-  toggleSidebar: () => useAppStoreHook().toggleSideBar(),
+  toggleSidebar: () => {
+    // full-content 布局不渲染侧栏；此时写持久化折叠态会让切回其他布局时侧栏意外收起
+    if (fullContent.value) return;
+    useAppStoreHook().toggleSideBar();
+  },
   openPreferences: () => emitter.emit("openPanel" as never),
   logout: () => useUserStoreHook().logOut()
 });
@@ -254,8 +255,13 @@ const sidebarInert = computed(
   () => sidebarHidden.value || (set.device === "mobile" && !set.sidebar.opened)
 );
 
-function setTheme(menuLayout: string) {
+/** 只切换运行时 body 属性（CSS 侧 `body[layout=...]` 消费），不动持久化偏好 */
+function applyLayoutTheme(menuLayout: string) {
   window.document.body.setAttribute("layout", menuLayout);
+}
+
+function setTheme(menuLayout: string) {
+  applyLayoutTheme(menuLayout);
   $storage.layout = {
     layout: `${menuLayout}`,
     theme: $storage.layout?.theme,
@@ -276,13 +282,20 @@ function toggle(device: string, bool: boolean) {
 let isAutoCloseSidebar = true;
 
 useResizeObserver(appWrapperRef, entries => {
-  if (isMobile) return;
   const entry = entries[0];
   const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
+  // 视口尺寸无条件同步（SettingStretch 等消费方在移动端也需真实尺寸）；
+  // 移动端的自动折叠/布局回落逻辑仍跳过，避免覆写桌面偏好
   useAppStoreHook().setViewportSize({ width, height });
-  width <= BREAKPOINTS.md
-    ? setTheme("vertical")
-    : setTheme(useAppStoreHook().layout);
+  if (isMobile) return;
+  if (width <= BREAKPOINTS.md) {
+    // 窄屏临时回落竖排：只改运行时 body 属性，不覆写持久化布局偏好——
+    // 否则窄屏下刷新页面会把用户的 mix / horizontal 选择永久覆盖成 vertical
+    // （渲染侧由 resolveLayoutMode 的 mobile 强制回落兜底，无需落库）
+    applyLayoutTheme("vertical");
+  } else {
+    setTheme(useAppStoreHook().layout);
+  }
   /** width app-wrapper类容器宽度（断点见 src/utils/breakpoints.ts，与 SCSS 侧同源）
    * 0 < width <= md(768) 隐藏侧边栏
    * md(768) < width <= lg(1024) 折叠侧边栏
@@ -297,10 +310,14 @@ useResizeObserver(appWrapperRef, entries => {
       isAutoCloseSidebar = false;
     }
   } else if (width > BREAKPOINTS.lg && !set.sidebar.isClickCollapse) {
-    toggle("desktop", true);
+    // 目标态已是「桌面 + 展开」时跳过：observer 高频触发，重复 toggle 会在
+    // 每次事件里写一次 storage（sidebarStatus 落盘）
+    if (!set.sidebar.opened || set.device !== "desktop")
+      toggle("desktop", true);
     isAutoCloseSidebar = true;
   } else {
-    toggle("desktop", false);
+    // 宽屏 + 用户手动折叠：折叠是既成事实，只补设备档同步，不再写折叠态
+    if (set.device !== "desktop") useAppStoreHook().toggleDevice("desktop");
     isAutoCloseSidebar = false;
   }
 });

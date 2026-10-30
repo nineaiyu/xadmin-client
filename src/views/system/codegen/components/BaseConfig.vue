@@ -148,10 +148,10 @@ onMounted(loadMenus);
     <el-form-item :label="t('codegen.menuIcon')">
       <ReIconPicker v-model="state.menu_icon" />
     </el-form-item>
-    <div v-if="planLoading" class="text-xs text-gray-400">
+    <div v-if="planLoading" class="text-xs text-fg-muted">
       {{ t("codegen.planLoading") }}
     </div>
-    <div v-else-if="state.model" class="text-xs text-gray-400">
+    <div v-else-if="state.model" class="text-xs text-fg-muted">
       {{ selectedMeta }}
     </div>
   </el-form>

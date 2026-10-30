@@ -22,6 +22,7 @@ export function useFormMyColumns({
   canDestroy,
   canResubmit,
   canSubmit,
+  canCancel,
   actions
 }: {
   t: TFunction;
@@ -29,12 +30,14 @@ export function useFormMyColumns({
   canDestroy: boolean;
   canResubmit: boolean;
   canSubmit: boolean;
+  canCancel: boolean;
   actions: {
     openDetail: (row: SubmissionItem) => void;
     openEdit: (row: SubmissionItem) => void;
     submitDraft: (row: SubmissionItem) => void;
     resubmit: (row: SubmissionItem) => void;
     remove: (row: SubmissionItem) => void;
+    cancel: (row: SubmissionItem) => void;
   };
 }) {
   /** 状态列：字典色优先、缺省按状态语义兜底；无状态（无需审批）不留空 */
@@ -77,12 +80,23 @@ export function useFormMyColumns({
           _column: { key: "data" },
           label: t("dform.submissionData"),
           minWidth: 240,
-          cellRenderer: ({ row }: { row: RecordType }) =>
-            h(
+          cellRenderer: ({ row }: { row: RecordType }) => {
+            const data = (row as SubmissionItem).data ?? {};
+            const textOptions = {
+              tableRows: (count: number) => t("formData.tableRows", { count })
+            };
+            return h(
               "span",
-              { class: "text-xs" },
-              submissionDataText((row as SubmissionItem).data ?? {})
-            )
+              {
+                class: "block truncate text-xs",
+                title: submissionDataText(data, {
+                  ...textOptions,
+                  maxLength: 0
+                })
+              },
+              submissionDataText(data, textOptions)
+            );
+          }
         } as PageTableColumn);
       }
     });
@@ -95,7 +109,7 @@ export function useFormMyColumns({
 
   const { operationButtonsProps } = useFormMyRowButtons({
     t,
-    flags: { canEdit, canDestroy, canResubmit, canSubmit },
+    flags: { canEdit, canDestroy, canResubmit, canSubmit, canCancel },
     actions
   });
 

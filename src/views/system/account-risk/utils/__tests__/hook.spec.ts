@@ -14,6 +14,7 @@ vi.mock("@/router/utils", () => ({
   hasAuth: () => true,
   usePageAuth: () => ({
     scan: true,
+    scanStatus: true,
     handle: true,
     batchHandle: true,
     stats: false
@@ -24,6 +25,7 @@ vi.mock("@/api/system/security", () => ({
   accountRiskApi: {
     stats: vi.fn().mockResolvedValue({ code: 1000, data: null }),
     scan: vi.fn(),
+    scanStatus: vi.fn(),
     handle: vi.fn(),
     batchHandle: vi.fn()
   }
@@ -37,10 +39,15 @@ vi.mock("@/components/ReIcon/src/hooks", () => ({
   useRenderIcon: (icon: unknown) => icon
 }));
 
-vi.mock("@/components/RePlusPage", () => ({
-  handleOperation: vi.fn(),
-  formatPageColumns: (cols: unknown) => cols
-}));
+vi.mock("@/components/RePlusPage", async () => {
+  const { defineListPage } =
+    await import("@/components/RePlusPage/src/utils/defineListPage");
+  return {
+    defineListPage,
+    handleOperation: vi.fn(),
+    formatPageColumns: (cols: unknown) => cols
+  };
+});
 
 vi.mock("../components/RiskHandleForm.vue", () => ({
   default: { name: "RiskHandleForm", render: () => null }
@@ -81,9 +88,8 @@ describe("metricEntriesOf / metricText（风险明细指标结构化）", () => 
 
 describe("useAccountRisk 批量处置按钮显隐", () => {
   it("show 为 selection-change 驱动的响应式计算（随选中集合翻转）", () => {
-    const tableRef = ref();
     const selectedRows = ref<RecordType[]>([]);
-    const { tableBarButtonsProps } = useAccountRisk(tableRef, selectedRows);
+    const { tableBarButtonsProps } = useAccountRisk(selectedRows);
 
     const buttons = tableBarButtonsProps.value.buttons ?? [];
     const batchHandle = buttons.find(button => button.code === "batchHandle");

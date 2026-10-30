@@ -6,7 +6,11 @@ import { epColor } from "@/utils/chartTheme";
 
 defineOptions({ name: "MonitorHealthBanner" });
 
-const props = defineProps<{ health: MonitorHealth | null }>();
+const props = defineProps<{
+  health: MonitorHealth | null;
+  /** 概览接口失败：与「尚未加载」区分，横幅显式显示未知而不是健康 0% */
+  unavailable?: boolean;
+}>();
 
 const { t } = useI18n();
 
@@ -23,10 +27,15 @@ const ITEM_STATUS_KEY: Record<string, string> = {
   unknown: "systemMonitor.itemUnknown"
 };
 
-const status = computed(() => props.health?.status ?? "healthy");
+const status = computed(() => props.health?.status ?? null);
 // 未知状态（后端新增档位/异常数据）回退健康档：直接取键会拿到 undefined 致渲染崩溃
-const meta = computed(() => STATUS_META[status.value] ?? STATUS_META.healthy);
-const score = computed(() => props.health?.score ?? 0);
+const meta = computed(() =>
+  status.value
+    ? (STATUS_META[status.value] ?? STATUS_META.healthy)
+    : { tag: "info" as const, key: "systemMonitor.healthUnknown" }
+);
+// null = 未获取（接口失败 / 尚未加载），不能按 0 分渲染
+const score = computed(() => props.health?.score ?? null);
 const items = computed(() => props.health?.items ?? []);
 const firing = computed(() => props.health?.alerts?.firing ?? 0);
 
@@ -35,7 +44,9 @@ const scoreColor = computed(() =>
     ? epColor("danger")
     : status.value === "warning"
       ? epColor("warning")
-      : epColor("success")
+      : status.value === "healthy"
+        ? epColor("success")
+        : epColor("info")
 );
 
 const checkedAt = computed(() =>
@@ -53,23 +64,34 @@ const itemTagType = (itemStatus: string) =>
 </script>
 
 <template>
-  <el-card shadow="never" class="mb-4" data-testid="monitor-health-banner">
+  <el-card
+    shadow="never"
+    class="mb-4"
+    data-testid="monitor-health-banner"
+    :title="unavailable ? t('systemMonitor.dataUnavailable') : undefined"
+  >
     <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
       <div class="flex items-center gap-4">
         <el-progress
+          v-if="score !== null"
           type="circle"
           :percentage="score"
           :width="68"
           :stroke-width="8"
           :color="scoreColor"
         />
+        <div v-else class="health-unknown" data-testid="monitor-health-unknown">
+          —
+        </div>
         <div class="flex flex-col gap-1">
           <span class="text-sm text-(--el-text-color-regular)">
             {{ t("systemMonitor.healthOverview") }}
           </span>
-          <el-tag :type="meta.tag" size="small" effect="dark">
-            {{ t(meta.key) }}
-          </el-tag>
+          <span data-testid="monitor-health-status">
+            <el-tag :type="meta.tag" size="small" effect="dark">
+              {{ t(meta.key) }}
+            </el-tag>
+          </span>
         </div>
       </div>
       <el-divider direction="vertical" class="hidden! md:block!" />
@@ -100,10 +122,24 @@ const itemTagType = (itemStatus: string) =>
       >
         <span>
           {{ t("systemMonitor.alertsFiring") }}：
-          <b :class="firing > 0 ? 'text-red-500' : ''">{{ firing }}</b>
+          <b :class="firing > 0 ? 'text-(--el-color-danger)' : ''">{{
+            firing
+          }}</b>
         </span>
         <span>{{ t("systemMonitor.checkedAt") }}：{{ checkedAt }}</span>
       </div>
     </div>
   </el-card>
 </template>
+<style scoped lang="scss">
+.health-unknown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  color: var(--el-text-color-secondary);
+  border: 6px solid var(--el-border-color-lighter);
+  border-radius: 50%;
+}
+</style>

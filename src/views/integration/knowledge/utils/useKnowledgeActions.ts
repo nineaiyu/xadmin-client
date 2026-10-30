@@ -22,10 +22,13 @@ export { dictValue } from "./useKnowledgeDialogs";
  */
 export function useKnowledgeActions({
   t,
-  tableRef
+  tableRef,
+  afterUpload
 }: {
   t: ReturnType<typeof useI18n>["t"];
   tableRef: Ref;
+  /** 上传成功后的回调（启动摄取状态轮询） */
+  afterUpload?: () => void;
 }) {
   const canUpdate = hasAuth("partialUpdate:AiKnowledge");
   const canDestroy = hasAuth("destroy:AiKnowledge");
@@ -40,7 +43,8 @@ export function useKnowledgeActions({
     t,
     refresh,
     flags: { canUpdate, canDestroy },
-    document: { toggleActive, confirmRemove }
+    document: { toggleActive, confirmRemove },
+    afterUpload
   });
 
   /** 批量启停：取勾选行 pk，未勾选时按项目既有口径提示 */

@@ -1,17 +1,19 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
+import { hasAuth } from "@/router/utils";
+import { choiceValue } from "@/utils/dict";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { choiceValue } from "@/utils/dict";
 import {
-  screenApi,
+  listScreenVersions,
+  type ScreenChoiceValue,
   type ScreenItem,
-  type ScreenLayoutMode,
-  type ScreenLayoutPane,
-  type ScreenPaneType
+  type ScreenLayoutMode
 } from "@/api/dataset/analysis";
+import { VersionHistoryDialog } from "@/components/VersionHistoryDialog";
+import type { VersionHistoryRow } from "@/components/VersionHistoryDialog";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 import DesignerToolbar from "./components/DesignerToolbar.vue";
 import FreeCanvasToolbar from "./components/FreeCanvasToolbar.vue";
@@ -22,6 +24,9 @@ import PaneInspector from "./components/PaneInspector.vue";
 import MultiSelectInspector from "./components/MultiSelectInspector.vue";
 import DesignerPalette from "./components/DesignerPalette.vue";
 import { useScreenPersistence } from "./utils/useScreenPersistence";
+import { createScreenVersionActions } from "./utils/screenVersions";
+import { useDesignerActions } from "./utils/useDesignerActions";
+import { useDesignerBootstrap } from "./utils/useDesignerBootstrap";
 import { usePaneHistory } from "./utils/history";
 import {
   createGridEditor,
@@ -30,9 +35,8 @@ import {
 import { createFreeEditor } from "./utils/createFreeEditor";
 import { useScreenShortcuts } from "./utils/shortcuts";
 import { onPaletteDragStart } from "./utils/dnd";
-import { loadScreenReferenceData } from "./utils/referenceData";
 import { useScreenTheme, type ScreenTheme } from "./utils/screenTheme";
-import { useUnsavedGuard } from "./utils/useUnsavedGuard";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 
 defineOptions({ name: "DataScreenDesigner" });
 
@@ -49,10 +53,8 @@ defineOptions({ name: "DataScreenDesigner" });
  * 只读态（非创建者记录）：编辑入口整体隐藏/禁用（写权威在后端，此处为 UX 守卫）。
  * 保存前各载荷本地归一化（丢未声明键、补默认值、夹回栅格/画幅），服务端再校验一次。
  */
-const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
-
+const { t, locale } = useI18n();
 const screen = ref<ScreenItem | null>(null);
 const dashboards = ref<DashboardItem[]>([]);
 const datasets = ref<DatasetItem[]>([]);
@@ -62,18 +64,37 @@ const saving = ref(false);
 const dirty = ref(false);
 const clock = ref("");
 const loading = ref(true);
+const versionsVisible = ref(false);
+
+async function loadVersions(): Promise<VersionHistoryRow[]> {
+  if (!screen.value) return [];
+  const res = await listScreenVersions(screen.value.pk);
+  if (!isSuccess(res)) throw new Error(res.detail ?? "");
+  return (res.data ?? []) as VersionHistoryRow[];
+}
+
+const versionMeta = (row: VersionHistoryRow) =>
+  choiceValue(row.layout_mode as ScreenChoiceValue) === "free"
+    ? t("dataScreen.modeFree")
+    : t("dataScreen.modeGrid");
 
 const gridBoardRef = ref<GridBoardHandle>(null);
 const freeBoardRef = ref<InstanceType<typeof FreeCanvasBoard> | null>(null);
 
 /** 只读态：非创建者记录后端会拒绝写入（1003），前端进入即置只读，
  *  属 UX 层守卫——写权威始终在后端，详情接口未返回 is_owner 时按可编辑放行 */
-const readonly = computed(() => screen.value?.is_owner === false);
+const readonly = computed(
+  () => !hasAuth("partialUpdate:DataScreen") || screen.value?.is_owner === false
+);
 const locked = computed(() => preview.value || readonly.value);
 const isFree = computed(() => mode.value === "free");
 
+/** 编辑序号：markDirty 单调递增；保存发起时快照，成功回调只在序号未前进时清 dirty
+ *  （防保存 RTT 内的新编辑被误判「已保存」，见 useScreenPersistence） */
+let editSeq = 0;
 const markDirty = () => {
   dirty.value = true;
+  editSeq += 1;
 };
 
 /** 大屏主题（深色缺省 / 浅色 / 跟随站点）：编辑中即时预览，与投屏同一套解析 */
@@ -135,6 +156,7 @@ const gridHistory = usePaneHistory({
 });
 const freeHistory = usePaneHistory({
   panes: freePanes,
+  design: freeDesign,
   selection: freeSelection,
   markDirty
 });
@@ -159,10 +181,6 @@ const freeSelectedPanes = computed(() =>
   freePanes.value.filter(pane => freeSelection.value.includes(pane.pk))
 );
 
-/** 组件库点击：按当前模式落到对应载荷（栅格找空位 / 自由层叠错开） */
-const onPaletteAdd = (type: ScreenPaneType, dashboard?: string) =>
-  isFree.value ? free.addPane(type, dashboard) : grid.addPane(type, dashboard);
-
 /** 保存 / 清空（实现见 utils/useScreenPersistence，行数门禁抽出） */
 const { save, clearCanvas } = useScreenPersistence({
   t,
@@ -170,6 +188,7 @@ const { save, clearCanvas } = useScreenPersistence({
   saving,
   dirty,
   readonly,
+  preview,
   isFree,
   activePanes,
   gridPanes,
@@ -178,7 +197,8 @@ const { save, clearCanvas } = useScreenPersistence({
     theme: themeValue.value,
     theme_color: themeColorValue.value
   }),
-  freePayload: () => free.toPayload(),
+  freePayload: panes => free.toPayload(panes),
+  editSeq: () => editSeq,
   pushHistory: () => pushHistory(),
   resetCoalesce: () => {
     gridHistory.resetCoalesce();
@@ -190,24 +210,29 @@ const { save, clearCanvas } = useScreenPersistence({
   }
 });
 
-/** 属性面板更新：按当前模式落到对应载荷（栅格重叠驳回 / 自由夹回画幅） */
-const updateSelected = (patch: Partial<ScreenLayoutPane>) =>
-  isFree.value ? free.updatePane(patch) : grid.updatePane(patch);
+const { rollbackTo } = createScreenVersionActions({
+  t,
+  screen,
+  saving,
+  readonly,
+  preview
+});
 
-const duplicatePane = () =>
-  isFree.value ? free.duplicate() : grid.duplicateSelected();
-const removeSelected = () =>
-  isFree.value ? free.removeSelected() : grid.removeSelected();
-const clearSelection = () =>
-  isFree.value ? free.clearSelection() : grid.clearSelection();
-
-/** 方向键：栅格 = 移动（Shift 缩放），自由 = 整组移动（Shift 10px 步进） */
-function nudge(pane: ScreenLayoutPane, dx: number, dy: number, shift: boolean) {
-  if (readonly.value) return false;
-  return isFree.value
-    ? free.nudge(dx, dy, shift)
-    : grid.nudge(pane, dx, dy, shift);
-}
+/* 模式分派动作（一行分派与「仅自由模式」口径收口在 useDesignerActions，行数门禁抽出） */
+const {
+  onPaletteAdd,
+  updateSelected,
+  duplicatePane,
+  removeSelected,
+  clearSelection,
+  nudge,
+  copy,
+  paste,
+  selectAll,
+  zoomIn,
+  zoomOut,
+  zoomFit
+} = useDesignerActions({ isFree, readonly, grid, free });
 
 useScreenShortcuts({
   locked,
@@ -221,26 +246,12 @@ useScreenShortcuts({
     isFree.value ? freePrimaryPane.value : gridSelected.value
   ),
   nudge,
-  // 三键只在自由模式生效：这里按模式判定而非装配期取函数（模式可中途切换）
-  copy: () => {
-    if (isFree.value) free.copy();
-  },
-  paste: () => {
-    if (isFree.value) free.paste();
-  },
-  selectAll: () => {
-    if (isFree.value) free.selectAll();
-  },
-  // zoom 键盘档位同样只在自由模式生效（栅格画布是响应式布局，无固定画幅）
-  zoomIn: () => {
-    if (isFree.value) free.zoomIn();
-  },
-  zoomOut: () => {
-    if (isFree.value) free.zoomOut();
-  },
-  zoomFit: () => {
-    if (isFree.value) free.fitToView();
-  }
+  copy,
+  paste,
+  selectAll,
+  zoomIn,
+  zoomOut,
+  zoomFit
 });
 
 /** 模式切换：只改模式（坐标不互转），切回另一模式即见原布局；未保存过则标脏 */
@@ -252,54 +263,22 @@ function switchMode(next: ScreenLayoutMode) {
   if (choiceValue(screen.value?.layout_mode) !== next) markDirty();
 }
 
-let clockTimer: number | undefined;
-
-onMounted(async () => {
-  const pk = String(route.query.pk ?? "");
-  if (!pk) {
-    message(t("dataScreen.pickScreenFirst"), { type: "warning" });
-    router.replace("/analysis/screen/index");
-    return;
-  }
-  const res = await screenApi.retrieve(pk).catch(() => null);
-  if (!res || !isSuccess(res) || !res.data) {
-    message(t("dataScreen.loadFailed"), { type: "warning" });
-    router.replace("/analysis/screen/index");
-    return;
-  }
-  screen.value = res.data as ScreenItem;
-  // 模式与两份载荷各自装载：切回另一模式即见原布局（服务端已归一化，前端只读）
-  mode.value =
-    choiceValue(screen.value.layout_mode) === "free" ? "free" : "grid";
-  grid.load(screen.value.layout);
-  free.load(screen.value.free_layout);
-  free.refreshTemplates();
-  // 团队模板按需拉取（失败静默降级为空：不挡住本地模板与画布编辑）
-  void free.refreshServerTemplates();
-  // 引用数据失败不阻塞设计器主链路：显式提示并按空清单降级（此前未捕获——异常
-  // 逃逸且 loading 永久悬挂，画布空白且用户无感知）
-  const reference = await loadScreenReferenceData();
-  if (!reference.dashboards) {
-    message(t("dataScreen.dashboardsLoadFailed"), { type: "warning" });
-  }
-  if (!reference.datasets) {
-    message(t("dataScreen.datasetsLoadFailed"), { type: "warning" });
-  }
-  dashboards.value = reference.dashboards ?? [];
-  datasets.value = reference.datasets ?? [];
-  loading.value = false;
-  clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
-  clockTimer = window.setInterval(() => {
-    clock.value = new Date().toLocaleTimeString("zh-CN", { hour12: false });
-  }, 1000);
+/* 装载时序（进场校验 / 载荷装载 / 引用数据 / 时钟起表，见 useDesignerBootstrap） */
+useDesignerBootstrap({
+  t,
+  locale,
+  screen,
+  mode,
+  loading,
+  clock,
+  dashboards,
+  datasets,
+  grid,
+  free
 });
 
-onBeforeUnmount(() => {
-  window.clearInterval(clockTimer);
-});
-
-/* ---------------- 未保存守卫（关闭刷新 / 路由离开，实现见 useUnsavedGuard） ---------------- */
-useUnsavedGuard({ dirty, t });
+/* ---------------- 未保存守卫（关闭刷新 / 路由离开，实现见 useDesignerGuard） ---------------- */
+useDesignerGuard({ dirty, namespace: "dataScreen" });
 
 /* ---------------- 保存 / 清空 / 预览 ---------------- */
 const paneRefs = ref<Record<string, InstanceType<typeof ScreenPane> | null>>(
@@ -312,6 +291,23 @@ const refreshData = () => {
   Object.values(paneRefs.value).forEach(handle => handle?.refresh?.());
 };
 
+/** 回滚成功：把服务端恢复的两份载荷重新装进编辑器（模式/选中一并重置） */
+async function onRollback(version: number) {
+  const updated = await rollbackTo(version);
+  if (!updated) return;
+  mode.value = choiceValue(updated.layout_mode) === "free" ? "free" : "grid";
+  grid.load(updated.layout ?? []);
+  free.load(updated.free_layout ?? {});
+  grid.clearSelection();
+  free.clearSelection();
+  dirty.value = false;
+  versionsVisible.value = false;
+  message(t("dataScreen.versionRolledBack", { n: version }), {
+    type: "success"
+  });
+  refreshData();
+}
+
 const back = () => {
   router.push("/analysis/screen/index");
 };
@@ -323,7 +319,7 @@ const back = () => {
     class="designer-root fixed inset-0 flex flex-col"
     :class="{
       'screen-root--light': !screenDark,
-      'text-white': screenDark,
+      'text-(--el-color-white)': screenDark,
       'text-(--screen-fg)': !screenDark
     }"
     :data-screen-theme="screenDark ? 'dark' : 'light'"
@@ -349,6 +345,7 @@ const back = () => {
       @refresh="refreshData"
       @preview="preview = !preview"
       @clear="clearCanvas"
+      @versions="versionsVisible = true"
       @back="back"
       @save="save"
     />
@@ -373,6 +370,7 @@ const back = () => {
         free.saveCurrentToServer($event.name, $event.visibility, $event.group)
       "
       @paste-cloud="free.pasteFromCloud"
+      @clear-cloud="free.clearCloud"
       @rollback-template="free.rollbackTemplate($event.id, $event.version)"
       @import-template="free.importTemplateJson($event.raw, $event.mode)"
       @apply-template="free.applyTemplate($event.id, $event.mode)"
@@ -461,6 +459,15 @@ const back = () => {
         }}</span>
       </aside>
     </div>
+
+    <VersionHistoryDialog
+      v-model="versionsVisible"
+      :title="t('dataScreen.versionHistory')"
+      :load="loadVersions"
+      :meta-label="t('dataScreen.versionMode')"
+      :meta-text="versionMeta"
+      @rollback="onRollback"
+    />
   </div>
 </template>
 

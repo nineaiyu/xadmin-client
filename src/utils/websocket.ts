@@ -96,7 +96,7 @@ export interface WSOptions {
   /**
    * 关闭连接回调
    */
-  closeCallback?: (socket: WebSocket) => void;
+  closeCallback?: (socket: WebSocket, event?: CloseEvent) => void;
   /**
    * 连接异常回调
    */
@@ -116,6 +116,10 @@ class WS {
   openCallback: WSOptions["openCallback"] | null;
   closeCallback: WSOptions["closeCallback"] | null;
   errorCallback: WSOptions["errorCallback"] | null;
+  /** 消息回调：connect() 重建 socket 后统一重绑（重连不丢 onmessage） */
+  private messageCallback: ((data: unknown) => void) | null = null;
+  /** 最近一次收到任何下行帧的时间戳（心跳看门狗判据；0 = 尚未建立连接） */
+  private lastFrameAt = 0;
 
   constructor(url?: string, options?: WSOptions) {
     const {
@@ -147,8 +151,10 @@ class WS {
     this.close();
     this.socket = new WebSocket(this.url);
     this.socketOpen = true;
+    this.lastFrameAt = Date.now();
     this.onError();
     this.onOpen();
+    this.bindMessageHandler();
     // 监听页面可见性：退避等待期间回到前台可立即重连（见 handleVisibilityChange）
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
   }
@@ -201,6 +207,13 @@ class WS {
     const int = (this.heartbeat as Heartbeat)?.interval || interval;
     this.send(msg);
     this.timer = setInterval(() => {
+      // 看门狗：连续 3 个周期无任何下行帧判定半开连接——
+      // NAT/代理静默断流、休眠唤醒后 readyState 仍 OPEN 且永不 onclose，
+      // 只能人工刷新。主动 close 走既有 onclose → 退避重连链路自愈。
+      if (this.lastFrameAt > 0 && Date.now() - this.lastFrameAt > int * 3) {
+        this.socket?.close();
+        return;
+      }
       this.send(msg);
     }, int);
   }
@@ -230,9 +243,17 @@ class WS {
           this.errorCallback(socket);
         }
       };
-      socket.onclose = () => {
+      socket.onclose = (event: CloseEvent) => {
         if (this.closeCallback) {
-          this.closeCallback(socket);
+          this.closeCallback(socket, event);
+        }
+        // 4401 = 未认证（登录失效/被登出）、4403 = 权限拒绝：重连也不会成功，
+        // 停止退避循环（否则登出后每 30s 一次无效连接，服务端持续产生拒绝日志）
+        if (event?.code === 4401 || event?.code === 4403) {
+          // 清心跳/退避并置 socketOpen=false；否则下一次心跳 send() 会在
+          // CLOSED 状态主动 connect()，权限拒绝后仍周期性重连。
+          this.close();
+          return;
         }
         // 指数退避：3s、6s、12s… 封顶 30s，避免服务端抖动时被固定 3s 高频重连冲击
         const backoff = Math.min(
@@ -273,16 +294,28 @@ class WS {
    * @param callback
    */
   onMessage(callback: (data: unknown) => void): void {
-    if (this.socket) {
-      this.socket.onmessage = data => {
-        try {
-          const res = JSON.parse(data.data);
-          callback(res);
-        } catch {
-          callback(data);
-        }
-      };
-    }
+    // 回调存在实例上：重连（connect 重建 socket）后统一重绑，
+    // 否则旧 socket 上的 onmessage 不随迁，重连成功后永久静默
+    this.messageCallback = callback;
+    this.bindMessageHandler();
+  }
+
+  /** 把当前消息回调绑到最新 socket 上（无 socket 或无回调时跳过，connect 时再绑） */
+  private bindMessageHandler(): void {
+    if (!this.socket) return;
+    const callback = this.messageCallback;
+    // 无论业务是否注册回调都要绑 onmessage：任意下行帧是心跳看门狗的唯一
+    // 活性信号，未绑会让「无消息通道」的连接被看门狗误杀
+    this.socket.onmessage = (data: MessageEvent) => {
+      this.lastFrameAt = Date.now();
+      if (!callback) return;
+      try {
+        const res = JSON.parse(data.data);
+        callback(res);
+      } catch {
+        callback(data);
+      }
+    };
   }
 
   /**

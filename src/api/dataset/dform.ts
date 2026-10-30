@@ -80,6 +80,8 @@ export type FormField = {
    * 管理端列表可按该字段筛选（物化列 + GIN 索引，见后端 dataset/utils/dform_filter.py）
    */
   filterable?: boolean;
+  /** 敏感字段：列表/详情/导出对非超管统一掩码（schema 级标记，不改变存储） */
+  sensitive?: boolean;
 };
 
 /** 联动规则操作符：eq/ne 标量比较；in/notin 集合包含；empty/notempty 空值判定 */
@@ -123,6 +125,8 @@ export type DynamicFormItem = {
   is_template?: boolean;
   /** 行级归属：creator 本人/超管为 true；非本人修改删除会被后端守卫拒绝（1003） */
   is_owner?: boolean;
+  /** 最近更新时间：编辑保存的乐观锁基线 */
+  updated_time?: string;
 };
 
 /** 可填报表单（available-forms 返回结构：流程字段给名称与主键，不回传整个定义） */
@@ -284,6 +288,15 @@ export const submissionApi = new SubmissionApi(
   "/api/dataset/dynamic-form-submissions"
 );
 
+/**
+ * 表单数据（管理端）：表单选项响应。
+ * ``truncated`` 为真表示表单数量超过单次加载上限（此时 detail 才是截断提示，
+ * 成功响应的默认 detail「操作成功」不能当成提示）。
+ */
+export type FormDataOptionsResult = DataListResult<FormDataFormOption> & {
+  truncated?: boolean;
+};
+
 /** 表单数据（管理端）：表单选项（全部非模板表单，含停用；schema 供动态列渲染） */
 export type FormDataFormOption = {
   pk: string;
@@ -366,7 +379,7 @@ export class FormDataApi extends BaseApi {
 
   /** 表单选项（全部非模板表单，含停用）：页面「选择表单」数据源 */
   formOptions = () =>
-    this.request<DataListResult<FormDataFormOption>>(
+    this.request<FormDataOptionsResult>(
       "get",
       {},
       {},

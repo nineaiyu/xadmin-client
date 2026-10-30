@@ -78,6 +78,8 @@ class SystemUploadFileApi extends BaseApi {
     filesize: number;
     total_chunks: number;
     chunk_size: number;
+    /** 整文件 SHA-256 十六进制：断点续传会话键（init 必填） */
+    content_hash: string;
     md5?: string;
     mime_type?: string;
   }) => {

@@ -63,7 +63,7 @@ describe("About 平台信息卡排版", () => {
     expect(firstCard.find(".card-header").exists()).toBe(true);
     // 页头标题来自路由 meta（测试桩为 aboutTitle），版本徽章与之同行
     expect(firstCard.text()).toContain("aboutTitle");
-    expect(firstCard.findAll(".about-chip").length).toBe(6);
+    expect(firstCard.findAll(".about-chip").length).toBe(1);
   });
 
   it("版本行四项 + 相关链接行四个外链（新窗口打开）", async () => {

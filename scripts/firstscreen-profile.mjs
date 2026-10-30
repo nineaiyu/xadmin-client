@@ -49,11 +49,23 @@ const PAGES = [
 /** 注入到页面的采集器：LCP / Long Task / 导航与资源条目 */
 const INIT_SCRIPT = () => {
   const w = window;
-  w.__firstscreen = { lcp: 0, longtasks: [] };
+  w.__firstscreen = { lcp: 0, longtasks: [], lcpElement: "" };
   try {
     new PerformanceObserver(list => {
-      for (const e of list.getEntries())
+      for (const e of list.getEntries()) {
         w.__firstscreen.lcp = Math.max(w.__firstscreen.lcp, e.startTime);
+        const el = e.element;
+        if (el) {
+          const cls =
+            typeof el.className === "string" && el.className
+              ? `.${el.className.trim().split(/\s+/).join(".")}`
+              : "";
+          const text = (el.textContent ?? "").trim().replace(/\s+/g, " ");
+          w.__firstscreen.lcpElement =
+            `${el.tagName?.toLowerCase() ?? "?"}${el.id ? `#${el.id}` : ""}${cls}` +
+            ` size=${Math.round(e.size ?? 0)} text=${text.slice(0, 60)}`;
+        }
+      }
     }).observe({ type: "largest-contentful-paint", buffered: true });
     new PerformanceObserver(list => {
       for (const e of list.getEntries())
@@ -91,6 +103,7 @@ const READ_SCRIPT = () => {
     ttfb: Math.round(nav?.responseStart ?? 0),
     fcp: fcp ? Math.round(fcp.startTime) : null,
     lcp: fs?.lcp ? Math.round(fs.lcp) : null,
+    lcpElement: fs?.lcpElement ?? "",
     dcl: Math.round(nav?.domContentLoadedEventEnd ?? 0),
     load: Math.round(loadEnd),
     tbt: Math.round(tbt),
@@ -216,7 +229,7 @@ async function main() {
     console.log(
       `[firstscreen][${ENV_KEY}][${def.name}] ttfb=${r.ttfb} fcp=${r.fcp} ` +
         `lcp=${r.lcp} dcl=${r.dcl} load=${r.load} tbt=${r.tbt}ms ` +
-        `longtasks=${r.longTaskCount}`
+        `longtasks=${r.longTaskCount} lcpEl=${r.lcpElement}`
     );
     console.log("  瀑布:", JSON.stringify(r.waterfall));
     console.log("  最重请求:", JSON.stringify(r.heaviest.slice(0, 6)));
@@ -226,9 +239,13 @@ async function main() {
     const baseline = existsSync(BASELINE_FILE)
       ? JSON.parse(readFileSync(BASELINE_FILE, "utf-8"))
       : {};
+    // --pages 只采部分页面时按页面合并，不能让未采集页面的基线被整体覆盖
     baseline.firstscreen = {
       ...(baseline.firstscreen ?? {}),
-      [ENV_KEY]: out
+      [ENV_KEY]: {
+        ...(baseline.firstscreen?.[ENV_KEY] ?? {}),
+        ...out
+      }
     };
     writeFileSync(
       BASELINE_FILE,

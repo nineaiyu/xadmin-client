@@ -23,6 +23,9 @@ body[layout="sidebar-mixed-nav"] {
   }
 
   .hideSidebar {
+    @include sidebar-hover-expand($sideBarWidth);
+    @include sidebar-collapse-show-title;
+
     .fixed-header {
       width: calc(100% - #{$sideBarCollapsed});
       transition: width var(--duration-base);
@@ -36,14 +39,6 @@ body[layout="sidebar-mixed-nav"] {
     /* 窄列独显（主列无内容）时折叠不生效：没有次级列可折叠，侧栏保持窄列宽度 */
     .sidebar-container.is-narrow-only {
       width: $narrow !important;
-    }
-
-    /* 折叠态悬停临时展开（设置面板 →「侧栏悬停展开」）：侧栏浮层式回到展开宽度，
-       主列菜单随 menuCollapse 解除折叠，内容区不动（折叠态悬停展开同口径）；
-       窄列独显时无次级列可展开，不参与 */
-    .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
-      width: $sideBarWidth !important;
-      box-shadow: var(--shadow-md);
     }
 
     .main-container {

@@ -1,5 +1,12 @@
 <script lang="ts" setup>
-import { onActivated, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { message } from "@/utils/message";
@@ -48,6 +55,18 @@ function refreshPresence() {
   chat.roomState.loadRooms();
 }
 
+function startPresencePolling() {
+  stopPresencePolling();
+  presenceTimer = window.setInterval(refreshPresence, 30_000);
+}
+
+function stopPresencePolling() {
+  if (presenceTimer) {
+    window.clearInterval(presenceTimer);
+    presenceTimer = undefined;
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
     chat.roomState.loadRooms(),
@@ -55,19 +74,27 @@ onMounted(async () => {
   ]);
   applyRouteRoom();
   chat.connect();
-  presenceTimer = window.setInterval(refreshPresence, 30_000);
+  startPresencePolling();
 });
 
 watch(() => route.query.room, applyRouteRoom);
 
 onActivated(() => {
-  // keep-alive 返回聊天页：刷新在线态（连接由 onUnmounted 关闭，需重连；面板高度由 hook 重测）
+  // keep-alive 返回聊天页：刷新在线态并重连（离开时已在 onDeactivated 断开）
   refreshPresence();
   if (!chat.connected.value) chat.connect();
+  startPresencePolling();
+});
+
+onDeactivated(() => {
+  // keep-alive 只触发 deactivated，不触发 onUnmounted：必须在这里停轮询/断 WS，
+  // 否则离开聊天页后仍在后台收消息并标记已读
+  stopPresencePolling();
+  chat.disconnect();
 });
 
 onUnmounted(() => {
-  if (presenceTimer) window.clearInterval(presenceTimer);
+  stopPresencePolling();
 });
 
 function selectRoom(roomId: number) {
@@ -115,7 +142,7 @@ function submit(content: string) {
 async function recall(item: ChatMessageItem) {
   if (
     !(await confirm(t("chat.recallConfirm"), {
-      confirmButtonClass: "el-button--danger",
+      danger: true,
       draggable: true
     }))
   ) {
@@ -142,9 +169,11 @@ async function recall(item: ChatMessageItem) {
       :ai-hint="chat.roomState.aiHint.value"
       :loading="chat.roomState.loadingRooms.value"
       :loading-contacts="chat.roomState.loadingContacts.value"
+      :load-error="chat.roomState.roomsError.value"
       @select="selectRoom"
       @open-private="openPrivate"
       @refresh-contacts="chat.roomState.loadContacts()"
+      @retry-rooms="chat.roomState.loadRooms()"
       @created="createdGroup"
     />
 
@@ -157,9 +186,12 @@ async function recall(item: ChatMessageItem) {
         :ai-hint="chat.roomState.aiHint.value"
         :loading="chat.roomState.loadingRooms.value"
         :loading-contacts="chat.roomState.loadingContacts.value"
+        :load-error="chat.roomState.roomsError.value"
         @select="selectRoom"
         @open-private="openPrivate"
         @refresh-contacts="chat.roomState.loadContacts()"
+        @retry-rooms="chat.roomState.loadRooms()"
+        @created="createdGroup"
       />
     </ReNavDrawer>
 
@@ -176,6 +208,7 @@ async function recall(item: ChatMessageItem) {
       :loading-more="chat.loadingMore.value"
       :streaming="chat.streaming.value"
       :connected="chat.connected.value"
+      :denied="chat.denied.value"
       :pending-count="chat.pendingCount.value"
       :is-narrow="isNarrow"
       :uploading="chat.uploading.value > 0"

@@ -39,7 +39,7 @@ export function findMenuByActivePath(
 
 /**
  * 国际化下拉的选中样式：选中项取 EP 主题色底 + 白字，未选中取常规文本色
- * （暗色下由消费端模板的 `dark:text-white!` 类兜底）。
+ * （暗色下由消费端模板的 `dark:text-(--el-color-white)!` 类兜底）。
  */
 export function createLocaleDropdownStyles() {
   const getDropdownItemStyle = computed(() => {

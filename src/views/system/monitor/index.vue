@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { computed, h, onMounted, ref, watch } from "vue";
+import RePage from "@/components/RePage";
+import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
-import { addDialog } from "@/components/ReDialog";
-import { dialogSize } from "@/components/ReDialog/size";
-import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { copyText } from "@/utils/clipboard";
 import { hasAuth } from "@/router/utils";
 import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
@@ -20,8 +19,9 @@ import MonitorSlowRequests from "./components/MonitorSlowRequests.vue";
 import MonitorStatusPanels from "./components/MonitorStatusPanels.vue";
 import MonitorToolbar from "./components/MonitorToolbar.vue";
 import TaskHealthCard from "./components/TaskHealthCard.vue";
-import ThresholdForm from "./components/ThresholdForm.vue";
 import { useMonitor } from "./utils/hook";
+import { useMonitorView } from "./utils/useMonitorView";
+import { useThresholdDialog } from "./utils/useThresholdDialog";
 import {
   DEFAULT_METRICS,
   INTERVAL_LABEL_KEYS,
@@ -29,10 +29,6 @@ import {
   METRIC_OPTIONS,
   RANGE_LABEL_KEYS,
   buildShareQuery,
-  formatComparePercent,
-  formatMetricValue,
-  metricLabelKey,
-  metricStat,
   parseShareQuery
 } from "./utils/format";
 
@@ -53,21 +49,20 @@ onMounted(async () => {
   echartsReady.value = true;
 });
 
+const monitorState = useMonitor();
 const {
   loading,
   autoRefresh,
   wsConnected,
   overview,
-  services,
-  redisInfo,
   celery,
   slow,
   taskHealth,
   history,
   historyLoading,
   thresholds,
-  alerts,
   alertCounts,
+  sectionErrors,
   fetchAll,
   fetchHistory,
   fetchThresholds,
@@ -75,7 +70,7 @@ const {
   fetchAlerts,
   toggleAuto,
   start
-} = useMonitor();
+} = monitorState;
 
 // ---- 趋势筛选（分享链接可复现：query 与筛选双向同步） ----
 const shared = parseShareQuery((route.query ?? {}) as Record<string, unknown>);
@@ -126,37 +121,14 @@ watch(
 const alertStatus = ref<"" | "firing" | "resolved">("");
 watch(alertStatus, status => fetchAlerts({ status }));
 
-const thresholdFormRef = ref<InstanceType<typeof ThresholdForm>>();
-const openThresholdDialog = () => {
-  if (!thresholds.value?.items?.length) {
-    message(t("systemMonitor.thresholdUnavailable"), { type: "warning" });
-    return;
-  }
-  thresholdFormRef.value = undefined;
-  // 显式指定载荷泛型：ref 包装的实例类型无法从 getPayload 返回类型反推（TS 退化 unknown）
-  const { beforeSure } = useDialogForm<Record<string, number>>({
-    formRef: thresholdFormRef,
-    submit: payload => saveThresholds(payload),
-    successText: t("systemMonitor.thresholdSaved"),
-    failType: "error",
-    // 先关弹窗再刷新（刷新慢时不滞留弹窗）；useDialogForm 内 done 先于回调
-    onSuccess: () => fetchThresholds()
-  });
-  addDialog({
-    title: t("systemMonitor.thresholdSettings"),
-    width: dialogSize("sm"),
-    draggable: true,
-    destroyOnClose: true,
-    closeOnClickModal: false,
-    sureBtnLoading: true,
-    contentRenderer: () =>
-      h(ThresholdForm, {
-        ref: thresholdFormRef,
-        items: thresholds.value?.items ?? []
-      }),
-    beforeSure
-  });
-};
+const { openThresholdDialog } = useThresholdDialog({
+  t,
+  thresholds,
+  saveThresholds,
+  fetchThresholds,
+  fetchAlerts,
+  alertStatus
+});
 
 // ---- 报表导出 / 分享 ----
 const exporting = ref(false);
@@ -181,7 +153,7 @@ const exportReport = async (command: string) => {
     }
     message(t("systemMonitor.exportDone"), { type: "success" });
   } catch (error) {
-    message(String((error as { detail?: string })?.detail ?? error), {
+    message(normalizeError(error).detail, {
       type: "error"
     });
   } finally {
@@ -202,133 +174,26 @@ const exportChartImage = () => {
   if (!ok) message(t("systemMonitor.trendEmpty"), { type: "warning" });
 };
 
-// ---- 实时卡片 ----
-const currentMetrics = computed(
-  () => overview.value.live ?? overview.value.latest
-);
-
-const resourceCards = computed(() => {
-  const current = currentMetrics.value;
-  return [
-    {
-      key: "cpu",
-      label: t("systemMonitor.cpu"),
-      value: current?.cpu_percent ?? 0,
-      suffix: "%",
-      ring: true
-    },
-    {
-      key: "memory",
-      label: t("systemMonitor.memory"),
-      value: current?.memory_used ?? 0,
-      suffix: "%",
-      ring: true
-    },
-    {
-      key: "disk",
-      label: t("systemMonitor.disk"),
-      value: current?.disk_used ?? 0,
-      suffix: "%",
-      ring: true
-    },
-    {
-      // cpu_load 是负载均值（如 0.14），不是百分比：进度环会被 Math.round 归零
-      // 成空环配原始数字，改用纯数字展示
-      key: "load",
-      label: t("systemMonitor.load"),
-      value: current?.cpu_load ?? 0,
-      suffix: "",
-      ring: false
-    }
-  ];
-});
-
-const netRates = computed(() => ({
-  sent: overview.value.live?.net_sent_rate,
-  recv: overview.value.live?.net_recv_rate,
-  sentTotal: overview.value.live?.net_sent_mb,
-  recvTotal: overview.value.live?.net_recv_mb
-}));
-
-const runtimeItems = computed(() => {
-  const live = overview.value.live;
-  if (!live) return [];
-  return [
-    {
-      key: "cores",
-      label: t("systemMonitor.cores"),
-      value: String(live.cpu_count ?? "—")
-    },
-    {
-      key: "processes",
-      label: t("systemMonitor.processes"),
-      value: String(live.process_count ?? "—")
-    },
-    {
-      key: "swap",
-      label: t("systemMonitor.swap"),
-      value: `${live.swap_percent ?? 0}%`
-    }
-  ];
-});
-
-const serviceItems = computed(() => {
-  const items = services.value;
-  return [
-    {
-      key: "db",
-      label: t("systemMonitor.db"),
-      ok: items?.db.status ?? false,
-      cost: items?.db.cost
-    },
-    {
-      key: "redis",
-      label: t("systemMonitor.redis"),
-      ok: items?.redis.status ?? false,
-      cost: items?.redis.cost
-    },
-    {
-      key: "celery",
-      label: t("systemMonitor.celery"),
-      ok: items?.celery.status ?? false,
-      cost: items?.celery.cost
-    }
-  ];
-});
-
-const redis = computed(() => redisInfo.value.redis ?? {});
-const queues = computed(
-  () =>
-    Object.entries(redisInfo.value.queues ?? {}).filter(
-      entry => typeof entry[1] === "number"
-    ) as [string, number][]
-);
-const slowRows = computed(() => slow.value.results ?? []);
-const alertRows = computed(() => alerts.value);
-
-/** 趋势摘要（平均 / 峰值 / 环比），逐指标 chips 展示 */
-const metricSummaries = computed(() =>
-  metrics.value.map(metric => {
-    const stat = metricStat(history.value, metric);
-    const compare = history.value?.compare?.[metric];
-    return {
-      metric,
-      label: t(metricLabelKey(metric)),
-      avg: formatMetricValue(metric, stat.avg),
-      max: formatMetricValue(metric, stat.max),
-      min: formatMetricValue(metric, stat.min),
-      percent: formatComparePercent(compare?.percent),
-      rising: (compare?.percent ?? 0) > 0
-    };
-  })
-);
-
-const metricLabel = (metric: MonitorMetric) => t(metricLabelKey(metric));
+// ---- 实时卡片（视图模型派生见 utils/useMonitorView.ts，行数门禁抽出） ----
+const {
+  resourceCards,
+  netRates,
+  runtimeItems,
+  serviceItems,
+  redis,
+  queues,
+  slowRows,
+  alertRows,
+  metricSummaries,
+  metricLabel
+} = useMonitorView({ t, monitor: monitorState, metrics });
 
 const eventPanelRef = ref<InstanceType<typeof EventPanel>>();
 
 const refreshAll = async () => {
   await fetchAll(true);
+  // fetchAll 内的告警请求不带筛选，刷新后按当前告警状态再收口一次
+  await fetchAlerts({ status: alertStatus.value || undefined });
   loadHistory();
   eventPanelRef.value?.refresh();
 };
@@ -343,8 +208,31 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main">
-    <health-banner :health="overview.health" />
+  <RePage>
+    <health-banner
+      :health="overview.health"
+      :unavailable="Boolean(sectionErrors.overview)"
+    />
+
+    <div
+      v-if="sectionErrors.overview || sectionErrors.services"
+      class="mb-4 flex items-center gap-3"
+      data-testid="monitor-unavailable"
+    >
+      <el-alert
+        class="flex-1"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('systemMonitor.dataUnavailable')"
+        :description="
+          sectionErrors.overview || sectionErrors.services || undefined
+        "
+      />
+      <el-button size="small" @click="refreshAll">
+        {{ t("systemMonitor.refresh") }}
+      </el-button>
+    </div>
 
     <MonitorToolbar
       v-model:auto-refresh="autoRefresh"
@@ -417,7 +305,7 @@ onMounted(() => {
         <div
           v-for="item in metricSummaries"
           :key="item.metric"
-          class="flex items-center gap-2 rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-(--el-fill-color-light)"
+          class="flex items-center gap-2 rounded bg-(--el-fill-color-light) px-3 py-1.5 text-sm"
         >
           <span class="text-(--el-text-color-regular)">{{ item.label }}</span>
           <span class="font-medium">{{ item.avg }}</span>
@@ -469,9 +357,7 @@ onMounted(() => {
     />
 
     <event-panel ref="eventPanelRef" class="mb-4" />
-
     <task-health-card :health="taskHealth" />
-
     <MonitorSlowRequests :rows="slowRows" :threshold="slow.threshold" />
-  </div>
+  </RePage>
 </template>

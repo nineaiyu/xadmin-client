@@ -35,6 +35,15 @@ class NoticeReadApi extends BaseApi {
       `${this.baseApi}/${pk}/state`
     );
   };
+  /** 当前筛选结果内私信全部已读（公告族不参与） */
+  allRead = () => {
+    return this.request<BaseResult>(
+      "patch",
+      {},
+      {},
+      `${this.baseApi}/all-read`
+    );
+  };
 }
 
 export const noticeReadApi = new NoticeReadApi(

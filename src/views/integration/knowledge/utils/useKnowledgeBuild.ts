@@ -1,4 +1,5 @@
 import { isSuccess } from "@/api/types";
+import { onMounted } from "vue";
 import {
   knowledgeApi,
   type KnowledgeBuildStatus,
@@ -41,6 +42,11 @@ export function useKnowledgeBuild({
    */
   const buildEmbeddings = async () => {
     const statusRes = await knowledgeApi.vectorStatus().catch(normalizeError);
+    if (!isSuccess(statusRes)) {
+      // 403（缺权限）与「未配置向量通道」是两种原因，不能都提示未启用
+      message(t("aiKnowledge.vectorStatusDenied"), { type: "error" });
+      return;
+    }
     const status = statusRes.data as KnowledgeVectorStatus | null;
     if (!status?.enabled) {
       message(t("aiKnowledge.vectorDisabled"), { type: "warning" });
@@ -76,6 +82,18 @@ export function useKnowledgeBuild({
     message(t("aiKnowledge.buildSubmitted"), { type: "success" });
     await pollBuildStatus();
   };
+
+  // 跨会话恢复：页面重新进入/刷新时探测既有构建任务，运行中则继续轮询
+  onMounted(async () => {
+    const res = await knowledgeApi
+      .buildEmbeddingsStatus()
+      .catch(normalizeError);
+    const status = (res.data as KnowledgeBuildStatus | null) ?? null;
+    if (status?.state === "running") {
+      message(t("aiKnowledge.buildAlreadyRunning"), { type: "info" });
+      await pollBuildStatus();
+    }
+  });
 
   return { buildEmbeddings };
 }

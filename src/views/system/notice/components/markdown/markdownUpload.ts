@@ -7,10 +7,11 @@
 import { ref } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import { isSuccess } from "@/api/types";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import type { UploadKind } from "./types";
 
-/** 无 `config:SystemUploadFile` 权限时的兜底上限（与后端默认 file_upload_size 同口径） */
-export const DEFAULT_UPLOAD_SIZE = 1048576;
+/** 无 `config:SystemUploadFile` 权限时的兜底上限（与文件中心共用同一常量） */
+export const DEFAULT_UPLOAD_SIZE = DEFAULT_FILE_UPLOAD_SIZE;
 
 export type UploadRecord = {
   filename?: string;

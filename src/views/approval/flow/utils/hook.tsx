@@ -23,9 +23,8 @@ export function useFlow(tableRef: Ref) {
   auth.update = false;
   auth.partialUpdate = false;
   const canCreate = hasAuth("create:SystemApprovalFlow");
-  const canUpdate =
-    hasAuth("partialUpdate:SystemApprovalFlow") ||
-    hasAuth("update:SystemApprovalFlow");
+  // 保存固定走 partialUpdate：不再用 update 兜底（该权限点不存在，分支为死代码）
+  const canUpdate = hasAuth("partialUpdate:SystemApprovalFlow");
   // 版本历史与回滚是独立权限点（versions/rollback），与编辑权限互不蕴含：
   // 用编辑权限判断会让只有 partialUpdate 的角色点开抽屉后回滚 403
   const canViewVersions = hasAuth("versions:SystemApprovalFlow");

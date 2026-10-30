@@ -28,6 +28,17 @@ describe("useRenderIcon 图标渲染分支", () => {
     expect(html).not.toContain('height="40"');
   });
 
+  it("SVG 字符串：剥离事件属性与 script，保留图形标签", () => {
+    const Raw = useRenderIcon(
+      '<svg onload="alert(1)" viewBox="0 0 24 24"><script>alert(1)</script><path d="M0 0h24v24H0z"/></svg>'
+    );
+    const wrapper = mount(Raw as never);
+    const html = wrapper.find(".svg-raw-icon").html();
+    expect(html).toContain("<path");
+    expect(html).not.toContain("onload");
+    expect(html).not.toContain("<script");
+  });
+
   it("SVG 字符串命中缓存：同串二次渲染结果一致", () => {
     const svg = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="4"/></svg>';
     const first = mount(useRenderIcon(svg) as never).html();

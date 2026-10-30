@@ -6,7 +6,7 @@ import {
   noticeTypeOptionLocked,
   parseNoticeUserParam
 } from "../noticeFormRules";
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 
 describe("noticeMessageHasContent", () => {
   it("treats empty editor markup as empty", () => {
@@ -38,23 +38,27 @@ describe("noticeTypeOptionLocked", () => {
     expect(noticeTypeOptionLocked(NoticeChoices.NOTICE, true)).toBe(false);
   });
 
-  it("never locks other types (disabled state left untouched)", () => {
+  it("locks other types without create permission", () => {
     expect(noticeTypeOptionLocked(NoticeChoices.USER, false)).toBe(false);
-    expect(noticeTypeOptionLocked(NoticeChoices.DEPT, false)).toBe(false);
+    expect(noticeTypeOptionLocked(NoticeChoices.USER, false, false)).toBe(true);
+    expect(noticeTypeOptionLocked(NoticeChoices.DEPT, false, false)).toBe(true);
     expect(noticeTypeOptionLocked(undefined, false)).toBe(false);
   });
 });
 
 describe("parseNoticeUserParam", () => {
-  it("parses valid JSON payloads", () => {
-    expect(parseNoticeUserParam('{"id":1}')).toEqual({
+  it("parses a non-empty array of user refs", () => {
+    expect(parseNoticeUserParam('[{"id":1,"username":"alice"}]')).toEqual({
       ok: true,
-      value: { id: 1 }
+      value: [{ id: 1, username: "alice" }]
     });
-    expect(parseNoticeUserParam("42")).toEqual({ ok: true, value: 42 });
   });
 
-  it("reports failure for invalid or missing JSON instead of throwing", () => {
+  it("rejects scalars, objects, empty arrays and malformed JSON", () => {
+    expect(parseNoticeUserParam("42")).toEqual({ ok: false });
+    expect(parseNoticeUserParam('{"id":1}')).toEqual({ ok: false });
+    expect(parseNoticeUserParam("[]")).toEqual({ ok: false });
+    expect(parseNoticeUserParam('[{"foo":"bar"}]')).toEqual({ ok: false });
     expect(parseNoticeUserParam("{oops")).toEqual({ ok: false });
     expect(parseNoticeUserParam(undefined)).toEqual({ ok: false });
     expect(parseNoticeUserParam("")).toEqual({ ok: false });

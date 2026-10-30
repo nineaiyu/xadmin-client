@@ -35,11 +35,32 @@ describe("getUsedAccessToken", () => {
     expect(getRefreshTokenMock).not.toHaveBeenCalled();
   });
 
-  it("无 access 且无 refresh 返回 undefined", async () => {
+  it("无 access 且无 refresh 返回空串", async () => {
     getTokenMock.mockReturnValue("");
     getRefreshTokenMock.mockReturnValue("");
-    await expect(getUsedAccessToken()).resolves.toBeUndefined();
+    await expect(getUsedAccessToken()).resolves.toBe("");
     expect(refreshTokenApiMock).not.toHaveBeenCalled();
+  });
+
+  it("并发取 token 只打一次刷新接口（单飞）", async () => {
+    let token = "";
+    getTokenMock.mockImplementation(() => token);
+    getRefreshTokenMock.mockReturnValue("refresh-1");
+    refreshTokenApiMock.mockResolvedValue({
+      code: 1000,
+      data: { access: "new", refresh: "r" }
+    });
+    setTokenMock.mockImplementation(data => {
+      token = data.access;
+    });
+
+    const [first, second] = await Promise.all([
+      getUsedAccessToken(),
+      getUsedAccessToken()
+    ]);
+    expect(refreshTokenApiMock).toHaveBeenCalledTimes(1);
+    expect(first).toBe("new");
+    expect(second).toBe("new");
   });
 
   it("无 access 有 refresh 走刷新流程并返回新 token", async () => {

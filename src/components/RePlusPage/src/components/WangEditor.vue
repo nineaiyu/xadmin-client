@@ -11,6 +11,7 @@ import {
 import "@wangeditor/editor/dist/css/style.css";
 import { ensureWangEditorBoot } from "@/utils/wangEditorBoot";
 import { systemUploadFileApi } from "@/api/file/file";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import { message } from "@/utils/message";
 import { formatBytes, getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
@@ -42,7 +43,7 @@ const editorRef = shallowRef();
 const mode = "default";
 const { t } = useI18n();
 const loading = ref(false);
-const uploadConfig = ref({ file_upload_size: 1048576 });
+const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
 type InsertFnType = (_url: string, _alt?: string, _href?: string) => void;
 
 const emit = defineEmits<{

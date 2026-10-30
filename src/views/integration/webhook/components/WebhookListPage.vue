@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useWebhookSubscription } from "../../subscription/utils/hook";
 import { useWebhookDelivery } from "../../delivery/utils/hook";
 
@@ -14,7 +14,7 @@ const props = defineProps<{ mode: "subscription" | "delivery" }>();
 const tableRef = ref();
 const config =
   props.mode === "subscription"
-    ? useWebhookSubscription()
+    ? useWebhookSubscription(tableRef)
     : useWebhookDelivery(tableRef);
 
 // 这组 props 在 hook 里以 shallowRef 承载，必须提到 setup 顶层再下传给模板：
@@ -26,6 +26,11 @@ const { api, auth, listColumnsFormat, operationButtonsProps } = config;
 // 表单定制仅订阅页装配（事件多选 / 密钥必填规则）；投递页为只读审计无表单
 const addOrEditOptions =
   "addOrEditOptions" in config ? config.addOrEditOptions : undefined;
+/** 投递页事件筛选复用事件目录（订阅页无该钩子，保持 undefined） */
+const searchColumnsFormat =
+  "searchColumnsFormat" in config ? config.searchColumnsFormat : undefined;
+/** 多选只为批量删除服务：投递审计 hook 已关闭 batchDestroy，故不会出现选择列 */
+const selectionEnabled = computed(() => Boolean(auth.batchDestroy));
 </script>
 
 <template>
@@ -34,9 +39,10 @@ const addOrEditOptions =
     :api="api"
     :auth="auth"
     locale-name="webhook"
-    :selection="false"
+    :selection="selectionEnabled"
     :add-or-edit-options="addOrEditOptions"
     :list-columns-format="listColumnsFormat"
+    :search-columns-format="searchColumnsFormat"
     :operation-buttons-props="operationButtonsProps"
   />
 </template>

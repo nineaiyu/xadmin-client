@@ -15,7 +15,7 @@ vi.mock("@/api/user/notifications", () => ({
 }));
 
 // 工厂内定义替身组件（vi.mock 提升到文件顶部，不能引用顶层变量）
-vi.mock("@/views/system/components/MessageNotifications.vue", async () => {
+vi.mock("@/components/ReMessageNotifications", async () => {
   const { defineComponent } = await import("vue");
   return {
     default: defineComponent({
@@ -26,7 +26,7 @@ vi.mock("@/views/system/components/MessageNotifications.vue", async () => {
   };
 });
 
-import MessageNotifications from "@/views/system/components/MessageNotifications.vue";
+import MessageNotifications from "@/components/ReMessageNotifications";
 import Notifications from "./Notifications.vue";
 
 describe("通知订阅页签", () => {

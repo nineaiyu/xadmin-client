@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import {
   buildMediaSyntax,
   collectDroppedFiles,
@@ -58,6 +59,13 @@ function makeDeps(overrides: Partial<UploadRunnerDeps> = {}) {
   };
   return { deps, notify, insert, upload, onStart, onDone };
 }
+
+describe("上传兜底上限", () => {
+  it("公告 Markdown 与文件中心共用 10MB 兜底", () => {
+    expect(DEFAULT_UPLOAD_SIZE).toBe(10 * 1024 * 1024);
+    expect(DEFAULT_UPLOAD_SIZE).toBe(DEFAULT_FILE_UPLOAD_SIZE);
+  });
+});
 
 describe("partitionBySize", () => {
   it("上限按 ≤ 判定，超限进入 rejected 且保持原顺序", () => {

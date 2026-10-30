@@ -74,6 +74,16 @@ jobs:
         # 必须显式登记豁免并写明理由（scripts/handwritten-forms-exempt.json）
         run: node scripts/check-handwritten-forms.mjs
 
+      - name: Bare table gate
+        # 表格选型收口：直接手写 <el-table> 必须改走 DataTable / ReReadonlyTable /
+        # RePlusPage；存量基线只减不增（scripts/bare-tables-baseline.json）
+        run: pnpm check:tables
+
+      - name: Declarative overlay gate
+        # 弹层选型收口：直接手写 <el-dialog> / <el-drawer> 必须改走 addDialog / addDrawer；
+        # 存量按文件基线只减不增（scripts/declarative-overlays-baseline.json）
+        run: pnpm check:overlays
+
       - name: Quarantine manifest gate
         # 隔离清单是临时收容（非永久跳过）：任何条目必须可追踪、有责任人、且未过期
         # （scripts/check-quarantine.mjs，过期 / 缺 owner / 缺 issue 即失败）
@@ -135,6 +145,15 @@ jobs:
         run: |
           pnpm gen:metadata-types
           git diff --exit-code -- src/api/types
+
+      - name: OpenAPI generated types are up to date
+        # 全量契约类型由 contract/openapi.json 生成；手改或镜像更新未重生成时失败
+        run: pnpm check:openapi-types
+
+      - name: Frontend API paths exist in OpenAPI
+        # 手写 API 模块的 URL ↔ 后端路由静态对账：后端改 url_path 而前端未跟进时，
+        # 此步直接报出「前端调用但 OpenAPI 不存在」的路径（白名单见 scripts/api-routes-whitelist.json）
+        run: pnpm check:api-routes
 
       - name: Contract generated types have consumers
         # 生成物必须有 import 方：search-columns / search-fields / ws-frame 三份曾长期

@@ -3,11 +3,11 @@ import { computed, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import SearchPicker from "@/components/SearchPicker";
+import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
 import { pickUsernames } from "../utils/instanceFormShared";
 
 /**
- * 加签表单：SearchPicker(user) 多选选人（复用权限表单同款的表格面板选择器）；
+ * 加签表单：ApproverPicker(search) 多选选人（复用权限表单同款的表格面板选择器）；
  * 无 `list:SearchUser` 权限的审批人回退用户名逗号输入，保证加签始终可用。
  *
  * 提交契约 `getPayload()`：返回 `{ usernames, comment }`；`null` = 校验未过（保持弹窗）。
@@ -40,11 +40,15 @@ defineExpose({ getPayload });
 <template>
   <el-form :model="form">
     <el-form-item prop="users" required>
-      <SearchPicker
+      <ApproverPicker
         v-if="canPickUser"
-        v-model="form.users"
-        entity="user"
+        :model-value="form.users"
+        type="user"
         multiple
+        source="search"
+        @update:model-value="
+          value => (form.users = Array.isArray(value) ? value : [])
+        "
       />
       <el-input
         v-else

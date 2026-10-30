@@ -256,11 +256,14 @@ export function saveTemplate({
   name: string;
   design: FreeDesign;
   panes: readonly ScreenLayoutPane[];
-  pks: readonly string[];
+  /** 选中窗格 pk；空 / 缺省 = 无选区，回落全量画布（与「保存为模板」按钮口径一致） */
+  pks?: readonly string[];
 }): SaveTemplateResult {
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "name" };
-  const chosen = panes.filter(pane => pks.includes(pane.pk));
+  const chosen = panes.filter(
+    pane => !pks || pks.length === 0 || pks.includes(pane.pk)
+  );
   if (chosen.length === 0) return { ok: false, error: "empty" };
   const mine = listMyTemplates();
   if (mine.length >= FREE_TEMPLATE_LIMIT) return { ok: false, error: "limit" };

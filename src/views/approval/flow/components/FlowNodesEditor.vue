@@ -3,12 +3,17 @@ import { h, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
-import { useAssigneeCandidates } from "@/views/approval/utils/useAssigneeCandidates";
+import DataTable from "@/components/DataTable";
+import { approvalFlowApi } from "@/api/approval/approvalFlow";
+import { useConfirm } from "@/hooks/useConfirm";
+import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
 import {
   ASSIGNEE_TYPES,
   CONDITION_OPS,
   TIMEOUT_ACTIONS,
   createEmptyNode,
+  remapRouteTargets,
+  conditionOpLabel,
   type FieldRow,
   type NodeRow
 } from "./flowConfig";
@@ -19,25 +24,30 @@ import { joinValues, splitValues } from "@/views/approval/utils/assigneeValues";
 const props = defineProps<{ nodes: NodeRow[]; fields?: FieldRow[] }>();
 
 const { t } = useI18n();
+const confirm = useConfirm();
 
 /* ---------------- 审批人选择器（避免裸文本输错用户名/角色码） ---------------- */
 
-/** 始终提供可查询下拉（用户候选目录本地过滤 / 角色下拉），搜索无结果时允许直接输入兜底；
- * 候选目录与审批规则表单共用 useAssigneeCandidates（同一端点、同一截断提示口径） */
-const {
-  userOptions,
-  userLoading,
-  candidateTruncated,
-  roleOptions,
-  postOptions,
-  searchUsers,
-  ensureUserOption
-} = useAssigneeCandidates();
+type ApproverType = "user" | "role" | "post";
+
+function isApproverType(type: string): type is ApproverType {
+  return type === "user" || type === "role" || type === "post";
+}
+
+/** 兜底分支不会走到，仅用于模板取到收窄后的 type */
+function approverTypeOf(type: string): ApproverType {
+  return isApproverType(type) ? type : "role";
+}
 
 /** el-select 多选回写：事件载荷是宽联合、el-table 的 row 是 DefaultRow，统一按行号写回 */
 function updateMultiValue(index: number, value: unknown) {
   const node = props.nodes[index];
   if (node) node.assignee_value = joinValues(value);
+}
+
+/** 节点级抄送人：用户名数组，保持原数组载荷 */
+function updateCcUsers(row: { cc_users?: string[] }, value: unknown) {
+  row.cc_users = (Array.isArray(value) ? value : []).map(String);
 }
 
 /** 分支路由编辑（统一走 ReDialog，路由表格在 RouteEditorForm 中） */
@@ -50,6 +60,10 @@ function openRouteEditor(nodes: NodeRow[], index: number) {
     condition: { ...(route.condition || {}) },
     target: Number(route.target)
   }));
+  const nodeOptions = nodes.map((node, position) => ({
+    order: position + 1,
+    name: node.name
+  }));
   routeFormRef.value = undefined;
   addDialog({
     title: t("systemApprovalFlow.routesTitle"),
@@ -58,7 +72,13 @@ function openRouteEditor(nodes: NodeRow[], index: number) {
     destroyOnClose: true,
     closeOnClickModal: false,
     contentRenderer: () =>
-      h(RouteEditorForm, { ref: routeFormRef, order, count, routes }),
+      h(RouteEditorForm, {
+        ref: routeFormRef,
+        order,
+        count,
+        nodeOptions,
+        routes
+      }),
     beforeSure: (done, { closeLoading }) => {
       const updated = routeFormRef.value?.getRoutes();
       if (!updated) {
@@ -76,14 +96,20 @@ function addNode(nodes: NodeRow[]) {
   nodes.push(createEmptyNode());
 }
 
-function removeNode(nodes: NodeRow[], index: number) {
+async function removeNode(nodes: NodeRow[], index: number) {
+  if (!(await confirm(t("systemApprovalFlow.removeNodeConfirm")))) return;
+  const snapshot = nodes.slice();
   nodes.splice(index, 1);
+  // 出口路由 target 是节点 order：删节点后必须重映射/丢弃，否则跳到错误节点
+  remapRouteTargets(nodes, snapshot);
 }
 
 function moveNode(nodes: NodeRow[], index: number, offset: number) {
   const target = index + offset;
   if (target < 0 || target >= nodes.length) return;
+  const snapshot = nodes.slice();
   [nodes[index], nodes[target]] = [nodes[target], nodes[index]];
+  remapRouteTargets(nodes, snapshot);
 }
 
 /** 审批人值占位符 i18n key：类型缺失/非法时回退 role，避免拼出 assigneeHint_undefined */
@@ -95,14 +121,13 @@ function assigneeHint(type: string): string {
 <template>
   <div>
     <!-- 单根包裹：父组件用 v-show 切换列表/画布，多根组件上运行时指令（v-show）不生效并告警 -->
-    <el-alert
-      v-if="candidateTruncated"
-      type="warning"
-      :closable="false"
-      class="mb-2"
-      :title="t('approval.candidateTruncated')"
-    />
-    <el-table :data="nodes" size="small" border class="nodes-table">
+    <DataTable
+      :data="nodes"
+      size="small"
+      border
+      class="nodes-table"
+      :label="t('systemApprovalFlow.nodesTitle')"
+    >
       <el-table-column
         type="index"
         width="50"
@@ -190,71 +215,20 @@ function assigneeHint(type: string): string {
             :placeholder="t('systemApprovalFlow.assigneeHint_leader')"
             :aria-label="t('systemApprovalFlow.assigneeValue')"
           />
-          <!-- 指定用户：按用户名远程搜索多选（值=用户名，逗号分隔）；搜索无结果可直接输入用户名兜底 -->
-          <el-select
-            v-else-if="row.assignee_type === 'user'"
+          <!-- 指定用户 / 角色 / 岗位：候选目录多选（用户远程搜索；均可直输 code 兜底） -->
+          <ApproverPicker
+            v-else-if="isApproverType(row.assignee_type)"
             :model-value="splitValues(row.assignee_value)"
-            multiple
-            filterable
-            remote
-            allow-create
-            default-first-option
-            reserve-keyword
-            size="small"
-            :remote-method="searchUsers"
-            :loading="userLoading"
-            :placeholder="t('systemApprovalFlow.assigneeHint_user')"
-            :aria-label="t('systemApprovalFlow.assigneeValue')"
-            @focus="splitValues(row.assignee_value).forEach(ensureUserOption)"
-            @update:model-value="value => updateMultiValue($index, value)"
-          >
-            <el-option
-              v-for="user in userOptions"
-              :key="user.username"
-              :label="user.label"
-              :value="user.username"
-            />
-          </el-select>
-          <!-- 角色：按角色名多选（值=角色编码）；可直接输入角色 code 兜底 -->
-          <el-select
-            v-else-if="row.assignee_type === 'role'"
-            :model-value="splitValues(row.assignee_value)"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            size="small"
-            :placeholder="t('systemApprovalFlow.assigneeHint_role')"
+            :type="approverTypeOf(row.assignee_type)"
+            :size="'small'"
+            :fetcher="approvalFlowApi.candidateOptions"
+            truncated-hint
+            :placeholder="
+              t(`systemApprovalFlow.assigneeHint_${row.assignee_type}`)
+            "
             :aria-label="t('systemApprovalFlow.assigneeValue')"
             @update:model-value="value => updateMultiValue($index, value)"
-          >
-            <el-option
-              v-for="role in roleOptions"
-              :key="role.code"
-              :label="role.name"
-              :value="role.code"
-            />
-          </el-select>
-          <!-- 岗位：按岗位名多选（值=岗位 code，逗号分隔）；后端仅启用岗位的在岗用户参与解析 -->
-          <el-select
-            v-else-if="row.assignee_type === 'post'"
-            :model-value="splitValues(row.assignee_value)"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            size="small"
-            :placeholder="t('systemApprovalFlow.assigneeHint_post')"
-            :aria-label="t('systemApprovalFlow.assigneeValue')"
-            @update:model-value="value => updateMultiValue($index, value)"
-          >
-            <el-option
-              v-for="post in postOptions"
-              :key="post.code"
-              :label="post.name"
-              :value="post.code"
-            />
-          </el-select>
+          />
           <!-- 表单字段：单选（值=字段 key，来自本流程已配置的表单字段） -->
           <el-select
             v-else-if="row.assignee_type === 'field' && (fields ?? []).length"
@@ -284,29 +258,14 @@ function assigneeHint(type: string): string {
       <el-table-column :label="t('systemApprovalFlow.ccUsers')" min-width="150">
         <template #default="{ row }">
           <!-- 抄送人（节点级默认）：与审批人同口径的多选（用户名数组，可直接输入兜底） -->
-          <el-select
+          <ApproverPicker
             :model-value="row.cc_users || []"
-            multiple
-            filterable
-            remote
-            allow-create
-            default-first-option
-            reserve-keyword
-            size="small"
-            :remote-method="searchUsers"
-            :loading="userLoading"
+            type="user"
+            :fetcher="approvalFlowApi.candidateOptions"
             :placeholder="t('systemApprovalFlow.ccUsersHint')"
             :aria-label="t('systemApprovalFlow.ccUsers')"
-            @focus="(row.cc_users || []).forEach(ensureUserOption)"
-            @update:model-value="value => (row.cc_users = value)"
-          >
-            <el-option
-              v-for="user in userOptions"
-              :key="user.username"
-              :label="user.label"
-              :value="user.username"
-            />
-          </el-select>
+            @update:model-value="value => updateCcUsers(row, value)"
+          />
         </template>
       </el-table-column>
       <el-table-column
@@ -333,7 +292,7 @@ function assigneeHint(type: string): string {
             <el-option
               v-for="op in CONDITION_OPS"
               :key="op"
-              :label="op"
+              :label="conditionOpLabel(op, t)"
               :value="op"
             />
           </el-select>
@@ -442,7 +401,7 @@ function assigneeHint(type: string): string {
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
   </div>
 </template>
 

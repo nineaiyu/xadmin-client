@@ -20,6 +20,9 @@ export interface GlobalSearchGroup {
   label: string;
   /** 命中后的跳转路由 */
   route: string;
+  /** 命中跳转承接字段：跳转带 ?<search_field>=<关键词>，列表页（RePlusPage
+   *  的 route.query → 搜索默认值装配）直接过滤到命中；空 = 跳转不带 query */
+  search_field?: string | null;
   total: number;
   items: GlobalSearchItem[];
 }

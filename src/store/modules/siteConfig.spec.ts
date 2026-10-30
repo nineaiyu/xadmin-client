@@ -136,6 +136,27 @@ describe("siteConfig 实时自动保存", () => {
   });
 });
 
+describe("siteConfig 站点配置完整性", () => {
+  it("缺 Locale 时按注册表补默认值，不再整包 reject", async () => {
+    mocks.getSiteConfig.mockResolvedValue({
+      config: { Layout: "vertical", Theme: "light" } as never
+    });
+    const store = useSiteConfigStoreHook();
+    await expect(store.getSiteConfig()).resolves.toMatchObject({
+      Layout: "vertical"
+    });
+    expect(mocks.storage.get("responsive-locale")).toMatchObject({
+      locale: "zh"
+    });
+  });
+
+  it("非对象响应仍按失败处理", async () => {
+    mocks.getSiteConfig.mockResolvedValue({ config: null as never });
+    const store = useSiteConfigStoreHook();
+    await expect(store.getSiteConfig()).rejects.toBeNull();
+  });
+});
+
 describe("siteConfig 面板级批量偏好落库（撤销 / 恢复站点默认共用）", () => {
   it("立即整包 PATCH 并弹自定义成功提示，同时捕获已同步快照", async () => {
     const store = useSiteConfigStoreHook();

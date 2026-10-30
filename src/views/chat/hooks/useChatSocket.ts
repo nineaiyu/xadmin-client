@@ -41,6 +41,7 @@ export function useChatSocket({
   scrollToBottom: () => void;
 }) {
   const connected = ref(false);
+  const denied = ref(false);
   const socket = ref<WS>();
 
   function markRead(roomId: number) {
@@ -65,6 +66,7 @@ export function useChatSocket({
     const instance = new ChatWebSocket({
       openCallback: () => {
         connected.value = true;
+        denied.value = false;
         instance.onMessage(raw =>
           dispatchChatFrame(raw, {
             activeRoomId,
@@ -83,8 +85,9 @@ export function useChatSocket({
         // 取当前登录用户主键（气泡左右对齐）；连接恢复后需重新拉取
         instance.send(JSON.stringify({ action: MessageAction.USERINFO }));
       },
-      closeCallback: () => {
+      closeCallback: (_socket, event) => {
         connected.value = false;
+        denied.value = event?.code === 4403;
       },
       errorCallback: () => {
         connected.value = false;
@@ -99,5 +102,5 @@ export function useChatSocket({
     connected.value = false;
   }
 
-  return { connected, socket, connect, disconnect, markRead };
+  return { connected, denied, socket, connect, disconnect, markRead };
 }

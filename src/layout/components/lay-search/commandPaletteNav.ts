@@ -6,8 +6,8 @@ import type { optionsItem } from "./types";
 
 /**
  * 命令面板键盘导航（自 useCommandPalette.ts 抽出）：唯一导航指针
- * （cmd:xx / 菜单路径 / global:<组>:<pk> / 历史路径）串联快捷动作、菜单结果、
- * 全局搜索分组与历史记录，↑↓ 循环移动、Enter 执行。
+ * （cmd:xx / 菜单路径 / global:<组>:<pk> / ask:ai / 历史路径）串联快捷动作、
+ * 菜单结果、全局搜索分组、问 AI 与历史记录，↑↓ 循环移动、Enter 执行。
  */
 export function createNavController({
   router,
@@ -18,8 +18,10 @@ export function createNavController({
   globalGroups,
   activePath,
   historyPath,
+  askAiVisible,
   scrollTo,
   goGlobalResult,
+  runAskAi,
   saveHistory,
   updateHistory,
   handleClose,
@@ -33,17 +35,20 @@ export function createNavController({
   globalGroups: ShallowRef<GlobalSearchGroup[]>;
   activePath: Ref<string>;
   historyPath: Ref<string>;
+  askAiVisible: ComputedRef<boolean>;
   scrollTo: (index: number) => void;
   goGlobalResult: (group: GlobalSearchGroup) => void;
+  runAskAi: () => void;
   saveHistory: () => void;
   updateHistory: () => void;
   handleClose: () => void;
   runQuickAction: (id: string) => void;
 }) {
-  /** 唯一导航指针：cmd:xx / 菜单路径 / global:<组>:<pk> / 历史路径 */
+  /** 唯一导航指针：cmd:xx / 菜单路径 / global:<组>:<pk> / ask:ai / 历史路径 */
   const activeNav = ref("");
   const commandActive = ref("");
   const globalActive = ref("");
+  const askAiActive = ref("");
 
   const navTargets = (): NavTarget[] => {
     const targets: NavTarget[] = [];
@@ -60,6 +65,9 @@ export function createNavController({
           })
         )
       );
+      if (askAiVisible.value) {
+        targets.push({ key: "ask:ai", kind: "askAi", payload: null });
+      }
     } else {
       commandItems.value.forEach(item =>
         targets.push({ key: item.id, kind: "command", payload: item })
@@ -75,7 +83,9 @@ export function createNavController({
   watch(activeNav, key => {
     commandActive.value = key.startsWith("cmd:") ? key : "";
     globalActive.value = key.startsWith("global:") ? key : "";
+    askAiActive.value = key === "ask:ai" ? key : "";
     if (key.startsWith("global:") || key.startsWith("cmd:")) return;
+    if (key === "ask:ai") return;
     if (keyword.value) activePath.value = key;
     else historyPath.value = key;
   });
@@ -118,6 +128,10 @@ export function createNavController({
       goGlobalResult(target.payload as GlobalSearchGroup);
       return;
     }
+    if (target.kind === "askAi") {
+      runAskAi();
+      return;
+    }
     if (target.kind === "result") {
       saveHistory();
     } else {
@@ -131,6 +145,7 @@ export function createNavController({
     activeNav,
     commandActive,
     globalActive,
+    askAiActive,
     handleEnter,
     handleUp: () => moveNav(-1),
     handleDown: () => moveNav(1)

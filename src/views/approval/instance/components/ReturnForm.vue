@@ -41,10 +41,16 @@ defineExpose({ getPayload });
 
 onMounted(async () => {
   try {
-    const res = await approvalInstanceApi.returnTargets(props.pk);
+    const res = await approvalInstanceApi
+      .returnTargets(props.pk)
+      .catch(() => null);
+    // HTTP 层异常已由拦截器提示，这里只处理 200 + 业务码失败
+    if (!res) return;
     if (isSuccess(res) && res.data) {
       targets.value = res.data;
       form.target_order = targets.value[0]?.order;
+    } else {
+      message(String(res.detail || t("results.failed")), { type: "warning" });
     }
   } finally {
     loading.value = false;

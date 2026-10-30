@@ -1,35 +1,30 @@
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   oauthApi,
   OAUTH_BIND_FLAG,
   type OAuthProvider
 } from "@/api/identity/oauth";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { message } from "@/utils/message";
 
 /**
  * 第三方登录入口：**无 provider 配置时不渲染**（后端 OAUTH_PROVIDERS 默认空 = 整体休眠）。
  *
- * 只拉取已启用的 provider（接口不返回密钥），点击后取一次性 state 的授权地址再整体跳转。
+ * provider 列表来自登录页能力清单（外壳统一拉取,清单失败有整页重试,
+ * 不再各自静默吞错）;点击后取一次性 state 的授权地址再整体跳转。
  */
 
 defineOptions({ name: "OAuthEntry" });
 
 const { t } = useI18n();
-const providers = ref<OAuthProvider[]>([]);
-
-onMounted(() => {
-  oauthApi
-    .providers()
-    .then(res => {
-      if (isSuccess(res)) {
-        providers.value = (res.data?.providers ?? []) as OAuthProvider[];
-      }
-    })
-    .catch(() => undefined);
-});
+const providers = computed<OAuthProvider[]>(
+  () =>
+    (useLoginPageStoreHook().capabilities?.oauth as
+      OAuthProvider[] | undefined) ?? []
+);
 
 const goAuthorize = (key: string) => {
   oauthApi
@@ -40,8 +35,10 @@ const goAuthorize = (key: string) => {
         // 避免回调失败页被旧标记误导出「返回账户设置」出口
         sessionStorage.removeItem(OAUTH_BIND_FLAG);
         window.location.href = String(res.data.url);
-      } else if (res.detail) {
-        message(res.detail, { type: "warning" });
+      } else {
+        message(String(res.detail || t("results.failed")), {
+          type: "warning"
+        });
       }
     })
     .catch(() => undefined);

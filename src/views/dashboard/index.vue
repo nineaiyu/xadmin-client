@@ -1,32 +1,37 @@
 <script lang="ts" setup>
-import { isSuccess } from "@/api/types";
-import { fetchAllRows } from "@/utils/fetchAllRows";
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { Download, Setting } from "@element-plus/icons-vue";
 import ReEmpty from "@/components/ReEmpty";
 import { hasAuth } from "@/router/utils";
-import { message } from "@/utils/message";
-import { copyText } from "@/utils/clipboard";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useSortable } from "@/hooks/useSortable";
+import { useDesignerGuard } from "@/hooks/useDesignerGuard";
+import type { DashboardCard } from "@/api/dataset/datasets";
 import {
-  dashboardApi,
-  datasetApi,
-  listRows,
-  type DashboardCard,
-  type DashboardItem,
-  type DatasetItem
-} from "@/api/dataset/datasets";
-import { cardRenderHeight } from "@/utils/cardHeight";
+  REALTIME_REFRESH_SECONDS,
+  useDashboardAutoRefresh
+} from "./utils/useDashboardAutoRefresh";
+import {
+  applyDashboardFrame,
+  useDashboardChannel
+} from "./utils/useDashboardChannel";
 import { useCardImageExport } from "./utils/useCardImageExport";
+import { useDashboardSnapshot } from "./utils/useDashboardSnapshot";
 import { useCardDialog } from "./utils/useCardDialog";
 import { useDashboardDialogs } from "./utils/useDashboardDialogs";
+import { useDashboardDelete } from "./utils/useDashboardDelete";
+import { useDashboardEditing } from "./utils/useDashboardEditing";
+import { useDashboardView } from "./utils/useDashboardView";
+import { useCardDrill } from "./utils/useCardDrill";
+import { useDashboardLinkage } from "./utils/useDashboardLinkage";
 import { cardColSpan, cardColSpanNarrow } from "./utils/span";
+import { DASHBOARD_MAX_CARDS } from "./utils/cardLimits";
+import { cardRenderHeight } from "@/utils/cardHeight";
+import { syncSelectInputsA11y } from "@/utils/tableA11y";
 // 门控包装：内部等 echarts 就绪后再挂载 ChartCard（useECharts 初始化时同步读 $echarts）
 import { ChartCardAsync as ChartCard } from "./components/ChartCardAsync";
-import { normalizeError } from "@/utils/apiError";
+import CardDrillDrawer from "./components/CardDrillDrawer.vue";
+import CardHeaderActions from "./components/CardHeaderActions.vue";
+import DashboardToolbar from "./components/DashboardToolbar.vue";
 
 defineOptions({
   name: "DataDashboard"
@@ -35,201 +40,103 @@ defineOptions({
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
-const confirm = useConfirm();
 const canEdit = hasAuth("partialUpdate:DataDashboard");
 const canCreate = hasAuth("create:DataDashboard");
+const canDestroy = hasAuth("destroy:DataDashboard");
+/** 展板路由（meta.kiosk）：隐藏全部编辑/选择工具栏，只读自动刷新 */
+const kiosk = computed(() => route.meta?.kiosk === true);
 
-const dashboards = ref<DashboardItem[]>([]);
-const current = ref<DashboardItem | null>(null);
-const loading = ref(false);
-const editing = ref(false);
-/**
- * 卡片刷新信号：自增经 refreshToken prop 下发，ChartCard watch 后原位重拉
- * （保留 ECharts 实例，不再销毁重建）；结构性重挂仍由 layoutKey 承担
- * （仅卡片集合/顺序变化时变，span/height 走响应式绑定无需重挂）。
- */
-const refreshKey = ref(0);
+// ---- 展示态（清单/选中/分享/数据集目录/刷新信号）与编辑态（草稿/拖拽/保存）各归 composable ----
+const view = useDashboardView({ t, route, router });
+const {
+  current,
+  dashboards,
+  datasetName,
+  datasets,
+  loadDashboards,
+  loadDatasets,
+  loading,
+  loadFailed,
+  loadError,
+  refreshCards,
+  refreshKey,
+  selectDashboard,
+  setSwitchGuard,
+  shareDashboard
+} = view;
 
-const refreshCards = () => {
-  refreshKey.value += 1;
+const {
+  dirty,
+  editing,
+  layout,
+  layoutKey,
+  moveCard,
+  removeCard,
+  rowRef,
+  saveLayout,
+  saving,
+  stopEditing,
+  toggleEdit,
+  updateDraft
+} = useDashboardEditing({ t, current, dashboards });
+/** 卡片数量上限（与后端 DASHBOARD_MAX_CARDS 同口径）：达到后禁用「添加卡片」 */
+const cardLimitReached = computed(
+  () => layout.value.length >= DASHBOARD_MAX_CARDS
+);
+const { confirmLeave } = useDesignerGuard({
+  dirty,
+  namespace: "dashboard",
+  // 编辑态是页面内联态：路由离开/刷新同样需要守卫（dialog 模式只做弹窗合并）
+  mode: "page"
+});
+/** 切换仪表盘前先收口编辑态：草稿有改动时确认，取消则保持当前盘 */
+setSwitchGuard(async () => {
+  if (dirty.value && !(await confirmLeave())) return false;
+  stopEditing();
+});
+
+/** 编辑 / 退出编辑：退出路径复用同一 dirty 守卫（取消不再静默丢草稿） */
+const onToggleEdit = async () => {
+  if (editing.value && dirty.value && !(await confirmLeave())) return;
+  toggleEdit();
 };
 
 /* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
-const AUTO_REFRESH_OPTIONS = [
-  { value: 0, labelKey: "dashboard.autoRefreshOff" },
-  { value: 10, labelKey: "dashboard.autoRefresh10s" },
-  { value: 30, labelKey: "dashboard.autoRefresh30s" },
-  { value: 60, labelKey: "dashboard.autoRefresh60s" },
-  { value: 300, labelKey: "dashboard.autoRefresh5m" }
-];
-const autoRefreshSeconds = ref(0);
-let autoRefreshTimer: number | undefined;
-
-const stopAutoRefresh = () => {
-  if (autoRefreshTimer) {
-    window.clearInterval(autoRefreshTimer);
-    autoRefreshTimer = undefined;
-  }
-};
-
-watch(autoRefreshSeconds, seconds => {
-  stopAutoRefresh();
-  if (seconds > 0) {
-    autoRefreshTimer = window.setInterval(refreshCards, seconds * 1000);
-  }
+const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
+  kiosk,
+  requestedSeconds: route.query.refresh,
+  refresh: refreshCards
 });
 
-onBeforeUnmount(stopAutoRefresh);
-
-const layout = computed<DashboardCard[]>(() =>
-  editing.value ? draftLayout.value : (current.value?.layout ?? [])
-);
-
-/** 编辑态草稿：拖拽排序/增删卡片落在草稿上，保存才提交后端 */
-const draftLayout = ref<DashboardCard[]>([]);
-const layoutKey = computed(() =>
-  draftLayout.value.map(card => card.id).join("|")
-);
-
-const rowRef = ref();
-
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
-const { setCardRef, exportingCard, exportCardImage } = useCardImageExport(t);
+const { cardRefs, setCardRef, exportingCard, exportCardImage } =
+  useCardImageExport(t);
 
-const loadDashboards = async () => {
-  loading.value = true;
-  try {
-    // fetchAllRows：下拉与 ?pk= 分享定位必须覆盖全量仪表盘——只取首页 20 条
-    // 会让超出分页的仪表盘在下拉里缺失、分享定位静默回落（与 loadDatasets 同口径）
-    const res = await fetchAllRows(dashboardApi.list);
-    dashboards.value = listRows<DashboardItem>(res as never);
-    if (!current.value && dashboards.value.length > 0) {
-      // 分享链接定位：?pk=<仪表盘主键> 命中则直接打开对应仪表盘
-      const sharedPk = typeof route.query.pk === "string" ? route.query.pk : "";
-      current.value =
-        dashboards.value.find(item => item.pk === sharedPk) ??
-        dashboards.value[0];
-    }
-  } finally {
-    loading.value = false;
-  }
-};
+/* ---------------- 实时推送（ws/dashboard/<pk>）：自动刷新「实时」档的取数替代 ---------------- */
+useDashboardChannel({
+  // 编辑态预览不吃推送（草稿卡片与线上布局不同）；切盘由通道 watch 重连
+  enabled: computed(
+    () =>
+      autoRefreshSeconds.value === REALTIME_REFRESH_SECONDS && !editing.value
+  ),
+  dashboardPk: computed(() => current.value?.pk ?? null),
+  applyFrame: frame => applyDashboardFrame(frame, cardRefs.value)
+});
 
-const datasets = ref<DatasetItem[]>([]);
-const loadDatasets = async () => {
-  // 数据集下拉失败不阻塞看板主链路：显式提示（此前未捕获，失败用户无感知）
-  const res = await fetchAllRows(datasetApi.list).catch(() => null);
-  if (!res) {
-    message(t("dashboard.datasetsLoadFailed"), { type: "warning" });
-    return;
-  }
-  datasets.value = listRows<DatasetItem>(res as never);
-};
-
-/** 选中仪表盘并把 pk 写回地址栏（分享即复制当前 URL） */
-const selectDashboard = (pk: string) => {
-  current.value = dashboards.value.find(item => item.pk === pk) ?? null;
-  editing.value = false;
-  syncDashboardQuery();
-};
-
-const syncDashboardQuery = () => {
-  if (!current.value) return;
-  router.replace({ query: { ...route.query, pk: current.value.pk } });
-};
-
-/** 复制当前仪表盘视图链接（同角色内有权限者打开即定位到该仪表盘） */
-const shareDashboard = async () => {
-  if (!current.value) return;
-  syncDashboardQuery();
-  // 剪贴板不可用（非 https/权限受限）时降级展示链接供手动复制
-  await copyText(window.location.href, {
-    failureFallbackText: String(window.location.href)
+/** 快照导出：整盘卡片按页面布局合成单张 PNG（标题/时间戳/水印叠加） */
+const { exporting: exportingSnapshot, exportDashboardSnapshot } =
+  useDashboardSnapshot({
+    layout,
+    current,
+    cardRefs,
+    rowEl: () => (rowRef.value?.$el as HTMLElement | undefined) ?? null
   });
-};
-
-const toggleEdit = () => {
-  if (!current.value) return;
-  if (!editing.value) {
-    draftLayout.value = JSON.parse(JSON.stringify(current.value.layout ?? []));
-    editing.value = true;
-    setupSortable();
-  } else {
-    editing.value = false;
-    destroySortable();
-  }
-};
-
-/**
- * 卡片拖拽排序：手柄 `drag-handle` 仅编辑态渲染，编辑期间把手柄拖动结果写回草稿。
- * 拖拽手势由 useSortable 统一承载（sortablejs 按需加载），本处只保留数据重排。
- */
-const { init: setupSortable, destroy: destroySortable } = useSortable(
-  () => rowRef.value?.$el as HTMLElement | undefined,
-  {
-    animation: 200,
-    handle: ".drag-handle",
-    onEnd: ({ oldIndex, newIndex }) => {
-      if (
-        oldIndex === undefined ||
-        newIndex === undefined ||
-        oldIndex === newIndex
-      )
-        return;
-      const next = [...draftLayout.value];
-      const [moved] = next.splice(oldIndex, 1);
-      next.splice(newIndex, 0, moved);
-      draftLayout.value = next;
-    }
-  }
-);
-
-const saving = ref(false);
-
-const saveLayout = async () => {
-  if (!current.value) return;
-  // 防重：连点只发一次 PATCH（partialUpdate 异步，竞态会并发写同一 layout）
-  if (saving.value) return;
-  saving.value = true;
-  try {
-    const res = await dashboardApi.partialUpdate<DashboardItem>(
-      current.value.pk,
-      { layout: draftLayout.value }
-    );
-    if (isSuccess(res)) {
-      message(t("dashboard.saveOk"), { type: "success" });
-      const index = dashboards.value.findIndex(
-        item => item.pk === current.value?.pk
-      );
-      if (index >= 0 && res.data) {
-        dashboards.value[index] = res.data;
-        current.value = dashboards.value[index];
-      }
-      editing.value = false;
-      destroySortable();
-      return;
-    }
-    // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-    if (res.detail) message(String(res.detail), { type: "error" });
-  } finally {
-    saving.value = false;
-  }
-};
-
-const removeCard = (id: string) => {
-  draftLayout.value = draftLayout.value.filter(card => card.id !== id);
-};
-
-const datasetName = (pk: string) =>
-  datasets.value.find(item => item.pk === pk)?.name ?? pk;
 
 // ---- 卡片弹窗（新建 / 编辑双模式）与图片导出：独立 composable（控制页面体积） ----
 const { openCardSettings, openCardDialog } = useCardDialog({
   t,
   datasets,
-  updateDraft: updater => {
-    draftLayout.value = updater(draftLayout.value);
-  }
+  updateDraft
 });
 
 // ---- 新建 / 设置仪表盘弹窗：独立 composable（控制页面体积） ----
@@ -238,32 +145,14 @@ const { openCreateDashboard, openDashboardSettings } = useDashboardDialogs({
   dashboards,
   current,
   reload: loadDashboards,
-  syncQuery: syncDashboardQuery
+  syncQuery: view.syncDashboardQuery
 });
 
-const removeDashboard = async () => {
-  if (!current.value) return;
-  if (
-    !(await confirm(
-      t("dashboard.removeConfirm", { name: current.value.name }),
-      { danger: true, draggable: true }
-    ))
-  ) {
-    return;
-  }
-  // 异常归一为可读失败结果：请求异常不再产生 unhandled rejection
-  const res = await dashboardApi
-    .destroy(current.value.pk)
-    .catch(normalizeError);
-  if (isSuccess(res)) {
-    current.value = null;
-    await loadDashboards();
-    syncDashboardQuery();
-    return;
-  }
-  // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-  if (res.detail) message(String(res.detail), { type: "error" });
-};
+const { removeDashboard } = useDashboardDelete({
+  current,
+  reload: loadDashboards,
+  syncQuery: view.syncDashboardQuery
+});
 
 const goDatasetPage = () => {
   // 护栏：URL 命名空间 /analysis/dataset/index ≠ 组件目录
@@ -273,110 +162,126 @@ const goDatasetPage = () => {
   router.push("/analysis/dataset/index");
 };
 
+/* ---------------- 卡片下钻：图表点击 / 查看明细 → 数据集明细抽屉 ---------------- */
+const { drillVisible, drillCard, openDrill, drillFilter } = useCardDrill();
+
+/* ---------------- 卡片联动：点击维度值反向过滤同盘其他卡片（来源卡除外） ---------------- */
+const {
+  linkage,
+  applyFromPoint,
+  clear: clearLinkage,
+  payloadFor
+} = useDashboardLinkage({
+  datasets
+});
+
+/** 卡片点击：下钻抽屉 + 同步联动（带维度原值时）；联动变化即整盘刷新 */
+const onCardPoint = (
+  card: DashboardCard,
+  point: { name: string; raw?: unknown } | null
+) => {
+  openDrill(card, point);
+  if (applyFromPoint(card, point)) refreshCards();
+};
+
+/** 清除联动并复位到全量视图（chip 关闭按钮） */
+const onClearLinkage = () => {
+  clearLinkage();
+  refreshCards();
+};
+
+// 编辑态预览不受浏览态过滤影响；切换仪表盘联动复位（卡片属于另一份布局）
+watch(editing, value => {
+  if (value) clearLinkage();
+});
+watch(
+  () => current.value?.pk,
+  () => clearLinkage()
+);
+
 onMounted(async () => {
   await Promise.all([loadDashboards(), loadDatasets()]);
+  // 自动刷新下拉的可访问名（EP el-select 无 props 入口，渲染后补名；
+  // 与分页器下拉同一收口手法）
+  syncSelectInputsA11y(
+    document.querySelector('[data-testid="dashboard-picker"]'),
+    t("dashboard.pickDashboard")
+  );
+  syncSelectInputsA11y(
+    document.querySelector('[data-testid="dashboard-auto-refresh"]'),
+    t("dashboard.autoRefresh")
+  );
 });
 </script>
 
 <template>
-  <div v-loading="loading" class="pr-[1%]">
-    <!-- pr-[1%]：内容宽度对齐 RePlusPage 的 w-99/100（右侧留 1%），
+  <div v-loading="loading">
+    <!-- 与列表页内容区同宽：页面留白由 layout 的 main-content 统一提供，
+         不再用 pr-[1%] 模拟 RePlusPage 搜索卡的 1% 右留白；
          根元素自带 layout 注入的 main-content（24px 外边距），不能再设百分比宽度（会溢出） -->
-    <el-card shadow="never" class="mb-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="font-semibold">{{ t("dashboard.title") }}</span>
-        <el-select
-          v-model="current"
-          :placeholder="t('dashboard.pickDashboard')"
-          value-key="pk"
-          class="w-56!"
-          @change="(item: DashboardItem) => selectDashboard(item?.pk)"
-        >
-          <el-option
-            v-for="item in dashboards"
-            :key="item.pk"
-            :value="item"
-            :label="item.name"
-          />
-        </el-select>
-        <el-button
-          v-if="canCreate"
-          data-testid="dashboard-create"
-          @click="openCreateDashboard"
-        >
-          {{ t("dashboard.create") }}
-        </el-button>
-        <el-button
-          v-if="canEdit && current && current.is_owner !== false"
-          :type="editing ? 'warning' : 'primary'"
-          @click="toggleEdit"
-        >
-          {{ editing ? t("dashboard.cancelEdit") : t("dashboard.edit") }}
-        </el-button>
-        <el-button
-          v-if="editing"
-          type="success"
-          :loading="saving"
-          @click="saveLayout"
-        >
-          {{ t("dashboard.saveLayout") }}
-        </el-button>
-        <el-button v-if="editing" type="danger" plain @click="removeDashboard">
-          {{ t("dashboard.remove") }}
-        </el-button>
-        <el-button
-          v-if="canEdit && current && current.is_owner !== false && !editing"
-          plain
-          data-testid="dashboard-settings"
-          @click="openDashboardSettings"
-        >
-          {{ t("dashboard.settings") }}
-        </el-button>
-        <div class="flex-1" />
-        <el-button
-          v-if="current"
-          link
-          type="primary"
-          data-testid="dashboard-share"
-          @click="shareDashboard"
-        >
-          {{ t("dashboard.share") }}
-        </el-button>
-        <el-button
-          v-if="current"
-          link
-          type="primary"
-          data-testid="dashboard-refresh"
-          @click="refreshCards"
-        >
-          {{ t("dashboard.refresh") }}
-        </el-button>
-        <el-select
-          v-model="autoRefreshSeconds"
-          class="w-28!"
-          size="default"
-          data-testid="dashboard-auto-refresh"
-          :title="t('dashboard.autoRefreshTip')"
-        >
-          <el-option
-            v-for="item in AUTO_REFRESH_OPTIONS"
-            :key="item.value"
-            :value="item.value"
-            :label="t(item.labelKey)"
-          />
-        </el-select>
-        <el-button link type="primary" @click="goDatasetPage">
-          {{ t("dashboard.manageDatasets") }}
-        </el-button>
-      </div>
-    </el-card>
+    <DashboardToolbar
+      v-if="!kiosk"
+      v-model:auto-refresh-seconds="autoRefreshSeconds"
+      :can-edit="canEdit"
+      :can-create="canCreate"
+      :can-destroy="canDestroy"
+      :current="current"
+      :dashboards="dashboards"
+      :editing="editing"
+      :saving="saving"
+      :exporting-snapshot="exportingSnapshot"
+      @select="selectDashboard"
+      @create="openCreateDashboard"
+      @toggle-edit="onToggleEdit"
+      @save="saveLayout"
+      @remove="removeDashboard"
+      @settings="openDashboardSettings"
+      @export-snapshot="exportDashboardSnapshot"
+      @share="shareDashboard"
+      @refresh="refreshCards"
+      @go-datasets="goDatasetPage"
+    />
 
+    <el-result
+      v-if="loadFailed"
+      icon="error"
+      :title="t('dashboard.loadFailed')"
+      :sub-title="loadError"
+    >
+      <template #extra>
+        <el-button type="primary" @click="loadDashboards">
+          {{ t("buttons.reload") }}
+        </el-button>
+      </template>
+    </el-result>
     <ReEmpty
-      v-if="!current"
+      v-else-if="!current"
       :description="t('dashboard.empty')"
       icon="ep/data-line"
     />
     <template v-else>
+      <!-- 联动过滤提示条：当前联动来源卡与维度值，可一键清除回到全量 -->
+      <div
+        v-if="linkage && !editing"
+        class="mb-3"
+        data-testid="dashboard-linkage-bar"
+      >
+        <el-tag
+          closable
+          type="primary"
+          size="large"
+          :title="t('dashboard.linkageTip')"
+          data-testid="dashboard-linkage-chip"
+          @close="onClearLinkage"
+        >
+          {{
+            t("dashboard.linkageActive", {
+              name: linkage.sourceTitle,
+              value: linkage.label
+            })
+          }}
+        </el-tag>
+      </div>
       <el-row ref="rowRef" :gutter="12" data-testid="dashboard-cards">
         <!-- 栅格：窄屏最多两列（xs 全宽 / sm、md 半宽上限）；lg 起回到用户档位。
              EP 断点类为 min-width 语义，必须显式给 lg，否则大屏仍命中 md 的半宽值 -->
@@ -393,43 +298,28 @@ onMounted(async () => {
           <el-card
             shadow="never"
             class="app-card flex flex-col overflow-hidden"
+            :data-card-id="card.id"
             :style="{ height: `${cardRenderHeight(card.height)}px` }"
             :body-style="{ flex: '1 1 0%', minHeight: '0' }"
           >
             <template #header>
               <div class="flex items-center gap-2">
+                <!-- 拖拽手柄留在标题左侧（sortable 的 handle 选择器按卡片头定位） -->
                 <span v-if="editing" class="drag-handle" aria-hidden="true" />
                 <span class="truncate font-medium">{{ card.title }}</span>
-                <el-tag size="small" type="info" class="ml-1">
+                <el-tag size="small" type="info" class="card-dataset-tag ml-1">
                   {{ datasetName(card.dataset) }}
                 </el-tag>
                 <div class="flex-1" />
-                <el-button
-                  v-if="!editing"
-                  link
-                  type="primary"
-                  :icon="Download"
-                  :title="t('dashboard.exportImage')"
-                  :loading="exportingCard === card.id"
-                  data-testid="card-export-image"
-                  @click="exportCardImage(card)"
+                <CardHeaderActions
+                  :editing="editing"
+                  :exporting="exportingCard === card.id"
+                  @export-image="exportCardImage(card)"
+                  @drill="openDrill(card, null)"
+                  @move="direction => moveCard(card.id, direction)"
+                  @settings="openCardSettings(card)"
+                  @remove="removeCard(card.id)"
                 />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="primary"
-                  :icon="Setting"
-                  :title="t('dashboard.cardSettings')"
-                  @click="openCardSettings(card)"
-                />
-                <el-button
-                  v-if="editing"
-                  link
-                  type="danger"
-                  @click="removeCard(card.id)"
-                >
-                  {{ t("dashboard.remove") }}
-                </el-button>
               </div>
             </template>
             <ChartCard
@@ -437,18 +327,46 @@ onMounted(async () => {
               :ref="setCardRef(card.id)"
               :card="card"
               :refresh-token="refreshKey"
+              :drillable="!editing"
+              :linkage-filter="payloadFor(card)"
+              @drill="point => onCardPoint(card, point)"
             />
           </el-card>
         </el-col>
       </el-row>
-      <el-button v-if="editing" class="w-40!" @click="openCardDialog">
+      <el-button
+        v-if="editing"
+        class="w-40!"
+        :disabled="cardLimitReached"
+        :title="
+          cardLimitReached
+            ? t('dashboard.cardLimitReached', {
+                count: DASHBOARD_MAX_CARDS
+              })
+            : undefined
+        "
+        @click="openCardDialog"
+      >
         {{ t("dashboard.addCard") }}
       </el-button>
     </template>
+
+    <CardDrillDrawer
+      v-model="drillVisible"
+      :title="String(drillCard?.title ?? '')"
+      :dataset="drillCard?.dataset ?? ''"
+      :filter="drillFilter"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
+/* 卡片头「数据集名」标签：el-tag--info 缺省文字色在浅灰底上对比度不足
+   （axe color-contrast serious），正文灰加深一档（底色不变，视觉近似） */
+.card-dataset-tag :deep(.el-tag__content) {
+  color: var(--el-text-color-regular);
+}
+
 /* 卡片拖拽手柄：2×3 点阵（CSS 绘制，避免文本字符在不同字体下的宽度差异） */
 .drag-handle {
   display: block;

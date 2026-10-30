@@ -138,7 +138,15 @@ const commands: Record<string, () => void> = {
   "code-block": () => insertBlock("```\ncode\n```"),
   link: () =>
     insertSnippet("[", "](https://)", t("systemNotice.markdownLinkText")),
-  table: () => insertBlock("| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |"),
+  // 表格骨架单元格文案走词条：en 语言下不应插入中文示例表头
+  table: () =>
+    insertBlock(
+      `| ${t("systemNotice.markdownTableCol1")} | ${t(
+        "systemNotice.markdownTableCol2"
+      )} |\n| --- | --- |\n| ${t("systemNotice.markdownTableCell")} | ${t(
+        "systemNotice.markdownTableCell"
+      )} |`
+    ),
   divider: () => insertBlock("---")
 };
 

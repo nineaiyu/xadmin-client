@@ -18,3 +18,4 @@ export * from "./src/components/ButtonOperation";
 export * from "./src/utils/types";
 export * from "./src/utils/formatColumns";
 export * from "./src/utils/public";
+export * from "./src/utils/defineListPage";

@@ -54,18 +54,19 @@ export function useChatCore() {
 
   // ------------------------------------------------------------------ WS
 
-  const { connected, socket, connect, disconnect, markRead } = useChatSocket({
-    activeRoomId,
-    me,
-    roomState,
-    upsertMessage,
-    applyRecall,
-    applyReactions,
-    isMine,
-    atBottom,
-    pendingCount,
-    scrollToBottom
-  });
+  const { connected, denied, socket, connect, disconnect, markRead } =
+    useChatSocket({
+      activeRoomId,
+      me,
+      roomState,
+      upsertMessage,
+      applyRecall,
+      applyReactions,
+      isMine,
+      atBottom,
+      pendingCount,
+      scrollToBottom
+    });
 
   // ---------------------------------------------------------- 历史与已读
 
@@ -101,6 +102,7 @@ export function useChatCore() {
     disposeMessageStore,
     // WS 与历史
     connected,
+    denied,
     socket,
     connect,
     disconnect,

@@ -25,6 +25,7 @@ export function usePlusPageData({
   routeParams,
   dataList,
   loadingStatus,
+  loadError,
   searchFields,
   defaultValue,
   tablePagination,
@@ -38,6 +39,8 @@ export function usePlusPageData({
   routeParams: Record<string, unknown>;
   dataList: Ref<unknown[]>;
   loadingStatus: Ref<boolean>;
+  /** 列表请求失败原因（框架错误态消费） */
+  loadError: Ref<string>;
   searchFields: Ref<{
     size?: number;
     page?: number;
@@ -67,6 +70,7 @@ export function usePlusPageData({
     routeParams,
     dataList,
     loadingStatus,
+    loadError,
     searchFields,
     tablePagination,
     getColumnData,

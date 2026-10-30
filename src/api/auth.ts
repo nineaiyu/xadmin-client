@@ -122,12 +122,71 @@ export type TempTokenResult = {
   lifetime?: number;
 };
 
-export type CaptchaResult = {
+/** 统一人机验证题型 / 场景（与后端 captcha.const 的枚举保持一致） */
+export type CaptchaType =
+  "image" | "slide" | "rotate" | "click" | "pow" | "wordorder" | "icon";
+export type CaptchaScene =
+  "login" | "register" | "reset" | "bind_email" | "bind_phone" | "invite";
+
+/** 拖动 / 点击采样点：坐标为题目图片的自然像素，t 为毫秒时间戳 */
+export type CaptchaTrackPoint = {
+  x: number;
+  y: number;
+  t: number;
+  /** 事件类型（move/down/up/click/keyboard）：信号层用于区分轨迹阶段 */
+  ev?: string;
+};
+
+export type CaptchaPowChallenge = {
+  algorithm: "sha256";
+  challenge: string;
+  difficulty_bits: number;
+  expire: number;
+  /** 相对有效期（秒）：客户端优先按收到时刻 + ttl 计时 */
+  ttl?: number;
+};
+
+export type CaptchaChallengeData = {
+  challenge_id: string;
+  type: CaptchaType;
+  background: string;
+  piece?: string;
+  tip?: string;
+  width?: number;
+  height?: number;
+  piece_size?: number;
+  count?: number;
+  /** 图片题答案长度（用于输入提示） */
+  length?: number;
+  /** 图片题是否提供音频回退 */
+  audio?: boolean;
+  ttl: number;
+  /** 服务端时间戳（秒）：verify 加签以此为 gen_time，避免客户端时钟偏差 */
+  ts?: number;
+  /** 一次性验签会话密钥：verify 需据此加签 */
+  ck?: string;
+  /** allow / light / 图片回退的算力题面（图片题需随答案一起提交） */
+  pow?: CaptchaPowChallenge;
+};
+
+export type CaptchaVerifyData = {
+  passed: boolean;
+  ticket?: string;
+  expires_in?: number;
+};
+
+export type CaptchaChallengeResult = {
   code: number;
   detail: string;
-  captcha_image: string;
-  captcha_key: string;
-  length: number;
+  data: CaptchaChallengeData;
+};
+
+export type CaptchaVerifyResult = {
+  code: number;
+  detail: string;
+  data: CaptchaVerifyData;
+  /** 失败语义：captcha_invalid（HTTP 400 时下发，所有失败同形） */
+  error?: string;
 };
 
 export type AuthInfoResult = {
@@ -136,15 +195,49 @@ export type AuthInfoResult = {
   data: {
     access: boolean;
     captcha?: boolean;
+    captcha_types?: CaptchaType[];
+    captcha_image_fallback?: boolean;
+    captcha_flow?: "always" | "adaptive";
     token?: boolean;
     encrypted?: boolean;
     lifetime?: number;
-    reset?: boolean;
     password?: PasswordRule[];
     email?: boolean;
     sms?: boolean;
-    basic?: boolean;
     rate?: number;
+  };
+};
+
+/** 登录页能力清单(GET /api/identity/auth/capabilities):各登录方式入口
+ * 可见性的唯一事实源;basic 携带账密登录细节开关,验证码场景的页内细节
+ * (发码冷却 / 密码规则等)仍由 verify?category= 承载 */
+export type OAuthCapabilityEntry = {
+  key: string;
+  name: string;
+  flavor: string;
+};
+
+export type AuthCapabilitiesResult = {
+  code: number;
+  detail: string;
+  data: {
+    /** 登录总开关(关闭时登录页整体不可用) */
+    access: boolean;
+    /** 免登录天数(refresh token 生命周期,天) */
+    lifetime: number;
+    basic: {
+      enabled: boolean;
+      captcha: boolean;
+      captcha_types: CaptchaType[];
+      captcha_image_fallback: boolean;
+      captcha_flow?: "always" | "adaptive";
+      token: boolean;
+      encrypted: boolean;
+    };
+    code: { enabled: boolean; email: boolean; sms: boolean };
+    register: { enabled: boolean; email: boolean; sms: boolean };
+    reset: { enabled: boolean; email: boolean; sms: boolean };
+    oauth: OAuthCapabilityEntry[];
   };
 };
 
@@ -153,7 +246,15 @@ export type AuthInfoResult = {
 export type InviteValidateResult = {
   code: number;
   detail: string;
-  data: { state: string; username: string; encrypted?: boolean };
+  data: {
+    state: string;
+    username: string;
+    encrypted?: boolean;
+    captcha_required?: boolean;
+    captcha_types?: CaptchaType[];
+    captcha_image_fallback?: boolean;
+    captcha_flow?: "always" | "adaptive";
+  };
 };
 
 /**
@@ -184,13 +285,13 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 登录方式能力探测（data 仅在显式传入时作为请求体） */
-  loginAuth = (data?: object) => {
-    return this.request<AuthInfoResult>(
+  /** 登录页能力清单(各登录方式入口可用性,登录页外壳一次性拉取) */
+  loginCapabilities = () => {
+    return this.request<AuthCapabilitiesResult>(
       "get",
       {},
-      data,
-      "/api/identity/login/basic"
+      undefined,
+      "/api/identity/auth/capabilities"
     );
   };
 
@@ -204,13 +305,23 @@ class AuthApi extends BaseApi {
     );
   };
 
-  /** 图形验证码 */
-  captcha = () => {
-    return this.request<CaptchaResult>(
-      "get",
+  /** 统一人机验证：获取挑战（答案永不下发） */
+  captchaChallenge = (data?: object) => {
+    return this.request<CaptchaChallengeResult>(
+      "post",
       {},
-      undefined,
-      "/api/identity/auth/captcha"
+      data,
+      "/api/identity/auth/captcha/challenge"
+    );
+  };
+
+  /** 统一人机验证：校验并换取一次性 ticket */
+  captchaVerify = (data?: object) => {
+    return this.request<CaptchaVerifyResult>(
+      "post",
+      {},
+      data,
+      "/api/identity/auth/captcha/verify"
     );
   };
 
@@ -223,16 +334,6 @@ class AuthApi extends BaseApi {
   register = (data?: object) => {
     return this.request<TokenResult>(
       "post",
-      {},
-      data,
-      "/api/identity/register"
-    );
-  };
-
-  /** 注册方式能力探测（data 仅在显式传入时作为请求体） */
-  registerAuth = (data?: object) => {
-    return this.request<AuthInfoResult>(
-      "get",
       {},
       data,
       "/api/identity/register"
@@ -305,15 +406,16 @@ export const loginBasicApi = (data?: object) => authApi.loginBasic(data);
 export const loginVerifyCodeApi = (data?: object) =>
   authApi.loginVerifyCode(data);
 
-export const loginAuthApi = (data?: object) => authApi.loginAuth(data);
+export const loginCapabilitiesApi = () => authApi.loginCapabilities();
 
 export const getTempTokenApi = () => authApi.tempToken();
-export const getCaptchaApi = () => authApi.captcha();
+export const captchaChallengeApi = (data?: object) =>
+  authApi.captchaChallenge(data);
+export const captchaVerifyApi = (data?: object) => authApi.captchaVerify(data);
 
 export const refreshTokenApi = (data?: object) => authApi.refreshToken(data);
 
 export const registerApi = (data?: object) => authApi.register(data);
-export const registerAuthApi = (data?: object) => authApi.registerAuth(data);
 
 export const logoutApi = (data?: object) => authApi.logout(data);
 

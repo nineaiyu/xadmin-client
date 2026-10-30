@@ -1,4 +1,5 @@
 import { isSuccess } from "@/api/types";
+import { onMounted } from "vue";
 import type { useI18n } from "vue-i18n";
 import { knowledgeApi, type KnowledgeSyncStatus } from "@/api/ai/knowledge";
 import { usePollTask } from "@/hooks/usePollTask";
@@ -55,6 +56,16 @@ export function useKnowledgeSync({
   });
 
   const pollSyncStatus = () => syncPoll.start();
+
+  // 跨会话恢复：页面重新进入/刷新时先探测既有同步任务，运行中则继续轮询
+  onMounted(async () => {
+    const res = await knowledgeApi.syncRepoStatus().catch(normalizeError);
+    const status = (res.data as KnowledgeSyncStatus | null) ?? null;
+    if (status?.state === "running") {
+      message(t("aiKnowledge.syncAlreadyRunning"), { type: "info" });
+      await pollSyncStatus();
+    }
+  });
 
   const syncRepo = async () => {
     // 异常归一为可读失败结果：提交可能因仓库不可达等失败，需给出可读原因

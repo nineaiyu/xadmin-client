@@ -8,7 +8,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { RecordType } from "plus-pro-components";
 import Message from "~icons/ri/message-fill";
 import Tag from "~icons/ri/price-tag-3-line";
-import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
+import { useActiveBatchUpdate } from "@/views/system/components/useActiveBatchUpdate";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 type Row = RecordType;
@@ -51,17 +51,12 @@ export function useUserToolbarButtons({
   }
 
   // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
-  const { batchUpdateButton } = useBatchUpdate({
+  // 权限点缺失时按钮不出现（此前只看勾选，点开必 403）
+  const { batchUpdateButton } = useActiveBatchUpdate({
     t,
     api,
     tableRef,
-    fields: [
-      {
-        key: "is_active",
-        label: t("commonLabels.is_active"),
-        input_type: "boolean"
-      }
-    ]
+    canBatch: hasAuth("batchUpdate:SystemUser")
   });
 
   const tableBarButtonsProps = shallowRef<OperationProps>({

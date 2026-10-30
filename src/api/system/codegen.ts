@@ -71,12 +71,24 @@ export type CodegenFieldOverride = {
   field_class?: string;
 };
 
+/** AI 字段草案结果（人审采纳后合并进 fields 覆盖，不直写代码） */
+export type CodegenAiDraftResult = {
+  model: string;
+  /** AI 一句话取舍说明 */
+  summary: string;
+  /** 服务端按字段表格同套约束剔除的项（可读原因，逐条展示） */
+  warnings: string[];
+  fields: CodegenFieldOverride[];
+};
+
 /** 生成产物（path = 仓库相对路径，如 xadmin-server/demo/views.py） */
+/** kind 是前后端契约标识（如 next-steps），label 仅作展示文案，勿用于逻辑判定 */
 export type CodegenArtifact = {
   label: string;
   path: string;
   content: string;
   mode: string;
+  kind?: string;
   key: string;
   notice?: string;
 };
@@ -155,6 +167,15 @@ class SystemCodeGenApi extends BaseApi {
       { label },
       {},
       `${this.baseApi}/model-fields`
+    );
+  };
+  /** AI 字段草案：自然语言 → 字段覆盖草案（服务端校验过滤 + 告警，人审采纳） */
+  aiDraft = (payload: { model: string; description: string }) => {
+    return this.request<DetailResult<CodegenAiDraftResult>>(
+      "post",
+      {},
+      payload,
+      `${this.baseApi}/ai-draft`
     );
   };
   preview = (payload: CodegenPayload) => {

@@ -57,17 +57,22 @@ describe("resolveInitialPane", () => {
 describe("syncTabQuery", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    window.location.hash = "";
+    window.history.replaceState(null, "", "/");
   });
 
-  it("经 history.replaceState 写入地址栏（不触发路由导航）", () => {
-    window.location.hash = "#/account-settings";
+  it("经 history.replaceState 写入地址栏并保留路由 state（不触发路由导航）", () => {
+    window.history.replaceState(
+      { back: "/settings", current: "/account-settings", position: 2 },
+      "",
+      "#/account-settings"
+    );
     const spy = vi.spyOn(window.history, "replaceState");
+    const routerState = window.history.state;
 
     syncTabQuery("securityLog");
 
     expect(spy).toHaveBeenCalledWith(
-      null,
+      routerState,
       "",
       "#/account-settings?tab=securityLog"
     );
@@ -80,5 +85,22 @@ describe("syncTabQuery", () => {
     syncTabQuery("");
 
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveInitialPane 兜底权限收敛", () => {
+  const panes = [
+    { key: "export", auth: false },
+    { key: "import", auth: true }
+  ];
+
+  it("兜底键无权限时回落首个有权限页签（不再首屏空白）", () => {
+    expect(resolveInitialPane(panes, "", "export")).toBe("import");
+    expect(resolveInitialPane(panes, "export", "export")).toBe("import");
+  });
+
+  it("query 命中有权限页签直达；全部无权限维持 fallback", () => {
+    expect(resolveInitialPane(panes, "import", "export")).toBe("import");
+    expect(resolveInitialPane([{ key: "a", auth: false }], "", "a")).toBe("a");
   });
 });

@@ -4,7 +4,7 @@
  * 不持有 Vue 状态、不发起请求；装配流程见同目录 useNoticeFormOptions.ts。
  */
 
-import { NoticeChoices } from "@/views/system/constants";
+import { NoticeChoices } from "@/constants/notice";
 
 /**
  * 通知类型选项禁用判定：通知公告（SYSTEM）恒禁用（走公告接口另行发布）；
@@ -13,11 +13,13 @@ import { NoticeChoices } from "@/views/system/constants";
  */
 export function noticeTypeOptionLocked(
   value: unknown,
-  canAnnouncement: boolean
+  canAnnouncement: boolean,
+  canCreate = true
 ): boolean {
   if (value == NoticeChoices.SYSTEM) return true;
   if (value == NoticeChoices.NOTICE) return !canAnnouncement;
-  return false;
+  // 普通通知（用户/部门/角色/岗位）走通用 create；无 create 时选中必 403
+  return !canCreate;
 }
 
 /**
@@ -28,7 +30,23 @@ export function parseNoticeUserParam(
   raw: unknown
 ): { ok: true; value: unknown } | { ok: false } {
   try {
-    return { ok: true, value: JSON.parse(raw as string) };
+    const value = JSON.parse(raw as string);
+    // 形状校验：必须是非空数组，且每项含 pk/id/username；标量/空数组/坏对象一律拒绝
+    if (
+      !Array.isArray(value) ||
+      value.length === 0 ||
+      !value.every(
+        item =>
+          item &&
+          typeof item === "object" &&
+          ((item as { pk?: unknown }).pk != null ||
+            (item as { id?: unknown }).id != null ||
+            typeof (item as { username?: unknown }).username === "string")
+      )
+    ) {
+      return { ok: false };
+    }
+    return { ok: true, value };
   } catch {
     return { ok: false };
   }

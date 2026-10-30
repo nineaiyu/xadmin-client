@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { apiFailure } from "@/utils/apiError";
 import {
   getScreenCommandState,
   sendScreenCommand,
@@ -57,20 +58,18 @@ const syncTarget = () => {
   targetPk.value = props.dashboards[state.value.index]?.pk ?? "";
 };
 
-const loadState = async () => {
+const loadState = async (syncTargetOnLoad = true) => {
   // 控制态读取失败不阻塞面板：异常归一为可读失败结果并提示（此前未捕获——请求
   // 异常时抛 unhandled rejection 且面板以默认态静默呈现，用户误判为展示端 auto）
-  const res = await getScreenCommandState(props.row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error),
-    data: { state: state.value }
-  }));
+  const res = await getScreenCommandState(props.row.pk).catch(error =>
+    apiFailure(error, { state: state.value })
+  );
   if (!isSuccess(res)) {
     if (res.detail) message(String(res.detail), { type: "warning" });
     return;
   }
   state.value = res.data.state;
-  syncTarget();
+  if (syncTargetOnLoad) syncTarget();
 };
 
 /** 下发指令：成功后原地回写控制态；失败提示但保持弹窗（可重试） */
@@ -78,11 +77,9 @@ const apply = async (payload: ScreenCommandPayload) => {
   loading.value = true;
   try {
     // 异常归一为可读失败结果：避免请求异常时函数抛出、按钮 loading 悬挂
-    const res = await sendScreenCommand(props.row.pk, payload).catch(error => ({
-      code: -1,
-      detail: String((error as { detail?: string })?.detail ?? error),
-      data: { state: state.value }
-    }));
+    const res = await sendScreenCommand(props.row.pk, payload).catch(error =>
+      apiFailure(error, { state: state.value })
+    );
     if (isSuccess(res)) {
       state.value = res.data.state;
       syncTarget();
@@ -112,7 +109,15 @@ const refreshData = () => void apply({ command: "refresh" });
 /** 恢复自动轮播（展示端从当前页继续） */
 const resumeAuto = () => void apply({ command: "auto" });
 
-onMounted(loadState);
+/** 面板打开期间轮询控制态：展示端本地轮播/暂停也会反映到当前页 */
+let pollTimer: ReturnType<typeof setInterval> | undefined;
+onMounted(() => {
+  void loadState();
+  pollTimer = setInterval(() => void loadState(false), 5000);
+});
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer);
+});
 </script>
 
 <template>

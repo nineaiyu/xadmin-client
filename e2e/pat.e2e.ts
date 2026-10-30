@@ -8,11 +8,15 @@ import { BACKEND_URL, login } from "./helpers";
  * 创建表单在弹层内（明文一次性展示需要独立弹层承载）；返回明文供后续 `Pat` 头调用。
  */
 async function createToken(page: Page, tokenName: string): Promise<string> {
-  await page.getByRole("button", { name: "创建令牌" }).first().click();
   const createDialog = page
     .locator(".el-dialog", { hasText: "创建访问令牌" })
     .first();
-  await expect(createDialog).toBeVisible({ timeout: 10_000 });
+  // 首屏未完全可交互时，首次点击可能落在水合完成前被吞掉：
+  // 点击与「弹层出现」一起重试（6 路并行 + webkit 上踩过 20s 不出现的现场）
+  await expect(async () => {
+    await page.getByRole("button", { name: "创建令牌" }).first().click();
+    await expect(createDialog).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
   await createDialog
     .locator(".el-form-item", { hasText: "令牌名称" })
     .locator("input")

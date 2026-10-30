@@ -53,12 +53,12 @@ class DataDictApi extends BaseApi {
       `${this.baseApi}/${pk}/move`
     );
   };
-  /** 清空全部字典缓存（直连改库等绕过信号的场景） */
-  refreshCache = () => {
+  /** 清空字典缓存；传 code 时只失效该类型 */
+  refreshCache = (code?: string) => {
     return this.request<BaseResult>(
       "post",
       {},
-      {},
+      code ? { code } : {},
       `${this.baseApi}/refresh-cache`
     );
   };

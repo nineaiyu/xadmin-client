@@ -1,16 +1,8 @@
-import {
-  type CSSProperties,
-  getCurrentInstance,
-  onMounted,
-  ref,
-  computed
-} from "vue";
+import { type CSSProperties, getCurrentInstance, ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { responsiveStorageNameSpace } from "@/config";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
-import { storageLocal } from "@pureadmin/utils";
 import Close from "~icons/ep/close";
 import { createTagsPreferences, createTagsViews } from "./tagViewsConfig";
 import { createTagActiveState } from "./tagActiveState";
@@ -33,7 +25,7 @@ export function useTags() {
   const currentSelect = ref({});
   const isScrolling = ref(false);
 
-  const { tagsStyle, showTags } = createTagsPreferences();
+  const { tagsStyle, hideTags } = createTagsPreferences();
   const multiTags = computed(() => useMultiTagsStoreHook().multiTags);
 
   const tagsViews = createTagsViews(multiTags.value.length);
@@ -72,25 +64,12 @@ export function useTags() {
     }
   }
 
-  onMounted(() => {
-    if (!tagsStyle.value) {
-      const configure = storageLocal().getItem<StorageConfigs>(
-        `${responsiveStorageNameSpace()}configure`
-      );
-      configure.tagsStyle = "card";
-      storageLocal().setItem(
-        `${responsiveStorageNameSpace()}configure`,
-        configure
-      );
-    }
-  });
-
   return {
     Close,
     route,
     router,
     visible,
-    showTags,
+    hideTags,
     instance,
     multiTags,
     tagsStyle,
@@ -110,7 +89,6 @@ export function useTags() {
     getContextMenuStyle,
     $t,
     closeMenu,
-    onMounted,
     onMouseenter,
     onMouseleave,
     transformI18n,

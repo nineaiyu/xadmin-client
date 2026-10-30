@@ -1,12 +1,12 @@
 import { isSuccess } from "@/api/types";
-import { computed, onMounted, reactive, useSlots, type Ref } from "vue";
+import { computed, onMounted, reactive, ref, useSlots, type Ref } from "vue";
 import type { FormInstance } from "element-plus";
 import {
   getTempTokenApi,
   verifyCodeConfigApi,
   verifyCodeSendApi
 } from "@/api/auth";
-import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import type { CaptchaType } from "@/api/auth";
 import { isEmpty } from "@pureadmin/utils";
 import { buildEmailRule } from "@/utils/rules/email";
 import { buildPhoneRule } from "@/utils/rules/phone";
@@ -23,8 +23,7 @@ export interface SendVerifyFormData {
   token: string;
   phone?: string;
   email?: string;
-  captcha_key?: string;
-  captcha_code?: string;
+  captcha_ticket?: string;
   verify_code?: string;
   verify_token?: string;
   [key: string]: unknown;
@@ -32,13 +31,18 @@ export interface SendVerifyFormData {
 
 export const useSendVerifyCode = (
   formDataRef: Ref<FormInstance | undefined>,
-  captchaRef: Ref<{ getImgCode?: () => void } | undefined>,
+  challengeRef: Ref<
+    { open?: () => Promise<string>; reset?: () => void } | undefined
+  >,
   formData: Ref<SendVerifyFormData>,
   props: { category?: string },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vue EmitFn 交叉类型在参数逆变下需 any 才能收宽
   emit: (...args: any[]) => void
 ) => {
-  const { isDisabled, text } = useVerifyCode();
+  // 发送倒计时与按钮禁用必须读同一个实例：再调用一次 useVerifyCode() 会拿到
+  // 全新状态（冷却不生效/文本不更新），模块级单例时代被掩盖
+  const verifyCode = useVerifyCode();
+  const { isDisabled, text } = verifyCode;
   const { t } = useI18n();
   const $slots = useSlots();
   const access = computed(
@@ -52,23 +56,36 @@ export const useSendVerifyCode = (
     phone: "",
     email: "",
     target: "",
-    captcha_key: "",
-    captcha_code: "",
+    captcha_ticket: "",
     verify_code: "",
     verify_token: undefined
   };
 
   formData.value = Object.assign(formData.value, defaultValue);
 
-  const verifyCodeConfig = reactive({
+  const verifyCodeConfig = reactive<{
+    access: boolean;
+    captcha: boolean;
+    captcha_types: CaptchaType[];
+    captcha_image_fallback: boolean;
+    token: boolean;
+    encrypted: boolean;
+    email: boolean;
+    sms: boolean;
+    rate: number;
+  }>({
     access: false,
     captcha: false,
+    captcha_types: [],
+    captcha_image_fallback: false,
     token: false,
     encrypted: false,
     email: false,
     sms: false,
     rate: 60
   });
+
+  const captchaEnabled = computed(() => verifyCodeConfig.captcha);
 
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
@@ -99,26 +116,6 @@ export const useSendVerifyCode = (
         requiredMessage: transformI18n($t("login.emailReg")),
         formatMessage: transformI18n($t("login.emailCorrectReg"))
       })
-    ],
-    captcha_code: [
-      {
-        required: true,
-
-        validator: (rule, value, callback) => {
-          if (value === "") {
-            callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-          } else if (
-            useLoginPageStoreHook().verifyCodeLength !== value?.length
-          ) {
-            callback(
-              new Error(transformI18n($t("login.verifyCodeCorrectReg")))
-            );
-          } else {
-            callback();
-          }
-        },
-        trigger: "blur"
-      }
     ],
     verify_code: [
       {
@@ -170,8 +167,7 @@ export const useSendVerifyCode = (
       form_type: formData.value.form_type,
       token: formData.value.token,
       target: formData.value[formData.value.form_type],
-      captcha_key: formData.value.captcha_key,
-      captcha_code: formData.value.captcha_code
+      captcha_ticket: formData.value.captcha_ticket
     };
   };
 
@@ -179,11 +175,25 @@ export const useSendVerifyCode = (
     callback?: ((data: { [key: string]: unknown }) => void) | null
   ) => {
     formData.value.verify_token = undefined;
-    useVerifyCode().start(
+    verifyCode.start(
       formDataRef.value,
-      [formData.value.form_type, "captcha_code"],
+      [
+        formData.value.form_type,
+        formData.value.form_type === "phone" ? "phone" : "email"
+      ],
       verifyCodeConfig.rate,
       async interval => {
+        formData.value.captcha_ticket = "";
+        if (captchaEnabled.value) {
+          try {
+            formData.value.captcha_ticket =
+              (await challengeRef.value?.open?.()) ?? "";
+          } catch {
+            // 用户取消挑战：不进入冷却，保持可重试
+            return;
+          }
+          if (!formData.value.captcha_ticket) return;
+        }
         const data = formatSendData();
         if (verifyCodeConfig.encrypted) {
           data["target"] = await AesEncrypted(
@@ -197,6 +207,7 @@ export const useSendVerifyCode = (
           success(res) {
             if (!res?.data) return;
             formData.value.verify_token = res.data.verify_token;
+            formData.value.captcha_ticket = "";
             emit("sendCodeReqSuccess", res.data);
             interval(verifyCodeConfig.rate);
             if (callback) {
@@ -206,18 +217,23 @@ export const useSendVerifyCode = (
           showSuccessMsg: ["email", "phone"].includes(formData.value.form_type),
           exception() {
             initToken();
-            captchaRef.value?.getImgCode?.();
+            formData.value.captcha_ticket = "";
+            challengeRef.value?.reset?.();
           },
           failed() {
             initToken();
-            captchaRef.value?.getImgCode?.();
+            formData.value.captcha_ticket = "";
+            challengeRef.value?.reset?.();
           }
         });
       }
     );
   };
 
-  onMounted(() => {
+  /** 配置加载失败：与「服务禁用」区分，页面给出重试而不是静默空白 */
+  const configFailed = ref(false);
+  const loadConfig = () => {
+    configFailed.value = false;
     verifyCodeConfigApi({ category: props.category })
       .then(res => {
         if (isSuccess(res)) {
@@ -236,12 +252,19 @@ export const useSendVerifyCode = (
             }
           }
           initToken();
+        } else {
+          configFailed.value = true;
         }
+      })
+      .catch(() => {
+        configFailed.value = true;
       })
       .finally(() => {
         emit("configReqEnd");
       });
-  });
+  };
+
+  onMounted(loadConfig);
 
   return {
     t,
@@ -250,6 +273,9 @@ export const useSendVerifyCode = (
     formRules,
     isDisabled,
     verifyCodeConfig,
+    captchaEnabled,
+    configFailed,
+    reloadConfig: loadConfig,
     handleSendCode,
     fetchSuggestions
   };

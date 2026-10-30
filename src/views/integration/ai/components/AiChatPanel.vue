@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SendIcon from "~icons/ep/promotion";
@@ -42,6 +42,10 @@ const props = defineProps<{
   nlRunnable: boolean;
   actionExecutor: (_draft: AiActionDraft) => Promise<ExecuteResult>;
   isNarrow: boolean;
+  /** 初始输入内容（命令面板「问 AI」经路由 query 预填）；seq 变化即覆盖 */
+  initialDraft?: { seq: number; text: string } | null;
+  /** 发送失败回填的草稿（输入框为空时恢复，避免覆盖用户新输入） */
+  failedDraft?: { seq: number; text: string } | null;
 }>();
 
 const emit = defineEmits<{
@@ -53,10 +57,27 @@ const emit = defineEmits<{
   scroller: [HTMLElement | null];
   toggleNav: [];
   runNl: [dsl: object];
+  retry: [text: string];
 }>();
 
 const { t } = useI18n();
-const draft = ref("");
+const draft = ref(props.initialDraft?.text ?? "");
+// 命令面板「问 AI」再次进入（keep-alive 复用本组件）时刷新预填；
+// 仅在携带非空文案时覆盖，不清空用户已输入的内容
+watch(
+  () => props.initialDraft,
+  payload => {
+    if (payload?.text) draft.value = payload.text;
+  }
+);
+// 发送失败：乐观气泡被移除时把原草稿回填；用户已输入新内容则不覆盖
+watch(
+  () => props.failedDraft,
+  payload => {
+    if (payload?.text && !draft.value.trim()) draft.value = payload.text;
+  },
+  { immediate: true }
+);
 const scrollEl = ref<HTMLElement | null>(null);
 
 /** 列表壳滚动元素就绪：登记并向上冒泡，供父级滚动到底/离底检测持有 */
@@ -82,6 +103,29 @@ function submit() {
   if (!content) return;
   draft.value = "";
   emit("send", content);
+}
+
+/** Enter 发送：输入法组词确认（isComposing / 229）不发送，避免只发出未上屏拼音 */
+function onEnterKeydown(event: Event | KeyboardEvent) {
+  if (!(event instanceof KeyboardEvent)) return;
+  if (event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  submit();
+}
+
+/** 重试中断/失败回答：向上找最近一条用户提问原样重发（历史消息无本地请求上下文） */
+function retryMessage(item: AiConsoleMessage) {
+  if (props.streaming) return;
+  const flat = props.groups
+    .filter(row => row.type === "message")
+    .map(row => row.item);
+  const index = flat.findIndex(message => message.id === item.id);
+  for (let i = index - 1; i >= 0; i--) {
+    if (flat[i].role === "user") {
+      emit("retry", flat[i].content);
+      return;
+    }
+  }
 }
 
 /** 新增消息的进入动画标记：仅「尾部追加」播一次（整批替换 / 加载更早不播） */
@@ -128,7 +172,9 @@ defineExpose({ scrollEl });
         :nl-running="nlRunning"
         :action-executor="actionExecutor"
         :fresh="isFresh(row.key)"
+        :retry-disabled="streaming"
         @run-nl="dsl => emit('runNl', dsl)"
+        @retry="retryMessage(row.item)"
       />
     </template>
 
@@ -153,7 +199,7 @@ defineExpose({ scrollEl });
         :placeholder="placeholder"
         :disabled="disabled"
         data-testid="ai-ask-input"
-        @keydown.enter.exact.prevent="submit"
+        @keydown.enter.exact="onEnterKeydown"
       />
       <div class="mt-2 flex-bc">
         <div class="text-xs text-(--el-text-color-secondary)">

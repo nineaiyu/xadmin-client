@@ -98,6 +98,10 @@ export async function fetchServerTemplates(): Promise<FreeTemplate[]> {
   return rows.map(toFreeTemplate);
 }
 
+/** 最近一次模板写失败的服务端原因（重名/权限等），供调用方给出可读提示 */
+let lastWriteError = "";
+export const templateWriteError = () => lastWriteError;
+
 /** 另存为团队模板（名称 + 可见性；成功返回 true） */
 export async function saveServerTemplate(payload: {
   name: string;
@@ -106,6 +110,7 @@ export async function saveServerTemplate(payload: {
   panes: readonly ScreenLayoutPane[];
   visibility: "personal" | "shared";
 }): Promise<boolean> {
+  lastWriteError = "";
   const res = await screenTemplateApi
     .create({
       name: payload.name,
@@ -118,7 +123,9 @@ export async function saveServerTemplate(payload: {
       }
     })
     .catch(() => null);
-  return Boolean(res && isSuccess(res));
+  const ok = Boolean(res && isSuccess(res));
+  if (!ok) lastWriteError = String(res?.detail ?? "");
+  return ok;
 }
 
 /** 重命名团队模板（仅创建者可改，服务端 1003 拒绝时返回 false） */
@@ -126,10 +133,13 @@ export async function renameServerTemplate(
   pk: string,
   name: string
 ): Promise<boolean> {
+  lastWriteError = "";
   const res = await screenTemplateApi
     .partialUpdate(pk, { name })
     .catch(() => null);
-  return Boolean(res && isSuccess(res));
+  const ok = Boolean(res && isSuccess(res));
+  if (!ok) lastWriteError = String(res?.detail ?? "");
+  return ok;
 }
 
 /** 删除团队模板（仅创建者可删） */

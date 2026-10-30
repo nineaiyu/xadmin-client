@@ -36,7 +36,7 @@ const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
 /**
  * 详情数据是否「整行皆空」：字段权限启用且未给当前菜单配白名单时，
  * 序列化器会把字段裁空（未配置 = 裁空，运行时不可见），用户看到的是一块空白。
- * 这里给出可读解释，避免误判为数据丢失（白名单是部署前提，见 docs/architecture/field-permission.md）。
+ * 这里给出可读解释，避免误判为数据丢失（白名单是部署前提，见 docs/architecture/permission.md）。
  */
 const isBlankDetail = computed(() => {
   const values = Object.values(newFormInline.value ?? {});

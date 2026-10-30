@@ -210,6 +210,38 @@ test("自由画布：拖动缩放保存 → 投屏等比缩放；切回栅格不
   expect(matrix[2]).toBe(0);
   expect(matrix[3]).toBe(matrix[0]);
 
+  // ---- 几何断言：投屏窗格按 x/y/w/h 定位（与设计器同源包裹层），不再铺满舞台互相覆盖 ----
+  const displayDetail = await page.request.get(
+    `${BACKEND_URL}/api/dataset/screens/${screen.pk}`,
+    { headers: auth(token) }
+  );
+  const displayPanes = (
+    (await displayDetail.json()).data as {
+      free_layout: {
+        panes: Array<{
+          pk: string;
+          x: number;
+          y: number;
+          w: number;
+          h: number;
+        }>;
+      };
+    }
+  ).free_layout.panes;
+  expect(displayPanes.length).toBeGreaterThan(0);
+  const stageBox = (await stage.boundingBox())!;
+  const k = matrix[0];
+  for (const pane of displayPanes) {
+    const paneBox = await screenRoot
+      .getByTestId(`screen-free-pane-box-${pane.pk}`)
+      .boundingBox();
+    expect(paneBox).not.toBeNull();
+    expect(paneBox!.width).toBeCloseTo(pane.w * k, 0);
+    expect(paneBox!.height).toBeCloseTo(pane.h * k, 0);
+    expect(paneBox!.x).toBeCloseTo(stageBox.x + pane.x * k, 0);
+    expect(paneBox!.y).toBeCloseTo(stageBox.y + pane.y * k, 0);
+  }
+
   // ---- 切回栅格再保存：坐标不互转，自由载荷原样保留 ----
   await page.goto(`/#/analysis/screen/designer?pk=${screen.pk}`);
   await expect(page.getByTestId("free-canvas")).toBeVisible({

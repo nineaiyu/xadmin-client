@@ -187,13 +187,15 @@ onMounted(fetchHistory);
                 />
               </template>
               <template v-else>
-                <span class="text-red-500 line-through ml-1">
+                <span class="text-(--el-color-danger) line-through ml-1">
                   {{ entry.old ?? "null" }}
                 </span>
                 <el-icon class="mx-0.5 align-middle">
                   <IconifyIconOffline icon="ep:arrow-right" />
                 </el-icon>
-                <span class="text-green-600">{{ entry.new ?? "null" }}</span>
+                <span class="text-(--el-color-success)">{{
+                  entry.new ?? "null"
+                }}</span>
               </template>
             </div>
           </div>

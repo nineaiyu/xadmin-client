@@ -4,9 +4,9 @@
  */
 
 import type { useI18n } from "vue-i18n";
-import { ElMessageBox } from "element-plus";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { usePrompt } from "@/hooks/useMessageBox";
 import type { MenuRow } from "./types";
 import { normalizeError } from "@/utils/apiError";
 
@@ -23,8 +23,9 @@ export function useMenuRename({
   ) => Promise<{ code: number; detail?: string }>;
 }) {
   /** 快速重命名（不打开整表单） */
-  const openRename = (row: MenuRow) => {
-    ElMessageBox.prompt(
+  const prompt = usePrompt();
+  const openRename = async (row: MenuRow) => {
+    const result = await prompt(
       t("systemMenu.verifyTitle"),
       t("systemMenu.action.rename"),
       {
@@ -34,18 +35,16 @@ export function useMenuRename({
         inputValidator: (value: string) =>
           value?.trim() ? true : t("systemMenu.verifyTitle")
       }
-    )
-      .then(async ({ value }) => {
-        const res = await renameNode(row, String(value).trim()).catch(
-          normalizeError
-        );
-        if (!isSuccess(res)) {
-          message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-          return;
-        }
-        message(t("results.success"), { type: "success" });
-      })
-      .catch(() => undefined);
+    );
+    if (!result) return;
+    const res = await renameNode(row, result.value.trim()).catch(
+      normalizeError
+    );
+    if (!isSuccess(res)) {
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" });
+      return;
+    }
+    message(t("results.success"), { type: "success" });
   };
 
   return {

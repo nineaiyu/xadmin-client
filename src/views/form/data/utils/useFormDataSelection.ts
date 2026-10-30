@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
+import { message } from "@/utils/message";
 import type {
   FormDataApi,
   FormDataFormOption,
@@ -38,6 +39,10 @@ export function useFormDataSelection({
     }
     formsLoadFailed.value = false;
     forms.value = (res.data ?? []) as FormDataFormOption[];
+    // 只在服务端标记截断时提示：成功响应的 detail 默认是「操作成功」，不能据非空判断
+    if (res.truncated && res.detail) {
+      message(String(res.detail), { type: "warning" });
+    }
     if (!selectedFormPk.value && forms.value.length) {
       selectedFormPk.value = forms.value[0].pk;
     }

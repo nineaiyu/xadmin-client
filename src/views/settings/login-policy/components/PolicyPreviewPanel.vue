@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { type FormInstance, type FormItemRule } from "element-plus";
 import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
 import { isIPv4, isIPv6 } from "@/utils/rules/ip";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { isSuccess } from "@/api/types";
+import DataTable from "@/components/DataTable";
 
 /**
  * 登录策略命中预演：给出样例用户 / IP / 时间，逐条策略展示匹配结果与最终判定。
@@ -21,6 +23,15 @@ const form = reactive({ username: "", ip: "", when: "" });
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 const result = ref<LoginPolicyPreview | null>(null);
+/** 无时区输入按浏览器所在时区解释（与后端 timezone.make_aware 同语义） */
+const timezone = computed(
+  () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+);
+
+// 输入变化即失效上次结果：避免「改了样例但看到的是上一次结论」
+watch(form, () => {
+  result.value = null;
+});
 
 /** 动作裸值 → 可读文案 */
 const ACTION_KEYS: Record<string, string> = {
@@ -72,6 +83,10 @@ const dimList = (row: Record<string, unknown>) => [
   { key: "ip", ok: row.ip_matched === true, label: t("loginPolicy.dimIp") }
 ];
 
+/** 未启用策略整行弱化（row 显式收窄：attr 透传到 DataTable 后不再有 EP 作用域行类型） */
+const inactiveRowClass = ({ row }: { row: Record<string, unknown> }) =>
+  row.is_active === false ? "preview-inactive-row" : "";
+
 /** 样例 IP 严格校验（口径见 utils/sampleIp.ts，与后端 ipaddress 解析对齐） */
 const validateIp = (
   _rule: unknown,
@@ -106,7 +121,7 @@ const runPreview = async () => {
       message(String(res.detail), { type: "error" });
     }
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -123,6 +138,13 @@ const echoLine = (data: LoginPolicyPreview) =>
 
 <template>
   <div>
+    <el-alert
+      class="mb-2"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="t('loginPolicy.previewHint')"
+    />
     <el-form
       ref="formRef"
       :inline="true"
@@ -159,6 +181,9 @@ const echoLine = (data: LoginPolicyPreview) =>
         <el-button type="primary" :loading="loading" @click="runPreview">
           {{ t("loginPolicy.previewRun") }}
         </el-button>
+        <span class="ml-2 text-xs text-(--el-text-color-secondary)">
+          {{ t("loginPolicy.previewTimezone", { zone: timezone }) }}
+        </span>
       </el-form-item>
     </el-form>
 
@@ -190,13 +215,12 @@ const echoLine = (data: LoginPolicyPreview) =>
         {{ echoLine(result) }}
       </div>
 
-      <el-table
+      <DataTable
         :data="result.items"
         border
         size="small"
-        :row-class-name="
-          ({ row }) => (row.is_active === false ? 'preview-inactive-row' : '')
-        "
+        :label="t('loginPolicy.previewTitle')"
+        :row-class-name="inactiveRowClass"
       >
         <el-table-column
           prop="priority"
@@ -257,7 +281,7 @@ const echoLine = (data: LoginPolicyPreview) =>
             <span v-else>-</span>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </template>
   </div>
 </template>

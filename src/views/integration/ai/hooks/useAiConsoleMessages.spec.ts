@@ -171,6 +171,48 @@ describe("useAiConsoleMessages 消息集合写入口径", () => {
     ]);
   });
 
+  it("upsert 把中断固化的助手 partial 与服务端前缀内容对齐为同一条", () => {
+    const store = build();
+    const now = Date.now();
+    store.messages.value = [
+      consoleMessage({
+        id: -1,
+        role: "assistant",
+        feature: "docs",
+        content: "数据库是用于",
+        created_time: new Date(now).toISOString()
+      })
+    ];
+
+    store.upsertMessage(
+      consoleMessage({
+        id: 88,
+        role: "assistant",
+        feature: "docs",
+        content: "数据库是用于存储、管理数据的系统。",
+        created_time: new Date(now + 1000).toISOString()
+      })
+    );
+
+    expect(store.messages.value).toHaveLength(1);
+    expect(store.messages.value[0].id).toBe(88);
+    expect(store.messages.value[0].content).toBe(
+      "数据库是用于存储、管理数据的系统。"
+    );
+  });
+
+  it("removeOptimistic 从末尾移除，重复提问不会连带清掉更早的占位", () => {
+    const store = build();
+    store.pushOptimistic("同样的话");
+    store.pushOptimistic("同样的话");
+    expect(store.messages.value).toHaveLength(2);
+
+    store.removeOptimistic("同样的话");
+
+    expect(store.messages.value).toHaveLength(1);
+    expect(store.messages.value[0].role).toBe("user");
+  });
+
   it("toIncoming 校验服务端载荷：缺角色或内容非字符串判为无效", () => {
     const row = consoleMessage({});
     expect(toIncoming(row)).toBe(row);

@@ -2,7 +2,8 @@ import {
   createRouter,
   type RouteRecordRaw,
   type Router,
-  type RouterHistory
+  type RouterHistory,
+  type RouterScrollBehavior
 } from "vue-router";
 import { constantRoutes, pathMatchRoute } from "./constants";
 import remainingRouter from "./modules/remaining";
@@ -18,6 +19,21 @@ import { getHistoryMode } from "./utils/history";
 const asRouteRecords = (value: unknown): RouteRecordRaw[] =>
   value as RouteRecordRaw[];
 
+/** 滚动恢复：同步返回，避免无匹配分支时 Promise 永不 resolve */
+export const scrollBehavior: RouterScrollBehavior = (
+  _to,
+  from,
+  savedPosition
+) => {
+  if (savedPosition) return savedPosition;
+  if (from.meta?.saveSrollTop) {
+    const top: number =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    return { left: 0, top };
+  }
+  return false;
+};
+
 /** 创建路由实例 */
 export const router: Router = createRouter({
   // VITE_ROUTER_HISTORY 由构建配置保证为合法值（hash / h5[,base]），未命中场景不发生后端兜底
@@ -29,19 +45,7 @@ export const router: Router = createRouter({
     pathMatchRoute
   ),
   strict: true,
-  scrollBehavior(to, from, savedPosition) {
-    return new Promise(resolve => {
-      if (savedPosition) {
-        return savedPosition;
-      } else {
-        if (from.meta.saveSrollTop) {
-          const top: number =
-            document.documentElement.scrollTop || document.body.scrollTop;
-          resolve({ left: 0, top });
-        }
-      }
-    });
-  }
+  scrollBehavior
 });
 
 export default router;

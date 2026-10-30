@@ -21,6 +21,8 @@ export const usePermissionStore = defineStore("pure-permission", {
     constantMenus,
     // 整体路由生成的菜单（静态、动态）
     wholeMenus: [] as menuType[],
+    // 菜单装配是否已结束（区分「装配中」与「装配完但为空」——零权限账号的空态依据）
+    menusLoaded: false,
     // 整体路由（一维数组格式）
     flatteningRoutes: [] as RouteRecordRaw[],
     // 缓存页面keepAlive（路由 name 归一为字符串，keep-alive include 按名称匹配）
@@ -49,22 +51,16 @@ export const usePermissionStore = defineStore("pure-permission", {
       this.flatteningRoutes = formatFlatteningRoutes(
         this.constantMenus.concat(routes) as RouteRecordRaw[]
       );
+      this.menusLoaded = true;
     },
     /** 监听缓存页面是否存在于标签页，不存在则删除 */
     clearCache() {
-      let cacheLength = this.cachePageList.length;
-      const nameList = getKeyList(useMultiTagsStoreHook().multiTags, "name");
-      while (cacheLength > 0) {
-        if (
-          nameList.findIndex(v => v === this.cachePageList[cacheLength - 1]) ===
-          -1
-        )
-          this.cachePageList.splice(
-            this.cachePageList.indexOf(this.cachePageList[cacheLength - 1]),
-            1
-          );
-        cacheLength--;
-      }
+      // Set 化：旧实现对每个缓存页做 findIndex + indexOf（O(n²)），标签页多时
+      // 每次关闭/刷新都会连续重扫
+      const names = new Set(
+        getKeyList(useMultiTagsStoreHook().multiTags, "name")
+      );
+      this.cachePageList = this.cachePageList.filter(name => names.has(name));
     },
     cacheOperate({ mode, name }: cacheType) {
       const delIndex = this.cachePageList.findIndex(v => v === name);
@@ -89,6 +85,7 @@ export const usePermissionStore = defineStore("pure-permission", {
       this.wholeMenus = [];
       this.cachePageList = [];
       this.flatteningRoutes = [];
+      this.menusLoaded = false;
     }
   }
 });

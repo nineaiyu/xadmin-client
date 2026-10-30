@@ -17,7 +17,7 @@ import {
   splitHighlight,
   toggleMenuSelection,
   type PermissionTreeNode
-} from "../permissionTree";
+} from "@/components/ReMenuPermissionTree/utils/permissionTree";
 
 /**
  * 授权树样本：目录 A（菜单 a1 带两个权限点 + 字段分组，菜单 a2）、目录 B（菜单 b1）。

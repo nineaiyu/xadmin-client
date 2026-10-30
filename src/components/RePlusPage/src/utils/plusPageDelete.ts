@@ -59,7 +59,22 @@ export function createDeleteActions({
     handleOperation({
       t,
       apiReq: api.batchDestroy(pks, { impact_confirmed: true }),
-      success() {
+      success(res) {
+        const failures =
+          (res?.data as { failures?: Array<{ pk: string; detail: string }> })
+            ?.failures ?? [];
+        if (failures.length) {
+          message(
+            t("results.batchPartial", {
+              n: failures.length,
+              detail: failures
+                .slice(0, 3)
+                .map(item => `${String(item.pk).slice(0, 8)}: ${item.detail}`)
+                .join("；")
+            }),
+            { type: "warning" }
+          );
+        }
         onSelectionCancel();
         handleGetData();
       }

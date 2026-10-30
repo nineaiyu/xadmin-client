@@ -44,6 +44,7 @@ export function useChat() {
     loadingMore: core.loadingMore,
     streaming: core.streaming,
     connected: core.connected,
+    denied: core.denied,
     pendingCount: core.pendingCount,
     uploading: actions.uploading,
     scroller: core.scroller,

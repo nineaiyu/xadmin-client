@@ -11,6 +11,7 @@ import { hasAuth } from "@/router/utils";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
 import { resolveInitialPane, syncTabQuery } from "@/utils/tabQuery";
+import { message } from "@/utils/message";
 import { createAccountPanes } from "./utils/panes";
 
 defineOptions({
@@ -48,8 +49,16 @@ const panes = computed(() => createAccountPanes(t, hasAuth));
  * 页签定位：支持 `?tab=xxx` 直达（OAuth 绑定回调落地后回到「第三方账号」），
  * 非法/无权限的 key 一律回落「个人信息」，避免落到空白面板。
  */
-const initialPane = () =>
-  resolveInitialPane(panes.value, route.query.tab, "profile");
+const initialPane = () => {
+  const raw = String(route.query.tab ?? "");
+  // 兼容旧 key：Notifications → notifications（历史书签/文档仍可落地）
+  const requested = raw === "Notifications" ? "notifications" : raw;
+  const resolved = resolveInitialPane(panes.value, requested, "profile");
+  if (raw && resolved !== requested) {
+    message(t("account.tabUnavailable"), { type: "warning" });
+  }
+  return resolved;
+};
 const currentPane = ref(initialPane());
 
 /**

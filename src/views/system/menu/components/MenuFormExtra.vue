@@ -2,7 +2,7 @@
 import { computed, inject } from "vue";
 import { useI18n } from "vue-i18n";
 import FormQuestion from "./FormQuestion.vue";
-import ReAnimateSelector from "./ReAnimateSelector";
+import ReAnimateSelector from "@/components/ReAnimateSelector";
 import { MenuChoices } from "@/views/system/constants";
 import { MENU_FORM_KEY } from "../utils/formContext";
 

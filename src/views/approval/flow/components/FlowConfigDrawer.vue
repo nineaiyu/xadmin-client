@@ -8,8 +8,7 @@ import { message } from "@/utils/message";
 import {
   buildFlowPayload,
   createEmptyNode,
-  formatConditionValue,
-  pickValue,
+  toNodeRow,
   validateFlowConfig,
   type FieldRow,
   type FlowRow,
@@ -18,6 +17,7 @@ import {
 import FlowFieldsEditor from "./FlowFieldsEditor.vue";
 import FlowNodesEditor from "./FlowNodesEditor.vue";
 import FlowCanvas from "./FlowCanvas.vue";
+import ApproverPicker from "../../components/ApproverPicker.vue";
 
 /**
  * 流程定义配置抽屉（一期：列表式节点编辑，不做拖拽画布）。
@@ -44,7 +44,12 @@ const saving = ref(false);
 // 编辑锁：流程被 dform 绑定后字段由表单侧单向投影（服务端同步落库），流程侧只读
 const formSchemaLocked = computed(() => !!props.flow?.form_schema_locked);
 
-const basic = reactive({ name: "", code: "", is_active: true });
+const basic = reactive({
+  name: "",
+  code: "",
+  is_active: true,
+  initiator_roles: [] as string[]
+});
 const nodes = ref<NodeRow[]>([]);
 const fields = ref<FieldRow[]>([]);
 const canvasRef = ref<{ syncLayout: () => void } | null>(null);
@@ -53,6 +58,8 @@ const editMode = ref<"list" | "canvas">("list");
 // 画布懒挂载：首次切到画布时才渲染 FlowCanvas。抽屉打开时画布容器 display:none（v-show），
 // 尺寸为 0，若此时挂载会触发 "[Vue Flow]: Viewport not initialized yet" 且 fit-view 失效
 const canvasMounted = ref(false);
+/** 打开时的表单快照：关闭前据此判断是否有未保存变更 */
+const initialSnapshot = ref("");
 
 watch(editMode, mode => {
   if (mode === "canvas") canvasMounted.value = true;
@@ -63,6 +70,7 @@ function initFromFlow() {
   basic.name = flow?.name ?? "";
   basic.code = flow?.code ?? "";
   basic.is_active = flow?.is_active ?? true;
+  basic.initiator_roles = [...(flow?.initiator_roles ?? [])];
   fields.value = (flow?.form_schema ?? []).map(item => ({
     label: item.label ?? "",
     key: item.key,
@@ -73,27 +81,7 @@ function initFromFlow() {
   nodes.value = (flow?.nodes ?? [])
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map(node => ({
-      name: node.name ?? "",
-      approve_type: pickValue(node.approve_type, "OR"),
-      approve_ratio: node.approve_ratio ?? 100,
-      assignee_type: pickValue(node.assignee_type, "role"),
-      assignee_value: node.assignee_value ?? "",
-      condition_field: node.condition?.field ?? "",
-      condition_op: node.condition?.op ?? "eq",
-      condition_value: formatConditionValue(node.condition?.value),
-      routes: (node.routes ?? []).map(route => ({
-        condition: {
-          field: route.condition?.field ?? "",
-          op: route.condition?.op ?? "eq",
-          value: route.condition?.value ?? ""
-        },
-        target: Number(route.target)
-      })),
-      layout: { ...(node.layout ?? {}) },
-      timeout_hours: node.timeout_hours ?? 0,
-      timeout_action: node.timeout_action ?? "none"
-    }));
+    .map(toNodeRow);
   if (!nodes.value.length) nodes.value.push(createEmptyNode());
 }
 
@@ -120,6 +108,13 @@ async function save() {
     if (isSuccess(res)) {
       message(t("systemApprovalFlow.saveSuccess"), { type: "success" });
       props.onSaved?.();
+      // 快照刷新为已保存状态：否则 emit("close") 时 isDirty 恒真，
+      // 保存成功的关闭也会被「未保存变更」守卫拦下
+      initialSnapshot.value = JSON.stringify({
+        basic,
+        fields: fields.value,
+        nodes: nodes.value
+      });
       emit("close");
       return;
     }
@@ -134,6 +129,19 @@ async function save() {
 }
 
 onMounted(initFromFlow);
+onMounted(() => {
+  initialSnapshot.value = JSON.stringify({
+    basic,
+    fields: fields.value,
+    nodes: nodes.value
+  });
+});
+
+/** 关闭前未保存变更判定（供 ReDrawer beforeClose 使用） */
+const isDirty = () =>
+  JSON.stringify({ basic, fields: fields.value, nodes: nodes.value }) !==
+  initialSnapshot.value;
+defineExpose({ isDirty });
 </script>
 <template>
   <div class="flow-config">
@@ -146,6 +154,14 @@ onMounted(initFromFlow);
       </el-form-item>
       <el-form-item :label="t('systemApprovalFlow.formActive')">
         <el-switch v-model="basic.is_active" />
+      </el-form-item>
+      <el-form-item :label="t('systemApprovalFlow.initiatorRoles')">
+        <ApproverPicker
+          v-model="basic.initiator_roles"
+          type="role"
+          :fetcher="approvalFlowApi.candidateOptions"
+          :placeholder="t('systemApprovalFlow.initiatorRolesHint')"
+        />
       </el-form-item>
     </el-form>
 

@@ -106,6 +106,27 @@ describe("multiTags store", () => {
     expect(store.multiTags.map(t => t.path)).toEqual(["/home", "/a", "/d"]);
   });
 
+  it("其余页签全固定时新页签不被当场淘汰（明确允许超限）", () => {
+    localStorage.setItem(
+      "responsive-configure",
+      JSON.stringify({ maxTagsCount: 3 })
+    );
+    const store = useMultiTagsStore();
+    store.handleTags("equal", [tagOf("/home", "首页")]);
+    store.handleTags("push", tagOf("/a", "A"));
+    store.handleTags("push", tagOf("/b", "B"));
+    store.togglePinnedTag("/a");
+    store.togglePinnedTag("/b");
+    // 此时已超限但全部固定：再 push 也不淘汰任何固定页签
+    store.handleTags("push", tagOf("/c", "C"));
+    expect(store.multiTags.map(t => t.path)).toEqual([
+      "/home",
+      "/a",
+      "/b",
+      "/c"
+    ]);
+  });
+
   it("页签最大数量为 0 时不限制", () => {
     localStorage.setItem(
       "responsive-configure",

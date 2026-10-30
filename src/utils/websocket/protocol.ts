@@ -65,6 +65,8 @@ export const MessageAction = {
   CHAT_READ: "chat_read",
   /** 未读红点推送（下行，ws/chat/） */
   CHAT_UNREAD: "chat_unread",
+  /** 群资料变更（成员/名称；下行，ws/chat/，客户端重拉会话列表） */
+  CHAT_ROOM: "chat_room",
   /** 任务执行日志增量推送 */
   TASK_LOG: "task_log",
   /** 监控面板指标推送（system/ws_monitor.py） */
@@ -74,7 +76,9 @@ export const MessageAction = {
   /** 大屏服务端聚合数据推送（dataset/ws_screen.py，按观察者各自聚合后自推） */
   SCREEN_DATA: "screen_data",
   /** 大屏展示端当前页上报（dataset/ws_screen.py，上行单向；carousel 触发聚合按上报页取数） */
-  SCREEN_PAGE_STATE: "screen_page_state"
+  SCREEN_PAGE_STATE: "screen_page_state",
+  /** 仪表盘服务端聚合数据推送（dataset/ws_dashboard.py，按观察者各自聚合后自推） */
+  DASHBOARD_DATA: "dashboard_data"
   // 值形态由生成契约约束（未知动作字面量即类型错误）；
   // 双向集合一致性由 protocol.spec.ts 对着镜像 schema 断言（新增 action 必须双端登记）
 } as const satisfies Record<string, WsContractAction>;
@@ -159,6 +163,20 @@ export interface ScreenDataPayload {
 export interface ScreenPageStatePayload {
   /** 当前页码（0 基，按 Screen.dashboards 原序） */
   index: number;
+}
+
+/** 仪表盘聚合数据帧（dashboard_data；ws/dashboard/<pk> 下行，按观察者各自聚合后自推）。
+ *
+ * 与 ScreenDataPayload 同一推送模型：服务端不做组广播数据，触发事件到达各连接后
+ * 以连接自身用户视角聚合（数据权限 fail-closed 与逐卡 HTTP 重拉等价）。卡片集 =
+ * 该仪表盘 layout（卡片级 allowed_roles 过滤）；cards[].data 为 execute/aggregate
+ * 返回结构；单卡失败进 errors，不中断整帧。 */
+export interface DashboardDataPayload {
+  dashboard: string;
+  cards: Array<{ card: string; kind: string; data: unknown }>;
+  errors: Array<{ card: string; detail: string }>;
+  /** 推送时刻（epoch 秒），可据此丢弃乱序到达的旧帧 */
+  ts: number;
 }
 
 /** 通知推送载荷（push_message；message_type 语义见 message/notifications） */
@@ -252,6 +270,12 @@ export interface ChatReadPayload {
 export interface ChatUnreadPayload {
   room_id: number;
   unread_count: number;
+}
+
+/** 群资料变更帧（chat_room） */
+export interface ChatRoomChangedPayload {
+  room_id: number;
+  change?: string;
 }
 
 /** 当前登录用户信息帧（userinfo） */

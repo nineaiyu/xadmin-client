@@ -4,18 +4,18 @@ import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
-import { createVerifySubmitters } from "./mfaVerifySubmit";
+import { createVerifySubmitters } from "./internal/mfaVerifySubmit";
 import type {
   MfaSendCodeResult,
   MfaVerifyOptions,
   MfaVerifyResult
-} from "./mfaVerifyTypes";
+} from "./internal/mfaVerifyTypes";
 
 export type {
   MfaPasskeyChallengeResult,
   MfaSendCodeResult,
   MfaVerifyResult
-} from "./mfaVerifyTypes";
+} from "./internal/mfaVerifyTypes";
 
 /** 挑战码发送成功后的冷却秒数（登录二次验证与敏感操作确认共用同一节奏） */
 export const MFA_CODE_COOLDOWN_SECONDS = 60;

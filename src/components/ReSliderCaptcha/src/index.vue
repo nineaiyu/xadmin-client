@@ -38,7 +38,7 @@ type SlideEvent = PointerEvent | KeyboardEvent;
 const emit = defineEmits<{
   start: [event: PointerEvent];
   move: [payload: { event: SlideEvent; moveX: number }];
-  end: [event: PointerEvent];
+  end: [event: SlideEvent];
   success: [payload: { isPassing: boolean; time: string }];
 }>();
 
@@ -53,6 +53,8 @@ const isPassing = ref(verified.value);
 const toLeft = ref(false);
 let pointerOffset = 0;
 let startTime = 0;
+/** 键盘是否已产生位移：仅移动后 Enter 才提交，避免空答案误提交 */
+let keyboardMoved = false;
 
 const offset = computed(() =>
   actionOffset(wrapperRef.value?.offsetWidth ?? 0, props.actionWidth)
@@ -86,11 +88,14 @@ const hintText = computed(() => {
 function onDown(event: PointerEvent) {
   if (isPassing.value || event.button !== 0) return;
   isMoving.value = true;
+  keyboardMoved = false;
   pointerOffset = event.clientX - moveX.value;
   startTime = Date.now();
   emit("start", event);
   window.addEventListener("pointermove", onMove);
   window.addEventListener("pointerup", onUp);
+  // 移动端系统手势/滚动打断：复位而不是按当前位移提交半截答案
+  window.addEventListener("pointercancel", onCancel);
 }
 
 function onMove(event: PointerEvent) {
@@ -112,6 +117,15 @@ function onKeydown(event: KeyboardEvent) {
   if (isPassing.value) return;
   const max = offset.value;
   if (max <= 0) return;
+  // 键盘提交：移动过之后 Enter / Space 收尾（与指针 pointerup 同口径）
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    if (!keyboardMoved) return;
+    emit("end", event);
+    isMoving.value = false;
+    detach();
+    return;
+  }
   const step = Math.max(8, Math.round(max * 0.1));
   let next = moveX.value;
   if (event.key === "ArrowRight" || event.key === "ArrowUp") {
@@ -127,6 +141,7 @@ function onKeydown(event: KeyboardEvent) {
   }
   event.preventDefault();
   if (!startTime) startTime = Date.now();
+  keyboardMoved = true;
   moveX.value = next;
   emit("move", { event, moveX: next });
   if (!props.isSlot && next >= max) checkPass();
@@ -142,6 +157,13 @@ function onUp(event: PointerEvent) {
   }
 }
 
+function onCancel() {
+  if (!isMoving.value) return;
+  isMoving.value = false;
+  detach();
+  resume();
+}
+
 function checkPass() {
   isPassing.value = true;
   isMoving.value = false;
@@ -155,6 +177,7 @@ function checkPass() {
 /** 复位到起点（校验失败或需重试时调用） */
 function resume() {
   toLeft.value = true;
+  keyboardMoved = false;
   moveX.value = 0;
   setTimeout(() => {
     toLeft.value = false;
@@ -164,6 +187,7 @@ function resume() {
 function detach() {
   window.removeEventListener("pointermove", onMove);
   window.removeEventListener("pointerup", onUp);
+  window.removeEventListener("pointercancel", onCancel);
 }
 
 watch(verified, val => {
@@ -248,6 +272,7 @@ defineExpose({ resume });
   width: 100%;
   height: 40px;
   overflow: hidden;
+  touch-action: none;
   user-select: none;
   background: var(--el-fill-color-light);
   border: 1px solid hsl(var(--border));

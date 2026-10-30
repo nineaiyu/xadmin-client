@@ -1,7 +1,6 @@
 import { reactive } from "vue";
 import type { FormRules } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 
 /** 登录校验 */
 const loginRules = reactive<FormRules>({
@@ -17,20 +16,6 @@ const loginRules = reactive<FormRules>({
       validator: (rule, value, callback) => {
         if (value === "") {
           callback(new Error(transformI18n($t("login.passwordReg"))));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur"
-    }
-  ],
-  captcha_code: [
-    {
-      validator: (rule, value, callback) => {
-        if (value === "") {
-          callback(new Error(transformI18n($t("login.verifyCodeReg"))));
-        } else if (useLoginPageStoreHook().verifyCodeLength !== value.length) {
-          callback(new Error(transformI18n($t("login.verifyCodeCorrectReg"))));
         } else {
           callback();
         }

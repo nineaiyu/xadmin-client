@@ -153,6 +153,7 @@ messageTemplate:
   resetConfirm: Reset "{name}" to the code default template?
   saveSuccess: Template saved
   resetSuccess: Reset to default template
+  loadFailed: Failed to load the template registry; check permissions or service status
   syntaxHint: "Insert variables as {'{{'}name{'}}'}; leave empty to keep the code default"
   previewUnsupported: This message type has no sample data, preview is unavailable
   defaultContent: Code default content
@@ -172,15 +173,28 @@ approvalDiscussion:
   empty: No comments yet
   deleteConfirm: Delete this comment?
   submitted: Comment posted
+  readonly: You do not have permission to comment
+  mentionTitle: Mention members
+  mentionEmpty: No matching members
   cc: CC Users
   ccPlaceholder: Select CC users (multiple)
 
 accountRisk:
+  noPermission: You do not have permission to view account security risks. Contact an administrator.
   scan: Scan Now
+  scanRunning: Scan in progress, please wait…
+  scanDone: "Scan completed: {total} risk item(s)"
+  scanFailed: Scan failed, please try again later
+  scanStatusFailed: Failed to query scan progress
+  scanTimeout: Timed out waiting for the scan; check task center later
   batchHandle: Batch Handle
   handle: Handle
   detail: Detail
   detailTitle: Risk Detail - {name}
+  handledBy: Handled by
+  handledAt: Handled at
+  statsLoadFailed: Failed to load risk statistics
+  retry: Retry
   handleTitle: Handle Risks ({count} selected)
   action: Action
   remark: Remark
@@ -220,16 +234,12 @@ loginPolicy:
   editTitle: Edit Login Policy
   name: Policy Name
   priority: Priority
-  priorityTip: Lower number matches first; the first match takes effect
   isActive: Active
   targetType: Target
   targetAll: All Users
-  targetRole: Roles
-  targetUser: Users
   targetValue: Target Value
-  targetValuePlaceholder: Ignored for "All Users"; role codes or usernames separated by commas
-  rolePlaceholder: Role codes separated by commas
-  userPlaceholder: Usernames separated by commas
+  targetValuePlaceholder: Select users or roles (multi-select); not applicable when the target is all users
+  targetAllUsers: All users (no selection needed)
   weekdays: Weekdays
   weekday1: Monday
   weekday2: Tuesday
@@ -238,9 +248,6 @@ loginPolicy:
   weekday5: Friday
   weekday6: Saturday
   weekday7: Sunday
-  timeRange: Time Range
-  startTime: Start Time
-  endTime: End Time
   ipRanges: IP Ranges
   ipPlaceholder: One CIDR or range per line, e.g. 192.168.0.0/24
   action: Action
@@ -257,6 +264,8 @@ loginPolicy:
   previewIpTip: Leave empty to use client IP
   previewWhen: Sample Time
   previewWhenTip: Leave empty to use now
+  previewHint: "All three samples can be left empty: user = current user, IP = current source IP, time = now (interpreted in the browser timezone)"
+  previewTimezone: Time is interpreted in {zone}
   previewRun: Preview
   previewResult: Matched "{policy}" -> {action}
   previewEcho: Sample actually used — user {username} / IP {ip} / time {when}
@@ -341,6 +350,43 @@ sliderRotateCaptcha:
 sliderTranslateCaptcha:
   text: Drag to fit the puzzle piece
 
+captchaChallenge:
+  title: Security verification
+  challengeTitle: Complete the security check
+  refresh: New challenge
+  retryHint: Verification failed, {count} attempts left
+  success: Verified
+  verifyFailed: Verification failed, please try again
+  signFailed: Security signature failed; retry or use HTTPS
+  loadFailed: Failed to load the challenge, please retry
+  puzzleAlt: Slide puzzle captcha
+  rotateAlt: Rotate captcha
+  clickHint: Click the characters in the order shown in the tip
+  tipAlt: Click character tip
+  clickStage: Word click captcha image
+  clickAlt: Word click captcha
+  selected: Selected {count}/{total}
+  resetSelection: Reselect
+  confirm: Confirm
+  imageFallback: Use image captcha
+  close: Close
+  powTitle: Security check
+  powTip: One click completes the check; no image recognition required
+  powAction: Verify
+  powHint: The check runs locally; passwords and input are never collected
+  powRunning: Running security check…
+  powFailed: Security check failed, please retry
+  loading: Loading verification code…
+  unsupportedType: Unsupported challenge type; click Refresh to get another
+  clickStageKeyboard: Click the captcha image (arrow keys move the cursor, Enter places a point, Backspace undoes)
+  notReady: The captcha component is not ready, please retry
+  imageHint: Enter the characters shown in the image
+  imageAlt: Image captcha
+  imagePlaceholder: Enter the characters
+  imageSubmit: Verify
+  imageAudio: Play audio captcha
+  imagePowHint: A security check runs automatically before submission
+
 backTop:
   text: Back to top
 
@@ -352,8 +398,12 @@ collapseParams:
   fold: Fold
 
 reState:
+  denied: No permission
   empty: No data
   error: Failed to load
+
+reStat:
+  empty: No statistics available
 
 tableAction:
   confirmTitle: Are you sure you want to proceed?
@@ -374,6 +424,8 @@ layout:
   settings: Settings
   total: "{ total } items in total"
   noData: No Data
+  emptyMenu: No accessible menus
+  emptyMenuHint: This account has no menu permissions yet. Contact an administrator to request access.
   more: More
   fold: Fold
   unfold: Unfold
@@ -450,6 +502,10 @@ layout:
   headerAutoHideTip: Hide the header when scrolling down, restore on scroll up
   compactMode: Compact mode
   compactModeTip: Tighter content padding with a centered max width
+  uiSize: UI density
+  uiSizeTip: Overall size of tables, forms and buttons; tables with a manually picked density keep their own choice
+  uiSizeDefault: Default
+  uiSizeCompact: Compact
   display: Display
   greyMode: Grey mode
   colorWeakMode: Color weak mode
@@ -670,6 +726,20 @@ layout:
   copyPreferences: Copy preferences
   copyPreferencesTip: Copy the complete platform config (all fields) to overwrite platform-config.json as a whole, or paste it as the site config item value in System Config
   copyPreferencesSuccess: Platform config copied (ready to overwrite platform-config.json)
+  exportAppearancePack: Export appearance pack
+  exportAppearancePackSuccess: Appearance pack exported (import it into another environment as site defaults)
+  appearancePackExportFailed: Failed to export the appearance pack (download not supported)
+  importAppearancePack: Import appearance pack
+  appearancePackImportConfirm: This will overwrite site-wide UI defaults ({count} items). Personal overrides are kept. Import anyway?
+  appearancePackImported: Appearance pack imported and applied
+  appearancePackImportFailed: Failed to import the appearance pack, please try again later
+  appearancePackRowMissing: Site config row (WEB_SITE_CONFIG) not found. Initialize it in System Config first
+  appearancePackBadJson: The file is not valid JSON
+  appearancePackWrongType: Not an appearance pack file (type marker mismatch)
+  appearancePackWrongVersion: The appearance pack is from a newer version. Upgrade the system first
+  appearancePackEmpty: The appearance pack contains no config items
+  appearancePackUnknownKeys: "The appearance pack contains unknown config items: {keys}"
+  appearancePackBadValue: The value type of config item {key} does not match this system
   enableCopyPreferences: Show copy-preferences button
   enableCopyPreferencesTip: Show a copy entry in the panel footer "More" menu for the complete platform config
   cleanOut: Clear the cache and return the login page
@@ -745,7 +815,7 @@ layout:
   resetSiteWide: Restore site defaults
   resetSiteWideConfirm: This restores the site title / logo / login page layout to the platform defaults and takes effect immediately for all users and the login page. Continue?
   resetSiteWideSuccess: Site appearance restored to defaults
-  panelMoreTip: "More actions: restore site defaults / copy preferences / clear cache and return to login page"
+  panelMoreTip: "More actions: restore site defaults / copy preferences / appearance pack export & import / clear cache and return to login page"
 
 error:
   error403: Sorry, you are not authorized to access this page
@@ -755,6 +825,9 @@ error:
   moduleDisabled: Feature module is disabled
   moduleDisabledTip: The module behind this feature has been disabled. Contact an administrator to enable it.
   back: Go back
+  copied: Diagnostics copied
+  copyFailed: Copy failed, please select manually
+  copyDiagnostics: Copy diagnostics
 
 password:
   veryWeak: Very weak
@@ -899,6 +972,7 @@ taskCenter:
   cancelConfirm: The task will stop at the next safe point (running exports/imports finish the current checkpoint). Continue?
   cancelDone: Cancelled
   rerun: Rerun
+  rerunConfirm: Run again? A new record will be created and dispatched
   rerunDone: Rerun submitted
   colTimeCost: Time cost
   deleteConfirm: Delete this execution record?
@@ -929,6 +1003,7 @@ post:
   disabled: Disabled
   members: Members
   memberHint: Remove existing members or search to add new ones (applies on save)
+  memberTruncated: "{total} members in total; only the first {shown} are shown. Filter by post in User Management."
   memberEmpty: No members yet
   memberPlaceholder: Search username or nickname
   memberNoChange: No member changes detected
@@ -938,7 +1013,11 @@ post:
   preview: Preview
 
 directory:
+  filterByTag: Filter by tag
   membersLoadFailed: Failed to load members, please retry later
+  noPermission: No permission to view the directory
+  noPermissionHint: Ask an administrator to grant list:SystemDirectory
+  retry: Retry
   title: Directory
   viewByDept: By Department
   viewByPost: By Post
@@ -955,6 +1034,10 @@ directory:
   empty: No members
   emptyDept: No department available
   emptyPosts: No active posts
+  noDeptPermission: No permission to view departments. Contact an administrator.
+  noPostPermission: No permission to view posts. Contact an administrator.
+  deptLoadFailed: Failed to load departments, please retry later
+  postLoadFailed: Failed to load posts, please retry later
   deptTreeTruncated: Department count exceeds the single-load cap; the dept tree was truncated and may be incomplete
   postListTruncated: Post count exceeds the single-load cap; the post list was truncated and may be incomplete
   noPost: No post
@@ -972,6 +1055,7 @@ directory:
   dateJoined: Joined At
 
 tag:
+  usageHint: Tag assignment lives on user/file pages; the assign/batchAssign/resources/objects permissions are consumed by their tag pickers, not this page.
   title: Tag
   create: New tag
   edit: Edit tag
@@ -1002,6 +1086,7 @@ tag:
 commandPalette:
   title: Quick actions
   openAi: Open AI assistant
+  askAi: Ask AI
   openTaskLog: Open task log
   openTags: Open tag management
   openModules: Open module management
@@ -1020,10 +1105,16 @@ invite:
   invalid: The invitation link is invalid or has expired. Please contact the administrator to resend it.
   accepted: The account is already activated, please sign in directly
   toLogin: Go to sign in
-  captchaRequired: Please complete the puzzle verification first
+  captcha: Captcha
+  captchaPlaceholder: Enter the characters in the image
+  captchaRequired: Please complete the captcha first
+  validateNetworkFailed: Failed to validate the invite link (network or service error), please retry
+  rulesLoadFailed: Failed to load password rules; the server will still validate on submit
+  contactInviter: If this was not you or the link has expired, ask the inviter to send a new invitation
 
 oauth:
   title: Third-party login
+  emptyCallback: The login service returned an empty result; return to login and retry
   tabTitle: Third-party accounts
   bindTip: Bind a third-party account to sign in with it directly. Unbinding requires your login password and never removes your last available login method.
   bound: Bound accounts
@@ -1048,12 +1139,16 @@ oauth:
 
 plus:
   fileLink: File link
+  noListPermission: You do not have permission to view this page. Contact an administrator.
+  retry: Retry
+  resetAndRetry: Reset filters and retry
   metaMissingTitle: Failed to load column configuration
   metaMissingDetail: "The search and table columns of this page are generated from backend metadata, which is currently unavailable. Please refresh and retry; if it persists, contact the administrator (common causes: page not registered, serializer fields not declared, or missing page permission)."
   detailBlankTitle: Detail data is empty
   detailBlankTip: If field permission is enabled, configure the field whitelist for this menu (fields without whitelist entries are trimmed to empty)
 
 results:
+  batchPartial: "{n} not processed: {detail}"
   copySuccess: Copied
   copyFailed: Copy failed
   operateSuccess: Operation successful
@@ -1074,6 +1169,7 @@ sorts:
   rank: Rank
 
 buttons:
+  retry: Retry
   tips: Tips
   loginOut: LoginOut
   add: Add
@@ -1122,6 +1218,8 @@ buttons:
   changeHistory: Change history
 
 menus:
+  playground: Components
+  pluginDemo: Plugin note (demo plugin)
   searchData: Data search
   userOnline: Online users
   apiApp: API applications
@@ -1131,8 +1229,11 @@ menus:
   systemSettings: System Settings
   basicSettings: Basic Settings
   messageSettings: Message Settings
+  channelSettings: Notification Channels
   smsSettings: SMS Settings
+  captchaSettings: Captcha Settings
   ldapSettings: LDAP Directory
+  openPlatformSettings: Open Platform
   dataAnalysis: Data Analysis
   dataDashboard: Dashboards
   dataDataset: Datasets
@@ -1149,7 +1250,8 @@ menus:
   formDesigner: Form Design
   formMySubmission: My Submissions
   formData: Form Data
-  securitySettings: Security Settings
+  securitySettings: Login Security
+  accountSecuritySettings: Account Security
   userManagement: User Manage
   directory: Directory
   deptManagement: Department Manage
@@ -1175,7 +1277,6 @@ menus:
   fourZeroThree: "403"
   FiveZeroZero: "500"
   about: About
-  empty: Empty Page
   noticeAndAnnouncement: Notice Announcement
   newsAndAnnouncement: News Announcement
   readNotice: Read Notices
@@ -1200,7 +1301,8 @@ menus:
   loginPolicy: Login Policy
   dataMaskRule: Data Mask Rule
   approval: Approval Management
-  approvalCenter: Approval Center
+  approvalCenter: Operation Approval
+  settingLedger: Settings Ledger
   approvalFlow: Flow Definition
   approvalInstance: Flow Approval
   approvalDelegation: Approval Delegation
@@ -1213,6 +1315,10 @@ impact:
   title: Impact preview
   affected: This operation affects the following related data
   confirmDelete: Confirm delete
+  preflightUnavailableTitle: Unable to preflight impact
+  preflightUnavailable: The current role lacks the impact preflight permission (impact:*), so related data cannot be verified.
+  preflightUnavailableHint: Continuing may affect related data and cannot be undone. Grant the impact permission first, or continue only after confirming there are no references.
+  continueDelete: Delete anyway
 
 credential:
   title: Credentials
@@ -1246,6 +1352,10 @@ credential:
   modelFieldsHint: Model field credentials are encrypted per row (AESCipherV3); only the configured count is shown here, never the secret itself
   noPermission: No permission to view credentials
   noPermissionHint: Ask an administrator to grant the credential overview permission
+  loadFailed: Failed to load credentials
+  retry: Retry
+  searchPlaceholder: Filter by name / consumer / category
+  noMatch: No matching credentials
 
 approval:
   pendingTab: Pending My Approval
@@ -1291,6 +1401,8 @@ approval:
   pendingApprover: Pending
   progressTitle: Approval progress - {no}
   progressTip: "Level by level: the next approver is notified after each level passes; approved only when all levels pass"
+  requestParams: Request content (masked body)
+  requestParamsTip: Masked request payload captured when the approval was submitted, for reviewing what is being approved
   target: Target object
   targetChanges: Change comparison (before → after)
   targetNoChanges: No field changes recorded (deletion shows the target identity only)
@@ -1303,6 +1415,22 @@ approval:
   progressLoadFailed: Failed to load approval progress, please try again later
 
 approvalRule:
+  impactTitle: "In-flight approval impact"
+  impactHint: "Check in-flight approvals against the current path/method/priority/active state. Rule changes only affect approvals created afterwards."
+  impactPreview: "Check in-flight matches"
+  impactTotal: "{total} in-flight approval(s) match"
+  impactTruncated: "Only the first {count} entries are shown"
+  impactWins: "This rule would take effect at the current priority"
+  impactOutranked: "A same- or higher-priority rule exists; this rule may not win"
+  impactNoRule: "No matching rule"
+  impactInactive: "The rule is inactive and matches nothing"
+  impactNote: "Only PENDING approvals are counted; historical approvals use creation snapshots and are unaffected."
+  impactFailed: "Failed to preview impact, please retry later"
+  impactNoPermission: "No permission to preview impact (impact:SystemApprovalRule)"
+  pathCatalogLoadFailed: Failed to load the API path catalog; enter custom path regexes below
+  pathCatalogEmpty: No API paths available for this account; enter custom path regexes below
+  retry: Retry
+  levelNamePlaceholder: Optional, e.g. Direct manager
   createTitle: New Approval Rule
   editTitle: Edit Approval Rule
   name: Rule Name
@@ -1355,12 +1483,27 @@ approvalRule:
   levelCount: "{n} levels"
 
 systemApprovalFlow:
+  unsavedConfirm: The flow configuration has unsaved changes. Close and discard them?
+  removeNodeConfirm: Delete this approval node? Outgoing routes will be remapped
+  conditionOpEq: Equals
+  conditionOpNe: Not equals
+  conditionOpIn: In
+  conditionOpNotIn: Not in
+  conditionOpGt: Greater than
+  conditionOpGte: Greater than or equal
+  conditionOpLt: Less than
+  conditionOpLte: Less than or equal
+  conditionOpContains: Contains
+  conditionOpIsEmpty: Is empty
+  conditionOpNotEmpty: Is not empty
   versionsLoadFailed: Failed to load versions, please retry later
   createTitle: New Flow
   editTitle: Edit Configuration
   formName: Flow Name
   formCode: Flow Code
   formActive: Active
+  initiatorRoles: Initiator Roles
+  initiatorRolesHint: Leave empty to allow all users to initiate
   formSchemaTitle: Form Fields
   formSchemaTip: The dynamic form rendered when submitting; field keys are referenced by node conditions and the "form field" assignee type
   formSchemaLocked: "This flow is bound to a dynamic form; form fields are synced from the bound form (edit in the form designer, read-only here)"
@@ -1432,19 +1575,23 @@ systemApprovalFlow:
   nodeRequired: At least one approval node is required
   nodeNameRequired: Some node has no name
   saveSuccess: Flow saved
-  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target cannot be the current node)
+  routeInvalidDropped: Invalid routes were ignored (a condition field is required and the target must be a later node)
 
 systemApprovalInstance:
+  commentsNoPermission: Missing comments:SystemApprovalInstance; the discussion is unavailable
   start: New Application
   startTitle: New Application
   pendingTab: Pending My Approval
   mineTab: My Applications
   doneTab: Processed
+  ccTab: CC to me
   ongoingTab: All in progress
   formTitle: Title
   formFlow: Flow
   formStatus: Status
   formApplicant: Applicant
+  formCcUsers: CC users
+  sourceInstance: Source request
   formCurrentNode: Current Node
   formCreatedTime: Submitted At
   formReason: Rejection / Result Note
@@ -1478,8 +1625,8 @@ systemApprovalInstance:
   batchReject: Batch Reject
   batchApproveConfirm: Batch approve the selected applications?
   batchRejectTitle: Reject {n} applications
-  batchRejectPartial: "{n} not processed: {detail}"
-  batchApprovePartial: "{n} not approved: {detail}"
+  batchRejectPartial: "{succeeded} succeeded, {n} not processed: {detail}"
+  batchApprovePartial: "{succeeded} succeeded, {n} not approved: {detail}"
   cancelConfirm: Cancel application "{title}"?
   submit: Submit
   submitSuccess: Application submitted
@@ -1511,7 +1658,7 @@ systemApprovalInstance:
   transferOk: Transferred, waiting for the assignee
   batchTransfer: Batch transfer
   batchTransferTitle: Batch transfer {n} tasks
-  batchTransferPartial: "{n} tasks failed to transfer: {detail}"
+  batchTransferPartial: "{succeeded} succeeded, {n} tasks failed to transfer: {detail}"
   nodeProgress: Node progress
   progressCount: "{approved} approved / {required} required ({total} candidates)"
   progressRatioHint: "Ratio sign-off: passes when approvals reach {ratio}% (counter-signing raises the threshold)"
@@ -1536,6 +1683,8 @@ systemApprovalInstance:
   flowUnavailable: The original flow is disabled or unavailable, please choose another one
 
 userinfo:
+  confirmUnbind: I understand and confirm unbinding the original account
+  confirmUnbindRequired: Please confirm unbinding the original account
   userinfo: UserInfo
   edit: Modify personal information
   basicInfo: Basic information
@@ -1548,6 +1697,7 @@ userinfo:
   verifyOldPassword: Please enter old password
   verifyNewPassword: Please enter new password
   surePassword: Sure Password
+  confirmPasswordRequired: Please enter the new password again
   username: Username
   nickname: Nickname
   phone: Mobile
@@ -1568,6 +1718,7 @@ userinfo:
 
 # MFA / Sensitive operation re-verification
 mfa:
+  statusLoadFailed: Failed to load MFA status; retry before binding
   tabTitle: MFA Security
   confirmTitle: Sensitive Operation Confirmation
   confirmTip: This operation requires identity re-verification, please select a verification method
@@ -1614,6 +1765,9 @@ mfa:
   recoverySaved: I have saved them
 
 account:
+  home: Home
+  logout: Sign out
+  tabUnavailable: The requested tab is unavailable or not permitted; showing profile instead
   profile: Profile
   preference: Preference
   prefCrossHint: These switches control whether real-time alerts pop up (global). To choose which message types you subscribe to, see "Notifications".
@@ -1630,12 +1784,15 @@ account:
   password: Password
   bind: Bind
   unbound: Unbound
+  emailUnavailable: Email service is not configured, email binding is unavailable
+  smsUnavailable: SMS service is not configured, phone binding is unavailable
 
 systemUser:
   invite: Invite to activate
   inviteConfirm: An invitation email will be sent (the account becomes pending and the current password is invalidated immediately; an activated account must be activated again). Continue?
   invitePending: Pending acceptance
   inviteAccepted: Accepted
+  deptUserCountHint: Direct active members; may differ from the data-permission filtered list total
   avatarAlt: User avatar
   user: User
   resetMfa: Reset MFA
@@ -1650,6 +1807,11 @@ systemUser:
   dept: Department
   date_joined: Registration Date
   last_login: Last Login Date
+  recentLogins: Recent logins
+  noLoginRecords: No login records
+  loginSucceeded: Signed in
+  loginFailed: Sign-in failed
+  loginRecordsLoadFailed: Failed to load login records
   batchSendNotice: Batch Send Notice
   editAvatar: Edit Avatar
   resetPassword: Reset Password
@@ -1698,6 +1860,7 @@ systemUser:
   changeHistoryTip: View field-level change records of this user
 
 systemDept:
+  hardDeleteHint: Deleting a department is permanent and cannot be restored; it is rejected while child departments or members exist, so reassign them first
   dept: Department
   name: Name
   code: Code
@@ -1737,6 +1900,10 @@ systemMyScope:
   subCount: Sub-departments
   hint: Data scope follows the manager assignment in real time; preview members per department or continue in user management
   empty: No managed departments (assign managers on the department page)
+  noPermissionTitle: No access to My Scope
+  noPermission: Missing the managed:SystemDept permission, so managed departments cannot be loaded. Ask an administrator to grant it in role permissions
+  loadFailed: Failed to load managed departments
+  retry: Retry
   direct: Direct
   members: Members { count }
   searchPlaceholder: Search by name / code
@@ -1759,9 +1926,16 @@ systemMyScope:
   active: Active
   disabled: Disabled
   loadMore: "Load more ({count} remaining)"
+  visibleCount: "Showing {shown}/{total} departments"
 
 systemPermission:
   permission: Permissions
+  trial: Trial
+  trialTitle: "Trial: {name}"
+  trialPermissionRequired: 'Trial requires the "previewTrial:SystemUser" permission. Ask an administrator to grant it.'
+  trialReadonlyHint: The list-page trial uses the saved rules of this permission group; edit the group to change the draft
+  lookupMissing: Missing required permissions ({permissions}). Scope and rule field candidates are unavailable, so create and edit are disabled
+  lookupLoadFailed: Failed to load the data permission dependencies. Create and edit are disabled; refresh the page and try again
   name: Name
   mode_type: Mode Type
   modeTypeTip: The permission mode indicates that the data must meet each rule in the rule list at the same time, or the mode can meet any rule
@@ -1836,6 +2010,7 @@ systemPermission:
     matchPlaceholder: Select a match
     matchRequired: Match is required
     matchFixedTip: The match is fixed by the system for this value type
+    lookupFailed: Failed to load match conditions; check whether the field is synced or retry later
     value: Value
     valueRequired: Value is required
     jsonPlaceholder: Enter JSON (validated on save)
@@ -1872,6 +2047,7 @@ systemPermission:
     scopeApis: "{count} APIs"
 
 systemRole:
+  builtin: Built-in
   role: Role
   name: RoleName
   code: RoleCode
@@ -1879,6 +2055,10 @@ systemRole:
   menuTitle: Please enter menu title
   menu: Menus
   preview: Grant Preview
+  menuTreeDenied: Missing the menu list permission (list:SystemMenu). The permission tree is unavailable, so create and edit are disabled to avoid clearing role grants on save
+  menuTreeLoadFailed: Failed to load the menu list. The permission tree is unavailable, so create and edit are disabled; refresh the page and try again
+  fieldTreeLoadFailed: Failed to load field-permission metadata. Field nodes are unavailable, so edit is disabled to avoid clearing role field grants on save
+  editRetrieveDenied: Missing the role detail permission (retrieve:SystemRole). Existing grants cannot be echoed in the edit dialog, so edit is disabled to avoid clearing role grants on save
 
 # Role menu permission tree
 rolePermission:
@@ -1941,6 +2121,7 @@ permissionPreview:
   noGrantAtLevel: No grant at this department level
   dataDisabled: Data permission disabled, filtering inactive
   boundMenus: Bound menus
+  moreTitles: "{shown} and {count} total"
   generalGrant: General grant (no menu bound)
   modeOr: OR mode
   modeAnd: AND mode
@@ -1991,6 +2172,8 @@ permissionPreview:
   noRoles: No role granted to this department
   dataGrant: Department data grants
   trialDraft: Instant trial (unsaved rules)
+  trialDraftMerged: Instant trial (draft + saved rules)
+  trialHintMerged: In edit mode the draft is appended to the group's saved rules for the trial, so results include the existing rules
   draftEmpty: Add rules before running the trial
   draftApplied: Current rule draft applied
   draftSkipped: Draft skipped (menu context mismatch)
@@ -2165,13 +2348,19 @@ systemMenu:
     unsaved: This menu has unsaved changes. Discard them?
     activeTitle: Batch enable
     inactiveTitle: Batch disable
-    activeCount: "{ count } node(s) will be enabled (including descendants of selected directories)"
-    inactiveCount: "{ count } node(s) will be disabled (including descendants of selected directories)"
-    inactiveDirectoryHint: "Disabling a directory does not cascade: when the parent is hidden its children are promoted to top level"
+    activeCount: "{ count } node(s) selected"
+    inactiveCount: "{ count } node(s) selected"
+    cascadeActiveHint: "{ count } child page(s) will be enabled as well"
+    cascadeInactiveHint: "{ count } child page(s) will be disabled as well"
+    inactiveDirectoryHint: "Disabling a directory also disables its pages; permission codes keep their state (menu activation does not affect them)"
   result:
     enabled: "Enabled { title }"
     disabled: "Disabled { title }"
     batchActive: "{ count } menu(s) updated"
+    batchMixedTypes: Selection contains mixed menu node types; batch activate only supports a single type
+    batchPermissionMixed: Permission codes cannot be batch updated together with menus or directories (their state is independent of menu activation)
+    batchFailed: "All { count } items failed"
+    batchPartial: "Partially applied: { ok } updated, { failed } failed"
     sorted: Order saved
   preview:
     action: Action
@@ -2194,6 +2383,7 @@ systemMenu:
     missing: Missing permissions
     orphan: Orphaned permissions
     duplicate: Duplicate codes
+    customAction: "Page-custom actions (naming convention action:Component)"
     fieldUnconfigured: Roles without field permissions
     role: Role
     locate: Locate
@@ -2201,19 +2391,22 @@ systemMenu:
     summary: "Scanned { routes } routes / { permissions } permissions · { total } issues"
     suggest:
       generate: Run permission sync or "auto add permissions" to fill
-      verify: Confirm the endpoint is retired, remove the permission if so
+      verify: Confirm whether the endpoint/custom action is still used, remove the permission if not
       merge: Merge the duplicate codes or confirm they are intentional
       configure: Pick the field whitelist for this permission on the role page (empty output otherwise)
     empty:
       missing: No missing permissions
       orphan: No orphaned permissions
       duplicate: No duplicate codes
+      customAction: No page-custom permission found
       fieldUnconfigured: No role missing field permissions
   empty:
     noMatch: No menu matches the filters, try clearing them
     noData: No menu data
 
 logsOperation:
+  bodyDropped: Body not recorded (OPERATION_LOG_FIELD_MAX=0)
+  exportBodyHint: Exports include request/response bodies, truncated per field by OPERATION_LOG_FIELD_MAX (default 4096 chars); sensitive fields are masked
   creator_id: Creator Id
   module: Module
   ipaddress: Ip Address
@@ -2238,6 +2431,12 @@ logsOperation:
   request_uuid: Request ID
 
 logsLogin:
+  sessionManage: Sessions
+  forceLogoutConfirm: Force logout all online sessions of "{user}"?
+  policyReject: Rejected
+  policyRecord: Recorded
+  policyRequireMfa: MFA required
+  logoutHint: Force logout only works for live WebSocket sessions. Manage HTTP-only sessions on the Online Sessions page.
   creator_id: Creator ID
   login_type: Login Type
   ipaddress: Ip Address
@@ -2247,6 +2446,8 @@ logsLogin:
   creator: Creator
 
 configSystem:
+  unregisteredKeyTip: Unregistered keys have no effect; use uppercase snake case for custom keys and register them in code
+  registeredKeysLoadFailed: Failed to load registered keys; autocomplete is unavailable
   configSystem: System Config
   key: Config Name
   value: Config Value
@@ -2272,7 +2473,8 @@ configUser:
   username: Username
   access: API Access
   owner_id: User ID
-  config_user: User ID
+  config_user: Users (multi-select)
+  lockedTip: The owner cannot be changed after creation
   owner: UserInfo
   cache_value: Config Cache Value
   invalidCache: Invalid Cache
@@ -2305,6 +2507,9 @@ systemNotice:
   markdownHeadingText: Heading
   markdownLink: Link
   markdownLinkText: Link text
+  markdownTableCol1: Column 1
+  markdownTableCol2: Column 2
+  markdownTableCell: Content
   markdownCode: Inline code
   markdownStrikethrough: Strikethrough
   markdownQuote: Quote
@@ -2332,6 +2537,8 @@ systemNotice:
 
 noticeRead:
   owner_id: User ID
+  allRead: Mark all read
+  allReadConfirm: Mark all unread private messages in the current filter as read? Announcements are not removed.
   notice_id: Notice ID
   message: Message
   title: Title
@@ -2342,6 +2549,8 @@ noticeRead:
   notice_info: Title
   readDate: Read Date
   showSystemNotice: Check the system announcement
+  remove: Remove
+  removeConfirm: Removing this announcement only clears it from your notification list (the announcement and other recipients are unaffected). Remove it?
 
 userNotice:
   readFailed: Failed to mark as read, please retry later
@@ -2392,6 +2601,8 @@ status:
   hsLoad: Loading...
 
 chat:
+  noPermission: No permission to access chat
+  removeMemberConfirm: Remove {name} from the group?
   groupNameRequired: Please enter a group name
   membersRequired: Please select group members
   inputLabel: "Message:"
@@ -2409,6 +2620,7 @@ chat:
   unknownUser: Unknown user
   noMessageYet: No messages yet
   emptyRooms: No chats
+  loadRoomsFailed: Failed to load conversations, please retry
   emptyContacts: No contacts
   emptyMessages: No messages yet, say hello
   selectRoom: Select a chat to start
@@ -2416,6 +2628,8 @@ chat:
   offline: Offline
   onlineCount: "{count} online"
   connecting: Connecting...
+  uploading: Uploading attachment...
+  streamingHint: AI is answering; you can send again when it finishes
   enterHint: Enter to send, Shift + Enter for a new line
   mentionHint: Type {'@'} to mention an online member
   loadMore: Load earlier messages
@@ -2502,6 +2716,13 @@ chat:
   emptyMembers: No members
 
 login:
+  confirm: Confirm
+  typeItSingleElement: Make sure there is exactly one element with the 'type-it' class
+  captchaImage: Captcha image
+  captchaRefresh: Click to refresh the captcha
+  verifyCodeRequired: Please request a verification code first
+  configLoadFailed: Failed to load login configuration, please retry
+  privacyPrefix: By signing in you agree to
   logoutSuccess: Logged out
   thirdPartyLogin: Third-party login
   serverForbidden: Login is not allowed on this server
@@ -2523,11 +2744,14 @@ login:
   back: Back
   definite: Definite
   loginSuccess: Login Success
+  basicDisabled: Password sign-in is disabled. Use a verification code or a third-party provider.
+  resetUnavailable: Self-service password reset is unavailable. Contact an administrator.
   registerSuccess: Registered successfully
+  registerFailed: Registration failed, please check the account or password rules
   tickPrivacy: Please tick Privacy Policy
   readAccept: I have read it carefully and accept
   privacyPolicy: Privacy Policy
-  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
+  privacyPolicyBody: "This system only collects what is necessary for registration and usage: your username, phone number or email (for identity and verification codes), login credentials (passwords are stored only in irreversible encrypted form), and basic operation logs for security auditing. Human verification collects browser environment digests and behavior features (used only to distinguish humans from automation; IP/UA are never stored in plaintext, passwords and input are never collected, no cookies are written, and nothing is sent to third parties); logs are kept for 30 days by default. Such data is used solely for account management and system security — never for advertising or shared with third parties. To export or delete your account data, please contact the administrator."
   getVerifyCode: Get VerifyCode
   info: Seconds
   usernameReg: Please enter username
@@ -2547,6 +2771,18 @@ login:
   smsVerify: SMS Auth
 
 welcome:
+  noOperateLog: No operation logs yet
+  aiDailyTitle: AI Daily Report
+  aiDailyPending: Pending approvals
+  aiDailyAlerts: Monitor alerts
+  aiDailyErrors: Failed requests
+  aiDailyTasks: Failed tasks
+  aiDailyCalls: AI calls
+  aiDailyEmpty: Digest not generated yet (scheduled daily at 07:31)
+  aiDailyFailed: Digest generation failed; live metrics below
+  aiDailyGeneratedAt: "Digest generated at {time}"
+  loadFailed: Failed to load dashboard data; some cards may show 0
+  dataScopeLimited: Some statistics show 0 because you lack data permissions. Contact an administrator to configure data scope.
   operateLog: Log of operations
   userAnalysis: Overview of user analysis
   registerUser: Number of Registered Users
@@ -2617,6 +2853,10 @@ apiApp:
   enforceDailyQuotaTip: "When on, requests beyond the daily quota get 429 (off = warn only)"
   grant:
     title: Resource grants
+    manage: Manage resource grants
+    manageDesc: Adjust models, actions, fields and row rules without re-saving the application form
+    manageTitle: "Resource grants - {name}"
+    saved: Resource grants saved
     hint: "Empty = inherit owner permissions and API scopes; any rule enables whitelist mode (model / action / field / row, tighten only)"
     add: Add rule
     remove: Remove
@@ -2637,12 +2877,23 @@ apiApp:
     loadFailed: "Resource grants were not loaded: this save skips grant rules (existing rules are kept)"
     saveFailed: Failed to save resource grants
     matchExact: Equals
+    matchIExact: Equals (case-insensitive)
     matchContains: Contains
-    matchIn: "In (comma-separated)"
+    matchIContains: Contains (case-insensitive)
+    matchStartsWith: Starts with
+    matchIStartsWith: Starts with (case-insensitive)
+    matchEndsWith: Ends with
+    matchIEndsWith: Ends with (case-insensitive)
+    matchIn: In (comma separated)
     matchGt: Greater than
-    matchGte: Greater or equal
+    matchGte: Greater than or equal
     matchLt: Less than
-    matchLte: Less or equal
+    matchLte: Less than or equal
+    matchRegex: Regex
+    matchM2m: M2M contains
+    matchM2mAll: M2M contains all
+    matchAll: All
+    matchIpIn: IP in range
   usage:
     title: Usage
     range: Window
@@ -2655,6 +2906,7 @@ apiApp:
     daily: Daily breakdown
     date: Date
     topPaths: Top paths
+    path: Path
     statusCodes: Business code distribution
     statusCode: Code
     empty: No request data yet
@@ -2671,11 +2923,16 @@ apiScope:
     /api/identity/user
     /api/task/exports
 setting:
-  name: Name
-  value: Value
-  category: Category
+  name: Setting name
+  noPermission: No settings available (missing view permission)
+  loadFailed: Failed to load settings, please try again later
+  effectiveOk: '"{name}" is currently in effect'
+  effectiveBlocked: '"{name}" is not in effect'
+  value: Setting value
+  category: Setting category
   is_active: Is active
   encrypted: Encrypted
+  reload: Reload
 
 settingBasic:
   title: Basic Settings
@@ -2684,30 +2941,125 @@ settingWatermark:
   title: Watermark Settings
   preview: Live Preview
   previewTip: Placeholders are resolved with the current logged-in user's real info; the style matches the actual watermark; empty color = default gray
+  previewDisabled: The watermark master switch is off, so the preview is hidden; actual pages only show it after enabling
+  previewOutOfScope: This settings page is outside the configured page scope, so actual pages will not show it; the preview below is for style only
 
 settingMessage:
-  mailTitle: Email Server
   messageTitle: Message Notifications
+
+settingChannel:
+  mailTitle: Email Server
   dingtalkTitle: DingTalk
   wecomTitle: WeCom
   feishuTitle: FeiShu
+  webhookTitle: Webhook
+
+settingCommon:
+  unsaved: Unsaved changes
+  leaveConfirm: Current settings are not saved. Leave anyway?
+  leave: Leave
+  stay: Stay on this page
 
 settingLdap:
   title: LDAP Directory
+  desc: Configure the directory connection, user/department sync and group-role mapping; "Test connection" only checks connection/search and does not write users
+
+settingCaptcha:
+  general: Captcha General
+  generalDesc: Global switch and the captcha type in use; interactive means behavior verification (slide / rotate / click / word order); when disabled, no scene requires a captcha
+  image: Image type
+  imageDesc: Generation mode, length, font, colors and noise for the image-character type (fallback / explicit only)
+  imagePreviewTitle: Image type preview
+  interactive: Challenge types
+  interactiveDesc: "Unified protocol types, tolerances, TTL, sizes and image fallback"
+  interactivePreviewTitle: Interactive Captcha Preview
+  previewType: Preview type
+  previewSlide: Slide puzzle
+  previewRotate: Rotate upright
+  previewClick: Word click
+  previewWordorder: Word order
+  previewIcon: Icon click
+  previewImage: Image characters
+  previewPow: Proof of work
+  refreshPreview: Refresh preview
+  previewTip: Preview uses the saved configuration; for visual check only, no verification is submitted
+  previewFailed: Failed to load preview
+  previewDenied: No preview permission (requires the matching preview permission code)
+  interactiveBehaviorHint: Word order is a new behavior verification type; enable it under Interactive types below. PoW and stricter difficulty are issued automatically by Risk Policy according to the risk decision.
+  risk: Risk Policy
+  riskDesc: Risk mode, thresholds, PoW budget and disposal ladder; trusted networks reuse the login-security whitelist; default is enforce (reverse-proxy deployments must configure TRUSTED_PROXY_IPS first)
+  riskGuideTitle: How to configure
+  riskGuide1: "Start with shadow: score and log only, no behavior change; observe at least 3 days and 1000 verifications, then switch to enforce."
+  riskGuide2: "Thresholds are score bands: below allow -> no puzzle; allow to light -> click + PoW; light to hard -> normal puzzle; hard to deny -> hard puzzle; at deny -> reject. Keep 20/40/70/90 unless you have data."
+  riskGuide3: Private networks and loopback are trusted by default; add office networks to the login-security whitelist. Ladder 3/8/20 = force hard / 15 min cooldown / 1 hour cooldown.
+  riskRules: Rule scores
+  riskRulesDesc: Tune the score and switch of the 16 explainable rules (effective immediately after save)
+  riskRuleScore: Score
+  riskRulePriority: Priority
+  riskRuleEnabled: Enabled
+  riskRuleSave: Save rules
+  riskRuleReload: Discard changes
+  unsaved: Risk rules have unsaved changes
+  leaveConfirm: Risk rules have unsaved changes that will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay on this page
+  riskRuleRetry: Retry
+  riskRulesEmpty: No rules
+  riskRulesLoadFailed: Failed to load rules
+  riskRulesSaved: Rules saved
+  riskRulesFailed: Failed to save rules
+  riskCompliance: "Privacy notice: only environment digests and behavior hashes are collected; passwords, input content and cookies are never collected or sent to third parties. Logs are kept for 30 days by default and IPs only as network-prefix hashes."
+  data: Verification Data
+  dataDesc: Verification volume, pass rate, type and decision distribution; logs keep 30 days with hashes and categories only (no plain IP / UA)
+  dataWindow: Time window
+  dataHour24: Last 24 hours
+  dataHour72: Last 3 days
+  dataHour168: Last 7 days
+  dataChallenge: Challenges
+  dataVerify: Verifications
+  dataPassRate: Pass rate
+  dataConsume: Tickets consumed
+  dataByType: Pass rate by type
+  dataByAsset: Pass rate by background asset
+  dataByDecision: Decision distribution
+  dataTotal: Total
+  dataPassed: Passed
+  dataTrend: Hourly trend
+  dataTrendNote: Showing the latest {count} points (the full window still feeds the summary above)
+  dataLog: Verification logs
+  dataEmpty: No data yet
+  dataRetry: Retry
+  dataRefresh: Refresh
+  dataRiskMode: Risk mode
+  dataRetention: Logs retained for {days} days
+  dataDenyRate: Deny rate
+  dataLatencyP50: Verify P50 latency
+  dataThresholds: Thresholds
+  dataRiskDistribution: Risk score distribution
+  dataTopReasons: Top deny reasons
+  dataTopIps: Top suspicious IP prefixes
+  dataTopFingerprints: Top suspicious fingerprints
+  dataTopUa: Top suspicious UA classes
+  decisionAllow: Allow
+  decisionLight: Light
+  decisionChallenge: Challenge
+  decisionHard: Hard
+  decisionDeny: Deny
 
 settingSecurity:
-  code: Verify Code
-  captcha: Captcha Code
   login: Login Safe
   limit: Login Limit
+  mfa: MFA Verification Settings
+  monitor: Resource Alert
+  blockIp: Block Ip
+
+settingAccountSecurity:
   register: Register Safe
   resetPassword: Reset Password
   passwordRule: Password Rules
   bindEmail: Bind Email
   bindPhone: Bind Phone
-  mfa: MFA Verification Settings
-  monitor: Resource Alert
-  blockIp: Block Ip
+  verifyCode: Email / SMS Verify Code
 
 settingPassword:
   tips: Password should be
@@ -2719,7 +3071,9 @@ settingPassword:
 
 settingSms:
   title: SMS Setting
+  serverDesc: Configure the SMS master switch and provider defaults; the test sends a verification SMS
   backendsLoadFailed: Failed to load SMS channel tabs
+  backend_alibaba: Alibaba Cloud SMS
 
 demoBook:
   book: Book
@@ -2740,6 +3094,7 @@ demoBook:
   publisherExample3: Science Press
 
 systemTask:
+  registeredLoadFailed: Failed to load runnable tasks, please retry
   name: Task Name
   task: Task Path
   crontab: Crontab
@@ -2777,8 +3132,20 @@ systemTask:
   noExecution: No execution records for this celery
   logTitle: Log
   noLogOutput: No log output yet
+  logAuthExpired: Your session has expired. Sign in again to view the log.
+  logForbidden: You do not have permission to view this task log.
+  logLoadFailed: Failed to load the log
+  logRetry: Retry
+  logPolling: Live channel unavailable, polling instead
+  scheduleDeleteConfirm: Delete this schedule? Deletion is rejected while periodic tasks reference it
+  scheduleReferencesTitle: Referenced and cannot be deleted
+  scheduleReferencesHint: "{count} periodic task(s) still reference this schedule:"
+  scheduleReferencesTruncated: Only the first {count} entries are shown
+  scheduleReferencesAction: Adjust or delete the referencing tasks before deleting this schedule
+  openTaskList: View in task list
 
 systemTaskExecution:
+  deleteConfirmLog: Delete this execution record? Its log file will also be physically deleted and cannot be recovered
   name: Task Name
   product_type: Record type
   product_progress: Progress
@@ -2897,6 +3264,8 @@ systemTaskCrontab:
   month_of_year: Month
   timezone: Timezone
   cronEveryWeek: Every week
+  cronEveryNWeeks: Every {n} weeks
+  cronFromWeekdayStep: "Every {step} weeks from {day}"
   cronWeekday0: Sunday
   cronWeekday1: Monday
   cronWeekday2: Tuesday
@@ -2904,8 +3273,21 @@ systemTaskCrontab:
   cronWeekday4: Thursday
   cronWeekday5: Friday
   cronWeekday6: Saturday
+  expression: Cron expression
+  timezonePlaceholder: Select or enter an IANA timezone
+  expressionHint: "Current expression: {expression} ({weekday})"
+  nextRuns: Next 5 runs
+  previewFailed: Failed to preview run times; check the expression and timezone
+  previewEmpty: No upcoming run
+  previewRequired: Fill all five fields to preview
+  previewHint: Preview uses the declared timezone; the beat scheduler is authoritative
+  preset_every5: Every 5 minutes
+  preset_hourly: Hourly
+  preset_daily2: Daily at 02:00
+  preset_workday9: Weekdays at 09:00
 
 systemTaskInterval:
+  nextApprox: next around {time}
   every: Number of Periods
   period: Period Unit
 
@@ -2918,11 +3300,21 @@ imBinding:
   current: Current bindings
   empty: No IM binding yet
   unbind: Unbind
+  unbindConfirm: "Unbind the {provider} account of this user? It will no longer be able to sign in via that provider."
   required: Provider and account identity are required
   saved: IM binding saved
   unbound: Unbound
 
 systemApprovalDelegation:
+  impactTitle: "Confirm disabling delegation"
+  impactConfirm: "There are {count} in-flight task(s) related to this delegation (delegator: {delegator}, delegate: {delegate}). Existing assignments stay unchanged after disabling; only future nodes revert to the original approvers. Disable anyway?"
+  effectiveStatus: Effective status
+  status_active: Active
+  status_notStarted: Not started
+  status_expired: Expired
+  status_disabled: Disabled
+  flowOptionsLoadFailed: Failed to load the flow catalog; only "All flows" is available for now
+  flowRequired: Select the flows to delegate (leaving it empty would be treated as "All flows" and silently widen the scope)
   allFlows: All flows
   delegator: Delegator
   delegator_name: Delegator
@@ -2950,6 +3342,9 @@ recycleBin:
   purgeDone: Purged
 
 systemMonitor:
+  thresholdNoPermission: Missing thresholds:SystemMonitor; threshold settings are unavailable
+  eventsDenied: Missing events:SystemMonitor; events are unavailable
+  eventsLoadFailed: Failed to load events, please retry
   worker: Worker
   active: Active
   reserved: Reserved
@@ -3008,6 +3403,9 @@ systemMonitor:
   healthHealthy: Healthy
   healthWarning: Warning
   healthCritical: Critical
+  healthUnknown: Unknown (no data)
+  valueUnavailable: N/A
+  dataUnavailable: Monitoring data failed to load or access is denied. Current values are unavailable.
   itemWarning: Over threshold
   itemCritical: Critical
   itemUnknown: Unknown
@@ -3081,8 +3479,11 @@ systemOnline:
   forceLogoutNoUser: Missing user info on this row; cannot force offline
   batchForceLogout: Batch force offline
   batchForceLogoutConfirm: Force selected users offline? All their sessions will be revoked immediately
+  logoutConfirm: Sign out the current session of { name }?
 
 dataDict:
+  parentType: Parent type
+  refreshTypeCache: Refresh this type's cache
   dictType: Dict type
   parent: Parent
   parent_code: Dict code
@@ -3108,6 +3509,8 @@ dataDict:
   addChild: Add child item
 
 mask:
+  disableRiskHint: Disabling a mask rule immediately restores plaintext for all non-superusers; confirm compliance impact first
+  previewInvalidPattern: The custom regex is invalid, so this rule is inactive and the preview shows the original value
   model: Model
   field: Field
   mask_type: Mask Type
@@ -3140,11 +3543,29 @@ mask:
   maskTypeCustom: Custom Pattern
 
 dashboard:
+  moveUp: Move card up
+  moveDown: Move card down
+  unsaved: Unsaved layout changes
+  leaveConfirm: Unsaved layout changes will be lost. Leave anyway?
+  leave: Leave
+  stay: Stay on this dashboard
+  refreshing: Refreshing linked data
   datasetsLoadFailed: Failed to load the dataset list, please refresh and retry
   exportImage: Export image
+  drillViewData: View data
+  drillFilteredBy: Filtered by {field} = {value}
+  drillClearFilter: View all rows
+  drillLoadFailed: Failed to load rows
+  drillRetry: Retry
+  drillRows: Detail rows
+  drillTotal: "{count} rows in total (first {limit} shown)"
+  exportSnapshot: Export snapshot
+  exportSnapshotNote: "{count} cards have no chart and were exported as placeholders"
   exportNoChart: Metric cards have no chart to export
   title: Dashboards
   pickDashboard: Pick a dashboard
+  linkageActive: "Card linkage: {name} = {value}"
+  linkageTip: Other cards are cross-filtered by this dimension value (source card stays unfiltered). Close to clear
   create: New Dashboard
   edit: Edit Layout
   cancelEdit: Exit Edit
@@ -3152,6 +3573,7 @@ dashboard:
   remove: Remove
   empty: No dashboards yet, click "New Dashboard" to start
   addCard: Add Card
+  cardLimitReached: A dashboard supports at most {count} cards
   dataset: Dataset
   cardTitle: Card Title
   chartType: Chart Type
@@ -3187,21 +3609,26 @@ dashboard:
   removeConfirm: Delete dashboard "{name}"? Its layout and cards will be removed, and screens referencing it will lose this page
   valueField: Measure field
   valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
+  lineRequiresDate: This dataset has no date field, so a trend line cannot be rendered; use bar/pie or configure a time field first
   valueFieldRequired: Please select a measure field
   loadFailed: Failed to load data
   retry: Retry
   settings: Settings
   refresh: Refresh
   autoRefreshOff: Off
+  autoRefreshRealtime: Realtime (push)
   autoRefresh10s: Every 10s
   autoRefresh30s: Every 30s
   autoRefresh60s: Every minute
   autoRefresh5m: Every 5 minutes
+  autoRefresh: Auto refresh interval
   autoRefreshTip: Refresh the current dashboard cards on a timer (for wall displays)
 
   share: Share
   shareCopied: Dashboard link copied
 dataDataset:
+  previewNetworkFailed: Preview request failed (network or service error), please retry
+  inValuesPlaceholder: Type a value and press Enter; commas are allowed
   metaLoadFailed: Failed to load dataset metadata; editing and field options are unavailable
   previewFailed: Preview failed. Check the dataset configuration or retry later
   title: Datasets
@@ -3233,6 +3660,10 @@ dataDataset:
   saveOk: Saved
   deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
   dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
+  fieldPermissionMode: Field permission mode
+  fieldPermissionInherit: Inherit (no pruning when unconfigured)
+  fieldPermissionStrict: Strict (empty result when unconfigured)
+  fieldPermissionTip: Use strict for shared datasets; run dataset_field_permission_audit before switching
   jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
   exportCsv: Export CSV
   previewRows: Rows
@@ -3251,6 +3682,11 @@ dataDataset:
   aggregateEmpty: Set aggregation and click "Aggregate" to preview
 
 dataScreen:
+  templateDetail: Details
+  templateDetailFailed: Failed to load details
+  clearCloud: Clear cloud clipboard
+  clipboardCloudCleared: Cloud clipboard cleared
+  clipboardCloudClearFailed: Failed to clear cloud clipboard
   dashboardHidden: Invisible dashboard
   designer: Design
   designerTitle: Screen canvas designer
@@ -3294,6 +3730,7 @@ dataScreen:
   gridHint: 12 columns x 60 rows; position and size are column/row indexes
   modeGrid: Grid
   modeFree: Free canvas
+  modeCarousel: Carousel
   theme: Theme
   themeDark: Dark
   themeLight: Light
@@ -3329,6 +3766,9 @@ dataScreen:
   richList: Bullet list
   richOrderedList: Numbered list
   richTable: Table
+  richTableCol1: Column 1
+  richTableCol2: Column 2
+  richTableCell: Content
   richPreview: Live preview
   richPlaceholder: text
   animationNone: None
@@ -3365,6 +3805,7 @@ dataScreen:
   pasteNothing: Nothing to paste (empty clipboard or all references are invisible)
   insertSkipped: Skipped {n} pane(s) with invisible references
   insertTruncated: Pane limit reached, {n} pane(s) truncated
+  mediaPanesDropped: Skipped {n} media pane(s) with empty URL (kept on canvas; fill the URL and save again)
   templateMenu: Apply template
   templateApplyReplace: Replace with
   templateApplyAppend: Append
@@ -3401,6 +3842,9 @@ dataScreen:
   templateRollbackFailed: Rollback failed (only the creator can roll back)
   templateVersionEmpty: No version history yet
   templateVersionColumn: Version
+  versionMode: Canvas mode
+  versionHistory: Version history
+  versionRolledBack: Rolled back to screen version {n}
   updatedTime: Updated
   pasteCloud: Paste from cloud
   clipboardCloudEmpty: The cloud clipboard is empty (copy something on another device first)
@@ -3419,6 +3863,7 @@ dataScreen:
   templateImportEmpty: No importable pane (missing coordinates or type)
   templateImportTooLarge: File too large — import cancelled
   templateImported: Imported {n} panes
+  templateImportSkipped: Skipped {n} unrecognizable pane(s) (unknown type or missing required fields)
   tplPromo: Promo screen
   tplPromoTitle: Title
   tplPromoSubtitle: Subtitle / description
@@ -3467,6 +3912,8 @@ dataScreen:
   save: Save
   noDashboards: No dashboard to display
   exportScreen: Export screen
+  exportSnapshot: Snapshot PNG
+  exportSnapshotTip: Compose all charts into one PNG image (with title, timestamp and watermark)
   exportNoChart: The current screen has no chart to export
   exportSkipped: "{count} metric cards were not exported"
   pause: Pause rotation
@@ -3559,6 +4006,7 @@ dataReport:
   stay: Stay
   runDirty: Save your changes before running
   cronInvalid: Cron expression must have 5 fields (min hour day month weekday)
+  imRecipientsRequired: Select at least one IM recipient for the enabled IM channels
   recipientsRequired: Email recipients are required when the email channel is selected
   recipientsInvalid: "Invalid email recipient: {value}"
   monthDayHint: Day of month to deliver (1-28)
@@ -3581,6 +4029,9 @@ dataReport:
   edit: Edit
   delete: Delete
   run: Run Now
+  runDone: Report finished; the output is available in the download center
+  runFailed: Report run failed
+  runPollTimeout: The report is still running; check the download center later
   runOk: Dispatched; the artifact will appear in the download center
   name: Name
   dataset: Dataset
@@ -3624,6 +4075,17 @@ dataReport:
   valueField: Measure field
   valueFieldTip: Numeric source field for sum/avg aggregation (numeric columns only)
   valueFieldRequired: Please select a measure field
+  versionHistory: Version history
+  versionRolledBack: Rolled back to version {n}
+  versionComponents: "{n} components"
+
+versionHistory:
+  version: Version
+  time: Saved at
+  rollback: Roll back
+  rollbackConfirm: Roll back to version {n}? The current content will be replaced.
+  empty: No version history yet
+  loadFailed: Failed to load version history
 
 webhook:
   urlInvalid: Callback URL must start with http:// or https://
@@ -3640,11 +4102,23 @@ webhook:
   secret: Secret
   secretKeep: Leave empty to keep the current secret
   secretHint: Used for HMAC-SHA256 signing
+  hasSecret: Secret status
+  secretConfigured: Configured
+  secretMissing: Not configured
+  rotateSecret: Rotate secret
+  rotateSecretConfirm: The old secret stops working immediately and subscribers must update it. Rotate now?
+  rotateSecretTitle: New signing secret
+  rotateSecretHint: "The new secret is shown only once. Copy it and update the subscriber now:"
+  rotateSecretOk: Secret rotated
+  viewRequest: View request
+  payload: Request body
+  requestHeaders: Signature headers
+  requestTitle: Request body and signature headers
   events: Events
-  isActive: Enabled
+  is_active: Enabled
   on: On
   off: Off
-  lastFailure: Last Failure
+  last_failure: Last Failure
   description: Description
   actions: Actions
   cancel: Cancel
@@ -3667,6 +4141,10 @@ webhook:
   attempt: Attempts
   responseCode: Code
   responseBody: Response
+  responseTitle: Full response body
+  responseTruncated: Truncated
+  responseEmpty: (empty response)
+  viewResponse: View full
   duration: Duration(s)
 
 ai:
@@ -3686,6 +4164,7 @@ ai:
   emptyMessages: No conversation with {name} yet, start asking
   persistHint: Conversations and operation records are stored on the server
   partialHint: Answer incomplete
+  latestOnlyHint: Only the latest answer can be executed; older messages are read-only
   streamInterrupted: Answer stream interrupted; partial content retained
   resultRows: "{count} rows in total, showing first {shown}"
   resultName: Metric
@@ -3731,10 +4210,18 @@ ai:
   stopGenerating: Stop generating
   askFailed: Docs Q&A failed; please retry or switch models
   nlFailed: Data query failed; please retry or switch models
+  toolCatalog: Tool catalog ({count})
+  toolCatalogTitle: AI tool catalog
+  toolCatalogEmpty: No AI tools are available
+  toolParams: Parameters
+  statusDegraded: Console status is unavailable; Q&A is still available
   statusLoadFailed: Failed to load AI console status
   retry: Retry
 
 aiConfig:
+  statusUnknown: Global switch status unknown
+  statusUnknownHint: Missing permission to view AI configuration or the request failed; refresh or ask an administrator to grant access
+  retry: Retry
   title: AI Configuration
   globalTitle: Global Switches
   sectionSwitch: Feature switches
@@ -3873,6 +4360,8 @@ aiConfig:
   deactivateConfirm: Deactivate this profile? This purpose will fall back to the chat profile or the legacy config.
   deactivateDone: Profile deactivated
   testOk: Connected
+  testFailed: Connection failed
+  testTimeout: Test timed out
   actions: Actions
 
   AI_ASSISTANT_ENABLED: Enable AI assistant
@@ -3894,10 +4383,31 @@ aiConfig:
   capabilities: Capabilities
   probed_at: Probed at
 dform:
+  removeFieldConfirm: Delete field "{name}"? Fields referenced by formulas/linkages are validated or dropped on save; reconfigure after deletion.
+  editOptions: "Edit options"
+  optionsEditorTitle: "Edit complex options"
+  optionValue: "Option value"
+  addOption: "Add option"
+  cascaderPathPlaceholder: "Leaf path, segments separated by /, e.g. East/ Jiangsu/Nanjing"
+  addPath: "Add path"
+  addColumn: "Add column"
+  formsLoadFailed: Failed to load fillable forms, please retry
+  retry: Retry
+  submitConfirm: Submit the draft of "{name}"? It will enter the approval flow
+  resubmitConfirm: Resubmit "{name}"? A new approval flow will be started
+  flowOptionsLoadFailed: Failed to load the approval flow catalog; binding is unavailable
   detailFallback: Failed to load details, showing list data instead
   noApprovalNeeded: No approval required
   designerTitle: Form Design
+  designTab: Design
+  previewTab: Preview
+  previewHint: Live preview of the current design (including unsaved fields and linkages). Fill it in to test the behavior; nothing is submitted
+  previewEmpty: Add a field to preview the fill-in experience here
   fillTitle: Available Forms
+  withdraw: Withdraw
+  withdrawConfirm: Withdraw the approval request for "{name}"? You will need to submit it again
+  withdrawOk: Withdrawn
+  withdrawNoInstance: This submission has no approval instance to withdraw
   mySubmissions: My Submissions
   exportCsv: Export CSV
   create: New Form
@@ -3921,6 +4431,8 @@ dform:
   fieldOptions: Options
   optionsHint: Comma-separated
   fieldRequired: Required
+  fieldSensitive: Sensitive field
+  fieldSensitiveTip: Lists, details and exports show ****** to non-superusers; only superusers see the original value
   fieldFilterable: Filterable
   fieldFilterableTip: Materialize this field on submit so the form data page can filter by it
   fieldFormula: Formula expression
@@ -3928,6 +4440,8 @@ dform:
   fieldFormulaTip: Supports + - * / and parentheses; {'{'}price{'}'} references numeric fields, SUM/AVG/MIN/MAX aggregate detail columns, plus ROUND/ABS; click a tag below to insert
   noForms: No forms available
   noDescription: No description
+  formEnabled: Form enabled
+  formEnabledTip: Disabled forms disappear from the fillable list; existing submissions are unaffected
   approvalRequired: Approval
   approvalOn: Approval
   approvalOff: Direct
@@ -4076,8 +4590,15 @@ dform:
   historyRollbackConfirm: Roll back to v{version}? It applies that version's fields and linkages and creates a new version
   historyRollbackDone: Rolled back to v{version}
   historyLoadFailed: Failed to load version history
+  unsaved: Unsaved design changes
+  leaveConfirm: The form design has unsaved changes. Close and discard them?
+  leave: Close anyway
+  stay: Keep editing
 
 formData:
+  exportFullHint: Exports include all form fields regardless of the current column settings
+  dataScopeHint: If the list is empty, confirm the form-data model (dataset.dynamicformsubmission) has a data-permission scope granted
+  fieldPermissionHint: Dynamic forms store values as JSON, so model field-level permissions do not apply to dynamic keys; avoid collecting sensitive fields or restrict this page/export to authorized roles
   selectTitle: Select Form
   selectPlaceholder: Please select a form
   noForms: No form available
@@ -4090,6 +4611,8 @@ formData:
   formsLoadFailed: Failed to load the form list
   retry: Retry
 leaveApply:
+  statsTip: "Leave statistics: last {n} days"
+  saveAndSubmit: Save and submit for approval
   leave_type: Leave type
   start_date: Start date
   end_date: End date
@@ -4124,6 +4647,22 @@ leaveApply:
   statsRejected: Rejected
 
 mcp:
+  logs: Call Logs
+  logChannelAi: AI action
+  logChannelAdmin: Console
+  logOutcomeAll: All
+  logOutcomeOk: Success
+  logOutcomeFailed: Failed
+  logTotal: "{count} in total"
+  logColTime: Time
+  logColTool: Tool
+  logColUser: User
+  logColChannel: Channel
+  logColResult: Result
+  logColDetail: Detail
+  logOk: OK
+  logFailed: Failed
+  dailyCallLimit: Daily call limit
   create: New server
   createTitle: New external MCP server
   editTitle: Edit external MCP server
@@ -4136,7 +4675,7 @@ mcp:
   formAuthTokenLeave: Leave blank to keep unchanged
   formTimeout: Timeout (seconds)
   formAllowedTools: Allowed tools
-  formAllowedToolsTip: Comma separated (e.g. echo, search); empty means no tool can be called
+  formAllowedToolsTip: Select synced tools or type tool names; empty means no tool can be called
   formEnabled: Enabled
   formExposeToAi: Expose to AI actions
   formExposeToAiTip: When on, whitelisted tools join the AI assistant action catalog (called after user confirmation; off by default)
@@ -4166,10 +4705,17 @@ mcp:
   callTitle: "Call test - {name}"
   callArguments: Arguments (JSON)
   callArgumentsTip: Fill a JSON object keyed by tool params (e.g. text=hello)
+  writeConfirmTitle: Confirm write-capable tool
+  writeConfirm: Tool "{name}" is marked writable and may modify external data. Continue?
+
   callRun: Run
   callSuccess: Call succeeded
   callFailed: Call failed
   callInvalidJson: Arguments must be a valid JSON object
+  argsJsonTip: Enter JSON for object/array arguments
+  argRequired: "Missing required argument: {name}"
+  argInvalidNumber: "Argument {name} must be a number"
+
   whitelistTip: Only whitelisted tools can be called; every call is audited
   empty: No tool snapshot yet, sync tools first
   readOnlyYes: Read-only
@@ -4178,7 +4724,15 @@ mcp:
   disabled: Disabled
   actionSurfaceIn: Exposed
   actionSurfaceOut: Not exposed
+  expose_to_ai: AI action surface
+  tools_count: Tools
+  toolsCount: "{count} tools"
+  toolCallUnavailable: Only tools in the allowlist and exposed to AI actions can be called
 aiKnowledge:
+  ingestPending: Pending
+  ingestProcessing: Processing
+  ingestDone: Ready
+  ingestFailed: Failed
   upload: Upload document
   uploadTitle: Upload document
   syncRepo: Sync repository docs
@@ -4202,6 +4756,7 @@ aiKnowledge:
   chooseFile: Choose a local file
   chooseFileTip: Supports .md/.markdown/.txt/.pdf/.docx; text is editable, pdf/docx are parsed on upload
   content: Content
+  parsingHint: Parsing and uploading the document, please wait…
   contentPlaceholder: Paste or edit Markdown text
   contentTitle: Content
   chunksTitle: Knowledge chunks (retrieval units)
@@ -4233,6 +4788,7 @@ aiKnowledge:
   buildAlreadyRunning: "A build is already running; tracking its progress"
   buildProgress: "Building vectors… {percent}%"
   buildPollTimeout: "The build is taking long; progress tracking stopped. Check vector status later"
+  vectorStatusDenied: "Unable to read vector status: missing knowledge-base view permission; ask an administrator to grant it"
   vectorDisabled: No active profile with purpose Text embedding; add and activate one on the AI config page first
   panelTitle: "Manage {title}"
   enabled: Enabled
@@ -4256,8 +4812,18 @@ oauthAuthorize:
   invalidRequest: Missing request parameters (client_id / redirect_uri)
   loadFailed: Failed to load authorization request
   invalidRedirect: Authorization completed, but the app's registered redirect URI is invalid and the browser cannot be redirected; ask the app provider to fix redirect_uri
+  invalidRedirectEffective: Authorization is already effective on the server, but the redirect URI could not be parsed; return to the app and retry (no need to authorize again)
+  emptyInfo: Authorization info is empty; return to the app and start again
+  redirectHost: "Will return to: {host}"
+  riskyScopes: "Includes {count} write scopes; only approve apps you trust"
+  pkceRequired: This app requires PKCE; the code is bound to this challenge
+  pkceOptional: This app does not require PKCE
 
 systemModule:
+  unsaved: Unsaved trimming changes
+  leaveConfirm: Module trimming changes are not saved. Leave and discard them?
+  leave: Leave
+  stay: Stay
   currentPreset: Current effective preset
   enabledSummary: "{enabled} / {total} modules enabled"
   restartTip: Trimming takes effect after a service restart; disabling only hides entry points and APIs, and never deletes data
@@ -4281,6 +4847,7 @@ systemModule:
   depends: Depends
   note: Notes
   loadFailed: Failed to load module list
+  loadFailedHint: Check the network or apply:SystemModule permission and retry
   desiredPreset: Pending preset
   overrideActive: Backend override active
   baseline: Deployment baseline
@@ -4302,6 +4869,12 @@ systemModule:
   saved: Saved; takes effect after restart
   saveFailed: Save failed
   noChange: No changes to save
+  retry: Retry
+  applyRequired: This role lacks apply:SystemModule; presets and switches are read-only
+  saveConfirm: "Changes: {changes}. A service restart is required after saving. Save now?"
+  saveDiffPreset: "Preset {from} → {to}"
+  saveDiffEnable: "Enable {modules}"
+  saveDiffDisable: "Disable {modules}"
   reset: Reset to deployment config
   resetConfirm: Clear the backend override and fall back to the deployment baseline (config.yml / environment variables)?
   resetDone: Reset to deployment config; takes effect after restart
@@ -4312,7 +4885,7 @@ about:
   platformInfo: Platform info
   prodDeps: Production dependencies
   devDeps: Development dependencies
-  version: Current version
+  version: Frontend version
   buildTime: Build time
   nodeVersion: Node version
   pnpmVersion: pnpm version
@@ -4331,12 +4904,122 @@ pickerShortcuts:
   lastMonth: Last month
   thisYear: This year
 
-emptyPage:
-  title: Business content module
-  description: "Use case: embed a single platform page without menu navigation or extra modules"
-  back: Back to previous page
-
+playground:
+  desc:
+    ReText: "Truncated text + tippy tooltip (expandable)"
+    ReEmpty: "Empty state (hint / icon / size options)"
+    ReResult: "Generic result state (info/success/warning/danger/offline)"
+    ReStat: "Stat bar StatBar / stat grid StatGrid"
+    ReCountTo: "Number rolling animation (normal + bounce)"
+    ReJsonViewer: "JSON tree viewer (lazy vue-json-pretty)"
+    ReSkeleton: "Skeleton screen (text / fill variants)"
+    ReScrollbar: "Enhanced scrollbar (reach events + mask)"
+    ReCol: "Grid column (pureadmin upstream)"
+    ReSplitPane: "Draggable split pane"
+    ReResize: "Resize box (eight handles)"
+    ReCollapseParams: "Collapsible params panel (name/value/description)"
+    RePage: "Generic page shell (header + content + footer)"
+    ReNavDrawer: "Navigation drawer"
+    ReIconPicker: "Icon picker (thin ReIcon wrapper)"
+    ReAnimateSelector: "animate.css animation selector"
+    ReImageVerify: "Image captcha (self-contained canvas)"
+    ReSliderCaptcha: "Slider captcha (keyboard + touch accessible)"
+    ReSendVerifyCode: "Send verification code (countdown button, needs backend)"
+    ReCropper: "Image cropping"
+    RePictureUpload: "Crop-preview image upload"
+    ReApiSelect: "Remote data select / tree select (incl. ReApiTreeSelect)"
+    RePlusSearch: "Entity search select"
+    ReDialog: "Unified dialog entry (component + command API)"
+    ReDrawer: "Unified drawer entry (component + command API)"
+    ReStateContainer: "loading/empty/error/ready four-state container"
+    ReMfaConfirm: "Command-style MFA confirmation dialog"
+    ReNoticeShow: "Notice display"
+    ReMessageNotifications: "Message notifications"
+    ReTaskCenterDrawer: "Task center drawer"
+    ReTaskLogDialog: "Task log dialog"
+    ReReadonlyTable: "Read-only compact key/value table"
+    ReRenderContent: "Content renderer (string/component/VNode → VNode)"
+    ReIcon: "Offline icon renderer + useRenderIcon"
+    ReMenuPermissionTree: "Menu permission tree"
+    RePermissionPreview: "Permission preview"
+    ReActionPanel: "Entity management action drawer"
+    ReTreeLine: "el-tree / el-tree-v2 connector lines"
+    ReBackTop: "Back to top (native button)"
+    RePlusPage: "Metadata-driven list page ecosystem (incl. ReRecycleBin)"
+    RePureTableBar: "Table toolbar (for {'@'}pureadmin/table)"
+    ReTableAction: "Table action column (primary + more menu)"
+  intro: "{count} in-house components; Sample = interactive, Docs = handbook"
+  searchPlaceholder: Search by name or purpose
+  noMatch: No matching component
+  hasDemo: Sample
+  docsOnly: Docs
+  catAll: All
+  catDisplay: Display
+  catLayout: Layout
+  catInput: Input
+  catFeedback: Feedback
+  catEcosystem: Containers & ecosystem
+  demoDisplay: Display samples
+  demoLayout: Layout samples
+  demoInput: Input samples
+  statTotal: Total requests
+  statOk: Success
+  statFailed: Failed
+  statRate: Success rate
+  scrollItem: Scrollbar demo row
+  emptyDemo: No data yet
+  emptyHint: Empty state supports a secondary hint
+  resultTitle: Request accepted
+  resultSub: Subtitle example of the result component
+  paneLeft: Left pane (drag the divider)
+  paneRight: Right pane
+  paramThreshold: Threshold
+  paramThresholdDesc: Percentage that triggers alerts
+  paramRegion: Region
+  paramRegionDesc: Deployment region identifier
+  paramRetention: Retention
+  paramRetentionDesc: Log retention duration
+  paramOwner: Owner
+  paramOwnerDesc: On-call owner
+  verifyState: State
 codegen:
+  unsaved: Unsaved generator configuration
+  leaveConfirm: Generator configuration has unsaved changes. Leave and discard them?
+  leave: Leave
+  stay: Stay
+  modelsLoadFailed: Failed to load models
+  planLoadFailed: Failed to load the field plan
+  previewLoadFailed: Failed to preview artifacts
+  downloadFailed: Failed to download generated code
+  aiDraft: AI Draft
+  aiDraftTitle: AI Field Draft
+  aiDraftLabel: Page description
+  aiDraftPlaceholder: Describe the page and trade-offs, e.g. name required, status column shown and searchable, author via search select, cover as color field
+  aiDraftRun: Generate Draft
+  aiDraftNoFields: AI produced no usable field draft; adjust the description and retry
+  aiDraftApplied: "Adopted {count} draft item(s)"
+  aiDraftWarnings: "{count} draft item(s) stripped by server validation"
+  aiDraftApply: "Adopt ({count})"
+  aiDraftColField: Field
+  aiDraftColLabel: Label
+  aiDraftColOverrides: Overrides
+  aiDraftFlagExcluded: excluded
+  aiDraftFlagRequired: required
+  aiDraftFlagOptional: optional
+  aiDraftFlagReadonly: read-only
+  aiDraftFlagInTable: in table
+  aiDraftFlagInSearch: searchable
+  aiDraftNeedModel: Pick a model to use AI draft
+  planRename: Rename plan
+  planRenamePrompt: Enter a new plan name
+  planShare: Share plan
+  planUnshare: Unshare
+  planShareConfirm: Share this plan with users on this page?
+  planUnshareConfirm: Stop sharing this plan?
+  planUpdated: Plan updated
+  planUpdateFailed: Failed to update plan
+  modelsDenied: Missing models:SystemCodeGen; the model list is unavailable
+  fieldsDenied: Missing modelFields:SystemCodeGen; field configuration is unavailable
   model: Target Model
   modelPlaceholder: Search and select a model (app.Model)
   ordering: Ordering
@@ -4421,6 +5104,9 @@ codegen:
   planShared: Shared
   planShareOnSave: Share with same-page users
   planNameRequired: Plan name is required
+  planOperationFailed: Plan operation failed
+  planImportEmpty: The imported file contains no valid plan
+  planSharedDeleteDenied: Only the creator can delete a shared plan
   planLoad: Load
   planDelete: Delete
   planDeleteConfirm: Delete this plan?
@@ -4433,3 +5119,102 @@ codegen:
   planDeleteFailed: Delete failed
   planImported: Plans imported
   planImportFailed: Import failed
+
+reAnimateSelector:
+  placeholder: Select a transition animation
+
+settingOpenPlatform:
+  title: Open Platform
+  scim: SCIM Directory Sync
+  scimDesc: The IdP pushes users and groups over SCIM 2.0; no outbound connection is required.
+  oauth: Third-party Login
+  oauthDesc: Configure OAuth2 / OIDC / enterprise IM login. Secrets are encrypted; leave blank to keep the current value.
+  authorized: Authorized Applications
+  authorizedDesc: "Admin audit view: OAuth authorizations aggregated by application across all users; revoke all authorizations for an application."
+settingScim:
+  rotateToken: Generate / Rotate Token
+  rotateHint: The previous token becomes invalid immediately; the new token is shown only once.
+  rotateConfirm: The previous token will be invalidated immediately and the IdP must be updated. Generate a new token?
+  rotateTitle: SCIM Token
+  tokenOnce: Copy it and configure it in the IdP now; it cannot be viewed again after closing.
+  rotateFailed: Token rotation failed
+  syncStatus: Recent Sync Records
+  syncTotal: "{total} records"
+  syncTime: Time
+  syncModule: Operation
+  syncMethod: Method
+  syncPath: Path
+  syncResult: Result
+  syncIp: IP
+oauthProvider:
+  desc: Supports OAuth2, OIDC and enterprise IM login. Secrets are encrypted; leave blank to keep the current value.
+  add: Add Provider
+  rawMode: Raw JSON
+  rawHint: Edit the complete provider array; click Save afterwards to apply.
+  rawApply: Apply
+  rawMustBeArray: JSON must be an array of providers
+  rawInvalid: Invalid JSON
+  saved: Third-party login configuration saved
+  saveFailed: Save failed
+  testFailed: Discovery test failed
+  testOk: Discovery Result
+  empty: No third-party login provider configured
+  unnamed: Unnamed provider
+  name: Name
+  key: Key
+  keyPlaceholder: e.g. corp-sso
+  flavor: Type
+  clientId: Client ID
+  clientSecret: Client Secret
+  secretConfigured: Configured; leave blank to keep it
+  scope: Scope
+  subjectField: Subject Field
+  autoCreate: Auto-create user on first login
+  advanced: Advanced
+  issuer: Issuer
+  discoveryUrl: Discovery URL
+  discoveryPlaceholder: Leave blank to derive from issuer
+  authorizeUrl: Authorization URL
+  tokenUrl: Token URL
+  userinfoUrl: Userinfo URL
+  jwksUri: JWKS URI
+  groupsField: Groups Field
+  nicknameClaim: Nickname Claim
+  emailClaim: Email Claim
+  phoneClaim: Phone Claim
+  agentId: Agent ID
+  groupRoleMap: Group to Role Mapping
+  groupRoleMapPlaceholder: group -> role-code
+  groupMapInvalid: Group mapping must be a JSON object
+  testDiscovery: Test Discovery
+  remove: Remove
+  removeConfirm: Remove provider "{name}"?
+authorizedApps:
+  title: Authorized Applications
+  desc: These applications can access your account. Revoking immediately invalidates their refresh and access tokens.
+  userCount: Users
+  revokeAllConfirm: Revoke all user authorizations for "{name}"? All OAuth tokens of this application will be invalidated immediately.
+  revokedAll: All authorizations for this application have been revoked
+  application: Application
+  scopes: Scopes
+  noScopes: No restriction
+  authorizedTime: Authorized At
+  lastUsed: Last Used
+  status: Status
+  actions: Actions
+  revoke: Revoke
+  revokeConfirm: Revoke the authorization for "{name}"? Its tokens will be invalidated immediately.
+  revoked: Authorization revoked
+  empty: No authorized applications
+  status_active: Active
+  status_disabled: Application disabled
+  status_expired: Expired
+
+# 插件示例（src/extensions/demo-plugin，配套 xadmin-demo-plugin 后端插件）
+pluginNote:
+  title: Title
+  content: Content
+  is_active: Active
+  creator: Creator
+  created_time: Created time
+  updated_time: Updated time

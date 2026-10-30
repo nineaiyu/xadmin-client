@@ -1,9 +1,10 @@
-import { nextTick, ref } from "vue";
+import { nextTick } from "vue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
 import type { DashboardItem, DatasetItem } from "@/api/dataset/datasets";
 
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
+vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 vi.mock("../serverTemplates", () => ({
   fetchServerTemplates: vi.fn(async () => []),
   saveServerTemplate: vi.fn(async () => true),
@@ -38,9 +39,12 @@ const PANES = [
 
 /** 组合层依赖 onMounted / watch：用最小宿主组件承载（与 hook.spec 同口径） */
 async function setup(initial: ScreenLayoutPane[] = PANES) {
-  const { createApp, defineComponent, h } = await import("vue");
+  const { createApp, defineComponent, h, ref } = await import("vue");
   const pushes: string[] = [];
   const dirty: number[] = [];
+  /** 引用可见性由测试就地调整（模板插入链路的可见引用过滤用） */
+  const dashboards = ref([{ pk: "dash-1" }] as DashboardItem[]);
+  const datasets = ref([{ pk: "data-1" }] as DatasetItem[]);
   const bag: { api?: FreeEditorApi } = {};
   const host = defineComponent({
     setup(_, { expose }) {
@@ -48,8 +52,8 @@ async function setup(initial: ScreenLayoutPane[] = PANES) {
         t: key => key,
         markDirty: () => dirty.push(1),
         pushHistory: (key?: string) => pushes.push(key ?? ""),
-        dashboards: ref([{ pk: "dash-1" }] as DashboardItem[]),
-        datasets: ref([{ pk: "data-1" }] as DatasetItem[]),
+        dashboards,
+        datasets,
         viewport: ref(undefined)
       });
       api.load({ design_w: 1920, design_h: 1080, panes: initial });
@@ -61,7 +65,7 @@ async function setup(initial: ScreenLayoutPane[] = PANES) {
   const app = createApp(host);
   app.mount(document.createElement("div"));
   await nextTick();
-  return { api: bag.api!, pushes, dirty };
+  return { api: bag.api!, pushes, dirty, dashboards, datasets };
 }
 
 const boxes = (api: FreeEditorApi) =>
@@ -268,12 +272,20 @@ describe("自由画布编辑域：剪贴板与模板", () => {
     const { api } = await setup();
     api.refreshTemplates();
     expect(api.saveCurrentAsTemplate("   ")).toBe(false);
-    expect(api.saveCurrentAsTemplate("季报")).toBe(false);
+
+    // 无选区回落全量画布（与按钮文案「保存为模板」一致），不再误报「画布为空」
+    api.clearSelection();
+    expect(api.saveCurrentAsTemplate("全量")).toBe(true);
+    api.refreshTemplates();
+    expect(api.templates.value.find(item => !item.builtin)!.panes).toHaveLength(
+      3
+    );
 
     api.selectMany(["a", "b"]);
     expect(api.saveCurrentAsTemplate("季报")).toBe(true);
     api.refreshTemplates();
     const mine = api.templates.value.find(item => !item.builtin)!;
+    expect(mine.panes).toHaveLength(2);
     expect(vi.mocked(message)).toHaveBeenCalledWith(
       "dataScreen.templateSaved",
       expect.anything()

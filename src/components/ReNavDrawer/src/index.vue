@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 import { drawerSize } from "@/components/ReDialog/size";
 
 /**
@@ -24,7 +25,7 @@ const visible = defineModel<boolean>({ required: true });
 </script>
 
 <template>
-  <el-drawer
+  <OverlayDrawer
     v-if="props.narrow"
     v-model="visible"
     direction="ltr"
@@ -32,5 +33,5 @@ const visible = defineModel<boolean>({ required: true });
     :with-header="false"
   >
     <slot />
-  </el-drawer>
+  </OverlayDrawer>
 </template>

@@ -7,7 +7,7 @@ import {
   openActionDialog,
   type ActionFormInstance
 } from "./instanceFormDialog";
-import { batchFailedDetail } from "../../utils/approvalTexts";
+import { batchFailedDetail } from "../../utils/approvalHelpers";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -34,13 +34,21 @@ export function batchSuccessHandler(options: {
   return (res: unknown) => {
     options.done();
     const failures = collectFailures(res as { data?: unknown });
+    const succeeded = Number(
+      (res as { data?: { succeeded?: number } })?.data?.succeeded ?? 0
+    );
     if (failures.length) {
       const detail = batchFailedDetail(
         options.limit ? failures.slice(0, options.limit) : failures
       );
-      message(options.t(options.partialKey, { n: failures.length, detail }), {
-        type: "warning"
-      });
+      message(
+        options.t(options.partialKey, {
+          n: failures.length,
+          succeeded,
+          detail
+        }),
+        { type: "warning" }
+      );
     }
     options.refresh();
   };

@@ -4,22 +4,26 @@
 AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的展示与交互层。
 
 > 维护约定：新组件按 `src/components/<Name>/`（实现 `src/index.vue|.tsx`、类型 `src/types.ts`、
-> barrel `index.ts`（`withInstall`）、单测 `__tests__/*.spec.ts`）落位；纯逻辑抽纯函数单独可测；
+> barrel `index.ts`、单测 `__tests__/*.spec.ts`）落位；纯逻辑抽纯函数单独可测；
 > 消费端一律从 barrel import（`@/components/<Name>`），不直接指向 `src/.../index.vue`。
+> barrel 采用直接 export 组件本体——消费端均为局部 import，无 `app.use` 全局注册场景，
+> 不要求 `withInstall`（历史约定已按实践收敛，个别存量 `withInstall` 不必拆除）。
 > 门禁：`pnpm test:run`（组件级单测）+ `pnpm check:module-cycles` + `pnpm check:bundle-size`。
+> 可执行文档：`Re*` 组件的活样例与分组目录见 `/playground`（`views/playground/`，
+> 注册表 `registry.ts` 与本分组表同源，vitest 守护两边名字集合一致）。
 
 ## 一、按用途分组
 
-| 分组                             | 组件                                                                                                                                                                              |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 页面与容器                       | `RePlusPage`（元数据驱动列表页）、`RePlusSearch`（实体搜索下拉）、`RePage`（通用内容骨架）、`ReSplitPane`、`ReReadonlyTable`、`RePureTableBar`、`ReRecycleBin`（RePlusPage 内建） |
-| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`                                                                |
-| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`                                                          |
-| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReSliderCaptcha`、`ReImageVerify`、`ReSendVerifyCode`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm`                         |
-| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`                                                                                                                                             |
-| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReAuth`、`ReResize`（拖拽缩放盒）                                                                                               |
-| AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                            |
-| 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`          |
+| 分组                             | 组件                                                                                                                                                                                                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 页面与容器                       | `RePlusPage`（元数据驱动列表页）、`RePlusSearch`（实体搜索下拉）、`RePage`（通用内容骨架）、`ReSplitPane`、`ReReadonlyTable`、`DataTable`（手写表格统一壳）、`AuthorizedAppTable`（已授权应用表格，管理端 / 个人端共用）、`RePureTableBar`、`ReRecycleBin`（RePlusPage 内建）       |
+| 状态与反馈                       | `ReStateContainer`（loading/empty/error/ready 四态）、`ReResult`（结果态）、`ReEmpty`、`ReSkeleton`、`ReSegmented`、`ReScrollbar`（到达态事件）、`ReBackTop`、`ReMessageNotifications`、`ReNoticeShow`、`ReTaskCenterDrawer`、`ReTaskLogDialog`                                     |
+| 数据展示                         | `ReCountTo`、`ReText`（省略 + tippy）、`ReJsonViewer`、`ReStat`（StatBar/StatGrid）、`ReCollapseParams`（参数折叠）、`ReTableAction`（操作列）、`ReActionPanel`、`RePermissionPreview`、`ReMenuPermissionTree`                                                                      |
+| 表单与输入                       | `SearchPicker`、`ReApiSelect` / `ReApiTreeSelect`、`ReIconPicker`、`ReSliderCaptcha`、`ReSendVerifyCode`、`ReCaptchaChallenge`（统一人机验证编排）、`ReImageCaptcha` / `ReCaptchaPuzzle` / `ReRotateCaptcha` / `ReWordClickCaptcha`、`RePictureUpload`、`ReCropper`、`ReMfaConfirm` |
+| 弹层                             | `ReDialog`、`ReDrawer`、`ReNavDrawer`；常驻面板的声明式壳 `OverlayDialog` / `OverlayDrawer`（`src/components/overlay/`，与命令式弹层共用滚动锁）                                                                                                                                    |
+| 布局与图标                       | `ReIcon`（离线图标 + `useRenderIcon`）、`ReCol`、`ReResize`（拖拽缩放盒）、`ReTreeLine`（树连接线）、`ReAnimateSelector`（动画选择器）                                                                                                                                              |
+| AI 域（聊天室与 AI 控制台共用）  | `AiThinking`、`AiMessageBlock`、`AiStreamingBubble`、`AiActionCard`、`AiResultTable`、`ApiScopeEditor`                                                                                                                                                                              |
+| 聊天域（聊天室与 AI 控制台共用） | `ChatMessageList`、`ChatTextBubble`、`ChatSystemNotice`、`ChatMessageAvatar`、`MessageTimeDivider`、`NewMessagesBadge`、`MessageThreadPanel`、`MessageActionAttachments`                                                                                                            |
 
 > **弹窗表单标签宽度**：`RePlusPage` 的新增/编辑弹窗（`AddOrEdit`）标签宽度按当前页签
 > 最长标签自适应（`src/components/RePlusPage/src/utils/adaptiveLabelWidth.ts`）：列元数据
@@ -86,30 +90,47 @@ AI 与聊天域组件（`Ai* / Chat* / Message*`）为两处业务线共用的�
 
 ## 三、通用组件
 
-| 组件                              | 用法示例                                                                     | 说明                                                                                                                                                                                |
-| --------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RePage`                          | `<RePage title="详情" :auto-content-height="true">…</RePage>`                | 非列表页的统一骨架（页头/内容区/页脚），`title` / `description` / `extra` 插槽；窄屏页头自动堆叠                                                                                    |
-| `ReStateContainer`                | `<ReStateContainer :state="state" :error-text="err">…</ReStateContainer>`    | 四态收敛；loading 默认骨架（`skeleton`/`spinner` 两档），加载态带 `aria-busy` 与 `role="status"`；`minLoadingTime`（默认 50ms）窗口内就绪不闪现 loading 占位                        |
-| `ReResult`                        | `<ReResult status="403" title="无权限" />`                                   | 居中式结果态（success/info/warning/error/403/404/500/coming-soon/offline）                                                                                                          |
-| `ReTableAction`                   | `<ReTableAction :actions="actions" :dropdown-actions="more" :auth="auth" />` | 操作列契约：`popConfirm` / `danger` / `ifShow`，图标按钮自动补可访问名                                                                                                              |
-| `ReJsonViewer`                    | `<ReJsonViewer :value="payload" :expand-depth="2" copyable />`               | 基于 `vue-json-pretty` 懒加载；配置预览 / 动作入参出参 / 审计详情                                                                                                                   |
-| `ReResize`                        | `<ReResize :w="320" :h="180" :is-resizable="true">…</ReResize>`              | 绝对定位拖拽缩放盒（拖动 + 八向手柄 + 父容器约束；`snap` 吸附钩子、props↔box 同步、`scale` 反换算 + 手柄屏幕尺寸恒定）；大屏自由画布（ADR-086/088）为其业务落点，栅格语义画布不适用 |
-| `ReApiSelect` / `ReApiTreeSelect` | `<ReApiSelect :api="roleApi" label-field="name" />`                          | 通用远程下拉（与 `SearchPicker` 的实体会话搜索不同）；共用 `useApiOptions`（缓存 / 重取 / 归一）                                                                                    |
-| `ReSliderCaptcha`                 | `<ReSliderCaptcha v-model="passed" @success="onPass" />`                     | 拖到末端通过；键盘可达（方向键步进、`Home`/`End` 直达），触屏 Pointer 事件统一                                                                                                      |
+| 组件                              | 用法示例                                                                     | 说明                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RePage`                          | `<RePage title="详情" :auto-content-height="true">…</RePage>`                | 非列表页的统一骨架（页头/统计/工具栏/内容/页脚），`#stats` / `#toolbar` / `#empty` 插槽；`padded` 默认关闭（留白沿用 layout，不二次叠加）；窄屏页头自动堆叠                                                                                                                                                               |
+| `DataTable`                       | `<DataTable :label="t('x.previewTable')" :data="rows">…</DataTable>`         | 页面级**手写**表格的统一壳：表头样式单源（`TABLE_HEADER_CELL_STYLE`，与 RePlusPage 同款）+ 表格可访问名 / 描述关联（`label` / `desc`）+ `$attrs` 与全部槽位透传；列定义与分页由调用方自持。选型：权限驱动的业务列表页用 `RePlusPage`，只读少列键值表用 `ReReadonlyTable`，两者都不适用（设计器内嵌表 / 预览表）时用本组件 |
+| `ReStat`                          | `<StatBar :items="items" /><StatGrid :items="items" :columns="4" />`         | 统计条 `StatBar`（浅底 + 描边 chips，`#prefix` / `#extra` 扩展、`group` 分组）与统计网格 `StatGrid`（`el-statistic` 等分，`text` 空值分支、`animate` 数字滚动）；条目类型 `StatItem`                                                                                                                                      |
+| `ReStateContainer`                | `<ReStateContainer :state="state" :error-text="err">…</ReStateContainer>`    | 四态收敛；loading 默认骨架（`skeleton`/`spinner` 两档），加载态带 `aria-busy` 与 `role="status"`；`minLoadingTime`（默认 50ms）窗口内就绪不闪现 loading 占位                                                                                                                                                              |
+| `ReResult`                        | `<ReResult status="403" title="无权限" />`                                   | 居中式结果态（success/info/warning/error/403/404/500/coming-soon/offline）                                                                                                                                                                                                                                                |
+| `ReTableAction`                   | `<ReTableAction :actions="actions" :dropdown-actions="more" :auth="auth" />` | 操作列契约：`popConfirm` / `danger` / `ifShow`，图标按钮自动补可访问名                                                                                                                                                                                                                                                    |
+| `ReJsonViewer`                    | `<ReJsonViewer :value="payload" :expand-depth="2" copyable />`               | 基于 `vue-json-pretty` 懒加载；配置预览 / 动作入参出参 / 审计详情                                                                                                                                                                                                                                                         |
+| `ReResize`                        | `<ReResize :w="320" :h="180" :is-resizable="true">…</ReResize>`              | 绝对定位拖拽缩放盒（拖动 + 八向手柄 + 父容器约束；`snap` 吸附钩子、props↔box 同步、`scale` 反换算 + 手柄屏幕尺寸恒定）；大屏自由画布（ADR-086/088）为其业务落点，栅格语义画布不适用                                                                                                                                       |
+| `ReApiSelect` / `ReApiTreeSelect` | `<ReApiSelect :api="roleApi" label-field="name" />`                          | 通用远程下拉（与 `SearchPicker` 的实体会话搜索不同）；共用 `useApiOptions`（缓存 / 重取 / 归一）                                                                                                                                                                                                                          |
+| `ReSliderCaptcha`                 | `<ReSliderCaptcha v-model="passed" @success="onPass" />`                     | 拖到末端通过；键盘可达（方向键步进、`Home`/`End` 直达），触屏 Pointer 事件统一                                                                                                                                                                                                                                            |
+
+**状态口径（防四态碎片化）**：数据区域 / 列表 / 详情块的 loading、empty、error、denied
+一律用 `ReStateContainer`（列表页由 `RePlusPage` 内置 `PageState` 统一承载）；整页导航结果
+（登录被禁用、OAuth 回调失败、403/404/维护页）才用 `ReResult` / `el-result`。禁止用
+`el-empty` / `el-result` 拼数据态，也不要在页面内另写 loading 骨架。
 
 ## 四、增强组件
 
-> **以下组件已全部接入真实页面**：`ReScrollbar` → AI 控制台左栏 `AiFeatureNav`（功能导航滚动区，经 `label` 下发可访问名）；`ReCollapseParams` → 监控「告警阈值设置」弹窗 `ThresholdForm`（名称列支持可选 `label`）；`ReRenderContent` → `AiResultTable` 单元格；`ReIconPicker` → 菜单管理 `MenuFormBasic` 与代码生成 `BaseConfig` 的图标字段；`ReBackTop` → 布局内容区（`lay-content` 与 `layout/index.vue` 两分支）；旋转 / 拼图验证码 → 邀请激活页 `accept.vue`（拼图，题图 `assets/captcha/puzzle.svg`）。下方表格的「接入条件」为原始交付口径，保留备查。
+> **以下组件已全部接入真实页面**：`ReScrollbar` → AI 控制台左栏 `AiFeatureNav`（功能导航滚动区，经 `label` 下发可访问名）；`ReCollapseParams` → 监控「告警阈值设置」弹窗 `ThresholdForm`（名称列支持可选 `label`）；`ReRenderContent` → `AiResultTable` 单元格；`ReIconPicker` → 菜单管理 `MenuFormBasic` 与代码生成 `BaseConfig` 的图标字段；`ReBackTop` → 布局内容区（`lay-content` 与 `layout/index.vue` 两分支）。下方表格的「接入条件」为原始交付口径，保留备查。
+>
+> 统一人机验证组件族：`ReCaptchaChallenge` 按题型分发 `ReImageCaptcha`（图片字符 +
+> 音频 + 静默 PoW）/ `ReCaptchaPuzzle` / `ReRotateCaptcha` /
+> `ReWordClickCaptcha`（`wordorder` 与 `icon` 复用点选）/ `ReCaptchaPow`（无感点击）。
+> 图片题型只作为无障碍回退，不参与常规随机；所有题型走同一条
+> `challenge → verify → ticket` 链路，答案由服务端校验并换一次性 ticket。
+> `ReCaptchaChallenge` 支持四种展示方式：`popup`（默认弹窗）/ `inline`（内联，
+> 兼容旧 `inline` prop）/ `float`（右下浮层）/ `bind`（由调用方持有 ref 调 `open()`，
+> 通过 `target` 传 CSS 选择器或 DOM 元素，组件用 Teleport 真正挂到目标 div，而不是弹窗）。前端只负责采集坐标 / 角度 / 轨迹 / 环境摘要，
+> 风险层启用时附带 Web Crypto 签名；`allow`/`light` 档由 Web Worker 静默求解 PoW
+> （CSP 允许 `worker-src blob:`，Worker 不可用降级主线程分片并上报 degraded）。
+> 基础滑条 `ReSliderCaptcha`（含键盘可达与触屏支持）是拼图 / 旋转题的拖杆基座。
 
-| 组件                       | 用法示例                                                                       | 说明                                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ReScrollbar`              | `<ReScrollbar :height="360" shadow @scroll-at="onArrival">…</ReScrollbar>`     | 增强滚动条（底层 `el-scrollbar`）：派发四向到达态 `scroll-at`，未到边界一侧显示渐变遮罩；暴露 `scrollTo` / `setScrollTop` / `updateArrival`；滚动容器带 `role="region"` + `tabindex="0"`（方向键 / `PageUp` / `PageDown` 可键盘滚动），可访问名经 `label` 传入。接入条件 = 需要「滚动到底加载更多 / 新内容提示」或遮罩提示的列表（通知中心、聊天、抽屉） |
-| `ReCollapseParams`         | `<ReCollapseParams :params="schema" v-model:value="vals" visible-count="3" />` | 参数折叠面板：三列（名称 / 值 / 说明）+ 前 N 行可见、其余折叠；控件走 `el-input` / `el-input-number` / `el-select`；展开按钮带 `aria-expanded` / `aria-controls`（关联折叠区），窄屏自动改纵向堆叠；暴露 `toggleCollapsed` / `resetValues` / `updateValues`。接入条件 = 需要编辑一组带说明与取值范围的参数（工具入参、算法/规则参数）                    |
-| `ReRenderContent`          | `<ReRenderContent :content="value" />`                                         | 内容渲染器：字符串 / 数字按文本、组件 / VNode 交给 `h()`；`renderBr` 按换行拆段（不解析 HTML）。接入条件 = 列值 / 消息体「可能是字符串或组件」的统一渲染                                                                                                                                                                                                 |
-| `ReIconPicker`             | `<ReIconPicker v-model="icon" />`                                              | 图标选择器：**薄封装** `ReIcon` 的离线选择器（搜索 + 图标集页签 + 网格分页），不重复实现                                                                                                                                                                                                                                                                 |
-| `ReBackTop`                | `<ReBackTop :visibility-height="300" right="24" bottom="24" />`                | 回到顶部：**自实现**（原生 `button`：可聚焦、`Enter` / `Space` 原生触发；不封装 `el-backtop`——其多根渲染导致 `role` / `tabindex` / `aria-label` 无法透传、键盘不可达），默认目标 = 布局内容区滚动容器（`LAYOUT_SCROLL_SELECTOR`）                                                                                                                        |
-| `ReSliderRotateCaptcha`    | `<ReSliderRotateCaptcha :src="img" v-model="passed" />`                        | 旋转验证码：拖动滑条把随机倾斜的图片转正（复用 `ReSliderCaptcha`，`isSlot` 关闭自动通过、按角度容差判定）；几何纯函数在 `src/geometry.ts`                                                                                                                                                                                                                |
-| `ReSliderTranslateCaptcha` | `<ReSliderTranslateCaptcha :src="img" v-model="passed" />`                     | 拼图验证码：拖动滑条使拼图块对齐缺口（复用 `ReSliderCaptcha` + `actionOffset` 行程换算）；几何纯函数在 `src/geometry.ts`                                                                                                                                                                                                                                 |
+| 组件               | 用法示例                                                                       | 说明                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ReScrollbar`      | `<ReScrollbar :height="360" shadow @scroll-at="onArrival">…</ReScrollbar>`     | 增强滚动条（底层 `el-scrollbar`）：派发四向到达态 `scroll-at`，未到边界一侧显示渐变遮罩；暴露 `scrollTo` / `setScrollTop` / `updateArrival`；滚动容器带 `role="region"` + `tabindex="0"`（方向键 / `PageUp` / `PageDown` 可键盘滚动），可访问名经 `label` 传入。接入条件 = 需要「滚动到底加载更多 / 新内容提示」或遮罩提示的列表（通知中心、聊天、抽屉） |
+| `ReCollapseParams` | `<ReCollapseParams :params="schema" v-model:value="vals" visible-count="3" />` | 参数折叠面板：三列（名称 / 值 / 说明）+ 前 N 行可见、其余折叠；控件走 `el-input` / `el-input-number` / `el-select`；展开按钮带 `aria-expanded` / `aria-controls`（关联折叠区），窄屏自动改纵向堆叠；暴露 `toggleCollapsed` / `resetValues` / `updateValues`。接入条件 = 需要编辑一组带说明与取值范围的参数（工具入参、算法/规则参数）                    |
+| `ReRenderContent`  | `<ReRenderContent :content="value" />`                                         | 内容渲染器：字符串 / 数字按文本、组件 / VNode 交给 `h()`；`renderBr` 按换行拆段（不解析 HTML）。接入条件 = 列值 / 消息体「可能是字符串或组件」的统一渲染                                                                                                                                                                                                 |
+| `ReIconPicker`     | `<ReIconPicker v-model="icon" />`                                              | 图标选择器：**薄封装** `ReIcon` 的离线选择器（搜索 + 图标集页签 + 网格分页），不重复实现                                                                                                                                                                                                                                                                 |
+| `ReBackTop`        | `<ReBackTop :visibility-height="300" right="24" bottom="24" />`                | 回到顶部：**自实现**（原生 `button`：可聚焦、`Enter` / `Space` 原生触发；不封装 `el-backtop`——其多根渲染导致 `role` / `tabindex` / `aria-label` 无法透传、键盘不可达），默认目标 = 布局内容区滚动容器（`LAYOUT_SCROLL_SELECTOR`）                                                                                                                        |
 
 ## 五、确认交互三范式
 
@@ -175,4 +196,26 @@ try {
 
 - 组件级单测与实现同目录（`__tests__/`），纯逻辑单独成测试文件；
 - 新增组件请同步本文件分组表，并在实现文件头部写清「何时用 / 何时不用」；
+- **零单测组件的已知名单**（展示型/重包装，行为由 E2E 与页面用例覆盖；新增纯逻辑组件
+  必须补测）：`AuthorizedAppTable`、`RePictureUpload`。`ReCol` / `ReMotion` /
+  `ReImageCaptcha` / `ReSplitPane` / `ReAnimateSelector` / `ReTaskCenterDrawer`
+  已补组件级用例；`ReCropper` 依赖 canvas，按 E2E 覆盖处理；
 - 依赖使用情况见 `docs/component-dependencies.md`（依赖 → 消费组件映射，用于后续裁剪与升级评估）。
+
+## 七、组件 API 约定
+
+- **emit 一律 camelCase**（如 `optionsChange` / `scrollAt`）：模板侧监听写 kebab
+  （`@options-change`）由 Vue 自动转换；不要在新组件里以 kebab 声明事件名。
+- **v-model 统一 `defineModel()`**：默认模型用 `defineModel<T>()`，具名模型用
+  `defineModel<T>("value")`；不再用 options API 手写 `update:modelValue`。
+  存量 `ReSegmented` 等例外在各组件头部注明，按改动面滚动迁移。
+- **弹层优先 addDialog / addDrawer**（见 `component-handbook.md` §2.2）：一次性表单/确认走命令式；
+  常驻面板 / 组件内部交互走声明式壳 `OverlayDialog` / `OverlayDrawer`（同属 overlay 内核，
+  共用滚动锁与尺寸档位）。直接写 `<el-dialog>` / `<el-drawer>` 会被 `pnpm check:overlays` 拦下，
+  存量登记在 `scripts/declarative-overlays-baseline.json`（只减不增）。
+- **确认交互**：二值确认用 `useConfirm`；输入型确认用 `useMessageBox` 的
+  `usePrompt` / 提示用 `useAlert`，取消/关闭返回 `null` / `false`（不抛错）。
+- **组件关系注记**：`ReSliderCaptcha` 仅 playground 引用（演示保留，不进入业务页）；
+  `ReTableAction` 由 `FlowVersions` 直用（操作列渲染器形态，不强制走 ButtonOperation）；
+  `MessageThreadPanel` 的 15 个 props 是刻意设计（骨架透传的单一契约，勿再增散参数，
+  新增能力优先走 config 对象或插槽）。

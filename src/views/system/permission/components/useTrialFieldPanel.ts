@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { userApi } from "@/api/identity/user";
 import { buildDraftEntries, buildFieldModelOptions } from "./utils/trial";
@@ -72,6 +73,13 @@ export function useTrialFieldPanel({
         menu: menuContext.value,
         draft: hasDraftFields.value ? { fields: draftFields.value } : null
       });
+      if (!isSuccess(res)) {
+        fieldResult.value = null;
+        message(String(res.detail || t("permissionPreview.trialFailed")), {
+          type: "error"
+        });
+        return;
+      }
       fieldResult.value = res.data;
     } catch {
       fieldResult.value = null;

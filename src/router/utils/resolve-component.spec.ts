@@ -8,7 +8,9 @@ const KEYS = [
   "/src/views/settings/security/index.vue",
   "/src/views/system/user/index.vue",
   "/src/views/system/notice/index.vue",
-  "/src/views/welcome/index.vue"
+  "/src/views/welcome/index.vue",
+  "/src/extensions/demo-portal/index.vue",
+  "/src/extensions/demo-portal/reports/index.vue"
 ];
 
 describe("resolveComponentKey", () => {
@@ -47,6 +49,18 @@ describe("resolveComponentKey", () => {
     expect(resolveComponentKey("views/system/notice", KEYS)).toBe(
       KEYS.indexOf("/src/views/system/notice/index.vue")
     );
+  });
+
+  it("二开扩展目录片段命中 src/extensions", () => {
+    expect(resolveComponentKey("extensions/demo-portal", KEYS)).toBe(
+      KEYS.indexOf("/src/extensions/demo-portal/index.vue")
+    );
+    expect(resolveComponentKey("extensions/demo-portal/reports", KEYS)).toBe(
+      KEYS.indexOf("/src/extensions/demo-portal/reports/index.vue")
+    );
+    expect(
+      resolveComponentKey("/src/extensions/demo-portal/index.vue", KEYS)
+    ).toBe(KEYS.indexOf("/src/extensions/demo-portal/index.vue"));
   });
 
   it("不存在与空值返回 -1", () => {

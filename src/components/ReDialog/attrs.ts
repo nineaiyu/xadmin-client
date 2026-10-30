@@ -29,6 +29,7 @@ export const RE_DIALOG_INTERNAL_KEYS = [
   "sureBtnLoading",
   "beforeCancel",
   "beforeSure",
+  "beforeClose",
   // 生命周期回调
   "open",
   "close",

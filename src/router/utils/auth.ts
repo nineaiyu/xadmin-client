@@ -32,7 +32,34 @@ type Auths = {
   batchDestroy?: boolean;
   partialUpdate?: boolean;
   recycleList?: boolean;
+  recycleRestore?: boolean;
+  recyclePurge?: boolean;
 };
+
+/** 列表页默认按钮位（与后端 FRAMEWORK_PERMISSION_ACTIONS 的前端默认子集）：
+ * `getDefaultAuths` 扫描与 `defineListPage` 开发态缺码告警共用同一份清单。 */
+const DEFAULT_AUTH_ACTIONS = [
+  "list",
+  "create",
+  "update",
+  "upload",
+  "destroy",
+  "retrieve",
+  "exportData",
+  "importData",
+  "batchDestroy",
+  "partialUpdate",
+  "recycleList",
+  "recycleRestore",
+  "recyclePurge"
+] as const;
+
+/** 权限码字典是否已装载（路由守卫 fetchRoutes 后非空）：
+ * 未装载时「缺码」不可信，开发态告警应跳过。 */
+function authCodesLoaded(): boolean {
+  const permissionAuths = usePermissionStoreHook().permissionAuths;
+  return Object.keys(permissionAuths).length > 0;
+}
 
 function getDefaultAuths(
   suffix: ComponentInternalInstance | string | null | undefined,
@@ -41,20 +68,7 @@ function getDefaultAuths(
   if (isObject(suffix)) {
     suffix = suffix?.type?.name;
   }
-  const actions = [
-    "list",
-    "create",
-    "update",
-    "upload",
-    "destroy",
-    "retrieve",
-    "exportData",
-    "importData",
-    "batchDestroy",
-    "partialUpdate",
-    "recycleList",
-    ...auth
-  ];
+  const actions = [...DEFAULT_AUTH_ACTIONS, ...auth];
   const auths: Auths = {};
   actions.forEach(key => {
     auths[key] = hasAuth(`${key}:${suffix}`);
@@ -86,4 +100,12 @@ function usePageAuth<K extends string = never>(
   return reactive(getDefaultAuths(suffix, keys)) as Auths & Record<K, boolean>;
 }
 
-export { type Auths, getAuths, hasAuth, getDefaultAuths, usePageAuth };
+export {
+  type Auths,
+  DEFAULT_AUTH_ACTIONS,
+  authCodesLoaded,
+  getAuths,
+  getDefaultAuths,
+  hasAuth,
+  usePageAuth
+};

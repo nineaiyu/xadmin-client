@@ -10,6 +10,8 @@ import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
  *
  * 基线更新：`pnpm test:e2e:visual -- --update-snapshots`
  * 判定：maxDiffPixelRatio 2%（容忍字体渲染亚像素差），全页截图、禁用动画。
+ * 复核/录制必须使用干净种子（勿设 E2E_SEED=0）：复用被其它用例写脏的库会让
+ * 首页计数与未读徽标变化，welcome 曾因此 flaky。
  *
  * 页面选择口径：结构稳定、数据稳定的核心页（静态骨架 / 种子数据）；
  * 数据随运行时刻变化的页面不入基线，避免 flaky。实测排除（2026-09-25）：
@@ -117,9 +119,9 @@ async function stabilize(page: Page) {
     .catch(() => undefined);
   // 字体就绪后再截图，避免首帧字体回退
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s；canvas 绘制无 DOM 信号，
-  // 只有像素比对可见，故保留固定观察窗（未用 ECharts 的页面此窗口也仅多等 1.5s）
-  await page.waitForTimeout(1500);
+  // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s；首页数字滚动 2.2s，
+  // 统一取 2.5s 观察窗，避免截图落在计数动画中间态（welcome 曾因此 flaky）。
+  await page.waitForTimeout(2500);
 }
 
 for (const core of CORE_PAGES) {

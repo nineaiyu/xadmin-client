@@ -66,9 +66,6 @@ import { FontIcon, IconifyIconOffline } from "./components/ReIcon";
 app.component("IconifyIconOffline", IconifyIconOffline);
 app.component("FontIcon", FontIcon);
 
-// 全局注册按钮级别权限组件
-import { Auth } from "@/components/ReAuth";
-app.component("Auth", Auth);
 // RePlusPage 是业务页面组件（登录/外壳不需要），全局注册为异步组件：
 // 模板中的 <RePlusPage> 仍按同名解析，但组件代码与它独有的依赖（表格栈等）
 // 不再进入首屏闭包，首次进入列表页时按需加载（见 docs/perf-firstscreen.md）

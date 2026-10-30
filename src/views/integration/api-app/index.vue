@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Info from "~icons/ri/information-line";
@@ -20,6 +21,7 @@ const {
   operationButtonsProps,
   credentialDialog,
   credential,
+  closeCredential,
   copyText,
   usageVisible,
   usageLoading,
@@ -54,10 +56,11 @@ const {
       :operationButtonsProps="operationButtonsProps"
     />
 
-    <el-dialog
+    <OverlayDialog
       v-model="credentialDialog"
       :title="t('apiApp.credentialTitle')"
       :width="dialogSize('md')"
+      @closed="closeCredential"
     >
       <el-alert
         class="mb-3"
@@ -82,6 +85,7 @@ const {
           <el-input
             :model-value="credential.client_secret"
             readonly
+            show-password
             data-testid="api-app-secret"
           />
           <el-button
@@ -94,7 +98,11 @@ const {
         </div>
         <div class="flex items-center gap-2">
           <span class="w-32 shrink-0">{{ t("apiApp.callbackSecret") }}</span>
-          <el-input :model-value="credential.callback_secret" readonly />
+          <el-input
+            :model-value="credential.callback_secret"
+            readonly
+            show-password
+          />
           <el-button
             link
             type="primary"
@@ -105,11 +113,11 @@ const {
         </div>
       </div>
       <template #footer>
-        <el-button type="primary" @click="credentialDialog = false">
+        <el-button type="primary" @click="closeCredential">
           {{ t("apiApp.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </OverlayDialog>
 
     <ApiUsageDrawer
       v-model="usageVisible"

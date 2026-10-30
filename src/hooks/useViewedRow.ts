@@ -9,11 +9,11 @@ import {
   removeViewedKeys,
   resolveViewedRowAdapter,
   viewedRowClassName
-} from "./viewedRowStore";
-import type { ViewedRowStorage } from "./viewedRowStore";
+} from "./internal/viewedRowStore";
+import type { ViewedRowStorage } from "./internal/viewedRowStore";
 
-export { VIEWED_ROW_CLASS } from "./viewedRowStore";
-export type { ViewedRowStorage } from "./viewedRowStore";
+export { VIEWED_ROW_CLASS } from "./internal/viewedRowStore";
+export type { ViewedRowStorage } from "./internal/viewedRowStore";
 
 /**
  * 表格「已读行」状态机：列表行被打开过（详情 / 编辑）后标记已读，行上挂

@@ -4,7 +4,13 @@ import {
   ElButton,
   ElDescriptions,
   ElDescriptionsItem,
+  ElForm,
+  ElFormItem,
   ElInput,
+  ElInputNumber,
+  ElOption,
+  ElSelect,
+  ElSwitch,
   ElTable,
   ElTableColumn,
   ElTag
@@ -16,8 +22,12 @@ import type { McpServerItem, McpToolSnapshot } from "@/api/ai/mcp";
 // 权限判定桩（默认有权限）：抽屉入口按 sync / call:AiMcpServers 收敛。
 // 形参签名须与真实 hasAuth(code: string) 对齐——零参签名会让下方
 // mockImplementation((code: string) => ...) 类型失配（tsc 报 TS2345）。
-const mocks = vi.hoisted(() => ({ hasAuth: vi.fn((_code: string) => true) }));
+const mocks = vi.hoisted(() => ({
+  hasAuth: vi.fn((_code: string) => true),
+  confirm: vi.fn(async () => true)
+}));
 vi.mock("@/router/utils", () => ({ hasAuth: mocks.hasAuth }));
+vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => mocks.confirm }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 vi.mock("@/utils/apiError", () => ({
@@ -31,6 +41,7 @@ vi.mock("@/api/ai/mcp", () => ({
   mcpServerApi: { sync: vi.fn(), call: vi.fn() }
 }));
 
+import { mcpServerApi } from "@/api/ai/mcp";
 import McpToolsDrawer from "./McpToolsDrawer.vue";
 
 const tool = (overrides: Partial<McpToolSnapshot>): McpToolSnapshot =>
@@ -70,7 +81,13 @@ const mountDrawer = async (item: McpServerItem) => {
         ElButton,
         ElDescriptions,
         ElDescriptionsItem,
+        ElForm,
+        ElFormItem,
         ElInput,
+        ElInputNumber,
+        ElOption,
+        ElSelect,
+        ElSwitch,
         ElTable,
         ElTableColumn,
         ElTag
@@ -88,9 +105,11 @@ const surfaceTags = async (wrapper: Awaited<ReturnType<typeof mountDrawer>>) =>
     .map(row => row.findAll(".el-tag").at(-1)?.text());
 
 beforeEach(() => {
-  // 每个用例重置为「有权限」基线，权限用例内再按权限码细分
+  // 每个用例重置为「有权限 + 确认通过」基线，用例内再按需细分
   mocks.hasAuth.mockReset();
   mocks.hasAuth.mockReturnValue(true);
+  mocks.confirm.mockReset();
+  mocks.confirm.mockResolvedValue(true);
 });
 
 describe("McpToolsDrawer 工具动作面准入", () => {
@@ -146,5 +165,74 @@ describe("McpToolsDrawer 入口权限收敛", () => {
 
     expect(wrapper.find("[data-testid='mcp-drawer-sync']").exists()).toBe(true);
     expect(wrapper.find("[data-testid='mcp-call-run']").exists()).toBe(false);
+  });
+});
+
+describe("McpToolsDrawer 参数表单与可写工具确认", () => {
+  const clickFirstRowCall = async (
+    wrapper: Awaited<ReturnType<typeof mountDrawer>>
+  ) => {
+    const table = wrapper.find("[data-testid='mcp-tools-table']");
+    const row = table.findAll(".el-table__row")[0];
+    await row.find("button").trigger("click");
+    await flushPromises();
+  };
+
+  it("有 input_schema 时按 schema 生成表单字段（不再手填 JSON）", async () => {
+    const wrapper = await mountDrawer(
+      server([
+        tool({
+          name: "demo_tool",
+          input_schema: {
+            type: "object",
+            properties: { text: { type: "string", description: "文本" } },
+            required: ["text"]
+          }
+        })
+      ])
+    );
+
+    await clickFirstRowCall(wrapper);
+
+    expect(wrapper.find("[data-testid='mcp-call-form']").exists()).toBe(true);
+    expect(wrapper.find("[data-testid='mcp-arg-text']").exists()).toBe(true);
+    expect(wrapper.find("[data-testid='mcp-call-arguments']").exists()).toBe(
+      false
+    );
+  });
+
+  it("可写工具执行前二次确认；取消时不发起调用", async () => {
+    mocks.confirm.mockResolvedValueOnce(false);
+    const call = vi.mocked(mcpServerApi.call);
+    call.mockClear();
+
+    const wrapper = await mountDrawer(
+      server([tool({ name: "demo_tool", read_only: false })])
+    );
+    await clickFirstRowCall(wrapper);
+    await wrapper.find("[data-testid='mcp-call-run']").trigger("click");
+    await flushPromises();
+
+    expect(mocks.confirm).toHaveBeenCalledTimes(1);
+    expect(call).not.toHaveBeenCalled();
+  });
+
+  it("确认通过后才发起调用", async () => {
+    const call = vi.mocked(mcpServerApi.call);
+    call.mockClear();
+    call.mockResolvedValue({
+      code: 1000,
+      data: { tool: "demo_tool", is_error: false, text: "ok" }
+    } as never);
+
+    const wrapper = await mountDrawer(
+      server([tool({ name: "demo_tool", read_only: false })])
+    );
+    await clickFirstRowCall(wrapper);
+    await wrapper.find("[data-testid='mcp-call-run']").trigger("click");
+    await flushPromises();
+
+    expect(mocks.confirm).toHaveBeenCalledTimes(1);
+    expect(call).toHaveBeenCalledTimes(1);
   });
 });

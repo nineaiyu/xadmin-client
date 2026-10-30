@@ -8,7 +8,7 @@ import { useI18n } from "vue-i18n";
 
 import LocalIcon from "./localIcon";
 import { ensureIconSet, isIconSetLoaded } from "./iconRegistry";
-import { usePagination } from "@/hooks/usePagination";
+import { usePagination } from "./usePagination";
 
 type ParameterCSSProperties = (_item?: string) => CSSProperties | undefined;
 

@@ -2,7 +2,6 @@ import { useTrialContext } from "./useTrialContext";
 import { useTrialDataPanel } from "./useTrialDataPanel";
 import { useTrialFieldPanel } from "./useTrialFieldPanel";
 import type { TrialPanelProps } from "./useTrialContext";
-
 export type { TrialPanelProps } from "./useTrialContext";
 
 /**
@@ -29,6 +28,7 @@ export function useTrialPanel(props: TrialPanelProps) {
     scope: ctx.scope,
     targetUser: ctx.targetUser,
     formMode: ctx.formMode,
+    isEdit: ctx.isEdit,
     boundMenuPks: ctx.boundMenuPks,
     targetPk: ctx.targetPk,
     menuContext: ctx.menuContext,

@@ -9,7 +9,11 @@ import {
   type OAuthProvider
 } from "@/api/identity/oauth";
 import { message } from "@/utils/message";
-import { ElMessageBox } from "element-plus";
+import { AesEncrypted } from "@/utils/aes";
+import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
+import { usePrompt } from "@/hooks/useMessageBox";
+import { useUserStoreHook } from "@/store/modules/user";
 import AccountPanel from "./AccountPanel.vue";
 
 /**
@@ -32,10 +36,13 @@ type BindingRow = {
 };
 
 const { t } = useI18n();
+const userinfoStore = useUserStoreHook();
 const rows = ref<BindingRow[]>([]);
 const providers = ref<OAuthProvider[]>([]);
 const loading = ref(false);
 const providersLoading = ref(false);
+const loadError = ref("");
+const providersError = ref("");
 /** 正在发起跳转的 provider key（绑定按钮 loading，跳转后页面即卸载） */
 const bindingKey = ref("");
 
@@ -46,55 +53,61 @@ const bindableProviders = computed(() =>
   )
 );
 
-const load = () => {
+const load = async () => {
   loading.value = true;
-  oauthApi
-    .bindings()
-    .then(res => {
-      if (isSuccess(res)) rows.value = (res.data ?? []) as BindingRow[];
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      loading.value = false;
-    });
+  loadError.value = "";
+  const res = await oauthApi.bindings().catch(normalizeError);
+  if (isSuccess(res)) {
+    rows.value = (res.data ?? []) as BindingRow[];
+  } else {
+    // 加载失败不能渲染成「未绑定」：用户会误判并重复绑定
+    rows.value = [];
+    loadError.value = String(res.detail || t("results.failed"));
+  }
+  loading.value = false;
 };
 
-const loadProviders = () => {
+const loadProviders = async () => {
   providersLoading.value = true;
-  oauthApi
-    .providers()
-    .then(res => {
-      if (isSuccess(res))
-        providers.value = (res.data?.providers ?? []) as OAuthProvider[];
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      providersLoading.value = false;
-    });
+  providersError.value = "";
+  const res = await oauthApi.providers().catch(normalizeError);
+  if (isSuccess(res)) {
+    providers.value = (res.data?.providers ?? []) as OAuthProvider[];
+  } else {
+    providers.value = [];
+    providersError.value = String(res.detail || t("results.failed"));
+  }
+  providersLoading.value = false;
 };
 
 const displayName = (row: BindingRow) =>
   String(row.profile?.nickname || row.profile?.email || row.subject);
 
-const unbind = (row: BindingRow) => {
-  void ElMessageBox.prompt(t("oauth.unbindPasswordTip"), t("oauth.unbind"), {
+const prompt = usePrompt();
+
+const unbind = async (row: BindingRow) => {
+  const input = await prompt(t("oauth.unbindPasswordTip"), t("oauth.unbind"), {
     inputType: "password",
     inputPlaceholder: t("oauth.password"),
     inputValidator: value => Boolean(value),
     // 解绑是破坏性操作：确认钮着危险色（useConfirm 同口径；
     // prompt 模式焦点本就在输入框，不存在回车误确认问题）
-    confirmButtonClass: "el-button--danger"
-  })
-    .then(({ value }) => oauthApi.unbind(row.pk, String(value)))
-    .then(res => {
-      if (isSuccess(res)) {
-        message(t("oauth.unbindSuccess"), { type: "success" });
-        load();
-      } else if (res.detail) {
-        message(res.detail, { type: "warning" });
-      }
-    })
-    .catch(() => undefined);
+    danger: true
+  });
+  if (!input) return;
+  // 与改密同口径：口令按 AESCipherV2(username) 加密后提交，不落明文
+  const res = await oauthApi
+    .unbind(
+      row.pk,
+      await AesEncrypted(userinfoStore.username as string, input.value)
+    )
+    .catch(normalizeError);
+  if (isSuccess(res)) {
+    message(t("oauth.unbindSuccess"), { type: "success" });
+    load();
+  } else if (res.detail) {
+    message(res.detail, { type: "warning" });
+  }
 };
 
 /** 发起绑定：取授权地址后整体跳转，IdP 回跳 `/#/oauth/callback` 完成绑定 */
@@ -129,8 +142,19 @@ defineExpose({ load });
 <template>
   <AccountPanel :title="t('oauth.tabTitle')" :description="t('oauth.bindTip')">
     <p class="account-section-title">{{ t("oauth.bound") }}</p>
+    <el-alert
+      v-if="loadError"
+      type="error"
+      :title="loadError"
+      :closable="false"
+      class="mb-2"
+    >
+      <el-button link type="primary" @click="load">
+        {{ t("buttons.retry") }}
+      </el-button>
+    </el-alert>
     <div v-loading="loading">
-      <div v-if="rows.length === 0" class="account-empty">
+      <div v-if="!loadError && rows.length === 0" class="account-empty">
         <ReEmpty :description="t('oauth.noBindings')" :image-size="60" />
       </div>
       <!-- provider-row / binding-row：既有 E2E 的行定位钩子，与样式类并存 -->
@@ -139,7 +163,9 @@ defineExpose({ load });
           <div class="account-row__title truncate">
             {{ row.provider_name || row.provider }} · {{ displayName(row) }}
           </div>
-          <span class="account-row__desc">{{ row.created_time }}</span>
+          <span class="account-row__desc">
+            {{ formatDateTime(row.created_time) || "-" }}
+          </span>
         </div>
         <el-button link type="danger" @click="unbind(row)">
           {{ t("oauth.unbind") }}
@@ -165,7 +191,17 @@ defineExpose({ load });
         </el-button>
       </div>
       <el-alert
-        v-if="!providersLoading && providers.length === 0"
+        v-if="providersError"
+        type="error"
+        :title="providersError"
+        :closable="false"
+      >
+        <el-button link type="primary" @click="loadProviders">
+          {{ t("buttons.retry") }}
+        </el-button>
+      </el-alert>
+      <el-alert
+        v-else-if="!providersLoading && providers.length === 0"
         type="warning"
         :closable="false"
         :title="t('oauth.providerNotConfigured')"

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { copyText } from "@/utils/clipboard";
+import { formatDateTime } from "@/utils/format";
 import type { DirectoryMember } from "@/api/identity/directory";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import CopyDocument from "~icons/ep/copy-document";
@@ -96,10 +97,10 @@ function copy(text: string) {
         </div>
       </el-descriptions-item>
       <el-descriptions-item :label="t('directory.lastLogin')">
-        {{ row.last_login || "-" }}
+        {{ formatDateTime(row.last_login) || "-" }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('directory.dateJoined')">
-        {{ row.date_joined || "-" }}
+        {{ formatDateTime(row.date_joined) || "-" }}
       </el-descriptions-item>
     </el-descriptions>
   </div>

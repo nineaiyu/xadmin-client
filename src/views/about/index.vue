@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { useMediaQuery } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { TopRight } from "@element-plus/icons-vue";
 import { SITE_LINKS } from "@/config/site";
@@ -41,15 +42,19 @@ const extLinks = [
   { label: t("about.demoUrl"), href: SITE_LINKS.demo }
 ];
 
-/** 页头技术栈徽章（技术名不翻译，直接展示；取自简介文案中的主干技术） */
-const techStack = [
-  "Vue 3",
-  "Vite",
-  "TypeScript",
-  "Element Plus",
-  "Pinia",
-  "Tailwind CSS"
-];
+/** 页头技术栈徽章：从 package.json 现有依赖派生，避免与依赖表漂移 */
+const TECH_LABELS: Record<string, string> = {
+  vue: "Vue 3",
+  vite: "Vite",
+  typescript: "TypeScript",
+  "element-plus": "Element Plus",
+  pinia: "Pinia",
+  tailwindcss: "Tailwind CSS"
+};
+const techStack = Object.entries(TECH_LABELS)
+  .filter(([key]) => key in dependencies || key in devDependencies)
+  .map(([, label]) => label);
+const isNarrow = useMediaQuery("(width <= 768px)");
 
 /** 主依赖高亮 = 生产依赖键集：构建期随 package.json 派生，不再手维护名单 */
 const mainLabels = new Set(Object.keys(dependencies));
@@ -106,7 +111,7 @@ Object.keys(devDependencies).forEach(key => {
         </div>
       </template>
       <!-- 版本行：键值对形态（当前版本 / 构建时间 / Node / pnpm） -->
-      <PlusDescriptions border :columns="columns" :column="4" />
+      <PlusDescriptions border :columns="columns" :column="isNarrow ? 1 : 4" />
       <!-- 相关链接行：外链单独成行并加分隔线，避免 descriptions 里 label 与
              链接文案重复（原「前端代码地址 | 前端代码地址」的排版问题） -->
       <div class="about-links">
@@ -135,10 +140,10 @@ Object.keys(devDependencies).forEach(key => {
         </div>
       </template>
       <el-scrollbar>
-        <el-descriptions :column="6" border size="small">
+        <el-descriptions :column="isNarrow ? 1 : 6" border size="small">
           <el-descriptions-item
-            v-for="(item, index) in schema"
-            :key="index"
+            v-for="item in schema"
+            :key="item.label"
             :label="item.label"
             :label-class-name="getMainLabel(item.label)"
             class-name="pure-version"
@@ -171,10 +176,10 @@ Object.keys(devDependencies).forEach(key => {
         </div>
       </template>
       <el-scrollbar>
-        <el-descriptions :column="5" border size="small">
+        <el-descriptions :column="isNarrow ? 1 : 5" border size="small">
           <el-descriptions-item
-            v-for="(item, index) in devSchema"
-            :key="index"
+            v-for="item in devSchema"
+            :key="item.label"
             :label="item.label"
             :label-class-name="getMainLabel(item.label)"
             class-name="pure-version"

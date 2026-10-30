@@ -20,6 +20,7 @@ import {
   withAlpha
 } from "@/utils/chartTheme";
 import { waitChartSized } from "@/utils/chart";
+import { normalizeError } from "@/utils/apiError";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
@@ -39,6 +40,22 @@ const props = defineProps<{
    * 优先级 forceDark > forceLight > 跟随站点；配色走固定浅色基线。
    */
   forceLight?: boolean;
+  /**
+   * 图表可下钻：点击图形元素向上派发 drill 事件（携带点击维度值），由父级
+   * 打开明细抽屉。默认关闭（大屏/投屏展示场景不接下钻）。
+   */
+  drillable?: boolean;
+  /**
+   * 卡片联动过滤（父级按数据集字段能力判定后下发）：非空时本次取数带
+   * 请求级 filters（与数据集定义 filters 叠加，服务端 validate_filters 再校验）。
+   * 刷新仍走 refreshToken 令牌，本组件不自行监听该 prop。
+   */
+  linkageFilter?: { field: string; value: unknown } | null;
+}>();
+
+const emit = defineEmits<{
+  /** 点亮图形元素（drillable 时）：point 为点击的维度项；null = 全量 */
+  drill: [point: { name: string; raw?: unknown } | null];
 }>();
 
 const { t } = useI18n();
@@ -58,6 +75,8 @@ const total = ref(0);
 let loadSeq = 0;
 /** 加载失败原因：图表/数字区域改为可读提示 + 重试（业务码非 1000 与网络异常统一收敛） */
 const errorMsg = ref("");
+/** 联动过滤期间的静默重拉计数：仅显示轻量指示，不闪整卡骨架 */
+const refreshingCount = ref(0);
 /** 解构 resize：容器尺寸（卡片高度/宽度档位）变化后手动重算，window resize 监听不覆盖容器变化 */
 const { setOptions, resize, getInstance } = useECharts(chartRef, {
   theme,
@@ -79,6 +98,19 @@ const schemeOf = () =>
   props.forceLight && !props.forceDark
     ? chartLightColorScheme()
     : chartColorScheme(dark.value, colorScope.value);
+
+/** 联动过滤载荷：请求级 filters（字段能力判定在父级，服务端 validate_filters 兜底） */
+const activeFilters = computed(() =>
+  props.linkageFilter
+    ? [
+        {
+          field: props.linkageFilter.field,
+          op: "exact",
+          value: props.linkageFilter.value
+        }
+      ]
+    : undefined
+);
 
 const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   const names = result.series.map(item => item.name);
@@ -181,21 +213,40 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   };
 };
 
-/** 卡片加载：失败就地转骨架错误态（errorMsg），不外抛；loading 由 hook 托管 */
-const loadData = () =>
-  runWithLoading(async () => {
-    const card = props.card;
-    // 请求序号：自动刷新（10s 档）与手动刷新 / 编辑草稿变动竞态时，
-    // 丢弃过期响应，防旧数据后到覆盖新数据或把已恢复的错误态又打成错误
-    const seq = ++loadSeq;
-    /** 本次请求是否仍是最新（过期响应直接丢弃，不触碰共享状态） */
-    const fresh = () => seq === loadSeq;
-    errorMsg.value = "";
-    try {
-      if (card.chart_type === "number") {
-        // count_only：数字卡只读 total，服务端跳过全量行物化
+/**
+ * 取数核心（不含 loading 包裹）：失败就地转骨架错误态（errorMsg），不外抛。
+ * 与 ``loadData`` 分离是为了让「实时推送期间的静默重拉」复用同一取数与竞态守卫，
+ * 又不闪加载骨架。
+ */
+const fetchData = async () => {
+  const card = props.card;
+  // 请求序号：自动刷新（10s 档）与手动刷新 / 编辑草稿变动 / 推送帧竞态时，
+  // 丢弃过期响应，防旧数据后到覆盖新数据或把已恢复的错误态又打成错误
+  const seq = ++loadSeq;
+  /** 本次请求是否仍是最新（过期响应直接丢弃，不触碰共享状态） */
+  const fresh = () => seq === loadSeq;
+  errorMsg.value = "";
+  try {
+    if (card.chart_type === "number") {
+      // count_only：数字卡只读 total，服务端跳过全量行物化
+      const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
+        count_only: true,
+        filters: activeFilters.value
+      });
+      if (!fresh()) return;
+      if (isSuccess(res)) {
+        total.value = Number(res.data?.total ?? 0);
+        return;
+      }
+      errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+      return;
+    }
+    if (card.chart_type === "metric") {
+      // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
+      if ((card.metric ?? "count") === "count") {
         const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
-          count_only: true
+          count_only: true,
+          filters: activeFilters.value
         });
         if (!fresh()) return;
         if (isSuccess(res)) {
@@ -205,56 +256,65 @@ const loadData = () =>
         errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
         return;
       }
-      if (card.chart_type === "metric") {
-        // 指标卡：count = 行总数（复用 execute）；sum/avg = 无分组纯聚合单值
-        if ((card.metric ?? "count") === "count") {
-          const res = await datasetApi.execute<ExecuteResult>(card.dataset, {
-            count_only: true
-          });
-          if (!fresh()) return;
-          if (isSuccess(res)) {
-            total.value = Number(res.data?.total ?? 0);
-            return;
-          }
-          errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-          return;
-        }
-        const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
-          group_by: "",
-          metric: card.metric ?? "count",
-          value_field: card.value_field
-        });
-        if (!fresh()) return;
-        if (isSuccess(res)) {
-          total.value = Number(res.data?.series?.[0]?.value ?? 0);
-          return;
-        }
-        errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-        return;
-      }
       const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
-        group_by: card.group_by,
+        group_by: "",
         metric: card.metric ?? "count",
-        date_trunc:
-          card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
-        value_field: card.value_field
+        value_field: card.value_field,
+        filters: activeFilters.value
       });
       if (!fresh()) return;
       if (isSuccess(res)) {
-        await renderAggregate(res.data);
+        total.value = Number(res.data?.series?.[0]?.value ?? 0);
         return;
       }
-      // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
       errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
-    } catch (error) {
-      if (!fresh()) return;
-      errorMsg.value = String(
-        (error as { detail?: string })?.detail ??
-          error ??
-          t("dashboard.loadFailed")
-      );
+      return;
     }
+    const res = await datasetApi.aggregate<AggregateResult>(card.dataset, {
+      group_by: card.group_by,
+      metric: card.metric ?? "count",
+      date_trunc:
+        card.chart_type === "line" ? (card.date_trunc ?? "day") : undefined,
+      value_field: card.value_field,
+      filters: activeFilters.value
+    });
+    if (!fresh()) return;
+    if (isSuccess(res)) {
+      await renderAggregate(res.data);
+      return;
+    }
+    // 200 + 业务码非 1000（字段权限/数值字段校验等）：显式提示，避免图表空白无解释
+    errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
+  } catch (error) {
+    if (!fresh()) return;
+    errorMsg.value =
+      normalizeError(error).detail || String(t("dashboard.loadFailed"));
+  }
+};
+
+/** 卡片加载（带骨架）：手动刷新 / 令牌刷新 / 首次挂载 / 重试入口 */
+const loadData = () => runWithLoading(fetchData);
+
+/** 最近一次聚合序列（下钻点击时按维度名反查 raw 原始值） */
+const lastSeries = ref<AggregateResult["series"]>([]);
+let drillBound = false;
+
+/**
+ * 图表点击下钻：点击柱/扇区派发该维度项（name 为可读 label，raw 为过滤原值；
+ * 趋势序列无 raw——派发后由父级回落为全量明细）。实例由 useECharts 延迟创建，
+ * 首次渲染成功后挂载一次。
+ */
+function bindDrillClick() {
+  if (drillBound || !props.drillable) return;
+  const instance = getInstance();
+  if (!instance || typeof instance.on !== "function") return;
+  instance.on("click", (params: { name?: string }) => {
+    if (!props.drillable || !params?.name) return;
+    const hit = lastSeries.value.find(item => item.name === params.name);
+    emit("drill", { name: params.name, raw: hit?.raw });
   });
+  drillBound = true;
+}
 
 /** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
 const renderAggregate = async (result: AggregateResult) => {
@@ -262,6 +322,8 @@ const renderAggregate = async (result: AggregateResult) => {
     // 尺寸可能因卡片高度/宽度配置变化而与上次渲染不同，先重算再 set
     resize();
     setOptions(buildSeriesOptions(result));
+    lastSeries.value = result.series;
+    bindDrillClick();
   }
 };
 
@@ -280,6 +342,18 @@ const applyData = async (entry: {
     errorMsg.value = entry.detail;
     return;
   }
+  if (activeFilters.value?.length) {
+    // 联动过滤生效期间：推送帧由服务端按卡片定义聚合，载荷不含请求级 filters，
+    // 直接落盘会把已过滤的结果覆盖成全量（chip 还在、数据已错）。此处丢弃帧，
+    // 按当前 filters 静默重拉——与 HTTP 路径同一取数口径，服务端再校验一次。
+    refreshingCount.value += 1;
+    void fetchData().finally(() => {
+      refreshingCount.value = Math.max(0, refreshingCount.value - 1);
+    });
+    return;
+  }
+  // 推送帧与在途 HTTP 请求互斥：先作废在途序号，避免早发晚到的响应覆盖更新的帧
+  loadSeq++;
   errorMsg.value = "";
   if (props.card.chart_type === "metric" && entry.kind === "aggregate") {
     // 服务端对 metric 卡统一走聚合（count 也是单桶 Total 帧），取首值渲染大数字
@@ -300,16 +374,25 @@ onMounted(async () => {
   await loadData();
 });
 
+// 卡片配置由父级不可变替换（拖拽/布局变化不重建对象）：浅比较即可，
+// deep 会把布局拖动也当成数据变更，触发整盘图表重拉。
 watch(
   () => props.card,
-  () => loadData(),
-  { deep: true }
+  () => loadData()
 );
 
 /** 刷新信号：令牌变化即在原实例上重拉数据（手动刷新与自动刷新共用同一入口） */
 watch(
   () => props.refreshToken,
   () => loadData()
+);
+
+/** 编辑态切换后补挂下钻（编辑期间不派发，退出编辑时实例已在） */
+watch(
+  () => props.drillable,
+  value => {
+    if (value) bindDrillClick();
+  }
 );
 
 /**
@@ -338,6 +421,14 @@ defineExpose({ loadData, applyData, renderImage });
     }"
     :data-chart-theme="dark ? 'dark' : 'light'"
   >
+    <div
+      v-if="refreshingCount > 0"
+      class="pointer-events-none absolute right-2 top-2 z-10 rounded border border-solid border-(--divider) bg-(--el-bg-color) px-2 py-1 text-xs text-(--el-text-color-secondary)"
+      role="status"
+      data-testid="chart-card-refreshing"
+    >
+      {{ t("dashboard.refreshing") }}
+    </div>
     <div
       v-if="errorMsg"
       class="flex-c size-full flex-col gap-2 text-center"

@@ -52,7 +52,7 @@ export function openPostMembersDialog({
 
   addDialog({
     title: `${t("post.members")}：${row.name}`,
-    width: dialogSize("sm"),
+    width: dialogSize("md"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,

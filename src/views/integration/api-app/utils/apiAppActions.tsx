@@ -17,6 +17,7 @@ export interface ApiAppActionFlags {
   canRegenerate?: boolean;
   canTestCallback?: boolean;
   canEdit?: boolean;
+  canManageGrants?: boolean;
 }
 
 export interface ApiAppActionHandlers {
@@ -24,6 +25,7 @@ export interface ApiAppActionHandlers {
   regenerate: () => void;
   testCallback: () => void;
   edit: () => void;
+  grants: () => void;
 }
 
 /** 动作收集：上下文类型收敛字面量，并剔除无权限（false/undefined）项 */
@@ -85,6 +87,13 @@ export function buildApiAppActionGroups({
       key: "manage",
       title: t("apiApp.actionGroups.manage"),
       actions: collect(
+        flags.canManageGrants && {
+          code: "grants",
+          label: t("apiApp.grant.manage"),
+          description: t("apiApp.grant.manageDesc"),
+          icon: Settings,
+          run: handlers.grants
+        },
         flags.canEdit && {
           code: "edit",
           label: t("apiApp.edit"),

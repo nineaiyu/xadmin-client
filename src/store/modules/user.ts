@@ -20,7 +20,7 @@ import { useWatermarkStoreHook } from "./watermark";
 /**
  * 认证类请求的统一包装：调 api → 业务成功即写 token（可选）→ resolve/reject。
  *
- * loginByUsername / registerByUsername / handRefreshToken 三个动作此前各写一遍
+ * loginByUsername / registerByUsername 两个动作此前各写一遍
  * ``new Promise`` 包 ``api().then().catch()``，差异只在「成功时是否写 token」，
  * 收敛于此；登录态写入由 utils/auth 的 setToken 单点负责。
  */
@@ -243,11 +243,6 @@ export const useUserStore = defineStore("pure-user", {
             reject(error);
           });
       });
-    },
-    /** 刷新`token` */
-    async handRefreshToken(data: { refresh: string }) {
-      const { refreshTokenApi } = await import("@/api/auth");
-      return requestWithToken(refreshTokenApi(data));
     }
   }
 });

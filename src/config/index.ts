@@ -51,7 +51,9 @@ export const getPlatformConfig = async (
         // 历史实现此处无界递归——配置文件缺字段时无限自调，
         // boot promise 永不 resolve（白屏且请求打满）。
         if (attempt + 1 >= PLATFORM_CONFIG_MAX_ATTEMPTS) {
-          throw "platform-config.json 配置缺少 Locale 字段，请检查配置文件";
+          throw new Error(
+            "platform-config.json is missing the required Locale field"
+          );
         }
         return await getPlatformConfig(app, defaultConfigUrl, attempt + 1);
       }
@@ -69,7 +71,9 @@ export const getPlatformConfig = async (
       if (url === null && attempt + 1 < PLATFORM_CONFIG_MAX_ATTEMPTS) {
         return await getPlatformConfig(app, defaultConfigUrl, attempt + 1);
       } else {
-        throw "请在public文件夹下添加platform-config.json配置文件";
+        throw new Error(
+          "platform-config.json is missing under the public directory"
+        );
       }
     });
 };

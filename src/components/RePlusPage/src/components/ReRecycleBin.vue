@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
+import { isSuccess } from "@/api/types";
 import { computed, h, isVNode, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
@@ -69,12 +71,18 @@ const props = withDefaults(
     title?: string;
     /** 入口按钮是否隐藏（调用方按 auth 控制） */
     disabled?: boolean;
+    /** 是否可恢复（recycleRestore 权限；独立使用时缺省允许） */
+    canRestore?: boolean;
+    /** 是否可清除（recyclePurge 权限；独立使用时缺省允许） */
+    canPurge?: boolean;
   }>(),
   {
     columns: () => [],
     localeName: "",
     title: "",
-    disabled: false
+    disabled: false,
+    canRestore: true,
+    canPurge: true
   }
 );
 
@@ -124,34 +132,54 @@ async function loadData() {
       page: pagination.value.page,
       pageSize: pagination.value.pageSize
     });
-    rows.value = res.data.results ?? [];
-    pagination.value.total = res.data.total ?? rows.value.length;
+    // 业务失败（code 非 1000）时 data 为空：先判成功再取结果，避免只留 finally
+    // 的裸 await——失败会抛到事件循环，界面停在上一批数据上看似「已刷新」
+    if (!isSuccess(res)) {
+      rows.value = [];
+      pagination.value.total = 0;
+      message(res.detail || t("results.failed"), { type: "error" });
+      return;
+    }
+    rows.value = res.data?.results ?? [];
+    pagination.value.total = res.data?.total ?? rows.value.length;
     // 删空当前页后回退页码，避免停留在空页（page 变化经 watch 自动重载）
     if (!rows.value.length && pagination.value.page > 1) {
       pagination.value.page -= 1;
     }
+  } catch {
+    // HTTP 层错误由拦截器提示；清空列表避免把陈旧行当成最新回收站状态
+    rows.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
 }
 
-function open() {
+async function open() {
   visible.value = true;
   pagination.value.page = 1;
-  loadData();
+  await loadData();
 }
 
-function onChanged() {
+async function onChanged() {
   emit("changed");
-  loadData();
+  await loadData();
 }
 
 async function handleRestore(pks: Array<string>) {
   submitting.value = true;
   try {
     const res = await props.api.recycleRestore(pks);
+    // HTTP 200 + 业务码非 1000（恢复冲突/权限等）也是失败：一律按成功提示会让
+    // 「危险操作结果不可信」（业务失败必须显式报错并保留现场可重试）
+    if (!isSuccess(res)) {
+      message(res.detail || t("results.failed"), { type: "error" });
+      return;
+    }
     message(res.detail ?? t("recycleBin.restoreDone"), { type: "success" });
-    onChanged();
+    await onChanged();
+  } catch {
+    // HTTP 层错误拦截器已提示；这里保弹窗状态可重试
   } finally {
     submitting.value = false;
   }
@@ -161,8 +189,14 @@ async function handlePurge(pks?: Array<string>) {
   submitting.value = true;
   try {
     const res = await props.api.recyclePurge(pks);
+    if (!isSuccess(res)) {
+      message(res.detail || t("results.failed"), { type: "error" });
+      return;
+    }
     message(res.detail ?? t("recycleBin.purgeDone"), { type: "success" });
-    onChanged();
+    await onChanged();
+  } catch {
+    // HTTP 层错误拦截器已提示
   } finally {
     submitting.value = false;
   }
@@ -183,15 +217,16 @@ defineExpose({ open });
     {{ title || t("recycleBin.title") }}
   </el-button>
 
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     :title="title || t('recycleBin.title')"
     :size="drawerSize('lg')"
     destroy-on-close
     class="recycle-bin-drawer"
   >
-    <div class="mb-3 flex flex-wrap gap-2">
+    <div v-if="canRestore || canPurge" class="mb-3 flex flex-wrap gap-2">
       <el-popconfirm
+        v-if="canRestore"
         :title="t('recycleBin.restoreConfirm', { count: selectedPks.length })"
         :disabled="selectedPks.length === 0"
         @confirm="handleRestore(selectedPks)"
@@ -208,32 +243,34 @@ defineExpose({ open });
           </el-button>
         </template>
       </el-popconfirm>
-      <el-popconfirm
-        :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
-        :disabled="selectedPks.length === 0"
-        @confirm="handlePurge(selectedPks)"
-      >
-        <template #reference>
-          <el-button
-            type="danger"
-            plain
-            :disabled="selectedPks.length === 0 || submitting"
-            :icon="useRenderIcon(Delete)"
-          >
-            {{ t("recycleBin.purge") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
-      <el-popconfirm
-        :title="t('recycleBin.purgeExpiredConfirm')"
-        @confirm="handlePurge()"
-      >
-        <template #reference>
-          <el-button type="warning" plain :disabled="submitting">
-            {{ t("recycleBin.purgeExpired") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
+      <template v-if="canPurge">
+        <el-popconfirm
+          :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
+          :disabled="selectedPks.length === 0"
+          @confirm="handlePurge(selectedPks)"
+        >
+          <template #reference>
+            <el-button
+              type="danger"
+              plain
+              :disabled="selectedPks.length === 0 || submitting"
+              :icon="useRenderIcon(Delete)"
+            >
+              {{ t("recycleBin.purge") }}
+            </el-button>
+          </template>
+        </el-popconfirm>
+        <el-popconfirm
+          :title="t('recycleBin.purgeExpiredConfirm')"
+          @confirm="handlePurge()"
+        >
+          <template #reference>
+            <el-button type="warning" plain :disabled="submitting">
+              {{ t("recycleBin.purgeExpired") }}
+            </el-button>
+          </template>
+        </el-popconfirm>
+      </template>
     </div>
 
     <el-table
@@ -257,6 +294,7 @@ defineExpose({ open });
         </template>
       </el-table-column>
       <el-table-column
+        v-if="canRestore"
         :label="t('recycleBin.actions')"
         width="90"
         fixed="right"
@@ -292,5 +330,5 @@ defineExpose({ open });
       size="small"
       class="mt-3 justify-end"
     />
-  </el-drawer>
+  </OverlayDrawer>
 </template>

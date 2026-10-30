@@ -31,6 +31,7 @@ export function buildConfigureDefaults(
     stretch: config?.Stretch ?? false,
     headerAutoHide: config?.HeaderAutoHide ?? false,
     compactMode: config?.CompactMode ?? false,
+    uiSize: config?.UiSize ?? "default",
     radius: config?.Radius ?? "default",
     fontScale: config?.FontScale ?? "default",
     fontScaleCustom: config?.FontScaleCustom ?? 14,

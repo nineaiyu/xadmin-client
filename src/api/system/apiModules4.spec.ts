@@ -218,6 +218,16 @@ describe("datasets 数据集动作", () => {
       {}
     );
 
+    // 报表明细预览等调用方带 max_rows：随载荷原样下发（服务端与 row_limit
+    // 取小者下推 SQL，避免为前端切片全量物化）
+    datasetApi.execute("ds1", { max_rows: 100 });
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "post",
+      "/api/dataset/datasets/ds1/execute",
+      { params: {}, data: { max_rows: 100 } },
+      {}
+    );
+
     datasetApi.aggregate("ds1", { type: "sum" });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",

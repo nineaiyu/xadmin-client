@@ -74,7 +74,9 @@ function getObjectKeys(obj: Record<string, unknown>) {
       if (value && isObject(value)) {
         stack.push({ obj: value, key: newKey });
       } else {
-        keys.add(key);
+        // 叶子节点必须登记完整点分路径；登记父路径会让
+        // transformI18n("login.logoutSuccess") 永远探测不到而回退原始 key
+        keys.add(newKey);
       }
     }
   }
@@ -110,14 +112,15 @@ export function transformI18n(message: string | Record<string, string> = "") {
     return message[current];
   }
 
-  const key = message.match(/(\S*)\./)?.input;
+  // 命中片段用于判断「是否带命名空间」（.input 即完整原文）
+  const matchedInput = message.match(/(\S*)\./)?.input;
 
   // legacy: false 下 global 为 Composer（I18n 类型的 global 是 Composer | VueI18n 联合，此处收窄）
   const composer = i18n.global as Composer;
 
-  if (key && flatI18n("zh-CN").has(key)) {
+  if (matchedInput && flatI18n("zh-CN").has(matchedInput)) {
     return composer.t(message);
-  } else if (!key && Object.hasOwn(siphonI18n("zh-CN"), message)) {
+  } else if (!matchedInput && Object.hasOwn(siphonI18n("zh-CN"), message)) {
     // 兼容非嵌套形式的国际化写法
     return composer.t(message);
   } else {

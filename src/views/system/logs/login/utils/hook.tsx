@@ -1,104 +1,106 @@
 import { useI18n } from "vue-i18n";
 import { loginLogApi } from "@/api/audit/logs/login";
 import { useRouter } from "vue-router";
-import { usePageAuth } from "@/router/utils";
-import { reactive, shallowRef, type Ref } from "vue";
+import { hasAuth } from "@/router/utils";
+import { shallowRef } from "vue";
 import { goUserDetail, usePublicHooks } from "@/views/system/hooks";
 import {
-  type PageTableColumn,
+  defineListPage,
   type OperationProps,
-  renderBooleanTag,
-  handleOperation,
-  formatPageColumns
+  handleOperation
 } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { useConfirm } from "@/hooks/useConfirm";
 import Logout from "~icons/ri/logout-circle-r-line";
+import {
+  canForceLogout,
+  onlineSessionsQuery,
+  showSessionManage
+} from "./loginLogActions";
+import { buildLoginLogColumns } from "./loginLogColumns";
 
-export function useLoginLog(tableRef: Ref) {
-  const { t } = useI18n();
-  const api = reactive(loginLogApi);
-
-  const auth = usePageAuth(["logout"]);
+export function useLoginLog() {
+  // 纯 HTTP 会话不产生 WS channel，本页踢不掉：给一个跳在线会话页的入口
+  const { te } = useI18n();
+  const canViewOnline = hasAuth("list:SystemUserOnline");
 
   const router = useRouter();
+  const confirm = useConfirm();
   const { tagStyle } = usePublicHooks();
 
-  const operationButtonsProps = shallowRef<OperationProps>({
-    width: 180,
-    buttons: [
-      {
-        text: t("systemUser.logout"),
-        code: "logout",
-        props: (row, button) => {
-          const disabled = row?.online !== true;
-          return {
-            ...(button?._?.props ?? {
-              icon: useRenderIcon(Logout),
-              plain: true,
-              link: true
-            }), // button?._ 这个表示之前老的按钮信息
-            ...{ disabled, type: disabled ? "default" : "danger" }
-          };
-        },
-        onClick: ({ row }) => {
-          handleOperation({
-            t,
-            apiReq: api.logout(row.pk, {}),
-            success() {
-              tableRef.value.handleGetData();
-            }
-          });
-        },
-        show: auth.logout
-      }
-    ]
-  });
-  const listColumnsFormat = (columns: PageTableColumn[]) =>
-    formatPageColumns(columns, {
-      creator: column => {
-        column["cellRenderer"] = ({ row }) => (
-          <el-link onClick={() => onGoDetail(row)}>
-            {row.creator?.username ? row.creator?.username : "/"}
-          </el-link>
-        );
-      },
-      status: column => {
-        column["cellRenderer"] = renderBooleanTag({
-          t,
-          tagStyle,
-          field: column.prop as string,
-          actionMap: { true: t("labels.success"), false: t("labels.failed") }
-        });
-      },
-      online: column => {
-        column["cellRenderer"] = renderBooleanTag({
-          t,
-          tagStyle,
-          field: column.prop as string,
-          // 三元语义与后端 UserLoginLogSerializer.get_online 对齐：
-          // -1 = 不适用（非 WS 登录或无 creator），True/False = WS 会话是否在线
-          actionMap: {
-            true: t("labels.online"),
-            false: t("labels.offline"),
-            "-1": "/"
+  const page = defineListPage({
+    api: loginLogApi,
+    localeName: "logsLogin",
+    extraAuth: ["logout"],
+    buttons: ({ t, api, auth, tableRef }) => ({
+      operationButtonsProps: shallowRef<OperationProps>({
+        width: 180,
+        buttons: [
+          {
+            text: t("systemUser.logout"),
+            code: "logout",
+            props: (_row, button) => ({
+              ...(button?._?.props ?? {
+                icon: useRenderIcon(Logout),
+                plain: true,
+                link: true
+              }), // button?._ 这个表示之前老的按钮信息
+              type: "danger"
+            }),
+            onClick: async ({ row, loading }) => {
+              const username = row?.creator?.username ?? "";
+              if (
+                !(await confirm(
+                  t("logsLogin.forceLogoutConfirm", { user: username })
+                ))
+              ) {
+                return;
+              }
+              loading.value = true;
+              handleOperation({
+                t,
+                apiReq: api.logout(row.pk, {}),
+                success() {
+                  tableRef.value.handleGetData();
+                },
+                requestEnd() {
+                  loading.value = false;
+                }
+              });
+            },
+            // 只有 WS 在线会话能按 channel 踢线；其余行改给「会话管理」入口
+            show: row => canForceLogout(auth, row)
+          },
+          {
+            text: t("logsLogin.sessionManage"),
+            code: "sessionManage",
+            show: row => showSessionManage(canViewOnline, row),
+            onClick: ({ row }) =>
+              router.push({
+                path: "/system/online/index",
+                query: onlineSessionsQuery(row)
+              })
           }
-        });
-      }
-    });
+        ]
+      })
+    })
+  });
+  const { t, api } = page;
 
-  /** 行内 `creator` 嵌套字段（点击跳转 SystemUser 详情） */
-  type CreatorRow = {
-    creator?: { username?: string; pk?: number | string };
-  };
+  /** 详情入口消费 retrieve 权限：按主键取完整行，而不是仅展示列表快照 */
+  const detailRowFetch = (row: Record<string, unknown>) =>
+    api.retrieve(String(row.pk ?? "")).then(res => res.data);
 
-  function onGoDetail(row: CreatorRow) {
-    goUserDetail(router, row?.creator?.pk);
-  }
+  const listColumnsFormat = buildLoginLogColumns({
+    t,
+    te,
+    tagStyle,
+    onGoDetail: row => goUserDetail(router, row?.creator?.pk)
+  });
 
   return {
-    api,
-    auth,
-    listColumnsFormat,
-    operationButtonsProps
+    ...page,
+    detailRowFetch,
+    listColumnsFormat
   };
 }

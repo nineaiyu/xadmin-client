@@ -1,102 +1,101 @@
-import { nextTick, watch, type Ref } from "vue";
-import { computeMenuScrollTop } from "@/utils/menuScroll";
+import { nextTick, onBeforeUnmount, watch, type Ref } from "vue";
+import {
+  applyMenuScroll,
+  measureMenuScroll,
+  menuLayoutSignature,
+  resolveMenuScrollWrap,
+  type MenuScrollbarLike
+} from "@/utils/menuScroll";
+
+/** el-scrollbar 实例的滚动访问面（EP 暴露 wrapRef / scrollTo / setScrollTop） */
+export type ScrollbarExpose = MenuScrollbarLike;
 
 /**
- * el-scrollbar 实例的滚动访问面（EP 暴露 wrapRef 与 setScrollTop）。
- * wrapRef 在组件实例上可能已被 proxyRefs 解包为元素，也可能仍是 Ref：两者都兼容。
+ * 布局收敛窗口：覆盖 EP 子菜单 0.3s 展开/收起过渡与排队动画。
+ * 收敛前只观察、不滚动——中途校正会让长菜单出现阶梯式位移。
  */
-export interface ScrollbarExpose {
-  wrapRef?: HTMLElement | { value?: HTMLElement };
-  setScrollTop?: (top: number) => void;
-}
+const SETTLE_TIMEOUT = 800;
 
 /**
- * 重试节奏：子菜单展开有过渡动画、EP 自动展开发生在挂载之后，单次测量必然踩在
- * 中间态——「滚到当时可见」也可能在动画结束后重新越界，故重试期内每次都校正
- * （target 为 null 时自然不滚动），直到位置稳定。
+ * 最小观测窗口：展开过渡由下一帧的样式变更启动，可能晚于首轮观测一两帧；
+ * 只看「连续稳定」会提前收工，错过随后才开始的高度动画。
  */
-const RETRY_LIMIT = 5;
-const RETRY_INTERVAL = 200;
+const MIN_OBSERVE = 120;
 
-/** 激活叶子项（真正需要对齐的滚动目标） */
-const ACTIVE_LEAF_SELECTOR = ".el-menu-item.is-active";
+/** 连续帧布局签名不变即视为收敛 */
+const STABLE_FRAMES = 2;
 
-/** 激活目录标题（当前页为目录自身时无叶子项，取最深的激活目录标题兜底） */
-const ACTIVE_PARENT_SELECTOR = ".el-sub-menu.is-active > .el-sub-menu__title";
-
-/** 从实例形态取滚动容器元素（元素本身 / 未解包的 Ref） */
-function resolveWrap(scrollbar?: ScrollbarExpose): HTMLElement | undefined {
-  const wrap = scrollbar?.wrapRef;
-  if (!wrap) return undefined;
-  return wrap instanceof HTMLElement ? wrap : wrap.value;
-}
-
-/**
- * 定位滚动目标元素：叶子激活项优先。
- *
- * 不能把两类选择器合并后交给 querySelector——它按文档顺序取第一个匹配，
- * 而激活目录的标题总是排在它的激活子项之前，会把「滚到激活叶子项」
- * 退化为「滚到激活目录」（叶子项仍留在视口之外）。
- */
-function findActiveElement(wrap: HTMLElement): HTMLElement | null {
-  const leaf = wrap.querySelector<HTMLElement>(ACTIVE_LEAF_SELECTOR);
-  if (leaf) return leaf;
-  const parents = wrap.querySelectorAll<HTMLElement>(ACTIVE_PARENT_SELECTOR);
-  return parents.length ? parents[parents.length - 1] : null;
-}
+/** 用户滚动 / 按下指针即交还控制权，停止自动校正 */
+const USER_INPUT_EVENTS = ["wheel", "touchstart", "pointerdown"] as const;
 
 /**
  * 激活项滚入可视区（自 NavVertical 抽出）：
- * 路由切换、菜单数据变化或子菜单展开后，激活项若在滚动区之外则滚入；
- * 已在可视区时不滚动，逐次校正到稳定（见 RETRY_* 说明）。
+ * 路由切换、菜单数据变化或子菜单展开后，等布局收敛再把激活项平滑滚入一次；
+ * 激活项被折叠目录隐藏（手风琴收起）时没有可见目标，不做任何滚动。
  */
 export function useMenuScrollActive(
   scrollbarRef: Ref<ScrollbarExpose | undefined>,
   sources: Array<() => unknown>
 ) {
-  let retryTimer: number | undefined;
+  let frame = 0;
+  let releaseInput: (() => void) | undefined;
 
-  function measure() {
-    const scrollbar = scrollbarRef.value;
-    const wrap = resolveWrap(scrollbar);
-    if (!wrap || typeof scrollbar?.setScrollTop !== "function") return null;
-    const active = findActiveElement(wrap);
-    if (!active) return null;
-
-    const wrapRect = wrap.getBoundingClientRect();
-    const activeRect = active.getBoundingClientRect();
-    return {
-      scrollbar,
-      target: computeMenuScrollTop({
-        itemTop: activeRect.top - wrapRect.top + wrap.scrollTop,
-        itemHeight: activeRect.height,
-        scrollTop: wrap.scrollTop,
-        viewportHeight: wrap.clientHeight,
-        scrollHeight: wrap.scrollHeight
-      })
-    };
-  }
-
-  function attemptScroll(attempt: number) {
-    const result = measure();
-    if (result && result.target !== null) {
-      result.scrollbar.setScrollTop!(result.target);
-    }
-    // 激活项尚未渲染或位置仍会变化（展开动画）：有界重试、逐次校正
-    if (attempt < RETRY_LIMIT) {
-      retryTimer = window.setTimeout(
-        () => attemptScroll(attempt + 1),
-        RETRY_INTERVAL
-      );
-    }
+  function stop() {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    releaseInput?.();
+    releaseInput = undefined;
   }
 
   function scrollToActive() {
-    window.clearTimeout(retryTimer);
-    attemptScroll(0);
+    stop();
+    const scrollbar = scrollbarRef.value;
+    const wrap = resolveMenuScrollWrap(scrollbar);
+    if (!scrollbar || !wrap) return;
+
+    // 滚动条拖动发生在 wrap 的兄弟节点上，监听其父级（el-scrollbar 根）
+    const owner = wrap.parentElement ?? wrap;
+    const onUserInput = () => stop();
+    USER_INPUT_EVENTS.forEach(type =>
+      owner.addEventListener(type, onUserInput, { passive: true })
+    );
+    releaseInput = () => {
+      USER_INPUT_EVENTS.forEach(type =>
+        owner.removeEventListener(type, onUserInput)
+      );
+    };
+
+    const startedAt = performance.now();
+    let signature = "";
+    let stableFrames = 0;
+
+    const settle = () => {
+      frame = 0;
+      if (!resolveMenuScrollWrap(scrollbar)) {
+        stop();
+        return;
+      }
+      const nextSignature = menuLayoutSignature(wrap);
+      stableFrames = nextSignature === signature ? stableFrames + 1 : 0;
+      signature = nextSignature;
+      const elapsed = performance.now() - startedAt;
+      if (
+        (stableFrames < STABLE_FRAMES || elapsed < MIN_OBSERVE) &&
+        elapsed < SETTLE_TIMEOUT
+      ) {
+        frame = requestAnimationFrame(settle);
+        return;
+      }
+      const plan = measureMenuScroll(scrollbar);
+      if (plan) applyMenuScroll(plan);
+      stop();
+    };
+
+    frame = requestAnimationFrame(settle);
   }
 
   watch(sources, () => nextTick(scrollToActive), { flush: "post" });
+  onBeforeUnmount(stop);
 
   return { scrollToActive };
 }

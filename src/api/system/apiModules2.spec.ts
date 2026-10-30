@@ -184,20 +184,28 @@ describe("periodicTaskApi 定时任务", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
       "/api/task/periodic/batch-enable",
-      { params: {}, data: { pks: [1, 2], enabled: undefined } },
+      { params: {}, data: { pks: [1, 2] } },
       {}
     );
 
-    periodicTaskApi.batchEnable([3], true);
+    periodicTaskApi.batchDisable([3]);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/task/periodic/batch-enable",
-      { params: {}, data: { pks: [3], enabled: true } },
+      "/api/task/periodic/batch-disable",
+      { params: {}, data: { pks: [3] } },
+      {}
+    );
+
+    periodicTaskApi.enable(6, false);
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "patch",
+      "/api/task/periodic/6/enable",
+      { params: {}, data: { enabled: false } },
       {}
     );
   });
 
-  it("clone / registered / batchUpdate", () => {
+  it("clone / registered / references", () => {
     periodicTaskApi.clone(7);
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
@@ -214,16 +222,34 @@ describe("periodicTaskApi 定时任务", () => {
       {}
     );
 
-    periodicTaskApi.batchUpdate([1], { is_active: false });
+    crontabScheduleApi.references(9);
+    expect(requestMock).toHaveBeenLastCalledWith(
+      "get",
+      "/api/task/crontab/9/references",
+      { params: {}, data: {} },
+      {}
+    );
+  });
+
+  it("crontab preview 走专用端点", () => {
+    crontabScheduleApi.preview({
+      minute: "*/5",
+      hour: "*",
+      day_of_month: "*",
+      month_of_year: "*",
+      day_of_week: "*"
+    });
     expect(requestMock).toHaveBeenLastCalledWith(
       "post",
-      "/api/task/periodic/batch-update",
+      "/api/task/crontab/preview",
       {
         params: {},
         data: {
-          pks: [1],
-          fields: { is_active: false },
-          _write_marker: "batchUpdate"
+          minute: "*/5",
+          hour: "*",
+          day_of_month: "*",
+          month_of_year: "*",
+          day_of_week: "*"
         }
       },
       {}

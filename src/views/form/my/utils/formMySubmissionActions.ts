@@ -4,6 +4,7 @@ import { addDrawer } from "@/components/ReDrawer";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { submissionApi } from "@/api/dataset/dform";
+import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import SubmissionDetail from "../../components/SubmissionDetail.vue";
 import type { useConfirm } from "@/hooks/useConfirm";
 import type { SubmissionItem } from "@/api/dataset/dform";
@@ -41,7 +42,7 @@ export function createSubmissionActions({
   const remove = async (row: SubmissionItem) => {
     if (
       !(await confirm(t("dform.removeConfirm", { name: row.form_name }), {
-        confirmButtonClass: "el-button--danger",
+        danger: true,
         draggable: true
       }))
     ) {
@@ -59,6 +60,13 @@ export function createSubmissionActions({
 
   /** 提交草稿（仅草稿态）：服务端按 schema 严格校验后进入审批/直接生效 */
   const submitDraft = async (row: SubmissionItem) => {
+    if (
+      !(await confirm(t("dform.submitConfirm", { name: row.form_name }), {
+        type: "warning"
+      }))
+    ) {
+      return;
+    }
     const res = await submissionApi.submit(row.pk).catch(normalizeError);
     if (isSuccess(res)) {
       message(t("dform.submitDraftOk"), { type: "success" });
@@ -68,8 +76,39 @@ export function createSubmissionActions({
     message(String(res.detail || t("results.failed")), { type: "warning" });
   };
 
+  /** 撤回审批中的填报：走流程实例 cancel（申请人本人），状态经信号回写 */
+  const cancel = async (row: SubmissionItem) => {
+    if (!row.instance) {
+      message(t("dform.withdrawNoInstance"), { type: "warning" });
+      return;
+    }
+    if (
+      !(await confirm(t("dform.withdrawConfirm", { name: row.form_name }), {
+        type: "warning"
+      }))
+    ) {
+      return;
+    }
+    const res = await approvalInstanceApi
+      .cancel(row.instance)
+      .catch(normalizeError);
+    if (isSuccess(res)) {
+      message(t("dform.withdrawOk"), { type: "success" });
+      refresh();
+      return;
+    }
+    message(String(res.detail || t("results.failed")), { type: "warning" });
+  };
+
   /** 重新提交被驳回的填报（仅申请人、仅驳回态：按当前数据重新发起流程实例） */
   const resubmit = async (row: SubmissionItem) => {
+    if (
+      !(await confirm(t("dform.resubmitConfirm", { name: row.form_name }), {
+        type: "warning"
+      }))
+    ) {
+      return;
+    }
     const res = await submissionApi.resubmit(row.pk).catch(normalizeError);
     if (isSuccess(res)) {
       message(t("dform.resubmitOk"), { type: "success" });
@@ -79,5 +118,5 @@ export function createSubmissionActions({
     message(String(res.detail || t("results.failed")), { type: "warning" });
   };
 
-  return { openDetail, remove, submitDraft, resubmit };
+  return { openDetail, remove, submitDraft, resubmit, cancel };
 }

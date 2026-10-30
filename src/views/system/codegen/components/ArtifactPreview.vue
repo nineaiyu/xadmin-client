@@ -158,7 +158,7 @@ function downloadActive() {
     <el-scrollbar class="w-60 shrink-0 border border-border-light rounded">
       <div v-for="group in groups" :key="group.key" class="py-1">
         <div
-          class="px-3 py-1 text-xs font-medium text-gray-400 bg-fill-muted sticky top-0"
+          class="px-3 py-1 text-xs font-medium text-fg-muted bg-fill-muted sticky top-0"
         >
           {{ group.title }}
         </div>
@@ -174,11 +174,11 @@ function downloadActive() {
         >
           <div class="flex items-center gap-1">
             <span class="truncate">{{ fileName(item) }}</span>
-            <el-tag v-if="item.label === '后续步骤'" size="small" type="info">
+            <el-tag v-if="item.kind === 'next-steps'" size="small" type="info">
               MD
             </el-tag>
           </div>
-          <div class="text-xs text-gray-400 truncate">
+          <div class="text-xs text-fg-muted truncate">
             {{ item.path || item.notice }}
           </div>
         </div>
@@ -190,7 +190,7 @@ function downloadActive() {
     >
       <template #header>
         <div class="flex-bc gap-2">
-          <span class="text-xs text-gray-500 truncate">
+          <span class="text-xs text-fg-subtle truncate">
             {{ active?.path || active?.notice || t("codegen.previewEmpty") }}
           </span>
           <span class="flex items-center gap-1 shrink-0">
@@ -199,6 +199,7 @@ function downloadActive() {
                 size="small"
                 text
                 :icon="CopyDocument"
+                :aria-label="t('codegen.copyCode')"
                 @click="copyActive"
               />
             </el-tooltip>
@@ -207,6 +208,7 @@ function downloadActive() {
                 size="small"
                 text
                 :icon="Download"
+                :aria-label="t('codegen.downloadFile')"
                 @click="downloadActive"
               />
             </el-tooltip>
@@ -221,7 +223,7 @@ function downloadActive() {
       />
       <div v-else class="flex h-full overflow-auto codegen-preview__code">
         <pre
-          class="m-0 text-xs/5 select-none text-right px-2 text-gray-300 sticky left-0 bg-white"
+          class="m-0 text-xs/5 select-none text-right px-2 text-fg-subtle sticky left-0 bg-bg-card"
           >{{ lineNumbers }}</pre>
         <!-- highlight 输出由本组件构造（escapeHtml / hljs.highlight），不存在用户注入面 -->
         <!-- eslint-disable-next-line vue/no-v-html -->

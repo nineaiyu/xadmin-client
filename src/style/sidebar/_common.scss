@@ -44,6 +44,9 @@
       align-items: center;
     }
 
+    /* 保留 !important：菜单图标是后端下发的任意 SVG 字符串（ReIcon 的
+       .svg-raw-icon 只清 width/height），字符串内联 style="fill:..." 会压过
+       普通声明，此处必须以 important 强制跟随菜单前景色 */
     .svg-raw-icon svg path {
       fill: currentcolor !important;
     }
@@ -119,11 +122,14 @@
   }
 
   .main-hidden {
-    margin-left: 0 !important;
+    margin-left: 0;
 
     .fixed-header {
-      width: 100% !important;
+      width: 100%;
 
+      /* 保留 !important：页签最大化（main-hidden）时顶栏已隐藏，lay-content 的
+         内联 padding-top（calc(chromeHeight)）不知情仍按「顶栏+页签」让位——
+         本规则以内联样式为对手，把让位收敛到页签条高度（37px） */
       + .app-main {
         padding-top: 37px !important;
       }
@@ -148,11 +154,11 @@
     bottom: 0;
     left: 0;
     z-index: 1001;
-    width: $sideBarWidth !important;
+    width: $sideBarWidth;
     height: 100%;
     overflow: visible;
     font-size: 0;
-    background: var(--sidebar) !important;
+    background: var(--sidebar);
     border-right: 1px solid var(--pure-theme-sidebar-border);
 
     /* 展开动画 */
@@ -164,7 +170,7 @@
     }
 
     .scrollbar-wrapper {
-      overflow-x: hidden !important;
+      overflow-x: hidden;
     }
 
     .el-scrollbar__bar.is-vertical {
@@ -211,7 +217,7 @@
       --el-menu-level-padding: var(--nav-item-indent);
 
       height: 100%;
-      background-color: transparent !important;
+      background-color: transparent;
       border: none;
     }
 
@@ -222,7 +228,7 @@
       /* 项间纵距（margin-bottom 2px）：行步进 = 项高 + 该值 */
       margin-bottom: var(--nav-item-margin-y);
       color: var(--pure-theme-menu-text);
-      background-color: transparent !important;
+      background-color: transparent;
 
       /* 悬停/激活反馈节奏（0.15s；EP 缺省为 0.3s） */
       transition:
@@ -230,10 +236,10 @@
         color var(--duration-hover) var(--ease-standard);
 
       &:hover {
-        color: var(--pure-theme-menu-title-hover) !important;
+        color: var(--pure-theme-menu-title-hover);
 
         /* 悬停浅背景（主题令牌，深浅主题各自取色）：替代既往的强制透明 */
-        background-color: var(--pure-theme-menu-hover) !important;
+        background-color: var(--pure-theme-menu-hover);
       }
 
       div,
@@ -259,11 +265,11 @@
 
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
     }
 
     .is-active {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
       transition: color var(--duration-base) var(--ease-standard);
     }
 
@@ -278,15 +284,15 @@
       clear: both;
       margin: var(--nav-item-margin-y) 0;
       content: "";
-      background: var(--pure-theme-menu-active-bg) !important;
+      background: var(--pure-theme-menu-active-bg);
       border-radius: var(--nav-item-radius);
     }
 
     .el-menu .el-menu--inline .el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
-      min-width: $sideBarWidth !important;
+      min-width: $sideBarWidth;
       font-size: var(--font-size-base);
-      background-color: var(--pure-theme-sub-menu-bg) !important;
+      background-color: var(--pure-theme-sub-menu-bg);
     }
 
     /* 有子集的激活菜单左侧小竖条 */
@@ -327,7 +333,7 @@
       clear: both;
       margin: var(--nav-item-margin-y) 0;
       content: "";
-      background: var(--pure-theme-menu-active-bg) !important;
+      background: var(--pure-theme-menu-active-bg);
       border-radius: var(--nav-item-radius);
     }
   }
@@ -335,7 +341,7 @@
   /* vertical 菜单折叠 */
   .el-menu--vertical {
     .el-menu--popup {
-      background-color: var(--pure-theme-sub-menu-bg) !important;
+      background-color: var(--pure-theme-sub-menu-bg);
 
       .el-menu-item {
         span {
@@ -353,14 +359,14 @@
 
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
     }
 
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
-      min-width: $sideBarWidth !important;
+      min-width: $sideBarWidth;
       font-size: var(--font-size-base);
-      background-color: var(--pure-theme-sub-menu-bg) !important;
+      background-color: var(--pure-theme-sub-menu-bg);
     }
 
     .el-menu-item,
@@ -368,16 +374,19 @@
       height: var(--nav-item-height);
       line-height: var(--nav-item-height);
       color: var(--pure-theme-menu-text);
-      background-color: var(--pure-theme-sub-menu-bg);
 
+      /* 顶层项保持透明（悬停才出浅背景，见 `.sidebar-container` 的 transparent 规则）：
+         此处若统一铺 `--pure-theme-sub-menu-bg`，同特异性的后写规则会把顶层项
+         也刷成实心底色，悬停装饰失去「默认无背景」的对比。嵌套层底色由
+         `.el-sub-menu .el-menu-item` 单独给出。 */
       &:hover {
-        color: var(--pure-theme-menu-title-hover) !important;
-        background-color: var(--pure-theme-menu-hover) !important;
+        color: var(--pure-theme-menu-title-hover);
+        background-color: var(--pure-theme-menu-hover);
       }
     }
 
     .is-active {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
       transition: color var(--duration-base) var(--ease-standard);
     }
 
@@ -391,7 +400,7 @@
       inset: 0 var(--nav-item-inset);
       clear: both;
       content: "";
-      background: var(--pure-theme-menu-active-bg) !important;
+      background: var(--pure-theme-menu-active-bg);
       border-radius: var(--nav-item-radius);
     }
 
@@ -411,7 +420,7 @@
   /* horizontal 菜单 */
   .el-menu--horizontal {
     & > .el-sub-menu .el-sub-menu__icon-arrow {
-      position: static !important;
+      position: static;
       margin-top: 0;
     }
 
@@ -421,7 +430,7 @@
     }
 
     .el-menu--popup {
-      background-color: var(--pure-theme-sub-menu-bg) !important;
+      background-color: var(--pure-theme-sub-menu-bg);
 
       a > .is-active.submenu-title-noDropdown {
         border-bottom: none;
@@ -432,7 +441,7 @@
         background-color: var(--pure-theme-sub-menu-bg);
 
         &:hover {
-          background-color: var(--pure-theme-menu-hover) !important;
+          background-color: var(--pure-theme-menu-hover);
         }
 
         span {
@@ -444,37 +453,37 @@
         color: var(--pure-theme-menu-text);
 
         &:hover {
-          background-color: var(--pure-theme-menu-hover) !important;
+          background-color: var(--pure-theme-menu-hover);
         }
       }
     }
 
     /* 子菜单中还有子菜单 */
     .el-menu .el-sub-menu__title {
-      min-width: $sideBarWidth !important;
+      min-width: $sideBarWidth;
       font-size: var(--font-size-base);
-      background-color: var(--pure-theme-sub-menu-bg) !important;
+      background-color: var(--pure-theme-sub-menu-bg);
 
       &:hover {
-        color: var(--pure-theme-menu-title-hover) !important;
+        color: var(--pure-theme-menu-title-hover);
       }
     }
 
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
     }
 
     .nest-menu .el-sub-menu > .el-sub-menu__title,
     .el-menu-item {
       &:hover {
-        color: var(--pure-theme-menu-title-hover) !important;
-        background-color: var(--pure-theme-menu-hover) !important;
+        color: var(--pure-theme-menu-title-hover);
+        background-color: var(--pure-theme-menu-hover);
       }
     }
 
     .el-menu-item.is-active {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
       transition: color var(--duration-base) var(--ease-standard);
     }
 
@@ -488,7 +497,7 @@
       inset: 0 var(--nav-item-inset-mix);
       clear: both;
       content: "";
-      background: var(--pure-theme-menu-active-bg) !important;
+      background: var(--pure-theme-menu-active-bg);
       border-radius: var(--nav-item-radius);
     }
   }
@@ -499,7 +508,7 @@
     justify-content: space-around;
     width: 100%;
     height: var(--layout-header-h);
-    background: var(--pure-theme-menu-bg) !important;
+    background: var(--pure-theme-menu-bg);
 
     .horizontal-header-left {
       display: flex;
@@ -601,7 +610,7 @@
     }
 
     .el-menu {
-      width: 100% !important;
+      width: 100%;
       height: 100%;
       background-color: transparent;
       border: none;
@@ -617,18 +626,18 @@
       padding-left: 12px;
       line-height: var(--nav-item-height-horizontal);
       color: var(--pure-theme-menu-text);
-      background: var(--pure-theme-menu-bg) !important;
+      background: var(--pure-theme-menu-bg);
       border-radius: var(--radius-md);
 
       &:hover {
-        color: var(--pure-theme-menu-title-hover) !important;
+        color: var(--pure-theme-menu-title-hover);
 
         /* 顶栏菜单项悬停浅背景（主题令牌）：覆盖「菜单底色」强制声明 */
-        background: var(--pure-theme-menu-hover) !important;
+        background: var(--pure-theme-menu-hover);
       }
 
       svg {
-        position: static !important;
+        position: static;
       }
     }
 
@@ -636,12 +645,12 @@
     .el-menu-item.is-active,
     .is-active > .el-sub-menu__title,
     .is-active.submenu-title-noDropdown {
-      color: var(--pure-theme-menu-active-text) !important;
-      background: var(--pure-theme-menu-active-bg) !important;
+      color: var(--pure-theme-menu-active-text);
+      background: var(--pure-theme-menu-active-bg);
     }
 
     .is-active {
-      color: var(--pure-theme-sub-menu-active-text) !important;
+      color: var(--pure-theme-sub-menu-active-text);
       transition: color var(--duration-base) var(--ease-standard);
     }
   }
@@ -707,18 +716,20 @@
   }
 
   .el-menu--collapse .el-menu .el-sub-menu {
-    min-width: $sideBarWidth !important;
+    min-width: $sideBarWidth;
   }
 
-  /* 手机端 */
-  .mobile {
+  /* 手机端：`.app-wrapper` 前缀把特异性抬到 (0,4,1)，压过各布局文件在 mixin 之后
+     追加的同特异性 `.hideSidebar` 规则（fixed-header 宽度 / main-container 左距）——
+     移动端顶栏与内容恒全宽，不受桌面折叠态影响 */
+  .app-wrapper.mobile {
     .fixed-header {
-      width: 100% !important;
+      width: 100%;
       transition: width var(--duration-base);
     }
 
     .main-container {
-      margin-left: 0 !important;
+      margin-left: 0;
     }
 
     .sidebar-container {
@@ -734,5 +745,75 @@
         transition-duration: var(--duration-base);
       }
     }
+  }
+}
+
+/* 折叠态显示标题（设置面板 →「折叠态显示标题」）：竖排 / 混合 / 顶栏侧栏 /
+   双列次级栏共用同一套规则；此前只在 vertical partial 内实现，其余布局开关无效。 */
+@mixin sidebar-collapse-show-title {
+  .el-menu-item .collapse-show-title-text {
+    display: none;
+  }
+
+  .el-menu--collapse.sidebar-collapse-show-title {
+    > .el-sub-menu.collapse-show-title > .el-sub-menu__title {
+      flex-direction: column;
+      align-items: center;
+      height: auto;
+      min-height: 54px;
+      padding: 8px 0;
+      line-height: 1.4;
+
+      .sub-menu-icon {
+        height: 18px;
+        line-height: 1;
+      }
+
+      > span {
+        visibility: visible;
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-xs);
+        line-height: 1.4;
+        text-align: center;
+        white-space: nowrap;
+      }
+    }
+
+    /* 叶子项被 router-link 包裹（li 非菜单直接子级），选择器不能用直接子级 */
+    .el-menu-item {
+      height: auto;
+      min-height: 54px;
+      line-height: 1.4;
+
+      .el-menu-tooltip__trigger {
+        flex-direction: column;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .collapse-show-title-text {
+        display: block;
+        max-width: 48px;
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-xs);
+        line-height: 1.4;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+/* 折叠态悬停临时展开：四条竖排侧栏布局共用（浮层加宽，不写回存储） */
+@mixin sidebar-hover-expand($expandedWidth) {
+  .sidebar-container.sidebar-hover-expanded:not(.is-narrow-only) {
+    width: $expandedWidth !important;
+    box-shadow: var(--shadow-md);
   }
 }

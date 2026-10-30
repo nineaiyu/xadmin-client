@@ -308,6 +308,72 @@ test("表单版本：改 schema 生成新版本 → 历史查看 → 回滚生�
   }
 });
 
+test("表单设计器实时预览：未保存 schema 与联动即时生效", async ({ page }) => {
+  await login(page);
+  const token = await getAccessToken(page);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const formName = `E2E预览-${suffix}`;
+  let formPk = "";
+
+  try {
+    formPk = await createForm(page, token, {
+      name: formName,
+      is_active: true,
+      schema: {
+        fields: [
+          {
+            key: "kind",
+            label: "类型",
+            type: "select",
+            options: ["A", "B"]
+          },
+          { key: "reason", label: "说明", type: "input" },
+          { key: "amount", label: "金额", type: "number" }
+        ],
+        linkages: [
+          { target: "reason", field: "kind", op: "empty", effect: "hide" },
+          {
+            target: "amount",
+            field: "kind",
+            op: "notempty",
+            effect: "require"
+          }
+        ]
+      }
+    });
+
+    const dialog = await openDesigner(page, formName);
+    // 实时性：预览消费当前编辑态 schema（含尚未保存的行内改动）
+    const firstRow = dialog.locator(".el-table__row").first();
+    await firstRow.getByLabel("标签").fill("类型（未保存）");
+
+    await dialog.getByRole("tab", { name: "预览" }).click();
+    const preview = dialog.getByTestId("designer-preview-pane");
+    await expect(preview.getByLabel("类型（未保存）")).toBeVisible({
+      timeout: 10_000
+    });
+
+    // 联动求值与填报页同源：触发值为空时隐藏「说明」
+    await expect(preview.getByLabel("说明")).toHaveCount(0);
+    // 点击选择器可交互层（内层 input 被 placeholder 覆盖，直接点 input 会被拦截）
+    await preview.locator(".el-select__wrapper").first().click();
+    await page
+      .locator(".el-select-dropdown__item")
+      .filter({ hasText: /^A$/ })
+      .first()
+      .click();
+    await expect(preview.getByLabel("说明")).toBeVisible();
+    // 触发值非空后「金额」动态必填
+    const amountItem = preview
+      .locator(".el-form-item")
+      .filter({ hasText: "金额" })
+      .first();
+    await expect(amountItem).toHaveClass(/is-required/);
+  } finally {
+    await removeForm(page, token, formPk);
+  }
+});
+
 /**
  * 拖拽排序未入 E2E：sortablejs 的 forceFallback 手势依赖真实帧节奏，合成鼠标事件
  * 在 chromium/webkit 间不稳定（实测拖动成功与否随帧时序漂移）。拖拽与「上移/下移」

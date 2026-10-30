@@ -5,12 +5,12 @@ import { isSuccess } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
-import MenuPermissionTree from "./MenuPermissionTree.vue";
-import { menuFieldKey } from "../utils/treeKeys";
+import MenuPermissionTree from "@/components/ReMenuPermissionTree";
+import { menuFieldKey } from "@/components/ReMenuPermissionTree";
 import type {
   PermissionSubmitPayload,
   PermissionTreeNode
-} from "../utils/permissionTree";
+} from "@/components/ReMenuPermissionTree";
 import type { BaseApi } from "@/api/base";
 import type { Auths } from "@/router/utils";
 
@@ -139,6 +139,12 @@ function getCheckedMenu(pk?: string) {
       .finally(() => {
         loading.value = false;
       });
+    return;
+  }
+  if (pk) {
+    // 编辑态缺 retrieve：无法回显现有授权（列表行 menu 恒为空），空树上提交
+    // 会清空角色全部授权——按回显失败遮罩树并禁止交互（列表页已禁编辑，此处兜底）
+    handleLoadFailed();
     return;
   }
   applyInitialChecked();

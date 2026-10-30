@@ -1,9 +1,7 @@
 import "./reset.css";
-import { reactive, ref, type Ref } from "vue";
-import { useI18n } from "vue-i18n";
+import { ref } from "vue";
 import { userApi } from "@/api/identity/user";
-import { usePageAuth } from "@/router/utils";
-import { usePublicHooks } from "@/components/RePlusPage";
+import { defineListPage, usePublicHooks } from "@/components/RePlusPage";
 import { deviceDetection } from "@pureadmin/utils";
 import { useUserOptions } from "./useUserOptions";
 import { useUserAvatarUpload } from "./useUserAvatarUpload";
@@ -27,22 +25,25 @@ import { TAGGABLE_RESOURCE } from "@/api/system/tag";
  * - useUserRowHandlers    行级动作（重置 MFA/下线/通知/邀请/模拟用户）
  * - useUserPanel          用户抽屉（动作分组与资料卡，见 userPanel.ts / userActions.tsx）
  */
-export function useUser(tableRef: Ref) {
-  const { t } = useI18n();
-  const api = reactive(userApi);
+export function useUser() {
+  const page = defineListPage({
+    api: userApi,
+    localeName: "systemUser",
+    extraAuth: [
+      "resetPassword",
+      "empower",
+      "logout",
+      "unblock",
+      "resetMfa",
+      "preview",
+      "changeHistory",
+      "imBinding",
+      "invite",
+      "impersonate"
+    ]
+  });
+  const { api, auth, tableRef, t } = page;
 
-  const auth = usePageAuth([
-    "resetPassword",
-    "empower",
-    "logout",
-    "unblock",
-    "resetMfa",
-    "preview",
-    "changeHistory",
-    "imBinding",
-    "invite",
-    "impersonate"
-  ]);
   const switchLoadMap = ref({});
   const { switchStyle } = usePublicHooks();
   // 全局密码规则（重置密码与新增/编辑表单校验共用）
@@ -100,8 +101,7 @@ export function useUser(tableRef: Ref) {
   // 刷新会覆盖请求序号，导致首开内联元数据被丢弃（表格无列）。
 
   return {
-    api,
-    auth,
+    ...page,
     treeData,
     treeLoading,
     addOrEditOptions,

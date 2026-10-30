@@ -5,6 +5,7 @@ import {
   login,
   logout,
   openMenuPath,
+  openUserPanel,
   waitAppWebSocket
 } from "./helpers";
 
@@ -44,6 +45,10 @@ test("登录日志：存在当前登录记录", async ({ page }) => {
     "/system/logs/login/index"
   );
   await expect(page.locator(".el-table")).toBeVisible({ timeout: 15_000 });
+  // 强退作用域说明：纯 HTTP 会话需到在线会话页下线（页面必须写明）
+  await expect(page.getByTestId("login-log-logout-hint")).toContainText(
+    "在线会话"
+  );
   // 刚刚的登录应已落库
   await expect(
     page.locator(".el-table").getByText(ADMIN.username).first()
@@ -114,6 +119,12 @@ test("模块管理：保存后台覆盖并展示待重启差异", async ({ page 
   // 切到「仅内核」预设 → 保存（只落库，不重启）
   await page.getByTestId("module-preset").getByText("仅内核").click();
   await page.getByTestId("module-save").click();
+  // 保存前会弹差异确认（列出将停用的模块），确认后才落库
+  await page
+    .locator(".el-message-box")
+    .getByRole("button", { name: "确定" })
+    .first()
+    .click();
 
   const pending = page.getByTestId("module-pending");
   await expect(pending).toBeVisible({ timeout: 10_000 });
@@ -141,6 +152,26 @@ test("账户设置：头像下拉可进入个人信息页", async ({ page }) => 
   await expect(page.locator(".el-form, .el-tabs").first()).toBeVisible({
     timeout: 15_000
   });
+});
+
+test("用户管理：管理抽屉展示最近登录时间线", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  const table = page.locator(".el-table").first();
+  await expect(table).toBeVisible({ timeout: 15_000 });
+
+  const row = page.locator(".el-table__row").first();
+  const loginLogResponse = page.waitForResponse(
+    response =>
+      response.url().includes("/api/audit/logs/login") &&
+      response.request().method() === "GET",
+    { timeout: 15_000 }
+  );
+  const panel = await openUserPanel(page, row);
+  expect((await loginLogResponse).status()).toBe(200);
+  await expect(panel.getByText("最近登录")).toBeVisible();
+  // 有日志时渲染时间线，无日志时渲染空态；两者都证明区块已挂载
+  await expect(panel.locator(".el-timeline, .el-empty").first()).toBeVisible();
 });
 
 test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
@@ -186,6 +217,25 @@ test("用户管理：新增 → 搜索可见 → 删除", async ({ page }) => {
   await expect(
     page.locator(".el-table__row", { hasText: username })
   ).toHaveCount(0, { timeout: 15_000 });
+});
+
+test("用户管理：部门树选中整行高亮", async ({ page }) => {
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  const panel = page.locator(".user-tree-panel");
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  const node = panel.locator(".el-tree-node__content").first();
+  await expect(node).toBeVisible({ timeout: 15_000 });
+  await node.click();
+
+  const current = panel
+    .locator(".el-tree-node.is-current > .el-tree-node__content")
+    .first();
+  await expect(current).toBeVisible({ timeout: 10_000 });
+  const background = await current.evaluate(
+    element => getComputedStyle(element).backgroundColor
+  );
+  expect(background, "选中行应有可见背景").not.toBe("rgba(0, 0, 0, 0)");
 });
 
 test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async ({ page }) => {
@@ -267,8 +317,8 @@ test("岗位管理：新增 → 分配成员 → 搜索可见 → 删除", async
  */
 test("系统设置：打开后切其他页面不白屏（单元素根守护）", async ({ page }) => {
   await login(page);
-  await openMenuPath(page, ["系统管理"], "/system/setting/index");
-  await expect(page.getByText("系统设置").first()).toBeVisible({
+  await openMenuPath(page, ["系统设置"], "/settings/ledger/index");
+  await expect(page.getByText("设置台账").first()).toBeVisible({
     timeout: 15_000
   });
 

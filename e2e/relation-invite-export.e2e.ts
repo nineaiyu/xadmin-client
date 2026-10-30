@@ -140,7 +140,7 @@ test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) 
       data: {
         name: datasetName,
         bound_model: "identity.userinfo",
-        columns: ["username"]
+        columns: ["username", "gender"]
       }
     }
   );

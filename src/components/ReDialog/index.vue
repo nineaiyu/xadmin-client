@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import type { EventType, ArgsType, ButtonProps, DialogOptions } from "./type";
+import type { EventType, ArgsType, DialogOptions } from "./type";
 import { closeDialog, dialogStore, getDialogUid } from "./store";
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "~icons/ri/fullscreen-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import { useI18n } from "vue-i18n";
-import { getLayoutScrollElement } from "@/utils/dom";
-import { useScrollLock } from "@/hooks/useScrollLock";
+import { useOverlayFooter } from "@/components/overlay/useOverlayFooter";
+import { useOverlayScrollLock } from "@/components/overlay/useOverlayScrollLock";
 import { dialogDomProps } from "./attrs";
 
 defineOptions({
   name: "ReDialog"
 });
 
-const sureBtnMap = ref<Record<string | number, { loading?: boolean }>>({});
 /**
  * 每个弹层的全屏运行时状态（按 uid 隔离，多弹层并存互不串扰）。
  * 未命中时回退 `options.fullscreen` 初始值；每次 `addDialog` 分配新 uid，
@@ -45,79 +44,21 @@ function toggleFullscreen(options: DialogOptions, index: number) {
   eventsCallBack("fullscreenCallBack", { ...options, fullscreen: next }, index);
 }
 
-/**
- * 弹层打开期间锁定布局滚动容器：防止背景滚动穿透，并以滚动条槽位预留
- * （`scrollbar-gutter`）避免关闭后内容横向跳动；独立页（无布局滚动容器）
- * 不重复锁定——EP 内置 lock-scroll 已锁 body，避免双重补偿。
- */
-const overlayLocked = useScrollLock({ immediate: false });
-watch(
-  () => dialogStore.value.some(options => options.visible),
-  visible => {
-    if (!getLayoutScrollElement()) return;
-    overlayLocked.value = visible;
+useOverlayScrollLock(dialogStore);
+
+const {
+  sureBtnMap,
+  footerButtons,
+  handleBeforeClose,
+  handleClose: closeOverlay
+} = useOverlayFooter<DialogOptions>({
+  close: closeDialog,
+  getUid: getDialogUid,
+  t,
+  clearRuntimeState: (options, index) => {
+    const uid = getDialogUid(options) ?? index;
+    delete fullscreenMap.value[uid];
   }
-);
-const footerButtons = computed(() => {
-  return (options: DialogOptions) => {
-    return (options?.footerButtons?.length ?? 0) > 0
-      ? options.footerButtons
-      : ([
-          {
-            label: t("buttons.cancel"),
-            text: true,
-            bg: true,
-            btnClick: ({ dialog: { options, index } }) => {
-              const done = () =>
-                handleCloseDialog(options, index, { command: "cancel" });
-              if (options?.beforeCancel && isFunction(options?.beforeCancel)) {
-                options.beforeCancel(done, { options, index });
-              } else {
-                done();
-              }
-            }
-          },
-          {
-            label: t("buttons.save"),
-            type: "primary",
-            text: true,
-            bg: true,
-            // 稳定标识：footer loading 按 code 判定（替代数组下标魔法数，
-            // 自定义 footerButtons 时不会把转圈落到错误按钮上）
-            code: "sure",
-            popconfirm: options?.popconfirm,
-            btnClick: ({ dialog: { options, index } }) => {
-              // 以弹层唯一标识（回退下标）作为状态键，避免多弹层并存时下标漂移串状态
-              const uid = getDialogUid(options) ?? index;
-              if (options?.sureBtnLoading) {
-                sureBtnMap.value[uid] = Object.assign(
-                  {},
-                  sureBtnMap.value[uid],
-                  {
-                    loading: true
-                  }
-                );
-              }
-              const closeLoading = () => {
-                // 条目可能已被关闭路径删除（done() 先于 closeLoading 调用，
-                // 如表单助手 finally 里补关 loading）：判空兜底，避免
-                // "Cannot set properties of undefined" 把 finally 变成未捕获拒绝
-                if (options?.sureBtnLoading && sureBtnMap.value[uid]) {
-                  sureBtnMap.value[uid].loading = false;
-                }
-              };
-              const done = () => {
-                handleCloseDialog(options, index, { command: "sure" });
-              };
-              if (options?.beforeSure && isFunction(options?.beforeSure)) {
-                options.beforeSure(done, { options, index, closeLoading });
-              } else {
-                done();
-              }
-            }
-          }
-        ] as Array<ButtonProps>);
-  };
 });
 
 const fullscreenClass = computed(() => {
@@ -145,11 +86,7 @@ function handleCloseDialog(
   index: number,
   args?: ArgsType
 ) {
-  const uid = getDialogUid(options) ?? index;
-  // 关闭即清理该弹层的运行时状态（loading / 全屏），避免无界累积与重开残留
-  delete sureBtnMap.value[uid];
-  delete fullscreenMap.value[uid];
-  closeDialog(options, index, args);
+  closeOverlay(options, index, args);
 }
 
 function handleClose(
@@ -189,6 +126,9 @@ function contentProps(options: DialogOptions) {
     class="pure-dialog"
     :fullscreen="isFullscreen(options, index)"
     :close-on-press-escape="options.closeOnPressEscape ?? true"
+    :before-close="
+      (done: (cancel?: boolean) => void) => handleBeforeClose(options, done)
+    "
     @closed="handleClose(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
@@ -224,7 +164,14 @@ function contentProps(options: DialogOptions) {
       v-bind="contentProps(options)"
       :is="options.contentRenderer?.({ options, index })"
       @change="(values: unknown) => handleChange(options, index, values)"
-      @close="(args: ArgsType) => handleClose(options, index, args)"
+      @close="
+        (args: ArgsType) =>
+          // 内容组件主动关闭同样走 beforeClose 守卫（与遮罩/ESC/右上角关闭同口径）：
+          // 未保存改动的确认不能因关闭入口不同而被绕过；done(true) = 取消关闭
+          handleBeforeClose(options, (cancel?: boolean) => {
+            if (!cancel) handleClose(options, index, args);
+          })
+      "
     />
     <!-- footer -->
     <template v-if="!options?.hideFooter" #footer>

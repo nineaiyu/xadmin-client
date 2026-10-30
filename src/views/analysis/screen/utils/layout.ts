@@ -233,6 +233,27 @@ export function normalizePanes(
   return panes.map(pane => ({ ...paneBody(pane), ...clampBox(pane) }));
 }
 
+/** 媒体窗格类型：url 必填（服务端对空 url 一律拒绝，见 screen_layout.py 媒体段） */
+const MEDIA_PANE_TYPES: readonly ScreenPaneType[] = ["image", "video", "html"];
+
+/**
+ * 保存前预检：剔除「尚未配置地址」的媒体窗格。
+ *
+ * 前端把空 url 定义为草稿态（画布有占位提示，见 `isValidPaneImageUrl`），服务端却把
+ * image/video/html 的空 url 判非法——不剔除会让「拖进来先摆位置、回头再填地址」的
+ * 正常编辑路径阻断整页保存。剔除只发生在载荷层（画布保留窗格供继续编辑），剔除数
+ * 由调用方提示。
+ */
+export function dropUnconfiguredMediaPanes(
+  panes: readonly ScreenLayoutPane[]
+): { panes: ScreenLayoutPane[]; dropped: number } {
+  const kept = panes.filter(
+    pane =>
+      !MEDIA_PANE_TYPES.includes(pane.type) || Boolean((pane.url ?? "").trim())
+  );
+  return { panes: kept, dropped: panes.length - kept.length };
+}
+
 /** 窗格标识：仅用于定位与列表 key（不落业务语义） */
 export function genPaneId(): string {
   const random = globalThis.crypto?.randomUUID?.();

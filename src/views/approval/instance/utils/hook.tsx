@@ -10,14 +10,14 @@ import { useInstanceColumnFormats } from "./useInstanceColumnFormats";
 import { useTagAssign } from "@/views/system/components/useTagAssign";
 import { TAGGABLE_RESOURCE } from "@/api/system/tag";
 
-/** 页签取值域；ongoing = 全部在途（管理视角，按 ongoing 权限点显示） */
-export type InstanceScope = "pending" | "mine" | "done" | "ongoing";
+/** 页签取值域；cc = 抄送我（只读知会）；ongoing = 全部在途（管理视角） */
+export type InstanceScope = "pending" | "mine" | "done" | "cc" | "ongoing";
 
 // 页面级复用入口（index.vue / 面板按钮经此导入，保持原导出路径不变）
 export { openStartInstanceDialog, openInstanceDetail } from "./instanceDialogs";
 
 /**
- * 流程审批面板公共装配（待我审批 / 我的申请 / 已办 / 全部在途四页签同构）：
+ * 流程审批面板公共装配（待我审批 / 我的申请 / 已办 / 抄送我 / 全部在途五页签同构）：
  * 审批动作弹窗（useInstanceActions）、按钮组（useInstanceButtons）、列渲染
  * （useInstanceColumnFormats）与发起/详情弹层（instanceDialogs 页面级复用）；
  * 返回值形状与拆分前一致（InstancePanel.vue 无需改动）。唯一差异：scope 过滤

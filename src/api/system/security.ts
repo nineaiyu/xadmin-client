@@ -1,10 +1,5 @@
 import { BaseApi } from "@/api/base";
-import type {
-  BaseResult,
-  DataListResult,
-  DetailResult,
-  Envelope
-} from "@/api/types";
+import type { BaseResult, DataListResult, DetailResult } from "@/api/types";
 
 /**
  * 安全域接口集合。
@@ -34,11 +29,38 @@ export type AccountRiskStats = {
   actions: AccountRiskHandleAction[];
 };
 
+/** 异步巡检任务状态（progress/stage 运行期可读，result 终态回填） */
+export type AccountRiskScanStatus = {
+  task_id: string;
+  status: "PENDING" | "RUNNING" | "SUCCESS" | "FAILURE" | "REVOKED";
+  progress: number;
+  stage: string;
+  result: {
+    total: number;
+    created: number;
+    updated: number;
+    resolved: number;
+  } | null;
+  error: string;
+};
+
 class AccountRiskApi extends BaseApi {
+  /** 投递异步巡检任务（进度/结果经 scanStatus 轮询） */
   scan = () => {
-    return this.request<
-      DetailResult<{ total: number; created: number; resolved: number }>
-    >("post", {}, {}, `${this.baseApi}/scan`);
+    return this.request<DetailResult<{ task_id: string }>>(
+      "post",
+      {},
+      {},
+      `${this.baseApi}/scan`
+    );
+  };
+  scanStatus = (taskId: string) => {
+    return this.request<DetailResult<AccountRiskScanStatus>>(
+      "get",
+      { task_id: taskId },
+      {},
+      `${this.baseApi}/scan-status`
+    );
   };
   stats = (params?: object) => {
     return this.request<DetailResult<AccountRiskStats>>(
@@ -106,17 +128,6 @@ export type LoginPolicyPreview = {
   mfa_usable?: boolean | null;
 };
 
-/** choices 端点下发的选项条目（label 由后端元数据给出） */
-export type LoginPolicyChoiceOption = { value: string; label: string };
-
-/** 登录策略选项元数据：choices_dict 在响应顶层（不在 data 槽位），
- *  与 userinfo / field 等 choices 消费方同口径 */
-export type LoginPolicyChoicesResult = Omit<Envelope, "data"> & {
-  choices_dict: Partial<
-    Record<"target_type" | "action", LoginPolicyChoiceOption[]>
-  >;
-};
-
 class LoginPolicyApi extends BaseApi {
   preview = (data?: { username?: string; ip?: string; when?: string }) => {
     return this.request<DetailResult<LoginPolicyPreview>>(
@@ -124,15 +135,6 @@ class LoginPolicyApi extends BaseApi {
       {},
       data ?? {},
       `${this.baseApi}/preview`
-    );
-  };
-  /** 选项元数据（白名单端点，登录即可访问）；失败由表单回落 i18n 清单 */
-  choices = () => {
-    return this.request<LoginPolicyChoicesResult>(
-      "get",
-      {},
-      {},
-      `${this.baseApi}/choices`
     );
   };
 }

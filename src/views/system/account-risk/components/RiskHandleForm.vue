@@ -11,6 +11,11 @@ import type { AccountRiskHandleAction } from "@/api/system/security";
  */
 const { t } = useI18n();
 
+const props = defineProps<{
+  /** 服务端 stats 下发的可用动作；缺省回退本地全集（首屏/权限受限场景） */
+  actions?: string[];
+}>();
+
 /** 动作清单：值为服务端枚举，展示用 i18n 文案（不依赖后端下发的英文 label） */
 const ACTION_KEYS: Array<{ value: AccountRiskHandleAction; key: string }> = [
   { value: "notify", key: "accountRisk.actionNotify" },
@@ -20,9 +25,12 @@ const ACTION_KEYS: Array<{ value: AccountRiskHandleAction; key: string }> = [
   { value: "ignore", key: "accountRisk.actionIgnore" },
   { value: "resolve", key: "accountRisk.actionResolve" }
 ];
-const actionOptions = computed(() =>
-  ACTION_KEYS.map(item => ({ value: item.value, label: t(item.key) }))
-);
+const actionOptions = computed(() => {
+  const allowed = props.actions?.length
+    ? ACTION_KEYS.filter(item => props.actions?.includes(item.value))
+    : ACTION_KEYS;
+  return allowed.map(item => ({ value: item.value, label: t(item.key) }));
+});
 
 const form = reactive<{ action: AccountRiskHandleAction; remark: string }>({
   action: "notify",

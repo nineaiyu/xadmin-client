@@ -51,7 +51,8 @@ export function useKnowledgeDocument({
 
   const confirmRemove = (row: KnowledgeRow) => {
     confirm(t("aiKnowledge.deleteConfirm"), {
-      title: t("buttons.delete")
+      title: t("buttons.delete"),
+      danger: true
     }).then(ok => {
       if (ok) removeDocument(row);
     });

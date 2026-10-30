@@ -20,6 +20,15 @@ import {
   describeRule,
   type RuleDescribeContext
 } from "./utils/ruleSummary";
+import {
+  appendRule,
+  copyRule,
+  removeRule,
+  replaceRule,
+  stripRuleIds,
+  withRuleIds,
+  type EditableRule
+} from "./utils/ruleRows";
 import type {
   FieldLookupItem,
   FieldLookupNode,
@@ -56,9 +65,11 @@ const emit = defineEmits<{ change: [rules: FieldRuleRow[]] }>();
 
 const { t } = useI18n();
 
-const rules = ref<FieldRuleRow[]>([]);
-/** 编辑中的行下标；等于 rules.length 表示「新增」编辑卡片 */
-const editingIndex = ref(-1);
+const rules = ref<EditableRule[]>([]);
+/** 编辑中的行稳定身份；null 表示不在编辑既有行 */
+const editingRid = ref<number | null>(null);
+/** 新增规则卡片（编辑身份与既有行互斥） */
+const creating = ref(false);
 const draft = ref<FieldRuleRow>({
   table: "*",
   field: "",
@@ -138,9 +149,12 @@ let lastEmitted = "";
 watch(
   () => props.dataList,
   value => {
-    const next = (value ?? []).map(rule => ({ ...rule }));
-    if (JSON.stringify(next) === lastEmitted) return;
+    const next = withRuleIds(value ?? []);
+    if (JSON.stringify(stripRuleIds(next)) === lastEmitted) return;
+    // 外部整体替换：旧身份作废，编辑中的草稿不能落到新数据上
     rules.value = next;
+    editingRid.value = null;
+    creating.value = false;
   },
   { immediate: true }
 );
@@ -148,7 +162,7 @@ watch(
 watch(
   rules,
   value => {
-    const payload = value.map(rule => ({ ...rule }));
+    const payload = stripRuleIds(value);
     lastEmitted = JSON.stringify(payload);
     emit("change", payload);
   },
@@ -159,36 +173,46 @@ function emptyRule(type = "", match = ""): FieldRuleRow {
   return { table: "", field: "", match, type, value: "" };
 }
 
+function isEditing(rule: EditableRule): boolean {
+  return editingRid.value === rule._rid;
+}
+
 function handleAdd() {
   draft.value = emptyRule();
-  editingIndex.value = rules.value.length;
+  creating.value = true;
+  editingRid.value = null;
 }
 
-function handleEdit(index: number) {
-  draft.value = { ...rules.value[index] };
-  editingIndex.value = index;
+function handleEdit(rule: EditableRule) {
+  const { _rid, ...source } = rule;
+  draft.value = source;
+  editingRid.value = _rid;
+  creating.value = false;
 }
 
-function handleCopy(index: number) {
-  rules.value.splice(index + 1, 0, { ...rules.value[index] });
+function handleCopy(rule: EditableRule) {
+  rules.value = copyRule(rules.value, rule._rid);
 }
 
-function handleRemove(index: number) {
-  rules.value.splice(index, 1);
-  editingIndex.value = -1;
+function handleRemove(rule: EditableRule) {
+  rules.value = removeRule(rules.value, rule._rid);
+  // 编辑中的行被删除：草稿随之作废，避免提交时覆盖到别的规则
+  if (isEditing(rule)) handleCancelEdit();
 }
 
 function handleCancelEdit() {
-  editingIndex.value = -1;
+  editingRid.value = null;
+  creating.value = false;
 }
 
 function handleSubmitEdit() {
-  if (editingIndex.value < rules.value.length) {
-    rules.value.splice(editingIndex.value, 1, { ...draft.value });
-  } else {
-    rules.value.push({ ...draft.value });
+  if (creating.value) {
+    rules.value = appendRule(rules.value, draft.value);
+  } else if (editingRid.value !== null) {
+    rules.value = replaceRule(rules.value, editingRid.value, draft.value);
   }
-  editingIndex.value = -1;
+  editingRid.value = null;
+  creating.value = false;
 }
 
 /** 常用模板：只预置类型与匹配符；「全部数据」直接落成完整规则 */
@@ -196,7 +220,7 @@ function applyPreset(preset: RulePreset) {
   if (preset.wildcard) {
     const exists = rules.value.some(rule => rule.type === preset.type);
     if (!exists) {
-      rules.value.push({
+      rules.value = appendRule(rules.value, {
         table: "*",
         field: "*",
         match: "all",
@@ -208,8 +232,12 @@ function applyPreset(preset: RulePreset) {
     return;
   }
   draft.value = emptyRule(preset.type, preset.match);
-  editingIndex.value = rules.value.length;
+  creating.value = true;
+  editingRid.value = null;
 }
+
+/** 试算面板只消费纯规则行（编辑器内部身份不外泄） */
+const plainRules = computed(() => stripRuleIds(rules.value));
 </script>
 
 <template>
@@ -232,7 +260,7 @@ function applyPreset(preset: RulePreset) {
         </el-popover>
       </div>
       <el-button
-        v-if="editingIndex === -1"
+        v-if="!creating && editingRid === null"
         data-testid="rule-add"
         :icon="useRenderIcon(AddFill)"
         size="small"
@@ -258,17 +286,17 @@ function applyPreset(preset: RulePreset) {
       </el-button>
     </div>
 
-    <div v-if="rules.length || editingIndex >= 0" class="rule-list">
+    <div v-if="rules.length || creating" class="rule-list">
       <div
         v-for="(rule, index) in rules"
-        :key="`${index}-${rule.table}-${rule.field}`"
+        :key="rule._rid"
         class="rule-row"
         data-testid="rule-row"
-        :class="{ 'is-editing': editingIndex === index }"
+        :class="{ 'is-editing': isEditing(rule) }"
       >
         <RuleEditForm
-          v-if="editingIndex === index"
-          :key="`edit-${index}`"
+          v-if="isEditing(rule)"
+          :key="rule._rid"
           :field-lookups-data="ruleList"
           :model-value="draft"
           :values-data="valuesData"
@@ -291,7 +319,7 @@ function applyPreset(preset: RulePreset) {
               link
               size="small"
               type="primary"
-              @click="handleEdit(index)"
+              @click="handleEdit(rule)"
             />
             <el-button
               v-tippy="t('systemPermission.copyRule')"
@@ -300,11 +328,11 @@ function applyPreset(preset: RulePreset) {
               link
               size="small"
               type="primary"
-              @click="handleCopy(index)"
+              @click="handleCopy(rule)"
             />
             <el-popconfirm
               :title="t('buttons.confirmDelete')"
-              @confirm="handleRemove(index)"
+              @confirm="handleRemove(rule)"
             >
               <template #reference>
                 <el-button
@@ -320,7 +348,7 @@ function applyPreset(preset: RulePreset) {
         </template>
       </div>
 
-      <div v-if="editingIndex === rules.length" class="rule-row is-editing">
+      <div v-if="creating" class="rule-row is-editing">
         <RuleEditForm
           :key="`new-${rules.length}`"
           :field-lookups-data="ruleList"
@@ -345,7 +373,7 @@ function applyPreset(preset: RulePreset) {
       :form-value="formValue"
       :menus="menus"
       :rule-list="ruleList"
-      :rules="rules"
+      :rules="plainRules"
     />
   </section>
 </template>

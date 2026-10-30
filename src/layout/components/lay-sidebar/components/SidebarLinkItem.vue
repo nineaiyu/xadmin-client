@@ -20,7 +20,7 @@ const getLinkProps = (item: menuType) => {
     return {
       href: item.name,
       target: "_blank",
-      rel: "noopener"
+      rel: "noopener noreferrer"
     };
   }
   if (Object.keys(menuQuery.value).length > 0) {

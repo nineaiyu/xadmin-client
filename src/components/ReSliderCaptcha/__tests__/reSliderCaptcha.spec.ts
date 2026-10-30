@@ -82,6 +82,40 @@ describe("ReSliderCaptcha 滑块验证码", () => {
     expect(wrapper.emitted("move")?.at(-1)?.[0]).toMatchObject({ moveX: 154 });
   });
 
+  it("键盘：方向键移动后 Enter 可提交（不再只能拖拽）", async () => {
+    const wrapper = mountCaptcha({ isSlot: true });
+    const action = wrapper.find(".re-slider-captcha__action");
+    await action.trigger("keydown", { key: "ArrowRight" });
+    expect(wrapper.emitted("move")?.length).toBe(1);
+    expect(wrapper.emitted("end")).toBeUndefined();
+    await action.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("end")?.length).toBe(1);
+    expect(wrapper.emitted("end")?.[0]?.[0]).toBeInstanceOf(KeyboardEvent);
+  });
+
+  it("键盘：未移动时 Enter 不提交空答案", async () => {
+    const wrapper = mountCaptcha({ isSlot: true });
+    await wrapper.find(".re-slider-captcha__action").trigger("keydown", {
+      key: "Enter"
+    });
+    expect(wrapper.emitted("end")).toBeUndefined();
+  });
+
+  it("pointercancel 复位拖动状态（移动端手势打断）", async () => {
+    const wrapper = mountCaptcha();
+    wrapper
+      .find(".re-slider-captcha__action")
+      .element.dispatchEvent(pointer("pointerdown", { clientX: 0 }));
+    await nextTick();
+    window.dispatchEvent(pointer("pointercancel", { clientX: 40 }));
+    await nextTick();
+    // 取消不是「抬起」：不提交半截答案，滑块回到起点
+    expect(wrapper.emitted("end")).toBeUndefined();
+    expect(
+      wrapper.find(".re-slider-captcha__action").attributes("style")
+    ).toContain("left: 0px");
+  });
+
   it("外部把 v-model 置回 false 时复位", async () => {
     const wrapper = mountCaptcha({ modelValue: true });
     await nextTick();

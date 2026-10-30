@@ -143,6 +143,7 @@ const SERVER_PERSISTED_FIELDS = [
   "Stretch",
   "HeaderAutoHide",
   "CompactMode",
+  "UiSize",
   "TagsMiddleClickClose",
   "TagsWheelSwitch",
   "DynamicTitle",
@@ -164,7 +165,7 @@ const responsiveSource = read("src/utils/responsive.ts");
 const useLayoutSource =
   read("src/layout/hooks/useLayout.ts") +
   read("src/layout/hooks/layoutPreferences.ts");
-const siteConfigSource = read("src/store/modules/siteConfig.ts");
+const siteConfigFieldsSource = read("src/store/modules/siteConfigFields.ts");
 const diffSource = read("src/utils/preferenceDiff.ts");
 
 /** 复制偏好（全量快照）覆盖的存储命名空间：`SNAPSHOT_NAMESPACES = ["locale", "layout", ...]` */
@@ -217,11 +218,12 @@ function checkField(pascal: string, namespace: "configure" | "layout") {
     ).has(key),
     responsive: new RegExp(`\\b${key}\\b`).test(responsiveSource),
     useLayout: new RegExp(`\\b${key}\\b`).test(useLayoutSource),
-    read映射: new RegExp(`\\b${key}:\\s*config\\.${pascal}`).test(
-      siteConfigSource
+    // 读写映射已收敛到 siteConfigFields 单一注册表
+    read映射: new RegExp(`\\[\\s*"${pascal}",\\s*"${key}",`).test(
+      siteConfigFieldsSource
     ),
-    write映射: new RegExp(`\\b${pascal}:\\s*${namespace}\\.${key}`).test(
-      siteConfigSource
+    write映射: new RegExp(`\\[\\s*"${pascal}",\\s*"${key}",`).test(
+      siteConfigFieldsSource
     ),
     preferenceDiff: snapshotNamespaces.has(namespace),
     "platform-config.json": pascal in platformConfig,

@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { cardRenderHeight } from "@/utils/cardHeight";
 import { ChartCardAsync as ChartCard } from "@/views/dashboard/components/ChartCardAsync";
 import type { DashboardCard } from "@/api/dataset/datasets";
 import type { ScreenLayoutPane } from "@/api/dataset/analysis";
-import type { ExportedImage } from "@/utils/imageExport";
 import {
   clampRotate,
   paneAnimationClass,
@@ -13,6 +12,7 @@ import {
 } from "../utils/paneEffects";
 import { renderRichText } from "../utils/richText";
 import { injectScreenDark } from "../utils/screenTheme";
+import { usePaneCards } from "../utils/paneCards";
 import PaneMediaView from "./PaneMediaView.vue";
 
 /**
@@ -61,74 +61,18 @@ const chartAttrs = computed(() =>
   screenDark.value ? { forceDark: true } : { forceLight: true }
 );
 
-type CardHandle = {
-  loadData?: () => void;
-  applyData?: (_entry: {
-    kind?: string;
-    data?: unknown;
-    detail?: string;
-  }) => Promise<void> | void;
-  renderImage?: () => Promise<ExportedImage | null>;
-};
-const cardRefs = ref<Record<string, CardHandle | undefined>>({});
-const setCardRef = (cardId: string) => (el: unknown) => {
-  const handle = el as CardHandle | null;
-  if (handle) cardRefs.value[cardId] = handle;
-};
-
 const paneTitle = computed(() => props.pane.title || props.dashboardName || "");
 const hasContent = computed(
   () => props.pane.type !== "dashboard" || (props.cards ?? []).length > 0
 );
 
-/** 指标卡窗格 → 合成卡（复用 ChartCard 的取数/WS 注入内核；card id 即窗格 pk，
- * 与服务端 screen_data 对 metric 窗格的合成口径一致） */
-const metricCard = computed<DashboardCard | null>(() => {
-  const pane = props.pane;
-  if (pane.type !== "metric" || !pane.dataset) return null;
-  return {
-    id: pane.pk,
-    dataset: pane.dataset,
-    title: paneTitle.value || "",
-    chart_type: "metric",
-    metric: pane.metric ?? "count",
-    value_field: pane.value_field ?? ""
-  };
-});
-
-/** 实际持有卡片的清单：仪表盘窗格取 cards，指标卡取合成卡（刷新/注入/导出共用） */
-const innerCards = computed<DashboardCard[]>(() =>
-  props.pane.type === "metric"
-    ? metricCard.value
-      ? [metricCard.value]
-      : []
-    : (props.cards ?? [])
-);
-
-/** 定时刷新可见卡片（投屏 refresh / 设计器「刷新数据」） */
-const refresh = () => {
-  for (const card of innerCards.value) cardRefs.value[card.id]?.loadData?.();
-};
-
-/** 注入单卡数据帧（screen_data 推送通道）：窗格持有该卡时渲染并返回 true */
-const applyCardData = (
-  cardId: string,
-  entry: { kind?: string; data?: unknown; detail?: string }
-) => {
-  if (!innerCards.value.some(card => card.id === cardId)) return false;
-  void cardRefs.value[cardId]?.applyData?.(entry);
-  return true;
-};
-
-/** 逐卡渲染图片（投屏导出 ZIP 用；非图表卡返回 null 由调用方计入跳过数） */
-const renderImages = async () => {
-  const images: { cardId: string; title: string; image: ExportedImage }[] = [];
-  for (const card of innerCards.value) {
-    const image = await cardRefs.value[card.id]?.renderImage?.();
-    if (image) images.push({ cardId: card.id, title: card.title, image });
-  }
-  return images;
-};
+/** 卡片句柄与数据动作（指标卡合成 / 刷新 / 帧注入 / 图片导出，见 utils/paneCards.ts） */
+const { setCardRef, innerCards, refresh, applyCardData, renderImages } =
+  usePaneCards({
+    pane: computed(() => props.pane),
+    cards: computed(() => props.cards),
+    paneTitle
+  });
 
 defineExpose({ refresh, applyCardData, renderImages });
 

@@ -1,4 +1,5 @@
 import type { Ref, VNode } from "vue";
+import { deviceDetection } from "@pureadmin/utils";
 import { addDialog } from "@/components/ReDialog";
 
 import { dialogSize } from "@/components/ReDialog/size";
@@ -28,8 +29,9 @@ export function openActionDialog<T>({
 }) {
   addDialog({
     title,
-    // 档位口径：动作弹窗只有一段文本/一个选人控件，固定 md 宽度与既有实现一致
-    width: dialogSize("md"),
+    // 移动端全屏：动作弹窗含选人/意见输入，640px 在小屏会横向溢出
+    width: deviceDetection() ? "100%" : dialogSize("md"),
+    fullscreen: deviceDetection(),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,

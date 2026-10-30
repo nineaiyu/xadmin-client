@@ -140,6 +140,27 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   });
 });
 
+test("命令面板问 AI：搜索词直达助手页并预填输入框", async ({ page }) => {
+  await login(page);
+  // 前置：首个用例已开启全局开关并激活档案（同库串行），助手页输入框可用
+  await page.keyboard.press("Control+k");
+  const input = page.locator(".pure-search-dialog input").first();
+  await input.fill("命令面板预填验证问题");
+
+  const askEntry = page.getByTestId("ask-ai-entry");
+  await expect(askEntry).toBeVisible({ timeout: 10_000 });
+  await askEntry.click();
+
+  await expect(page).toHaveURL(/#\/integration\/ai\/index/, {
+    timeout: 15_000
+  });
+  // 预填落在问答入口的输入框；q 消费后从 URL 移除（刷新不重复预填）
+  const askInput = page.getByTestId("ai-ask-input");
+  await expect(askInput).toBeVisible({ timeout: 15_000 });
+  await expect(askInput).toHaveValue("命令面板预填验证问题");
+  await expect(page).not.toHaveURL(/q=/);
+});
+
 test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await login(page);
 
@@ -359,4 +380,37 @@ test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => 
   // 资料卡：接口地址/模型/密钥状态取自列表行快照
   await expect(panel).toContainText("stub-model");
   await expect(panel).toContainText("已配置");
+});
+
+test("首页 AI 日报卡：指标芯片渲染 + 失败任务直达任务日志", async ({
+  page
+}) => {
+  await login(page);
+
+  // 站点级开关：开启后首页渲染整卡（双浏览器共享库，用例结束复位避免影响视觉基线）
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_DAILY_REPORT_ENABLED: true
+  });
+  expect(saved.code).toBe(1000);
+  try {
+    // 开关经 pub/sub 异步回写 settings：留缓冲后整页进入首页读最新状态。
+    // 登录已落首页时同 URL 的 goto 不算文档导航（hash 路由不重跑取数），必须显式 reload
+    await page.waitForTimeout(1_500);
+    await page.goto(`${FRONT_URL}/#/welcome`);
+    await page.reload();
+    const card = page.getByTestId("ai-daily-report");
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await expect(
+      card.getByTestId("ai-daily-report-metric-approval_pending")
+    ).toBeVisible();
+    // 失败任务芯片可直达任务日志页（原写死空链接，点击无响应）
+    await card.getByTestId("ai-daily-report-metric-task_failed_24h").click();
+    await expect(page).toHaveURL(/#\/system\/celery\/logs\/index/, {
+      timeout: 15_000
+    });
+  } finally {
+    await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+      AI_DAILY_REPORT_ENABLED: false
+    }).catch(() => undefined);
+  }
 });

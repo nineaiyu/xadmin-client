@@ -8,6 +8,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
+import { syncSelectInputsA11y } from "@/utils/tableA11y";
 import { useConfigureStorage } from "../../lay-setting/hooks/useConfigureStorage";
 import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
 import WorldClockIcon from "~icons/fluent-mdl2/world-clock";
@@ -35,6 +36,11 @@ function startClock() {
   now.value = new Date();
   stopClock();
   timer = setInterval(() => (now.value = new Date()), 1000);
+  // 时区下拉的可访问名（EP el-select 无 props 入口，渲染后补名）
+  syncSelectInputsA11y(
+    document.querySelector(".timezone-popover"),
+    t("layout.timezone")
+  );
 }
 function stopClock() {
   if (timer) clearInterval(timer);

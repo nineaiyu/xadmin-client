@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
 import { match } from "pinyin-pro";
@@ -20,6 +21,7 @@ import { hasAuth } from "@/router/utils";
 import { searchGlobal, type GlobalSearchGroup } from "@/api/system/search";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import SearchIcon from "~icons/ri/search-line";
+import AskAiIcon from "~icons/ri/robot-2-line";
 
 interface Props {
   /** 弹窗显隐 */
@@ -51,6 +53,8 @@ const historyPath = ref("");
 // 必须用 computed：路由/授权异步注册完成前组件可能已挂载，一次性求值会把
 // 「暂时没权限」固化为永久关闭（全局搜索静默失效）。
 const globalSearchAuth = computed(() => hasAuth("retrieve:SystemGlobalSearch"));
+// 「问 AI」入口权限：与 AI 控制台问答入口（docs）同一权限点，无权限不出现
+const askAiAuth = computed(() => hasAuth("ask:AiAssistant"));
 const resultOptions = shallowRef<optionsItem[]>([]);
 const historyOptions = shallowRef<optionsItem[]>([]);
 // 全局搜索：菜单结果之外跨实体检索的分组结果
@@ -85,6 +89,7 @@ const {
   commandItems,
   commandActive,
   globalActive,
+  askAiActive,
   handleEnter,
   runQuickAction
 } = useCommandPalette({
@@ -97,8 +102,10 @@ const {
   globalGroups,
   activePath,
   historyPath,
+  askAiVisible: computed(() => askAiAuth.value && keyword.value.trim() !== ""),
   scrollTo,
   goGlobalResult,
+  runAskAi,
   saveHistory,
   updateHistory,
   handleClose
@@ -119,7 +126,9 @@ const showEmpty = computed(() => {
       commandItems.value.length === 0) ||
     (keyword.value &&
       resultOptions.value.length === 0 &&
-      globalGroups.value.length === 0)
+      globalGroups.value.length === 0 &&
+      // 「问 AI」可见时即使零命中也有可执行出口，不算空态
+      !(askAiAuth.value && keyword.value.trim() !== ""))
   );
 });
 
@@ -194,9 +203,21 @@ async function fetchGlobalResults() {
   }
 }
 
-/** 跳转到命中实体对应的页面（搜索词由该页面自身的搜索能力承接） */
+/** 跳转到命中实体对应的页面：有承接字段时携带关键词（列表页 routeParams
+ *  装配自动过滤到命中），无承接字段跳转由该页面自身的搜索能力承接 */
 function goGlobalResult(group: GlobalSearchGroup) {
-  router.push(group.route);
+  const keywordQuery = group.search_field
+    ? { [group.search_field]: keyword.value.trim() }
+    : {};
+  router.push({ path: group.route, query: keywordQuery });
+  handleClose();
+}
+
+/** 问 AI：跳 AI 控制台问答入口并携带搜索词（控制台读 query 预填输入框） */
+function runAskAi() {
+  const question = keyword.value.trim();
+  if (!question) return;
+  router.push({ path: "/integration/ai/index", query: { q: question } });
   handleClose();
 }
 
@@ -296,7 +317,7 @@ function handleDrag(item: dragItem) {
 </script>
 
 <template>
-  <el-dialog
+  <OverlayDialog
     v-model="show"
     :before-close="handleClose"
     :show-close="false"
@@ -344,7 +365,7 @@ function handleDrag(item: dragItem) {
             @click="runQuickAction(item.id)"
           >
             <component :is="useRenderIcon(item.icon)" class="size-4" />
-            <span class="truncate text-gray-900 dark:text-white">
+            <span class="truncate text-fg">
               {{ item.title }}
             </span>
           </div>
@@ -389,10 +410,30 @@ function handleDrag(item: dragItem) {
               :data-testid="`global-search-item-${group.key}`"
               @click="goGlobalResult(group)"
             >
-              <span class="truncate text-gray-900 dark:text-white">
+              <span class="truncate text-fg">
                 {{ item.text }}
               </span>
             </div>
+          </div>
+        </div>
+        <!-- 问 AI：搜索词不是菜单/实体命中时的自然语言出口（权限同问答入口） -->
+        <div
+          v-if="askAiAuth && keyword"
+          data-testid="ask-ai-entry"
+          :data-active="askAiActive ? 'true' : undefined"
+        >
+          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
+            {{ t("commandPalette.askAi") }}
+          </div>
+          <div
+            class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
+            :class="{ 'bg-fill-muted': askAiActive }"
+            @click="runAskAi"
+          >
+            <IconifyIconOffline :icon="AskAiIcon" class="size-4 text-primary" />
+            <span class="truncate text-fg">
+              {{ keyword.trim() }}
+            </span>
           </div>
         </div>
       </el-scrollbar>
@@ -400,7 +441,7 @@ function handleDrag(item: dragItem) {
     <template #footer>
       <SearchFooter :total="resultOptions.length" />
     </template>
-  </el-dialog>
+  </OverlayDialog>
 </template>
 
 <style lang="scss" scoped>

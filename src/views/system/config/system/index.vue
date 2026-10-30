@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { useSystemConfig } from "./utils/hook";
 
 defineOptions({
   name: "SystemConfig"
 });
 
-const tableRef = ref();
-
-const { api, auth, baseColumnsFormat, operationButtonsProps } =
-  useSystemConfig(tableRef);
+const { api, auth, tableRef, baseColumnsFormat, operationButtonsProps } =
+  useSystemConfig();
 </script>
 
 <template>
@@ -17,6 +14,7 @@ const { api, auth, baseColumnsFormat, operationButtonsProps } =
     ref="tableRef"
     :api="api"
     :auth="auth"
+    :selection="false"
     locale-name="configSystem"
     :baseColumnsFormat="baseColumnsFormat"
     :operationButtonsProps="operationButtonsProps"

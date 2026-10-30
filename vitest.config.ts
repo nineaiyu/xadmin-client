@@ -2,9 +2,8 @@ import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import Icons from "unplugin-icons/vite";
-import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
 import { parse } from "yaml";
-import { alias, pathResolve } from "./build/utils";
+import { alias } from "./build/utils";
 
 // 主构建链路原生支持 yaml 语言包，vitest 侧补同等转换
 const yamlLoader = {
@@ -23,13 +22,7 @@ export default defineConfig({
   resolve: { alias },
   // 与主构建 getPluginsList 对齐测试所需子集：vueJsx（.tsx 渲染器）、
   // Icons（~icons 虚拟模块）、i18n（locales 语言包编译）
-  plugins: [
-    vue(),
-    vueJsx(),
-    VueI18nPlugin({ include: [pathResolve("../locales/**")] }),
-    Icons({ compiler: "vue3", scale: 1 }),
-    yamlLoader
-  ],
+  plugins: [vue(), vueJsx(), yamlLoader, Icons({ compiler: "vue3", scale: 1 })],
   test: {
     environment: "jsdom",
     setupFiles: ["./src/tests/setup.ts"],

@@ -89,18 +89,17 @@ export function createTagsViews(tagCount: number) {
 
 /** 页签风格与显隐偏好（本地存储），默认谷歌风格 + 显示 */
 export function createTagsPreferences() {
-  /** 页签风格默认为谷歌风格 */
+  /** 页签风格默认为谷歌风格（唯一默认值来源，勿在消费侧再写兜底） */
   const tagsStyle = ref(
     storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
     )?.tagsStyle || "chrome"
   );
-  /** 是否隐藏标签页，默认显示 */
-  const showTags =
-    ref(
-      storageLocal().getItem<StorageConfigs>(
-        `${responsiveStorageNameSpace()}configure`
-      ).hideTabs
-    ) ?? ref("false");
-  return { tagsStyle, showTags };
+  /** 是否隐藏标签页，默认显示；存 hideTabs 本值（非反义命名） */
+  const hideTags = ref(
+    storageLocal().getItem<StorageConfigs>(
+      `${responsiveStorageNameSpace()}configure`
+    )?.hideTabs ?? false
+  );
+  return { tagsStyle, hideTags };
 }

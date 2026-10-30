@@ -31,6 +31,8 @@ export type McpServerItem = {
   /** 白名单内工具是否接入 AI 动作目录（默认 false，fail-closed） */
   expose_to_ai?: boolean;
   tools_snapshot: McpToolSnapshot[];
+  /** 工具快照数量（列表派生列） */
+  tools_count?: number;
   last_synced_time: string | null;
   last_sync_error: string;
   remark: string;
@@ -58,6 +60,20 @@ export type McpCallResult = {
   text: string;
 };
 
+/** MCP 调用审计行（提案 P5 治理面；数据源 OperationLog module=AI:mcp:client） */
+export type McpCallLogItem = {
+  pk: string;
+  server_name: string;
+  tool: string;
+  /** 空串 = 管理面直调；mcp_tool = AI 动作链路 */
+  channel: string;
+  creator?: { pk?: string; username?: string } | null;
+  ok: boolean;
+  detail: string;
+  exec_time: number | null;
+  created_time: string;
+};
+
 class McpServerApi extends BaseApi {
   /** 同步工具清单（initialize → tools/list），结果落服务器快照 */
   sync = (pk: string) => {
@@ -78,3 +94,6 @@ class McpServerApi extends BaseApi {
 }
 
 export const mcpServerApi = new McpServerApi("/api/ai/mcp-servers");
+
+/** MCP 调用审计报表 API（只读：list + retrieve 继承自 BaseApi，无删除端点） */
+export const mcpCallLogApi = new BaseApi("/api/ai/mcp-call-logs");

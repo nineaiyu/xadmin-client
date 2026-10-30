@@ -33,13 +33,23 @@ class ApprovalFlowApi extends BaseApi {
     );
   };
 
-  /** 回滚到历史版本：快照写回活定义并落新版本 */
+  /** 回滚到历史版本：快照写回活定义并落新版本（载荷走 body，后端读 request.data） */
   rollback = (pk: string, version: number, remark?: string) => {
     return this.request<BaseResult>(
       "post",
-      { version, remark },
       {},
+      { version, remark },
       `${this.baseApi}/${pk}/rollback`
+    );
+  };
+
+  /** 审批人候选目录（流程设计器）：与流程 list 权限同口径，支持关键字搜索 */
+  candidateOptions = (params?: { keyword?: string; limit?: number }) => {
+    return this.request<DetailResult>(
+      "get",
+      params ?? {},
+      {},
+      `${this.baseApi}/candidate-options`
     );
   };
 }

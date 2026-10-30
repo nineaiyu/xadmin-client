@@ -4,16 +4,7 @@ import { useTags } from "../../hooks/useTag";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { onClickOutside } from "@vueuse/core";
 import TagChrome from "./components/TagChrome.vue";
-import {
-  computed,
-  ref,
-  watch,
-  unref,
-  toRaw,
-  onMounted,
-  onBeforeUnmount,
-  type Ref
-} from "vue";
+import { computed, ref, watch, toRaw, onMounted, onBeforeUnmount } from "vue";
 import { delay, useGlobal, useResizeObserver } from "@pureadmin/utils";
 
 import { useTagScroll } from "./hooks/useTagScroll";
@@ -33,7 +24,7 @@ const {
   route,
   router,
   visible,
-  showTags,
+  hideTags,
   instance,
   tagsStyle,
   multiTags,
@@ -162,11 +153,10 @@ onMounted(() => {
   // 根据当前路由初始化操作标签页的禁用状态
   showMenuModel(route.fullPath);
 
-  // 触发隐藏标签页
+  // 触发隐藏标签页（载荷为 hideTabs 布尔开关，与 mitt 事件类型一致）
   emitter.on("tagViewsChange", key => {
-    // 载荷为布尔开关（与 mitt 事件类型一致），showTags 运行时为布尔 ref
-    if (unref(showTags as Ref<boolean>) === key) return;
-    (showTags as Ref<boolean>).value = key;
+    if (hideTags.value === key) return;
+    hideTags.value = key;
   });
 
   // 改变标签风格
@@ -195,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="!showTags" ref="containerDom" class="tags-view">
+  <div v-if="!hideTags" ref="containerDom" class="tags-view">
     <span v-show="isShowArrow" class="arrow-left">
       <IconifyIconOffline :icon="ArrowLeftSLine" @click="handleScroll(200)" />
     </span>
@@ -302,7 +292,10 @@ onBeforeUnmount(() => {
       @keydown.enter.prevent="refreshRoute"
       @keydown.space.prevent="refreshRoute"
     >
-      <IconifyIconOffline :icon="RefreshRight" class="dark:text-white" />
+      <IconifyIconOffline
+        :icon="RefreshRight"
+        class="dark:text-(--el-color-white)"
+      />
     </span>
     <!-- 内容区最大化 / 还原（与右键菜单同口径：隐藏顶栏与侧栏、保留页签条作为还原入口） -->
     <span
@@ -326,7 +319,7 @@ onBeforeUnmount(() => {
     >
       <IconifyIconOffline
         :icon="maximizeOn ? ExitFullscreen : Fullscreen"
-        class="dark:text-white"
+        class="dark:text-(--el-color-white)"
       />
     </span>
     <!-- 右键菜单按钮 -->
@@ -334,7 +327,6 @@ onBeforeUnmount(() => {
       <ul
         v-show="visible"
         ref="contextmenuRef"
-        :key="Math.random()"
         :style="getContextMenuStyle"
         class="contextmenu"
       >
@@ -358,7 +350,10 @@ onBeforeUnmount(() => {
       @command="handleCommand"
     >
       <span class="arrow-down" :aria-label="transformI18n('layout.more')">
-        <IconifyIconOffline :icon="ArrowDown" class="dark:text-white" />
+        <IconifyIconOffline
+          :icon="ArrowDown"
+          class="dark:text-(--el-color-white)"
+        />
       </span>
       <template #dropdown>
         <el-dropdown-menu>

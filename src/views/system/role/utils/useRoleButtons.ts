@@ -1,6 +1,7 @@
 import { shallowRef, type Ref, type UnwrapNestedRefs } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { useBatchUpdate } from "@/views/system/components/useBatchUpdate";
+import { useActiveBatchUpdate } from "@/views/system/components/useActiveBatchUpdate";
+import { hasAuth } from "@/router/utils";
 import View from "~icons/ep/view";
 import type { OperationProps } from "@/components/RePlusPage";
 import type { useI18n } from "vue-i18n";
@@ -45,17 +46,11 @@ export function useRoleButtons({
   });
 
   // 批量更新：勾选行后统一写入同组字段（字段白名单：启用状态）
-  const { batchUpdateButton } = useBatchUpdate({
+  const { batchUpdateButton } = useActiveBatchUpdate({
     t,
     api,
     tableRef,
-    fields: [
-      {
-        key: "is_active",
-        label: t("commonLabels.is_active"),
-        input_type: "boolean"
-      }
-    ]
+    canBatch: hasAuth("batchUpdate:SystemRole")
   });
   const tableBarButtonsProps = shallowRef<OperationProps>({
     buttons: [batchUpdateButton]

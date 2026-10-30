@@ -27,7 +27,8 @@ function isTypingTarget(target: EventTarget | null) {
  * - Ctrl/Cmd+D 复制选中（自由模式含多选整组）、Delete/Backspace 删除选中、Esc 取消选中；
  * - Ctrl/Cmd+C 复制到剪贴板、Ctrl/Cmd+V 粘贴、Ctrl/Cmd+A 全选（后三者仅自由模式提供）；
  * - 方向键移动选中窗格（栅格：Shift+方向 = 缩放；自由：Shift+方向 = 10px 步进）。
- * 整体锁定（预览 / 只读）时不响应；输入控件聚焦时不劫持（保存/撤销重做除外）。
+ * 整体锁定（预览 / 只读）时不响应；输入控件聚焦时不劫持（保存键除外，
+ * 撤销/重做交还浏览器原生文本撤销）。
  *
  * 选中相关动作用回调而非 ref 传参：自由模式是多选集合，写入语义归组合层，
  * 这里只负责「什么时候调用」。
@@ -67,6 +68,8 @@ export function useScreenShortcuts(handlers: {
 
   function onKeydown(event: KeyboardEvent) {
     if (handlers.locked.value) return;
+    // 输入控件内的撤销/重做属于文本编辑，不能劫持为画布撤销
+    if (isTypingTarget(event.target)) return;
     const mod = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();
     if (mod && key === "z") {
@@ -80,7 +83,6 @@ export function useScreenShortcuts(handlers: {
       handlers.redo();
       return;
     }
-    if (isTypingTarget(event.target)) return;
     if (mod && key === "d") {
       event.preventDefault();
       handlers.duplicateSelected();

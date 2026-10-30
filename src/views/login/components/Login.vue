@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import OAuthEntry from "./OauthEntry.vue";
+import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
+import { message } from "@/utils/message";
 import RememberLogin from "./RememberLogin.vue";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import { LOGIN_PAGE } from "../utils/enums";
 import {
@@ -34,6 +36,15 @@ const verifyCodeRef = ref<{
   getRef?: () => FormInstance;
 }>();
 const { t } = useI18n();
+const loginPageStore = useLoginPageStoreHook();
+
+/** 能力清单(外壳拉取):入口可见性判断的唯一来源 */
+const accessEnabled = computed(
+  () => loginPageStore.capabilities?.access === true
+);
+const resetEnabled = computed(
+  () => loginPageStore.capabilities?.reset?.enabled === true
+);
 
 const {
   checked,
@@ -64,8 +75,20 @@ const formData = ref({
 });
 
 const onLogin = async () => {
+  // 验证码组件未渲染（sms/email 均关闭或配置失败）时没有 token，直接提交只会 400
+  if (!formData.value.verify_token) {
+    message(t("login.verifyCodeRequired"), { type: "warning" });
+    return;
+  }
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("results.failed"), { type: "error" });
+    return;
+  }
 
   handleOperation({
     t,
@@ -96,7 +119,7 @@ onMounted(() => {
 
 const configReqSuccess = (verifyCodeConfig: RecordType) => {
   onConfig(verifyCodeConfig);
-  loginDay.value = authInfo.value.lifetime ?? 1;
+  loginDay.value = loginPageStore.capabilities?.lifetime ?? 1;
   formatLoginDayOptions();
   syncRememberToStore();
 };
@@ -130,7 +153,7 @@ const onBack = backToBasicPage;
         @configReqEnd="configLoading = false"
       />
 
-      <el-form v-if="authInfo.access" :model="formData" size="large">
+      <el-form v-if="accessEnabled" :model="formData" size="large">
         <Motion :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
@@ -140,13 +163,11 @@ const onBack = backToBasicPage;
                 :login-day-list="loginDayList"
               />
               <el-button
-                v-if="authInfo.reset"
+                v-if="resetEnabled"
                 link
                 type="primary"
                 @click="
-                  useLoginPageStoreHook().SET_CURRENT_PAGE(
-                    LOGIN_PAGE.resetPassword
-                  )
+                  loginPageStore.SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
                 "
               >
                 {{ t("login.forget") }}
@@ -177,6 +198,9 @@ const onBack = backToBasicPage;
             {{ t("login.back") }}
           </el-button>
         </el-form-item>
+      </Motion>
+      <Motion :delay="450">
+        <LoginPrivacyNotice />
       </Motion>
     </template>
   </div>

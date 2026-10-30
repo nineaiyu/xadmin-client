@@ -302,7 +302,9 @@ test("聊天室：多人群聊建群、消息、成员管理与退群", async ({
   await membersDialog.locator('[data-testid="chat-group-add-confirm"]').click();
   await expect(memberRows).toHaveCount(3, { timeout: 15_000 });
   await expect(
-    page.locator('[data-testid="chat-room-group"]', { hasText: "3 人" })
+    page
+      .locator('[data-testid="chat-room-group"]', { hasText: renamedGroup })
+      .filter({ hasText: "3 人" })
   ).toBeVisible({ timeout: 15_000 });
 
   // 移除成员：删掉刚加入的 e2e_user，回到 2 人
@@ -313,6 +315,10 @@ test("聊天室：多人群聊建群、消息、成员管理与退群", async ({
     }
   );
   await addedRow.getByRole("button", { name: "移除成员" }).click();
+  await page
+    .locator(".el-message-box")
+    .getByRole("button", { name: "确定" })
+    .click();
   await expect(memberRows).toHaveCount(2, { timeout: 15_000 });
 
   // ---- 退群（群主退出自动转让；二次确认）→ 会话从列表消失 ----

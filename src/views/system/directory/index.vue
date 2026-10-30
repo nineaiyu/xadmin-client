@@ -1,8 +1,11 @@
 <script lang="ts" setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
 import { ReSplitPane } from "@/components/ReSplitPane";
+import ReEmpty from "@/components/ReEmpty";
+import RePage from "@/components/RePage";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
 import DirectoryAside from "./components/DirectoryAside.vue";
 import DirectoryMembers from "./components/DirectoryMembers.vue";
@@ -23,6 +26,7 @@ const mode = ref<"dept" | "post">("dept");
 const dept = ref("");
 const post = ref("");
 const isMobile = deviceDetection();
+const { t } = useI18n();
 
 // 左栏宽度持久化（默认 20%；双击分隔条或点悬浮按钮重置）
 const { percent, handleDragEnd } = useSplitPaneConfig("system/directory", {
@@ -32,33 +36,41 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/directory", {
 </script>
 
 <template>
-  <div v-if="hasAuth('list:SystemDirectory')" class="main-content">
-    <ReSplitPane
-      v-if="!isMobile"
-      v-model:percent="percent"
-      :split-set="{ minPercent: 10, defaultPercent: 20, split: 'vertical' }"
-      @drag-end="handleDragEnd"
-    >
-      <template #paneL>
+  <RePage>
+    <template v-if="hasAuth('list:SystemDirectory')">
+      <ReSplitPane
+        v-if="!isMobile"
+        v-model:percent="percent"
+        :split-set="{ minPercent: 10, defaultPercent: 20, split: 'vertical' }"
+        @drag-end="handleDragEnd"
+      >
+        <template #paneL>
+          <DirectoryAside
+            v-model:mode="mode"
+            v-model:dept="dept"
+            v-model:post="post"
+          />
+        </template>
+        <template #paneR>
+          <DirectoryMembers :mode="mode" :dept="dept" :post="post" />
+        </template>
+      </ReSplitPane>
+      <!-- 移动端：上下堆叠（左栏限高，成员名录紧随其后） -->
+      <div v-else class="flex flex-col gap-2">
         <DirectoryAside
           v-model:mode="mode"
           v-model:dept="dept"
           v-model:post="post"
+          compact
         />
-      </template>
-      <template #paneR>
-        <DirectoryMembers :mode="mode" :dept="dept" :post="post" />
-      </template>
-    </ReSplitPane>
-    <!-- 移动端：上下堆叠（左栏限高，成员名录紧随其后） -->
-    <div v-else class="flex flex-col gap-2">
-      <DirectoryAside
-        v-model:mode="mode"
-        v-model:dept="dept"
-        v-model:post="post"
-        compact
-      />
-      <DirectoryMembers :mode="mode" :dept="dept" :post="post" compact />
-    </div>
-  </div>
+        <DirectoryMembers :mode="mode" :dept="dept" :post="post" compact />
+      </div>
+    </template>
+    <ReEmpty
+      v-else
+      :description="t('directory.noPermission')"
+      :hint="t('directory.noPermissionHint')"
+      icon="ep/lock"
+    />
+  </RePage>
 </template>

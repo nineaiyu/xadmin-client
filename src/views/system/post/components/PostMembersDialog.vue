@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { isSuccess } from "@/api/types";
 import { usePageLoading } from "@/hooks/usePageLoading";
 import {
@@ -31,7 +32,20 @@ const { t } = useI18n();
 
 const { loading, runWithLoading } = usePageLoading();
 const members = ref<PostMemberItem[]>([]);
+/** 后端 members 接口的全量人数与截断标记（超过 500 人时只回前 500 条） */
+const memberTotal = ref(0);
+const memberTruncated = ref(false);
 const editorRef = ref<InstanceType<typeof MemberTagEditor>>();
+
+const memberHint = computed(() => {
+  if (memberTruncated.value) {
+    return t("post.memberTruncated", {
+      total: memberTotal.value,
+      shown: members.value.length
+    });
+  }
+  return props.readonly ? t("post.memberReadonlyHint") : t("post.memberHint");
+});
 
 /** 成员加载失败就地提示（明细弹窗无骨架错误态），不外抛 */
 async function loadMembers() {
@@ -40,6 +54,8 @@ async function loadMembers() {
       const res = await postApi.members(props.row.pk);
       if (isSuccess(res)) {
         members.value = res.data?.members ?? [];
+        memberTotal.value = res.data?.total ?? members.value.length;
+        memberTruncated.value = Boolean(res.data?.truncated);
       } else if (res.detail) {
         message(String(res.detail), { type: "warning" });
       }
@@ -52,8 +68,12 @@ async function loadMembers() {
 
 /** 远程搜索候选（≤20 条；无关键字时服务端返回空列表，需要输入才会出候选） */
 async function searchUsers(keyword: string) {
-  const res = await postApi.userOptions(keyword ?? "");
-  return isSuccess(res) ? ((res.data ?? []) as PostUserOption[]) : [];
+  const res = await postApi.userOptions(keyword ?? "").catch(normalizeError);
+  if (!isSuccess(res)) {
+    if (res.detail) message(String(res.detail), { type: "warning" });
+    return [];
+  }
+  return (res.data ?? []) as PostUserOption[];
 }
 
 const getPayload = (): Record<string, unknown> | null =>
@@ -70,7 +90,7 @@ defineExpose({ getPayload });
     :loading="loading"
     :readonly="readonly"
     :members="members"
-    :hint="readonly ? t('post.memberReadonlyHint') : t('post.memberHint')"
+    :hint="memberHint"
     :empty-text="t('post.memberEmpty')"
     :placeholder="t('post.memberPlaceholder')"
     testid="post-member-select"

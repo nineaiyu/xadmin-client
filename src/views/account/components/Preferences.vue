@@ -37,6 +37,13 @@ function onChange(val: unknown, item: RecordType) {
   handleOperation({
     t,
     apiReq: configApi.setConfig(item.name, val as object, "patch"),
+    // 乐观开关失败必须回滚，否则界面显示已开启而服务端仍是旧值
+    failed() {
+      item.checked = !val;
+    },
+    exception() {
+      item.checked = !val;
+    },
     requestEnd() {
       loading.value = false;
     }

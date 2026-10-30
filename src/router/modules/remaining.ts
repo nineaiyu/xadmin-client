@@ -15,7 +15,9 @@ const Layout = () => import("@/layout/index.vue");
 /** 模块自带全屏页声明（glob 模式见下方代码，默认导出单条或数组，按路径排序装配） */
 const fullscreenPageModules = import.meta.glob<{
   default: RouteConfigsTable | RouteConfigsTable[];
-}>("/src/views/**/routes.ts", { eager: true });
+}>(["/src/views/**/routes.ts", "/src/extensions/**/routes.ts"], {
+  eager: true
+});
 
 const declaredFullscreenRoutes: Array<RouteConfigsTable> = Object.keys(
   fullscreenPageModules
@@ -54,17 +56,6 @@ const frameworkRoutes: Array<RouteConfigsTable> = [
       }
     ]
   },
-  // 下面是一个无layout菜单的例子（一个全屏空白页面），因为这种情况极少发生，所以只需要在前端配置即可（配置路径：src/router/modules/remaining.ts）
-  {
-    path: "/empty",
-    name: "Empty",
-    component: () => import("@/views/empty/index.vue"),
-    meta: {
-      title: $t("menus.empty"),
-      showLink: false,
-      rank: 10103
-    }
-  },
   // 邀请激活：令牌即凭据，未登录访问，独立无侧栏页面
   {
     path: "/invite/accept",
@@ -97,6 +88,8 @@ const frameworkRoutes: Array<RouteConfigsTable> = [
       rank: 10106
     }
   },
+  // 账户设置无布局直达入口：与动态菜单 UserInfo 共用组件，供 OAuth 回跳/外部链接落地；
+  // 标题统一走 menus.accountSettings 词条，布局语义不同故不合并为同一路由。
   {
     path: "/account-settings",
     name: "AccountSettings",
@@ -105,6 +98,17 @@ const frameworkRoutes: Array<RouteConfigsTable> = [
       title: $t("menus.accountSettings"),
       showLink: false,
       rank: 104
+    }
+  },
+  // 设置台账已迁入系统设置；保留旧地址重定向，避免历史书签/外部链接 404。
+  {
+    path: "/system/setting/index",
+    name: "SettingLedgerRedirect",
+    redirect: "/settings/ledger/index",
+    meta: {
+      title: $t("menus.settingLedger"),
+      showLink: false,
+      rank: 10108
     }
   }
 ];

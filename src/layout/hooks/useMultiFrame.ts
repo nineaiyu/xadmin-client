@@ -16,10 +16,16 @@ export const useMultiFrame = () => {
     MAP.delete(path);
   }
 
+  /** 全清：登出/切换账号时调用，避免 iframe 缓存跨会话驻留 */
+  function clearMap() {
+    MAP.clear();
+  }
+
   return {
     setMap,
     getMap,
     delMap,
+    clearMap,
     MAP
   };
 };

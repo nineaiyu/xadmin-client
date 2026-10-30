@@ -61,7 +61,7 @@ const divClass = computed(() => {
       class="notice-container-avatar"
     />
     <div class="notice-container-text">
-      <div class="notice-text-title text-fg dark:text-white">
+      <div class="notice-text-title text-fg dark:text-(--el-color-white)">
         <el-tooltip
           :content="noticeItem.title"
           :disabled="!titleTooltip"
@@ -83,7 +83,9 @@ const divClass = computed(() => {
           </div>
         </el-tooltip>
       </div>
-      <div class="notice-text-datetime text-fg-muted dark:text-white">
+      <div
+        class="notice-text-datetime text-fg-muted dark:text-(--el-color-white)"
+      >
         {{ dayjs(noticeItem.created_time).format(t("layout.noticeTime")) }}
       </div>
     </div>

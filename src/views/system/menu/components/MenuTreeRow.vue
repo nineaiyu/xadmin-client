@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import ReTreeLine from "./ReTreeLine";
+import ReTreeLine from "@/components/ReTreeLine";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { MenuChoices } from "@/views/system/constants";
 import { displayTitle } from "../utils/useMenuFilter";
@@ -161,8 +161,10 @@ const onSwitch = (value: boolean | string | number) => {
       </span>
       <span class="menu-row__path">{{ pathText }}</span>
       <span class="menu-row__actions">
+        <!-- 只读角色把开关置灰：状态仍可见，但切换请求必 403，不应给出可点的假象 -->
         <el-switch
           :aria-label="t('labels.status')"
+          :disabled="!auth.partialUpdate"
           :loading="busy"
           :model-value="data.isActive"
           size="small"

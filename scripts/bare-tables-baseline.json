@@ -1,0 +1,13 @@
+{
+  "src/components/DataTable/src/index.vue": "表格统一封装本体（表头样式与可访问名的唯一收口处）",
+  "src/components/ReReadonlyTable/src/index.vue": "只读表格封装本体（列少 + 分页独立的展示表）",
+  "src/components/AiResultTable/index.vue": "AI 结果结构化表（渲染模型返回的行列，无元数据面）",
+  "src/components/ReMessageNotifications/index.vue": "通知中心抽屉内的轻量只读表",
+  "src/components/RePermissionPreview/src/PreviewFieldMatrix.vue": "权限预览字段矩阵（二维矩阵，非列表页形态）",
+  "src/components/RePermissionPreview/src/PreviewRuleGroupTable.vue": "权限预览规则组明细（弹窗内只读表）",
+  "src/components/RePermissionPreview/src/PreviewUsersTable.vue": "权限预览用户清单（弹窗内只读表）",
+  "src/components/RePlusPage/src/components/ChangeHistoryDialog.vue": "变更历史 diff 表（成对前/后值，非标准列模型）",
+  "src/components/RePlusPage/src/components/ImportData.vue": "导入向导预览（列由上传文件动态决定）",
+  "src/components/RePlusPage/src/components/ImportValidateResult.vue": "导入校验结果（错误行明细）",
+  "src/components/RePlusPage/src/components/ReRecycleBin.vue": "回收站（跨资源混合列）"
+}

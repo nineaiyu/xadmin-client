@@ -1,10 +1,14 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useSendVerifyCode } from "./hooks";
-import Motion from "@/views/login/utils/motion";
+import Motion from "@/components/ReMotion";
 import type { FormInstance } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import ReImageVerify from "@/components/ReImageVerify/src/index.vue";
+import {
+  ReCaptchaChallenge,
+  verifyCodeSendAction
+} from "@/components/ReCaptchaChallenge";
+import type { CaptchaScene, CaptchaType } from "@/api/auth";
 import PhoneInput from "@/components/RePlusPage/src/components/PhoneInput.vue";
 import Email from "~icons/ep/message";
 import Keyhole from "~icons/ri/shield-keyhole-line";
@@ -15,6 +19,8 @@ defineOptions({ name: "ReSendVerifyCode" });
 interface VerifyCodeConfig {
   access: boolean;
   captcha: boolean;
+  captcha_types?: CaptchaType[];
+  captcha_image_fallback?: boolean;
   token: boolean;
   encrypted: boolean;
   email: boolean;
@@ -44,7 +50,7 @@ const emit = defineEmits<{
   configReqEnd: [];
 }>();
 const formDataRef = ref<FormInstance>();
-const captchaRef = ref();
+const challengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
 
 function getRef() {
   return formDataRef.value;
@@ -57,9 +63,12 @@ const {
   formRules,
   isDisabled,
   verifyCodeConfig,
+  captchaEnabled,
+  configFailed,
+  reloadConfig,
   handleSendCode,
   fetchSuggestions
-} = useSendVerifyCode(formDataRef, captchaRef, formData, props, emit);
+} = useSendVerifyCode(formDataRef, challengeRef, formData, props, emit);
 
 defineExpose({ getRef, handleSendCode });
 
@@ -67,11 +76,29 @@ const updatePhone = (phone: { code: string; phone: string }) => {
   formData.value.phone = `${phone.code}${phone.phone}`;
 };
 const phone = ref({ code: "+86", phone: "" });
+
+/** 发码场景与后端 captcha.const 的 scene 枚举同值（category 即场景键） */
+const captchaScene = computed<CaptchaScene>(
+  () => (props.category || "login") as CaptchaScene
+);
+/** 发码意图动作：按场景派生（服务端登记表同口径） */
+const captchaAction = computed(() => verifyCodeSendAction(captchaScene.value));
 </script>
 
 <template>
+  <el-result
+    v-if="configFailed"
+    icon="error"
+    :title="t('login.configLoadFailed')"
+  >
+    <template #extra>
+      <el-button type="primary" @click="reloadConfig">
+        {{ t("buttons.reload") }}
+      </el-button>
+    </template>
+  </el-result>
   <el-form
-    v-if="access"
+    v-else-if="access"
     ref="formDataRef"
     :model="formData"
     :rules="formRules"
@@ -113,24 +140,6 @@ const phone = ref({ code: "+86", phone: "" });
       </el-tabs>
     </Motion>
 
-    <Motion
-      v-if="verifyCodeConfig.access && verifyCodeConfig.captcha"
-      :delay="200"
-    >
-      <el-form-item prop="captcha_code">
-        <el-input
-          v-model="formData.captcha_code"
-          :placeholder="t('login.verifyCode')"
-          :prefix-icon="useRenderIcon(Keyhole)"
-          clearable
-        >
-          <template #append>
-            <ReImageVerify ref="captchaRef" v-model="formData.captcha_key" />
-          </template>
-        </el-input>
-      </el-form-item>
-    </Motion>
-
     <Motion v-if="['email', 'phone'].includes(formData.form_type)" :delay="100">
       <el-form-item prop="verify_code">
         <div class="w-full flex justify-between">
@@ -154,5 +163,13 @@ const phone = ref({ code: "+86", phone: "" });
         </div>
       </el-form-item>
     </Motion>
+    <ReCaptchaChallenge
+      v-if="captchaEnabled"
+      ref="challengeRef"
+      :scene="captchaScene"
+      :action="captchaAction"
+      :types="verifyCodeConfig.captcha_types"
+      :image-fallback="verifyCodeConfig.captcha_image_fallback === true"
+    />
   </el-form>
 </template>

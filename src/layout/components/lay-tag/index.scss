@@ -1,3 +1,5 @@
+/* 页签容器需压过 EP 与布局层的标签样式（颜色、固定页签 padding、拖拽幽灵块背景）：
+   本文件的 !important 是覆盖第三方/布局层优先级的必需项，不属可清理的样式债。 */
 @keyframes schedule-in-width {
   from {
     width: 0;

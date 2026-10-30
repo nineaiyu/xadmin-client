@@ -41,6 +41,9 @@ body[layout="header-sidebar-nav"] {
   }
 
   .hideSidebar {
+    @include sidebar-hover-expand($sideBarWidth);
+    @include sidebar-collapse-show-title;
+
     .fixed-header {
       width: 100%;
     }

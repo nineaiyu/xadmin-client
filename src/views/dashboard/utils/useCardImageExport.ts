@@ -7,9 +7,16 @@ import type { DashboardCard } from "@/api/dataset/datasets";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
-/** ChartCard 暴露的图片渲染句柄（number 卡无图表实例，返回 null） */
+/** ChartCard 暴露的句柄面（模板 ref 共用收集：图片导出 + 实时推送数据注入） */
 export type CardImageHandle = {
   renderImage?: () => Promise<ExportedImage | null>;
+  /** 服务端聚合帧注入（dashboard_data 推送通道；与 loadData 同一渲染路径） */
+  applyData?: (entry: {
+    card?: string;
+    kind?: string;
+    data?: unknown;
+    detail?: string;
+  }) => Promise<void> | void;
 };
 
 /**
@@ -45,5 +52,5 @@ export function useCardImageExport(t: TFunction) {
     }
   };
 
-  return { setCardRef, exportingCard, exportCardImage };
+  return { cardRefs, setCardRef, exportingCard, exportCardImage };
 }

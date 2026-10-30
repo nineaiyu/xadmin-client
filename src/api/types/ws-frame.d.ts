@@ -18,11 +18,13 @@ export type Action =
   | "chat_reaction"
   | "chat_read"
   | "chat_unread"
+  | "chat_room"
   | "task_log"
   | "monitor"
   | "screen_command"
   | "screen_data"
-  | "screen_page_state";
+  | "screen_page_state"
+  | "dashboard_data";
 
 /**
  * 客户端 → 服务端帧（客户端受控，键集合封闭）

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { watch } from "vue";
+import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { hasAuth } from "@/router/utils";
@@ -7,6 +8,10 @@ import { message } from "@/utils/message";
 import { usePagedList } from "@/hooks/usePagedList";
 import { userApi } from "@/api/identity/user";
 import { formatDateTime } from "@/utils";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 import type { ManagedDeptItem } from "@/api/identity/dept";
 
 import { drawerSize } from "@/components/ReDialog/size";
@@ -41,6 +46,33 @@ const PAGE_SIZE = 10;
 const displayName = (row: Partial<MemberRow> | undefined) =>
   row?.nickname || row?.username || "-";
 
+/** 只读列：复杂渲染走具名插槽，与凭据页等只读表保持同一形态 */
+const columns = computed<ReadonlyColumn[]>(() => [
+  {
+    label: t("systemMyScope.colUser"),
+    minWidth: 120,
+    slot: "user",
+    showOverflowTooltip: true
+  },
+  {
+    label: t("systemMyScope.colNickname"),
+    minWidth: 120,
+    slot: "nickname",
+    showOverflowTooltip: true
+  },
+  {
+    label: t("systemMyScope.colStatus"),
+    width: 80,
+    align: "center",
+    slot: "status"
+  },
+  {
+    label: t("systemMyScope.colLastLogin"),
+    minWidth: 160,
+    slot: "lastLogin"
+  }
+]);
+
 // 成员分页（异常归一与信封判定见 usePagedList；失败经 onFail 统一提示）
 const {
   loading,
@@ -66,6 +98,13 @@ const goUserPage = () => {
   router.push({ name: "SystemUser", query: { dept: props.dept.pk } });
 };
 
+/** 分页信息交给只读表统一渲染，翻页仍由本组件拉取 */
+const pagination = computed(() => ({
+  total: total.value,
+  page: page.value,
+  pageSize: PAGE_SIZE
+}));
+
 watch(visible, open => {
   if (open && props.dept) {
     page.value = 1;
@@ -77,7 +116,7 @@ watch(visible, open => {
 </script>
 
 <template>
-  <el-drawer
+  <OverlayDrawer
     v-model="visible"
     :title="
       dept
@@ -87,60 +126,41 @@ watch(visible, open => {
     :size="drawerSize('md')"
     class="max-w-[92vw]!"
   >
-    <div v-loading="loading" class="flex flex-col h-full">
+    <div class="flex flex-col h-full">
       <div class="flex-bc mb-2">
         <span class="text-sm text-(--el-text-color-secondary)">
           {{ t("systemMyScope.membersTotal", { total }) }}
         </span>
       </div>
-      <el-table :data="rows" size="small" class="flex-1">
-        <el-table-column :label="t('systemMyScope.colUser')" min-width="120">
-          <template #default="{ row }">
-            <el-text class="w-full" truncated>{{ row.username }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemMyScope.colNickname')"
-          min-width="120"
-        >
-          <template #default="{ row }">
-            <el-text class="w-full" truncated>{{ displayName(row) }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemMyScope.colStatus')"
-          width="80"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-tag size="small" :type="row.is_active ? 'success' : 'info'">
-              {{
-                row.is_active
-                  ? t("systemMyScope.active")
-                  : t("systemMyScope.disabled")
-              }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="t('systemMyScope.colLastLogin')"
-          min-width="160"
-        >
-          <template #default="{ row }">
-            {{ formatDateTime(row.last_login) || "-" }}
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="flex justify-end mt-3">
-        <el-pagination
-          layout="prev, pager, next"
-          size="small"
-          :total="total"
-          :page-size="PAGE_SIZE"
-          :current-page="page"
-          @current-change="setPage"
-        />
-      </div>
+      <ReReadonlyTable
+        :columns="columns"
+        :rows="rows"
+        :loading="loading"
+        :pagination="pagination"
+        size="small"
+        border
+        class="flex-1"
+        @page-change="setPage"
+      >
+        <template #user="{ row }">
+          <el-text class="w-full" truncated>{{ row.username }}</el-text>
+        </template>
+        <template #nickname="{ row }">
+          <el-text class="w-full" truncated>{{ displayName(row) }}</el-text>
+        </template>
+        <template #status="{ row }">
+          <el-tag size="small" :type="row.is_active ? 'success' : 'info'">
+            {{
+              row.is_active
+                ? t("systemMyScope.active")
+                : t("systemMyScope.disabled")
+            }}
+          </el-tag>
+        </template>
+        <template #lastLogin="{ row }">
+          {{ formatDateTime(row.last_login) || "-" }}
+        </template>
+      </ReReadonlyTable>
     </div>
     <template #footer>
       <el-button
@@ -151,5 +171,5 @@ watch(visible, open => {
         {{ t("systemMyScope.viewInUserPage") }}
       </el-button>
     </template>
-  </el-drawer>
+  </OverlayDrawer>
 </template>

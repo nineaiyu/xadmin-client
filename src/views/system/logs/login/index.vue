@@ -1,24 +1,40 @@
 <script lang="ts" setup>
+import { useI18n } from "vue-i18n";
 import { useLoginLog } from "./utils/hook";
-
-import { ref } from "vue";
 
 defineOptions({
   name: "SystemUserLoginLog"
 });
-const tableRef = ref();
+const { t } = useI18n();
 
-const { api, auth, listColumnsFormat, operationButtonsProps } =
-  useLoginLog(tableRef);
+const {
+  api,
+  auth,
+  tableRef,
+  detailRowFetch,
+  listColumnsFormat,
+  operationButtonsProps
+} = useLoginLog();
 </script>
 
 <template>
-  <RePlusPage
-    ref="tableRef"
-    :api="api"
-    :auth="auth"
-    locale-name="logsLogin"
-    :listColumnsFormat="listColumnsFormat"
-    :operationButtonsProps="operationButtonsProps"
-  />
+  <div>
+    <!-- 强退的作用域说明：纯 HTTP 会话没有 WS channel，需到在线会话页处理 -->
+    <p
+      class="mb-2 text-xs text-(--el-text-color-secondary)"
+      data-testid="login-log-logout-hint"
+    >
+      {{ t("logsLogin.logoutHint") }}
+    </p>
+    <RePlusPage
+      ref="tableRef"
+      :selection="false"
+      :api="api"
+      :auth="auth"
+      locale-name="logsLogin"
+      :detailRowFetch="detailRowFetch"
+      :listColumnsFormat="listColumnsFormat"
+      :operationButtonsProps="operationButtonsProps"
+    />
+  </div>
 </template>

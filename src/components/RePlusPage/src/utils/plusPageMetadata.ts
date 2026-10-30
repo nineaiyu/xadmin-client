@@ -90,21 +90,23 @@ export function createFetchColumnsSeparately({
 }) {
   const { api } = props;
   return (immediate: boolean) => {
-    // fetchSearchFields=false：页面声明不消费分离的 search-fields 端点，
-    // 与「api 无 fields 方法」同一路径（跳过请求、数据装配退回列回调分支）
-    const fieldsApi = props.fetchSearchFields === false ? null : api.fields;
+    // fetchSearchFields=false：页面声明不消费分离的 search-fields 端点；
+    // 无 list 权限时列/搜索元数据一律不请求（否则 denied 页仍发 search-fields，
+    // 端点放行时还会再发一次必然 403 的 list，与解释态同屏）
+    const fieldsApi =
+      props.fetchSearchFields === false || !auth.list ? null : api.fields;
     getColumnData(
       auth.list ? api.columns : null,
       fieldsApi,
       () => {
         columnsInitCallback();
-        if (!fieldsApi && immediate) {
+        if (!fieldsApi && immediate && auth.list) {
           handleGetData();
         }
       },
       () => {
         fieldsInitCallback();
-        if (immediate) {
+        if (immediate && auth.list) {
           handleGetData();
         }
       }

@@ -23,6 +23,8 @@ export interface DirectoryParams {
   dept?: number | string | "";
   posts?: number | string | "";
   keyword?: string;
+  /** 标签筛选：名称或主键，逗号分隔多标签按 AND 语义 */
+  tag?: string;
   ordering?: string;
 }
 
@@ -48,3 +50,8 @@ export interface DirectoryDeptNode {
 
 /** 通讯录（list:SystemDirectory 权限点；数据权限随调用者收口） */
 export const directoryApi = new BaseApi("/api/identity/directory");
+
+/** 类型化列表入口：岗位维度的参数名固定为 `posts`，避免调用侧拼错字段 */
+export function listDirectory(params: DirectoryParams) {
+  return directoryApi.list<DirectoryMember>(params);
+}

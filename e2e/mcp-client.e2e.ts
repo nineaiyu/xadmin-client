@@ -163,6 +163,15 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
     await nameInput.fill(name);
     await formItem("服务地址").locator("input").fill(stub.url);
     await formItem("允许调用的工具").locator("input").fill("echo");
+    const toolOption = page
+      .locator(".el-select-dropdown__item")
+      .filter({ hasText: "echo" })
+      .first();
+    await expect(toolOption).toBeVisible({ timeout: 10_000 });
+    await toolOption.click();
+    // EP 多选下拉选中后常以可见态残留并遮挡下方单选组：点弹窗标题强制收起
+    await dialog.locator(".el-dialog__header").click();
+    await formItem("接入动作面").getByText("启用", { exact: true }).click();
     await dialog.getByRole("button", { name: "保存" }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10_000 });
 
@@ -196,12 +205,34 @@ test("外部 MCP 服务器：配置 → 同步工具 → 白名单调用（SSE �
       .getByRole("row", { name: /echo/ })
       .getByRole("button", { name: "调用" })
       .click();
-    await drawer.getByTestId("mcp-call-arguments").fill('{"text": "hello"}');
+    // echo 带 inputSchema：按 schema 生成单字段表单（不再手填 JSON 文本）
+    await expect(drawer.getByTestId("mcp-call-form")).toBeVisible();
+    // ElInput 把 $attrs 透传到内部 input，data-testid 直接落在输入框上
+    await drawer.getByTestId("mcp-arg-text").fill("hello");
     await drawer.getByTestId("mcp-call-run").click();
     await expect(drawer.getByTestId("mcp-call-result")).toContainText(
       "echo: hello",
       { timeout: 15_000 }
     );
+
+    // ---- 调用记录抽屉：打开 → 有行 → 结果筛选 ----
+    // 先收起工具抽屉（遮罩会拦截行内按钮点击）
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden({ timeout: 10_000 });
+    await row.getByRole("button", { name: "调用记录" }).click();
+    const logsDrawer = page.locator(".el-drawer").last();
+    const logsTable = logsDrawer.getByTestId("mcp-call-logs-table");
+    await expect(logsTable).toContainText("echo", { timeout: 15_000 });
+    await expect(logsTable).toContainText("成功");
+    // 只看失败：本次只有一次成功调用 → 空表（仍应可用，不报错）
+    await logsDrawer
+      .locator(".el-radio-button")
+      .filter({ hasText: "失败" })
+      .first()
+      .click();
+    await expect(logsTable.locator(".el-table__row")).toHaveCount(0, {
+      timeout: 15_000
+    });
   } finally {
     stub.close();
     if (serverPk) {

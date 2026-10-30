@@ -16,7 +16,8 @@ import { formatUptime } from "../utils/hook";
 type ServiceItem = {
   key: string;
   label: string;
-  ok: boolean;
+  /** null = 未探测到（接口失败/尚未加载）：不是「异常」，不能标红 */
+  ok: boolean | null;
   cost?: number | string;
 };
 
@@ -57,12 +58,22 @@ const workerColumns = computed<ReadonlyColumn[]>(() => [
         <template #header>{{ t("systemMonitor.serviceHealth") }}</template>
         <div class="flex flex-col gap-3">
           <div v-for="item in serviceItems" :key="item.key" class="flex-bc">
-            <span class="flex items-center gap-2">
-              <el-tag :type="item.ok ? 'success' : 'danger'" size="small">
+            <span
+              class="flex items-center gap-2"
+              :data-testid="`monitor-service-${item.key}`"
+            >
+              <el-tag
+                :type="
+                  item.ok === null ? 'info' : item.ok ? 'success' : 'danger'
+                "
+                size="small"
+              >
                 {{
-                  item.ok
-                    ? t("systemMonitor.healthy")
-                    : t("systemMonitor.unhealthy")
+                  item.ok === null
+                    ? t("systemMonitor.itemUnknown")
+                    : item.ok
+                      ? t("systemMonitor.healthy")
+                      : t("systemMonitor.unhealthy")
                 }}
               </el-tag>
               {{ item.label }}
@@ -71,7 +82,7 @@ const workerColumns = computed<ReadonlyColumn[]>(() => [
               {{
                 typeof item.cost === "number"
                   ? `${(item.cost * 1000).toFixed(1)}ms`
-                  : item.cost
+                  : (item.cost ?? "")
               }}
             </span>
           </div>

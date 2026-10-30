@@ -9,6 +9,7 @@ import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { formatDateTime } from "@/utils/format";
 import { isSuccess } from "@/api/types";
+import { hasAuth } from "@/router/utils";
 import {
   messageTemplateApi,
   type MessageTemplateItem
@@ -17,7 +18,10 @@ import type { RecordType } from "plus-pro-components";
 import MessageTemplateForm from "./MessageTemplateForm.vue";
 import TemplatePreview from "./TemplatePreview.vue";
 import { normalizeError } from "@/utils/apiError";
-import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
+import {
+  ReReadonlyTable,
+  type ReadonlyColumn
+} from "@/components/ReReadonlyTable";
 
 /**
  * 通知消息模板：代码内模板是默认值，此处维护可选的 DB 覆盖层。
@@ -29,6 +33,11 @@ import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
  */
 const { t } = useI18n();
 const confirm = useConfirm();
+// 模板动作各有独立权限点（save / preview / reset，挂在 SettingMessage 名下）：
+// 只读角色不应看到编辑/预览/重置入口（点开必 403）
+const canSave = hasAuth("save:SettingMessage");
+const canPreview = hasAuth("preview:SettingMessage");
+const canReset = hasAuth("reset:SettingMessage");
 
 /** 保存载荷（与 MessageTemplateForm.getPayload 契约一致：message_type 为行主键） */
 type MessageTemplatePayload = {
@@ -39,6 +48,8 @@ type MessageTemplatePayload = {
 };
 
 const loading = ref(false);
+const loadFailed = ref(false);
+const resetting = ref("");
 const rows = ref<MessageTemplateItem[]>([]);
 const formRef = ref<InstanceType<typeof MessageTemplateForm>>();
 
@@ -75,13 +86,40 @@ const overriddenLabel = (row: RecordType) =>
     ? t("messageTemplate.overridden")
     : t("messageTemplate.defaultState");
 
+/** 模板注册表只读列（注册表规模小，过滤在客户端完成） */
+const columns = computed<ReadonlyColumn[]>(() => [
+  {
+    prop: "message_type_label",
+    label: t("messageTemplate.messageType"),
+    minWidth: 180
+  },
+  { label: t("messageTemplate.category"), width: 100, slot: "category" },
+  { label: t("messageTemplate.override"), width: 140, slot: "override" },
+  { label: t("messageTemplate.updatedAt"), width: 150, slot: "updatedAt" },
+  {
+    label: t("commonLabels.operation"),
+    width: 170,
+    fixed: "right",
+    slot: "actions"
+  }
+]);
+
 const load = async () => {
   loading.value = true;
+  loadFailed.value = false;
   try {
     const res = await messageTemplateApi.registry();
-    if (isSuccess(res)) rows.value = res.data ?? [];
+    if (isSuccess(res)) {
+      rows.value = res.data ?? [];
+    } else {
+      loadFailed.value = true;
+      if (res.detail) {
+        message(String(res.detail), { type: "error" });
+      }
+    }
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    loadFailed.value = true;
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }
@@ -156,10 +194,12 @@ const reset = async (raw: RecordType) => {
   ) {
     return;
   }
+  resetting.value = row.message_type;
   // 异常归一为可读失败结果：重置失败（权限被拒等）需给出可读原因
   const res = await messageTemplateApi
     .reset(row.message_type)
     .catch(normalizeError);
+  resetting.value = "";
   if (isSuccess(res)) {
     message(t("messageTemplate.resetSuccess"), { type: "success" });
     await load();
@@ -205,87 +245,88 @@ onMounted(load);
       </el-select>
     </div>
 
-    <!-- 表头浅灰底与列表页 / 订阅表同口径，页签之间切换不再出现两种表格皮肤 -->
-    <el-table
-      :data="filteredRows"
-      data-testid="template-table"
-      :header-cell-style="TABLE_HEADER_CELL_STYLE"
+    <!-- 注册表加载失败：空表 + 可重试失败态，避免权限被回收时误读成“没有模板” -->
+    <el-alert
+      v-if="loadFailed"
+      class="mb-3"
+      type="error"
+      :closable="false"
+      show-icon
+      :title="t('messageTemplate.loadFailed')"
     >
-      <el-table-column
-        prop="message_type_label"
-        :label="t('messageTemplate.messageType')"
-        min-width="180"
-      />
-      <el-table-column :label="t('messageTemplate.category')" width="100">
-        <template #default="{ row }">
-          <el-tag size="small" type="info" effect="plain">
-            {{ row.category_label || row.category }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('messageTemplate.override')" width="140">
-        <template #default="{ row }">
-          <el-tag
-            data-testid="template-override-tag"
-            :type="row.has_override ? 'success' : 'info'"
-            effect="light"
-          >
-            {{ overriddenLabel(row) }}
-          </el-tag>
-          <el-tag
-            v-if="row.has_override && row.override?.is_active === false"
-            class="ml-1"
-            size="small"
-            type="warning"
-            effect="plain"
-          >
-            {{ t("messageTemplate.inactiveMark") }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('messageTemplate.updatedAt')" width="150">
-        <template #default="{ row }">
-          {{
-            row.has_override && row.override?.updated_time
-              ? formatDateTime(row.override.updated_time)
-              : "—"
-          }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="t('commonLabels.operation')"
-        width="170"
-        fixed="right"
-      >
-        <template #default="{ row }">
-          <el-button
-            data-testid="template-edit"
-            link
-            type="primary"
-            @click="openEdit(row)"
-          >
-            {{ t("messageTemplate.edit") }}
-          </el-button>
-          <el-button
-            data-testid="template-preview-row"
-            :disabled="row.has_preview === false"
-            link
-            type="primary"
-            @click="previewRow(row)"
-          >
-            {{ t("messageTemplate.preview") }}
-          </el-button>
-          <el-button
-            v-if="row.has_override"
-            data-testid="template-reset"
-            link
-            type="warning"
-            @click="reset(row)"
-          >
-            {{ t("messageTemplate.reset") }}
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <el-button link type="primary" size="small" @click="load">
+        {{ t("buttons.reload") }}
+      </el-button>
+    </el-alert>
+
+    <!-- 表头浅灰底与列表页 / 订阅表同口径，页签之间切换不再出现两种表格皮肤 -->
+    <ReReadonlyTable
+      :columns="columns"
+      :rows="filteredRows"
+      data-testid="template-table"
+    >
+      <template #category="{ row }">
+        <el-tag size="small" type="info" effect="plain">
+          {{ row.category_label || row.category }}
+        </el-tag>
+      </template>
+      <template #override="{ row }">
+        <el-tag
+          data-testid="template-override-tag"
+          :type="row.has_override ? 'success' : 'info'"
+          effect="light"
+        >
+          {{ overriddenLabel(row) }}
+        </el-tag>
+        <el-tag
+          v-if="row.has_override && row.override?.is_active === false"
+          class="ml-1"
+          size="small"
+          type="warning"
+          effect="plain"
+        >
+          {{ t("messageTemplate.inactiveMark") }}
+        </el-tag>
+      </template>
+      <template #updatedAt="{ row }">
+        {{
+          row.has_override && row.override?.updated_time
+            ? formatDateTime(row.override.updated_time)
+            : "—"
+        }}
+      </template>
+      <template #actions="{ row }">
+        <el-button
+          v-if="canSave"
+          data-testid="template-edit"
+          link
+          type="primary"
+          @click="openEdit(row)"
+        >
+          {{ t("messageTemplate.edit") }}
+        </el-button>
+        <el-button
+          v-if="canPreview"
+          data-testid="template-preview-row"
+          :disabled="row.has_preview === false"
+          link
+          type="primary"
+          @click="previewRow(row)"
+        >
+          {{ t("messageTemplate.preview") }}
+        </el-button>
+        <el-button
+          v-if="canReset && row.has_override"
+          data-testid="template-reset"
+          link
+          type="warning"
+          :loading="resetting === row.message_type"
+          :disabled="Boolean(resetting)"
+          @click="reset(row)"
+        >
+          {{ t("messageTemplate.reset") }}
+        </el-button>
+      </template>
+    </ReReadonlyTable>
   </div>
 </template>

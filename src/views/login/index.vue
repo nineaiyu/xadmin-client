@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, toRaw, watch } from "vue";
+import { computed, onMounted, toRaw, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
-import Motion from "./utils/motion";
+import Motion from "@/components/ReMotion";
 import basic from "./components/Basic.vue";
 import TypeIt from "./components/ReTypeit";
 import register from "./components/Register.vue";
@@ -11,11 +11,14 @@ import { LOGIN_PAGE } from "./utils/enums";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
+import { loginCapabilitiesApi } from "@/api/auth";
+import { isSuccess } from "@/api/types";
 import { avatar, bg, illustration } from "./utils/static";
 
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { SITE_LINKS } from "@/config/site";
+import { LOCALE_OPTIONS } from "@/constants/localeOptions";
 import { useI18n } from "vue-i18n";
 
 import dayIcon from "@/assets/svg/day.svg?component";
@@ -27,8 +30,34 @@ defineOptions({
   name: "LoginIndex"
 });
 
+const loginPageStore = useLoginPageStoreHook();
 const currentPage = computed(() => {
-  return useLoginPageStoreHook().currentPage;
+  return loginPageStore.currentPage;
+});
+
+// 能力清单由外壳统一拉取:就绪前不渲染子页(配置未到时 access 未知,
+// 直接渲染会先闪「服务已禁止」);失败给整页重试(与子页原 configFailed 同口径)
+const capabilitiesReady = computed(
+  () => loginPageStore.capabilitiesStatus === "success"
+);
+const capabilitiesFailed = computed(
+  () => loginPageStore.capabilitiesStatus === "failed"
+);
+const reloadCapabilities = async () => {
+  loginPageStore.SET_CAPABILITIES_STATUS("loading");
+  try {
+    const res = await loginCapabilitiesApi();
+    if (isSuccess(res) && res.data) {
+      loginPageStore.SET_CAPABILITIES(res.data);
+    } else {
+      loginPageStore.SET_CAPABILITIES_STATUS("failed");
+    }
+  } catch {
+    loginPageStore.SET_CAPABILITIES_STATUS("failed");
+  }
+};
+onMounted(() => {
+  void reloadCapabilities();
 });
 
 const { initStorage } = useLayout();
@@ -39,10 +68,14 @@ dataThemeChange(themeMode.value, { animate: false });
 
 /** el-switch 的 change 载荷为 boolean/string/number，按既有调用口径透传给主题切换 */
 const handleDataThemeChange = (value: string | number | boolean) => {
-  dataThemeChange(value as string);
+  // el-switch 传的是 boolean；themeMode 是字符串枚举（"" / "system" / "light" / "dark"），
+  // 不能把布尔值落进 $storage.layout
+  dataTheme.value = Boolean(value);
+  dataThemeChange();
 };
 const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
+const [zhOption, enOption] = LOCALE_OPTIONS;
 const { t } = useI18n();
 
 /** 认证页外壳形态（设置面板 →「通用」→「登录页」）：panel-left / panel-center / panel-right */
@@ -91,7 +124,10 @@ watch(
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
+              :class="[
+                'dark:text-(--el-color-white)!',
+                getDropdownItemClass(locale, 'zh')
+              ]"
               :style="getDropdownItemStyle(locale, 'zh')"
               @click="translationCh"
             >
@@ -100,17 +136,20 @@ watch(
                 :icon="Check"
                 class="check-zh"
               />
-              简体中文
+              {{ zhOption.label }}
             </el-dropdown-item>
             <el-dropdown-item
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
+              :class="[
+                'dark:text-(--el-color-white)!',
+                getDropdownItemClass(locale, 'en')
+              ]"
               :style="getDropdownItemStyle(locale, 'en')"
               @click="translationEn"
             >
               <span v-show="locale === 'en'" class="check-en">
                 <IconifyIconOffline :icon="Check" />
               </span>
-              English
+              {{ enOption.label }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -130,29 +169,50 @@ watch(
               />
             </h2>
           </Motion>
-          <!-- 账户密码登录 -->
-          <basic v-if="currentPage === LOGIN_PAGE.basic" />
+          <!-- 能力清单未就绪:不渲染任何子页(避免配置未到时闪「服务已禁止」) -->
+          <Motion v-if="capabilitiesFailed" :delay="100">
+            <el-result icon="error" :title="t('login.configLoadFailed')">
+              <template #extra>
+                <el-button type="primary" @click="reloadCapabilities">
+                  {{ t("buttons.reload") }}
+                </el-button>
+              </template>
+            </el-result>
+          </Motion>
+          <Motion v-else-if="capabilitiesReady" :delay="100">
+            <!-- 账户密码登录 -->
+            <basic v-if="currentPage === LOGIN_PAGE.basic" />
 
-          <!-- 验证码登录 -->
-          <login v-if="currentPage === LOGIN_PAGE.verifyCode" />
-          <!-- 注册 -->
-          <register v-if="currentPage === LOGIN_PAGE.register" />
-          <!-- 忘记密码 -->
-          <resetPassword v-if="currentPage === LOGIN_PAGE.resetPassword" />
+            <!-- 验证码登录 -->
+            <login v-if="currentPage === LOGIN_PAGE.verifyCode" />
+            <!-- 注册 -->
+            <register v-if="currentPage === LOGIN_PAGE.register" />
+            <!-- 忘记密码 -->
+            <resetPassword v-if="currentPage === LOGIN_PAGE.resetPassword" />
+          </Motion>
+          <Motion v-else :delay="100">
+            <div v-loading="true" class="h-40 flex-c" />
+          </Motion>
         </div>
       </div>
     </div>
     <div class="w-full flex-c absolute bottom-3 text-sm text-fg-muted">
       Copyright © 2026-present
-      <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
+      <a
+        class="hover:text-primary!"
+        :href="SITE_LINKS.author"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         &nbsp;{{ title }}
       </a>
     </div>
   </div>
 </template>
 
-<style scoped>
-@import url("@/style/login.css");
+<!-- 登录页外壳样式：全局（类名仅本页使用），scss 版消费语义令牌 -->
+<style lang="scss">
+@use "@/style/login";
 </style>
 
 <style lang="scss" scoped>

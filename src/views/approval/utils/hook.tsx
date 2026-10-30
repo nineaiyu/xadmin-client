@@ -18,7 +18,7 @@ export type ApprovalScope = "pending" | "mine";
  * 弹窗内容（驳回原因 / 逐级进度）见 utils/dialogs.tsx；行内操作与工具栏见
  * useApprovalRowActions / useApprovalToolbar，列渲染见 approvalColumns，
  * 进度弹窗入口见 useApprovalProgress；行级可见性与文案规则见
- * approvalRowRules / approvalTexts（纯函数可单测直测）。
+ * approvalHelpers（纯函数可单测直测）。
  */
 export function useApprovalPanel(scope: ApprovalScope, tableRef: Ref) {
   const auth = usePageAuth("SystemApprovalRequest", [

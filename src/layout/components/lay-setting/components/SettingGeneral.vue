@@ -17,6 +17,7 @@ import { useNav } from "@/layout/hooks/useNav";
 import { resolveHeaderMode } from "@/layout/hooks/layoutModes";
 import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
+import { LOCALE_OPTIONS } from "@/constants/localeOptions";
 import { useConfigureStorage } from "../hooks/useConfigureStorage";
 import { useSiteWideEdit } from "../hooks/useSiteWideEdit";
 import PrefBlock from "./PrefBlock.vue";
@@ -69,10 +70,7 @@ const language = computed<string>({
   }
 });
 
-const languageOptions = computed(() => [
-  { label: "简体中文", value: "zh" },
-  { label: "English", value: "en" }
-]);
+const languageOptions = LOCALE_OPTIONS;
 
 /** 时区（顶栏时区组件与时钟展示消费同一存储项；空串 = 跟随浏览器） */
 const timezone = computed<string>({
@@ -80,6 +78,16 @@ const timezone = computed<string>({
   set: value => storageConfigureChange("timezone", value)
 });
 const timezoneOptions = computed(() => resolveTimezoneOptions());
+
+/** 界面密度（default / small）：全局注入 EP 组件 size；表格侧未手动切换的页面跟随 */
+const uiSize = computed<string>({
+  get: () => ($storage?.configure?.uiSize === "small" ? "small" : "default"),
+  set: value => storageConfigureChange("uiSize", value)
+});
+const uiSizeOptions = computed<PrefChoiceOption[]>(() => [
+  { value: "default", label: t("layout.uiSizeDefault") },
+  { value: "small", label: t("layout.uiSizeCompact") }
+]);
 
 /** 顶栏自动隐藏：实时生效（useHeaderAutoHide 读同一存储项）；
  *  与「布局」页签的顶栏模式四态同源——同时镜像 `headerMode`，两个入口不互相覆盖 */
@@ -283,6 +291,15 @@ async function checkUpdate() {
           :inactive-text="t('labels.inactive')"
           inline-prompt
           @change="compactModeChange"
+        />
+      </template>
+    </PrefRow>
+    <PrefRow :label="t('layout.uiSize')" :tip="t('layout.uiSizeTip')">
+      <template #control>
+        <PrefChoice
+          :options="uiSizeOptions"
+          :model-value="uiSize"
+          @change="value => (uiSize = value)"
         />
       </template>
     </PrefRow>

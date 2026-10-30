@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   OAUTH_BIND_FLAG_TTL: 15 * 60,
   query: {} as Record<string, string>,
   pushMock: vi.fn(),
+  replaceMock: vi.fn(),
   callbackMock: vi.fn(),
   setTokenMock: vi.fn(),
   initRouterMock: vi.fn(),
@@ -33,7 +34,7 @@ vi.mock("vue-i18n", () => ({
 }));
 vi.mock("vue-router", () => ({
   useRoute: () => ({ query: state.query }),
-  useRouter: () => ({ push: state.pushMock })
+  useRouter: () => ({ push: state.pushMock, replace: state.replaceMock })
 }));
 vi.mock("@/api/identity/oauth", () => ({
   OAUTH_BIND_FLAG: state.OAUTH_BIND_FLAG,
@@ -72,6 +73,7 @@ beforeEach(() => {
   sessionStorage.clear();
   state.query = {};
   state.pushMock.mockReset().mockResolvedValue(undefined);
+  state.replaceMock.mockReset().mockResolvedValue(undefined);
   state.callbackMock.mockReset();
   state.setTokenMock.mockReset();
   state.initRouterMock.mockReset().mockResolvedValue(undefined);
@@ -114,6 +116,33 @@ describe("OAuth 回调页 MFA 分支", () => {
     expect(state.setTokenMock).toHaveBeenCalledWith({ accessToken: "tok" });
     expect(state.initRouterMock).toHaveBeenCalledWith(true);
     expect(state.pushMock).toHaveBeenCalledWith("/");
+  });
+
+  it("MFA 验证成功且带 must_change_password：落到改密页并提示，不进主页", async () => {
+    state.query = { provider: "github", code: "c1", state: "s1" };
+    state.callbackMock.mockResolvedValue({
+      code: 1000,
+      data: { mfa_required: true, mfa_token: "mfa-token-1", methods: [] }
+    });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    const mfa = wrapper.findComponent({ name: "LoginMfa" });
+    await mfa.vm.$emit("success", {
+      access: "tok-mfa",
+      must_change_password: true
+    });
+    await flushPromises();
+
+    expect(state.setTokenMock).toHaveBeenCalledWith({
+      access: "tok-mfa",
+      must_change_password: true
+    });
+    expect(state.messageMock).toHaveBeenCalledWith("forcePassword.tip", {
+      type: "warning",
+      duration: 6000
+    });
+    expect(state.pushMock).toHaveBeenCalledWith("/settings/basic");
   });
 
   it("直接签发 token（无 MFA）：原有登录链路不变", async () => {
@@ -159,10 +188,11 @@ describe("OAuth 回调页 MFA 分支", () => {
     const wrapper = mountPage();
     await flushPromises();
 
-    expect(state.pushMock).toHaveBeenCalledWith({
+    expect(state.replaceMock).toHaveBeenCalledWith({
       path: "/account-settings",
       query: { tab: "oauthBindings" }
     });
+    expect(state.pushMock).not.toHaveBeenCalled();
     expect(wrapper.find(".login-mfa-stub").exists()).toBe(false);
   });
 });

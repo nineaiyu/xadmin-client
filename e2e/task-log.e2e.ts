@@ -93,6 +93,12 @@ test("任务日志：记录类型过滤 + 重跑 + 日志入口", async ({ page 
   await page.getByRole("button", { name: "搜索", exact: true }).first().click();
   await expect(targetRow).toBeVisible({ timeout: 10_000 });
   await targetRow.getByRole("button", { name: "重跑" }).click();
+  // 重跑改为二次确认（会新建执行记录并重新派发，连点会重复触发）：
+  // 框架用 ElPopconfirm 承载按钮级 confirm（不是 ElMessageBox），先断言气泡再确认
+  const rerunBox = page.locator(".el-popconfirm:visible").first();
+  await expect(rerunBox).toBeVisible({ timeout: 10_000 });
+  await expect(rerunBox).toContainText("确认重新执行");
+  await rerunBox.getByRole("button", { name: "确定" }).click();
   const rerunRow = table
     .locator("tbody tr", { hasText: `${record!.name}-rerun` })
     .first();

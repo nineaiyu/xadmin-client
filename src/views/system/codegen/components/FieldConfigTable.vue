@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSortable } from "@/hooks/useSortable";
+import DataTable from "@/components/DataTable";
 import type {
   CodegenFieldItem,
   CodegenFieldOverride,
@@ -121,7 +122,7 @@ useSortable(
 <template>
   <div class="w-full">
     <div class="mb-1 flex-bc">
-      <span class="text-sm text-gray-500">
+      <span class="text-sm text-fg-subtle">
         {{
           t("codegen.fieldSummary", {
             enabled: enabledCount,
@@ -133,16 +134,17 @@ useSortable(
         {{ t("codegen.resetFields") }}
       </el-button>
     </div>
-    <el-table
+    <DataTable
       ref="tableRef"
       :data="fields"
       size="small"
       row-key="name"
       max-height="460"
+      :label="t('codegen.fields')"
     >
       <el-table-column width="28" align="center">
         <template #default>
-          <span class="drag-handle cursor-move text-gray-400">⠿</span>
+          <span class="drag-handle cursor-move text-fg-muted">⠿</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -153,7 +155,7 @@ useSortable(
         <template #default="{ row }">
           <div class="leading-tight">
             <div class="text-xs font-medium">{{ row.name }}</div>
-            <div class="text-(length:--font-size-2xs) text-gray-400">
+            <div class="text-(length:--font-size-2xs) text-fg-muted">
               {{ planByName.get(row.name)?.verbose_name }}
               <el-tag
                 v-if="planByName.get(row.name)?.is_relation"
@@ -250,9 +252,9 @@ useSortable(
             :content="row.input_type"
             placement="top"
           >
-            <span class="text-xs text-gray-400">{{ row.input_type }}</span>
+            <span class="text-xs text-fg-muted">{{ row.input_type }}</span>
           </el-tooltip>
-          <span v-else class="text-xs text-gray-300">—</span>
+          <span v-else class="text-xs text-fg-subtle">—</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('codegen.colDict')" min-width="140">
@@ -273,7 +275,7 @@ useSortable(
               :label="`${dict.label}（${dict.code}）`"
             />
           </el-select>
-          <span v-else class="text-xs text-gray-300">—</span>
+          <span v-else class="text-xs text-fg-subtle">—</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('codegen.colFieldClass')" min-width="150">
@@ -294,7 +296,7 @@ useSortable(
               :label="t(`codegen.fieldClass_${option}`)"
             />
           </el-select>
-          <span v-else class="text-xs text-gray-300">—</span>
+          <span v-else class="text-xs text-fg-subtle">—</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -307,6 +309,6 @@ useSortable(
           <el-switch v-model="row.include" size="small" :disabled="isPk(row)" />
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
   </div>
 </template>

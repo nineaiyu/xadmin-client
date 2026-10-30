@@ -169,6 +169,9 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
 /**
  * 行操作收敛：操作列只留「编辑 / 管理」，用量报表入口在「管理」抽屉内。
  * 抽屉打开后动作执行前先收起抽屉（避免与用量抽屉叠加）。
+ *
+ * 定位必须用唯一 testid：管理抽屉收起有过渡动画，期间 DOM 仍可见且含「调用量」
+ * 文案，按 `.el-drawer:visible` + 文案选会命中正在收起的管理抽屉（历史假阳性）。
  */
 test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
   await login(page);
@@ -177,6 +180,7 @@ test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
     data: { name, rate_limit_per_minute: 0 }
   });
   expect(created.ok()).toBeTruthy();
+  const appPk = String((await created.json()).data?.pk ?? "");
 
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
   const row = page.locator(".el-table__row", { hasText: name }).first();
@@ -188,12 +192,35 @@ test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
   const panel = await openEntityPanel(page, row);
   await clickPanelAction(panel, "usage");
 
-  // 用量抽屉按内容特征定位（抽屉标题与行名都含「用量」，不能按标题区分）
-  const drawer = page.locator(".el-drawer:visible", { hasText: "调用量" });
+  const drawer = page.locator('[data-testid="api-usage-drawer"]');
   await expect(drawer).toBeVisible({ timeout: 15_000 });
-  await expect(drawer.getByText("调用量").first()).toBeVisible({
+  // 前置抽屉已收起（同一时刻只应有一个抽屉在屏上）：按管理面板内容判定，
+  // 不能用 `.el-drawer:visible` 的实时 locator——用量抽屉打开后它会解析到新抽屉
+  await expect(page.locator(".re-action-panel")).toBeHidden({
     timeout: 15_000
   });
+  // 数据区真的渲染出来（不只是容器可见）
+  await expect(drawer.locator('[data-testid="api-usage-summary"]')).toBeVisible(
+    { timeout: 15_000 }
+  );
+  await expect(drawer).toContainText("按天明细");
+
+  // 切换统计窗口以服务端请求为锚：只断言 UI 变化会漏掉「切换后不重拉」
+  const statsRequest = page.waitForResponse(
+    resp =>
+      resp.url().includes(`/api-applications/${appPk}/stats`) &&
+      resp.url().includes("days=30") &&
+      resp.ok()
+  );
+  await drawer
+    .locator(".el-radio-button", { hasText: "30 天" })
+    .first()
+    .click();
+  await statsRequest;
+
+  // 关闭后不残留：抽屉收起，再次打开的管理入口不受影响
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden({ timeout: 15_000 });
 });
 
 /**

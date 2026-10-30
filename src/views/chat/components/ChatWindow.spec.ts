@@ -9,13 +9,21 @@ import {
   ElTooltip
 } from "element-plus";
 
-import type { ChatRoomItem } from "@/api/chat";
+import type { ChatPeer, ChatRoomItem } from "@/api/chat";
 
-const mocks = vi.hoisted(() => ({ message: vi.fn(), addDialog: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  message: vi.fn(),
+  addDialog: vi.fn(),
+  closeDialog: vi.fn(),
+  membersAuth: true
+}));
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 // 附件入口按权限点显隐：真实实现依赖路由/权限 store，这里直接放行
-vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
+vi.mock("@/router/utils", () => ({
+  hasAuth: (code: string) =>
+    code === "members:ChatRoom" ? mocks.membersAuth : true
+}));
 vi.mock("@/utils/message", () => ({ message: mocks.message }));
 vi.mock("@/utils/desktopNotify", () => ({
   desktopNotifyEnabled: () => false,
@@ -23,7 +31,10 @@ vi.mock("@/utils/desktopNotify", () => ({
   enableDesktopNotify: vi.fn(async () => true),
   isDesktopNotifySupported: () => true
 }));
-vi.mock("@/components/ReDialog", () => ({ addDialog: mocks.addDialog }));
+vi.mock("@/components/ReDialog", () => ({
+  addDialog: mocks.addDialog,
+  closeDialog: mocks.closeDialog
+}));
 
 // 重依赖子组件以轻量替身替换（各分支在其专属 spec 内覆盖）
 vi.mock("./MessageBubble.vue", () => ({
@@ -74,6 +85,7 @@ const mountWindow = (
     room?: ChatRoomItem | null;
     aiHint?: string;
     pendingCount?: number;
+    contacts?: ChatPeer[];
   } = {}
 ) =>
   mount(ChatWindow, {
@@ -104,7 +116,7 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     const wrapper = mountWindow();
     const textarea = wrapper.find('[data-testid="chat-input"] textarea');
     await textarea.setValue("  hello ");
-    await textarea.trigger("keydown.enter");
+    await textarea.trigger("keydown", { key: "Enter" });
 
     expect(wrapper.emitted("send")).toEqual([["hello"]]);
     expect(
@@ -146,6 +158,26 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     );
   });
 
+  it("无 members:ChatRoom 权限：群成员入口不渲染", () => {
+    mocks.membersAuth = false;
+    const wrapper = mountWindow({ room: room({ room_type: "group" }) });
+    expect(wrapper.find('[data-testid="chat-group-members"]').exists()).toBe(
+      false
+    );
+    mocks.membersAuth = true;
+  });
+
+  it("群成员弹窗：面板「关闭」事件经 closeDialog 收起弹窗", async () => {
+    const wrapper = mountWindow({ room: room({ room_type: "group" }) });
+    await wrapper.find('[data-testid="chat-group-members"]').trigger("click");
+
+    const options = mocks.addDialog.mock.calls[0][0];
+    const vnode = options.contentRenderer();
+    expect(typeof vnode.props.onClose).toBe("function");
+    vnode.props.onClose();
+    expect(mocks.closeDialog).toHaveBeenCalledWith(options, 0);
+  });
+
   it("列表滚动事件透传给父级；离底悬浮条出现并可点击回底", async () => {
     const wrapper = mountWindow({ pendingCount: 2 });
     await wrapper.find('[data-testid="chat-messages"]').trigger("scroll");
@@ -154,5 +186,63 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     expect(wrapper.text()).toContain("chat.newMessages");
     await wrapper.find(".absolute.bottom-40").trigger("click");
     expect(wrapper.emitted("scrollToBottom")).toHaveLength(1);
+  });
+});
+
+describe("@ 提及键盘导航", () => {
+  const peer = {
+    pk: 2,
+    username: "alice",
+    nickname: "Alice",
+    online: true
+  } as ChatPeer;
+
+  it("输入法组词确认的 Enter 不发送", async () => {
+    const wrapper = mountWindow();
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("拼音");
+    await textarea.trigger("keydown", { key: "Enter", isComposing: true });
+
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("拼音");
+  });
+
+  it("候选打开时 Enter 选中成员而不是发送，随后 Enter 才发送", async () => {
+    const wrapper = mountWindow({ contacts: [peer] });
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("@");
+    expect(wrapper.text()).toContain("Alice");
+
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("@alice ");
+
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toEqual([["@alice"]]);
+  });
+
+  it("上下键循环高亮候选，Esc 关闭候选后 Enter 正常发送", async () => {
+    const second = {
+      ...peer,
+      pk: 3,
+      username: "bob",
+      nickname: "Bob"
+    } as ChatPeer;
+    const wrapper = mountWindow({ contacts: [peer, second] });
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("@");
+    expect(
+      wrapper.findAll('[role="option"]')[0].attributes("aria-selected")
+    ).toBe("true");
+
+    await textarea.trigger("keydown", { key: "ArrowDown" });
+    expect(
+      wrapper.findAll('[role="option"]')[1].attributes("aria-selected")
+    ).toBe("true");
+
+    await textarea.trigger("keydown", { key: "Escape" });
+    expect(wrapper.findAll('[role="option"]')).toHaveLength(0);
+    await textarea.trigger("keydown", { key: "Enter" });
+    expect(wrapper.emitted("send")).toEqual([["@"]]);
   });
 });

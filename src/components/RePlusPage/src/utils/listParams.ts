@@ -63,3 +63,39 @@ export function buildListParams(
   flattenPkCollections(params);
   return params;
 }
+
+/**
+ * 「按当前搜索条件」导出时的参数装配：与列表请求同口径归一。
+ *
+ * 裸区间数组键后端只认 `_after/_before`（不认会被静默忽略 → 导出比列表多），
+ * pk 集合要扁平化，导出端点不分页（剔 page/size）但保留 ordering。
+ * 在副本上变换，**不写回 searchFields**（否则列表页查询被打脏）。
+ */
+export function buildExportSearchParams(
+  searchFields: Record<string, unknown>,
+  type: unknown
+): Record<string, unknown> {
+  const draft: Record<string, unknown> = {
+    ...toRaw(searchFields),
+    type
+  };
+  splitDateRangeFields(draft);
+  const { page: _page, size: _size, ...rest } = draft;
+  return buildListParams(rest, {});
+}
+
+/**
+ * 「导出选中行」的范围收敛：拿到 `spm`（范围令牌）才允许导出，并去掉一次性 pks。
+ *
+ * spm 缺失 = 范围条件整体丢失，退化成全量导出会把「选中」静默放大为「全部」，
+ * 故缺 spm 时返回 ok=false 且**不动 formData**（pks 保留供重试）。
+ */
+export function applySelectedExportScope(
+  formData: Record<string, unknown>,
+  spm: string | undefined
+): { ok: boolean; params: Record<string, unknown> } {
+  if (!spm) return { ok: false, params: formData };
+  const params: Record<string, unknown> = { ...formData, spm };
+  delete params.pks;
+  return { ok: true, params };
+}

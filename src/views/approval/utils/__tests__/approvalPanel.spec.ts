@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { canActRow, isChainRow } from "../approvalRowRules";
-import { approverText, batchFailedDetail } from "../approvalTexts";
+import {
+  approverText,
+  batchFailedDetail,
+  canActRow,
+  isChainRow
+} from "../approvalHelpers";
 
 const t = (key: string, params?: Record<string, unknown>) =>
   params ? `${key}:${JSON.stringify(params)}` : key;

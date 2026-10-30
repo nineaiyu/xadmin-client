@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, ref, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth, usePageAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
@@ -12,6 +12,7 @@ import { useSubscriptionEvents } from "./useSubscriptionEvents";
 import { useSubscriptionFormOptions } from "./useSubscriptionFormOptions";
 import { useSubscriptionColumns } from "./useSubscriptionColumns";
 import { useSubscriptionButtons } from "./useSubscriptionButtons";
+import { useSubscriptionSecret } from "./useSubscriptionSecret";
 
 /**
  * Webhook 订阅：CRUD + 测试 + 行内启停。
@@ -21,27 +22,41 @@ import { useSubscriptionButtons } from "./useSubscriptionButtons";
  * - is_active 行内开关由页面接管渲染与乐观回滚（列渲染层覆盖框架默认单元格）；
  * - 删除保留框架默认入口（带二次确认）。
  */
-export function useWebhookSubscription() {
+export function useWebhookSubscription(tableRef: Ref = ref()) {
   const { t } = useI18n();
   const api = reactive(webhookSubscriptionApi);
   const auth = usePageAuth("WebhookSubscription");
   const canTest = hasAuth("test:WebhookSubscription");
+  const canRotate = hasAuth("rotateSecret:WebhookSubscription");
+  // 事件目录是独立权限点：无权限时不拉取，避免每次进页都弹「加载失败」
+  const canReadEvents = hasAuth("events:WebhookSubscription");
 
-  const { events, eventLabel } = useSubscriptionEvents({ t });
+  const { events, eventLabel } = useSubscriptionEvents({
+    t,
+    enabled: canReadEvents
+  });
   const { addOrEditOptions } = useSubscriptionFormOptions({ t, events });
 
-  /** 行内启停：乐观更新，失败回滚（框架默认编辑按钮关闭后的等价能力） */
+  /** 行内启停：乐观更新 + in-flight 去重，成功后刷新列表带回 last_failure 等派生列 */
+  const toggling = reactive(new Set<string>());
   const toggleActive = async (row: WebhookSubscriptionItem, value: boolean) => {
+    if (toggling.has(row.pk)) return;
     row.is_active = value;
-    const res = await webhookSubscriptionApi
-      .partialUpdate(row.pk, { is_active: value })
-      .catch(normalizeError);
-    if (isSuccess(res)) {
-      message(t("webhook.saveOk"), { type: "success" });
-      return;
+    toggling.add(row.pk);
+    try {
+      const res = await webhookSubscriptionApi
+        .partialUpdate(row.pk, { is_active: value })
+        .catch(normalizeError);
+      if (isSuccess(res)) {
+        message(t("webhook.saveOk"), { type: "success" });
+        tableRef.value?.handleGetData?.();
+        return;
+      }
+      row.is_active = !value;
+      if (res.detail) message(String(res.detail), { type: "warning" });
+    } finally {
+      toggling.delete(row.pk);
     }
-    row.is_active = !value;
-    if (res.detail) message(String(res.detail), { type: "warning" });
   };
 
   const testSubscription = async (row: WebhookSubscriptionItem) => {
@@ -56,16 +71,22 @@ export function useWebhookSubscription() {
     }
   };
 
+  const { rotateSecret } = useSubscriptionSecret({ t });
+
   const { listColumnsFormat } = useSubscriptionColumns({
+    t,
     canEdit: Boolean(auth.partialUpdate || auth.update),
     eventLabel,
+    toggling,
     toggleActive
   });
 
   const { operationButtonsProps } = useSubscriptionButtons({
     t,
     canTest,
-    testSubscription
+    canRotate,
+    testSubscription,
+    rotateSecret
   });
 
   return {

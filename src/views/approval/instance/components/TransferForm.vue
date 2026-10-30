@@ -3,13 +3,13 @@ import { computed, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
-import SearchPicker from "@/components/SearchPicker";
+import ApproverPicker from "@/views/approval/components/ApproverPicker.vue";
 import { pickUsername } from "../utils/instanceFormShared";
 
 /**
  * 转交表单：把我的当前待办交给他人处理（一次性，区别于「委托」的长期代理）。
  *
- * 选人复用 SearchPicker(user) 单选；无 `list:SearchUser` 权限时回退用户名输入。
+ * 选人复用 ApproverPicker(search) 单选；无 `list:SearchUser` 权限时回退用户名输入。
  * 提交契约 `getPayload()`：返回 `{ username, comment }`；`null` = 校验未过（保持弹窗）。
  * 单行「转交」与工具栏「批量转交」共用本组件。
  */
@@ -43,11 +43,15 @@ defineExpose({ getPayload });
       prop="user"
       required
     >
-      <SearchPicker
+      <ApproverPicker
         v-if="canPickUser"
-        v-model="form.user"
-        entity="user"
+        :model-value="form.user"
+        type="user"
         :multiple="false"
+        source="search"
+        @update:model-value="
+          value => (form.user = (value ?? undefined) as object | undefined)
+        "
       />
       <el-input
         v-else

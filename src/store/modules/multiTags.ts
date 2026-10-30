@@ -151,11 +151,18 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             this.multiTags.push(tagVal);
             const maxTagsCount = resolveMaxTagsCount();
             if (maxTagsCount > 0 && this.multiTags.length > maxTagsCount) {
-              // 关闭最早打开的可关闭页签：跳过首页固定页签（索引 0）与右键固定的页签
+              // 关闭最早打开的可关闭页签：跳过首页固定页签（索引 0）、右键固定的
+              // 页签，以及**刚打开的这一项**（否则已有页签全固定时会立刻把新页签
+              // 淘汰，表现为「点了菜单但标签页不出现」）。
+              const lastIndex = this.multiTags.length - 1;
               const removableIndex = this.multiTags.findIndex(
                 (tag, index) =>
-                  index > 0 && !(tag.path && this.pinnedTags.includes(tag.path))
+                  index > 0 &&
+                  index < lastIndex &&
+                  !(tag.path && this.pinnedTags.includes(tag.path))
               );
+              // 其余页签全固定时没有可淘汰项：固定是用户的显式保留意图，
+              // 此时允许短暂超限（不强行摘除固定页签）；取消固定后下一次 push 回收
               if (removableIndex > 0) this.multiTags.splice(removableIndex, 1);
             }
             this.tagsCache(this.multiTags);

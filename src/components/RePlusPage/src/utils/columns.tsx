@@ -195,9 +195,14 @@ export function useBaseColumns(localeName: string) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }
     } else if (apiFields) {
-      const res = await apiFields(fieldsParams);
-      searchColumns.value.splice(0, searchColumns.value.length);
-      formatSearchColumns(res.data);
+      try {
+        const res = await apiFields(fieldsParams);
+        searchColumns.value.splice(0, searchColumns.value.length);
+        formatSearchColumns(res.data);
+      } catch {
+        // search-fields 失败不阻断列表：保持空搜索区，请求层已统一提示；
+        // 不重抛可避免调用方出现 unhandled rejection
+      }
       if (fieldsCallback) {
         fieldsCallback({ searchDefaultValue, searchColumns });
       }
@@ -217,21 +222,25 @@ export function useBaseColumns(localeName: string) {
         });
       }
     } else if (apiColumns) {
-      apiColumns(columnsParams).then(res => {
+      try {
+        const res = await apiColumns(columnsParams);
         detailColumns.value.splice(0, detailColumns.value.length);
         addOrEditColumns.value.splice(0, addOrEditColumns.value.length);
         listColumns.value.splice(0, listColumns.value.length);
         formatAddOrEditColumns(res.data);
-        if (columnsCallback) {
-          columnsCallback({
-            listColumns,
-            detailColumns,
-            addOrEditRules,
-            addOrEditColumns,
-            addOrEditDefaultValue
-          });
-        }
-      });
+      } catch {
+        // search-columns 失败不阻断列表：保持空列（列表区仍可渲染、可重试），
+        // 请求层已统一提示；不重抛可避免调用方出现 unhandled rejection
+      }
+      if (columnsCallback) {
+        columnsCallback({
+          listColumns,
+          detailColumns,
+          addOrEditRules,
+          addOrEditColumns,
+          addOrEditDefaultValue
+        });
+      }
     }
   };
 

@@ -1,32 +1,33 @@
 <script lang="ts" setup>
 import { isSuccess } from "@/api/types";
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import Motion from "../utils/motion";
+import Motion from "@/components/ReMotion";
 import { loginRules } from "../utils/rule";
 import type { FormInstance } from "element-plus";
 import { LOGIN_PAGE, operates } from "../utils/enums";
 import { useUserStoreHook } from "@/store/modules/user";
 import { useLoginPageStoreHook } from "@/store/modules/loginPage";
-import { ReImageVerify } from "@/components/ReImageVerify";
+import {
+  CAPTCHA_ACTION_LOGIN,
+  ReCaptchaChallenge
+} from "@/components/ReCaptchaChallenge";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { handleOperation } from "@/components/RePlusPage";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import Keyhole from "~icons/ri/shield-keyhole-line";
 import {
   getTempTokenApi,
-  loginAuthApi,
   type LoginResultData,
   type TokenInfo
 } from "@/api/auth";
 import { cloneDeep } from "@pureadmin/utils";
+import { message } from "@/utils/message";
 import LoginMfa from "./LoginMfa.vue";
 import OAuthEntry from "./OauthEntry.vue";
 import RememberLogin from "./RememberLogin.vue";
-import type { RecordType } from "plus-pro-components";
+import LoginPrivacyNotice from "./LoginPrivacyNotice.vue";
 import {
-  useAuthInfo,
   useEnterSubmit,
   useLoginFlow,
   useRememberLogin
@@ -36,9 +37,10 @@ defineOptions({
   name: "BasicLogin"
 });
 
-const captchaRef = ref();
+const captchaChallengeRef = ref<InstanceType<typeof ReCaptchaChallenge>>();
 const ruleFormRef = ref<FormInstance>();
 const { t } = useI18n();
+const loginPageStore = useLoginPageStoreHook();
 
 const {
   checked,
@@ -48,14 +50,39 @@ const {
   syncRememberToStore
 } = useRememberLogin();
 
-const { authInfo, configLoading, onConfig } = useAuthInfo();
+/** 登录页能力清单(外壳拉取,本组件挂载时必已就绪) */
+const capabilities = computed(() => loginPageStore.capabilities);
+
+const accessEnabled = computed(() => capabilities.value?.access === true);
+const basicLoginEnabled = computed(
+  () => capabilities.value?.basic?.enabled === true
+);
+const resetEnabled = computed(
+  () => capabilities.value?.reset?.enabled === true
+);
+const captchaEnabled = computed(
+  () => capabilities.value?.basic?.captcha === true
+);
+const captchaTypes = computed(
+  () => capabilities.value?.basic?.captcha_types ?? []
+);
+
+/** 「其他登录方式」入口:按能力清单过滤(验证码通道全关 / 注册关闭时入口隐藏) */
+const visibleOperates = computed(() =>
+  operates.filter(item => {
+    if (item.page === LOGIN_PAGE.verifyCode)
+      return capabilities.value?.code?.enabled === true;
+    if (item.page === LOGIN_PAGE.register)
+      return capabilities.value?.register?.enabled === true;
+    return true;
+  })
+);
 
 const ruleForm = reactive({
   username: "",
   password: "",
   token: "",
-  captcha_key: "",
-  captcha_code: ""
+  captcha_ticket: ""
 });
 
 /**
@@ -66,8 +93,9 @@ let tokenPromise: Promise<void> | null = null;
 
 /** 取一次性临时 Token 写入表单；force=true 强制刷新（登录失败后 token 已被消费） */
 const initToken = (force = false) => {
-  if (!(authInfo.value.access && authInfo.value.token))
+  if (!(accessEnabled.value && capabilities.value?.basic?.token)) {
     return Promise.resolve();
+  }
   if (!force && tokenPromise) return tokenPromise;
   tokenPromise = getTempTokenApi()
     .then(res => {
@@ -88,7 +116,8 @@ const initToken = (force = false) => {
  */
 const refreshLoginResources = () => {
   void initToken(true);
-  captchaRef.value?.getImgCode();
+  ruleForm.captcha_ticket = "";
+  captchaChallengeRef.value?.reset();
 };
 
 const {
@@ -105,7 +134,9 @@ const {
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
+  // 回车监听挂在 document 上：挑战期间重复回车会共享同一个 pending Promise，
+  // 票据一到就发两次登录（第二次必失败并刷新掉刚成功的登录态）
+  if (!formEl || !basicLoginEnabled.value || loading.value) return;
   await formEl.validate(async valid => {
     if (!valid) {
       loading.value = false;
@@ -116,6 +147,22 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     // 空 token 打后端，命中「临时Token校验失败」的 400 且不会自动重试。
     // 提交前等 token 就绪（就绪后瞬时返回；失败路径见下方回调的强制刷新）。
     await initToken();
+    // 统一人机验证：提交前换取一次性 ticket 随登录体提交
+    if (captchaEnabled.value) {
+      try {
+        const ticket = await captchaChallengeRef.value?.open();
+        if (!ticket) {
+          // 组件未挂载（无反馈会像按钮坏了）；用户取消走 reject 分支，保持静默
+          message(t("captchaChallenge.notReady"), { type: "error" });
+          loading.value = false;
+          return;
+        }
+        ruleForm.captcha_ticket = ticket;
+      } catch {
+        loading.value = false;
+        return;
+      }
+    }
     // 登录请求（user store 封装）：成功时已写 token 并按 mfa_required 分支处理；
     // 失败与异常都走 handleOperation 的回调刷新一次性资源——一次性 token 提交即
     // 消费，不刷新则下次提交必带失效 token（验证码同理）
@@ -123,7 +170,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       t,
       apiReq: useUserStoreHook().loginByUsername(
         cloneDeep(ruleForm),
-        authInfo.value.encrypted
+        capabilities.value?.basic?.encrypted
       ),
       // 成功提示由登录流弹出「登录成功」，关掉默认文案
       showSuccessMsg: false,
@@ -160,24 +207,17 @@ const handleMfaSuccess = (data: TokenInfo) => afterTokenIssued(data, "login");
 /** 回车提交（随组件卸载自动移除监听） */
 useEnterSubmit(() => onLogin(ruleFormRef.value));
 
+// 能力清单已由外壳拉取就绪:挂载即初始化一次性 token 与免登录天数
 onMounted(() => {
-  configLoading.value = true;
-  loginAuthApi()
-    .then(res => {
-      if (isSuccess(res)) {
-        onConfig(res.data as RecordType);
-        void initToken();
-        loginDay.value = authInfo.value.lifetime ?? 1;
-        formatLoginDayOptions();
-        syncRememberToStore();
-      }
-    })
-    .finally(() => (configLoading.value = false));
+  void initToken();
+  loginDay.value = capabilities.value?.lifetime ?? 1;
+  formatLoginDayOptions();
+  syncRememberToStore();
 });
 </script>
 
 <template>
-  <div v-loading="configLoading">
+  <div>
     <LoginMfa
       v-if="loginMfaInfo"
       :mfa-info="loginMfaInfo"
@@ -186,13 +226,13 @@ onMounted(() => {
     />
     <template v-else>
       <el-form
-        v-if="authInfo.access"
+        v-if="accessEnabled"
         ref="ruleFormRef"
         :model="ruleForm"
         :rules="loginRules"
         size="large"
       >
-        <div v-if="authInfo.basic">
+        <div v-if="basicLoginEnabled">
           <Motion :delay="100">
             <el-form-item prop="username">
               <el-input
@@ -215,26 +255,10 @@ onMounted(() => {
               />
             </el-form-item>
           </Motion>
-
-          <Motion v-if="authInfo.access && authInfo.captcha" :delay="200">
-            <el-form-item prop="captcha_code">
-              <el-input
-                v-model="ruleForm.captcha_code"
-                :placeholder="t('login.verifyCode')"
-                :prefix-icon="useRenderIcon(Keyhole)"
-                clearable
-              >
-                <template v-slot:append>
-                  <ReImageVerify
-                    ref="captchaRef"
-                    v-model="ruleForm.captcha_key"
-                  />
-                </template>
-              </el-input>
-            </el-form-item>
-          </Motion>
         </div>
-        <Motion :delay="250">
+        <!-- 账号密码登录被关闭：给出可读说明，隐藏无字段可填的提交按钮；
+             验证码/第三方入口仍在下方渲染，不把用户困在空表单里 -->
+        <Motion v-if="basicLoginEnabled" :delay="250">
           <el-form-item>
             <div class="w-full h-5 flex-bc">
               <RememberLogin
@@ -243,13 +267,11 @@ onMounted(() => {
                 :login-day-list="loginDayList"
               />
               <el-button
-                v-if="authInfo.reset"
+                v-if="resetEnabled"
                 link
                 type="primary"
                 @click="
-                  useLoginPageStoreHook().SET_CURRENT_PAGE(
-                    LOGIN_PAGE.resetPassword
-                  )
+                  loginPageStore.SET_CURRENT_PAGE(LOGIN_PAGE.resetPassword)
                 "
               >
                 {{ t("login.forget") }}
@@ -267,6 +289,14 @@ onMounted(() => {
             </el-button>
           </el-form-item>
         </Motion>
+        <Motion v-else :delay="250">
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            :title="t('login.basicDisabled')"
+          />
+        </Motion>
         <!-- 第三方登录入口：读取后端已启用 provider，
              替换原静态装饰图标（不接后端、不可点击的死 UI） -->
         <Motion :delay="350">
@@ -276,21 +306,35 @@ onMounted(() => {
       <Motion v-else :delay="300">
         <el-result icon="error" :title="t('login.serverForbidden')" />
       </Motion>
-      <Motion :delay="300">
+      <!-- 入口按钮按能力清单过滤:验证码通道全关/注册关闭时对应入口隐藏;
+           服务整体禁用时全部隐藏(目标页同样是「服务已禁止」,保留即成死循环点击面) -->
+      <Motion v-if="accessEnabled && visibleOperates.length" :delay="300">
         <el-form-item>
           <div class="w-full h-5 flex-bc">
             <el-button
-              v-for="item in operates"
+              v-for="item in visibleOperates"
               :key="item.page"
               class="w-full mt-4!"
               size="default"
-              @click="useLoginPageStoreHook().SET_CURRENT_PAGE(item.page)"
+              @click="loginPageStore.SET_CURRENT_PAGE(item.page)"
             >
               {{ t(item.title) }}
             </el-button>
           </div>
         </el-form-item>
       </Motion>
+      <Motion :delay="450">
+        <LoginPrivacyNotice />
+      </Motion>
+      <ReCaptchaChallenge
+        v-if="captchaEnabled"
+        ref="captchaChallengeRef"
+        scene="login"
+        :action="CAPTCHA_ACTION_LOGIN"
+        :account="ruleForm.username"
+        :types="captchaTypes"
+        :image-fallback="capabilities?.basic?.captcha_image_fallback === true"
+      />
     </template>
   </div>
 </template>

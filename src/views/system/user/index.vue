@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import tree from "./components/UserTree.vue";
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useUser } from "./utils/hook";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
 
@@ -9,16 +10,12 @@ defineOptions({
   name: "SystemUser"
 });
 
-const tableRef = ref();
 const treeRef = ref();
-
-const treePk = computed(() => {
-  return tableRef.value?.searchFields?.dept;
-});
 
 const {
   api,
   auth,
+  tableRef,
   treeData,
   treeLoading,
   addOrEditOptions,
@@ -29,12 +26,42 @@ const {
   deviceDetection,
   listColumnsFormat,
   baseColumnsFormat
-} = useUser(tableRef);
+} = useUser();
+
+const treePk = computed(() => {
+  return tableRef.value?.searchFields?.dept;
+});
 
 // 左栏宽度持久化（默认 20%，约等于原 250px 固定宽；双击分隔条或点悬浮按钮重置）
 const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
   defaultPercent: 20,
   minPercent: 10
+});
+
+/**
+ * 列表页配置：桌面分栏与移动堆叠两分支共用同一份（避免双份维护漂移）。
+ * 必须用 reactive：`addOrEditOptions` / 两个按钮组是 shallowRef，普通对象经
+ * `v-bind` 传给子组件时不会解包，页面级表单定制与自定义按钮会整体失效。
+ */
+/** 勾选列 = 任一批量动作已授权（批删/批量更新/批量通知/批量打标） */
+const selection = computed(() =>
+  hasBatchSelection(auth, [
+    "batchUpdate:SystemUser",
+    "create:SystemNotice",
+    "assign:Tag"
+  ])
+);
+
+const plusPageProps = reactive({
+  api,
+  auth,
+  addOrEditOptions,
+  baseColumnsFormat,
+  listColumnsFormat,
+  localeName: "systemUser",
+  operationButtonsProps,
+  tableBarButtonsProps,
+  selection
 });
 </script>
 
@@ -59,14 +86,7 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
       <template #paneR>
         <RePlusPage
           ref="tableRef"
-          :api="api"
-          :auth="auth"
-          :addOrEditOptions="addOrEditOptions"
-          :baseColumnsFormat="baseColumnsFormat"
-          :listColumnsFormat="listColumnsFormat"
-          locale-name="systemUser"
-          :operationButtonsProps="operationButtonsProps"
-          :tableBarButtonsProps="tableBarButtonsProps"
+          v-bind="plusPageProps"
           saved-views
           advanced-filter
           recycleBin
@@ -87,15 +107,8 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
       />
       <RePlusPage
         ref="tableRef"
-        :api="api"
-        :auth="auth"
+        v-bind="plusPageProps"
         :class="['w-full', 'mt-2']"
-        :addOrEditOptions="addOrEditOptions"
-        :baseColumnsFormat="baseColumnsFormat"
-        :listColumnsFormat="listColumnsFormat"
-        locale-name="systemUser"
-        :operationButtonsProps="operationButtonsProps"
-        :tableBarButtonsProps="tableBarButtonsProps"
         saved-views
         advanced-filter
         recycleBin

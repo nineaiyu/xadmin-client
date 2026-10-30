@@ -1,5 +1,4 @@
 import { computed, ref, type Ref } from "vue";
-import { message } from "@/utils/message";
 import { mergeUnique } from "@/utils/unique";
 import type {
   ScreenFreeLayout,
@@ -24,13 +23,14 @@ import {
 } from "./freeAlign";
 import { clampGroupDelta } from "./freeSelect";
 import { batchCoalesceKey, batchUpdateTargets } from "./freeBatchUpdate";
+import { readClipboard } from "./freeClipboard";
 import {
-  createClipboard,
-  readClipboard,
-  writeClipboard
-} from "./freeClipboard";
+  copySelection,
+  moveSelectionLayer,
+  pasteClipboard
+} from "./freeEditorActions";
 import { createPaneInserter } from "./freeInserter";
-import { fetchCloudClipboard, saveCloudClipboard } from "./serverTemplates";
+import { createFreeCloudClipboard } from "./freeCloudClipboard";
 import { createFreeTemplates } from "./createFreeTemplates";
 import { nudgeCoalesceKey } from "./history";
 import type { PaneBox } from "./layout";
@@ -107,7 +107,9 @@ export function createFreeEditor(deps: {
     selection.value = [];
   }
 
-  const toPayload = () => buildFreeLayout(panes.value, design.value);
+  /** 自由载荷组装：默认取当前窗格，可传入预检后的清单覆盖（保存前剔除未配置媒体） */
+  const toPayload = (override?: readonly ScreenLayoutPane[]) =>
+    buildFreeLayout(override ?? panes.value, design.value);
 
   /* ---------------- 选择 ---------------- */
 
@@ -347,42 +349,16 @@ export function createFreeEditor(deps: {
     );
 
   /** 层级：单选走 freePaneOps；多选按选区整体置顶 / 置底 / 上移 / 下移一位 */
-  function moveLayer(action: FreeLayerAction) {
-    const pks = selection.value;
-    if (pks.length === 0) return;
-    if (pks.length === 1) {
-      ops.moveLayer(pks[0], action);
-      return;
-    }
-    const list = [...panes.value];
-    const isChosen = (pane: ScreenLayoutPane) => pks.includes(pane.pk);
-    const unchanged = (next: ScreenLayoutPane[]) =>
-      next.every((pane, index) => pane.pk === list[index].pk);
-    if (action === "top" || action === "bottom") {
-      const chosen = list.filter(isChosen);
-      const rest = list.filter(pane => !isChosen(pane));
-      const next =
-        action === "top" ? [...rest, ...chosen] : [...chosen, ...rest];
-      if (unchanged(next)) return;
-      deps.pushHistory();
-      panes.value = next;
-      return;
-    }
-    const next = [...list];
-    const dir = action === "up" ? 1 : -1;
-    const order =
-      action === "up" ? [...next.keys()].reverse() : [...next.keys()];
-    for (const index of order) {
-      if (!isChosen(next[index])) continue;
-      const target = index + dir;
-      if (target < 0 || target >= next.length) continue;
-      if (isChosen(next[target])) continue;
-      [next[index], next[target]] = [next[target], next[index]];
-    }
-    if (unchanged(next)) return;
-    deps.pushHistory();
-    panes.value = next;
-  }
+  const moveLayer = (action: FreeLayerAction) =>
+    moveSelectionLayer(
+      {
+        panes,
+        selection,
+        moveSingle: ops.moveLayer,
+        pushHistory: deps.pushHistory
+      },
+      action
+    );
 
   /* ---------------- 复制 / 粘贴（插入链路） ---------------- */
 
@@ -394,45 +370,24 @@ export function createFreeEditor(deps: {
           panes.value.filter(pane => selection.value.includes(pane.pk))
         );
 
-  function copy(): number {
-    const payload = createClipboard(panes.value, selection.value, design.value);
-    if (!payload) return 0;
-    if (!writeClipboard(payload)) {
-      message(deps.t("dataScreen.clipboardBlocked"), { type: "warning" });
-    }
-    hasClipboard.value = true;
-    // 双写云端：失败只警告不阻断——本地剪贴板仍然可用
-    void saveCloudClipboard({
-      design_w: payload.design.design_w,
-      design_h: payload.design.design_h,
-      panes: payload.panes
-    }).then(ok => {
-      if (!ok) {
-        message(deps.t("dataScreen.clipboardCloudFailed"), { type: "warning" });
-      }
+  const copy = (): number =>
+    copySelection({
+      panes,
+      selection,
+      design,
+      markHasClipboard: () => {
+        hasClipboard.value = true;
+      },
+      t: deps.t
     });
-    message(deps.t("dataScreen.copyDone", { n: payload.panes.length }), {
-      type: "success"
-    });
-    return payload.panes.length;
-  }
 
-  function paste(): number {
-    const payload = readClipboard();
-    if (!payload) return 0;
-    return inserter.insert(payload.panes);
-  }
+  const paste = (): number =>
+    pasteClipboard(panesList => inserter.insert(panesList));
 
-  /** 从云端粘贴（跨设备）：读服务端槽位 → 走插入链路；空槽位给可读提示 */
-  async function pasteFromCloud(): Promise<number> {
-    const slot = await fetchCloudClipboard();
-    const payload = readFreeLayout(slot?.free_layout ?? null);
-    if (payload.panes.length === 0) {
-      message(deps.t("dataScreen.clipboardCloudEmpty"), { type: "warning" });
-      return 0;
-    }
-    return inserter.insert(payload.panes);
-  }
+  const { pasteFromCloud, clearCloud } = createFreeCloudClipboard({
+    t: deps.t,
+    insert: payload => inserter.insert(payload)
+  });
 
   return {
     design,
@@ -469,6 +424,7 @@ export function createFreeEditor(deps: {
     copy,
     paste,
     pasteFromCloud,
+    clearCloud,
     templates: templateApi.templates,
     serverTemplates: templateApi.serverTemplates,
     refreshTemplates: templateApi.refresh,

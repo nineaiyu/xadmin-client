@@ -11,6 +11,9 @@
  */
 
 import { createMenuNodeSaver } from "./menuDrawerSave";
+import { normalizeMenuRow } from "./normalize";
+import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import {
   openMenuClone,
   openMenuCreate,
@@ -84,7 +87,22 @@ export function useMenuDrawer({
     dirty: core.dirty,
     openCreate: (parent?: MenuRow | null) =>
       openMenuCreate({ t, open: core.open, parent }),
-    openEdit: (row: MenuRow) => openMenuEdit({ t, open: core.open, row }),
+    openEdit: async (row: MenuRow) => {
+      // 编辑前取一次详情：列表行是快照，可能已被其他管理员改动；
+      // 失败（无 retrieve 权限 / 网络异常）回退行快照，不阻断编辑。
+      const res = await api.detail(row.pk as string).catch(normalizeError);
+      // 详情先归一再合并：详情接口的 parent/meta 是对象形态
+      // （normalizeMenuRow 注释亦写明），直接 spread 会把未归一对象盖到已归一行上，
+      // 表单回显 badge/上级丢失、保存时可能把对象提交给后端
+      const fresh =
+        isSuccess(res) && res.data
+          ? ({
+              ...row,
+              ...normalizeMenuRow(res.data as Record<string, unknown>)
+            } as MenuRow)
+          : row;
+      openMenuEdit({ t, open: core.open, row: fresh as MenuRow });
+    },
     openClone: (row: MenuRow) =>
       openMenuClone({ t, open: core.open, rowIndex, row }),
     openRename,

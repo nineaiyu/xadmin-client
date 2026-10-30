@@ -150,6 +150,8 @@ interface ApiAuthProps {
   fields?: string | boolean | null | BaseApi["fields"];
   batchDestroy?: string | boolean | null | BaseApi["batchDestroy"];
   recycleList?: string | boolean | null | BaseApi["recycleList"];
+  recycleRestore?: string | boolean | null | BaseApi["recycleRestore"];
+  recyclePurge?: string | boolean | null | BaseApi["recyclePurge"];
   /** 行级「变更历史」：页面在 getDefaultAuths 声明 + 菜单授权后显示 */
   changeHistory?: string | boolean | null;
 }
@@ -180,6 +182,12 @@ interface RePlusPageProps {
   api: Partial<BaseApi>;
   title?: string;
   auth: Partial<ApiAuthProps>;
+  /**
+   * 四态策略：framework（默认）在无 list 权限时渲染拒绝态、请求失败时渲染
+   * 错误态 + 重试入口；legacy 维持旧行为（无权限整页空白、失败仅 http 层 toast）。
+   * 存量页面按需显式传 legacy 做过渡，新页面不要关闭。
+   */
+  statePolicy?: "framework" | "legacy";
   /**
    * 是否有多选框， 一般为第一列
    */

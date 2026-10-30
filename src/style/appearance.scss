@@ -77,3 +77,25 @@
     border-color var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);
 }
+
+/* ================ 对比度收口（WCAG AA） ================
+   必须留在本层：EP 按需样式在本层之前加载，同特异性规则靠后生效。
+   空态描述 / 选择器占位 / 字数统计默认取次要或占位色，白底不足 4.5:1；
+   plain 主色按钮是浅主色底 + 主色字，部分主题档位同样不足 4.5:1。 */
+.el-empty .el-empty__description p {
+  color: var(--el-text-color-regular);
+}
+
+.el-select .el-select__placeholder.is-transparent {
+  color: var(--el-text-color-regular);
+}
+
+.el-input__count,
+.el-input__count-inner {
+  color: var(--el-text-color-regular);
+}
+
+/* 只改常态文字；hover / active 保持 EP 的「主色底 + 白字」高对比组合 */
+.el-button.el-button--primary.is-plain {
+  --el-button-text-color: var(--el-color-primary-dark-2);
+}

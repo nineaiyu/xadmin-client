@@ -15,12 +15,23 @@ export const menuTreeDefaultProps = {
 
 /** 拖拽约束：权限点不能再挂子级（其 path/method 是接口授权语义） */
 export function allowDropByType(
-  _draggingNode: unknown,
+  draggingNode: unknown,
   dropNode: unknown,
   type: string
 ) {
+  if (type !== "inner") return true;
   const data = (dropNode as { data?: MenuRow } | null | undefined)?.data;
-  return !(type === "inner" && data?.menuType === MenuChoices.PERMISSION);
+  if (data?.menuType === MenuChoices.PERMISSION) return false;
+  // 禁止把节点拖进自己的后代：否则 parent 链成环，整棵子树从菜单树消失
+  const draggingPk = (draggingNode as { data?: { pk?: unknown } } | null)?.data
+    ?.pk;
+  let node = dropNode as
+    { data?: { pk?: unknown }; parent?: unknown } | null | undefined;
+  while (node) {
+    if (draggingPk !== undefined && node.data?.pk === draggingPk) return false;
+    node = node.parent as typeof node;
+  }
+  return true;
 }
 
 /**

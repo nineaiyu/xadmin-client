@@ -1,4 +1,4 @@
-import { shallowRef } from "vue";
+import { shallowRef, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import type { OperationProps } from "@/components/RePlusPage";
@@ -18,6 +18,7 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 export function useKnowledgeButtons({
   t,
   flags: { canCreate, canSync, canBatchToggle, canBuildEmbeddings },
+  hasSelection,
   openUpload,
   syncRepo,
   buildEmbeddings,
@@ -31,6 +32,8 @@ export function useKnowledgeButtons({
     canBatchToggle: boolean;
     canBuildEmbeddings: boolean;
   };
+  /** 当前是否勾选行（批量启停与框架批量删除同口径：未选不出现） */
+  hasSelection: Ref<boolean>;
   openUpload: () => void;
   syncRepo: () => Promise<void>;
   buildEmbeddings: () => Promise<void>;
@@ -68,14 +71,14 @@ export function useKnowledgeButtons({
         code: "batchEnable",
         props: { type: "success", plain: true, icon: useRenderIcon(Check) },
         onClick: batchToggle(true),
-        show: canBatchToggle
+        show: () => canBatchToggle && hasSelection.value
       },
       {
         text: t("aiKnowledge.batchDisable"),
         code: "batchDisable",
         props: { type: "warning", plain: true, icon: useRenderIcon(Close) },
         onClick: batchToggle(false),
-        show: canBatchToggle
+        show: () => canBatchToggle && hasSelection.value
       }
     ]
   });

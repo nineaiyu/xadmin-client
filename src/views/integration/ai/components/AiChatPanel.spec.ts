@@ -69,6 +69,8 @@ const mountPanel = (
     streaming?: boolean;
     activeStreaming?: { content: string; reasoning: string } | null;
     groups?: MessageGroup[];
+    initialDraft?: { seq: number; text: string } | null;
+    failedDraft?: { seq: number; text: string } | null;
   } = {}
 ) =>
   mount(AiChatPanel, {
@@ -109,6 +111,28 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     );
   });
 
+  it("发送失败回填草稿；已有新输入时不覆盖", async () => {
+    const wrapper = mountPanel({
+      failedDraft: { seq: 1, text: "失败的问题" }
+    });
+    await wrapper.vm.$nextTick();
+    expect(
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value
+    ).toBe("失败的问题");
+
+    await wrapper.find('[data-testid="ai-ask-input"]').setValue("新输入");
+    await wrapper.setProps({ failedDraft: { seq: 2, text: "另一个失败" } });
+    expect(
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value
+    ).toBe("新输入");
+  });
+
   it("列表壳滚动元素就绪时向上冒泡 scroller（发送后自动到底依赖该元素）", () => {
     const wrapper = mountPanel();
 
@@ -117,6 +141,38 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(emitted![0][0]).toBe(
       wrapper.find('[data-testid="ai-messages"]').element
     );
+  });
+
+  it("失败消息可重试：原样重发最近一条用户提问", async () => {
+    const wrapper = mountPanel({
+      groups: [
+        {
+          type: "message",
+          key: "u1",
+          item: consoleMessage({
+            id: 1,
+            role: "user",
+            content: "查一下用户"
+          })
+        },
+        {
+          type: "message",
+          key: "a1",
+          item: consoleMessage({
+            id: 2,
+            role: "system",
+            content: "模型调用失败",
+            extra: { error: true }
+          })
+        }
+      ]
+    });
+
+    const retry = wrapper.find('[data-testid="ai-retry"]');
+    expect(retry.exists()).toBe(true);
+    await retry.trigger("click");
+
+    expect(wrapper.emitted("retry")?.[0]).toEqual(["查一下用户"]);
   });
 
   it("流式进行中：发送按钮切换为停止按钮，点击 emit stop", async () => {
@@ -149,6 +205,16 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(wrapper.emitted("send")).toEqual([["近 7 天登录数"], ["再来一问"]]);
   });
 
+  it("输入法组词确认的 Enter 不发送（保留草稿）", async () => {
+    const wrapper = mountPanel();
+    const textarea = wrapper.find('[data-testid="ai-ask-input"]');
+    await textarea.setValue("拼音");
+    await textarea.trigger("keydown", { key: "Enter", isComposing: true });
+
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("拼音");
+  });
+
   it("入口禁用：输入框与发送按钮均不可用", () => {
     const wrapper = mountPanel({ disabled: true });
     expect(
@@ -157,6 +223,33 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(
       wrapper.find('[data-testid="ai-send"]').attributes("disabled")
     ).toBeDefined();
+  });
+
+  it("initialDraft 预填：挂载即填入；空载荷不清空用户输入，新 seq 覆盖", async () => {
+    const wrapper = mountPanel({
+      initialDraft: { seq: 1, text: "怎么配置数据集？" }
+    });
+    const readValue = () =>
+      (
+        wrapper.find('[data-testid="ai-ask-input"]')
+          .element as HTMLTextAreaElement
+      ).value;
+    expect(readValue()).toBe("怎么配置数据集？");
+
+    // keep-alive 激活未携带 q：不清空用户已输入的内容
+    await wrapper
+      .find('[data-testid="ai-ask-input"]')
+      .setValue("用户改写的提问");
+    await wrapper.setProps({ initialDraft: null });
+    expect(readValue()).toBe("用户改写的提问");
+
+    // 命令面板再次「问 AI」（同词也带新 seq）：覆盖为新预填
+    await wrapper.setProps({
+      initialDraft: { seq: 2, text: "用户改写的提问" }
+    });
+    expect(readValue()).toBe("用户改写的提问");
+    await wrapper.setProps({ initialDraft: { seq: 3, text: "换一个问题" } });
+    expect(readValue()).toBe("换一个问题");
   });
 
   it("只有最新一条 assistant 消息可操作；NL 卡运行按钮冒泡 runNl 携带 dsl", async () => {

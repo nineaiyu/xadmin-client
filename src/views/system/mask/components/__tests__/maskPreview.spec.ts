@@ -31,6 +31,7 @@ vi.mock("@/api/base", () => ({
     body?.data?.results ?? []
 }));
 vi.mock("@/utils/message", () => ({ message: state.messageMock }));
+vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 
 const SUCCESS_RESPONSE = {
   code: 1000,

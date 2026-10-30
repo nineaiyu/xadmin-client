@@ -39,15 +39,34 @@ const modelOptions = computed(() =>
   }))
 );
 
-const matchOptions = computed(() => [
-  { value: "exact", label: t("apiApp.grant.matchExact") },
-  { value: "icontains", label: t("apiApp.grant.matchContains") },
-  { value: "in", label: t("apiApp.grant.matchIn") },
-  { value: "gt", label: t("apiApp.grant.matchGt") },
-  { value: "gte", label: t("apiApp.grant.matchGte") },
-  { value: "lt", label: t("apiApp.grant.matchLt") },
-  { value: "lte", label: t("apiApp.grant.matchLte") }
-]);
+/** 与后端 SUPPORTED_MATCHES 同集合（18 项）：历史规则写入的匹配符必须可选可切回 */
+const MATCH_KEYS: Array<[string, string]> = [
+  ["exact", "matchExact"],
+  ["iexact", "matchIExact"],
+  ["contains", "matchContains"],
+  ["icontains", "matchIContains"],
+  ["startswith", "matchStartsWith"],
+  ["istartswith", "matchIStartsWith"],
+  ["endswith", "matchEndsWith"],
+  ["iendswith", "matchIEndsWith"],
+  ["gt", "matchGt"],
+  ["gte", "matchGte"],
+  ["lt", "matchLt"],
+  ["lte", "matchLte"],
+  ["in", "matchIn"],
+  ["regex", "matchRegex"],
+  ["m2m", "matchM2m"],
+  ["m2m_all", "matchM2mAll"],
+  ["all", "matchAll"],
+  ["ip_in", "matchIpIn"]
+];
+
+const matchOptions = computed(() =>
+  MATCH_KEYS.map(([value, key]) => ({
+    value,
+    label: t(`apiApp.grant.${key}`)
+  }))
+);
 
 onMounted(async () => {
   loading.value = true;

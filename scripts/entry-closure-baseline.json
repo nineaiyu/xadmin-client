@@ -11,7 +11,6 @@
     "./style/index.scss",
     "./style/reset.scss",
     "./style/tailwind.css",
-    "@/components/ReAuth",
     "@/config",
     "@/directives",
     "@/plugins/echarts",

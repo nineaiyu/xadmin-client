@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, watch } from "vue";
 import { Delete, Plus, ZoomIn } from "@element-plus/icons-vue";
@@ -15,6 +16,7 @@ import defaultFile from "../assets/defaultFile.png";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { systemUploadFileApi } from "@/api/file/file";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import { message } from "@/utils/message";
 import { formatBytes } from "@pureadmin/utils";
 
@@ -102,7 +104,7 @@ const handleChange: UploadProps["onChange"] = uploadFile => {
 };
 
 const { t } = useI18n();
-const uploadConfig = ref({ file_upload_size: 1048576 });
+const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
 
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {
@@ -132,9 +134,9 @@ const uploadRequest = (option: UploadRequestOptions) => {
 watch(
   () => fileList,
   () => {
-    const pks = fileList.value.map(item => {
-      return { pk: item.pk };
-    });
+    const pks = fileList.value
+      .filter(item => item.pk != null)
+      .map(item => ({ pk: item.pk }));
     if (props.multiple) {
       emit("change", pks);
     } else {
@@ -237,7 +239,7 @@ const disableShowAdd = computed(() => {
       </template>
     </el-upload>
 
-    <el-dialog v-model="dialogVisible">
+    <OverlayDialog v-model="dialogVisible">
       <div class="flex-c flex-col">
         <img :src="dialogFile.url" alt="Preview Image" class="max-w-full" />
         <div v-if="dialogFile?.size">{{ formatBytes(dialogFile.size) }}</div>
@@ -245,10 +247,12 @@ const disableShowAdd = computed(() => {
           {{ dialogFile.name }}
         </div>
       </div>
-    </el-dialog>
+    </OverlayDialog>
   </div>
 </template>
 <style lang="scss" scoped>
+/* el-upload 的 picture-card 触发块由 EP 默认 display 规则渲染，页面级隐藏类
+   需要 !important 才能生效（v-show 的有效性依赖它）。 */
 :deep(.hideUploadBtn .el-upload--picture-card) {
   display: none !important;
 }

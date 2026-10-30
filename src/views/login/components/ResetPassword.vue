@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { onMounted, ref } from "vue";
-import Motion from "../utils/motion";
+import { computed, onMounted, ref } from "vue";
+import Motion from "@/components/ReMotion";
+import { message } from "@/utils/message";
 import type { FormInstance } from "element-plus";
 import { resetPasswordApi } from "@/api/auth";
 import { handleOperation } from "@/components/RePlusPage";
+import { useLoginPageStoreHook } from "@/store/modules/loginPage";
 import ReSendVerifyCode from "@/components/ReSendVerifyCode";
 import PasswordFields from "./PasswordFields.vue";
 import type { RecordType } from "plus-pro-components";
@@ -18,6 +20,10 @@ import {
 
 const { t } = useI18n();
 const loading = ref(false);
+/** 重置入口可用性:能力清单下发(关闭时不渲染重置表单) */
+const resetEnabled = computed(
+  () => useLoginPageStoreHook().capabilities?.reset?.enabled === true
+);
 const { authInfo, configLoading, onConfig } = useAuthInfo();
 const formData = ref({
   password: "",
@@ -35,7 +41,14 @@ const onBack = backToBasicPage;
 
 const onSubmit = async () => {
   loading.value = true;
-  const data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  let data: Record<string, string | undefined>;
+  try {
+    data = await buildVerifyCodePayload(formData.value, authInfo.value);
+  } catch {
+    loading.value = false;
+    message(t("results.failed"), { type: "error" });
+    return;
+  }
   handleOperation({
     t,
     apiReq: resetPasswordApi(data),
@@ -77,8 +90,9 @@ onMounted(() => (configLoading.value = true));
       @configReqSuccess="configReqSuccess"
       @configReqEnd="configLoading = false"
     />
+    <!-- 未开放自助重置：保留可读说明与返回入口，不渲染空白页 -->
     <el-form
-      v-if="authInfo.access"
+      v-if="resetEnabled"
       ref="formDataRef"
       :model="formData"
       :rules="formRules"
@@ -88,7 +102,6 @@ onMounted(() => (configLoading.value = true));
         <PasswordFields
           v-model:password="formData.password"
           v-model:repeat-password="formData.repeatPassword"
-          :rules="formRules"
           :password-delay="150"
           :repeat-delay="200"
         />
@@ -114,5 +127,12 @@ onMounted(() => (configLoading.value = true));
         </el-form-item>
       </Motion>
     </el-form>
+    <el-result v-else icon="info" :title="t('login.resetUnavailable')">
+      <template #extra>
+        <el-button size="default" @click="onBack">
+          {{ t("login.back") }}
+        </el-button>
+      </template>
+    </el-result>
   </div>
 </template>

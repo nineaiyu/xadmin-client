@@ -3,26 +3,45 @@
 import { h, reactive } from "vue";
 import { ElForm, ElFormItem, ElInput, ElTag } from "element-plus";
 import { addDialog } from "@/components/ReDialog";
-import { handleOperation } from "@/components/RePlusPage";
+import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { statusTagProps } from "@/utils/dict";
+import { formatDateTime } from "@/utils/format";
 import type { RecordType } from "plus-pro-components";
 import type { ApiResult, DetailResult } from "@/api/types";
-import { APPROVAL_STATUS_TAG_TYPE } from "./constants";
+import { APPROVAL_STATUS_TAG_TYPE } from "./approvalHelpers";
 
 import { dialogSize } from "@/components/ReDialog/size";
 /** 驳回原因输入弹窗：单条驳回 / 批量驳回共用同构表单，原因必填在此显式收口 */
 export function openRejectReasonDialog(options: {
-  /** 与 handleOperation 同宽松签名，便于直接透传 useI18n 的 t */
+  /** 与 useI18n 的 t 同宽松签名，便于直接透传 */
   t: (arg0: string, arg1?: object) => string;
   /** 弹窗标题（单条带审批单号 / 批量带勾选数量，由调用方组装） */
   title: string;
-  /** 以 trim 后的原因发起请求；成功/失败提示与 loading 收口由 handleOperation 统一处理 */
+  /** 以 trim 后的原因发起请求；成功/失败提示与 loading 收口由 useDialogForm 统一处理 */
   submit: (reason: string) => Promise<ApiResult>;
   onSuccess?: (res?: DetailResult) => void;
 }) {
   const { t, title, submit, onSuccess } = options;
   const form = reactive({ reason: "" });
+  const { beforeSure } = useDialogForm<string>({
+    readPayload: () => {
+      const reason = form.reason.trim();
+      // ReDialog 只回调 beforeSure，不触发表单校验：原因必填在此显式收口
+      if (!reason) {
+        message(t("approval.rejectReasonRequired"), { type: "error" });
+        return null;
+      }
+      return reason;
+    },
+    submit: reason => submit(reason),
+    onSuccess: res => {
+      message(String(res.detail ?? t("results.success")), { type: "success" });
+      onSuccess?.(res as DetailResult);
+    },
+    onFail: res =>
+      message(`${t("results.failed")}，${res.detail}`, { type: "error" })
+  });
   addDialog({
     title,
     width: dialogSize("sm"),
@@ -52,25 +71,7 @@ export function openRejectReasonDialog(options: {
       </ElForm>
     ),
     closeCallBack: () => (form.reason = ""),
-    beforeSure: (done, { closeLoading }) => {
-      const reason = form.reason.trim();
-      // ReDialog 只回调 beforeSure，不触发表单校验：原因必填在此显式收口
-      if (!reason) {
-        message(t("approval.rejectReasonRequired"), { type: "error" });
-        return;
-      }
-      // 统一走 handleOperation：成功/失败提示、异常 catch、loading 收口齐全
-      // （手写 then 时后端 400 会让 done() 不执行 → 弹窗卡死）
-      handleOperation({
-        t,
-        apiReq: submit(reason),
-        success: res => {
-          done();
-          onSuccess?.(res);
-        },
-        requestEnd: closeLoading
-      });
-    }
+    beforeSure
   });
 }
 
@@ -96,8 +97,11 @@ export function openApprovalProgressDialog(options: {
   steps: Array<RecordType>;
   /** 目标对象快照（敏感操作审批）：有变更时渲染「变更前 → 变更后」对照 */
   snapshot?: TargetSnapshot | null;
+  /** 脱敏后的请求体快照：操作类审批在无 target_snapshot 时的内容依据 */
+  params?: Record<string, unknown> | null;
 }) {
-  const { t, no, steps, snapshot } = options;
+  const { t, no, steps, snapshot, params } = options;
+  const hasParams = Boolean(params && Object.keys(params).length);
   const changes = (snapshot?.changes ?? []).filter(item => item?.field);
   addDialog({
     title: t("approval.progressTitle", { no }),
@@ -113,7 +117,7 @@ export function openApprovalProgressDialog(options: {
         </p>
         {snapshot?.name ? (
           <div
-            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
             data-testid="approval-target-snapshot"
           >
             <div class="font-medium">
@@ -147,10 +151,26 @@ export function openApprovalProgressDialog(options: {
             ) : null}
           </div>
         ) : null}
+        {hasParams ? (
+          <details
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
+            data-testid="approval-request-params"
+          >
+            <summary class="cursor-pointer font-medium">
+              {t("approval.requestParams")}
+            </summary>
+            <div class="mt-1 text-xs text-(--el-text-color-regular)">
+              {t("approval.requestParamsTip")}
+            </div>
+            <pre class="mt-1 overflow-x-auto text-xs">
+              {JSON.stringify(params, null, 2)}
+            </pre>
+          </details>
+        ) : null}
         {steps.map((step: RecordType) => (
           <div
             key={step.order}
-            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
           >
             <div class="flex items-center gap-2">
               {h(
@@ -187,7 +207,7 @@ export function openApprovalProgressDialog(options: {
               {step.approver?.username
                 ? ` · ${t("approval.handler")}: ${step.approver.username}`
                 : ""}
-              {step.acted_at ? ` · ${step.acted_at}` : ""}
+              {step.acted_at ? ` · ${formatDateTime(step.acted_at)}` : ""}
             </div>
             {(step.actions ?? []).length ? (
               <div class="mt-1 text-xs text-(--el-text-color-regular)">

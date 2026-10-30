@@ -18,14 +18,17 @@ import {
   getRefreshToken,
   getToken,
   removeToken,
-  setApiLanguage,
-  setToken
+  setApiLanguage
 } from "@/utils/auth";
-import { useUserStoreHook } from "@/store/modules/user";
+import { refreshAccessToken } from "./refreshToken";
 import { message } from "@/utils/message";
 import { announce } from "@/utils/announcer";
+import { getCaptchaFingerprint } from "@/utils/captchaSignal/env";
 import { downloadByData } from "@pureadmin/utils";
-import { resolveDownloadFilename } from "@/utils/download";
+import {
+  parseDownloadEnvelopeError,
+  resolveDownloadFilename
+} from "@/utils/download";
 import {
   approvalKey,
   clearPendingApprovals,
@@ -40,6 +43,15 @@ import {
 } from "./errorStrategies";
 
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
+
+/**
+ * 认证豁免 URL 清单（同一份清单、两处消费，防的故障不同）：
+ * ① attachRouteController——路由切换取消在途请求时豁免登录/刷新，
+ *    误拦会让「刷新 token 的请求被路由取消」复发；
+ * ② 请求拦截器 token 注入——无 token 不触发刷新，防「token 过期死循环」。
+ * 清单同源：改一处漏一处会让两种故障各复发一种，故收敛为单一常量。
+ */
+const AUTH_EXEMPT_URLS = ["/api/identity/refresh", "/api/identity/login"];
 
 /**
  * multipart/form-data 对象展开序列化（FormData 上传协议 v1 唯一收敛点）。
@@ -93,11 +105,7 @@ class PureHttp {
     config: PureHttpRequestConfig
   ): AbortController | null {
     if (config.skipRouteCancel || config.responseType === "blob") return null;
-    if (
-      ["/api/identity/refresh", "/api/identity/login"].some(url =>
-        (config.url ?? "").endsWith(url)
-      )
-    ) {
+    if (AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url))) {
       return null;
     }
     const controller = new AbortController();
@@ -271,13 +279,25 @@ class PureHttp {
     config?: PureHttpRequestConfig
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.download<AxiosResponse<Blob>>(url, params, config)
-        .then((response: AxiosResponse<Blob>) => {
+      // JSON 响应走拦截器的 response.data 分支（此时返回的是 Blob，没有 headers），
+      // 二进制文件则是完整 AxiosResponse；两种形状都要能落盘/报错
+      this.download<AxiosResponse<Blob> | Blob>(url, params, config)
+        .then(async (response: AxiosResponse<Blob> | Blob) => {
           try {
-            const { data } = response;
+            // 产物缺失时后端仍回 200 + 错误信封，必须先识别，
+            // 否则错误 JSON 会被当成文件存成随机 UUID 的「假文件」。
+            const data = response instanceof Blob ? response : response.data;
+            const envelopeError = await parseDownloadEnvelopeError(data);
+            if (envelopeError !== null) {
+              // 后端错误信封通常带 detail；缺失时给一句可读兜底，避免空提示
+              const text = envelopeError || "download failed";
+              message(text, { type: "error" });
+              announce(text);
+              throw new Error(text);
+            }
             // 文件名解析规则（RFC 5987 优先等）见 utils/download.ts
             const finalFilename = resolveDownloadFilename(
-              response.headers,
+              response instanceof Blob ? undefined : response.headers,
               (params as { type?: string } | undefined)?.type
             );
             downloadByData(data, filename ?? finalFilename);
@@ -297,6 +317,10 @@ class PureHttp {
         config: PureHttpRequestConfig
       ): Promise<InternalAxiosRequestConfig> => {
         setApiLanguage(config);
+        // 票据弱绑定：业务请求携带环境指纹（服务端只存哈希，缺失时跳过比对）
+        if (typeof window !== "undefined" && config.headers) {
+          config.headers["X-Captcha-Fp"] = getCaptchaFingerprint();
+        }
         // 开启进度条动画
         NProgress.start();
         // 敏感操作审批重发：同指纹请求携带暂存的审批令牌（审批通过后重发即消费）。
@@ -326,8 +350,7 @@ class PureHttp {
           return config as InternalAxiosRequestConfig;
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/api/identity/refresh", "/api/identity/login"];
-        return whiteList.some(url => (config.url ?? "").endsWith(url))
+        return AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url))
           ? (config as InternalAxiosRequestConfig)
           : new Promise(resolve => {
               const token = getToken();
@@ -339,31 +362,26 @@ class PureHttp {
                 if (refresh_token) {
                   if (!PureHttp.isRefreshing) {
                     PureHttp.isRefreshing = true;
-                    // token过期刷新
-                    useUserStoreHook()
-                      .handRefreshToken({ refresh: refresh_token })
-                      .then(res => {
-                        if (isSuccess(res)) {
-                          const token = res.data.access;
-                          setToken(res.data);
+                    // 与 WebSocket 重连共享同一单飞刷新（见 ./refreshToken）
+                    refreshAccessToken()
+                      .then(outcome => {
+                        if (outcome.ok) {
+                          const token = outcome.data.access;
                           config.headers!["Authorization"] = formatToken(token);
                           PureHttp.flushPendingRequests(token);
                         } else {
-                          // 刷新被拒（refresh_token 失效等）：提示一次并让排队请求以失败收尾
-                          message(res.detail, { type: "warning" });
+                          // 刷新被拒 / 网络异常：提示一次并让排队请求以失败收尾
+                          const error = outcome.error;
+                          const detail =
+                            outcome.detail ||
+                            (error instanceof Error
+                              ? error.message
+                              : String(error ?? ""));
+                          if (detail) message(detail, { type: "warning" });
                           PureHttp.flushPendingRequests(null);
                           removeToken();
                           redirectToLogin();
                         }
-                      })
-                      .catch(err => {
-                        // 刷新请求本身异常（网络/超时）：同上，保证队列不悬挂
-                        message(err?.message ?? String(err), {
-                          type: "warning"
-                        });
-                        PureHttp.flushPendingRequests(null);
-                        removeToken();
-                        redirectToLogin();
                       })
                       .finally(() => {
                         PureHttp.isRefreshing = false;

@@ -2,7 +2,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { ElButton, ElDialog, ElPopconfirm } from "element-plus";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { h, nextTick } from "vue";
+import { defineComponent, h, nextTick } from "vue";
 
 import {
   addDialog,
@@ -116,6 +116,71 @@ describe("ReDialog 弹层容器", () => {
     await nextTick();
     expect(beforeSure).toHaveBeenCalledTimes(1);
     // done() 已执行：visible 落 false，延迟后出栈由假定时器推进
+    expect(dialogStore.value[0]?.visible).toBe(false);
+  });
+
+  it("beforeClose：取消按钮先走守卫，done 后才真正关闭", async () => {
+    const beforeClose = vi.fn((_done: () => void) => undefined);
+    mountContainer();
+    addDialog({
+      title: "编辑",
+      contentRenderer: () => h("div", "正文"),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    const cancel = footerButtons().find(
+      button => button.textContent?.trim() === "取消"
+    );
+    (cancel as HTMLElement | undefined)?.click();
+    await nextTick();
+
+    expect(beforeClose).toHaveBeenCalledTimes(1);
+    // 守卫未 done：弹层保持打开
+    expect(dialogStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0]();
+    await nextTick();
+    expect(dialogStore.value[0]?.visible).toBe(false);
+  });
+
+  it("内容组件 emit close 同样走 beforeClose 守卫", async () => {
+    const beforeClose = vi.fn((_done: () => void) => undefined);
+    const Content = defineComponent({
+      emits: ["close"],
+      setup(_props, { emit }) {
+        return () =>
+          h(
+            "button",
+            {
+              class: "spec-content-close",
+              onClick: () => emit("close", { command: "close" })
+            },
+            "关闭"
+          );
+      }
+    });
+    mountContainer();
+    addDialog({
+      title: "内容关闭",
+      contentRenderer: () => h(Content),
+      beforeClose
+    });
+    await nextTick();
+    await flushPromises();
+
+    (
+      document.querySelector(".spec-content-close") as HTMLElement | null
+    )?.click();
+    await nextTick();
+
+    // 守卫未 done：弹层保持打开（历史缺陷：内容组件 @close 直穿 handleClose）
+    expect(beforeClose).toHaveBeenCalledTimes(1);
+    expect(dialogStore.value[0]?.visible).toBe(true);
+
+    beforeClose.mock.calls[0]![0]();
+    await nextTick();
     expect(dialogStore.value[0]?.visible).toBe(false);
   });
 
@@ -283,5 +348,50 @@ describe("ReDialog 尺寸档位", () => {
     expect(drawerSize("full")).toBe("100%");
     expect(Object.keys(DRAWER_SIZES)).toEqual(["sm", "md", "lg", "xl", "full"]);
     expect(DRAWER_NARROW_WIDTH).toBe("480px");
+  });
+});
+
+describe("ReDialog 焦点圈入（弹层打开后键盘焦点入层、关闭后还原触发元素）", () => {
+  beforeEach(() => {
+    dialogStore.value = [];
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    closeAllDialog();
+    document.body.innerHTML = "";
+  });
+
+  it("打开后初始焦点落在弹层内，关闭后焦点还原到触发元素", async () => {
+    mountContainer();
+    const trigger = document.createElement("button");
+    trigger.textContent = "触发按钮";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    addDialog({
+      title: "焦点实证",
+      contentRenderer: () => h("div", [h("input", { class: "probe-input" })])
+    });
+    await flushPromises();
+    await nextTick();
+
+    const dialog = document.querySelector(".el-dialog");
+    expect(dialog).toBeTruthy();
+    expect(
+      dialog!.contains(document.activeElement),
+      `初始焦点应落在弹层内，实际为 ${document.activeElement?.outerHTML ?? "null"}`
+    ).toBe(true);
+
+    closeDialog(dialogStore.value[0], 0, { command: "close" });
+    await flushPromises();
+    vi.advanceTimersByTime(300); // closeDelay 默认 200ms，过后弹层出栈
+    await flushPromises();
+    expect(
+      document.activeElement,
+      "关闭后焦点应还原到触发元素（EP focus-trap 的 return-focus）"
+    ).toBe(trigger);
   });
 });

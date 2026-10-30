@@ -19,6 +19,7 @@ const {
   scope,
   targetUser,
   formMode,
+  isEdit,
   boundMenuPks,
   model,
   menuContext,
@@ -46,7 +47,14 @@ const {
 
 <template>
   <el-collapse v-model="activeNames" class="mt-2">
-    <el-collapse-item :title="t('permissionPreview.trialDraft')" name="trial">
+    <el-collapse-item
+      :title="
+        isEdit
+          ? t('permissionPreview.trialDraftMerged')
+          : t('permissionPreview.trialDraft')
+      "
+      name="trial"
+    >
       <el-alert
         v-if="!canTrial"
         :closable="false"
@@ -57,7 +65,11 @@ const {
       <template v-else>
         <el-alert
           :closable="false"
-          :title="t('permissionPreview.trialHint')"
+          :title="
+            isEdit
+              ? t('permissionPreview.trialHintMerged')
+              : t('permissionPreview.trialHint')
+          "
           class="mb-2"
           show-icon
           type="info"
@@ -290,7 +302,7 @@ const {
             <div
               v-for="item in fieldResult.models"
               :key="item.model"
-              class="mt-2 rounded border border-gray-200 p-2 dark:border-gray-700"
+              class="mt-2 rounded border border-(--el-border-color-lighter) p-2"
             >
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-medium">{{ item.model_label }}</span>

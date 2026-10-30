@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { deptApi } from "@/api/identity/dept";
 import type {
   DeptPreviewResult,
   PreviewDataRuleGroup
 } from "@/api/types/permission-preview";
 import ReEmpty from "@/components/ReEmpty";
 import {
+  PREVIEW_FETCHERS,
   PreviewDescriptions,
   PreviewFieldMatrix,
   PreviewMenuTree,
@@ -33,7 +33,7 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 const { t } = useI18n();
 
 const { loading, data: preview } = usePermissionPreview<DeptPreviewResult>(
-  async pk => (await deptApi.preview(pk)).data,
+  PREVIEW_FETCHERS.dept,
   () => props.row.pk
 );
 
@@ -49,7 +49,9 @@ function groupModeText(group: PreviewDataRuleGroup): string {
 function boundMenusText(group: PreviewDataRuleGroup): string {
   const titles = group.menus.map(item => translateMenuTitle(item.title));
   const shown = titles.slice(0, 8).join("、");
-  return titles.length > 8 ? `${shown} 等 ${titles.length} 个` : shown;
+  return titles.length > 8
+    ? t("permissionPreview.moreTitles", { shown, count: titles.length })
+    : shown;
 }
 </script>
 

@@ -1,5 +1,5 @@
 import { isSuccess } from "@/api/types";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, type Ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { FieldChoices, MenuChoices } from "@/views/system/constants";
 import { menuApi } from "@/api/system/menu";
@@ -29,7 +29,25 @@ export function usePermissionLookups() {
   const matchTexts = ref<Record<string, string>>({});
   /** 全量菜单行：生效范围树与试算菜单上下文 */
   const menuRows = ref<MenuScopeRow[]>([]);
+  /** 菜单列表权限缺失：生效范围树恒为空 */
+  const menuDenied = ref(!hasAuth("list:SystemMenu"));
+  /** 字段注册表权限缺失：规则字段候选恒为空 */
+  const fieldDenied = ref(!hasAuth("list:SystemModelLabelField"));
+  /** 任一依赖数据加载失败（业务码失败 / 网络异常） */
+  const loadFailed = ref(false);
 
+  /** 缺失的权限点（用于页面提示；空数组 = 权限齐全） */
+  const missingPermissions = computed(() => {
+    const missing: string[] = [];
+    if (menuDenied.value) missing.push("list:SystemMenu");
+    if (fieldDenied.value) missing.push("list:SystemModelLabelField");
+    return missing;
+  });
+
+  /** 依赖不可用：缺权限或加载失败时禁用新增/编辑，避免在空表单里配置无效规则 */
+  const lookupBlocked = computed(
+    () => missingPermissions.value.length > 0 || loadFailed.value
+  );
   /** 试算的菜单上下文候选 = 页面菜单（绑定菜单的授权只在该页面上下文生效） */
   const menuContextOptions = computed(() =>
     menuRows.value
@@ -40,45 +58,50 @@ export function usePermissionLookups() {
       }))
   );
 
+  const markFailed = () => {
+    loadFailed.value = true;
+  };
+
+  /** 字段注册表按 field_type 加载：业务失败与网络异常都落到统一的失败标记 */
+  const loadFieldRows = (
+    fieldType: number,
+    target: Ref<TreeResult<RecordType>[]>
+  ) =>
+    fetchAllRows(modelLabelFieldApi.list, { field_type: fieldType })
+      .then(res => {
+        if (!isSuccess(res)) return markFailed();
+        formatFiledAppParent(res.data.results);
+        target.value = handleTree(res.data.results);
+      })
+      .catch(markFailed);
+
   onMounted(() => {
-    if (hasAuth("list:SystemMenu")) {
+    if (!menuDenied.value) {
       // 菜单全量列表与菜单页 / 角色页 / 权限页共用缓存；菜单页为权威刷新方（force）
-      fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list)).then(
-        res => {
-          if (isSuccess(res)) {
+      fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list))
+        .then(res => {
+          if (isSuccess(res))
             menuRows.value = res.data.results as MenuScopeRow[];
-          }
-        }
-      );
+          else markFailed();
+        })
+        .catch(markFailed);
     }
-    if (hasAuth("list:SystemModelLabelField")) {
-      fetchAllRows(modelLabelFieldApi.list, {
-        field_type: FieldChoices.DATA
-      }).then(res => {
-        if (isSuccess(res)) {
-          formatFiledAppParent(res.data.results);
-          fieldLookupsData.value = handleTree(res.data.results);
-        }
-      });
-      fetchAllRows(modelLabelFieldApi.list, {
-        field_type: FieldChoices.ROLE
-      }).then(res => {
-        if (isSuccess(res)) {
-          formatFiledAppParent(res.data.results);
-          fieldLookupsRole.value = handleTree(res.data.results);
-        }
-      });
+    if (!fieldDenied.value) {
+      loadFieldRows(FieldChoices.DATA, fieldLookupsData);
+      loadFieldRows(FieldChoices.ROLE, fieldLookupsRole);
     }
-    modelLabelFieldApi.choices().then(res => {
-      if (isSuccess(res)) {
+    modelLabelFieldApi
+      .choices()
+      .then(res => {
+        if (!isSuccess(res)) return markFailed();
         const choicesDict = res.choices_dict as {
           choices?: FieldLookupItem[];
           matches?: Record<string, string>;
         };
         valuesData.value = choicesDict?.choices ?? [];
         matchTexts.value = choicesDict?.matches ?? {};
-      }
-    });
+      })
+      .catch(markFailed);
   });
 
   return {
@@ -87,6 +110,10 @@ export function usePermissionLookups() {
     valuesData,
     matchTexts,
     menuRows,
-    menuContextOptions
+    menuContextOptions,
+    menuDenied,
+    fieldDenied,
+    missingPermissions,
+    lookupBlocked
   };
 }

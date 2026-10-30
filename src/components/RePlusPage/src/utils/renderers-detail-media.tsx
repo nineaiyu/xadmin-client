@@ -39,7 +39,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
         {
           type: "success",
           href: filepath,
-          target: "_blank"
+          target: "_blank",
+          rel: "noopener noreferrer"
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
@@ -54,7 +55,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
         {
           type: "success",
           href: row[column.key]?.filepath,
-          target: "_blank"
+          target: "_blank",
+          rel: "noopener noreferrer"
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
@@ -78,7 +80,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
                     {
                       type: "success",
                       href: item.filepath,
-                      target: "_blank"
+                      target: "_blank",
+                      rel: "noopener noreferrer"
                     },
                     {
                       icon: () => h(ElIcon, null, () => h(Link)),
@@ -104,7 +107,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
                 {
                   type: "success",
                   href: item.filepath,
-                  target: "_blank"
+                  target: "_blank",
+                  rel: "noopener noreferrer"
                 } as Record<string, unknown>,
                 {
                   icon: () => h(ElIcon, null, () => h(Link)),
@@ -182,7 +186,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
         {
           type: "success",
           href: value,
-          target: "_blank"
+          target: "_blank",
+          rel: "noopener noreferrer"
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),
@@ -197,7 +202,8 @@ export const mediaDetailRenderers: PlusColumnRegistry = {
         {
           type: "success",
           href: row[column.key],
-          target: "_blank"
+          target: "_blank",
+          rel: "noopener noreferrer"
         },
         {
           icon: () => h(ElIcon, null, () => h(Link)),

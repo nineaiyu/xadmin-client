@@ -13,14 +13,16 @@ const handlers: ApiAppActionHandlers = {
   openUsage: () => undefined,
   regenerate: () => undefined,
   testCallback: () => undefined,
-  edit: () => undefined
+  edit: () => undefined,
+  grants: () => undefined
 };
 
 const allFlags: Params["flags"] = {
   canStats: true,
   canRegenerate: true,
   canTestCallback: true,
-  canEdit: true
+  canEdit: true,
+  canManageGrants: true
 };
 
 describe("buildApiAppActionGroups", () => {
@@ -34,7 +36,7 @@ describe("buildApiAppActionGroups", () => {
     ]);
     expect(
       groups.flatMap(group => group.actions.map(item => item.code))
-    ).toEqual(["usage", "regenerate", "testCallback", "edit"]);
+    ).toEqual(["usage", "regenerate", "testCallback", "grants", "edit"]);
   });
 
   it("无任何权限时输出空清单（抽屉只渲染资料）", () => {

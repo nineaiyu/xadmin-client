@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
-import { roleApi } from "@/api/identity/role";
 import type { RolePreviewResult } from "@/api/types/permission-preview";
 import ReEmpty from "@/components/ReEmpty";
 import {
+  PREVIEW_FETCHERS,
   PreviewDescriptions,
   PreviewFieldMatrix,
   PreviewMenuTree,
@@ -27,7 +27,7 @@ const props = defineProps<{ row: { pk?: string | number } }>();
 const { t } = useI18n();
 
 const { loading, data: preview } = usePermissionPreview<RolePreviewResult>(
-  async pk => (await roleApi.preview(pk)).data,
+  PREVIEW_FETCHERS.role,
   () => props.row.pk
 );
 </script>
