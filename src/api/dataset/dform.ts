@@ -288,6 +288,15 @@ export const submissionApi = new SubmissionApi(
   "/api/dataset/dynamic-form-submissions"
 );
 
+/**
+ * 表单数据（管理端）：表单选项响应。
+ * ``truncated`` 为真表示表单数量超过单次加载上限（此时 detail 才是截断提示，
+ * 成功响应的默认 detail「操作成功」不能当成提示）。
+ */
+export type FormDataOptionsResult = DataListResult<FormDataFormOption> & {
+  truncated?: boolean;
+};
+
 /** 表单数据（管理端）：表单选项（全部非模板表单，含停用；schema 供动态列渲染） */
 export type FormDataFormOption = {
   pk: string;
@@ -370,7 +379,7 @@ export class FormDataApi extends BaseApi {
 
   /** 表单选项（全部非模板表单，含停用）：页面「选择表单」数据源 */
   formOptions = () =>
-    this.request<DataListResult<FormDataFormOption>>(
+    this.request<FormDataOptionsResult>(
       "get",
       {},
       {},

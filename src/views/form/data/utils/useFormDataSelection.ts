@@ -39,8 +39,10 @@ export function useFormDataSelection({
     }
     formsLoadFailed.value = false;
     forms.value = (res.data ?? []) as FormDataFormOption[];
-    // 服务端截断提示（表单数量超过单次加载上限）不能静默丢弃
-    if (res.detail) message(String(res.detail), { type: "warning" });
+    // 只在服务端标记截断时提示：成功响应的 detail 默认是「操作成功」，不能据非空判断
+    if (res.truncated && res.detail) {
+      message(String(res.detail), { type: "warning" });
+    }
     if (!selectedFormPk.value && forms.value.length) {
       selectedFormPk.value = forms.value[0].pk;
     }
