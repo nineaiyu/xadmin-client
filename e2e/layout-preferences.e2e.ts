@@ -3552,6 +3552,59 @@ test.describe("布局：侧栏菜单装饰与激活联动", () => {
       .toBe("visible");
   });
 
+  test("侧栏装饰：手风琴收起激活项所在目录时不产生阶梯滚动", async ({
+    page
+  }) => {
+    await login(page);
+    await openMenuPath(
+      page,
+      ["系统管理", "权限管理"],
+      "/system/permission/index"
+    );
+
+    const wrap = page.locator(".sidebar-container .el-scrollbar__wrap").first();
+    await wrap.waitFor({ state: "visible", timeout: 15_000 });
+
+    // 等进入页面后的自动滚动与展开动画收敛，再构造「用户已向下浏览」的起点
+    let lastTop = -1;
+    for (let i = 0; i < 20; i++) {
+      const top = Math.round(await wrap.evaluate(el => el.scrollTop));
+      if (top === lastTop) break;
+      lastTop = top;
+      await page.waitForTimeout(120);
+    }
+    expect(
+      await wrap.evaluate(el => el.scrollHeight - el.clientHeight),
+      "侧栏内容需足以滚动"
+    ).toBeGreaterThan(300);
+
+    await wrap.evaluate(el => {
+      (el as HTMLElement).scrollTop = 300;
+    });
+    const before = Math.round(await wrap.evaluate(el => el.scrollTop));
+    expect(before).toBe(300);
+
+    // 展开另一个目录：手风琴收起「权限管理」，激活项「数据权限」随之隐藏。
+    // 隐藏元素 rect 全 0，旧实现会把它当成「在视口上方」并按 50px/200ms
+    // 连续纠偏；新实现没有可见目标，滚动位置必须保持不动。
+    await page
+      .locator(".sidebar-container .el-sub-menu__title", {
+        hasText: "任务管理"
+      })
+      .first()
+      .click();
+
+    await page.waitForTimeout(250);
+    const baseline = Math.round(await wrap.evaluate(el => el.scrollTop));
+    const tops: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      await page.waitForTimeout(100);
+      tops.push(Math.round(await wrap.evaluate(el => el.scrollTop)));
+    }
+    expect(tops.every(top => Math.abs(top - baseline) <= 1)).toBe(true);
+    expect(Math.abs(baseline - before)).toBeLessThanOrEqual(1);
+  });
+
   test("侧栏装饰：悬停菜单项出现浅背景与图标放大", async ({ page }) => {
     await login(page);
     await page.mouse.move(700, 300);
