@@ -48,8 +48,7 @@ export const tableBarProps = {
 
 /** 图标按钮通用类名 */
 export const ICON_CLASS = [
-  "text-black",
-  "dark:text-white",
+  "text-fg",
   "duration-100",
   "hover:text-primary!",
   "cursor-pointer",

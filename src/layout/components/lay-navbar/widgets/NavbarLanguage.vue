@@ -25,7 +25,10 @@ const [zhOption, enOption] = LOCALE_OPTIONS;
       <el-dropdown-menu class="translation">
         <el-dropdown-item
           :style="getDropdownItemStyle(locale, 'zh')"
-          :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
+          :class="[
+            'dark:text-(--el-color-white)!',
+            getDropdownItemClass(locale, 'zh')
+          ]"
           @click="translationCh"
         >
           <IconifyIconOffline
@@ -37,7 +40,10 @@ const [zhOption, enOption] = LOCALE_OPTIONS;
         </el-dropdown-item>
         <el-dropdown-item
           :style="getDropdownItemStyle(locale, 'en')"
-          :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
+          :class="[
+            'dark:text-(--el-color-white)!',
+            getDropdownItemClass(locale, 'en')
+          ]"
           @click="translationEn"
         >
           <span v-show="locale === 'en'" class="check-en">

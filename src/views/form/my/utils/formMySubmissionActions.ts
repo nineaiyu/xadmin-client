@@ -42,7 +42,7 @@ export function createSubmissionActions({
   const remove = async (row: SubmissionItem) => {
     if (
       !(await confirm(t("dform.removeConfirm", { name: row.form_name }), {
-        confirmButtonClass: "el-button--danger",
+        danger: true,
         draggable: true
       }))
     ) {

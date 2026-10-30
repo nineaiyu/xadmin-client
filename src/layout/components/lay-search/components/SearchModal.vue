@@ -365,7 +365,7 @@ function handleDrag(item: dragItem) {
             @click="runQuickAction(item.id)"
           >
             <component :is="useRenderIcon(item.icon)" class="size-4" />
-            <span class="truncate text-gray-900 dark:text-white">
+            <span class="truncate text-fg">
               {{ item.title }}
             </span>
           </div>
@@ -410,7 +410,7 @@ function handleDrag(item: dragItem) {
               :data-testid="`global-search-item-${group.key}`"
               @click="goGlobalResult(group)"
             >
-              <span class="truncate text-gray-900 dark:text-white">
+              <span class="truncate text-fg">
                 {{ item.text }}
               </span>
             </div>
@@ -431,7 +431,7 @@ function handleDrag(item: dragItem) {
             @click="runAskAi"
           >
             <IconifyIconOffline :icon="AskAiIcon" class="size-4 text-primary" />
-            <span class="truncate text-gray-900 dark:text-white">
+            <span class="truncate text-fg">
               {{ keyword.trim() }}
             </span>
           </div>

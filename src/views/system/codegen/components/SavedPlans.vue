@@ -100,7 +100,8 @@ function onLoad(pk: string) {
 async function onRemove(pk: string) {
   if (
     !(await confirm(t("codegen.planDeleteConfirm"), {
-      title: t("codegen.planDelete")
+      title: t("codegen.planDelete"),
+      danger: true
     }))
   ) {
     return;

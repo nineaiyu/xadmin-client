@@ -95,7 +95,7 @@ const openPlainToken = (token: string) => {
         h(
           "code",
           {
-            class: "block break-all rounded bg-gray-100 p-2 dark:bg-gray-800"
+            class: "block break-all rounded bg-(--el-fill-color-light) p-2"
           },
           token
         ),
@@ -153,7 +153,7 @@ const openCreate = () => {
 const handleRevoke = (row: RecordType) => {
   void confirm(t("accessToken.revokeConfirm", { name: row.name }), {
     title: t("accessToken.revoke"),
-    confirmButtonClass: "el-button--danger"
+    danger: true
   }).then(ok => {
     if (ok)
       handleOperation({

@@ -6,6 +6,7 @@ import { getTopMenu, initRouter } from "@/router/utils";
 import { setToken } from "@/utils/auth";
 import type { TokenInfo } from "@/api/auth";
 import type { LoginMfaRequired } from "@/api/mfa";
+import { safeRedirectTarget } from "./utils/safeRedirect";
 
 export {
   backToBasicPage,
@@ -65,9 +66,10 @@ export function useLoginFlow(options: { onMfaBack?: () => void } = {}) {
           .push(
             kind === "login" && mustChangePassword.value
               ? "/settings/basic"
-              : ((route.query?.redirect as string) ??
-                  getTopMenu(true)?.path ??
-                  "/")
+              : safeRedirectTarget(
+                  route.query?.redirect,
+                  getTopMenu(true)?.path ?? "/"
+                )
           )
           .finally(() => {
             disabled.value = false;

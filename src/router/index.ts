@@ -16,6 +16,8 @@ import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 import { readConfigurePreferences } from "@/utils/preferences";
 import { useRouteLoading } from "@/utils/routeLoading";
 import { pushVisitHistory } from "@/utils/visitHistory";
+import { useMultiFrame } from "@/layout/hooks/useMultiFrame";
+import { resolveMatchedTitle } from "./utils/documentTitle";
 import { closeAllDialog } from "@/components/ReDialog";
 import { closeAllDrawer } from "@/components/ReDrawer";
 import {
@@ -76,6 +78,9 @@ export function resetRouter() {
   // 否则下一个账号登录会命中上一个账号的菜单缓存
   clearRouteSnapshot();
   resetLoadedPaths();
+  // iframe 页签缓存是模块级 Map：登出/切换账号时一并清空，避免上一会话的
+  // 页面实例（含远端资源）驻留到下一次登录
+  useMultiFrame().clearMap();
 }
 
 // 路由白名单见 router/publicRoutes.ts：未登录可达（含 OAuth 回跳）与「已登录保持原页」
@@ -126,13 +131,13 @@ router.beforeEach((to: ToRouteType, _from) => {
   const externalLink = isExternalRoute(to?.name as string);
   // 动态标题关闭时保持平台标题不随路由变化（偏好在设置面板 →「动态标题」）
   if (!externalLink && readConfigurePreferences().dynamicTitle !== false) {
-    to.matched.some(item => {
-      if (!item.meta.title) return "";
-      const Title = resolveSiteTitle();
-      if (Title)
-        document.title = `${transformI18n(item.meta.title)} | ${Title}`;
-      else document.title = transformI18n(item.meta.title);
-    });
+    // 取最深层带 title 的匹配路由（父→子倒序，命中即止）；纯函数见 utils/documentTitle
+    const title = resolveMatchedTitle(
+      to.matched,
+      value => transformI18n(value as string),
+      resolveSiteTitle()
+    );
+    if (title) document.title = title;
   }
 
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */

@@ -424,6 +424,8 @@ layout:
   settings: 项目配置
   total: "共 { total } 项"
   noData: 暂无结果
+  emptyMenu: 暂无可访问菜单
+  emptyMenuHint: 当前账号未被授予任何菜单权限，请联系管理员开通
   more: 更多
   fold: 点击折叠
   unfold: 点击展开
@@ -1167,6 +1169,7 @@ sorts:
   rank: 排序
 
 buttons:
+  retry: 重试
   tips: 提示
   loginOut: 退出系统
   add: 新增
@@ -2616,6 +2619,7 @@ chat:
   unknownUser: 未知用户
   noMessageYet: 还没有消息
   emptyRooms: 暂无会话
+  loadRoomsFailed: 会话列表加载失败，请重试
   emptyContacts: 暂无联系人
   emptyMessages: 还没有消息，说点什么吧
   selectRoom: 选择一个会话开始聊天

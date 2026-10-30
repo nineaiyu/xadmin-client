@@ -7,6 +7,14 @@ import { i18n } from "@/plugins/i18n";
 type MessageBox = string | VNode;
 type Options = Omit<ElMessageBoxOptions, "message">;
 
+export type PromptOptions = Options & {
+  /**
+   * 危险操作口径（与 useConfirm 同源）：确认按钮着危险色。prompt 模式焦点本来
+   * 就在输入框，不能像 confirm 那样把 autofocus 关掉，否则用户无法直接输入。
+   */
+  danger?: boolean;
+};
+
 /** prompt 结果：取消/关闭返回 null，调用方无需再包 try/catch */
 export type PromptResult = { value: string; action?: string } | null;
 
@@ -22,18 +30,25 @@ export function usePrompt() {
   return (
     message: MessageBox,
     title: string,
-    options: Options = {}
-  ): Promise<PromptResult> =>
-    ElMessageBox.prompt(message, title, {
+    options: PromptOptions = {}
+  ): Promise<PromptResult> => {
+    const { danger = false, ...rest } = options;
+    const resolved: ElMessageBoxOptions = {
       confirmButtonText: composer.t("buttons.sure"),
       cancelButtonText: composer.t("buttons.cancel"),
-      ...options
-    })
+      ...rest
+    };
+    if (danger) {
+      resolved.confirmButtonClass =
+        resolved.confirmButtonClass ?? "el-button--danger";
+    }
+    return ElMessageBox.prompt(message, title, resolved)
       .then(result => ({
         value: String(result.value ?? ""),
         action: result.action
       }))
       .catch(() => null);
+  };
 }
 
 /** 关闭当前可见的消息框（alert/prompt 内嵌链接跳转前收口，避免弹层残留）。 */

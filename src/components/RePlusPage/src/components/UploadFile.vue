@@ -99,6 +99,8 @@ const disableShowAdd = computed(() => {
   </div>
 </template>
 <style lang="scss" scoped>
+/* el-upload 的 picture-card 触发块由 EP 默认 display 规则渲染，页面级隐藏类
+   需要 !important 才能生效（v-show 的有效性依赖它）。 */
 :deep(.hideUploadBtn .el-upload--picture-card) {
   display: none !important;
 }

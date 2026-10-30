@@ -1,8 +1,8 @@
 import { useI18n } from "vue-i18n";
-import { createPasskeyAssert } from "./passkeyAssert";
-import { createPasskeyRegister } from "./passkeyRegister";
+import { createPasskeyAssert } from "./internal/passkeyAssert";
+import { createPasskeyRegister } from "./internal/passkeyRegister";
 
-export type { PasskeyAssertionPayload } from "./webauthnTypes";
+export type { PasskeyAssertionPayload } from "./internal/webauthnTypes";
 
 /**
  * Passkey 浏览器仪式收敛（登录 MFA、全局二次验证、个人凭据注册共用）。

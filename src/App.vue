@@ -43,7 +43,7 @@ import { checkUpdatesEnabled } from "@/utils/autoUpdate";
 // 由编辑器异步组件在挂载前调用，避免约 1MB 的编辑器栈进入首屏闭包。
 
 export default defineComponent({
-  name: "app",
+  name: "App",
   components: {
     // 组件名由 ElConfigProvider.name 动态给出（运行时必然为字符串）
     [ElConfigProvider.name as string]: ElConfigProvider,

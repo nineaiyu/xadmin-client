@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
+import { apiFailure } from "@/utils/apiError";
 import {
   getScreenCommandState,
   sendScreenCommand,
@@ -61,11 +61,9 @@ const syncTarget = () => {
 const loadState = async (syncTargetOnLoad = true) => {
   // 控制态读取失败不阻塞面板：异常归一为可读失败结果并提示（此前未捕获——请求
   // 异常时抛 unhandled rejection 且面板以默认态静默呈现，用户误判为展示端 auto）
-  const res = await getScreenCommandState(props.row.pk).catch(error => ({
-    code: -1,
-    detail: normalizeError(error).detail,
-    data: { state: state.value }
-  }));
+  const res = await getScreenCommandState(props.row.pk).catch(error =>
+    apiFailure(error, { state: state.value })
+  );
   if (!isSuccess(res)) {
     if (res.detail) message(String(res.detail), { type: "warning" });
     return;
@@ -79,11 +77,9 @@ const apply = async (payload: ScreenCommandPayload) => {
   loading.value = true;
   try {
     // 异常归一为可读失败结果：避免请求异常时函数抛出、按钮 loading 悬挂
-    const res = await sendScreenCommand(props.row.pk, payload).catch(error => ({
-      code: -1,
-      detail: normalizeError(error).detail,
-      data: { state: state.value }
-    }));
+    const res = await sendScreenCommand(props.row.pk, payload).catch(error =>
+      apiFailure(error, { state: state.value })
+    );
     if (isSuccess(res)) {
       state.value = res.data.state;
       syncTarget();

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// 裸颜色值门禁（只减不增）：禁止在消费端新增「裸 hex / rgb() / rgba() / hsl(数字…)」。
+// 裸颜色值门禁（只减不增）：禁止在消费端新增「裸 hex / rgb() / rgba() / hsl(数字…)
+// 以及 Tailwind 调色板类（text-gray-500 / bg-white / border-red-500 …）」。
 //
 // 口径：颜色单一来源为三层令牌——`tokens/primitives.scss`（原始值）与
 // `tokens/semantic.scss`（明暗成对语义槽）；业务与组件样式一律消费
@@ -33,7 +34,9 @@ const PATTERNS = [
   /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-zA-Z_-])/g,
   // 函数色：rgb() / rgba() / hsl()——参数里带 var( 的是令牌消费，单独过滤
   /\brgba?\([^)]*\)/g,
-  /\bhsl\([^)]*\)/g
+  /\bhsl\([^)]*\)/g,
+  // Tailwind 调色板类：绕过语义令牌（text-fg / bg-bg-card / border-(--el-*)）
+  /(?:^|[\s"'`])(?:text|bg|border|fill|stroke)-(?:gray|slate|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d{2,3})?(?![\w-])/g
 ];
 
 /**
@@ -128,7 +131,7 @@ for (const { rel, count } of rows) {
   const allowed = BASELINE[rel];
   if (allowed === undefined) {
     violations.push(
-      `${rel}: ${count} 处（未登记的裸颜色值——改走 var(--el-*) / hsl(var(--语义槽)) / Tailwind 语义别名）`
+      `${rel}: ${count} 处（未登记的裸颜色值/调色板类——改走 var(--el-*) / hsl(var(--语义槽)) / Tailwind 语义别名）`
     );
   } else if (count > allowed) {
     violations.push(`${rel}: ${count} 处（超过基线 ${allowed}，只减不增）`);

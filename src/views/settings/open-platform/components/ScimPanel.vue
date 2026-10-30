@@ -67,7 +67,7 @@ const showToken = (token: string) => {
       h(
         "code",
         {
-          class: "block break-all rounded bg-gray-100 p-2 dark:bg-gray-800"
+          class: "block break-all rounded bg-(--el-fill-color-light) p-2"
         },
         token
       ),

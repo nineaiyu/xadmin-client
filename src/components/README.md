@@ -196,6 +196,10 @@ try {
 
 - 组件级单测与实现同目录（`__tests__/`），纯逻辑单独成测试文件；
 - 新增组件请同步本文件分组表，并在实现文件头部写清「何时用 / 何时不用」；
+- **零单测组件的已知名单**（展示型/重包装，行为由 E2E 与页面用例覆盖；新增纯逻辑组件
+  必须补测）：`AuthorizedAppTable`、`RePictureUpload`。`ReCol` / `ReMotion` /
+  `ReImageCaptcha` / `ReSplitPane` / `ReAnimateSelector` / `ReTaskCenterDrawer`
+  已补组件级用例；`ReCropper` 依赖 canvas，按 E2E 覆盖处理；
 - 依赖使用情况见 `docs/component-dependencies.md`（依赖 → 消费组件映射，用于后续裁剪与升级评估）。
 
 ## 七、组件 API 约定

@@ -69,7 +69,7 @@ const register = async () => {
 };
 
 const remove = async (row: RecordType) => {
-  if (!(await confirm(t("passkey.removeConfirm")))) return;
+  if (!(await confirm(t("passkey.removeConfirm"), { danger: true }))) return;
   // 异常归一为可读失败结果：删除失败（凭据已被移除等）需给出可读原因
   const res = await passkeyApi.destroy(row?.pk).catch(normalizeError);
   if (isSuccess(res)) {

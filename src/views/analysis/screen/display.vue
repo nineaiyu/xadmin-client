@@ -165,7 +165,7 @@ onMounted(loadScreen);
     :class="{
       'is-free': isFree,
       'screen-root--light': !screenDark,
-      'text-white': screenDark,
+      'text-(--el-color-white)': screenDark,
       'text-(--screen-fg)': !screenDark
     }"
     :data-screen-theme="screenDark ? 'dark' : 'light'"

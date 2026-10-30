@@ -79,8 +79,8 @@ pnpm gen:module              # 模块脚手架
 
 - 样式用 Tailwind CSS v4 原子类（`src/style/tailwind.css` 的 `@theme` 桥接语义令牌；
   UnoCSS 已全量移除，不存在 `uno.config.*`）+ 设计令牌（`src/style/tokens/`）；
-  **不要写死字号与颜色字面量**（`pnpm check:font-size-literals` / `check:color-literals`
-  会拦），用语义令牌。
+  **不要写死字号与颜色字面量，也不要用 Tailwind 调色板类（`text-gray-500` / `bg-white` 等）**
+  （`pnpm check:font-size-literals` / `check:color-literals` 会拦），用语义令牌。
 - 暗色适配走令牌（`html.dark` 分支），别用 `!important` 堆叠。
 - 新用 Element Plus 组件要同时登记组件与 `element-plus/es/components/xxx/style/css`
   （登记处：`src/plugins/elementPlus.ts`）。

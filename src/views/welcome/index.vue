@@ -11,6 +11,7 @@ import { AiDailyReportCard } from "./components";
 import Segmented from "@/components/ReSegmented";
 import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
+import dayjs from "dayjs";
 
 /** echarts 懒加载就绪后再渲染图表组件（useECharts 在初始化时同步读取 $echarts） */
 const echartsReady = ref(false);
@@ -18,8 +19,6 @@ onMounted(async () => {
   await loadEcharts();
   echartsReady.value = true;
 });
-import dayjs from "dayjs";
-
 defineOptions({
   name: "Welcome"
 });

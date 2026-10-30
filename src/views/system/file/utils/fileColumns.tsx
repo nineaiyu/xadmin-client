@@ -64,7 +64,12 @@ export function buildFileColumns({
             if (!url) return h("span", "-");
             return h(
               ElLink,
-              { type: "success", href: url, target: "_blank" },
+              {
+                type: "success",
+                href: url,
+                target: "_blank",
+                rel: "noopener noreferrer"
+              },
               {
                 icon: () => h(ElIcon, null, () => h(Link)),
                 default: () => t("systemUploadFile.fileLink")

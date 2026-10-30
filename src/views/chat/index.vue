@@ -142,7 +142,7 @@ function submit(content: string) {
 async function recall(item: ChatMessageItem) {
   if (
     !(await confirm(t("chat.recallConfirm"), {
-      confirmButtonClass: "el-button--danger",
+      danger: true,
       draggable: true
     }))
   ) {
@@ -169,9 +169,11 @@ async function recall(item: ChatMessageItem) {
       :ai-hint="chat.roomState.aiHint.value"
       :loading="chat.roomState.loadingRooms.value"
       :loading-contacts="chat.roomState.loadingContacts.value"
+      :load-error="chat.roomState.roomsError.value"
       @select="selectRoom"
       @open-private="openPrivate"
       @refresh-contacts="chat.roomState.loadContacts()"
+      @retry-rooms="chat.roomState.loadRooms()"
       @created="createdGroup"
     />
 
@@ -184,9 +186,11 @@ async function recall(item: ChatMessageItem) {
         :ai-hint="chat.roomState.aiHint.value"
         :loading="chat.roomState.loadingRooms.value"
         :loading-contacts="chat.roomState.loadingContacts.value"
+        :load-error="chat.roomState.roomsError.value"
         @select="selectRoom"
         @open-private="openPrivate"
         @refresh-contacts="chat.roomState.loadContacts()"
+        @retry-rooms="chat.roomState.loadRooms()"
         @created="createdGroup"
       />
     </ReNavDrawer>

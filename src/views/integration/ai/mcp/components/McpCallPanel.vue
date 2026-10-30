@@ -169,7 +169,7 @@ const runCall = async () => {
   if (selectedTool.value?.read_only === false) {
     const ok = await confirm(t("mcp.writeConfirm", { name: props.toolName }), {
       title: t("mcp.writeConfirmTitle"),
-      confirmButtonClass: "el-button--danger"
+      danger: true
     });
     if (!ok) return;
   }

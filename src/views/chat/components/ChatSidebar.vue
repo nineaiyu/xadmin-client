@@ -35,12 +35,14 @@ const props = defineProps<{
   aiHint: string;
   loading: boolean;
   loadingContacts: boolean;
+  loadError: boolean;
 }>();
 
 const emit = defineEmits<{
   select: [number];
   openPrivate: [number];
   refreshContacts: [];
+  retryRooms: [];
   created: [ChatRoomItem];
 }>();
 
@@ -234,9 +236,20 @@ function avatarText(peer: ChatPeer) {
         </div>
         <ReEmpty
           v-if="!loading && !filteredRooms.length"
-          :description="t('chat.emptyRooms')"
           size="small"
-        />
+          :description="
+            loadError ? t('chat.loadRoomsFailed') : t('chat.emptyRooms')
+          "
+        >
+          <el-button
+            v-if="loadError"
+            text
+            type="primary"
+            @click="emit('retryRooms')"
+          >
+            {{ t("buttons.retry") }}
+          </el-button>
+        </ReEmpty>
       </div>
 
       <div class="pb-4">

@@ -25,9 +25,15 @@ export function useSidebarMenu(
       : usePermissionStoreHook().wholeMenus
   );
 
+  // 空菜单 ≠ 装配中：零菜单权限账号在 handleWholeMenus 之后应得到空态，
+  // 而不是永久 loading（历史实现只以长度判定，空结果与未装配不可区分）
   const loading = computed(() =>
-    submenuSidebar.value ? false : menuData.value.length === 0
+    submenuSidebar.value
+      ? false
+      : !usePermissionStoreHook().menusLoaded && menuData.value.length === 0
   );
+
+  const empty = computed(() => !loading.value && menuData.value.length === 0);
 
   /** 一级窄列高亮项：当前路由所属的一级路由 */
   const topLevelActive = computed(() => {
@@ -65,6 +71,7 @@ export function useSidebarMenu(
   return {
     menuData,
     loading,
+    empty,
     topLevelActive,
     handleTopLevelSelect
   };

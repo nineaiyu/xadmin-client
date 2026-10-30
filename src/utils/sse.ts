@@ -1,4 +1,5 @@
-import { getToken, formatToken, getApiLanguage } from "@/utils/auth";
+import { formatToken, getApiLanguage } from "@/utils/auth";
+import { getUsedAccessToken } from "@/utils/http/accessToken";
 
 /**
  * POST + SSE 流式读取。
@@ -135,7 +136,8 @@ export async function postSse(
   body: unknown,
   options: SseOptions
 ): Promise<void> {
-  const token = getToken();
+  // 复用无感刷新单飞：access token 过期时首连不再直接 401（与 axios/WS 同源）
+  const token = await getUsedAccessToken();
   const response = await fetch(url, {
     method: "POST",
     headers: {

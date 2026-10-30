@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeError } from "./apiError";
+import { apiFailure, normalizeError } from "./apiError";
 
 describe("normalizeError", () => {
   it("后端错误体（http 层 reject 的响应体）取其 detail", () => {
@@ -30,5 +30,26 @@ describe("normalizeError", () => {
   it("null / undefined 入参不抛错", () => {
     expect(normalizeError(null).code).toBe(-1);
     expect(normalizeError(undefined).code).toBe(-1);
+  });
+});
+
+describe("apiFailure", () => {
+  it("字符串直接作为 detail，默认 data 为 null", () => {
+    expect(apiFailure("本地校验失败")).toEqual({
+      code: -1,
+      data: null,
+      detail: "本地校验失败"
+    });
+  });
+
+  it("异常对象走 normalizeError，可带占位 data 与额外字段", () => {
+    expect(
+      apiFailure({ detail: "后端失败", type: "approval_required" }, { ok: 1 })
+    ).toEqual({
+      code: -1,
+      data: { ok: 1 },
+      detail: "后端失败",
+      type: "approval_required"
+    });
   });
 });

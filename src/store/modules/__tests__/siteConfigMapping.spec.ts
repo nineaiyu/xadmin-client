@@ -2,50 +2,33 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { PREFERENCE_FIELDS } from "../siteConfigFields";
+
 /**
- * 站点配置的读写映射分别写在 saveSiteConfig / getSiteConfig 两个对象字面量里。
- * 新增偏好键时只改一侧会出现「保存成功但刷新丢失」或「读取不到保存值」，这里静态
- * 比对两份映射的 camelCase → PascalCase 对应关系，防止单边漂移。
+ * 站点配置的读写映射由 siteConfigFields 单一注册表派生（历史是 save/get 两张
+ * 手工映射，新增键只改一侧会出现「保存成功但刷新丢失」）。这里守护：
+ * 注册表键唯一、保存/读取都走注册表，且不再回潮为手工 configObj 名单。
  */
 const source = readFileSync(
   resolve(process.cwd(), "src/store/modules/siteConfig.ts"),
   "utf-8"
 );
 
-const parsePairs = (block: string, pattern: RegExp, swap: boolean) => {
-  const pairs = new Map<string, string>();
-  for (const match of block.matchAll(pattern)) {
-    const first = match[1];
-    const second = match[2];
-    pairs.set(swap ? second : first, swap ? first : second);
-  }
-  return pairs;
-};
-
 describe("站点配置读写映射", () => {
-  it("saveSiteConfig 与 getSiteConfig 的键一一对应", () => {
-    const saveStart = source.indexOf("const configObj = {");
-    const saveEnd = source.indexOf("};", saveStart);
-    const readStart = source.indexOf("const configObj = {", saveStart + 1);
-    const readEnd = source.indexOf("} as PlatformConfigs;", readStart);
-
-    expect(saveStart).toBeGreaterThan(-1);
-    expect(readStart).toBeGreaterThan(saveStart);
-
-    const save = parsePairs(
-      source.slice(saveStart, saveEnd),
-      /(\w+):\s*(?:locale|layout|configure)\.(\w+)/g,
-      true
+  it("注册表内服务端键与本地键一一对应且不重复", () => {
+    const serverKeys = PREFERENCE_FIELDS.map(field => field.serverKey);
+    const localKeys = PREFERENCE_FIELDS.map(
+      field => `${field.section}.${field.localKey}`
     );
-    const read = parsePairs(
-      source.slice(readStart, readEnd),
-      /(\w+):\s*config\.(\w+)/g,
-      false
-    );
+    expect(new Set(serverKeys).size).toBe(serverKeys.length);
+    expect(new Set(localKeys).size).toBe(localKeys.length);
+    expect(serverKeys.length).toBeGreaterThan(90);
+  });
 
-    expect([...save.keys()].sort()).toEqual([...read.keys()].sort());
-    for (const [camel, pascal] of save) {
-      expect(read.get(camel), `${camel} 的读映射不一致`).toBe(pascal);
-    }
+  it("save/get 均从注册表派生，不再手写两张映射", () => {
+    expect(source).toContain("serverPreferenceConfig({");
+    expect(source).toContain("localPreferenceSections(");
+    // 手工名单的典型特征：config.<PascalKey> ?? 缺省值
+    expect(source).not.toMatch(/config\.[A-Z][A-Za-z0-9]*\s*\?\?/);
   });
 });

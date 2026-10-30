@@ -20,6 +20,7 @@ import {
   withAlpha
 } from "@/utils/chartTheme";
 import { waitChartSized } from "@/utils/chart";
+import { normalizeError } from "@/utils/apiError";
 // 仅类型引用（不进包）：导出实现按需动态加载（保持首屏体积）
 import type { EChartsLike, ExportedImage } from "@/utils/imageExport";
 
@@ -286,11 +287,8 @@ const fetchData = async () => {
     errorMsg.value = String(res.detail ?? t("dashboard.loadFailed"));
   } catch (error) {
     if (!fresh()) return;
-    errorMsg.value = String(
-      (error as { detail?: string })?.detail ??
-        error ??
-        t("dashboard.loadFailed")
-    );
+    errorMsg.value =
+      normalizeError(error).detail || String(t("dashboard.loadFailed"));
   }
 };
 

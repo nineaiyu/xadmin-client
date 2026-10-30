@@ -25,7 +25,8 @@ export function createNoticeReadRemove({
         title: t("noticeRead.remove"),
         type: "warning",
         confirmButtonText: t("buttons.confirm"),
-        cancelButtonText: t("buttons.cancel")
+        cancelButtonText: t("buttons.cancel"),
+        danger: true
       }))
     ) {
       return;

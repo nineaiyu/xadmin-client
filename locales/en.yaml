@@ -424,6 +424,8 @@ layout:
   settings: Settings
   total: "{ total } items in total"
   noData: No Data
+  emptyMenu: No accessible menus
+  emptyMenuHint: This account has no menu permissions yet. Contact an administrator to request access.
   more: More
   fold: Fold
   unfold: Unfold
@@ -1167,6 +1169,7 @@ sorts:
   rank: Rank
 
 buttons:
+  retry: Retry
   tips: Tips
   loginOut: LoginOut
   add: Add
@@ -2616,6 +2619,7 @@ chat:
   unknownUser: Unknown user
   noMessageYet: No messages yet
   emptyRooms: No chats
+  loadRoomsFailed: Failed to load conversations, please retry
   emptyContacts: No contacts
   emptyMessages: No messages yet, say hello
   selectRoom: Select a chat to start

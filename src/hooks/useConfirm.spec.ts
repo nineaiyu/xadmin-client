@@ -118,6 +118,20 @@ describe("useConfirm", () => {
     });
   });
 
+  it("danger + prompt（带输入框）不关闭 autofocus，避免焦点离开输入框", async () => {
+    mocks.confirm.mockResolvedValue("confirm");
+    const confirm = setupHook();
+    await confirm("输入口令确认", {
+      danger: true,
+      inputValidator: (value: string) => Boolean(value)
+    });
+    const options = mocks.confirm.mock.calls[0][2];
+    expect(options).toMatchObject({
+      confirmButtonClass: "el-button--danger"
+    });
+    expect(options).not.toHaveProperty("autofocus");
+  });
+
   it("非 danger 口径不注入 autofocus（保持 ElMessageBox 默认）", async () => {
     mocks.confirm.mockResolvedValue("confirm");
     const confirm = setupHook();

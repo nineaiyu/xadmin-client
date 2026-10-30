@@ -207,6 +207,8 @@ export function mineRowButtons(deps: InstanceRowButtonDeps): {
       link: true
     },
     confirm: {
+      // 撤回是不可逆动作：气泡确认的确认钮用危险色（MessageBox 通道用 danger: true）
+      props: { confirmButtonType: "danger" },
       title: (row: { title?: string }) =>
         t("systemApprovalInstance.cancelConfirm", { title: row?.title ?? "" })
     },

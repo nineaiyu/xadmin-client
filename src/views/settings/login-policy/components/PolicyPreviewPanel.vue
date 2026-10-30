@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { loginPolicyApi, type LoginPolicyPreview } from "@/api/system/security";
 import { isIPv4, isIPv6 } from "@/utils/rules/ip";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { isSuccess } from "@/api/types";
 import DataTable from "@/components/DataTable";
 
@@ -120,7 +121,7 @@ const runPreview = async () => {
       message(String(res.detail), { type: "error" });
     }
   } catch (error: unknown) {
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }

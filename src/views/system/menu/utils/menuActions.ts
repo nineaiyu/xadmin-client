@@ -303,7 +303,7 @@ export async function confirmMenuDelete(
   return confirm(renderContent(rows, payload, t), {
     title: t("systemMenu.confirm.removeTitle"),
     confirmButtonText: t("buttons.delete"),
-    confirmButtonClass: "el-button--danger",
+    danger: true,
     customClass: "menu-confirm-box"
   });
 }

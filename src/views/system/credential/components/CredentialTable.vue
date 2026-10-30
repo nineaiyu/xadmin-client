@@ -71,7 +71,8 @@ async function handleRotate(row: CredentialRowLike) {
   if (
     !(await confirm(confirmText, {
       title: t("credential.rotate"),
-      confirmButtonText: t("credential.rotate")
+      confirmButtonText: t("credential.rotate"),
+      danger: true
     }))
   ) {
     return;

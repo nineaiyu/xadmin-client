@@ -19,7 +19,8 @@ export function useSubscriptionSecret({ t }: { t: TFunction }) {
     if (
       !(await confirm(t("webhook.rotateSecretConfirm"), {
         title: t("webhook.rotateSecret"),
-        type: "warning"
+        type: "warning",
+        danger: true
       }))
     ) {
       return;

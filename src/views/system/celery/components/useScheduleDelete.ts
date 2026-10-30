@@ -48,7 +48,8 @@ export function useScheduleDelete({
   const confirmDelete = () =>
     confirm(t("systemTask.scheduleDeleteConfirm"), {
       title: t("buttons.delete"),
-      type: "warning"
+      type: "warning",
+      danger: true
     });
 
   const submitDelete = async (pk: string | number) => {

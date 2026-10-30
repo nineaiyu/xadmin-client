@@ -79,7 +79,7 @@ const pick = async (row: unknown) => {
 const remove = async (row: DynamicFormItem) => {
   if (
     !(await confirm(t("dform.templateRemoveConfirm", { name: row.name }), {
-      confirmButtonClass: "el-button--danger",
+      danger: true,
       draggable: true
     }))
   ) {

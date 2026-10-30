@@ -292,7 +292,10 @@ onBeforeUnmount(() => {
       @keydown.enter.prevent="refreshRoute"
       @keydown.space.prevent="refreshRoute"
     >
-      <IconifyIconOffline :icon="RefreshRight" class="dark:text-white" />
+      <IconifyIconOffline
+        :icon="RefreshRight"
+        class="dark:text-(--el-color-white)"
+      />
     </span>
     <!-- 内容区最大化 / 还原（与右键菜单同口径：隐藏顶栏与侧栏、保留页签条作为还原入口） -->
     <span
@@ -316,7 +319,7 @@ onBeforeUnmount(() => {
     >
       <IconifyIconOffline
         :icon="maximizeOn ? ExitFullscreen : Fullscreen"
-        class="dark:text-white"
+        class="dark:text-(--el-color-white)"
       />
     </span>
     <!-- 右键菜单按钮 -->
@@ -324,7 +327,6 @@ onBeforeUnmount(() => {
       <ul
         v-show="visible"
         ref="contextmenuRef"
-        :key="Math.random()"
         :style="getContextMenuStyle"
         class="contextmenu"
       >
@@ -348,7 +350,10 @@ onBeforeUnmount(() => {
       @command="handleCommand"
     >
       <span class="arrow-down" :aria-label="transformI18n('layout.more')">
-        <IconifyIconOffline :icon="ArrowDown" class="dark:text-white" />
+        <IconifyIconOffline
+          :icon="ArrowDown"
+          class="dark:text-(--el-color-white)"
+        />
       </span>
       <template #dropdown>
         <el-dropdown-menu>

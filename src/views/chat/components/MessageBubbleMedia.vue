@@ -123,7 +123,7 @@ const downloadAttachment = () => {
     class="flex min-w-45 max-w-70 items-center gap-2 rounded-lg px-3 py-2"
     :class="
       mine
-        ? 'bg-(--el-color-primary) text-white'
+        ? 'bg-(--el-color-primary) text-(--el-color-white)'
         : 'bg-(--el-fill-color-light) text-(--el-text-color-primary)'
     "
     data-testid="chat-file"

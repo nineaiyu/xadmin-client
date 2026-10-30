@@ -319,7 +319,7 @@ const back = () => {
     class="designer-root fixed inset-0 flex flex-col"
     :class="{
       'screen-root--light': !screenDark,
-      'text-white': screenDark,
+      'text-(--el-color-white)': screenDark,
       'text-(--screen-fg)': !screenDark
     }"
     :data-screen-theme="screenDark ? 'dark' : 'light'"

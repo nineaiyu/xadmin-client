@@ -302,7 +302,7 @@ const {
             <div
               v-for="item in fieldResult.models"
               :key="item.model"
-              class="mt-2 rounded border border-gray-200 p-2 dark:border-gray-700"
+              class="mt-2 rounded border border-(--el-border-color-lighter) p-2"
             >
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-medium">{{ item.model_label }}</span>

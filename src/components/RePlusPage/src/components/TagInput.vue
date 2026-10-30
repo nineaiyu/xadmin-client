@@ -139,6 +139,9 @@ const handleTagClick = (value: string, index: number) => {
 </script>
 
 <style lang="scss" scoped>
+/* EP 输入框内部节点（.el-input__inner / __wrapper）的边框与阴影由组件默认样式
+   直接定义，作用域选择器权重不足；这里的 !important 是压过 EP 内置规则的必需项，
+   不是可清理的样式债（新增 !important 由 stylelint 统一拦截）。 */
 .el-tag + .el-tag {
   margin-left: 4px;
 }

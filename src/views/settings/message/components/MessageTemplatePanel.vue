@@ -119,7 +119,7 @@ const load = async () => {
     }
   } catch (error: unknown) {
     loadFailed.value = true;
-    message(String((error as Error)?.message ?? error), { type: "error" });
+    message(normalizeError(error).detail, { type: "error" });
   } finally {
     loading.value = false;
   }

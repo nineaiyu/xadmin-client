@@ -57,7 +57,15 @@ export function useConfirm() {
     };
     if (danger) {
       resolved.confirmButtonClass = confirmButtonClass ?? "el-button--danger";
-      resolved.autofocus = autofocus ?? false;
+      // prompt 模式（带输入框）焦点本就在输入框，强制 autofocus=false 会把焦点
+      // 从输入框移走；此时保留 EP 默认焦点即可满足「不落在确认钮」的初衷
+      const promptMode =
+        rest.inputValidator !== undefined ||
+        rest.inputPattern !== undefined ||
+        rest.inputType !== undefined ||
+        rest.inputPlaceholder !== undefined;
+      if (!promptMode) resolved.autofocus = autofocus ?? false;
+      else if (autofocus !== undefined) resolved.autofocus = autofocus;
     } else {
       if (confirmButtonClass !== undefined) {
         resolved.confirmButtonClass = confirmButtonClass;

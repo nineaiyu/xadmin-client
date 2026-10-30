@@ -12,6 +12,12 @@ import { importRecordApi } from "@/api/task/import";
 import { taskExecutionApi } from "@/api/task/task";
 import { statusTagProps, type StatusValue } from "@/utils/dict";
 import type { ListResult } from "@/api/types";
+import {
+  toTaskCenterRows,
+  taskCenterStatusLabel,
+  taskCenterStatusValue,
+  type TaskCenterRow
+} from "./taskCenterRows";
 import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
 
 /**
@@ -22,14 +28,6 @@ import { openTaskLogDialog } from "@/components/ReTaskLogDialog/taskLogDialog";
  */
 
 defineOptions({ name: "TaskCenterDrawer" });
-
-type Row = {
-  pk: string;
-  name: string;
-  /** 状态原始值：字典驱动字段下发 `{value,label,color}` 对象，普通 Choice 下发标量 */
-  status: unknown;
-  created_time: string;
-};
 
 /** 每段最多展示条数（抽屉是"最近动态"视图，翻页交给各自的既有页面） */
 const SECTION_SIZE = 5;
@@ -49,56 +47,21 @@ const { t } = useI18n();
 const router = useRouter();
 
 const loading = ref(false);
-const approvalRows = ref<Row[]>([]);
-const taskRows = ref<Row[]>([]);
-const exportRows = ref<Row[]>([]);
-const importRows = ref<Row[]>([]);
+const approvalRows = ref<TaskCenterRow[]>([]);
+const taskRows = ref<TaskCenterRow[]>([]);
+const exportRows = ref<TaskCenterRow[]>([]);
+const importRows = ref<TaskCenterRow[]>([]);
 
 const hasApproval = hasAuth("list:SystemApprovalRequest");
 const hasTask = hasAuth("list:SystemTaskExecution");
 const hasExport = hasAuth("list:SystemExportRecord");
 const hasImport = hasAuth("list:SystemImportRecord");
 
-/** 行结构由各记录模型决定：这里只取抽屉需要的四个键（缺失按空串/空值兜底） */
-function toRows(res: { code: number; data?: unknown }): Row[] {
-  const results = ((res.data as ListResult["data"] | undefined)?.results ??
-    []) as Record<string, unknown>[];
-  return results.map(item => ({
-    pk: String(item.pk ?? ""),
-    // 审批单用 title，导出/导入/任务执行用 name
-    name: String(item.name ?? item.title ?? ""),
-    status: item.status,
-    created_time: String(item.created_time ?? "")
-  }));
-}
-
-/**
- * 状态取值：字典驱动字段在列表里是 `{value,label,color}` 对象，
- * 直接 String() 会渲染成 `[object Object]`（也会让状态判断全部失配）。
- */
-function statusValue(row: Row): string {
-  const status = row.status;
-  if (typeof status === "object" && status !== null) {
-    return String((status as { value?: unknown }).value ?? "");
-  }
-  return String(status ?? "");
-}
-
-/** 状态显示文案：优先字典 label，避免把内部取值（如 PENDING）直接给用户看 */
-function statusLabel(row: Row): string {
-  const status = row.status;
-  if (typeof status === "object" && status !== null) {
-    const item = status as { label?: unknown; value?: unknown };
-    return String(item.label ?? item.value ?? "");
-  }
-  return String(status ?? "");
-}
-
 async function loadSection(
   allowed: boolean,
   request: () => Promise<ListResult>,
   target: typeof approvalRows,
-  filter?: (_row: Row) => boolean
+  filter?: (_row: TaskCenterRow) => boolean
 ) {
   if (!allowed) {
     target.value = [];
@@ -106,7 +69,7 @@ async function loadSection(
   }
   try {
     const res = await request();
-    const rows = isSuccess(res) ? toRows(res) : [];
+    const rows = isSuccess(res) ? toTaskCenterRows(res) : [];
     target.value = (filter ? rows.filter(filter) : rows).slice(0, SECTION_SIZE);
   } catch {
     target.value = [];
@@ -128,7 +91,7 @@ async function load() {
         hasTask,
         () => taskExecutionApi.list({ page: 1, size: 50 }),
         taskRows,
-        row => IN_PROGRESS_STATUSES.includes(statusValue(row))
+        row => IN_PROGRESS_STATUSES.includes(taskCenterStatusValue(row))
       ),
       loadSection(
         hasExport,
@@ -180,8 +143,8 @@ const goPage = (path: string) => {
 };
 
 /** 下载：导出记录下载产物，导入记录下载失败行错误报告，均走鉴权接口 */
-const download = (key: string, row: Row) => {
-  if (!DOWNLOADABLE_STATUSES.includes(statusValue(row))) return;
+const download = (key: string, row: TaskCenterRow) => {
+  if (!DOWNLOADABLE_STATUSES.includes(taskCenterStatusValue(row))) return;
   if (key === "export") {
     void exportRecordApi.download(row.pk);
   } else if (key === "import") {
@@ -189,11 +152,11 @@ const download = (key: string, row: Row) => {
   }
 };
 
-const canDownload = (key: string, row: Row) =>
+const canDownload = (key: string, row: TaskCenterRow) =>
   (key === "export" || key === "import") &&
-  DOWNLOADABLE_STATUSES.includes(statusValue(row));
+  DOWNLOADABLE_STATUSES.includes(taskCenterStatusValue(row));
 
-const openLog = (row: Row) => {
+const openLog = (row: TaskCenterRow) => {
   openTaskLogDialog(row.pk, `${row.name} ${t("taskCenter.logTitle")}`);
 };
 
@@ -237,7 +200,7 @@ defineExpose({ load });
                 v-bind="statusTagProps(row.status as StatusValue)"
                 size="small"
               >
-                {{ statusLabel(row) }}
+                {{ taskCenterStatusLabel(row) }}
               </el-tag>
               <span>{{ row.created_time }}</span>
             </div>

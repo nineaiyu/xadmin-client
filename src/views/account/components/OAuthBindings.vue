@@ -89,7 +89,7 @@ const unbind = async (row: BindingRow) => {
     inputValidator: value => Boolean(value),
     // 解绑是破坏性操作：确认钮着危险色（useConfirm 同口径；
     // prompt 模式焦点本就在输入框，不存在回车误确认问题）
-    confirmButtonClass: "el-button--danger"
+    danger: true
   });
   if (!input) return;
   // 与改密同口径：口令按 AESCipherV2(username) 加密后提交，不落明文

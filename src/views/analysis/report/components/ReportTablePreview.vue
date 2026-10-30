@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { datasetApi, type ExecuteResult } from "@/api/dataset/datasets";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import DataTable from "@/components/DataTable";
 
 /**
@@ -71,9 +72,8 @@ const load = async () => {
     rows.value = allRows.value.slice(0, props.limit);
     total.value = result?.total ?? rows.value.length;
   } catch (error) {
-    errorMsg.value = String(
-      (error as { detail?: string })?.detail ?? t("dataReport.tableLoadFailed")
-    );
+    errorMsg.value =
+      normalizeError(error).detail || String(t("dataReport.tableLoadFailed"));
   } finally {
     loading.value = false;
   }

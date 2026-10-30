@@ -47,6 +47,22 @@ describe("usePrompt", () => {
     mocks.prompt.mockRejectedValue("cancel");
     await expect(usePrompt()("提示", "标题")).resolves.toBeNull();
   });
+
+  it("danger 档给确认钮加危险色（prompt 焦点仍在输入框）", async () => {
+    mocks.prompt.mockResolvedValue({ value: "x", action: "confirm" });
+    await usePrompt()("提示", "标题", {
+      danger: true,
+      inputPlaceholder: "口令"
+    });
+    expect(mocks.prompt).toHaveBeenCalledWith(
+      "提示",
+      "标题",
+      expect.objectContaining({
+        confirmButtonClass: "el-button--danger",
+        inputPlaceholder: "口令"
+      })
+    );
+  });
 });
 
 describe("useAlert", () => {

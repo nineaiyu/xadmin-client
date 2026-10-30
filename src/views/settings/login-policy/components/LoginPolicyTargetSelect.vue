@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { searchRoleApi, searchUserApi } from "@/api/system/search";
+import { normalizeError } from "@/utils/apiError";
 
 /**
  * 登录策略目标选择器：按 target_type 远程搜索用户名 / 角色 code。
@@ -66,10 +67,11 @@ const remoteSearch = async (keyword: string) => {
   if (!query) return;
   loading.value = true;
   try {
-    const res =
+    const res = await (
       props.targetType === "role"
-        ? await searchRoleApi.list({ code: query, page_size: 20 })
-        : await searchUserApi.list({ username: query, page_size: 20 });
+        ? searchRoleApi.list({ code: query, page_size: 20 })
+        : searchUserApi.list({ username: query, page_size: 20 })
+    ).catch(normalizeError);
     if (!isSuccess(res)) return;
     const rows =
       (res.data as { results?: Record<string, unknown>[] })?.results ?? [];

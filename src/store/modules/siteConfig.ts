@@ -8,7 +8,10 @@ import { message } from "@/utils/message";
 import { transformI18n } from "@/plugins/i18n";
 import { cloneDeep, isEqual } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
-import { DEFAULT_EP_THEME_COLOR } from "@/utils/themeConstants";
+import {
+  localPreferenceSections,
+  serverPreferenceConfig
+} from "./siteConfigFields";
 
 // 站点配置接口在动作内动态引入：顶层静态边 store/siteConfig → api/config
 // 会经 api/base → utils/http → store 成环（环检测脚本守护）。
@@ -144,110 +147,11 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         const locale = Storage.getData("locale", this.nameSpace);
         const layout = Storage.getData("layout", this.nameSpace);
         const configure = Storage.getData("configure", this.nameSpace);
-        const configObj = {
-          Locale: locale.locale,
-          Layout: layout.layout,
-          Theme: layout.theme,
-          ThemeColor: layout.themeColor,
-          DarkMode: layout.darkMode,
-          SidebarStatus: layout.sidebarStatus,
-          EpThemeColor: layout.epThemeColor,
-          ThemeMode: layout.themeMode,
-          AuthPageLayout: configure.authPageLayout,
-          Grey: configure.grey,
-          Weak: configure.weak,
-          HideTabs: configure.hideTabs,
-          HideFooter: configure.hideFooter,
-          FooterFixed: configure.footerFixed,
-          FooterHeight: configure.footerHeight,
-          Title: configure.title,
-          ShowLogo: configure.showLogo,
-          LogoSource: configure.logoSource,
-          LogoShowText: configure.logoShowText,
-          LogoFit: configure.logoFit,
-          LogoMode: configure.logoMode,
-          FullLogoHeight: configure.fullLogoHeight,
-          LogoSourceDark: configure.logoSourceDark,
-          Timezone: configure.timezone,
-          TagsStyle: configure.tagsStyle,
-          MultiTagsCache: configure.multiTagsCache,
-          Stretch: configure.stretch,
-          HeaderAutoHide: configure.headerAutoHide,
-          CompactMode: configure.compactMode,
-          UiSize: configure.uiSize,
-          Radius: configure.radius,
-          FontScale: configure.fontScale,
-          FontScaleCustom: configure.fontScaleCustom,
-          ThemePreset: configure.themePreset,
-          NavigationStyle: configure.navigationStyle,
-          NavigationSplit: configure.navigationSplit,
-          SidebarAccordion: configure.sidebarAccordion,
-          SidebarCollapseButton: configure.sidebarCollapseButton,
-          SemiDarkSidebar: configure.semiDarkSidebar,
-          SemiDarkHeader: configure.semiDarkHeader,
-          SemiDarkSidebarSub: configure.semiDarkSidebarSub,
-          SuccessColor: configure.successColor,
-          WarningColor: configure.warningColor,
-          DangerColor: configure.dangerColor,
-          SidebarWidth: configure.sidebarWidth,
-          SidebarExpandOnHover: configure.sidebarExpandOnHover,
-          SidebarDraggable: configure.sidebarDraggable,
-          SidebarCollapsedShowTitle: configure.sidebarCollapsedShowTitle,
-          SidebarAutoActivateChild: configure.sidebarAutoActivateChild,
-          HeaderFixed: configure.headerFixed,
-          HeaderMode: configure.headerMode,
-          HeaderHidden: configure.headerHidden,
-          BreadcrumbVisible: configure.breadcrumbVisible,
-          BreadcrumbShowIcon: configure.breadcrumbShowIcon,
-          BreadcrumbShowHome: configure.breadcrumbShowHome,
-          BreadcrumbHideOnlyOne: configure.breadcrumbHideOnlyOne,
-          BreadcrumbStyle: configure.breadcrumbStyle,
-          MaxTagsCount: configure.maxTagsCount,
-          NavbarSearch: configure.navbarSearch,
-          NavbarLanguage: configure.navbarLanguage,
-          NavbarFullscreen: configure.navbarFullscreen,
-          NavbarLock: configure.navbarLock,
-          NavbarNotice: configure.navbarNotice,
-          NavbarRefresh: configure.navbarRefresh,
-          NavbarSidebarToggle: configure.navbarSidebarToggle,
-          NavbarThemeToggle: configure.navbarThemeToggle,
-          NavbarTimezone: configure.navbarTimezone,
-          NavbarOrder: configure.navbarOrder,
-          NavbarMoreWidgets: configure.navbarMoreWidgets,
-          WidgetPositions: configure.widgetPositions,
-          HeaderMenuAlign: configure.headerMenuAlign,
-          SidebarCollapseWidth: configure.sidebarCollapseWidth,
-          SidebarMixedWidth: configure.sidebarMixedWidth,
-          SidebarHidden: configure.sidebarHidden,
-          SidebarFixedButton: configure.sidebarFixedButton,
-          SidebarExtraCollapse: configure.sidebarExtraCollapse,
-          TagsMiddleClickClose: configure.tagsMiddleClickClose,
-          TagsWheelSwitch: configure.tagsWheelSwitch,
-          TagsShowIcon: configure.tagsShowIcon,
-          TagsShowRefresh: configure.tagsShowRefresh,
-          TagsShowMore: configure.tagsShowMore,
-          TagsShowMaximize: configure.tagsShowMaximize,
-          TagsHeight: configure.tagsHeight,
-          TagsKeepAlive: configure.tagsKeepAlive,
-          TagsVisitHistory: configure.tagsVisitHistory,
-          DynamicTitle: configure.dynamicTitle,
-          EnablePreferences: configure.enablePreferences,
-          PreferencesPosition: configure.preferencesPosition,
-          PreferencesStickyNav: configure.preferencesStickyNav,
-          EnableCopyPreferences: configure.enableCopyPreferences,
-          PageTransition: configure.pageTransition,
-          TransitionProgress: configure.transitionProgress,
-          TransitionLoading: configure.transitionLoading,
-          ShortcutSearch: configure.shortcutSearch,
-          ShortcutLock: configure.shortcutLock,
-          ShortcutSidebar: configure.shortcutSidebar,
-          ShortcutEnable: configure.shortcutEnable,
-          ShortcutLockKeys: configure.shortcutLockKeys,
-          ShortcutSidebarKeys: configure.shortcutSidebarKeys,
-          ShortcutSearchKeys: configure.shortcutSearchKeys,
-          ShortcutPreferencesKeys: configure.shortcutPreferencesKeys,
-          ShortcutLogoutKeys: configure.shortcutLogoutKeys
-        };
+        const configObj = serverPreferenceConfig({
+          locale: locale ?? {},
+          layout: layout ?? {},
+          configure: configure ?? {}
+        });
         const newConfig = cloneDeep(this.config);
         Object.assign(newConfig, configObj);
         configApi
@@ -328,157 +232,50 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
         configApi
           .getSiteConfig()
           .then(({ config }) => {
-            if (config.Locale) {
-              this.config = config as PlatformConfigs;
-              const configObj = {
-                // 国际化 默认中文zh
-                locale: {
-                  locale: config.Locale ?? "zh"
-                },
-                // layout模式以及主题
-                layout: {
-                  layout: config.Layout ?? "vertical",
-                  theme: config.Theme ?? "light",
-                  darkMode: config.DarkMode ?? false,
-                  sidebarStatus: config.SidebarStatus ?? true,
-                  epThemeColor: config.EpThemeColor ?? DEFAULT_EP_THEME_COLOR,
-                  // 手点主题色（预设名或 custom）：缺省回落导航皮肤名
-                  themeColor: config.ThemeColor ?? config.Theme ?? "light",
-                  themeMode: config.ThemeMode ?? "light" // 整体风格（浅色：light、深色：dark、自动：system）
-                },
-                // 项目配置-界面显示
-                configure: {
-                  authPageLayout: config.AuthPageLayout ?? "panel-left",
-                  grey: config.Grey ?? false,
-                  weak: config.Weak ?? false,
-                  hideTabs: config.HideTabs ?? false,
-                  // 缺省与 platform-config.json / WEB_SITE_CONFIG 种子一致：默认显示页脚
-                  hideFooter: config.HideFooter ?? false,
-                  footerFixed: config.FooterFixed ?? false,
-                  footerHeight: config.FooterHeight ?? 0,
-                  // 站点标题：后端下发优先，缺失时回落 platform-config 的 Title（responsive 注入）
-                  title: config.Title ?? "",
-                  showLogo: config.ShowLogo ?? true,
-                  logoSource: config.LogoSource ?? "",
-                  logoShowText: config.LogoShowText ?? true,
-                  logoFit: config.LogoFit ?? "contain",
-                  logoMode: config.LogoMode ?? "icon",
-                  fullLogoHeight: config.FullLogoHeight ?? 32,
-                  logoSourceDark: config.LogoSourceDark ?? "",
-                  timezone: config.Timezone ?? "",
-                  tagsStyle: config.TagsStyle ?? "chrome",
-                  multiTagsCache: config.MultiTagsCache ?? false,
-                  stretch: config.Stretch ?? false,
-                  headerAutoHide: config.HeaderAutoHide ?? false,
-                  compactMode: config.CompactMode ?? false,
-                  uiSize: config.UiSize ?? "default",
-                  radius: config.Radius ?? "default",
-                  fontScale: config.FontScale ?? "default",
-                  fontScaleCustom: config.FontScaleCustom ?? 14,
-                  themePreset: config.ThemePreset ?? "default",
-                  navigationStyle: config.NavigationStyle ?? "rounded",
-                  navigationSplit: config.NavigationSplit ?? true,
-                  sidebarAccordion: config.SidebarAccordion ?? true,
-                  sidebarCollapseButton: config.SidebarCollapseButton ?? true,
-                  semiDarkSidebar: config.SemiDarkSidebar ?? false,
-                  semiDarkHeader: config.SemiDarkHeader ?? false,
-                  semiDarkSidebarSub: config.SemiDarkSidebarSub ?? false,
-                  successColor: config.SuccessColor ?? "",
-                  warningColor: config.WarningColor ?? "",
-                  dangerColor: config.DangerColor ?? "",
-                  sidebarWidth: config.SidebarWidth ?? 224,
-                  sidebarExpandOnHover: config.SidebarExpandOnHover ?? true,
-                  sidebarDraggable: config.SidebarDraggable ?? false,
-                  sidebarCollapsedShowTitle:
-                    config.SidebarCollapsedShowTitle ?? false,
-                  sidebarAutoActivateChild:
-                    config.SidebarAutoActivateChild ?? false,
-                  headerFixed: config.HeaderFixed ?? true,
-                  headerMode: config.HeaderMode ?? "",
-                  headerHidden: config.HeaderHidden ?? false,
-                  breadcrumbVisible: config.BreadcrumbVisible ?? true,
-                  breadcrumbShowIcon: config.BreadcrumbShowIcon ?? true,
-                  breadcrumbShowHome: config.BreadcrumbShowHome ?? false,
-                  breadcrumbHideOnlyOne: config.BreadcrumbHideOnlyOne ?? false,
-                  breadcrumbStyle: config.BreadcrumbStyle ?? "normal",
-                  maxTagsCount: config.MaxTagsCount ?? 0,
-                  navbarSearch: config.NavbarSearch ?? true,
-                  navbarLanguage: config.NavbarLanguage ?? true,
-                  navbarFullscreen: config.NavbarFullscreen ?? true,
-                  navbarLock: config.NavbarLock ?? true,
-                  navbarNotice: config.NavbarNotice ?? true,
-                  navbarRefresh: config.NavbarRefresh ?? true,
-                  navbarSidebarToggle: config.NavbarSidebarToggle ?? false,
-                  navbarThemeToggle: config.NavbarThemeToggle ?? false,
-                  navbarTimezone: config.NavbarTimezone ?? false,
-                  navbarOrder: config.NavbarOrder ?? [],
-                  navbarMoreWidgets: config.NavbarMoreWidgets ?? [],
-                  widgetPositions: config.WidgetPositions ?? {},
-                  headerMenuAlign: config.HeaderMenuAlign ?? "start",
-                  // 缺省值与 layout/hooks/preferenceAttributes 的
-                  // DEFAULT_SIDEBAR_COLLAPSE_WIDTH 同源（60），勿用历史值
-                  sidebarCollapseWidth: config.SidebarCollapseWidth ?? 60,
-                  sidebarMixedWidth: config.SidebarMixedWidth ?? 0,
-                  sidebarHidden: config.SidebarHidden ?? false,
-                  sidebarFixedButton: config.SidebarFixedButton ?? false,
-                  sidebarExtraCollapse: config.SidebarExtraCollapse ?? false,
-                  tagsMiddleClickClose: config.TagsMiddleClickClose ?? true,
-                  tagsWheelSwitch: config.TagsWheelSwitch ?? true,
-                  tagsShowIcon: config.TagsShowIcon ?? true,
-                  tagsShowRefresh: config.TagsShowRefresh ?? true,
-                  tagsShowMore: config.TagsShowMore ?? true,
-                  tagsShowMaximize: config.TagsShowMaximize ?? false,
-                  // 与 layout/hooks/preferenceAttributes 的 DEFAULT_TAGS_HEIGHT 同源（38）
-                  tagsHeight: config.TagsHeight ?? 38,
-                  tagsKeepAlive: config.TagsKeepAlive ?? true,
-                  tagsVisitHistory: config.TagsVisitHistory ?? true,
-                  dynamicTitle: config.DynamicTitle ?? true,
-                  enablePreferences: config.EnablePreferences ?? true,
-                  preferencesPosition: config.PreferencesPosition ?? "header",
-                  preferencesStickyNav: config.PreferencesStickyNav ?? true,
-                  enableCopyPreferences: config.EnableCopyPreferences ?? true,
-                  pageTransition: config.PageTransition ?? "fade-transform",
-                  transitionProgress: config.TransitionProgress ?? true,
-                  transitionLoading: config.TransitionLoading ?? false,
-                  shortcutSearch: config.ShortcutSearch ?? true,
-                  shortcutLock: config.ShortcutLock ?? true,
-                  shortcutSidebar: config.ShortcutSidebar ?? true,
-                  shortcutEnable: config.ShortcutEnable ?? true,
-                  shortcutLockKeys: config.ShortcutLockKeys ?? "alt+l",
-                  shortcutSidebarKeys: config.ShortcutSidebarKeys ?? "alt+s",
-                  shortcutSearchKeys: config.ShortcutSearchKeys ?? "mod+k",
-                  shortcutPreferencesKeys:
-                    config.ShortcutPreferencesKeys ?? "mod+,",
-                  shortcutLogoutKeys: config.ShortcutLogoutKeys ?? ""
-                }
-              };
-              // configObj 是「本地存储形状」（locale/layout/configure 三段），与服务端
-              // PlatformConfigs 的扁平大写键不同形：写入经 setSiteConfig 按键映射
-              setConfig(config as PlatformConfigs);
-              const after = this.readLocalPreferences();
-              const localChanged =
-                !isEqual(before.layout, after.layout) ||
-                !isEqual(before.configure, after.configure);
-              if (localChanged) {
-                // 用户改动优先：只落 locale（站点级语言不受偏好面板实时改动影响），
-                // 基线保持请求前的值（面板「撤销」仍能回到服务端旧值）
-                this.setSiteConfig({ locale: configObj.locale });
-                // 快照记服务端值：当前本地值与之不同 → 自动保存会提案用户改动
-                this.syncedSnapshot = {
-                  layout: cloneDeep(configObj.layout),
-                  configure: cloneDeep(configObj.configure)
-                };
-              } else {
-                this.setSiteConfig(configObj);
-                // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
-                this.capturePreferenceBaseline();
-                // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
-                this.captureSyncedSnapshot();
-              }
-              resolve(config as PlatformConfigs);
-            } else {
+            // 完整性判据是「config 是对象」而不是某个业务键存在：缺 Locale 时
+            // 注册表会补默认值，旧实现却整包 reject → 首屏静默回落到本地缓存
+            if (!config || typeof config !== "object") {
               reject(config);
+              return;
             }
+            if (!config.Locale) {
+              console.warn(
+                "[site-config] config.Locale missing, fallback to zh via preference registry"
+              );
+            }
+            this.config = config as PlatformConfigs;
+            const sections = localPreferenceSections(
+              config as Record<string, unknown>
+            );
+            const configObj = {
+              locale: sections.locale,
+              layout: sections.layout,
+              configure: sections.configure
+            };
+            // configObj 是「本地存储形状」（locale/layout/configure 三段），与服务端
+            // PlatformConfigs 的扁平大写键不同形：写入经 setSiteConfig 按键映射
+            setConfig(config as PlatformConfigs);
+            const after = this.readLocalPreferences();
+            const localChanged =
+              !isEqual(before.layout, after.layout) ||
+              !isEqual(before.configure, after.configure);
+            if (localChanged) {
+              // 用户改动优先：只落 locale（站点级语言不受偏好面板实时改动影响），
+              // 基线保持请求前的值（面板「撤销」仍能回到服务端旧值）
+              this.setSiteConfig({ locale: configObj.locale });
+              // 快照记服务端值：当前本地值与之不同 → 自动保存会提案用户改动
+              this.syncedSnapshot = {
+                layout: cloneDeep(configObj.layout),
+                configure: cloneDeep(configObj.configure)
+              };
+            } else {
+              this.setSiteConfig(configObj);
+              // 同步完成后捕获偏好比对基线（设置面板重置脏标记的比对基准）
+              this.capturePreferenceBaseline();
+              // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
+              this.captureSyncedSnapshot();
+            }
+            resolve(config as PlatformConfigs);
           })
           .catch(error => {
             reject(error);

@@ -11,7 +11,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { savedViewApi } from "@/api/system/security";
 import { type DetailResult, isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
+import { apiFailure, normalizeError } from "@/utils/apiError";
 import type { RecordType } from "plus-pro-components";
 import type { PageColumn } from "../utils/types";
 import SavedViewMenu from "./SavedViewMenu.vue";
@@ -103,11 +103,11 @@ const applyView = (row: SavedViewRow, silent = false) => {
 };
 
 /** 请求异常归一：HTTP 层错误也要落到业务码分支（否则弹窗 loading 悬挂） */
-const fallback = (error: unknown): DetailResult<RecordType> => ({
-  code: -1,
-  detail: normalizeError(error).detail || String(t("results.failed")),
-  data: {}
-});
+const fallback = (error: unknown): DetailResult<RecordType> =>
+  apiFailure(
+    normalizeError(error).detail || String(t("results.failed")),
+    {}
+  ) as DetailResult<RecordType>;
 
 let formComponent: Component | null = null;
 
@@ -233,7 +233,11 @@ const toggleDefault = async (row: SavedViewRow) => {
 };
 
 const remove = async (row: SavedViewRow) => {
-  if (!(await confirm(t("savedView.deleteConfirm", { name: row.name })))) {
+  if (
+    !(await confirm(t("savedView.deleteConfirm", { name: row.name }), {
+      danger: true
+    }))
+  ) {
     return;
   }
   const res = await savedViewApi.destroy(row.pk).catch(fallback);

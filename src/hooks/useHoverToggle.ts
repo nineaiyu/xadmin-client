@@ -2,7 +2,10 @@ import type { MaybeRef, Ref } from "vue";
 
 import { computed, ref, watch } from "vue";
 import { tryOnScopeDispose } from "@vueuse/core";
-import { createHoverElementGroup, type HoverTarget } from "./hoverElementGroup";
+import {
+  createHoverElementGroup,
+  type HoverTarget
+} from "./internal/hoverElementGroup";
 
 interface HoverDelayOptions {
   /** 鼠标进入延迟（ms 或取值函数） */

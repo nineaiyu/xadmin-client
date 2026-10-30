@@ -128,7 +128,7 @@ async function removeMember(peer: ChatPeer) {
   if (
     !(await confirm(
       t("chat.removeMemberConfirm", { name: peer.nickname || peer.username }),
-      { title: t("chat.removeMember") }
+      { title: t("chat.removeMember"), danger: true }
     ))
   ) {
     return;
@@ -174,7 +174,7 @@ async function leaveGroup() {
   if (
     !(await confirm(t("chat.leaveGroupConfirm"), {
       confirmButtonText: t("chat.leaveGroup"),
-      confirmButtonClass: "el-button--danger",
+      danger: true,
       draggable: true
     }))
   ) {

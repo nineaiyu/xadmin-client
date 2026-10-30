@@ -13,7 +13,7 @@ const { device, t } = useNav();
 </script>
 
 <template>
-  <div class="search-footer text-fg dark:text-white">
+  <div class="search-footer text-fg dark:text-(--el-color-white)">
     <span class="search-footer-item">
       <EnterOutlined class="icon" />
       {{ t("buttons.sure") }}

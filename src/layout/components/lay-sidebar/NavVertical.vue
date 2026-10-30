@@ -18,6 +18,7 @@ import { hasNavbarLogo, isTwoColumnSidebar } from "@/layout/hooks/layoutModes";
 import { resolveBrandVisible } from "@/layout/hooks/logoPreferences";
 import { useSidebarNarrow } from "@/layout/hooks/useSidebarNarrow";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
+import ReEmpty from "@/components/ReEmpty";
 import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
 import LaySidebarItem from "../lay-sidebar/components/SidebarItem.vue";
 import LaySidebarLeftCollapse from "../lay-sidebar/components/SidebarLeftCollapse.vue";
@@ -118,7 +119,7 @@ watch(sidebarHovered, inside => {
 });
 
 /** 菜单数据装配（整树 / 二级列 + 一级高亮），实现见 hooks/useSidebarMenu */
-const { menuData, loading, topLevelActive } = useSidebarMenu(
+const { menuData, loading, empty, topLevelActive } = useSidebarMenu(
   submenuSidebar,
   defaultActive,
   menuSelect
@@ -248,7 +249,15 @@ onMounted(() => {
           {{ activeTopMenuTitle }}
         </span>
       </div>
+      <ReEmpty
+        v-if="empty"
+        class="sidebar-empty"
+        size="small"
+        :description="t('layout.emptyMenu')"
+        :hint="t('layout.emptyMenuHint')"
+      />
       <el-scrollbar
+        v-else
         ref="mainScrollbarRef"
         wrap-class="scrollbar-wrapper"
         :class="[device === 'mobile' ? 'mobile' : 'pc']"
@@ -320,6 +329,10 @@ onMounted(() => {
 <style scoped>
 :deep(.el-loading-mask) {
   opacity: 0.45;
+}
+
+.sidebar-empty {
+  padding: var(--space-4) var(--space-2);
 }
 
 /* 钉住展开按钮：贴在底部折叠条上方（折叠态下仍居中可辨） */

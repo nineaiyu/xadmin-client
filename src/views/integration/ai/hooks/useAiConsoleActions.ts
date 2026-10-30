@@ -7,7 +7,7 @@ import {
   type AiActionDraft,
   type AiConsoleMessage
 } from "@/api/ai/ai";
-import { normalizeError } from "@/utils/apiError";
+import { apiFailure, normalizeError } from "@/utils/apiError";
 import { toIncoming } from "./useAiConsoleMessages";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
@@ -68,12 +68,9 @@ export function useAiConsoleActions({
   ): Promise<{ ok: boolean; pending?: boolean; detail?: string }> {
     const res = (await aiAssistantApi
       .actionExecute({ action: draft.action, params: draft.params })
-      .catch((error: { code?: number; type?: string; detail?: string }) => ({
-        code: Number(error?.code ?? -1),
-        data: null,
-        detail: String(error?.detail ?? error),
-        type: error?.type
-      }))) as ExecuteResponse;
+      .catch((error: { code?: number; type?: string; detail?: string }) =>
+        apiFailure(error, null, { type: error?.type })
+      )) as ExecuteResponse;
     if (isSuccess(res)) {
       const incoming = toIncoming(
         (res.data as Record<string, unknown>)?.message

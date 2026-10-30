@@ -22,9 +22,15 @@ export function useAiProfileActions({
   const confirmThen = async (
     confirmText: string,
     action: () => Promise<{ code: number; detail?: string }>,
-    doneText: string
+    doneText: string,
+    danger = false
   ) => {
-    if (!(await confirm(confirmText, { title: t("aiConfig.profileTitle") }))) {
+    if (
+      !(await confirm(confirmText, {
+        title: t("aiConfig.profileTitle"),
+        danger
+      }))
+    ) {
       return;
     }
     // 异常归一为可读失败结果：抽屉内触发的动作不应把异常抛到全局
@@ -55,7 +61,8 @@ export function useAiProfileActions({
     confirmThen(
       t("aiConfig.deleteConfirm"),
       () => aiProfileApi.destroy(row.pk),
-      t("aiConfig.deleteDone")
+      t("aiConfig.deleteDone"),
+      true
     );
 
   /** 连通性测试：提交/轮询流程在 aiProfileTest（纯流程），此处只接文案 */

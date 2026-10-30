@@ -146,7 +146,11 @@ export const useNoticeStore = defineStore("pure-notice", {
                     raw
                   );
                 if (!isHtml) {
-                  message = h("i", { style: "color: teal" }, data?.message);
+                  message = h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    data?.message
+                  );
                 } else {
                   // 任意公告类型走 dangerouslyUseHTMLString 前都必须净化：
                   // notice_type 不是安全边界（历史脏数据/新增类型同样可能带 HTML）。
@@ -173,7 +177,11 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (!quiet)
                 ElNotification({
                   title: `${data?.notice_type?.label}-${data?.title}`,
-                  message: h("i", { style: "color: teal" }, message),
+                  message: h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    message
+                  ),
                   duration: 3000,
                   onClick: () => {
                     router.push({
@@ -189,7 +197,11 @@ export const useNoticeStore = defineStore("pure-notice", {
               if (!quiet)
                 ElNotification({
                   title: `${data?.notice_type?.label}-${data?.title}`,
-                  message: h("i", { style: "color: teal" }, message),
+                  message: h(
+                    "i",
+                    { style: "color: var(--el-color-primary)" },
+                    message
+                  ),
                   duration: 5000,
                   onClick: () => {
                     router.push({

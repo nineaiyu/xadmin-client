@@ -112,7 +112,8 @@ async function showImpactConfirm(
   const confirm = useConfirm();
   return confirm(renderImpact(data, t), {
     title: t("impact.title"),
-    confirmButtonText: t("impact.confirmDelete")
+    confirmButtonText: t("impact.confirmDelete"),
+    danger: true
   });
 }
 

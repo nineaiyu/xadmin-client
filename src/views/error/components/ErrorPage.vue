@@ -69,7 +69,7 @@ const copyDiagnostics = async () => {
         v-motion
         :enter="enterFor(80)"
         :initial="initialFor()"
-        class="font-medium text-4xl mb-4! dark:text-white"
+        class="font-medium text-4xl mb-4! dark:text-(--el-color-white)"
       >
         {{ code }}
       </p>

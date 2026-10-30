@@ -19,6 +19,7 @@ function buildRoomState() {
     unreadTotal: computed(() => 0),
     loadingRooms: ref(false),
     loadingContacts: ref(false),
+    roomsError: ref(false),
     loadRooms,
     loadContacts: vi.fn<ChatFrameContext["roomState"]["loadContacts"]>(),
     upsertRoom: vi.fn<ChatFrameContext["roomState"]["upsertRoom"]>(),

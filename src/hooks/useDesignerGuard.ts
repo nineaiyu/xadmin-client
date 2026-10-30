@@ -30,7 +30,8 @@ export function useDesignerGuard({
     confirm(t(`${namespace}.leaveConfirm`), {
       title: t(`${namespace}.unsaved`),
       confirmButtonText: t(`${namespace}.leave`),
-      cancelButtonText: t(`${namespace}.stay`)
+      cancelButtonText: t(`${namespace}.stay`),
+      danger: true
     });
 
   if (mode === "page") {

@@ -73,6 +73,7 @@ import {
   useLoginFlow,
   useRememberLogin
 } from "./useLoginFlow";
+import { safeRedirectTarget } from "./utils/safeRedirect";
 
 /** setTimeout 宏任务兜底，冲刷 handleLoginSuccess 内整条 promise 链 */
 const flushAsync = () => new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -83,6 +84,16 @@ const tokenData = {
   access_token_lifetime: 100,
   refresh_token_lifetime: 200
 };
+
+describe("safeRedirectTarget", () => {
+  it("只接受站内绝对路径，拒绝协议相对与外部 URL", () => {
+    expect(safeRedirectTarget("/system/user", "/")).toBe("/system/user");
+    expect(safeRedirectTarget("//evil.example", "/")).toBe("/");
+    expect(safeRedirectTarget("https://evil.example", "/")).toBe("/");
+    expect(safeRedirectTarget("", "/welcome")).toBe("/welcome");
+    expect(safeRedirectTarget(null, "/welcome")).toBe("/welcome");
+  });
+});
 
 describe("useLoginFlow 登录流收敛", () => {
   beforeEach(() => {

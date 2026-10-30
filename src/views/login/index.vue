@@ -124,7 +124,10 @@ watch(
         <template #dropdown>
           <el-dropdown-menu class="translation">
             <el-dropdown-item
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'zh')]"
+              :class="[
+                'dark:text-(--el-color-white)!',
+                getDropdownItemClass(locale, 'zh')
+              ]"
               :style="getDropdownItemStyle(locale, 'zh')"
               @click="translationCh"
             >
@@ -136,7 +139,10 @@ watch(
               {{ zhOption.label }}
             </el-dropdown-item>
             <el-dropdown-item
-              :class="['dark:text-white!', getDropdownItemClass(locale, 'en')]"
+              :class="[
+                'dark:text-(--el-color-white)!',
+                getDropdownItemClass(locale, 'en')
+              ]"
               :style="getDropdownItemStyle(locale, 'en')"
               @click="translationEn"
             >
@@ -192,7 +198,12 @@ watch(
     </div>
     <div class="w-full flex-c absolute bottom-3 text-sm text-fg-muted">
       Copyright © 2026-present
-      <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
+      <a
+        class="hover:text-primary!"
+        :href="SITE_LINKS.author"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         &nbsp;{{ title }}
       </a>
     </div>

@@ -9,7 +9,7 @@ import {
   createScrollCompensator,
   getScrollLockTarget,
   SCROLL_FIXED_CLASS
-} from "./scrollLockCompensation";
+} from "./internal/scrollLockCompensation";
 
 export { SCROLL_FIXED_CLASS };
 

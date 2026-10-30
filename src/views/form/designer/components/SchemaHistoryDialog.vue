@@ -13,7 +13,7 @@ import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
-import { normalizeError } from "@/utils/apiError";
+import { apiFailure, normalizeError } from "@/utils/apiError";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -52,13 +52,14 @@ const data = ref<SchemaHistoryResult>({
 
 const load = async () => {
   loading.value = true;
-  // 保留手写兜底（非「异常归一」通用形态）：失败时需给出空历史占位 data，
-  // 以维持 SchemaHistoryResult 形状（normalizeError 的 data 为 null，不满足此契约）
-  const res = await designerApi.schemaHistory(props.row.pk).catch(error => ({
-    code: -1,
-    detail: String((error as { detail?: string })?.detail ?? error),
-    data: { current: props.row.schema_version ?? 1, history: [] }
-  }));
+  // 失败时需给出空历史占位 data 以维持 SchemaHistoryResult 形状：
+  // 统一走 apiFailure 工厂（detail 归一 + 占位数据），不再手写失败壳
+  const res = await designerApi.schemaHistory(props.row.pk).catch(error =>
+    apiFailure(error, {
+      current: props.row.schema_version ?? 1,
+      history: []
+    })
+  );
   loading.value = false;
   if (!isSuccess(res)) {
     message(res.detail ?? t("dform.historyLoadFailed"), { type: "warning" });
@@ -88,7 +89,8 @@ const linkageSummary = (item: SchemaHistoryItem) =>
 const rollback = (item: SchemaHistoryItem) => {
   confirm(t("dform.historyRollbackConfirm", { version: item.version }), {
     title: t("dform.historyRollback"),
-    confirmButtonText: t("dform.historyRollback")
+    confirmButtonText: t("dform.historyRollback"),
+    danger: true
   }).then(async ok => {
     if (!ok) return;
     submitting.value = true;

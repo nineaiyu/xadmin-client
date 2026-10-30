@@ -44,7 +44,12 @@ const footerStyle = computed(() => {
     :style="footerStyle"
   >
     Copyright © 2026-present
-    <a class="hover:text-primary!" :href="SITE_LINKS.author" target="_blank">
+    <a
+      class="hover:text-primary!"
+      :href="SITE_LINKS.author"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       &nbsp;{{ TITLE }}
     </a>
   </footer>

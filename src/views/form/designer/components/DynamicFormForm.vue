@@ -55,17 +55,13 @@ const form = reactive({
   approval_flow: props.row?.approval_flow?.pk ?? ""
 });
 const fields = ref<FormField[]>(
-  JSON.parse(
-    JSON.stringify(
-      props.row?.schema?.fields ?? props.prefill?.schema?.fields ?? []
-    )
+  structuredClone(
+    props.row?.schema?.fields ?? props.prefill?.schema?.fields ?? []
   )
 );
 const linkages = ref<FormLinkage[]>(
-  JSON.parse(
-    JSON.stringify(
-      props.row?.schema?.linkages ?? props.prefill?.schema?.linkages ?? []
-    )
+  structuredClone(
+    props.row?.schema?.linkages ?? props.prefill?.schema?.linkages ?? []
   )
 );
 

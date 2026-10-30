@@ -116,7 +116,7 @@ export function openApprovalProgressDialog(options: {
         </p>
         {snapshot?.name ? (
           <div
-            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
             data-testid="approval-target-snapshot"
           >
             <div class="font-medium">
@@ -152,7 +152,7 @@ export function openApprovalProgressDialog(options: {
         ) : null}
         {hasParams ? (
           <details
-            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
             data-testid="approval-request-params"
           >
             <summary class="cursor-pointer font-medium">
@@ -169,7 +169,7 @@ export function openApprovalProgressDialog(options: {
         {steps.map((step: RecordType) => (
           <div
             key={step.order}
-            class="rounded border border-gray-200 p-2 text-sm dark:border-gray-700"
+            class="rounded border border-(--el-border-color-lighter) p-2 text-sm"
           >
             <div class="flex items-center gap-2">
               {h(

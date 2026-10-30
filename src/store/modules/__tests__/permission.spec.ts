@@ -52,12 +52,16 @@ describe("permission store", () => {
     expect(store.cachePageList).toEqual([]);
     expect(store.wholeMenus).toEqual([]);
     expect(store.flatteningRoutes).toEqual([]);
+    // 空菜单态与「装配中」必须可区分：清零后重新进入未装配状态
+    expect(store.menusLoaded).toBe(false);
   });
 
   it("handleWholeMenus 组装整体菜单与扁平路由", () => {
     const store = usePermissionStore();
+    expect(store.menusLoaded).toBe(false);
     store.handleWholeMenus([]);
     expect(Array.isArray(store.wholeMenus)).toBe(true);
     expect(Array.isArray(store.flatteningRoutes)).toBe(true);
+    expect(store.menusLoaded).toBe(true);
   });
 });

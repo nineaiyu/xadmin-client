@@ -54,7 +54,9 @@ export function useApiAppActions({
    */
   const confirmRegenerate = (row: ApiApplicationItem) => {
     confirm(t("apiApp.regenerateConfirm"), {
-      title: t("apiApp.regenerate")
+      title: t("apiApp.regenerate"),
+      // 重置密钥使旧凭证立即失效，属高危动作：走 danger 档（焦点不落确认钮）
+      danger: true
     }).then(ok => {
       if (ok) regenerateSecret(row);
     });

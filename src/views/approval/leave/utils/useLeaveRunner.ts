@@ -30,7 +30,7 @@ export function useLeaveRunner({
     if (
       !(await confirm(t(`leaveApply.${titleKey}`), {
         title: t("leaveApply.confirmTitle"),
-        confirmButtonClass: "el-button--danger"
+        danger: true
       }))
     ) {
       return;

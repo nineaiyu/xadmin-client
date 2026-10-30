@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import { cloneDeep } from "@pureadmin/utils";
 import ReEmpty from "@/components/ReEmpty";
 import { $t, transformI18n } from "@/plugins/i18n";
+import { filterAnimates } from "./filter";
 
 defineOptions({
   name: "ReAnimateSelector"
@@ -56,9 +57,7 @@ function onClear() {
 
 function filterMethod(value: string) {
   searchVal.value = value;
-  animatesList.value = copyAnimatesList.value.filter((i: string) =>
-    i.includes(value)
-  );
+  animatesList.value = filterAnimates(copyAnimatesList.value ?? [], value);
 }
 
 const animateMap = ref<Record<string | number, { loading?: boolean }>>({});
@@ -131,6 +130,8 @@ function onMouseleave() {
 </template>
 
 <style>
+/* EP popper 的 min-width 由浮层内联/默认样式给出，选择器面板需要压到 0 才能贴合
+   触发宽度；!important 是覆盖 EP 浮层默认值的必需项。 */
 .pure-animate-popper {
   min-width: 0 !important;
 }

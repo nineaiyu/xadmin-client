@@ -142,7 +142,7 @@ onMounted(loadComments);
       <div
         v-for="item in comments"
         :key="item.pk"
-        class="mb-2 rounded bg-gray-50 p-2 dark:bg-gray-800"
+        class="mb-2 rounded bg-(--el-fill-color-light) p-2"
       >
         <div class="flex-bc text-xs text-(--el-text-color-regular)">
           <span>
