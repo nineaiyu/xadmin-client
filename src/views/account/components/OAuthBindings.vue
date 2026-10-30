@@ -11,6 +11,7 @@ import {
 import { message } from "@/utils/message";
 import { AesEncrypted } from "@/utils/aes";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import { usePrompt } from "@/hooks/useMessageBox";
 import { useUserStoreHook } from "@/store/modules/user";
 import AccountPanel from "./AccountPanel.vue";
@@ -40,6 +41,8 @@ const rows = ref<BindingRow[]>([]);
 const providers = ref<OAuthProvider[]>([]);
 const loading = ref(false);
 const providersLoading = ref(false);
+const loadError = ref("");
+const providersError = ref("");
 /** 正在发起跳转的 provider key（绑定按钮 loading，跳转后页面即卸载） */
 const bindingKey = ref("");
 
@@ -50,31 +53,31 @@ const bindableProviders = computed(() =>
   )
 );
 
-const load = () => {
+const load = async () => {
   loading.value = true;
-  oauthApi
-    .bindings()
-    .then(res => {
-      if (isSuccess(res)) rows.value = (res.data ?? []) as BindingRow[];
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      loading.value = false;
-    });
+  loadError.value = "";
+  const res = await oauthApi.bindings().catch(normalizeError);
+  if (isSuccess(res)) {
+    rows.value = (res.data ?? []) as BindingRow[];
+  } else {
+    // 加载失败不能渲染成「未绑定」：用户会误判并重复绑定
+    rows.value = [];
+    loadError.value = String(res.detail || t("results.failed"));
+  }
+  loading.value = false;
 };
 
-const loadProviders = () => {
+const loadProviders = async () => {
   providersLoading.value = true;
-  oauthApi
-    .providers()
-    .then(res => {
-      if (isSuccess(res))
-        providers.value = (res.data?.providers ?? []) as OAuthProvider[];
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      providersLoading.value = false;
-    });
+  providersError.value = "";
+  const res = await oauthApi.providers().catch(normalizeError);
+  if (isSuccess(res)) {
+    providers.value = (res.data?.providers ?? []) as OAuthProvider[];
+  } else {
+    providers.value = [];
+    providersError.value = String(res.detail || t("results.failed"));
+  }
+  providersLoading.value = false;
 };
 
 const displayName = (row: BindingRow) =>
@@ -139,8 +142,19 @@ defineExpose({ load });
 <template>
   <AccountPanel :title="t('oauth.tabTitle')" :description="t('oauth.bindTip')">
     <p class="account-section-title">{{ t("oauth.bound") }}</p>
+    <el-alert
+      v-if="loadError"
+      type="error"
+      :title="loadError"
+      :closable="false"
+      class="mb-2"
+    >
+      <el-button link type="primary" @click="load">
+        {{ t("buttons.retry") }}
+      </el-button>
+    </el-alert>
     <div v-loading="loading">
-      <div v-if="rows.length === 0" class="account-empty">
+      <div v-if="!loadError && rows.length === 0" class="account-empty">
         <ReEmpty :description="t('oauth.noBindings')" :image-size="60" />
       </div>
       <!-- provider-row / binding-row：既有 E2E 的行定位钩子，与样式类并存 -->
@@ -149,7 +163,9 @@ defineExpose({ load });
           <div class="account-row__title truncate">
             {{ row.provider_name || row.provider }} · {{ displayName(row) }}
           </div>
-          <span class="account-row__desc">{{ row.created_time }}</span>
+          <span class="account-row__desc">
+            {{ formatDateTime(row.created_time) || "-" }}
+          </span>
         </div>
         <el-button link type="danger" @click="unbind(row)">
           {{ t("oauth.unbind") }}
@@ -175,7 +191,17 @@ defineExpose({ load });
         </el-button>
       </div>
       <el-alert
-        v-if="!providersLoading && providers.length === 0"
+        v-if="providersError"
+        type="error"
+        :title="providersError"
+        :closable="false"
+      >
+        <el-button link type="primary" @click="loadProviders">
+          {{ t("buttons.retry") }}
+        </el-button>
+      </el-alert>
+      <el-alert
+        v-else-if="!providersLoading && providers.length === 0"
         type="warning"
         :closable="false"
         :title="t('oauth.providerNotConfigured')"

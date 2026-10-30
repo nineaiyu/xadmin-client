@@ -42,9 +42,12 @@ const kind = computed(() => {
   return "options";
 });
 
+/** 级联编辑行：展示用 label 路径 + 对应原始 value 路径（保住 value≠label 的映射） */
+type CascaderPathRow = { text: string; values: Array<string | number> };
+
 const flatOptions = ref<string[]>([]);
 const columns = ref<FormTableColumn[]>([]);
-const cascaderPaths = ref<string[]>([]);
+const cascaderPaths = ref<CascaderPathRow[]>([]);
 
 const cascaderOptionsOf = (field: FormField): FormCascaderOption[] =>
   (field.options ?? []).filter(
@@ -53,36 +56,43 @@ const cascaderOptionsOf = (field: FormField): FormCascaderOption[] =>
 
 const flattenCascader = (
   nodes: FormCascaderOption[],
-  prefix: string[] = []
-) => {
-  const result: string[] = [];
+  prefixLabels: string[] = [],
+  prefixValues: Array<string | number> = []
+): CascaderPathRow[] => {
+  const result: CascaderPathRow[] = [];
   for (const node of nodes) {
-    const path = [...prefix, String(node.label ?? node.value ?? "")];
-    if (node.children?.length)
-      result.push(...flattenCascader(node.children, path));
-    else result.push(path.join("/"));
+    const label = String(node.label ?? node.value ?? "");
+    const labels = [...prefixLabels, label];
+    const values = [...prefixValues, node.value ?? label];
+    if (node.children?.length) {
+      result.push(...flattenCascader(node.children, labels, values));
+    } else {
+      result.push({ text: labels.join("/"), values });
+    }
   }
   return result;
 };
 
-const buildCascader = (paths: string[]): FormCascaderOption[] => {
+const buildCascader = (rows: CascaderPathRow[]): FormCascaderOption[] => {
   const roots: FormCascaderOption[] = [];
-  for (const line of paths) {
-    const segments = line
+  for (const row of rows) {
+    const segments = row.text
       .split("/")
       .map(item => item.trim())
       .filter(Boolean);
     if (!segments.length) continue;
     let nodes = roots;
-    for (const segment of segments) {
-      let node = nodes.find(item => item.value === segment);
+    segments.forEach((segment, index) => {
+      // 已有节点沿用原 value（label 可改）；新增段才用 label 生成 value
+      const value = row.values[index] ?? segment;
+      let node = nodes.find(item => item.value === value);
       if (!node) {
-        node = { value: segment, label: segment };
+        node = { value, label: segment };
         nodes.push(node);
       }
       node.children ??= [];
       nodes = node.children;
-    }
+    });
   }
   const prune = (nodes: FormCascaderOption[]) => {
     for (const node of nodes) {
@@ -106,7 +116,7 @@ const reset = () => {
     flatOptions.value = [""];
   }
   if (kind.value === "cascader" && !cascaderPaths.value.length) {
-    cascaderPaths.value = [""];
+    cascaderPaths.value = [{ text: "", values: [] }];
   }
 };
 
@@ -119,7 +129,8 @@ watch(
 );
 
 const addFlatOption = () => flatOptions.value.push("");
-const addCascaderPath = () => cascaderPaths.value.push("");
+const addCascaderPath = () =>
+  cascaderPaths.value.push({ text: "", values: [] });
 const addColumn = () =>
   columns.value.push({ key: "", label: "", type: "input" });
 
@@ -185,7 +196,7 @@ const save = () => {
         class="mb-2 flex items-center gap-2"
       >
         <el-input
-          v-model="cascaderPaths[index]"
+          v-model="cascaderPaths[index].text"
           :placeholder="t('dform.cascaderPathPlaceholder')"
         />
         <el-button link type="danger" @click="cascaderPaths.splice(index, 1)">

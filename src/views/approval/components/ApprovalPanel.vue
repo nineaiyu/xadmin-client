@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { approvalSelectionEnabled } from "../utils/batchSelection";
 import { useApprovalPanel, type ApprovalScope } from "../utils/hook";
 
 /** 审批中心面板：待我审批 / 我发起的两页签同构，scope 驱动列表过滤与批量工具栏
@@ -20,6 +21,11 @@ const {
   tableBarButtonsProps,
   listColumnsFormat
 } = useApprovalPanel(props.scope, tableRef);
+
+/** 勾选列只在待办页签且存在批量动作权限时开启（避免不可用的死勾选） */
+const selection = computed(() =>
+  approvalSelectionEnabled(props.scope, auth, ["batchApprove", "batchReject"])
+);
 </script>
 <template>
   <RePlusPage
@@ -27,7 +33,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="approval"
-    :selection="scope === 'pending'"
+    :selection="selection"
     :list-columns-format="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="

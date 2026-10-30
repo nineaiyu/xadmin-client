@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { usePosts } from "./utils/hook";
 
 defineOptions({
@@ -21,7 +22,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="Boolean(auth.batchDestroy)"
+    :selection="hasBatchSelection(auth, ['batchUpdate:SystemPost'])"
     locale-name="post"
     :addOrEditOptions="addOrEditOptions"
     :listColumnsFormat="listColumnsFormat"

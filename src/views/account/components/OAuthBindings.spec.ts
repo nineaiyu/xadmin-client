@@ -37,7 +37,12 @@ const mountPanel = async () => {
       // el-alert / el-button 用真实组件（文案在 title / 插槽里，stub 后断言不可见）
       components: { ElAlert, ElButton },
       directives: { loading: {} },
-      stubs: { ReEmpty: true }
+      stubs: {
+        ReEmpty: {
+          props: ["description"],
+          template: '<div class="empty">{{ description }}</div>'
+        }
+      }
     }
   });
   await flushPromises();
@@ -64,6 +69,15 @@ describe("第三方账号绑定页签", () => {
     const wrapper = await mountPanel();
 
     expect(wrapper.text()).toContain("oauth.providerNotConfigured");
+  });
+
+  it("清单加载失败时展示错误与重试，而不是「未绑定」", async () => {
+    bindingsFn.mockRejectedValue(new Error("network down"));
+    const wrapper = await mountPanel();
+
+    expect(wrapper.text()).toContain("network down");
+    expect(wrapper.text()).toContain("buttons.retry");
+    expect(wrapper.text()).not.toContain("oauth.noBindings");
   });
 
   it("已有绑定时列出 provider 与解绑入口", async () => {

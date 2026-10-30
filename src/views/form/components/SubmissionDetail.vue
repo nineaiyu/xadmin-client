@@ -16,6 +16,7 @@ import {
   type DictItem,
   type StatusTagType
 } from "@/utils/dict";
+import { formatDateTime } from "@/utils/format";
 import { formatFormulaValue } from "@/views/form/utils/formulaEval";
 import { SUBMISSION_STATUS_TAG_TYPE } from "@/views/form/utils/submissionStatus";
 
@@ -224,10 +225,10 @@ const trailStatus = (item: SubmissionTrailItem) =>
         <span v-else>-</span>
       </el-descriptions-item>
       <el-descriptions-item :label="t('dform.submittedAt')">
-        {{ row.created_time }}
+        {{ formatDateTime(row.created_time) || "-" }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('dform.updatedAt')">
-        {{ row.updated_time || "-" }}
+        {{ formatDateTime(row.updated_time) || "-" }}
       </el-descriptions-item>
       <el-descriptions-item
         v-if="row.instance"

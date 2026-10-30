@@ -19,7 +19,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const { rows, loading, revoking, load, revoke } = useAuthorizedAppList({
+const { rows, loading, error, revoking, load, revoke } = useAuthorizedAppList({
   api: {
     list: () => authorizedApplicationApi.list(),
     revoke: pk => authorizedApplicationApi.revoke(pk)
@@ -41,6 +41,11 @@ onMounted(() => {
     :description="t('setting.noPermission')"
   />
   <div v-else class="space-y-3">
+    <el-alert v-if="error" type="error" :title="error" :closable="false">
+      <el-button link type="primary" @click="load">
+        {{ t("buttons.retry") }}
+      </el-button>
+    </el-alert>
     <AuthorizedAppTable
       :rows="rows"
       :loading="loading"
@@ -52,7 +57,7 @@ onMounted(() => {
       @revoke="revoke"
     />
     <ReEmpty
-      v-if="!loading && rows.length === 0"
+      v-if="!loading && !error && rows.length === 0"
       :description="t('authorizedApps.empty')"
     />
   </div>

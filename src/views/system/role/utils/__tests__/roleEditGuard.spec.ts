@@ -4,6 +4,7 @@ const shared = vi.hoisted(() => ({
   auth: {} as Record<string, boolean>,
   denied: { value: false },
   error: { value: "" },
+  fieldError: { value: false },
   tree: { value: [] as unknown[] }
 }));
 
@@ -33,7 +34,8 @@ vi.mock("../useRoleMenuTree", () => ({
   useRoleMenuTree: () => ({
     menuTreeData: shared.tree,
     menuDenied: shared.denied,
-    menuError: shared.error
+    menuError: shared.error,
+    fieldError: shared.fieldError
   })
 }));
 vi.mock("../useRoleFormOptions", () => ({
@@ -52,6 +54,7 @@ import { useRole } from "../hook";
 beforeEach(() => {
   shared.denied.value = false;
   shared.error.value = "";
+  shared.fieldError.value = false;
   for (const key of Object.keys(shared.auth)) delete shared.auth[key];
 });
 
@@ -128,5 +131,17 @@ describe("角色页授权树不可用的门控", () => {
     expect(auth.create).toBe(false);
     expect(auth.update).toBe(false);
     expect(menuAlert.value).toBe("systemRole.menuTreeLoadFailed");
+  });
+
+  it("字段权限元数据失败（fieldError）时关闭编辑，避免保存清空字段白名单", () => {
+    Object.assign(shared.auth, { create: true, update: true, retrieve: true });
+    shared.fieldError.value = true;
+
+    const { auth, menuAlert } = useRole();
+
+    expect(auth.create).toBe(true);
+    expect(auth.update).toBe(false);
+    expect(auth.partialUpdate).toBe(false);
+    expect(menuAlert.value).toBe("systemRole.fieldTreeLoadFailed");
   });
 });

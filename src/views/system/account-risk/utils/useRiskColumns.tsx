@@ -2,6 +2,7 @@ import { h, type VNode } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElTag } from "element-plus";
 import type { RecordType } from "plus-pro-components";
+import { formatDateTime } from "@/utils/format";
 import {
   formatPageColumns,
   type PageTableColumn
@@ -39,10 +40,7 @@ export function useRiskColumns() {
   const formatHandledAtCreatedTimeColumn = (column: PageTableColumn) => {
     column["cellRenderer"] = scope => {
       const value = scope.row?.[column.prop as string];
-      return h(
-        "span",
-        value ? String(value).replace("T", " ").slice(0, 19) : "-"
-      );
+      return h("span", formatDateTime(value as string) || "-");
     };
   };
 

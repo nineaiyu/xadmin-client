@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref } from "vue";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useKnowledge } from "./utils/hook";
 
 defineOptions({
@@ -25,7 +26,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="Boolean(auth.batchDestroy)"
+    :selection="hasBatchSelection(auth, ['batchToggle:AiKnowledge'])"
     locale-name="aiKnowledge"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"

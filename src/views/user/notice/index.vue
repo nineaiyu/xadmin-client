@@ -25,6 +25,7 @@ const {
     :api="api"
     :auth="auth"
     locale-name="userNotice"
+    :selection="Boolean(auth.batchRead)"
     :listColumnsFormat="listColumnsFormat"
     :operationButtonsProps="operationButtonsProps"
     :tableBarButtonsProps="tableBarButtonsProps"

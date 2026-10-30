@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useRole } from "./utils/hook";
 
 defineOptions({
@@ -34,7 +35,7 @@ const {
       ref="tableRef"
       :api="api"
       :auth="auth"
-      :selection="Boolean(auth.batchDestroy)"
+      :selection="hasBatchSelection(auth, ['batchUpdate:SystemRole'])"
       locale-name="systemRole"
       saved-views
       :addOrEditOptions="addOrEditOptions"

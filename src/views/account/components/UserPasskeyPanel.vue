@@ -14,6 +14,7 @@ import {
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 
 /**
  * Passkey 凭据管理：浏览器侧完成 WebAuthn 注册仪式，服务端验签落库。
@@ -80,9 +81,8 @@ const remove = async (row: RecordType) => {
   }
 };
 
-/** 时间展示：服务端 ISO 串统一裁到秒（本地化时区口径由后端下发值决定） */
-const formatTime = (value: unknown) =>
-  value ? String(value).replace("T", " ").slice(0, 19) : "-";
+/** 时间展示：服务端 ISO 串统一转本地可读格式 */
+const formatTime = (value: unknown) => formatDateTime(value as string) || "-";
 
 /** 凭据列：时间与删除动作需格式化，走具名插槽 */
 const columns = computed<ReadonlyColumn[]>(() => [

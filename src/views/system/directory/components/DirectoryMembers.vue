@@ -13,6 +13,7 @@ import { buildDirectoryParams } from "../utils/directoryParams";
 import { usePagedList } from "@/hooks/usePagedList";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import { addDrawer } from "@/components/ReDrawer";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import Search from "~icons/ri/search-line";
@@ -347,7 +348,7 @@ function openDetail(row: DirectoryMember) {
             <span
               class="hidden truncate text-xs text-(--el-text-color-secondary) lg:block"
             >
-              {{ row.last_login || "-" }}
+              {{ formatDateTime(row.last_login) || "-" }}
             </span>
           </button>
         </div>

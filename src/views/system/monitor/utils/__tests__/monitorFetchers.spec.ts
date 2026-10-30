@@ -50,6 +50,20 @@ describe("监控区块失败留痕", () => {
     expect(state.sectionErrors.value.services).toBeUndefined();
   });
 
+  it("业务码失败（HTTP 200）同样标记区块且保留旧值", async () => {
+    const state = createMonitorState();
+    const previous = state.overview.value;
+    apiMock.overview.mockResolvedValue({
+      code: 1001,
+      detail: "无监控查看权限",
+      data: null
+    });
+    await createMonitorFetchers(state).fetchAll();
+
+    expect(state.sectionErrors.value.overview).toBe("无监控查看权限");
+    expect(state.overview.value).toBe(previous);
+  });
+
   it("后续刷新成功时清除失败标记", async () => {
     apiMock.services.mockRejectedValueOnce(new Error("boom"));
     const state = createMonitorState();

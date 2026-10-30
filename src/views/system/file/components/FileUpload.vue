@@ -22,6 +22,7 @@ import {
   uploadFileChunked,
   type ChunkUploadResult
 } from "@/utils/upload/chunked";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { UploadFilled } from "@element-plus/icons-vue";
@@ -62,7 +63,6 @@ const uploadSessions = new Map<string, string>();
 const uploadKey = (file: UploadRawFile | UploadFile) =>
   String((file as UploadRawFile).uid ?? file.name);
 /** 上传大小默认限制：配置端点不可读（无权限/拉取失败）时的回退值（与后端默认 10MB 对齐） */
-const DEFAULT_FILE_UPLOAD_SIZE = 10 * 1024 * 1024;
 const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
 
 const warnDefaultUploadSize = () => {

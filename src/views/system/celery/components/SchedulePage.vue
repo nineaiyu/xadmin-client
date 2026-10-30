@@ -32,6 +32,7 @@ defineExpose({
     :api="api"
     :auth="auth"
     :locale-name="localeName"
+    :selection="false"
     :list-columns-format="listColumnsFormat"
     :add-or-edit-options="addOrEditOptions"
     :operation-buttons-props="operationButtonsProps"

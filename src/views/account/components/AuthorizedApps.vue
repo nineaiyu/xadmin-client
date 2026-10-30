@@ -17,7 +17,7 @@ import AccountPanel from "./AccountPanel.vue";
 defineOptions({ name: "AuthorizedApps" });
 
 const { t } = useI18n();
-const { rows, loading, revoking, load, revoke } = useAuthorizedAppList({
+const { rows, loading, error, revoking, load, revoke } = useAuthorizedAppList({
   api: {
     list: () => myAuthorizedApplicationApi.list(),
     revoke: pk => myAuthorizedApplicationApi.revoke(pk)
@@ -34,6 +34,17 @@ onMounted(load);
     :title="t('authorizedApps.title')"
     :description="t('authorizedApps.desc')"
   >
+    <el-alert
+      v-if="error"
+      type="error"
+      :title="error"
+      :closable="false"
+      class="mb-2"
+    >
+      <el-button link type="primary" @click="load">
+        {{ t("buttons.retry") }}
+      </el-button>
+    </el-alert>
     <AuthorizedAppTable
       :rows="rows"
       :loading="loading"
@@ -43,7 +54,7 @@ onMounted(load);
       @revoke="revoke"
     />
     <ReEmpty
-      v-if="!loading && rows.length === 0"
+      v-if="!loading && !error && rows.length === 0"
       :description="t('authorizedApps.empty')"
     />
   </AccountPanel>

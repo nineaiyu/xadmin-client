@@ -6,6 +6,7 @@ import { addDialog } from "@/components/ReDialog";
 import { useDialogForm } from "@/hooks/useDialogForm";
 import { message } from "@/utils/message";
 import { statusTagProps } from "@/utils/dict";
+import { formatDateTime } from "@/utils/format";
 import type { RecordType } from "plus-pro-components";
 import type { ApiResult, DetailResult } from "@/api/types";
 import { APPROVAL_STATUS_TAG_TYPE } from "./approvalHelpers";
@@ -206,7 +207,7 @@ export function openApprovalProgressDialog(options: {
               {step.approver?.username
                 ? ` · ${t("approval.handler")}: ${step.approver.username}`
                 : ""}
-              {step.acted_at ? ` · ${step.acted_at}` : ""}
+              {step.acted_at ? ` · ${formatDateTime(step.acted_at)}` : ""}
             </div>
             {(step.actions ?? []).length ? (
               <div class="mt-1 text-xs text-(--el-text-color-regular)">

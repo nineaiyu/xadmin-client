@@ -75,7 +75,8 @@ export function useMenuRowActions({
     else if (code === "clone") void openWithGuard(() => drawer.openClone(row));
     else if (code === "permissions") {
       void openWithGuard(() => drawer.openPermission(row));
-    } else if (code === "rename") drawer.openRename(row);
+    } else if (code === "rename")
+      void openWithGuard(() => drawer.openRename(row));
     else if (code === "delete") removeRow(row);
     else if (code.startsWith("move:")) {
       order.moveSibling(row, code.split(":")[1] as MoveDirection);

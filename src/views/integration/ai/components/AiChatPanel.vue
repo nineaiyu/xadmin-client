@@ -105,6 +105,14 @@ function submit() {
   emit("send", content);
 }
 
+/** Enter 发送：输入法组词确认（isComposing / 229）不发送，避免只发出未上屏拼音 */
+function onEnterKeydown(event: Event | KeyboardEvent) {
+  if (!(event instanceof KeyboardEvent)) return;
+  if (event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  submit();
+}
+
 /** 重试中断/失败回答：向上找最近一条用户提问原样重发（历史消息无本地请求上下文） */
 function retryMessage(item: AiConsoleMessage) {
   if (props.streaming) return;
@@ -191,7 +199,7 @@ defineExpose({ scrollEl });
         :placeholder="placeholder"
         :disabled="disabled"
         data-testid="ai-ask-input"
-        @keydown.enter.exact.prevent="submit"
+        @keydown.enter.exact="onEnterKeydown"
       />
       <div class="mt-2 flex-bc">
         <div class="text-xs text-(--el-text-color-secondary)">

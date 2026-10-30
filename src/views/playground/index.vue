@@ -114,9 +114,8 @@ const openDemo = (demo?: string) => {
           class="mb-3"
         >
           <el-card
-            shadow="hover"
-            class="cursor-pointer"
-            :class="entry.demo ? '' : 'is-docs-only'"
+            :shadow="entry.demo ? 'hover' : 'never'"
+            :class="entry.demo ? 'cursor-pointer' : 'is-docs-only'"
             :data-testid="`playground-card-${entry.name}`"
             @click="openDemo(entry.demo)"
           >

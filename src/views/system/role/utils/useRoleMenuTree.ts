@@ -29,10 +29,13 @@ export function useRoleMenuTree() {
   const menuDenied = ref(!hasAuth("list:SystemMenu"));
   // 菜单列表请求失败（业务码失败 / 网络异常）：与「无权限」同口径禁用保存
   const menuError = ref(false);
+  // 字段权限元数据加载失败：授权树缺少字段节点，继续编辑并保存会清空既有字段白名单
+  const fieldError = ref(false);
 
   const getMenuData = () => {
     // 菜单全量列表与菜单页 / 权限页共用缓存；菜单页为权威刷新方（force）
     menuError.value = false;
+    fieldError.value = false;
     fetchMetaList(META_KEYS.menu, () => fetchAllRows(menuApi.list))
       .then(res => {
         if (!isSuccess(res)) {
@@ -60,9 +63,19 @@ export function useRoleMenuTree() {
                 });
                 // 原地注入字段分组/叶子节点（menuTreeData 持有同一棵树）
                 injectFieldNodes(tree, fieldLookupsData.value);
+              } else {
+                fieldError.value = true;
+                message(`${t("results.failed")}，${result.detail}`, {
+                  type: "error"
+                });
               }
             })
-            .catch(() => undefined);
+            .catch(() => {
+              fieldError.value = true;
+              message(t("systemRole.fieldTreeLoadFailed"), {
+                type: "error"
+              });
+            });
         }
       })
       .catch(() => {
@@ -80,6 +93,7 @@ export function useRoleMenuTree() {
     menuTreeData,
     fieldLookupsData,
     menuDenied,
-    menuError
+    menuError,
+    fieldError
   };
 }

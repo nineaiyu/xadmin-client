@@ -9,6 +9,7 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import { formatDateTime } from "@/utils/format";
 import { metricLabelKey } from "../utils/format";
 
 /**
@@ -133,7 +134,7 @@ const columns = computed<ReadonlyColumn[]>(() => [
         </el-tag>
       </template>
       <template #resolvedTime="{ row }">
-        {{ row.resolved_time ?? "—" }}
+        {{ formatDateTime(row.resolved_time) || "—" }}
       </template>
       <template #message="{ row }">{{ row.message || "—" }}</template>
     </ReReadonlyTable>

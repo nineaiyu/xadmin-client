@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { FormField } from "@/api/dataset/dform";
-import { convergeFieldAttributes } from "../fieldConverge";
+import { canFieldBeRequired, convergeFieldAttributes } from "../fieldConverge";
 
 const field = (overrides: Partial<FormField>): FormField => ({
   key: "f1",
   label: "字段",
   type: "input",
   ...overrides
+});
+
+describe("canFieldBeRequired", () => {
+  it("公式字段不可必填，其余类型可必填", () => {
+    expect(canFieldBeRequired({ type: "formula" })).toBe(false);
+    expect(canFieldBeRequired({ type: "input" })).toBe(true);
+  });
 });
 
 describe("convergeFieldAttributes", () => {

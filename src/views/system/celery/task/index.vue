@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useTask } from "./utils/hook";
 
 defineOptions({
@@ -19,7 +20,13 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="Boolean(auth.batchDestroy)"
+    :selection="
+      hasBatchSelection(auth, [
+        'batchRun:SystemTask',
+        'batchEnable:SystemTask',
+        'batchDisable:SystemTask'
+      ])
+    "
     locale-name="systemTask"
     saved-views
     :base-columns-format="baseColumnsFormat"

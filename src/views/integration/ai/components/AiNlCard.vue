@@ -21,6 +21,13 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
+/** 预览计数：命中探测上限时显示下限（与后端摘要「≥N」同口径） */
+const previewText = computed(() =>
+  props.result.preview_capped
+    ? `≥${props.result.preview_count}`
+    : String(props.result.preview_count)
+);
+
 const filterText = computed(() => {
   const filters = props.result.dsl?.filters ?? [];
   if (!filters.length) return t("ai.nlNoFilters");
@@ -39,9 +46,7 @@ const filterText = computed(() => {
       <span class="font-semibold">
         {{ t("ai.nlDataset") }}: {{ result.dataset_name }}
       </span>
-      <el-tag size="small">
-        {{ t("ai.nlPreview") }}: {{ result.preview_count }}
-      </el-tag>
+      <el-tag size="small"> {{ t("ai.nlPreview") }}: {{ previewText }} </el-tag>
       <el-tag size="small" type="info">
         {{
           result.mode === "aggregate"

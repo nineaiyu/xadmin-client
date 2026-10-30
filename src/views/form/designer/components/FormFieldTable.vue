@@ -6,7 +6,10 @@ import { useSortable } from "@/hooks/useSortable";
 import DataTable from "@/components/DataTable";
 import type { FormField, FormFieldType } from "@/api/dataset/dform";
 import { FIELD_TYPE_OPTIONS } from "../utils/schemaMeta";
-import { convergeFieldAttributes } from "../utils/fieldConverge";
+import {
+  canFieldBeRequired,
+  convergeFieldAttributes
+} from "../utils/fieldConverge";
 import { fieldRowErrorOf } from "../utils/fieldValidate";
 import FormFieldOptionsDialog from "./FormFieldOptionsDialog.vue";
 
@@ -189,10 +192,12 @@ const move = (index: number, offset: -1 | 1) => {
     <el-table-column :label="t('dform.fieldRequired')" width="70">
       <template #default="{ row }">
         <el-switch
+          v-if="canFieldBeRequired(row as FormField)"
           v-model="(row as FormField).required"
           size="small"
           :aria-label="t('dform.fieldRequired')"
         />
+        <span v-else class="text-(--el-text-color-secondary)">—</span>
       </template>
     </el-table-column>
     <el-table-column :label="t('dform.actions')" width="220">

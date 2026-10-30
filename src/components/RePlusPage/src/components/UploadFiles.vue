@@ -16,6 +16,7 @@ import defaultFile from "../assets/defaultFile.png";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { systemUploadFileApi } from "@/api/file/file";
+import { DEFAULT_FILE_UPLOAD_SIZE } from "@/utils/upload/limits";
 import { message } from "@/utils/message";
 import { formatBytes } from "@pureadmin/utils";
 
@@ -103,7 +104,7 @@ const handleChange: UploadProps["onChange"] = uploadFile => {
 };
 
 const { t } = useI18n();
-const uploadConfig = ref({ file_upload_size: 1048576 });
+const uploadConfig = ref({ file_upload_size: DEFAULT_FILE_UPLOAD_SIZE });
 
 onMounted(() => {
   if (hasAuth("config:SystemUploadFile")) {

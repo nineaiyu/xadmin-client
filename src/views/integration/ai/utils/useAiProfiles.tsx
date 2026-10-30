@@ -44,6 +44,8 @@ export function useAiProfiles(tableRef: Ref) {
   const canRetrieve = hasAuth("retrieve:AiProfile");
   const canEdit = hasAuth("partialUpdate:AiProfile");
   const canDestroy = hasAuth("destroy:AiProfile");
+  // 管理抽屉只有资料卡 + retrieve/edit/probe/destroy 动作：四者皆无时不提供入口
+  const canManage = canRetrieve || canEdit || canProbe || canDestroy;
 
   const refresh = () => tableRef.value?.handleGetData();
 
@@ -60,11 +62,15 @@ export function useAiProfiles(tableRef: Ref) {
     removeProfile
   });
 
-  const { listColumnsFormat } = useAiProfileColumns({ t, openProfilePanel });
+  const { listColumnsFormat } = useAiProfileColumns({
+    t,
+    openProfilePanel,
+    canManage
+  });
 
   const { operationButtonsProps, tableBarButtonsProps } = useAiProfileButtons({
     t,
-    flags: { canCreate, canActivate, canDeactivate, canTest },
+    flags: { canCreate, canActivate, canDeactivate, canTest, canManage },
     activate,
     deactivate,
     testProfile,

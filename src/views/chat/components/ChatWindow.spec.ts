@@ -197,6 +197,16 @@ describe("@ 提及键盘导航", () => {
     online: true
   } as ChatPeer;
 
+  it("输入法组词确认的 Enter 不发送", async () => {
+    const wrapper = mountWindow();
+    const textarea = wrapper.find('[data-testid="chat-input"] textarea');
+    await textarea.setValue("拼音");
+    await textarea.trigger("keydown", { key: "Enter", isComposing: true });
+
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("拼音");
+  });
+
   it("候选打开时 Enter 选中成员而不是发送，随后 Enter 才发送", async () => {
     const wrapper = mountWindow({ contacts: [peer] });
     const textarea = wrapper.find('[data-testid="chat-input"] textarea');

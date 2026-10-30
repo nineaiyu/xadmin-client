@@ -9,12 +9,17 @@ import {
 } from "@/api/ai/mcp";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import { hasAuth } from "@/router/utils";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
 import McpCallPanel from "./McpCallPanel.vue";
+import {
+  isMcpToolCallable,
+  isMcpToolInActionSurface
+} from "../utils/actionSurface";
 
 /**
  * 外部 MCP 服务器抽屉：资料卡 + 工具快照清单 + 调用测试（白名单内）。
@@ -106,19 +111,11 @@ const pickTool = (raw: unknown) => {
   callTool.value = tool.name;
 };
 
-/** 工具是否已接入 AI 动作面：后端快照条目带 callable 标记（列表时按调用准入
- * 规则计算）时直接消费；字段缺失（在途旧后端）回落前端镜像规则兜底 */
-const inActionSurface = (raw: unknown) => {
-  const tool = raw as McpToolSnapshot;
-  if (typeof tool.callable === "boolean") return tool.callable;
-  return Boolean(
-    server.value.enabled &&
-    server.value.expose_to_ai &&
-    (server.value.allowed_tools ?? []).includes(tool.name) &&
-    tool.input_schema &&
-    Object.keys(tool.input_schema).length > 0
-  );
-};
+/** 工具是否可调用（白名单）与是否已接入 AI 动作面（叠加 expose_to_ai） */
+const isCallable = (raw: unknown) =>
+  isMcpToolCallable(server.value, raw as McpToolSnapshot);
+const inActionSurface = (raw: unknown) =>
+  isMcpToolInActionSurface(server.value, raw as McpToolSnapshot);
 </script>
 
 <template>
@@ -147,7 +144,7 @@ const inActionSurface = (raw: unknown) => {
         }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelLastSync')">
-        {{ server.last_synced_time || "-" }}
+        {{ formatDateTime(server.last_synced_time) || "-" }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('mcp.panelSyncError')">
         <span :class="server.last_sync_error ? 'text-(--el-color-danger)' : ''">
@@ -205,8 +202,8 @@ const inActionSurface = (raw: unknown) => {
           link
           type="primary"
           size="small"
-          :disabled="!inActionSurface(tool)"
-          :title="inActionSurface(tool) ? '' : t('mcp.toolCallUnavailable')"
+          :disabled="!isCallable(tool)"
+          :title="isCallable(tool) ? '' : t('mcp.toolCallUnavailable')"
           @click="pickTool(tool)"
         >
           {{ t("mcp.toolCall") }}

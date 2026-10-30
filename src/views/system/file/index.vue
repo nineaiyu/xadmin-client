@@ -3,6 +3,7 @@ import { h } from "vue";
 import { useI18n } from "vue-i18n";
 import { addDrawer, type DrawerOptions } from "@/components/ReDrawer";
 import { drawerSize } from "@/components/ReDialog/size";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useSystemUploadFile } from "./utils/hook";
 import FileStatsBar from "./components/FileStatsBar.vue";
 import FileStatsPanel from "./components/FileStatsPanel.vue";
@@ -61,6 +62,7 @@ const openStatsDetail = () => {
       :api="api"
       :auth="auth"
       locale-name="systemUploadFile"
+      :selection="hasBatchSelection(auth, ['assign:Tag'])"
       saved-views
       advanced-filter
       :searchColumnsFormat="searchColumnsFormat"

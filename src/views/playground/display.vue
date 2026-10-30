@@ -44,7 +44,8 @@ const statItems = reactive<StatItem[]>([
 
 const demoJson = {
   service: "xadmin",
-  version: "5.0.0",
+  // 示例 JSON 的版本取构建期注入值，避免样例与当前版本漂移
+  version: __APP_INFO__.pkg.version,
   modules: ["approval", "dataset", "ai"],
   quota: { calls: 0, tokens: 0 }
 };

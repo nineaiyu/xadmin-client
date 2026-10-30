@@ -14,10 +14,13 @@ type TFunction = ReturnType<typeof useI18n>["t"];
  */
 export function useAiProfileColumns({
   t,
-  openProfilePanel
+  openProfilePanel,
+  canManage
 }: {
   t: TFunction;
   openProfilePanel: (row: AiProfileItem) => void;
+  /** 无管理动作权限时档案名退化为纯文本（避免打开空抽屉） */
+  canManage: boolean;
 }) {
   const listColumnsFormat = (columns: PageTableColumn[]) => {
     columns.forEach(column => {
@@ -26,6 +29,7 @@ export function useAiProfileColumns({
           // 档案名同为「管理」抽屉入口
           column["cellRenderer"] = ({ row }) => {
             const item = row as AiProfileItem;
+            if (!canManage) return item.name;
             return h(
               ElLink,
               {

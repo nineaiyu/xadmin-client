@@ -14,6 +14,7 @@ import { isSuccess } from "@/api/types";
 import { fieldTypeLabelKey } from "../utils/schemaMeta";
 import { LINKAGE_EFFECTS, linkageFieldLabel } from "../utils/linkageMeta";
 import { apiFailure, normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -139,7 +140,7 @@ const columns = computed<ReadonlyColumn[]>(() => {
         v-if="data.updated_time"
         class="text-xs text-(--el-text-color-secondary)"
       >
-        {{ data.updated_time }}
+        {{ formatDateTime(data.updated_time) }}
       </span>
     </div>
     <ReReadonlyTable
@@ -188,7 +189,7 @@ const columns = computed<ReadonlyColumn[]>(() => {
       </template>
       <template #updated="{ row }">
         <span class="text-xs">
-          {{ (row as SchemaHistoryItem).updated_time || "-" }}
+          {{ formatDateTime((row as SchemaHistoryItem).updated_time) || "-" }}
         </span>
       </template>
       <template #updatedBy="{ row }">

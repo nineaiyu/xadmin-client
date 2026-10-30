@@ -235,6 +235,8 @@ function submit() {
 /** 输入区键盘：@ 候选打开时上下键/Enter/Esc 由候选接管，否则 Enter 发送 */
 function onComposerKeydown(event: Event | KeyboardEvent) {
   if (!(event instanceof KeyboardEvent)) return;
+  // 输入法组词确认（isComposing / 229）期间回车只用于选词，不发送
+  if (event.isComposing || event.keyCode === 229) return;
   if (mentionCandidates.value.length) {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();

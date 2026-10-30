@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useI18n } from "vue-i18n";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useDept } from "./utils/hook";
 
 defineOptions({
@@ -36,7 +37,7 @@ const {
       ref="tableRef"
       :api="api"
       :auth="auth"
-      :selection="Boolean(auth.batchDestroy)"
+      :selection="hasBatchSelection(auth, ['batchUpdate:SystemDept'])"
       :isTree="true"
       :addOrEditOptions="addOrEditOptions"
       :baseColumnsFormat="baseColumnsFormat"

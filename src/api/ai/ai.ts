@@ -131,6 +131,8 @@ export type NlInterpretResult = {
   dsl: NlQueryDsl;
   dataset_name: string;
   preview_count: number;
+  /** 预览探测命中上限（计数为下限，展示为「≥N」） */
+  preview_capped?: boolean;
   mode: string;
 };
 

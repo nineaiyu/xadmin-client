@@ -2057,6 +2057,7 @@ systemRole:
   preview: 授权预览
   menuTreeDenied: 缺少菜单列表权限（list:SystemMenu），授权树不可用，已禁用新增与编辑，避免保存后清空角色权限
   menuTreeLoadFailed: 菜单列表加载失败，授权树不可用，已禁用新增与编辑，请刷新页面重试
+  fieldTreeLoadFailed: 字段权限元数据加载失败，字段节点不可用，已禁用编辑，避免保存后清空角色字段白名单
   editRetrieveDenied: 缺少角色详情权限（retrieve:SystemRole），编辑无法回显现有授权，已禁用编辑，避免保存后清空角色权限
 
 # 角色菜单权限配置树
@@ -3299,6 +3300,7 @@ imBinding:
   current: 已有绑定
   empty: 暂无 IM 绑定
   unbind: 解绑
+  unbindConfirm: 确认解绑该用户的 {provider} 账号？解绑后该账号将无法通过该平台登录。
   required: 请填写平台与账号标识
   saved: IM 绑定已保存
   unbound: 已解绑

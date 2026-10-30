@@ -4,6 +4,7 @@ import type { useI18n } from "vue-i18n";
 import type { TableColumnRenderer } from "@pureadmin/table";
 import { dictTagProps } from "@/utils/dict";
 import { renderColorSwatch, renderBuiltinBadge } from "@/utils/cellRender";
+import { formatDateTime } from "@/utils/format";
 import type { PageTableColumn } from "@/components/RePlusPage";
 import type { DictCellRow } from "./types";
 
@@ -68,7 +69,7 @@ export const dictLastUsedCellRenderer = (column: PageTableColumn) => {
   column.cellRenderer = scope => {
     const value = asCellRow(scope).last_used_at;
     if (!value) return h("span", "—");
-    return h("span", String(value).replace("T", " ").slice(0, 19));
+    return h("span", formatDateTime(value));
   };
 };
 

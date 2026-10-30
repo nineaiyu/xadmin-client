@@ -4,6 +4,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import type { ScreenTemplateVersionItem } from "@/api/dataset/analysis";
+import { formatDateTime } from "@/utils/format";
 import { fetchTemplateVersions } from "../utils/serverTemplates";
 import {
   ReReadonlyTable,
@@ -66,8 +67,7 @@ async function onRollback(version: number) {
   setTimeout(() => void reload(), 400);
 }
 
-const formatTime = (value?: string) =>
-  value ? value.replace("T", " ").slice(0, 19) : "";
+const formatTime = (value?: string) => formatDateTime(value);
 
 /** 版本历史只读列（时间与回滚动作用具名插槽） */
 const columns = computed<ReadonlyColumn[]>(() => [

@@ -6,6 +6,7 @@ import { useDebounceFn } from "@vueuse/core";
 import { crontabScheduleApi } from "@/api/task/task";
 import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import { formatCronWeekday } from "../utils/cronWeekday";
 import {
   CRON_FIELD_KEYS,
@@ -127,7 +128,7 @@ const applyPreset = (values: string[]) => {
   draft.day_of_week = values[4];
 };
 
-const displayRun = (value: string) => value.replace("T", " ").slice(0, 19);
+const displayRun = (value: string) => formatDateTime(value);
 </script>
 
 <template>

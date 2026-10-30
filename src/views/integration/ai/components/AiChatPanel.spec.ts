@@ -205,6 +205,16 @@ describe("AiChatPanel 助手右栏挂载冒烟", () => {
     expect(wrapper.emitted("send")).toEqual([["近 7 天登录数"], ["再来一问"]]);
   });
 
+  it("输入法组词确认的 Enter 不发送（保留草稿）", async () => {
+    const wrapper = mountPanel();
+    const textarea = wrapper.find('[data-testid="ai-ask-input"]');
+    await textarea.setValue("拼音");
+    await textarea.trigger("keydown", { key: "Enter", isComposing: true });
+
+    expect(wrapper.emitted("send")).toBeUndefined();
+    expect((textarea.element as HTMLTextAreaElement).value).toBe("拼音");
+  });
+
   it("入口禁用：输入框与发送按钮均不可用", () => {
     const wrapper = mountPanel({ disabled: true });
     expect(

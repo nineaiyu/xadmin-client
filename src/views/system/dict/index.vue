@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useDataDict } from "./utils/hook";
 
 defineOptions({
@@ -23,7 +24,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="Boolean(auth.batchDestroy)"
+    :selection="hasBatchSelection(auth, ['batchActive:SystemDataDict'])"
     :isTree="true"
     :addOrEditOptions="addOrEditOptions"
     :beforeSearchSubmit="beforeSearchSubmit"

@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 
 import type { NodeProgress } from "@/api/approval/approvalFlow";
 import { statusTagProps, type StatusTagType } from "@/utils/dict";
+import { formatDateTime } from "@/utils/format";
 
 /**
  * 实例详情基础信息区（自 InstanceDetail 拆出，控制单文件行数）：
@@ -102,7 +103,7 @@ const statusOf = (value?: DictValue) =>
       {{ props.detail.current_node_name || "-" }}
     </el-descriptions-item>
     <el-descriptions-item :label="t('systemApprovalInstance.formCreatedTime')">
-      {{ props.detail.created_time ?? "-" }}
+      {{ formatDateTime(props.detail.created_time) || "-" }}
     </el-descriptions-item>
     <el-descriptions-item
       v-if="props.nodeProgress"

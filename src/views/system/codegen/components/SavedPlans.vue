@@ -10,9 +10,19 @@ import { exportPlan, type SavedPlan } from "../utils/plan-service";
 
 defineOptions({ name: "CodegenSavedPlans" });
 
-const props = defineProps<{
-  plans: SavedPlan[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    plans: SavedPlan[];
+    canCreate?: boolean;
+    canUpdate?: boolean;
+    canRemove?: boolean;
+  }>(),
+  {
+    canCreate: true,
+    canUpdate: true,
+    canRemove: true
+  }
+);
 
 const emit = defineEmits<{
   load: [plan: SavedPlan];
@@ -166,10 +176,20 @@ function notifyEmpty() {
         </div>
       </el-option>
     </el-select>
-    <el-button size="small" data-testid="codegen-plan-save" @click="onSave">
+    <el-button
+      v-if="canCreate"
+      size="small"
+      data-testid="codegen-plan-save"
+      @click="onSave"
+    >
       {{ t("codegen.planSave") }}
     </el-button>
-    <el-checkbox v-model="sharedOnSave" size="small" class="ml-1!">
+    <el-checkbox
+      v-if="canCreate"
+      v-model="sharedOnSave"
+      size="small"
+      class="ml-1!"
+    >
       {{ t("codegen.planShareOnSave") }}
     </el-checkbox>
     <el-button
@@ -182,17 +202,19 @@ function notifyEmpty() {
       {{ t("codegen.planLoad") }}
     </el-button>
     <el-button
+      v-if="canUpdate"
       size="small"
       data-testid="codegen-plan-rename"
-      :disabled="!canEditSelected"
+      :disabled="!canUpdate || !canEditSelected"
       @click="onRename"
     >
       {{ t("codegen.planRename") }}
     </el-button>
     <el-button
+      v-if="canUpdate"
       size="small"
       data-testid="codegen-plan-share"
-      :disabled="!canEditSelected"
+      :disabled="!canUpdate || !canEditSelected"
       @click="onToggleShared"
     >
       {{
@@ -205,6 +227,7 @@ function notifyEmpty() {
       {{ t("codegen.planExport") }}
     </el-button>
     <el-button
+      v-if="canRemove"
       size="small"
       type="danger"
       plain
@@ -219,7 +242,7 @@ function notifyEmpty() {
     >
       {{ t("codegen.planDelete") }}
     </el-button>
-    <el-button size="small" @click="onImportClick">
+    <el-button v-if="canCreate" size="small" @click="onImportClick">
       {{ t("codegen.planImport") }}
     </el-button>
     <input

@@ -6,6 +6,7 @@ import type { InstanceComment } from "@/api/approval/approvalFlow";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
+import { formatDateTime } from "@/utils/format";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useUserStoreHook } from "@/store/modules/user";
 import { hasAuth } from "@/router/utils";
@@ -118,9 +119,8 @@ async function removeComment(item: InstanceComment) {
   }
 }
 
-/** 评论时间展示（ISO → yyyy-MM-dd HH:mm:ss） */
-const commentTime = (value?: string) =>
-  value ? String(value).replace("T", " ").slice(0, 19) : "-";
+/** 评论时间展示（ISO → 本地可读格式） */
+const commentTime = (value?: string) => formatDateTime(value) || "-";
 
 onMounted(loadComments);
 </script>

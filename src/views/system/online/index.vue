@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { useUserOnline } from "./utils/hook";
 
 defineOptions({ name: "SystemUserOnline" });
@@ -16,7 +17,7 @@ const {
     ref="tableRef"
     :api="api"
     :auth="auth"
-    :selection="Boolean(auth.batchDestroy)"
+    :selection="hasBatchSelection(auth, ['batchForceLogout:SystemUserOnline'])"
     locale-name="systemOnline"
     :listColumnsFormat="listColumnsFormat"
     :tableBarButtonsProps="tableBarButtonsProps"

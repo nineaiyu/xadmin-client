@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { systemUploadFileApi, type FileAccessLogResult } from "@/api/file/file";
 import { message } from "@/utils/message";
 import { isSuccess } from "@/api/types";
+import { formatDateTime } from "@/utils/format";
 import type { RecordType } from "plus-pro-components";
 import {
   ReReadonlyTable,
@@ -100,11 +101,7 @@ onMounted(load);
       border
     >
       <template #time="{ row }">
-        {{
-          row.created_time
-            ? String(row.created_time).replace("T", " ").slice(0, 19)
-            : "-"
-        }}
+        {{ formatDateTime(row.created_time) || "-" }}
       </template>
       <template #action="{ row }">{{
         actionLabel(row.action?.value)

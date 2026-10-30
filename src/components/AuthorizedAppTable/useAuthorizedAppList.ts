@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import { isSuccess, type BaseResult, type ListResult } from "@/api/types";
 import type { AuthorizedApplication } from "@/api/user/authorizedApp";
 import { useConfirm } from "@/hooks/useConfirm";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 
 /** 两端授权应用 API 的公共面（管理端 / 个人端仅端点与撤销语义不同） */
@@ -27,20 +28,21 @@ export function useAuthorizedAppList(options: {
   const confirm = useConfirm();
   const rows = ref<AuthorizedApplication[]>([]);
   const loading = ref(false);
+  const error = ref("");
   const revoking = ref("");
 
   const load = async () => {
     loading.value = true;
-    try {
-      const res = await api.list();
-      if (isSuccess(res)) {
-        rows.value = res.data?.results ?? [];
-      }
-    } catch {
-      // 网络错误由统一拦截器提示
-    } finally {
-      loading.value = false;
+    error.value = "";
+    const res = await api.list().catch(normalizeError);
+    if (isSuccess(res)) {
+      rows.value = res.data?.results ?? [];
+    } else {
+      // 加载失败不能展示成「无已授权应用」：用户会误判授权状态
+      rows.value = [];
+      error.value = String(res.detail || t("results.failed"));
     }
+    loading.value = false;
   };
 
   const revoke = async (row: AuthorizedApplication) => {
@@ -62,5 +64,5 @@ export function useAuthorizedAppList(options: {
     }
   };
 
-  return { rows, loading, revoking, load, revoke };
+  return { rows, loading, error, revoking, load, revoke };
 }

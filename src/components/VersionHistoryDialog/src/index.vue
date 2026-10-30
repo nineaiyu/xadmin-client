@@ -4,6 +4,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import { message } from "@/utils/message";
+import { formatDateTime } from "@/utils/format";
 import {
   ReReadonlyTable,
   type ReadonlyColumn
@@ -58,8 +59,7 @@ watch(
   }
 );
 
-const formatTime = (value?: string) =>
-  value ? value.replace("T", " ").slice(0, 19) : "";
+const formatTime = (value?: string) => formatDateTime(value);
 
 const columns = computed<ReadonlyColumn[]>(() => {
   const base: ReadonlyColumn[] = [

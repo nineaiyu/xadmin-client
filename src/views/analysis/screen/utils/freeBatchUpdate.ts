@@ -8,13 +8,25 @@ import { clampRotate } from "./paneEffects";
  * `_normalize_pane_body` 一致——避免把 `text_format` 塞给时钟、把 `size` 塞给图片这类
  * 「注定被服务端丢掉」的写入。`rotate` / `animation` 适用于全部类型。
  */
+const ALL_PANE_TYPES: ScreenPaneType[] = [
+  "dashboard",
+  "text",
+  "clock",
+  "metric",
+  "image",
+  "video",
+  "html"
+];
+
 export const BATCH_FIELD_APPLIES: Record<string, ScreenPaneType[]> = {
   size: ["text", "clock"],
   align: ["text"],
   text_format: ["text"],
-  fit: ["image"],
-  rotate: ["dashboard", "text", "clock", "metric", "image"],
-  animation: ["dashboard", "text", "clock", "metric", "image"]
+  // 视频与图片同口径：服务端对 video.fit 做同样的归一化校验
+  fit: ["image", "video"],
+  // 旋转/入场动画适用于全部窗格（服务端 _normalize_pane_body 对全部类型归一化）
+  rotate: ALL_PANE_TYPES,
+  animation: ALL_PANE_TYPES
 };
 
 /** 归一化批量 patch：`rotate` 夹到 -180~180（其余字段由各自控件保证取值） */

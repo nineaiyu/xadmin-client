@@ -38,6 +38,7 @@ export function useKnowledge(
   const canCreate = hasAuth("create:AiKnowledge");
   const canSync = hasAuth("syncRepo:AiKnowledge");
   const canBatchToggle = hasAuth("batchToggle:AiKnowledge");
+  const canRetrieve = hasAuth("retrieve:AiKnowledge");
   const canBuildEmbeddings = hasAuth("buildEmbeddings:AiKnowledge");
   // 批量删除走框架内建入口（勾选行后工具栏出现），由 auth.batchDestroy 控制显示，
   // 后端 batch-destroy 只删上传文档并清理分块
@@ -54,7 +55,11 @@ export function useKnowledge(
 
   const { buildEmbeddings } = useKnowledgeBuild({ t, refresh });
 
-  const { listColumnsFormat } = useKnowledgeColumns({ t, openKnowledgePanel });
+  const { listColumnsFormat } = useKnowledgeColumns({
+    t,
+    openKnowledgePanel,
+    canRetrieve
+  });
 
   const { tableBarButtonsProps, operationButtonsProps } = useKnowledgeButtons({
     t,

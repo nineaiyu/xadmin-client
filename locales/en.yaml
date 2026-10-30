@@ -2057,6 +2057,7 @@ systemRole:
   preview: Grant Preview
   menuTreeDenied: Missing the menu list permission (list:SystemMenu). The permission tree is unavailable, so create and edit are disabled to avoid clearing role grants on save
   menuTreeLoadFailed: Failed to load the menu list. The permission tree is unavailable, so create and edit are disabled; refresh the page and try again
+  fieldTreeLoadFailed: Failed to load field-permission metadata. Field nodes are unavailable, so edit is disabled to avoid clearing role field grants on save
   editRetrieveDenied: Missing the role detail permission (retrieve:SystemRole). Existing grants cannot be echoed in the edit dialog, so edit is disabled to avoid clearing role grants on save
 
 # Role menu permission tree
@@ -3299,6 +3300,7 @@ imBinding:
   current: Current bindings
   empty: No IM binding yet
   unbind: Unbind
+  unbindConfirm: "Unbind the {provider} account of this user? It will no longer be able to sign in via that provider."
   required: Provider and account identity are required
   saved: IM binding saved
   unbound: Unbound

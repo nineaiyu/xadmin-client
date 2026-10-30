@@ -70,6 +70,9 @@ const monitorItem: settingItemProps = {
   title: "monitor"
 };
 
+/** 水印页签按独立权限位显隐：两个权限位都没有时不渲染（避免进入只读拒绝页签） */
+const canReadWatermark = watermarkAuth.retrieve || watermarkAuth.partialUpdate;
+
 const panes = computed<settingsPane[]>(() => [
   {
     key: "basic",
@@ -81,7 +84,9 @@ const panes = computed<settingsPane[]>(() => [
       fields: basicFields
     }
   },
-  { key: "watermark", label: t("settingWatermark.title") },
+  ...(canReadWatermark
+    ? [{ key: "watermark", label: t("settingWatermark.title") }]
+    : []),
   {
     key: "monitor",
     label: t("settingSecurity.monitor"),

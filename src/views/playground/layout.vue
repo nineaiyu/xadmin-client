@@ -67,12 +67,12 @@ const collapseParams = reactive({
         v-model:percent="percent"
         :split-set="{ minPercent: 20, defaultPercent: 50, split: 'vertical' }"
       >
-        <template #left>
+        <template #paneL>
           <div class="flex-c h-40 text-sm text-fg-muted">
             {{ t("playground.paneLeft") }} {{ percent }}%
           </div>
         </template>
-        <template #right>
+        <template #paneR>
           <div class="flex-c h-40 text-sm text-fg-muted">
             {{ t("playground.paneRight") }}
           </div>

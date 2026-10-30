@@ -30,6 +30,7 @@ import {
   type CodegenFormState
 } from "./utils/payload";
 import { useCodegenPlans } from "./utils/useCodegenPlans";
+import { useCodegenPlanLoader } from "./utils/useCodegenPlanLoader";
 import { useCodegenDownload } from "./utils/useCodegenDownload";
 import BaseConfig from "./components/BaseConfig.vue";
 import OptionSwitches from "./components/OptionSwitches.vue";
@@ -108,6 +109,27 @@ const canPreview = computed(
 // 模型清单与字段计划各有独立权限点：缺失时给出明确说明，而不是空下拉/空表
 const canLoadModels = hasAuth("models:SystemCodeGen");
 const canLoadFields = hasAuth("modelFields:SystemCodeGen");
+const canListPlans = hasAuth("list:CodegenPlan");
+const canCreatePlan = hasAuth("create:CodegenPlan");
+const canUpdatePlan = hasAuth("partialUpdate:CodegenPlan");
+const canRemovePlan = hasAuth("destroy:CodegenPlan");
+const payloadSignature = computed(() => JSON.stringify(buildSinglePayload()));
+/** 当前模型计划装配完成时的载荷快照：与实时载荷比较判定草稿是否改动 */
+const baselineSignature = ref("");
+const { loadPlan } = useCodegenPlanLoader({
+  t,
+  state,
+  planData,
+  planLoading,
+  planError,
+  artifacts,
+  hasPreviewed,
+  pendingPlanState,
+  baselineSignature,
+  payloadSignature,
+  canLoadFields,
+  fieldTableRef
+});
 const canDownload = computed(() =>
   mode.value === "batch" ? batchModels.value.length > 0 : Boolean(state.model)
 );
@@ -132,50 +154,6 @@ async function loadModels() {
     models.value = res.data ?? [];
   } finally {
     modelsLoading.value = false;
-  }
-}
-
-/** 模型变更 / 载入方案后的计划加载：默认命名 + 字段表重建（或回填方案字段） */
-async function loadPlan(label: string) {
-  // 切换模型先清场：请求失败时不再残留上一个模型的字段表与产物
-  planData.value = null;
-  state.fields = [];
-  artifacts.value = [];
-  hasPreviewed.value = false;
-  if (!label) return;
-  // 先落基线：无字段权限或计划请求失败时不应把「刚选完模型」判成未保存改动
-  baselineSignature.value = payloadSignature.value;
-  if (!canLoadFields) return;
-  planLoading.value = true;
-  planError.value = "";
-  try {
-    const res = await systemCodeGenApi.modelFields(label).catch(error => {
-      planError.value = normalizeError(error).detail || t("results.failed");
-      return null;
-    });
-    if (!res) return;
-    if (!isSuccess(res) || !res.data) {
-      planError.value = String(res.detail ?? t("results.failed"));
-      return;
-    }
-    planData.value = res.data;
-    if (pendingPlanState.value) {
-      // 载入保存方案：命名与字段配置以方案为准（仅保留当前模型仍存在的字段）
-      const saved = pendingPlanState.value;
-      pendingPlanState.value = null;
-      state.fields = saved.fields.filter(field =>
-        (res.data?.fields ?? []).some(item => item.name === field.name)
-      );
-    } else {
-      state.component = res.data.defaults.component;
-      state.url_prefix = res.data.defaults.url_prefix;
-      state.frontend_dir = res.data.defaults.frontend_dir;
-      fieldTableRef.value?.rebuild(res.data);
-    }
-    // 模型计划装配完成即基线：后续字段/命名改动才触发离开确认
-    baselineSignature.value = payloadSignature.value;
-  } finally {
-    planLoading.value = false;
   }
 }
 
@@ -229,9 +207,6 @@ async function handlePreview() {
 
 /** 实时预览：载荷签名变化 → 600ms 防抖静默刷新（模型切换由 loadPlan 清场，不触发） */
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
-const payloadSignature = computed(() => JSON.stringify(buildSinglePayload()));
-/** 当前模型计划装配完成时的载荷快照：与实时载荷比较判定草稿是否改动 */
-const baselineSignature = ref("");
 const dirty = computed(
   () =>
     mode.value === "single" &&
@@ -266,7 +241,7 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   loadModels();
-  void refreshPlans();
+  if (canListPlans) void refreshPlans();
 });
 </script>
 
@@ -286,7 +261,11 @@ onMounted(() => {
               </el-radio-button>
             </el-radio-group>
             <SavedPlans
+              v-if="canListPlans"
               :plans="savedPlans"
+              :can-create="canCreatePlan"
+              :can-update="canUpdatePlan"
+              :can-remove="canRemovePlan"
               @save="onSavePlan"
               @load="onLoadPlan"
               @remove="onRemovePlan"

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { isSuccess } from "@/api/types";
 import {
   monitorApi,
   type MonitorErrorEvent,
@@ -42,10 +43,11 @@ const fetchEvents = async () => {
       monitorApi.events({ kind: "error", range: range.value }),
       monitorApi.events({ kind: "task", range: range.value })
     ]);
-    if (results[0].status === "fulfilled")
+    // 业务码失败（HTTP 200 + code≠1000）与请求失败同口径：保留旧数据并标记失败
+    if (results[0].status === "fulfilled" && isSuccess(results[0].value))
       errorRows.value = results[0].value.data.results;
     else errorFailed.value = true;
-    if (results[1].status === "fulfilled")
+    if (results[1].status === "fulfilled" && isSuccess(results[1].value))
       taskRows.value = results[1].value.data.results;
     else taskFailed.value = true;
   } finally {

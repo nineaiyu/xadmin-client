@@ -10,6 +10,7 @@ import {
   ReReadonlyTable,
   type ReadonlyColumn
 } from "@/components/ReReadonlyTable";
+import { formatDateTime } from "@/utils/format";
 
 defineOptions({ name: "PatCallLogs" });
 
@@ -119,7 +120,7 @@ onMounted(() => {
         {{ stats.failed }}
       </el-descriptions-item>
       <el-descriptions-item :label="t('accessToken.lastCall')">
-        {{ stats.last_used_time ?? "—" }}
+        {{ formatDateTime(stats.last_used_time) || "—" }}
       </el-descriptions-item>
     </el-descriptions>
     <ReReadonlyTable

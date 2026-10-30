@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { userApi } from "@/api/identity/user";
 import { buildModelOptions } from "./utils/trial";
@@ -72,6 +73,13 @@ export function useTrialDataPanel({
           menu: boundMenuPks.value.length ? boundMenuPks.value : null
         }
       });
+      if (!isSuccess(res)) {
+        result.value = null;
+        message(String(res.detail || t("permissionPreview.trialFailed")), {
+          type: "error"
+        });
+        return;
+      }
       result.value = res.data;
       lastRunKey.value = draftKey.value;
     } catch {

@@ -71,6 +71,7 @@ const {
       :api="api"
       :auth="auth"
       locale-name="systemAccountRisk"
+      :selection="Boolean(auth.batchHandle)"
       :beforeSearchSubmit="beforeSearchSubmit"
       :tableBarButtonsProps="tableBarButtonsProps"
       :operationButtonsProps="operationButtonsProps"

@@ -33,6 +33,11 @@ const hasFlatOptions = (field: FormField) =>
 const hasTreeOptions = (field: FormField) =>
   (field.options ?? []).some(item => typeof item === "string");
 
+/** 可必填判定：公式字段为计算列、只读，服务端拒绝 required（与 dform.py 同口径）。 */
+export function canFieldBeRequired(field: Pick<FormField, "type">): boolean {
+  return field.type !== "formula";
+}
+
 /**
  * 就地收敛字段属性（删除与 type 不匹配的键），返回同一字段对象。
  * 调用方语义：行内编辑直接改 row；属性弹窗在确认时对副本调用。

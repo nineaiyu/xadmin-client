@@ -2,6 +2,7 @@
 import tree from "./components/UserTree.vue";
 import { computed, reactive, ref } from "vue";
 import { useUser } from "./utils/hook";
+import { hasBatchSelection } from "@/views/system/components/batchSelection";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import { useSplitPaneConfig } from "@/hooks/useSplitPaneConfig";
 
@@ -42,6 +43,15 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/user", {
  * 必须用 reactive：`addOrEditOptions` / 两个按钮组是 shallowRef，普通对象经
  * `v-bind` 传给子组件时不会解包，页面级表单定制与自定义按钮会整体失效。
  */
+/** 勾选列 = 任一批量动作已授权（批删/批量更新/批量通知/批量打标） */
+const selection = computed(() =>
+  hasBatchSelection(auth, [
+    "batchUpdate:SystemUser",
+    "create:SystemNotice",
+    "assign:Tag"
+  ])
+);
+
 const plusPageProps = reactive({
   api,
   auth,
@@ -50,7 +60,8 @@ const plusPageProps = reactive({
   listColumnsFormat,
   localeName: "systemUser",
   operationButtonsProps,
-  tableBarButtonsProps
+  tableBarButtonsProps,
+  selection
 });
 </script>
 

@@ -2,6 +2,7 @@ import { h } from "vue";
 import { ElLink, ElTag } from "element-plus";
 import { useRouter } from "vue-router";
 import { choiceValue, statusTagProps, type StatusTagType } from "@/utils/dict";
+import { hasAuth } from "@/router/utils";
 import {
   formatPageColumns,
   type PageTableColumn
@@ -23,6 +24,8 @@ const VISIBILITY_TAG: Record<string, StatusTagType> = {
  */
 export function useDatasetColumns({ t }: { t: TFunction }) {
   const router = useRouter();
+  // 报表数跳转落到报表列表：无 list:DataReport 权限时渲染纯文本，避免进入拒绝态
+  const canListReports = hasAuth("list:DataReport");
 
   const visibilityLabel = (value: string) =>
     value === "shared" ? t("dataDataset.shared") : t("dataDataset.personal");
@@ -49,8 +52,10 @@ export function useDatasetColumns({ t }: { t: TFunction }) {
       report_count: column => {
         // 联动：被几张定时报表引用（后端关联计数）可点击，跳转报表页按数据集筛选
         column["minWidth"] = 100;
-        column["cellRenderer"] = ({ row }) =>
-          h(
+        column["cellRenderer"] = ({ row }) => {
+          const count = String(row.report_count ?? 0);
+          if (!canListReports) return count;
+          return h(
             ElLink,
             {
               type: "primary",
@@ -61,8 +66,9 @@ export function useDatasetColumns({ t }: { t: TFunction }) {
                   query: { dataset: String(row.pk) }
                 })
             },
-            () => String(row.report_count ?? 0)
+            () => count
           );
+        };
       }
     });
 
