@@ -81,8 +81,13 @@ onMounted(() => {
     ref="textRef"
     v-bind="{ ...textProps, ...$attrs }"
     :class="{ 're-text--expandable': expand }"
+    :role="expand ? 'button' : undefined"
+    :tabindex="expand ? 0 : undefined"
+    :aria-expanded="expand ? expanded : undefined"
     @mouseover.self="handleHover"
     @click="handleClick"
+    @keydown.enter.prevent="handleClick"
+    @keydown.space.prevent="handleClick"
   >
     <slot />
   </el-text>

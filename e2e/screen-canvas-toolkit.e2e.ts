@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 大屏画布工具集三期：窗格旋转 / 入场动画 / 富文本 / 元素级网格吸附 /
@@ -66,6 +74,7 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   const templateGroup = "E2E分组";
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const screen = await postJson(
     page,
@@ -435,7 +444,13 @@ test("画布工具集三期：旋转 / 动画 / 富文本 / 网格吸附 / 键�
   const frame = screenRoot.getByTestId("pane-html");
   await expect(frame).toHaveCount(1);
   await expect(frame).toHaveAttribute("src", "https://example.invalid/embed");
-  await expect(frame).toHaveAttribute("sandbox", /allow-scripts/);
+  // sandbox 按 token 集合判定：允许脚本，但绝不允许 allow-same-origin
+  //（两者同时放开会基本抵消 sandbox 隔离，属安全回归）
+  const sandboxTokens = ((await frame.getAttribute("sandbox")) ?? "").split(
+    /\s+/
+  );
+  expect(sandboxTokens).toContain("allow-scripts");
+  expect(sandboxTokens).not.toContain("allow-same-origin");
   await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
 
   // 清理大屏（素材由 API 直建，走 API 删除保持与其它用例一致）

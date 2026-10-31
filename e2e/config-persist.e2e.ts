@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { PANEL_ACTION_TIMEOUT, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 站点配置持久化 E2E：用户配置页新增配置项 → 刷新页面后仍然存在。
@@ -11,6 +19,7 @@ import { PANEL_ACTION_TIMEOUT, login, openMenuPath } from "./helpers";
 test("用户配置：新增配置项 → 刷新后仍存在", async ({ page }) => {
   const key = `e2e_cfg_${Date.now()}`;
   await login(page);
+  await startResourceIsolation(page);
   // 三级菜单：系统管理 → 配置管理 → 用户配置
   await openMenuPath(
     page,

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import type { MenuNodeAction } from "../utils/types";
 
 /**
@@ -21,6 +21,18 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{ select: [code: string]; close: [] }>();
+
+/** 打开时把焦点移入首个可用菜单项（键盘可直接操作） */
+const menuRef = ref<HTMLElement | null>(null);
+watch(
+  () => props.visible,
+  async visible => {
+    if (!visible) return;
+    await nextTick();
+    menuRef.value?.querySelector<HTMLElement>("button:not(:disabled)")?.focus();
+  },
+  { immediate: true }
+);
 
 const MENU_WIDTH = 210;
 const ITEM_HEIGHT = 30;
@@ -68,6 +80,7 @@ const onSelect = (action: MenuNodeAction) => {
   <Teleport to="body">
     <div
       v-if="visible"
+      ref="menuRef"
       class="menu-context"
       :style="style"
       role="menu"

@@ -95,18 +95,29 @@ jobs:
       - name: Checkout client repository
         uses: actions/checkout@v4
 
-      # 快照按平台后缀存放（-linux / -darwin），linux 基线只能在 ubuntu 生成：
-      # 未入库前本 job 直接跳过比对（不误报红），提示先跑 Visual Baseline workflow
+      # 快照按平台后缀存放（-linux / -darwin），linux 基线只能在 ubuntu 生成。
+      # 基线缺失不能静默成功：main / schedule / 手动触发的发布链路直接失败；
+      # PR 只有在显式打上 `skip-visual` 标签时才允许跳过（并写入 job summary 记录原因）。
       - name: Check baseline availability
         id: baseline
         shell: bash
         run: |
           if compgen -G "e2e/visual.e2e.ts-snapshots/*-linux.png" > /dev/null; then
             echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=视觉基线缺失::未找到 e2e/visual.e2e.ts-snapshots/*-linux.png —— 先手动运行「Visual Baseline」workflow 生成基线并提交，之后本 job 自动启用常态比对。"
+            exit 0
           fi
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          message="未找到 e2e/visual.e2e.ts-snapshots/*-linux.png —— 先手动运行「Visual Baseline」workflow 生成基线并提交。"
+          echo "::error title=视觉基线缺失::$message"
+          labels='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          if [ "${{ github.event_name }}" = "pull_request" ] && echo "$labels" | grep -q '"skip-visual"'; then
+            echo "::warning title=视觉回归已跳过::PR 标记了 skip-visual 且基线缺失，本次不做视觉比对。"
+            echo "### 视觉回归已跳过" >> "$GITHUB_STEP_SUMMARY"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "视觉基线缺失且未获准跳过（仅 PR 可打 skip-visual 标签）。" >&2
+          exit 1
 
       - name: Setup E2E environment
         if: steps.baseline.outputs.available == 'true'

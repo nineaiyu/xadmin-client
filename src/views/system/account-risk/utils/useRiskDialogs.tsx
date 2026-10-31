@@ -33,8 +33,8 @@ export function useRiskDialogs({
   tableRef: Ref;
   /** 处置成功后的刷新回调（列表由调用方刷新，统计面板经该回调刷新） */
   onHandled: () => void;
-  /** 服务端下发的可用动作（stats.actions）；缺省由表单回退全集 */
-  actions?: AccountRiskHandleAction[];
+  /** 服务端下发的可用动作（stats.actions）；点击时取最新值，缺省由表单回退全集 */
+  actions?: () => AccountRiskHandleAction[] | undefined;
 }) {
   const { t } = useI18n();
 
@@ -88,7 +88,8 @@ export function useRiskDialogs({
       destroyOnClose: true,
       closeOnClickModal: false,
       sureBtnLoading: true,
-      contentRenderer: () => h(RiskHandleForm, { ref: handleFormRef, actions }),
+      contentRenderer: () =>
+        h(RiskHandleForm, { ref: handleFormRef, actions: actions?.() }),
       beforeSure
     });
   };

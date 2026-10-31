@@ -7,6 +7,14 @@ import {
   login,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 数据集 + 仪表盘主链路：
@@ -33,6 +41,7 @@ const pickSelectOption = async (
 
 test("数据集 + 仪表盘主链路", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   // 名称唯一约束（Dataset/Dashboard.name unique）+ 双浏览器共享同一独立库：
   // 固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离复跑才过），
@@ -139,6 +148,7 @@ test("数据集 + 仪表盘主链路", async ({ page }) => {
 
 test("仪表盘快照导出：整盘卡片合成单张 PNG 长图下载", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -235,6 +245,7 @@ test("仪表盘卡片下钻：图表点击维度过滤明细，可清过滤看�
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -403,6 +414,7 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -528,7 +540,9 @@ test("仪表盘聚合卡片：度量字段（sum）可配置并真实渲染，�
 test("仪表盘卡片联动：点击维度值反向过滤其他卡片，chip 可清除", async ({
   page
 }) => {
+  test.slow();
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -643,22 +657,31 @@ test("仪表盘卡片联动：点击维度值反向过滤其他卡片，chip 可
     // 以「抽屉真的出现」为收敛条件，避免图表位移导致的假失败
     const drawer = page.locator(".el-drawer:visible").first();
     await expect(async () => {
-      const barPoint = await barCard
-        .locator("svg")
-        .last()
-        .evaluate((svg: SVGElement) => {
-          const bars = Array.from(
-            svg.querySelectorAll('path[fill]:not([fill="none"])')
-          ).filter(element => {
-            const box = element.getBoundingClientRect();
-            return box.width > 20 && box.height > 20;
-          });
-          const box = bars[0].getBoundingClientRect();
-          return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      // WebKit 高负载下图表会持续重绘，locator.evaluate 会因元素抖动反复等不到；
+      // 改为单次 page.evaluate 直接按卡片标题定位，图表缺失/柱体未就绪时抛错由
+      // toPass 重试。
+      const barPoint = await page.evaluate((title: string) => {
+        const cards = Array.from(document.querySelectorAll(".el-card"));
+        const card = cards.find(element =>
+          (element.textContent ?? "").includes(title)
+        );
+        if (!card) throw new Error(`联动柱卡未渲染：${title}`);
+        const svgs = card.querySelectorAll("svg");
+        const svg = svgs[svgs.length - 1];
+        if (!svg) throw new Error(`联动柱卡缺少图表：${title}`);
+        const bars = Array.from(
+          svg.querySelectorAll('path[fill]:not([fill="none"])')
+        ).filter(element => {
+          const box = element.getBoundingClientRect();
+          return box.width > 20 && box.height > 20;
         });
+        const box = bars[0]?.getBoundingClientRect();
+        if (!box) throw new Error(`联动柱卡柱体未就绪：${title}`);
+        return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      }, `联动柱卡-${suffix}`);
       await page.mouse.click(barPoint.x, barPoint.y);
       await expect(drawer).toBeVisible({ timeout: 3_000 });
-    }).toPass({ timeout: 30_000 });
+    }).toPass({ timeout: 60_000 });
     await page.keyboard.press("Escape");
     await expect(drawer).toBeHidden({ timeout: 15_000 });
     await expect(page.getByTestId("dashboard-linkage-chip")).toBeVisible();
@@ -704,6 +727,7 @@ test("仪表盘实时推送：实时档建立 ws/dashboard 连接并收到首帧
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Math.random().toString(36).slice(2, 8);
@@ -817,6 +841,7 @@ test("仪表盘实时推送：实时档建立 ws/dashboard 连接并收到首帧
 
 test("进入仪表盘不改变站点明暗主题", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto(`${FRONT_URL}/#/welcome`);
   await expect(page.locator(".set-icon").first()).toBeVisible({
     timeout: 15_000

@@ -94,15 +94,19 @@ const uiSizeOptions = computed<PrefChoiceOption[]>(() => [
 const headerAutoHideChange = () => {
   const enabled = settings.headerAutoHide ?? false;
   storageConfigureChange("headerAutoHide", enabled);
+  const current = resolveHeaderMode(
+    $storage?.configure?.headerMode,
+    $storage?.configure?.headerFixed ?? true,
+    false
+  );
   storageConfigureChange(
     "headerMode",
     enabled
-      ? "auto"
-      : resolveHeaderMode(
-            $storage?.configure?.headerMode,
-            $storage?.configure?.headerFixed ?? true,
-            false
-          ) === "static"
+      ? // 已选 auto-scroll 时保持四态语义，不被通用开关降级成 auto
+        current === "auto-scroll"
+        ? "auto-scroll"
+        : "auto"
+      : current === "static"
         ? "static"
         : "fixed"
   );

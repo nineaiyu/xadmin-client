@@ -36,11 +36,13 @@ export function useTableSort({
   searchFields,
   defaultValue,
   tableRef,
+  tablePagination,
   handleGetData
 }: {
   searchFields: Ref<SearchFieldValue>;
   defaultValue: Ref<Record<string, unknown>>;
   tableRef: Ref;
+  tablePagination?: Ref<{ currentPage?: number }>;
   handleGetData: () => void;
 }) {
   /** 程序性回显（table.sort / clearSort）会再次派发 sort-change，需在下一次事件循环内忽略 */
@@ -64,6 +66,8 @@ export function useTableSort({
         ? fallback
         : "";
     searchFields.value.page = 1;
+    // 分页器同步回到第一页：只改 searchFields 会让高亮页码与真实数据窗口错位
+    if (tablePagination?.value) tablePagination.value.currentPage = 1;
     handleGetData();
   };
 

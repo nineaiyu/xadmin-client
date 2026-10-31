@@ -134,6 +134,17 @@ const textStyle = computed(() => ({
 const clockStyle = computed(() => ({
   fontSize: `${props.pane.size ?? 40}px`
 }));
+
+const paneLabel = computed(
+  () => `${props.pane.title || props.pane.type} · ${props.pane.type}`
+);
+const onPaneKeydown = (event: KeyboardEvent) => {
+  if (!props.editable) return;
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    emit("select", props.pane.pk);
+  }
+};
 </script>
 
 <template>
@@ -147,7 +158,12 @@ const clockStyle = computed(() => ({
     :data-pane-id="pane.pk"
     :data-pane-type="pane.type"
     :data-pane-animation="pane.animation || 'none'"
+    :tabindex="editable ? 0 : undefined"
+    role="group"
+    :aria-label="paneLabel"
+    :aria-selected="editable ? selected : undefined"
     @pointerdown="editable && emit('select', pane.pk)"
+    @keydown="onPaneKeydown"
   >
     <div
       v-if="gridEditable"

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { computed, ref } from "vue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** 本地存储替身：响应式存储的读写语义（set 存串、getData 自动 JSON.parse） */
@@ -38,7 +39,9 @@ import {
 import { createTablePrefsStorage } from "../src/tablePrefsStorage";
 import {
   buildRenderClass,
+  createRefreshState,
   rendTippyProps,
+  resolveColumnCheckState,
   resolveFixedState,
   toggleRowExpansionAll,
   type ExpandableTableInstance,
@@ -232,5 +235,65 @@ describe("RePureTableBar 工具函数", () => {
     expect(props.content).toBe("提示");
     expect(props.followCursor).toBe(true);
     expect(props.hideOnClick).toBe("toggle");
+  });
+});
+
+describe("RePureTableBar 列设置勾选态", () => {
+  it("偏好隐藏的列不显示为已勾选（点一次即可恢复）", () => {
+    const state = resolveColumnCheckState([
+      { label: "姓名" },
+      { label: "手机号", hide: true },
+      { label: "角色" }
+    ]);
+    expect(state.checked).toEqual(["姓名", "角色"]);
+    expect(state.all).toBe(false);
+    expect(state.indeterminate).toBe(true);
+  });
+
+  it("全部可见时全选且非半选", () => {
+    const state = resolveColumnCheckState([{ label: "a" }, { label: "b" }]);
+    expect(state.checked).toEqual(["a", "b"]);
+    expect(state.all).toBe(true);
+    expect(state.indeterminate).toBe(false);
+  });
+});
+
+describe("RePureTableBar 刷新 loading", () => {
+  it("父级回传真实请求状态时完全跟随（不再固定 500ms）", () => {
+    const pending = ref<boolean | null>(null);
+    const request = vi.fn();
+    const { loading, onReFresh } = createRefreshState(
+      computed(() => pending.value),
+      request
+    );
+
+    expect(loading.value).toBe(false);
+    pending.value = true;
+    expect(loading.value).toBe(true);
+    pending.value = false;
+    expect(loading.value).toBe(false);
+
+    // 已回传状态下点击刷新：立即发事件，loading 由父级请求驱动
+    onReFresh();
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(loading.value).toBe(false);
+  });
+
+  it("父级未回传状态时保留 500ms 兜底动画", async () => {
+    vi.useFakeTimers();
+    const request = vi.fn();
+    const pending = ref<boolean | null>(null);
+    const { loading, onReFresh } = createRefreshState(
+      computed(() => pending.value),
+      request
+    );
+
+    onReFresh();
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(loading.value).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(500);
+    expect(loading.value).toBe(false);
+    vi.useRealTimers();
   });
 });

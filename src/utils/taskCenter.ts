@@ -1,6 +1,5 @@
 import { isSuccess } from "@/api/types";
-import { computed, type Ref, ref } from "vue";
-import { useIntervalFn } from "@vueuse/core";
+import { computed, onScopeDispose, type Ref, ref } from "vue";
 import { hasAuth } from "@/router/utils";
 import { exportRecordApi } from "@/api/task/export";
 import { importRecordApi } from "@/api/task/import";
@@ -16,7 +15,7 @@ import type { DetailResult, RecordStats } from "@/api/types";
  *   对应计数保持 0 —— 与后端 action 的权限校验口径一致；
  * - **短轮询 + 写后刷新**：服务端 `stats` 有 10s 短缓存，客户端 60s 轮询足够；
  *   提交异步任务后调用 `refreshTaskCenter()` 立即刷新，避免"刚提交看不到"。
- * 轮询生命周期（挂载即拉取、卸载自动停止）由 `useIntervalFn` 随组件 scope 清理。
+ * 轮询生命周期（挂载即拉取、卸载自动停止）随组件 scope 清理，多个订阅者共享同一计时器。
  */
 
 const POLL_INTERVAL = 60_000;
@@ -82,9 +81,29 @@ export const runningCount = computed(
     Number(taskStats.value?.in_progress || 0)
 );
 
-/** 订阅聚合统计：挂载即拉取一次并开启轮询，卸载自动停止 */
+/**
+ * 订阅聚合统计：挂载即拉取一次并开启轮询，卸载自动停止。
+ *
+ * 轮询是模块级单例（引用计数）：铃铛与任务中心抽屉同时挂载时共用同一个
+ * 60s 定时器——各自 useIntervalFn 会让 stats 请求翻倍。
+ */
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let pollSubscribers = 0;
+
 export function useTaskCenter() {
-  useIntervalFn(refreshTaskCenter, POLL_INTERVAL, { immediateCallback: true });
+  pollSubscribers += 1;
+  // 每次挂载都立即拉一次（新订阅者不该等下一拍），定时器仍只有一份
+  void refreshTaskCenter();
+  if (!pollTimer) {
+    pollTimer = setInterval(refreshTaskCenter, POLL_INTERVAL);
+  }
+  onScopeDispose(() => {
+    pollSubscribers = Math.max(0, pollSubscribers - 1);
+    if (pollSubscribers === 0 && pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  });
 
   return {
     exportStats,

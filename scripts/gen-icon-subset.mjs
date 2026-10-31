@@ -70,13 +70,19 @@ function codeNames() {
   return names;
 }
 
-/** 3. 服务端种子菜单元数据（平台层 + 各应用 seeds/；跨仓缺失跳过） */
+/** 3. 服务端种子菜单元数据（平台层 + 各应用 seeds/；跨仓缺失时给出可复现入口） */
 function seedNames() {
   const names = { ep: new Set(), ri: new Set(), "fa-solid": new Set() };
-  const serverRoot = resolve(ROOT, "../xadmin-server");
+  // 与 check_doc_facts / check-version-sync 等跨仓门禁统一口径：XADMIN_SERVER_DIR 可覆盖
+  const serverRoot = resolve(
+    process.env.XADMIN_SERVER_DIR ?? join(ROOT, "../xadmin-server")
+  );
   if (!existsSync(serverRoot)) {
-    console.log(
-      "[icon-subset] 未找到 xadmin-server（独立检出），跳过种子图标收集"
+    console.warn(
+      `[icon-subset] 未找到 xadmin-server（${serverRoot}），本次不收集种子图标。\n` +
+        "             Docker 构建上下文只含客户端源码，这是预期行为；\n" +
+        "             本地/发布前请用 `XADMIN_SERVER_DIR=/path/to/xadmin-server pnpm gen:icon-subset`\n" +
+        "             核对种子图标是否已进入子集（缺失会在选择器里渲染空白）。"
     );
     return names;
   }
@@ -142,6 +148,13 @@ for (const set of SETS) {
     ...(code[set] ?? []),
     ...(seeds[set] ?? [])
   ]);
+  if (wanted.size === 0) {
+    console.error(
+      `[icon-subset] ${set} 子集为空——引用面解析异常（data.ts / 代码引用 / 种子均未命中），` +
+        "拒绝产出空子集；请检查 data.ts 的集合数组与 XADMIN_SERVER_DIR。"
+    );
+    process.exit(1);
+  }
   const missing = [...wanted].filter(name => !inFull(name)).sort();
   if (missing.length > 0) {
     console.error(

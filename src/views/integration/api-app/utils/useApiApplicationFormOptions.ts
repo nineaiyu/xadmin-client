@@ -50,8 +50,9 @@ export function useApiApplicationFormOptions({
       beforeSubmit: ({ formData }) => {
         formData.ip_allowlist = splitListText(formData.ip_allowlist);
         formData.callback_urls = splitListText(formData.callback_urls);
-        const grants = pickGrants(formData);
-        if (grants) pendingGrants.value = grants;
+        // 每次提交都重置：新建态没有 grants 扩展值，沿用上一次应用会导致
+        // 把上一应用的授权规则写进新应用（或编辑态复用残留规则）
+        pendingGrants.value = pickGrants(formData) ?? [];
         return formData;
       }
     },

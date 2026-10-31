@@ -83,6 +83,31 @@ export default defineComponent({
       ctx.emit("resize", value);
     };
 
+    /** 键盘调比例：方向键 ±1%（Shift ±5%），Home/End 到最小/最大允许位，Enter/Space 重置 */
+    const onResizerKeydown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        resetPercent();
+        return;
+      }
+      const vertical = props.splitSet.split === "vertical";
+      const step = e.shiftKey ? 5 : 1;
+      const min = props.splitSet.minPercent;
+      const max = 100 - min;
+      let next: number | null = null;
+      if (e.key === "Home") next = min;
+      else if (e.key === "End") next = max;
+      else if (vertical && e.key === "ArrowLeft") next = props.percent - step;
+      else if (vertical && e.key === "ArrowRight") next = props.percent + step;
+      else if (!vertical && e.key === "ArrowUp") next = props.percent - step;
+      else if (!vertical && e.key === "ArrowDown") next = props.percent + step;
+      if (next === null) return;
+      e.preventDefault();
+      const clamped = Math.min(max, Math.max(min, next));
+      applyPercent(clamped);
+      ctx.emit("drag-end", clamped);
+    };
+
     const resetPercent = () => {
       applyPercent(props.splitSet.defaultPercent);
       ctx.emit("reset", props.splitSet.defaultPercent);
@@ -189,6 +214,8 @@ export default defineComponent({
         </div>
         <resizer
           split={props.splitSet.split}
+          percent={props.percent}
+          onNudge={onResizerKeydown}
           onMousedown={(e: MouseEvent) => onResizerMouseDown(e)}
           onDblclick={() => resetPercent()}
         ></resizer>

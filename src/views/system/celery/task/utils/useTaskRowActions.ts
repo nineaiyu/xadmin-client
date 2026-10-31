@@ -1,5 +1,6 @@
 import { shallowRef } from "vue";
 import type { useI18n } from "vue-i18n";
+import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
 import { normalizeError } from "@/utils/apiError";
 import { type periodicTaskApi, taskExecutionApi } from "@/api/task/task";
@@ -54,6 +55,14 @@ export function useTaskRowActions({
         size: 1
       })
       .catch(normalizeError);
+    if (!isSuccess(res)) {
+      // 请求失败（403/网络）已由 http 层提示：不能与「确实没有执行记录」混为一谈；
+      // 仅 HTTP 200 + 业务码失败需要页面补提示
+      if (res.code !== -1 && res.detail) {
+        message(String(res.detail), { type: "error" });
+      }
+      return;
+    }
     const latest = res.data?.results?.[0] as
       { pk: string; name: string } | undefined;
     if (!latest) {

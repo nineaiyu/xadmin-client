@@ -1,5 +1,7 @@
 import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
+import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 import { monitorApi } from "@/api/system/monitor";
 import { ALERT_RANGE, readSectionError } from "./monitorState";
 import type {
@@ -90,6 +92,11 @@ export function createMonitorFetchers(state: MonitorState) {
     try {
       const res = await monitorApi.history(params);
       if (isSuccess(res)) state.history.value = res.data;
+      else
+        message(String(res.detail || transformI18n("results.failed")), {
+          type: "warning",
+          grouping: true
+        });
     } catch {
       // 请求失败（含切页/连点筛选被路由层取消）静默：保留旧数据，loading 由 finally 复位
     } finally {
@@ -101,6 +108,11 @@ export function createMonitorFetchers(state: MonitorState) {
     try {
       const res = await monitorApi.thresholds();
       if (isSuccess(res)) state.thresholds.value = res.data;
+      else
+        message(String(res.detail || transformI18n("results.failed")), {
+          type: "warning",
+          grouping: true
+        });
     } catch {
       // 静默：阈值区块保留旧值
     }
@@ -121,6 +133,12 @@ export function createMonitorFetchers(state: MonitorState) {
       if (isSuccess(res)) {
         state.alerts.value = res.data.results;
         if (res.data.counts) state.alertCounts.value = res.data.counts;
+      } else {
+        // 业务码失败不能按「无告警」展示：保留旧值并显式提示
+        message(String(res.detail || transformI18n("results.failed")), {
+          type: "warning",
+          grouping: true
+        });
       }
     } catch {
       // 静默：告警列表保留旧值

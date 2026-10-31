@@ -56,6 +56,19 @@ function expectNoWrap(
   }
 }
 
+/** 等自适应标签宽度落地（挂载后按真实内容实测一次），替代固定 400ms 盲等。 */
+async function waitForAdaptiveLabelWidth(dialog: Locator) {
+  await expect
+    .poll(
+      async () => {
+        const items = await collectLabelWidths(dialog);
+        return Math.max(0, ...items.map(item => item.width));
+      },
+      { timeout: PANEL_ACTION_TIMEOUT }
+    )
+    .toBeGreaterThan(100);
+}
+
 test("表单标签宽度：长标签不折行（书籍弹窗）", async ({ page }) => {
   await login(page);
   await page.goto("/#/default/demo/book/index");
@@ -69,8 +82,7 @@ test("表单标签宽度：长标签不折行（书籍弹窗）", async ({ page 
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
     timeout: PANEL_ACTION_TIMEOUT
   });
-  // 等宽度校正落地（挂载后按真实内容实测一次）
-  await page.waitForTimeout(400);
+  await waitForAdaptiveLabelWidth(dialog);
 
   const items = await collectLabelWidths(dialog);
   expectNoWrap(items);
@@ -93,7 +105,7 @@ test("表单标签宽度：标签变宽后半宽列控件不被压塌（书籍�
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
     timeout: PANEL_ACTION_TIMEOUT
   });
-  await page.waitForTimeout(400);
+  await waitForAdaptiveLabelWidth(dialog);
 
   // 售价是半宽列（colProps md/lg/xl: 12）+ el-input-number：标签占宽后控件被
   // 压塌到几十像素会直接无法输入，故断言其可用宽度
@@ -108,19 +120,23 @@ test("表单标签宽度：标签变宽后半宽列控件不被压塌（书籍�
 
   // 文件信息页签：上传区块不得超出弹窗内容区（右列曾被挤出可视区）
   await dialog.getByRole("tab", { name: "文件信息" }).click();
-  await page.waitForTimeout(400);
-  const overflowCount = await dialog.evaluate(el => {
-    const body = el.querySelector<HTMLElement>(".el-dialog__body");
-    if (!body) return -1;
-    const bodyRight = body.getBoundingClientRect().right;
-    return Array.from(el.querySelectorAll<HTMLElement>(".el-form-item")).filter(
-      item => {
-        const rect = item.getBoundingClientRect();
-        return rect.width > 0 && rect.right - bodyRight > 1;
-      }
-    ).length;
-  });
-  expect(overflowCount).toBe(0);
+  await expect
+    .poll(
+      async () =>
+        dialog.evaluate(el => {
+          const body = el.querySelector<HTMLElement>(".el-dialog__body");
+          if (!body) return -1;
+          const bodyRight = body.getBoundingClientRect().right;
+          return Array.from(
+            el.querySelectorAll<HTMLElement>(".el-form-item")
+          ).filter(item => {
+            const rect = item.getBoundingClientRect();
+            return rect.width > 0 && rect.right - bodyRight > 1;
+          }).length;
+        }),
+      { timeout: PANEL_ACTION_TIMEOUT }
+    )
+    .toBe(0);
 });
 
 test("表单标签宽度：带帮助图标的标签不折行（间隔调度弹窗）", async ({
@@ -142,7 +158,15 @@ test("表单标签宽度：带帮助图标的标签不折行（间隔调度弹�
   await expect(dialog.locator(".el-form-item__label").first()).toBeVisible({
     timeout: PANEL_ACTION_TIMEOUT
   });
-  await page.waitForTimeout(400);
+  await expect
+    .poll(
+      async () => {
+        const items = await collectLabelWidths(dialog);
+        return items.length > 0 && items.every(item => item.need <= item.width);
+      },
+      { timeout: PANEL_ACTION_TIMEOUT }
+    )
+    .toBe(true);
 
   expectNoWrap(await collectLabelWidths(dialog));
 });

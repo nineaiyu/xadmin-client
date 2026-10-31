@@ -9,9 +9,15 @@ import { transformI18n } from "@/plugins/i18n";
 import { cloneDeep, isEqual } from "@pureadmin/utils";
 import { responsiveStorageNameSpace, store } from "../utils";
 import {
+  diffPreferenceConfig,
   localPreferenceSections,
-  serverPreferenceConfig
+  preferenceFieldsFor,
+  serverPreferenceConfig,
+  type PreferenceSections
 } from "./siteConfigFields";
+import { publishCrossTab, subscribeCrossTab } from "@/utils/crossTabSync";
+import { CHART_THEME_PREFERENCE_EVENT } from "@/plugins/echarts";
+import { useAppStoreHook } from "./app";
 
 // 站点配置接口在动作内动态引入：顶层静态边 store/siteConfig → api/config
 // 会经 api/base → utils/http → store 成环（环检测脚本守护）。
@@ -31,12 +37,12 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      */
     preferenceBaseline: null as PreferenceBaseline | null,
     /**
-     * 最近一次与服务端同步（读取/保存成功）时的 layout/configure 快照。
+     * 最近一次与服务端同步（读取/保存成功）时的偏好快照。
      * 首屏会把站点配置回写本地存储（主题色 / 菜单布局等相同值），布局层的
-     * 自动保存用它与当前值深比较，无差异时不发整包 PATCH——否则每次页面加载
-     * 都会产生一次无意义写入。
+     * 自动保存用 layout/configure 与它深比较，无差异时不发 PATCH——否则每次页面
+     * 加载都会产生一次无意义写入；保存时也以它为基线只提交差异键（见 saveSiteConfig）。
      */
-    syncedSnapshot: null as { layout: unknown; configure: unknown } | null,
+    syncedSnapshot: null as PreferenceSections | null,
     /**
      * 自动保存「待发或在途」：防抖计时器已排或 PATCH 未返回。
      * 布局层据此禁止「与快照无差异」跳过——用户在防抖窗内改回原值时，快照仍是
@@ -88,6 +94,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
     /** 捕获「已同步」快照（读取 / 保存成功后调用，供布局层跳过无差异的自动保存） */
     captureSyncedSnapshot() {
       this.syncedSnapshot = {
+        locale: cloneDeep(Storage.getData("locale", this.nameSpace) ?? {}),
         layout: cloneDeep(Storage.getData("layout", this.nameSpace) ?? {}),
         configure: cloneDeep(Storage.getData("configure", this.nameSpace) ?? {})
       };
@@ -107,16 +114,25 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      */
     async resetSiteConfig() {
       const { configApi } = await import("@/api/config");
-      configApi.resetSiteConfig().then(res => {
-        if (!isSuccess(res)) {
+      configApi
+        .resetSiteConfig()
+        .then(res => {
+          if (!isSuccess(res)) {
+            message(transformI18n("layout.saveConfigFailed"), {
+              type: "error"
+            });
+            return;
+          }
+          message(transformI18n("layout.resetConfigSuccess"), {
+            type: "success"
+          });
+          window.location.reload();
+        })
+        .catch(error => {
+          // 网络/HTTP 失败同样要给出反馈，否则「恢复默认」看起来毫无反应
           message(transformI18n("layout.saveConfigFailed"), { type: "error" });
-          return;
-        }
-        message(transformI18n("layout.resetConfigSuccess"), {
-          type: "success"
+          console.warn("[site-config] reset failed:", error);
         });
-        window.location.reload();
-      });
     },
     /**
      * 面板级批量偏好的落库（「撤销本次调整」/「恢复站点默认」）：
@@ -128,9 +144,12 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
      * 一次；跨 tick 调用时监听已排入队列，快照来不及生效。
      */
     async persistPreferences(successMessage: string) {
+      // 快照先行：抑制布局层的防抖监听（值与之相等即跳过）。差异基线另存旧快照，
+      // 否则「先捕快照」会把本次待落库的改动算成无差异、漏发 PATCH。
+      const base = this.syncedSnapshot;
       this.captureSyncedSnapshot();
       try {
-        await this.saveSiteConfig(true);
+        await this.saveSiteConfig(true, base);
         message(successMessage, { type: "success" });
       } catch (error) {
         message(transformI18n("layout.saveConfigFailed"), { type: "error" });
@@ -138,24 +157,35 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
       }
     },
     /**
-     * 保存站点配置（整包 PATCH，后端按键 merge）。
+     * 保存站点配置（后端按键 merge）。
+     *
+     * 只提交与「最近一次同步快照」存在差异的偏好键：站点配置由多名管理员共享，
+     * 整包 PATCH 会用自己的旧快照覆盖他人刚改的键（并发改站点标题 / Logo 时回滚）。
+     * 无基线（站点配置尚未同步成功）时回落整包，保持既有可用性。
+     *
      * @param silent 自动保存场景传 true：成功不弹提示，避免每次设置变更刷屏
+     * @param base 差异基线（撤销 / 恢复站点默认时传入调用前的快照）
      */
-    async saveSiteConfig(silent = false) {
+    async saveSiteConfig(silent = false, base?: PreferenceSections | null) {
+      const baseline = base === undefined ? this.syncedSnapshot : base;
       const { configApi } = await import("@/api/config");
       return new Promise((resolve, reject) => {
-        const locale = Storage.getData("locale", this.nameSpace);
-        const layout = Storage.getData("layout", this.nameSpace);
-        const configure = Storage.getData("configure", this.nameSpace);
-        const configObj = serverPreferenceConfig({
-          locale: locale ?? {},
-          layout: layout ?? {},
-          configure: configure ?? {}
-        });
-        const newConfig = cloneDeep(this.config);
-        Object.assign(newConfig, configObj);
+        const current: PreferenceSections = {
+          locale: Storage.getData("locale", this.nameSpace) ?? {},
+          layout: Storage.getData("layout", this.nameSpace) ?? {},
+          configure: Storage.getData("configure", this.nameSpace) ?? {}
+        };
+        const payload = baseline
+          ? diffPreferenceConfig(current, baseline)
+          : serverPreferenceConfig(current);
+        if (Object.keys(payload).length === 0) {
+          // 无本地变更：不发空 PATCH，快照已是最新
+          this.captureSyncedSnapshot();
+          resolve({} as never);
+          return;
+        }
         configApi
-          .setSiteConfig(newConfig)
+          .setSiteConfig(payload)
           .then(res => {
             if (!isSuccess(res)) {
               // HTTP 200 + 业务码失败（如非超管改站点级键）不能提示成功/写快照，
@@ -174,12 +204,57 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               });
             }
             this.captureSyncedSnapshot();
+            this.notifyChartThemeChanged();
+            publishCrossTab({
+              type: "site:preferences",
+              keys: Object.keys(payload)
+            });
             resolve(res);
           })
           .catch(error => {
             reject(error);
           });
       });
+    },
+    /** 通知图表主题：本站偏好已变化（字体栈可能变化） */
+    notifyChartThemeChanged() {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event(CHART_THEME_PREFERENCE_EVENT));
+      }
+    },
+    /**
+     * 收到其他标签页的偏好变更：只前移「本次实际落库」的键的同步基线，
+     * 保留本标签其它未保存的改动（整包重捕会把它们误标为已同步而丢掉回写）。
+     */
+    applyRemotePreferences(keys: string[] = []) {
+      const current = {
+        locale: Storage.getData("locale", this.nameSpace) ?? {},
+        layout: Storage.getData("layout", this.nameSpace) ?? {},
+        configure: Storage.getData("configure", this.nameSpace) ?? {}
+      } as PreferenceSections;
+      const base = this.syncedSnapshot
+        ? cloneDeep(this.syncedSnapshot)
+        : cloneDeep(current);
+      for (const field of preferenceFieldsFor(keys)) {
+        base[field.section][field.localKey] =
+          current[field.section][field.localKey];
+      }
+      this.syncedSnapshot = base;
+      const baseline = this.preferenceBaseline
+        ? cloneDeep(this.preferenceBaseline)
+        : cloneDeep(base);
+      for (const field of preferenceFieldsFor(keys)) {
+        baseline[field.section][field.localKey] =
+          current[field.section][field.localKey];
+      }
+      this.preferenceBaseline = baseline;
+      const layoutName =
+        typeof current.layout.layout === "string" ? current.layout.layout : "";
+      if (layoutName) useAppStoreHook().setLayout(layoutName);
+      if (typeof current.layout.sidebarStatus === "boolean") {
+        useAppStoreHook().sidebar.opened = current.layout.sidebarStatus;
+      }
+      this.notifyChartThemeChanged();
     },
     /**
      * 布局层自动保存的「无差异跳过」判据。
@@ -197,7 +272,10 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
           layout: Storage.getData("layout", this.nameSpace),
           configure: Storage.getData("configure", this.nameSpace)
         },
-        this.syncedSnapshot
+        {
+          layout: this.syncedSnapshot.layout,
+          configure: this.syncedSnapshot.configure
+        }
       );
     },
     /**
@@ -265,6 +343,7 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               this.setSiteConfig({ locale: configObj.locale });
               // 快照记服务端值：当前本地值与之不同 → 自动保存会提案用户改动
               this.syncedSnapshot = {
+                locale: cloneDeep(configObj.locale),
                 layout: cloneDeep(configObj.layout),
                 configure: cloneDeep(configObj.configure)
               };
@@ -274,6 +353,8 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
               this.capturePreferenceBaseline();
               // 已同步快照：首屏随后用相同值回写本地存储时不再触发整包保存
               this.captureSyncedSnapshot();
+              // 站点配置同步完成：字体 / 主题偏好可能已变化，通知图表重注册
+              this.notifyChartThemeChanged();
             }
             resolve(config as PlatformConfigs);
           })
@@ -287,4 +368,14 @@ export const useSiteConfigStore = defineStore("pure-site-config", {
 
 export function useSiteConfigStoreHook() {
   return useSiteConfigStore(store);
+}
+
+// 跨标签同步：其他标签保存偏好后，本标签以共享存储为准刷新 store 与图表主题。
+// 订阅在模块加载时安装一次（BroadcastChannel 优先，storage 事件兜底）。
+if (typeof window !== "undefined") {
+  subscribeCrossTab(message => {
+    if (message.type === "site:preferences") {
+      useSiteConfigStoreHook().applyRemotePreferences(message.keys);
+    }
+  });
 }

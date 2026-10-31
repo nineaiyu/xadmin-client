@@ -1,4 +1,5 @@
 import { BaseApi } from "@/api/base";
+import type { BaseResult } from "@/api/types";
 import type { TokenInfo } from "@/api/auth";
 
 /** 验证方式元数据（由后端按全局配置与用户可用性下发，文案已含翻译） */
@@ -82,6 +83,11 @@ export interface OtpConfirmResult {
 /** 恢复码剩余数量 */
 export interface RecoveryCodesStatus {
   remaining: number;
+}
+
+/** 重新生成恢复码：仅回传本次明文（剩余数量需重新查询 status） */
+export interface RecoveryCodesRegenerateResult {
+  recovery_codes: string[];
 }
 
 /**
@@ -199,11 +205,12 @@ class MfaApi extends BaseApi {
 
   /** 重新生成恢复码（敏感操作：旧码整批作废，明文仅此响应内出现一次；未二次验证时返回 412 走全局验证弹窗） */
   recoveryCodesRegenerate = () => {
-    return this.request<{
-      code: number;
-      detail: string;
-      data: RecoveryCodesStatus & { recovery_codes: string[] };
-    }>("post", {}, undefined, "/api/mfa/otp/recovery-codes/regenerate");
+    return this.request<BaseResult & { data?: RecoveryCodesRegenerateResult }>(
+      "post",
+      {},
+      undefined,
+      "/api/mfa/otp/recovery-codes/regenerate"
+    );
   };
 
   /** 发送登录 MFA 挑战验证码（匿名，凭 mfa_token） */

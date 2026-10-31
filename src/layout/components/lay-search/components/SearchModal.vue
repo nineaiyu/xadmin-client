@@ -4,7 +4,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { isSuccess } from "@/api/types";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
-import { getConfig } from "@/config";
+import { getConfig, responsiveStorageNameSpace } from "@/config";
 import { useRouter } from "vue-router";
 import SearchResult from "./SearchResult.vue";
 import SearchFooter from "./SearchFooter.vue";
@@ -39,8 +39,9 @@ const { locale } = useI18n();
 
 const HISTORY_TYPE = "history";
 const COLLECT_TYPE = "collect";
-const LOCALEHISTORYKEY = "menu-search-history";
-const LOCALECOLLECTKEY = "menu-search-collect";
+// 与其它本地偏好同用部署命名空间：同源多套部署（不同 base path）互不污染历史/收藏
+const LOCALEHISTORYKEY = `${responsiveStorageNameSpace()}menu-search-history`;
+const LOCALECOLLECTKEY = `${responsiveStorageNameSpace()}menu-search-collect`;
 
 const keyword = ref("");
 const resultRef = ref();

@@ -9,6 +9,12 @@ import {
   openMenuPath,
   PLAIN_USER
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 审批转交 + 管理视角（全部在途）E2E：
@@ -77,6 +83,7 @@ test("流程审批：转交待办 → 原待办消失 + 轨迹留痕（申请详
   page
 }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E转交-${stamp}`;
@@ -155,7 +162,7 @@ test("流程审批：转交待办 → 原待办消失 + 轨迹留痕（申请详
     .getByRole("button", { name: /保存|确定/ })
     .first()
     .click();
-  const feedback = approverPage.locator(".el-message").first();
+  const feedback = approverPage.locator(".el-message").last();
   await expect(feedback).toContainText(/transferred|已转交/i, {
     timeout: 15_000
   });
@@ -191,6 +198,7 @@ test("流程审批：转交待办 → 原待办消失 + 轨迹留痕（申请详
 
 test("流程审批：管理视角「全部在途」页签可见 + 催办入口", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E在途-${stamp}`;

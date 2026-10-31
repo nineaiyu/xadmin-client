@@ -1,4 +1,5 @@
 // 此文件跟同级目录的 global.d.ts 文件一样也是全局类型声明，只不过这里存放一些零散的全局类型，无需引入直接在 .vue 、.ts 、.tsx 文件使用即可获得类型提示
+/* eslint-disable @typescript-eslint/no-explicit-any -- 全局工具类型与既有调用面保持宽泛签名，避免二开代码类型断链 */
 
 type RefType<T> = T | null;
 

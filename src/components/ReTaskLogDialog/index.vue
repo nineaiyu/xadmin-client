@@ -41,8 +41,12 @@ const feed = createTaskLogFeed({
   fetchChunk: loadChunk,
   onChunk: chunk => {
     if (!chunk.content) return;
+    const el = contentRef.value;
+    // 用户上翻查看历史时不抢滚动；仅在原本贴底时跟随新输出
+    const shouldFollow =
+      !el || el.scrollHeight - el.scrollTop - el.clientHeight < 40;
     content.value += chunk.content;
-    void scrollToBottom();
+    if (shouldFollow) void scrollToBottom();
   },
   onStatus: (next, detail) => {
     status.value = next;

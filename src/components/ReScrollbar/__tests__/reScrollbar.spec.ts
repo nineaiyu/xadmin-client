@@ -101,15 +101,29 @@ describe("ReScrollbar", () => {
     expect(wrapper.find(".re-scrollbar__mask--top").isVisible()).toBe(false);
   });
 
-  it("滚动容器键盘可达：tabindex/role 就位；label 有值时设 aria-label，缺省不设", async () => {
-    const { wrap } = await mountScrollbar({ label: "消息列表" });
-    expect(wrap.getAttribute("tabindex")).toBe("0");
-    expect(wrap.getAttribute("role")).toBe("region");
-    expect(wrap.getAttribute("aria-label")).toBe("消息列表");
-
+  it("默认不占 Tab 停靠点；label 或 keyboard 时才可聚焦", async () => {
     const { wrap: plain } = await mountScrollbar();
-    expect(plain.getAttribute("tabindex")).toBe("0");
+    expect(plain.getAttribute("tabindex")).toBeNull();
+    expect(plain.getAttribute("role")).toBeNull();
     expect(plain.getAttribute("aria-label")).toBeNull();
+
+    const { wrap: labeled } = await mountScrollbar({ label: "消息列表" });
+    expect(labeled.getAttribute("tabindex")).toBe("0");
+    expect(labeled.getAttribute("role")).toBe("region");
+    expect(labeled.getAttribute("aria-label")).toBe("消息列表");
+
+    const { wrap: keyboard } = await mountScrollbar({ keyboard: true });
+    expect(keyboard.getAttribute("tabindex")).toBe("0");
+    expect(keyboard.getAttribute("role")).toBe("region");
+    expect(keyboard.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("keyboard 切换后同步增删 tabindex", async () => {
+    const { wrapper, wrap } = await mountScrollbar();
+    await wrapper.setProps({ keyboard: true });
+    expect(wrap.getAttribute("tabindex")).toBe("0");
+    await wrapper.setProps({ keyboard: false });
+    expect(wrap.getAttribute("tabindex")).toBeNull();
   });
 
   it("暴露 scrollTo / setScrollTop 落到滚动容器", async () => {

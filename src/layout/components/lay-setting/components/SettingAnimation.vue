@@ -119,7 +119,13 @@ const pageTransition = computed<PageTransitionType>({
             class="anim-card"
             :class="{ 'is-active': pageTransition === item.value }"
             :data-transition="item.value"
+            role="button"
+            tabindex="0"
+            :aria-pressed="pageTransition === item.value"
+            :aria-label="item.label"
             @click="pageTransition = item.value"
+            @keydown.enter.prevent="pageTransition = item.value"
+            @keydown.space.prevent="pageTransition = item.value"
           >
             <span class="anim-card__stage">
               <span

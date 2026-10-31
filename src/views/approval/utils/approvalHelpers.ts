@@ -2,7 +2,7 @@ import type { RecordType } from "plus-pro-components";
 import type { StatusTagType } from "@/utils/dict";
 
 /**
- * 审批中心纯函数与展示常量（P2-128 合并）：状态色兜底、审批人文案、
+ * 审批中心纯函数与展示常量：状态色兜底、审批人文案、
  * 行级可见性规则。原先分散在 constants/approvalTexts/approvalRowRules 三个文件。
  */
 

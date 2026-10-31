@@ -57,7 +57,29 @@ function pkOf(value: unknown): number | string | null {
 
 /** 接口行 → 归一化菜单行（不含树结构，children 由 buildMenuTree 填充） */
 export function normalizeMenuRow(raw: Record<string, unknown>): MenuRow {
-  const meta = (raw.meta ?? {}) as Partial<MenuMeta>;
+  const sourceMeta = (raw.meta ?? {}) as Record<string, unknown>;
+  // 历史行缺失的 meta 键保持缺失：保存时不再静默写入新默认值（缺省值只用于新建表单）
+  const meta: Record<string, unknown> = { ...sourceMeta };
+  if (sourceMeta.title !== undefined)
+    meta.title = String(sourceMeta.title ?? "");
+  if (sourceMeta.icon !== undefined) meta.icon = String(sourceMeta.icon ?? "");
+  if (sourceMeta.watermark !== undefined)
+    meta.watermark = Boolean(sourceMeta.watermark);
+  if (sourceMeta.active_path !== undefined)
+    meta.active_path = String(sourceMeta.active_path ?? "");
+  if (sourceMeta.badge !== undefined)
+    meta.badge = String(sourceMeta.badge ?? "");
+  // 详情接口对 choices 字段下发 {value,label} 对象（与 menu_type/method 同形）
+  if (sourceMeta.badge_type !== undefined)
+    meta.badge_type = String(scalar(sourceMeta.badge_type) ?? "normal");
+  if (sourceMeta.query !== undefined)
+    meta.query = String(sourceMeta.query ?? "");
+  if (sourceMeta.group_name !== undefined)
+    meta.group_name = String(sourceMeta.group_name ?? "");
+  if (sourceMeta.group_rank !== undefined)
+    meta.group_rank =
+      sourceMeta.group_rank === null ? null : Number(sourceMeta.group_rank);
+
   const modelPks = Array.isArray(raw.model)
     ? (raw.model as unknown[])
         .map(item => String(pkOf(item) ?? ""))
@@ -74,23 +96,7 @@ export function normalizeMenuRow(raw: Record<string, unknown>): MenuRow {
     rank: Number(raw.rank ?? 0),
     isActive: raw.is_active !== false,
     modelPks,
-    meta: {
-      ...EMPTY_META,
-      ...meta,
-      title: String(meta.title ?? ""),
-      icon: String(meta.icon ?? ""),
-      watermark: Boolean(meta.watermark),
-      active_path: String(meta.active_path ?? ""),
-      badge: String(meta.badge ?? ""),
-      // 详情接口对 choices 字段下发 {value,label} 对象（与 menu_type/method 同形）
-      badge_type: String(scalar(meta.badge_type) ?? "normal"),
-      query: String(meta.query ?? ""),
-      group_name: String(meta.group_name ?? ""),
-      group_rank:
-        meta.group_rank === null || meta.group_rank === undefined
-          ? null
-          : Number(meta.group_rank)
-    },
+    meta: meta as unknown as MenuMeta,
     raw,
     children: [],
     depth: 1,
@@ -259,10 +265,34 @@ export function emptyFormModel(
   };
 }
 
-/** 抽屉表单模型 → 接口载荷（meta 整体下发，类型无关字段清空） */
+/**
+ * 抽屉表单模型 → 接口载荷（meta 整体下发，类型无关字段清空）。
+ *
+ * 历史行缺失的 meta 键不再补默认值：只回写表单里实际存在（或用户新填）的键，
+ * 新建记录仍按 EMPTY_META 全量下发。字段权限/服务端默认由后端补齐，前端不替它决定。
+ */
 export function toPayload(model: MenuFormModel): Record<string, unknown> {
   const isPermission = model.menuType === MenuChoices.PERMISSION;
   const isMenu = model.menuType === MenuChoices.MENU;
+  const source = { ...model.meta } as Record<string, unknown>;
+  const meta: Record<string, unknown> = { ...source };
+  const assign = (key: keyof MenuMeta, value: unknown) => {
+    if (source[key] !== undefined) meta[key] = value;
+  };
+  assign("title", model.title);
+  assign("icon", model.icon);
+  // 目录/权限点不承载标签页与外链语义，清空避免脏值
+  assign("transition_enter", isMenu ? model.meta.transition_enter : "");
+  assign("transition_leave", isMenu ? model.meta.transition_leave : "");
+  assign("frame_url", model.meta.frame_url);
+  assign("frame_loading", Boolean(model.meta.frame_loading));
+  assign("watermark", Boolean(model.meta.watermark));
+  // 高亮路径与查询参数只在可导航的页面菜单上生效（目录点击只展开、权限点无路由）
+  assign("active_path", isMenu ? normalizedText(model.meta.active_path) : "");
+  assign("query", isMenu ? normalizedText(model.meta.query) : "");
+  assign("badge", normalizedText(model.meta.badge));
+  assign("group_name", normalizedText(model.meta.group_name));
+  assign("group_rank", model.meta.group_rank ?? null);
   return {
     menu_type: model.menuType,
     parent: model.parent === "" ? null : model.parent,
@@ -273,23 +303,7 @@ export function toPayload(model: MenuFormModel): Record<string, unknown> {
     model: isPermission ? [...model.model] : [],
     rank: model.rank,
     is_active: model.isActive,
-    meta: {
-      ...model.meta,
-      title: model.title,
-      icon: model.icon,
-      // 目录/权限点不承载标签页与外链语义，清空避免脏值
-      transition_enter: isMenu ? model.meta.transition_enter : "",
-      transition_leave: isMenu ? model.meta.transition_leave : "",
-      frame_url: model.meta.frame_url,
-      frame_loading: Boolean(model.meta.frame_loading),
-      watermark: Boolean(model.meta.watermark),
-      // 高亮路径与查询参数只在可导航的页面菜单上生效（目录点击只展开、权限点无路由）
-      active_path: isMenu ? normalizedText(model.meta.active_path) : "",
-      query: isMenu ? normalizedText(model.meta.query) : "",
-      badge: normalizedText(model.meta.badge),
-      group_name: normalizedText(model.meta.group_name),
-      group_rank: model.meta.group_rank ?? null
-    }
+    meta
   };
 }
 

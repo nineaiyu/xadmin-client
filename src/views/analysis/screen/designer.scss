@@ -1,0 +1,25 @@
+/* 画布恒深色（与投屏页同底），保证设计所见即投屏所得 */
+.designer-root {
+  background: var(--screen-canvas);
+}
+
+.designer-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.designer-inspector {
+  flex: none;
+  width: 260px;
+  padding: var(--space-3);
+  overflow: auto;
+  background: var(--screen-surface);
+  border-left: 1px solid var(--screen-border);
+}
+
+.designer-hint {
+  font-size: var(--el-font-size-extra-small);
+  line-height: 1.6;
+  color: var(--screen-fg-dim);
+}

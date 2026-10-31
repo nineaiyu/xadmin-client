@@ -61,7 +61,10 @@ const buttonClass = computed(() => {
 
 const filterNode = (value: string, data: TreeNodeData) => {
   if (!value) return true;
-  return data.name?.includes(value) ?? false;
+  // 与列表/菜单树的本地过滤同口径（大小写不敏感）
+  return String(data.name ?? "")
+    .toLowerCase()
+    .includes(value.trim().toLowerCase());
 };
 
 function nodeClick(value: TreeNodeData) {
@@ -96,15 +99,7 @@ function toggleRowExpansionAll(status: boolean) {
   });
 }
 
-/** 重置部门树状态（选中状态、搜索框值、树初始化） */
-function onTreeReset() {
-  selectedPk.value = null;
-  searchValue.value = "";
-  toggleRowExpansionAll(true);
-}
-
 const { t } = useI18n();
-
 watch(searchValue, val => {
   treeRef.value!.filter(val);
 });
@@ -121,8 +116,6 @@ watch(
   },
   { immediate: true }
 );
-
-defineExpose({ onTreeReset });
 </script>
 
 <template>

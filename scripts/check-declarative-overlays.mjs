@@ -26,9 +26,10 @@ const REGISTRY = path.join(
   "scripts",
   "declarative-overlays-baseline.json"
 );
-// 覆盖模板字面量、PascalCase 组件与 h(ElDialog) 渲染函数三种形态
+// 覆盖模板字面量、PascalCase 组件、h(ElDialog) 与 h("el-dialog") 渲染函数、
+// 以及动态组件写法 <component :is="'el-dialog'"> 三种形态
 const OVERLAY =
-  /(?:<el-(?:dialog|drawer)(?![-A-Za-z0-9_])|<El(?:Dialog|Drawer)(?![\w])|\bh\(\s*El(?:Dialog|Drawer)\b)/g;
+  /(?:<el-(?:dialog|drawer)(?![-A-Za-z0-9_])|<El(?:Dialog|Drawer)(?![\w])|\bh\(\s*El(?:Dialog|Drawer)\b|\bh\(\s*["']el-(?:dialog|drawer)["']|<component[^>]*\bis\s*=\s*["'](?:\\)?['"]?el-(?:dialog|drawer))/g;
 const SOURCE_EXT = new Set([".vue", ".tsx", ".jsx"]);
 
 const reportOnly = process.argv.includes("--report");

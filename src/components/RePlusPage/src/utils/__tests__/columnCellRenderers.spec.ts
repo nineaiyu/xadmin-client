@@ -106,7 +106,8 @@ describe("boolean 列开关", () => {
       api: api as never,
       auth: auth as never,
       switchLoadMap: ref({}) as never,
-      switchStyle: ref({}) as never
+      switchStyle: ref({}) as never,
+      tagStyle: ref(() => ({})) as never
     });
     const renderer = listColumns.value[0].cellRenderer!;
     return (scope: Record<string, unknown>) => {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
@@ -37,18 +37,40 @@ const flavorOptions = computed(() =>
     : Object.entries(FLAVOR_LABELS).map(([value, label]) => ({ value, label }))
 );
 
-const groupMapText = computed({
-  get: () => formatGroupRoleMap(provider.value),
-  set: (text: string) => {
-    const parsed = parseGroupRoleMap(text);
-    if (parsed === null) {
-      groupMapError.value = t("oauthProvider.groupMapInvalid");
-      return;
-    }
-    groupMapError.value = "";
-    provider.value.group_role_map = parsed;
+/**
+ * 组到角色映射用「本地文本 + 校验后写回」：直接 computed 双向绑定时，
+ * 输入过程中的非法中间态（如刚删掉一个引号）会被 setter 拒绝并回弹旧值，
+ * 用户无法逐字编辑，只能整段粘贴合法 JSON。
+ */
+const groupMapText = ref(formatGroupRoleMap(provider.value));
+
+watch(groupMapText, text => {
+  const parsed = parseGroupRoleMap(text);
+  if (parsed === null) {
+    groupMapError.value = t("oauthProvider.groupMapInvalid");
+    return;
   }
+  groupMapError.value = "";
+  provider.value.group_role_map = parsed;
 });
+
+// 外部改写（切换渠道预设 / 重新拉取配置）时同步文本；语义相同的格式化差异不回写
+watch(
+  () => provider.value.group_role_map,
+  map => {
+    const current = parseGroupRoleMap(groupMapText.value);
+    if (
+      current !== null &&
+      JSON.stringify(current) === JSON.stringify(map ?? {})
+    )
+      return;
+    groupMapText.value = formatGroupRoleMap({
+      ...provider.value,
+      group_role_map: map
+    });
+  },
+  { deep: true }
+);
 
 const onFlavorChange = (flavor: string) => {
   const preset = props.flavors.find(item => item.key === flavor)?.preset ?? {};

@@ -234,7 +234,7 @@ const onMoreCommand = (command: string) => {
       >
         <el-button
           :icon="useRenderIcon(Key)"
-          :disabled="!selected"
+          :disabled="!selected || selected.menuType !== MenuChoices.MENU"
           @click="emit('permissions')"
         >
           {{ t("systemMenu.addPermissions") }}
@@ -329,11 +329,7 @@ const onMoreCommand = (command: string) => {
     <span class="menu-batchbar__count">
       {{ t("buttons.selected", { count: checkedCount }) }}
     </span>
-    <el-button
-      size="small"
-      :disabled="!checkedCount"
-      @click="emit('select-all')"
-    >
+    <el-button size="small" @click="emit('select-all')">
       {{ t("buttons.selectAll") }}
     </el-button>
     <el-button

@@ -1,0 +1,58 @@
+{
+  "e2e/a11y.e2e.ts": {
+    "max": 1,
+    "reason": "复扫前等待无障碍树更新（axe 注入后的 DOM 稳定窗口）"
+  },
+  "e2e/ai.e2e.ts": {
+    "max": 2,
+    "reason": "站点级 AI 开关切换后的界面稳定窗口（跨请求状态刷新）"
+  },
+  "e2e/captcha-interactive.e2e.ts": {
+    "max": 5,
+    "reason": "拖拽轨迹按时间采样（pointermove 节奏本身是被测对象）"
+  },
+  "e2e/captcha-risk.e2e.ts": {
+    "max": 1,
+    "reason": "风险统计聚合刷新窗口"
+  },
+  "e2e/chart-theme.e2e.ts": {
+    "max": 2,
+    "reason": "ECharts 动画帧节奏与主题重绘（时间域）"
+  },
+  "e2e/csp-page.e2e.ts": {
+    "max": 7,
+    "reason": "CSP 违规上报批处理窗口（README 已登记）"
+  },
+  "e2e/file-center.e2e.ts": {
+    "max": 2,
+    "reason": "统计/趋势尾随请求与列表高度收敛窗口"
+  },
+  "e2e/layout-preferences.e2e.ts": {
+    "max": 14,
+    "reason": "站点配置自动保存防抖（PATCH 防抖本身是时间域行为；含快照写回前等待在途保存落地）"
+  },
+  "e2e/notice-push.e2e.ts": {
+    "max": 1,
+    "reason": "负向观察窗（验证通知确实不出现，无法用自动重试断言）"
+  },
+  "e2e/perf.e2e.ts": {
+    "max": 1,
+    "reason": "性能采样时间窗（README 已登记）"
+  },
+  "e2e/site-setting-live.e2e.ts": {
+    "max": 1,
+    "reason": "站点配置实时同步窗口（README 已登记）"
+  },
+  "e2e/split-pane.e2e.ts": {
+    "max": 3,
+    "reason": "拖拽帧节奏（README 已登记）"
+  },
+  "e2e/theme-contrast.e2e.ts": {
+    "max": 4,
+    "reason": "CSS 主题过渡动画窗口（颜色切换需等过渡完成）"
+  },
+  "e2e/visual.e2e.ts": {
+    "max": 1,
+    "reason": "视觉基线截图前的渲染稳定窗口（README 已登记）"
+  }
+}

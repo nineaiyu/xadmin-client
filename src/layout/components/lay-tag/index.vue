@@ -11,6 +11,7 @@ import { useTagScroll } from "./hooks/useTagScroll";
 import { useTagActions } from "./hooks/useTagActions";
 import { useTagDrag } from "./hooks/useTagDrag";
 import { useListAppendAnimation } from "@/hooks/useListAppendAnimation";
+import type { RouteConfigs } from "@/layout/types";
 
 import ArrowDown from "~icons/ri/arrow-down-s-line";
 import ArrowRightSLine from "~icons/ri/arrow-right-s-line";
@@ -18,6 +19,12 @@ import ArrowLeftSLine from "~icons/ri/arrow-left-s-line";
 import RefreshRight from "~icons/ep/refresh-right";
 import Fullscreen from "~icons/ri/fullscreen-fill";
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
+
+/** 页签键盘关闭（Delete）：与可视关闭按钮同口径（首页签 / 固定页签不关闭） */
+function closeTagByKeyboard(item: RouteConfigs, index: number) {
+  if (index === 0 || isFixedTag.value(item)) return;
+  deleteMenu(item);
+}
 
 const {
   Close,
@@ -147,6 +154,13 @@ watch(route, () => {
   dynamicTagView();
 });
 
+// 非菜单导航（前进/后退、页面内链接）新增/关闭页签时不会触发 changLayoutRoute：
+// 「更多」下拉的关闭类禁用态必须随页签数量重算，否则会一直停留在单页签的禁用态
+watch(
+  () => multiTags.value.length,
+  () => showMenuModel(route.fullPath)
+);
+
 onMounted(() => {
   if (!instance) return;
 
@@ -187,7 +201,15 @@ onBeforeUnmount(() => {
 <template>
   <div v-if="!hideTags" ref="containerDom" class="tags-view">
     <span v-show="isShowArrow" class="arrow-left">
-      <IconifyIconOffline :icon="ArrowLeftSLine" @click="handleScroll(200)" />
+      <IconifyIconOffline
+        :icon="ArrowLeftSLine"
+        role="button"
+        tabindex="0"
+        :aria-label="transformI18n('buttons.scrollLeft')"
+        @click="handleScroll(200)"
+        @keydown.enter.prevent="handleScroll(200)"
+        @keydown.space.prevent="handleScroll(200)"
+      />
     </span>
     <div
       ref="scrollbarDom"
@@ -198,11 +220,20 @@ onBeforeUnmount(() => {
       ]"
       @wheel.prevent="tagsWheelSwitch && handleWheel($event)"
     >
-      <div ref="tabDom" class="tab select-none" :style="getTabStyle">
+      <div
+        ref="tabDom"
+        class="tab select-none"
+        role="tablist"
+        :style="getTabStyle"
+      >
         <div
           v-for="(item, index) in multiTags"
           :ref="'dynamic' + index"
           :key="tagKey(item)"
+          role="tab"
+          tabindex="0"
+          :aria-selected="linkIsActive(item) ? 'true' : 'false'"
+          :aria-label="transformI18n(item.meta?.title ?? '')"
           :class="[
             'scroll-item is-closable',
             'group',
@@ -218,6 +249,9 @@ onBeforeUnmount(() => {
           @mouseenter.prevent="onMouseenter(index)"
           @mouseleave.prevent="onMouseleave(index)"
           @click="tagOnClick(item)"
+          @keydown.enter.prevent="tagOnClick(item)"
+          @keydown.space.prevent="tagOnClick(item)"
+          @keydown.delete.prevent="closeTagByKeyboard(item, index)"
         >
           <template v-if="tagsStyle !== 'chrome'">
             <span
@@ -238,6 +272,8 @@ onBeforeUnmount(() => {
                     (index === activeIndex && index !== 0)
               "
               class="el-icon-close"
+              :aria-label="transformI18n('buttons.close')"
+              aria-hidden="true"
               @click.stop="deleteMenu(item)"
             >
               <IconifyIconOffline :icon="Close" />
@@ -269,6 +305,8 @@ onBeforeUnmount(() => {
             <span
               v-if="isFixedTag(item) ? false : index !== 0"
               class="chrome-close-btn"
+              :aria-label="transformI18n('buttons.close')"
+              aria-hidden="true"
               @click.stop="deleteMenu(item)"
             >
               <IconifyIconOffline :icon="Close" />
@@ -278,7 +316,15 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <span v-show="isShowArrow" class="arrow-right">
-      <IconifyIconOffline :icon="ArrowRightSLine" @click="handleScroll(-200)" />
+      <IconifyIconOffline
+        :icon="ArrowRightSLine"
+        role="button"
+        tabindex="0"
+        :aria-label="transformI18n('buttons.scrollRight')"
+        @click="handleScroll(-200)"
+        @keydown.enter.prevent="handleScroll(-200)"
+        @keydown.space.prevent="handleScroll(-200)"
+      />
     </span>
     <!-- 刷新当前页按钮（与右键菜单「刷新」同口径） -->
     <span

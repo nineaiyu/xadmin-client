@@ -63,7 +63,7 @@ const contentStyle = computed(() =>
     <div v-if="hasHeader" class="re-page__header">
       <div class="re-page__heading">
         <slot name="title">
-          <div v-if="title" class="re-page__title">{{ title }}</div>
+          <h1 v-if="title" class="re-page__title">{{ title }}</h1>
         </slot>
         <slot name="description">
           <p v-if="description" class="re-page__desc">{{ description }}</p>
@@ -142,7 +142,9 @@ const contentStyle = computed(() =>
     min-width: 0;
   }
 
+  /* 语义标题（h1）：显式清零 UA 外边距，字号/字重沿用骨架样式 */
   &__title {
+    margin: 0;
     font-size: var(--font-size-lg);
     font-weight: 600;
     color: hsl(var(--fg));

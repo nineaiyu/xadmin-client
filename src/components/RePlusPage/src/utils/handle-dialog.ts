@@ -382,7 +382,9 @@ export const openDialogDrawer = (formOptions: formDialogDrawerOptions) => {
       // 否则用户把字段隐藏后旧值仍会被写回，表现为「字段消失但值没清」
       const formData = stripHiddenFormFields(
         (submitted as RecordType | undefined) || formInlineData,
-        formOptions?.columns
+        // 必须传解析后的列对象：formOptions.columns 是「列解析器函数表」，
+        // 函数表没有 hideInForm，联动隐藏列会被整批放过（创建态提交旧值）
+        Object.values(editColumns)
       );
       formOptions?.saveCallback?.({
         formData,

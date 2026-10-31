@@ -11,6 +11,7 @@ const overlay = createOverlayStore<DialogOptions<any>>();
 export const dialogStore = overlay.store;
 export const getDialogUid = overlay.getUid;
 export const closeDialog = overlay.close;
+export const finalizeDialog = overlay.finalize;
 export const updateDialog = overlay.update;
 export const closeAllDialog = overlay.closeAll;
 

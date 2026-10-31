@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import {
   DEFAULT_SIDEBAR_WIDTH,
@@ -22,6 +22,10 @@ export function useSidebarResize(enabled: () => boolean) {
   const resizing = ref(false);
   const resizeOutOfRange = ref(false);
   const draggable = computed(() => enabled());
+  /** 拖拽中组件卸载时的清理：window 监听与 body 光标不能留到下一次挂载 */
+  let detachWindowListeners: (() => void) | null = null;
+
+  onBeforeUnmount(() => detachWindowListeners?.());
 
   function startResize(event: MouseEvent) {
     if (resizing.value) return;
@@ -51,13 +55,17 @@ export function useSidebarResize(enabled: () => boolean) {
       );
     };
     const onUp = (upEvent: MouseEvent) => {
+      detachWindowListeners?.();
+      storageConfigureChange("sidebarWidth", widthAt(upEvent.clientX));
+    };
+    detachWindowListeners = () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
       resizing.value = false;
       resizeOutOfRange.value = false;
-      storageConfigureChange("sidebarWidth", widthAt(upEvent.clientX));
+      detachWindowListeners = null;
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);

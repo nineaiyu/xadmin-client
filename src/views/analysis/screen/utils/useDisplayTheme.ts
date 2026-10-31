@@ -79,7 +79,7 @@ export function useDisplayTheme(options: {
         .partialUpdate(current.pk, { theme: nextTheme, theme_color: nextColor })
         .catch(normalizeError);
       if (!isSuccess(res)) {
-        if (res.detail) message(String(res.detail), { type: "warning" });
+        message(String(res.detail || t("results.failed")), { type: "warning" });
         return;
       }
       reset();

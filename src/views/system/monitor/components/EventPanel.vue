@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { formatDateTime } from "@/utils/format";
 import { isSuccess } from "@/api/types";
 import {
   monitorApi,
@@ -59,7 +60,13 @@ const onRangeChange = () => fetchEvents();
 
 /** 面板内嵌密集表：显式取紧凑档（此处密度优先于与列表页行高对齐） */
 const errorColumns = computed<ReadonlyColumn[]>(() => [
-  { prop: "created_time", label: t("systemMonitor.time"), width: 170 },
+  {
+    prop: "created_time",
+    label: t("systemMonitor.time"),
+    width: 170,
+    formatter: (row: { created_time?: string }) =>
+      formatDateTime(row.created_time)
+  },
   {
     prop: "module",
     label: t("systemMonitor.module"),
@@ -87,8 +94,19 @@ const taskColumns = computed<ReadonlyColumn[]>(() => [
     showOverflowTooltip: true
   },
   { label: t("systemMonitor.taskState"), width: 120, slot: "status" },
-  { prop: "date_start", label: t("systemMonitor.taskStart"), width: 180 },
-  { prop: "date_finished", label: t("systemMonitor.taskFinished"), width: 180 }
+  {
+    prop: "date_start",
+    label: t("systemMonitor.taskStart"),
+    width: 180,
+    formatter: (row: { date_start?: string }) => formatDateTime(row.date_start)
+  },
+  {
+    prop: "date_finished",
+    label: t("systemMonitor.taskFinished"),
+    width: 180,
+    formatter: (row: { date_finished?: string }) =>
+      formatDateTime(row.date_finished)
+  }
 ]);
 
 onMounted(fetchEvents);

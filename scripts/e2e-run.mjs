@@ -63,21 +63,29 @@ const MODES = {
   parallel: { parallel: true }
 };
 
-/** 读取隔离清单；容忍「数组」与「{ tests: [...] }」两种顶层形态与损坏文件。 */
+/** 读取隔离清单；容忍「数组」与「{ tests: [...] }」两种顶层形态。
+ *  清单文件缺失视为无隔离；文件存在但解析失败必须非零退出——静默按空清单跑，
+ *  会让已知抖动混进主线，还会掩盖清单本身写坏的事实。 */
 function readQuarantine(file = QUARANTINE_FILE) {
   const path = resolve(file);
   if (!existsSync(path)) return [];
+  let data;
   try {
-    const data = JSON.parse(readFileSync(path, "utf-8"));
-    const entries = Array.isArray(data) ? data : data?.tests;
-    if (!Array.isArray(entries)) return [];
-    return entries.filter(
-      e => e && typeof e.title === "string" && e.title.trim()
-    );
+    data = JSON.parse(readFileSync(path, "utf-8"));
   } catch (error) {
-    console.warn(`[e2e-run] 隔离清单解析失败，按空清单处理：${error.message}`);
-    return [];
+    console.error(`[e2e-run] 隔离清单解析失败：${path}（${error.message}）`);
+    process.exit(2);
   }
+  const entries = Array.isArray(data) ? data : data?.tests;
+  if (!Array.isArray(entries)) {
+    console.error(
+      `[e2e-run] 隔离清单顶层必须是数组或含 tests 数组的对象：${path}`
+    );
+    process.exit(2);
+  }
+  return entries.filter(
+    e => e && typeof e.title === "string" && e.title.trim()
+  );
 }
 
 function escapeRegExp(value) {

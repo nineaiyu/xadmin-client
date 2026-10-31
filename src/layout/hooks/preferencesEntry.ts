@@ -25,6 +25,8 @@ export interface PreferencesEntryOptions {
   horizontal?: boolean;
   /** 当前布局是否全屏内容模式（无顶栏，齿轮无处安放） */
   fullContent?: boolean;
+  /** 配置层是否隐藏了顶栏（Navbar 整块不渲染：齿轮与头像菜单兜底项都不可达） */
+  headerHidden?: boolean;
 }
 
 export interface PreferencesEntryState {
@@ -51,6 +53,11 @@ export function resolvePreferencesEntry(
     "header") as PreferencesPosition;
 
   if (!enabled || position === "none") return FALLBACK_ENTRY;
+  // 顶栏整块不渲染时，header 与 user-dropdown 两种形态都无处安放（头像菜单也在
+  // Navbar 内）：必须回落悬浮球，否则只剩快捷键一个入口
+  if (options.headerHidden) {
+    return { header: false, floating: true, dropdown: false };
+  }
   if (position === "user-dropdown") return FALLBACK_ENTRY;
 
   // 全屏内容模式不渲染顶栏（齿轮无处安放），任何位置档都回落悬浮球

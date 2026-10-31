@@ -42,6 +42,14 @@ function mountTaskCenter() {
   );
 }
 
+let activeWrapper: ReturnType<typeof mountTaskCenter> | null = null;
+
+/** 挂载并登记：模块级轮询是单例（按订阅者计数），用例结束必须卸载回收 */
+function mountAndTrack() {
+  activeWrapper = mountTaskCenter();
+  return activeWrapper;
+}
+
 describe("refreshTaskCenter 聚合统计", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -56,11 +64,13 @@ describe("refreshTaskCenter 聚合统计", () => {
   });
 
   afterEach(() => {
+    activeWrapper?.unmount();
+    activeWrapper = null;
     vi.useRealTimers();
   });
 
   it("三类统计聚合进 runningCount（只计进行中）", async () => {
-    mountTaskCenter();
+    mountAndTrack();
     await vi.advanceTimersByTimeAsync(0);
     expect(runningCount.value).toBe(9);
   });
@@ -69,7 +79,7 @@ describe("refreshTaskCenter 聚合统计", () => {
     hasAuthMock.mockImplementation(
       (code: string) => code !== "stats:SystemImportRecord"
     );
-    mountTaskCenter();
+    mountAndTrack();
     await vi.advanceTimersByTimeAsync(0);
     expect(importStatsMock).not.toHaveBeenCalled();
     expect(exportStatsMock).toHaveBeenCalledTimes(1);
@@ -79,13 +89,13 @@ describe("refreshTaskCenter 聚合统计", () => {
 
   it("单类失败静默，其余两类照常聚合", async () => {
     importStatsMock.mockRejectedValue(new Error("network"));
-    mountTaskCenter();
+    mountAndTrack();
     await vi.advanceTimersByTimeAsync(0);
     expect(runningCount.value).toBe(6);
   });
 
   it("挂载即拉取，60s 轮询，卸载停止", async () => {
-    const wrapper = mountTaskCenter();
+    const wrapper = mountAndTrack();
     await vi.advanceTimersByTimeAsync(0);
     expect(exportStatsMock).toHaveBeenCalledTimes(1);
 
@@ -93,6 +103,7 @@ describe("refreshTaskCenter 聚合统计", () => {
     expect(exportStatsMock).toHaveBeenCalledTimes(2);
 
     wrapper.unmount();
+    activeWrapper = null;
     await vi.advanceTimersByTimeAsync(180_000);
     expect(exportStatsMock).toHaveBeenCalledTimes(2);
   });

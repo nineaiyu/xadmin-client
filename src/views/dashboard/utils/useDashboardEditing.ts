@@ -6,6 +6,7 @@ import {
   type DashboardCard,
   type DashboardItem
 } from "@/api/dataset/datasets";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { createDraftSortable, moveCardInList } from "./dashboardActions";
 import { useDraftDirty } from "./useDraftDirty";
@@ -26,9 +27,6 @@ export function useDashboardEditing(options: {
   const layout = computed<DashboardCard[]>(() =>
     editing.value ? draftLayout.value : (current.value?.layout ?? [])
   );
-  const layoutKey = computed(() =>
-    draftLayout.value.map(card => card.id).join("|")
-  );
   const dirty = useDraftDirty(editing, draftLayout, current);
   const rowRef = ref();
   const { init: setupSortable, destroy: destroySortable } = createDraftSortable(
@@ -44,9 +42,8 @@ export function useDashboardEditing(options: {
   const toggleEdit = () => {
     if (!current.value) return;
     if (!editing.value) {
-      draftLayout.value = JSON.parse(
-        JSON.stringify(current.value.layout ?? [])
-      );
+      // 浅拷贝数组：卡片对象复用，避免进入编辑态时每张卡引用变化触发全盘重拉
+      draftLayout.value = [...(current.value.layout ?? [])];
       editing.value = true;
       setupSortable();
     } else {
@@ -60,12 +57,11 @@ export function useDashboardEditing(options: {
     if (saving.value) return;
     saving.value = true;
     try {
-      const res = await dashboardApi.partialUpdate<DashboardItem>(
-        current.value.pk,
-        {
+      const res = await dashboardApi
+        .partialUpdate<DashboardItem>(current.value.pk, {
           layout: draftLayout.value
-        }
-      );
+        })
+        .catch(normalizeError);
       if (isSuccess(res)) {
         message(t("dashboard.saveOk"), { type: "success" });
         const index = dashboards.value.findIndex(
@@ -78,8 +74,8 @@ export function useDashboardEditing(options: {
         stopEditing();
         return;
       }
-      // 200 + 业务码非 1000：全局拦截器只处理 HTTP 层错误，业务失败必须显式提示
-      if (res.detail) message(String(res.detail), { type: "error" });
+      // 200 + 业务码非 1000 / 网络失败：统一显式提示（detail 为空也不能静默）
+      message(String(res.detail || t("results.failed")), { type: "error" });
     } finally {
       saving.value = false;
     }
@@ -106,7 +102,6 @@ export function useDashboardEditing(options: {
     dirty,
     editing,
     layout,
-    layoutKey,
     moveCard,
     removeCard,
     rowRef,

@@ -1,6 +1,19 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult, ChoicesResult, DataListResult } from "@/api/types";
 
+/** 字段形态元数据（后端 get_field_meta；非关系字段 related_model 为 null） */
+export interface FieldLookupMeta {
+  internal_type: string;
+  related_model: string | null;
+  multiple: boolean;
+  null: boolean;
+  verbose_name: string;
+}
+
+export interface FieldLookupsResult extends DataListResult {
+  field_meta?: FieldLookupMeta | null;
+}
+
 class ModelLabelFieldApi extends BaseApi {
   /** 枚举选项元数据：显式声明（与 BaseApi 同名方法同实现），保证契约面可读、改动就地下沉 */
   choices = () => {
@@ -13,10 +26,10 @@ class ModelLabelFieldApi extends BaseApi {
   };
 
   lookups = (params?: object) => {
-    return this.request<DataListResult>(
+    return this.request<FieldLookupsResult>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/lookups`
     );
   };

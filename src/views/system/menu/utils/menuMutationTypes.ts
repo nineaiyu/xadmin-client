@@ -5,7 +5,7 @@ import type { menuApi } from "@/api/system/menu";
 // 不能直接写 typeof menuApi（hasFileObject 为 private，赋值检查会缺属性报错）
 export type MenuApi = UnwrapNestedRefs<typeof menuApi>;
 
-/** 变更动作所需的 API 面（含删除前影响面预检的 baseApi/request；页面装配保证存在） */
+/** 变更动作所需的 API 面（含删除前影响面预检；页面装配保证存在） */
 export type MenuMutationApi = Pick<
   MenuApi,
   | "create"
@@ -14,6 +14,5 @@ export type MenuMutationApi = Pick<
   | "batchDestroy"
   | "batchUpdate"
   | "rank"
-  | "baseApi"
-  | "request"
+  | "impact"
 >;

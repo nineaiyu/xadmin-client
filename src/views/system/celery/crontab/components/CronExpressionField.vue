@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onUnmounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDebounceFn } from "@vueuse/core";
 import { crontabScheduleApi } from "@/api/task/task";
@@ -39,6 +39,7 @@ const nextRuns = ref<string[]>([]);
 const previewTimezone = ref("");
 const previewLoading = ref(false);
 const previewError = ref(false);
+let previewSeq = 0;
 
 const fieldLabels = computed<Record<(typeof CRON_FIELD_KEYS)[number], string>>(
   () => ({
@@ -82,12 +83,14 @@ const fetchPreview = useDebounceFn(async () => {
     previewError.value = false;
     return;
   }
+  const seq = ++previewSeq;
   previewLoading.value = true;
   previewError.value = false;
   try {
     const res = await crontabScheduleApi
       .preview({ ...draft })
       .catch(normalizeError);
+    if (seq !== previewSeq) return;
     if (isSuccess(res)) {
       nextRuns.value = res.data?.next_runs ?? [];
       previewTimezone.value = res.data?.timezone ?? draft.timezone;
@@ -96,12 +99,31 @@ const fetchPreview = useDebounceFn(async () => {
     nextRuns.value = [];
     previewError.value = true;
   } catch {
+    if (seq !== previewSeq) return;
     nextRuns.value = [];
     previewError.value = true;
   } finally {
-    previewLoading.value = false;
+    if (seq === previewSeq) previewLoading.value = false;
   }
 }, 350);
+
+onUnmounted(() => {
+  previewSeq += 1;
+  // 取消防抖排队中的预览请求（在途响应由 previewSeq 丢弃）
+  (fetchPreview as typeof fetchPreview & { cancel?: () => void }).cancel?.();
+});
+
+// 外部重置/切换行时同步草稿（destroyOnClose 之外的复用路径）
+watch(
+  () => props.modelValue,
+  value => {
+    const next = cronDraftFromRow(value);
+    if (JSON.stringify(next) !== JSON.stringify(draft)) {
+      Object.assign(draft, next);
+    }
+  },
+  { deep: true }
+);
 
 watch(
   draft,
@@ -150,6 +172,7 @@ const displayRun = (value: string) => formatDateTime(value);
         <span class="cron-field__label">{{ fieldLabels[key] }}</span>
         <el-input
           v-model="draft[key]"
+          :aria-label="fieldLabels[key]"
           :placeholder="key === 'minute' ? '0,30' : '*'"
         />
       </div>
@@ -158,6 +181,7 @@ const displayRun = (value: string) => formatDateTime(value);
         <el-input
           v-model="draft.timezone"
           class="w-full"
+          :aria-label="fieldLabels.timezone"
           :placeholder="t('systemTaskCrontab.timezonePlaceholder')"
         />
       </div>
@@ -257,7 +281,7 @@ const displayRun = (value: string) => formatDateTime(value);
 .cron-field__runs {
   padding-left: 20px;
   margin: 0;
-  font-family: var(--el-font-family-mono);
+  font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   line-height: 1.8;
 }

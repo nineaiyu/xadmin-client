@@ -70,14 +70,13 @@ export function useChatCore() {
 
   // ---------------------------------------------------------- 历史与已读
 
-  const { hasMore, loadingHistory, loadingMore, loadHistory, loadMore } =
-    useChatHistory({
-      messages,
-      activeRoomId,
-      scroller,
-      pendingCount,
-      scrollToBottom
-    });
+  const history = useChatHistory({
+    messages,
+    activeRoomId,
+    scroller,
+    pendingCount,
+    scrollToBottom
+  });
 
   return {
     // 状态
@@ -107,10 +106,6 @@ export function useChatCore() {
     connect,
     disconnect,
     markRead,
-    hasMore,
-    loadingHistory,
-    loadingMore,
-    loadHistory,
-    loadMore
+    ...history
   };
 }

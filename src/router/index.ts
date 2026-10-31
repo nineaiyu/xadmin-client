@@ -72,7 +72,13 @@ export function resetRouter() {
     router.addRoute(route);
   }
   router.addRoute(pathMatchRoute);
-  router.options.routes = cloneDeep(constantRoutes);
+  // 必须用「未被动态路由污染」的快照：handleAsyncRoutes 会把动态子路由 splice
+  // 进 options.routes[0].children，若从 constantRoutes 现取，重登后新账号的同 path
+  // 动态路由会被 existingPaths 过滤，旧账号的路由却仍留在 matcher 里
+  router.options.routes = cloneDeep(initConstantRoutes).concat(
+    ...asRouteRecords(remainingRouter),
+    pathMatchRoute
+  );
   usePermissionStoreHook().clearAllCachePage();
   // 一并清掉动态路由/权限的本地缓存（CachingAsyncRoutes 开启时写入）：
   // 否则下一个账号登录会命中上一个账号的菜单缓存

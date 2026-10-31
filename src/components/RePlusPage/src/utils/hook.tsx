@@ -71,14 +71,14 @@ export function usePlusPage(
   });
 
   // 表单与详情（pageTitle / selectedNum / onSelectionCancel / getSelectPks 取自视图状态）
-  const { handleAddOrEdit, handleDetail, handleDelete, handleManyDelete } =
-    usePlusPageForm({
-      props,
-      t,
-      ...baseCols,
-      ...viewState,
-      handleGetData
-    });
+  const formActions = usePlusPageForm({
+    props,
+    t,
+    ...baseCols,
+    ...viewState,
+    handleGetData
+  });
+  const { handleAddOrEdit, handleDetail, handleDelete } = formActions;
 
   // 默认按钮组
   const buttons = usePlusPageButtons({
@@ -107,8 +107,7 @@ export function usePlusPage(
     handleSearch,
     getPageColumn,
     handleGetData,
-    handleAddOrEdit,
-    handleManyDelete,
+    ...formActions,
     handleSizeChange,
     handleCurrentChange,
     handleSortChange

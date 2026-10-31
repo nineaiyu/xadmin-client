@@ -4,6 +4,7 @@ import {
   type Locator,
   type Page
 } from "@playwright/test";
+import { isDeepStrictEqual } from "node:util";
 
 /**
  * E2E 公共助手：凭据与登录/登出/菜单导航。
@@ -633,4 +634,266 @@ export async function switchSettingTab(page: Page, label: string | RegExp) {
   });
   await tab.first().click();
   await expect(tab.first()).toHaveClass(/is-active/, { timeout: 10_000 });
+}
+
+/** 站点级共享配置快照：失败路径也能在 afterEach 原样写回。 */
+export type SiteConfigSnapshot = { pk: string; value: unknown };
+const SITE_CONFIG_API = `${FRONT_URL}/api/system/config/system`;
+
+export async function captureSiteConfig(
+  page: Page
+): Promise<SiteConfigSnapshot | null> {
+  try {
+    const resp = await page.request.get(
+      `${SITE_CONFIG_API}?key=WEB_SITE_CONFIG`
+    );
+    if (!resp.ok()) return null;
+    const body = (await resp.json()) as {
+      data?: { results?: Array<{ pk: string; key: string; value: unknown }> };
+    };
+    const row = (body.data?.results ?? []).find(
+      item => item.key === "WEB_SITE_CONFIG"
+    );
+    if (!row) return null;
+    const value =
+      typeof row.value === "string" ? JSON.parse(row.value) : row.value;
+    return { pk: String(row.pk), value };
+  } catch {
+    return null;
+  }
+}
+
+export async function restoreSiteConfig(
+  page: Page,
+  snapshot: SiteConfigSnapshot | null
+) {
+  if (!snapshot) return;
+  const expected = snapshot.value as Record<string, unknown>;
+  let last: Record<string, unknown> | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // 聚合端点（/api/system/configs/WEB_SITE_CONFIG）会同步刷新站点配置读缓存；
+    // 通用 CRUD 端点写库不刷新缓存，直写后后续 spec 仍可能读到旧值。
+    await page.request
+      .patch(`${FRONT_URL}/api/system/configs/WEB_SITE_CONFIG`, {
+        data: expected
+      })
+      .catch(() => undefined);
+    const resp = await page.request
+      .get(`${FRONT_URL}/api/system/configs/WEB_SITE_CONFIG`)
+      .catch(() => null);
+    if (resp?.ok()) {
+      last = ((await resp.json())?.config ?? {}) as Record<string, unknown>;
+      // 站点配置含对象/数组键（SplitPanes / NavbarOrder 等）：必须深比较，
+      // 严格不等会把「值相同的新对象」误判为未写回
+      const mismatched = Object.keys(expected).filter(
+        key => !isDeepStrictEqual(last?.[key], expected[key])
+      );
+      if (mismatched.length === 0) return;
+    }
+    if (attempt < 2) await page.waitForTimeout(400);
+  }
+  // 清理失败只记日志：不能用还原错误覆盖用例本身的业务断言
+  console.warn(
+    `[e2e] 站点配置未能完全写回快照：${JSON.stringify(
+      Object.fromEntries(
+        Object.keys(expected)
+          .filter(key => !isDeepStrictEqual(last?.[key], expected[key]))
+          .map(key => [key, { expected: expected[key], actual: last?.[key] }])
+      )
+    )}`
+  );
+}
+
+/** AI 站点级共享态（激活档案 + 开关）：跨 spec 失败路径同样需要复位。 */
+export const AI_SWITCH_KEYS = [
+  "AI_ASSISTANT_ENABLED",
+  "AI_NL_QUERY_ENABLED",
+  "AI_ACTION_ENABLED",
+  "AI_NATIVE_TOOLS_ENABLED",
+  "AI_CODEGEN_DRAFT_ENABLED"
+] as const;
+
+export type AiStateSnapshot = {
+  activeProfile: string;
+  switches: Record<string, unknown>;
+};
+
+const AI_CONFIG_API = `${FRONT_URL}/api/ai/assistant/config`;
+
+export async function captureAiState(page: Page): Promise<AiStateSnapshot> {
+  const state: AiStateSnapshot = { activeProfile: "", switches: {} };
+  try {
+    const [profilesResp, configResp] = await Promise.all([
+      page.request.get(`${FRONT_URL}/api/ai/profiles?size=100`),
+      page.request.get(AI_CONFIG_API)
+    ]);
+    if (profilesResp.ok()) {
+      const body = (await profilesResp.json()) as {
+        data?: { results?: Array<{ pk: string; is_active?: boolean }> };
+      };
+      state.activeProfile =
+        (body.data?.results ?? []).find(row => row.is_active)?.pk ?? "";
+    }
+    if (configResp.ok()) {
+      const body = (await configResp.json()) as {
+        data?: Record<string, unknown>;
+      };
+      for (const key of AI_SWITCH_KEYS) {
+        if (body.data && key in body.data) state.switches[key] = body.data[key];
+      }
+    }
+  } catch {
+    // 快照失败不阻塞用例；清理阶段按能恢复的部分尽力恢复
+  }
+  return state;
+}
+
+export async function restoreAiState(
+  page: Page,
+  state: AiStateSnapshot,
+  createdProfiles: string[] = []
+) {
+  for (const pk of [...createdProfiles].reverse()) {
+    await page.request
+      .post(`${FRONT_URL}/api/ai/profiles/${pk}/deactivate`)
+      .catch(() => undefined);
+    await page.request
+      .delete(`${FRONT_URL}/api/ai/profiles/${pk}`)
+      .catch(() => undefined);
+  }
+  if (state.activeProfile) {
+    await page.request
+      .post(`${FRONT_URL}/api/ai/profiles/${state.activeProfile}/activate`)
+      .catch(() => undefined);
+  }
+  if (Object.keys(state.switches).length) {
+    await page.request
+      .patch(AI_CONFIG_API, { data: state.switches })
+      .catch(() => undefined);
+  }
+}
+
+/** 在当前测试内监听创建类请求，afterEach 统一删除（本 run 资源登记）。 */
+export type CreatedResource = { path: string; pk: string };
+
+export function collectCreatedResources(
+  page: Page,
+  pathPatterns: RegExp[]
+): CreatedResource[] {
+  const created: CreatedResource[] = [];
+  page.on("response", async response => {
+    const request = response.request();
+    if (request.method() !== "POST" || !response.ok()) return;
+    const path = new URL(response.url()).pathname.replace(/\/+$/, "");
+    if (!pathPatterns.some(pattern => pattern.test(path))) return;
+    try {
+      const body = (await response.json()) as {
+        code?: number;
+        data?: { pk?: string | number; id?: string | number };
+      };
+      const pk = body.data?.pk ?? body.data?.id;
+      if (body.code === 1000 && pk !== undefined && pk !== null) {
+        created.push({ path, pk: String(pk) });
+      }
+    } catch {
+      // 非 JSON / 流式响应不纳入资源清理
+    }
+  });
+  return created;
+}
+
+export async function deleteCreatedResources(
+  page: Page,
+  created: CreatedResource[]
+) {
+  for (const item of [...created].reverse()) {
+    if (item.path.endsWith("/api/ai/profiles")) {
+      await page.request
+        .post(`${FRONT_URL}${item.path}/${item.pk}/deactivate`)
+        .catch(() => undefined);
+    }
+    if (item.path.endsWith("/api/identity/personal-access-tokens")) {
+      // 凭证走吊销（is_active=false）而非硬删：保留调用记录，且与 UI「吊销」同语义
+      await page.request
+        .patch(`${FRONT_URL}${item.path}/${item.pk}`, {
+          data: { is_active: false }
+        })
+        .catch(() => undefined);
+      continue;
+    }
+    // 上传/创建动作与资源集合路由不同（如 /api/file/file/upload → /api/file/file/<pk>）
+    const basePath = item.path.endsWith("/upload")
+      ? item.path.slice(0, -"/upload".length)
+      : item.path;
+    await page.request
+      .delete(`${FRONT_URL}${basePath}/${item.pk}`)
+      .catch(() => undefined);
+  }
+}
+
+/** 系统配置行（按 key 查询）：种子 UUID 会随换库/重建变化，用例不写死主键 */
+export type SystemConfigRow = { pk: string; value: unknown };
+
+export async function findSystemConfig(
+  page: Page,
+  key: string
+): Promise<SystemConfigRow | null> {
+  const resp = await page.request.get(
+    `${FRONT_URL}/api/system/config/system?key=${encodeURIComponent(key)}`
+  );
+  if (!resp.ok()) return null;
+  const body = (await resp.json()) as {
+    data?: { results?: Array<{ pk: string; key: string; value: unknown }> };
+  };
+  const row = (body.data?.results ?? []).find(item => item.key === key);
+  return row ? { pk: String(row.pk), value: row.value } : null;
+}
+
+/** 按 key 写系统配置值（value 原样写入：数组/对象不做二次序列化） */
+export async function setSystemConfigByKey(
+  page: Page,
+  key: string,
+  value: unknown,
+  token?: string
+) {
+  const row = await findSystemConfig(page, key);
+  if (!row) throw new Error(`系统配置不存在：${key}`);
+  const resp = await page.request.patch(
+    `${FRONT_URL}/api/system/config/system/${row.pk}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      data: { value }
+    }
+  );
+  expect(resp.ok(), await resp.text()).toBeTruthy();
+}
+
+/** 设置页原值快照（路径 → 受管键当前值）：失败路径按原值写回 */
+export type SettingsSnapshot = Record<string, Record<string, unknown>>;
+
+export async function captureSettings(
+  page: Page,
+  paths: string[],
+  keys: string[]
+): Promise<SettingsSnapshot> {
+  const snapshot: SettingsSnapshot = {};
+  for (const path of paths) {
+    const resp = await page.request.get(`${FRONT_URL}${path}`);
+    if (!resp.ok()) continue;
+    const body = (await resp.json()) as { data?: Record<string, unknown> };
+    const data = body.data ?? {};
+    snapshot[path] = Object.fromEntries(
+      keys.filter(key => key in data).map(key => [key, data[key]])
+    );
+  }
+  return snapshot;
+}
+
+export async function restoreSettings(page: Page, snapshot: SettingsSnapshot) {
+  for (const [path, data] of Object.entries(snapshot)) {
+    if (Object.keys(data).length === 0) continue;
+    await page.request
+      .patch(`${FRONT_URL}${path}`, { data })
+      .catch(() => undefined);
+  }
 }

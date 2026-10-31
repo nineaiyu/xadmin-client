@@ -4,7 +4,7 @@ import { useGlobal } from "@pureadmin/utils";
 import { getConfig } from "@/config";
 import { SITE_LINKS } from "@/config/site";
 
-const TITLE = getConfig("Title");
+const TITLE = getConfig<string>("Title");
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 /**

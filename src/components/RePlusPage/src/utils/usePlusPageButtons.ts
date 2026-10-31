@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { computed, shallowRef } from "vue";
+import { computed } from "vue";
 import type { useI18n } from "vue-i18n";
 import type { RePlusPageProps } from "./types";
 // 导入顺序有语义：工具栏模块（经 ./handle）先于操作列模块（经 ./handle-history）
@@ -46,22 +46,10 @@ export function usePlusPageButtons({
   ) => void;
   handleDetail: (row: Record<string, unknown>) => void | Promise<void>;
 }) {
-  const {
-    api,
-    auth,
-    isTree,
-    allowAsyncExport,
-    operationButtonsProps,
-    tableBarButtonsProps
-  } = props;
-
   // 默认按钮的页面级开关：页面用自有面板承载详情/记录时逐项收敛，
   // 未声明时保持原行为（按钮按权限点显隐）
-  const hideDetail = operationButtonsProps?.hideDetail === true;
-  const hideChangeHistory = operationButtonsProps?.hideChangeHistory === true;
   // 编辑按钮与 boolean 列内联开关共用 auth.partialUpdate/update 位：
   // 页面只要自有编辑弹窗、但要保留内联开关时，须用 hideEdit 而非关权限位
-  const hideEdit = operationButtonsProps?.hideEdit === true;
 
   // 表格已读行（默认关）：操作命中后标记行已读（行类 is-viewed）
   const {
@@ -70,48 +58,42 @@ export function usePlusPageButtons({
     wrapButtons
   } = useViewedRowBinding(props);
 
-  const defaultOperationButtons = shallowRef(
-    buildDefaultOperationButtons({
-      t,
-      api,
-      auth,
-      hideEdit,
-      hideDetail,
-      hideChangeHistory,
-      hasDetailFetch: Boolean(props.detailRowFetch),
-      handleAddOrEdit,
-      handleDelete,
-      handleDetail,
-      onRowAction
-    })
-  );
-
   const operationButtons = computed(() => {
+    const operationProps = props.operationButtonsProps;
     return [
-      ...defaultOperationButtons.value,
-      ...wrapButtons(operationButtonsProps?.buttons ?? [])
+      ...buildDefaultOperationButtons({
+        t,
+        api: props.api,
+        auth: props.auth,
+        hideEdit: operationProps?.hideEdit === true,
+        editAllowed: operationProps?.editAllowed,
+        hideDetail: operationProps?.hideDetail === true,
+        hideChangeHistory: operationProps?.hideChangeHistory === true,
+        hasDetailFetch: Boolean(props.detailRowFetch),
+        handleAddOrEdit,
+        handleDelete,
+        handleDetail,
+        onRowAction
+      }),
+      ...wrapButtons(operationProps?.buttons ?? [])
     ];
   });
 
-  const defaultTableBarButtons = shallowRef(
-    buildDefaultToolbarButtons({
-      t,
-      api,
-      auth,
-      isTree,
-      treeProps,
-      searchFields,
-      allowAsyncExport,
-      getSelectPks,
-      handleGetData,
-      handleAddOrEdit
-    })
-  );
-
   const tableBarButtons = computed(() => {
     return [
-      ...defaultTableBarButtons.value,
-      ...(tableBarButtonsProps?.buttons ?? [])
+      ...buildDefaultToolbarButtons({
+        t,
+        api: props.api,
+        auth: props.auth,
+        isTree: props.isTree,
+        treeProps,
+        searchFields,
+        allowAsyncExport: props.allowAsyncExport,
+        getSelectPks,
+        handleGetData,
+        handleAddOrEdit
+      }),
+      ...(props.tableBarButtonsProps?.buttons ?? [])
     ];
   });
 

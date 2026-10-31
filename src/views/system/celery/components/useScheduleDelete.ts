@@ -2,6 +2,7 @@ import { shallowRef } from "vue";
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import type { ScheduleReference } from "@/api/task/task";
 import type { OperationProps } from "@/components/RePlusPage";
 import { message } from "@/utils/message";
@@ -20,7 +21,7 @@ type ScheduleApiLike = {
 type ScheduleRow = { pk?: string | number; id?: string | number };
 
 /**
- * 调度删除入口（crontab / interval 共用，P2-063）：
+ * 调度删除入口（crontab / interval 共用）：
  * 删除前先取引用任务；有引用时弹窗列出任务并可跳转任务列表筛选，
  * 不再只有一条 toast。删除请求若仍被并发引用拒绝，也从错误响应里提取清单。
  */
@@ -53,22 +54,21 @@ export function useScheduleDelete({
     });
 
   const submitDelete = async (pk: string | number) => {
-    try {
-      const res = await api.destroy(pk);
-      if (isSuccess(res)) {
-        message(t("results.success"), { type: "success" });
-        tableRef.value?.handleGetData?.();
-        return;
-      }
-      if (res.detail) message(String(res.detail), { type: "warning" });
-    } catch (error) {
+    const res = await api.destroy(pk).catch((error: unknown) => {
+      // 并发引用拒绝：错误体携带引用任务清单，直接弹窗展示（后端 fail-closed）
       const data = (error as { data?: ScheduleReference } | undefined)?.data;
-      if (data?.total) {
-        show(data, pk);
-        return;
-      }
-      const detail = (error as { detail?: string } | undefined)?.detail;
-      if (detail) message(detail, { type: "error" });
+      if (data?.total) show(data, pk);
+      return normalizeError(error);
+    });
+    if (isSuccess(res)) {
+      message(t("results.success"), { type: "success" });
+      tableRef.value?.handleGetData?.();
+      return;
+    }
+    // 请求失败（normalizeError → code -1）已由 http 层提示、引用清单已单独弹窗；
+    // 仅 HTTP 200 + 业务码失败需要页面补提示
+    if (res.code !== -1 && res.detail) {
+      message(String(res.detail), { type: "warning" });
     }
   };
 

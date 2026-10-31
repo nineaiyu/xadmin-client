@@ -231,7 +231,7 @@ export function normalizeSelection(
  * 提交形态最终授权一致；折叠仅影响回显形态，与用户「勾过页面」的操作记忆对齐。
  * 自底向上逐层折叠（深层先折叠为菜单键，父级再据直接子级判断），叶子不参与。
  */
-export function foldFullMenuSelection(
+export function expandMenuSelection(
   index: PermissionTreeIndex,
   selection: Iterable<string>
 ): Set<string> {
@@ -239,8 +239,7 @@ export function foldFullMenuSelection(
   /**
    * 页面 / 目录级勾选（父键在选、直接子级全不在选）等价于「整棵子树生效」——
    * 与后端授权按子树展开的存储口径一致。先补齐后代再走父链规范化：否则这类
-   * 勾选会被当成「无子级支撑的孤儿」剔除，表现为「明明有授权，打开后一个勾都没有」
-   * （经检索后端存的就是页面键的场景必然命中）。
+   * 勾选会被当成「无子级支撑的孤儿」剔除，表现为「明明有授权，打开后一个勾都没有」。
    */
   const expanded = new Set(incoming);
   for (const key of index.menuKeys) {
@@ -251,7 +250,14 @@ export function foldFullMenuSelection(
     }
     menuDescendants(index, key).forEach(item => expanded.add(item));
   }
-  const next = normalizeSelection(index, expanded);
+  return normalizeSelection(index, expanded);
+}
+
+export function foldFullMenuSelection(
+  index: PermissionTreeIndex,
+  selection: Iterable<string>
+): Set<string> {
+  const next = expandMenuSelection(index, selection);
   for (let i = index.menuKeys.length - 1; i >= 0; i--) {
     const key = index.menuKeys[i];
     const children = index.childrenMap.get(key) ?? [];
@@ -310,13 +316,17 @@ export function toggleMenuSelection(
 /**
  * 反选：对 scope（缺省为全部菜单节点）及其后代取反，随后按父链一致性规范化。
  * 搜索态下传入命中节点，实现「只反选当前搜索结果」。
+ *
+ * 先把「页面级折叠勾选」（父键在选、子级不在选）按子树展开再取反：否则
+ * 只移除页面键、又把子级逐个加入，规范化后页面键被父链规则重新加回，
+ * 表现为「反选后该页仍是全授权」。
  */
 export function invertSelection(
   index: PermissionTreeIndex,
   selection: Iterable<string>,
   scope: Iterable<string> = index.menuKeys
 ): Set<string> {
-  const next = sanitizeSelection(index, selection);
+  const next = new Set(expandMenuSelection(index, selection));
   const targets = new Set<string>();
   for (const key of scope) {
     if (!index.nodeMap.has(key) || isSyntheticKey(key)) continue;

@@ -310,7 +310,7 @@ test("表单数据：导出按所选表单出动态列文件", async ({ page }) 
 
     // 工具栏为图标按钮：按可访问名定位（同 import-export 口径）
     await table
-      .locator("div.flex.mr-4")
+      .getByTestId("table-bar-buttons")
       .first()
       .getByRole("button", { name: "导出", exact: true })
       .click();

@@ -10,6 +10,9 @@ import { BACKEND_URL, FRONT_URL, getAccessToken, login } from "./helpers";
  */
 
 const headers = (token: string) => ({ Authorization: `Bearer ${token}` });
+/** 桩 LLM 地址：并行分片按路分配，读取环境变量避免打到 shard 1 的桩 */
+const STUB_LLM_URL =
+  process.env.E2E_STUB_LLM_URL ?? "http://127.0.0.1:18897/v1";
 
 test("知识库向量：embedding 档案 → 构建向量 → 状态更新", async ({ page }) => {
   await login(page);
@@ -26,7 +29,7 @@ test("知识库向量：embedding 档案 → 构建向量 → 状态更新", asy
         headers: headers(token),
         data: {
           name: `E2E向量档案-${suffix}`,
-          base_url: "http://127.0.0.1:18897/v1",
+          base_url: STUB_LLM_URL,
           api_key: "stub-key",
           model: "stub-embed",
           purpose: "embedding",

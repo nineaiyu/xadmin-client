@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
+import { computed, ref, type ComputedRef } from "vue";
 
 import { buildNoticeFormColumns } from "../noticeColumns";
 import { resolveMessageFormat } from "@/utils/noticeFormat";
@@ -167,5 +167,49 @@ describe("公告表单正文列", () => {
 
     expect(onChange).toHaveBeenCalledWith(messages);
     expect(formValue.value.files).toEqual(["/media/upload/a.png"]);
+  });
+});
+
+describe("公告表单列的 options 运行时形态", () => {
+  // 框架侧 options 恒为 ComputedRef：按数组 .forEach 会 TypeError 被 console.warn 吞掉，
+  // 等级着色 / 类型选项权限锁全部静默失效
+  const option = (value: string, label: string) => ({
+    label,
+    value: { value }
+  });
+
+  it("level：computed options 正常着色", () => {
+    const column = {
+      options: computed(() => [
+        option("info", "普通"),
+        option("danger", "重要")
+      ])
+    };
+    const result = buildNoticeFormColumns({ t }).level({ column });
+    const list = (column.options as ComputedRef).value as Array<{
+      fieldSlot?: () => unknown;
+    }>;
+    expect(list.every(item => typeof item.fieldSlot === "function")).toBe(true);
+    expect(result).toBe(column);
+  });
+
+  it("notice_type：computed options + 缺省 fieldProps 不抛错且锁定非公告类型", () => {
+    const column = {
+      options: computed(() => [
+        option(String(0), "系统公告"),
+        option(String(1), "通知"),
+        option(String(2), "用户通知")
+      ])
+    };
+    expect(() =>
+      buildNoticeFormColumns({ t }).notice_type({
+        column,
+        isAdd: true
+      })
+    ).not.toThrow();
+    const list = (column.options as ComputedRef).value as Array<{
+      fieldItemProps?: { disabled?: boolean };
+    }>;
+    expect(list[0].fieldItemProps?.disabled).toBe(true);
   });
 });

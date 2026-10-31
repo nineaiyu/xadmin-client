@@ -5,6 +5,7 @@
 
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { MenuChoices } from "@/views/system/constants";
 import { confirmBatchActive, confirmMenuDelete } from "./menuActions";
 import { flattenMenuTree } from "./normalize";
@@ -51,8 +52,12 @@ export async function removeMenuRows({
   if (!(await confirmMenuDelete(api, rows, t))) return false;
   const pks = rows.map(row => row.pk);
   const res = batch
-    ? await api.batchDestroy(pks, { impact_confirmed: true })
-    : await api.destroy(pks[0] as number, { impact_confirmed: true });
+    ? await api
+        .batchDestroy(pks, { impact_confirmed: true })
+        .catch(normalizeError)
+    : await api
+        .destroy(pks[0] as number, { impact_confirmed: true })
+        .catch(normalizeError);
   if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;
@@ -79,32 +84,51 @@ export async function setMenuRowsActive({
   patchRows: (patch: Map<string, Record<string, unknown>>) => void;
 }): Promise<boolean> {
   if (!rows.length) return false;
+  // el-tree 非严格模式下全选父级会连同子树一起进 checkedNodes：先折叠成「顶层选中行」，
+  // 否则目录 + 页面 + 权限点永远混批（实际只有纯权限点选择可用）
+  const selected = new Set(rows.map(row => String(row.pk)));
+  const nested = new Set<string>();
+  rows.forEach(row =>
+    collectDescendantPks(row).forEach(pk => {
+      if (selected.has(pk)) nested.add(pk);
+    })
+  );
+  const roots = rows.filter(row => !nested.has(String(row.pk)));
   // 批量启停限同 menu_type（菜单/目录/权限点的启停语义不同，跨类型混选不合法）
-  const types = new Set(rows.map(row => row.menuType));
+  const types = new Set(roots.map(row => row.menuType));
   if (types.size > 1) {
     message(t("systemMenu.result.batchMixedTypes"), { type: "error" });
     return false;
   }
   // 防御：权限点与菜单/目录的启停语义不同，混批会把权限点一并停用（授权面静默失效）
-  const hasPermission = rows.some(
+  const hasPermission = roots.some(
     row => row.menuType === MenuChoices.PERMISSION
   );
-  const hasMenuNode = rows.some(row => row.menuType !== MenuChoices.PERMISSION);
+  const hasMenuNode = roots.some(
+    row => row.menuType !== MenuChoices.PERMISSION
+  );
   if (hasPermission && hasMenuNode) {
     message(t("systemMenu.result.batchPermissionMixed"), { type: "error" });
     return false;
   }
   // 目录级联只带页面，权限点保持原状态（与后端拒绝跨类型混批同口径）
-  const pks = rows.flatMap(row => [
+  const pks = roots.flatMap(row => [
     String(row.pk),
     ...collectActiveCascadePks(row)
   ]);
   const unique = [...new Set(pks)];
   if (
-    !(await confirmBatchActive(rows, isActive, t, unique.length - rows.length))
+    !(await confirmBatchActive(
+      roots,
+      isActive,
+      t,
+      unique.length - roots.length
+    ))
   )
     return false;
-  const res = await api.batchUpdate(unique, { is_active: isActive });
+  const res = await api
+    .batchUpdate(unique, { is_active: isActive })
+    .catch(normalizeError);
   if (!isSuccess(res)) {
     message(`${t("results.failed")}，${res.detail}`, { type: "error" });
     return false;

@@ -5,6 +5,7 @@ import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree } from "@/utils/tree";
 import { buildListParams, splitDateRangeFields } from "./listParams";
 import type { Ref } from "vue";
+import type { BaseApi } from "@/api/base";
 import type { RePlusPageProps } from "./types";
 import type { useI18n } from "vue-i18n";
 import type { useBaseColumns } from "./columns";
@@ -28,7 +29,8 @@ export function createPageRequest({
   tablePagination,
   getColumnData,
   columnsInitCallback,
-  fieldsInitCallback
+  fieldsInitCallback,
+  inlineMetaFallbacks
 }: {
   props: RePlusPageProps;
   emit: (event: string, ...args: unknown[]) => void;
@@ -47,6 +49,11 @@ export function createPageRequest({
   getColumnData: BaseColumnsReturn["getColumnData"];
   columnsInitCallback: () => void;
   fieldsInitCallback: () => void;
+  /** 内联元数据只回一侧键时的分离请求回退（另一侧仍用内联载荷） */
+  inlineMetaFallbacks?: {
+    columns: BaseApi["columns"] | null | undefined;
+    fields: BaseApi["fields"] | null | undefined;
+  };
 }) {
   const { api, isTree, beforeSearchSubmit, searchResultFormat } = props;
 
@@ -71,10 +78,12 @@ export function createPageRequest({
     loadingStatus.value = true;
     loadError.value = "";
 
-    // 日期区间字段拆分为 _after/_before（就地写入搜索字段，区间选择器回显共用）
-    splitDateRangeFields(searchFields.value);
+    // 日期区间字段拆分为 _after/_before：在副本上变换，派生键不写回 searchFields
+    // （否则会进入我的视图快照/条件摘要，出现重复与未翻译参数名）
+    const scopedSearch = { ...searchFields.value };
+    splitDateRangeFields(scopedSearch);
 
-    const params = buildListParams(searchFields.value, queryParams);
+    const params = buildListParams(scopedSearch, queryParams);
     const data = (beforeSearchSubmit && beforeSearchSubmit(params)) || params;
 
     // 树形列表（菜单/部门等）父子关系不能被分页切断，需全量数据；
@@ -96,9 +105,13 @@ export function createPageRequest({
           tablePagination.value.total = res.data.total;
           if (options.inline) {
             if (res.data.search_columns || res.data.search_fields) {
+              // 单侧缺失时按侧回退到分离请求：只回列不回字段（或反之）时，
+              // 缺的一侧不能静默为空
+              const columnsMissing = !res.data.search_columns;
+              const fieldsMissing = !res.data.search_fields;
               getColumnData(
-                null,
-                null,
+                columnsMissing ? (inlineMetaFallbacks?.columns ?? null) : null,
+                fieldsMissing ? (inlineMetaFallbacks?.fields ?? null) : null,
                 columnsInitCallback,
                 fieldsInitCallback,
                 {},

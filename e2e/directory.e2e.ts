@@ -38,8 +38,13 @@ test.describe("通讯录", () => {
       })
       .first()
       .click();
-    await expect(cards).toHaveCount(2, { timeout: 15_000 });
+    // 不写死行数（同分片其它 spec 可能向该部门加人）：钉「两名种子成员在、外部人员不在」
     await expect(page.getByText("E2E主管用户")).toBeVisible();
+    await expect(page.getByText("E2E部门成员")).toBeVisible();
+    await expect(page.getByText("E2E普通用户")).toHaveCount(0);
+    await expect
+      .poll(() => cards.count(), { timeout: 15_000 })
+      .toBeGreaterThanOrEqual(2);
 
     // 「全部成员」清空筛选 → 成员数量恢复（目录含 xadmin 等，宽松断言）
     await page.getByRole("button", { name: "全部成员" }).click();
@@ -57,7 +62,9 @@ test.describe("通讯录", () => {
     // 「岗位字段越界」缺陷），这里量测标签右边界不得越过岗位列右边界
     const overflowed = await page.evaluate(() =>
       Array.from(document.querySelectorAll(".member-row")).some(row => {
-        const cell = row.children[2] as HTMLElement | undefined;
+        const cell = row.querySelector(
+          '[data-testid="member-post"]'
+        ) as HTMLElement | null;
         if (!cell || cell.offsetParent === null) return false;
         const cellRight = cell.getBoundingClientRect().right;
         return Array.from(cell.querySelectorAll(".el-tag")).some(
@@ -98,12 +105,17 @@ test.describe("通讯录", () => {
       .filter({ hasText: "E2E研发岗" })
       .first();
     await expect(postItem).toBeVisible({ timeout: 15_000 });
-    await expect(postItem).toContainText("2");
+    // 岗位清单展示的成员数即筛选后的预期行数（不写死种子数字）
+    const postCount = Number(
+      (await postItem.textContent())?.match(/(\d+)/)?.[1] ?? "0"
+    );
+    expect(postCount).toBeGreaterThanOrEqual(2);
 
     await postItem.click();
-    await expect(page.locator(".member-card")).toHaveCount(2, {
-      timeout: 15_000
-    });
+    await expect
+      .poll(() => page.locator(".member-card").count(), { timeout: 15_000 })
+      .toBe(postCount);
     await expect(page.getByText("E2E普通用户")).toBeVisible();
+    await expect(page.getByText("E2E部门成员")).toBeVisible();
   });
 });

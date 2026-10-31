@@ -12,8 +12,9 @@ import { h } from "vue";
 import type { useI18n } from "vue-i18n";
 import { copyText } from "@/utils/clipboard";
 import { useConfirm } from "@/hooks/useConfirm";
-import type { BaseApi } from "@/api/base";
+import { hasAuth } from "@/router/utils";
 import { MenuChoices } from "@/views/system/constants";
+import type { MenuApi } from "./menuMutationTypes";
 import { rowPathText } from "./normalize";
 import { displayTitle } from "./useMenuFilter";
 import type {
@@ -170,8 +171,8 @@ export function buildNodeActions(
 
 // ---------------------------------------------------------------- 危险动作确认
 
-/** 只依赖通用请求能力：调用方传 reactive 包装后的实例也能通过类型检查 */
-type ImpactApi = Pick<BaseApi, "baseApi" | "request">;
+/** 只依赖影响面预检能力：调用方传 reactive 包装后的菜单 API 实例也能通过类型检查 */
+type ImpactApi = Pick<MenuApi, "impact">;
 
 interface ImpactItem {
   key: string;
@@ -199,17 +200,10 @@ async function fetchImpact(
   api: ImpactApi,
   pks: Array<string | number>
 ): Promise<ImpactPayload | null> {
-  try {
-    const res = await api.request<{ data?: ImpactPayload }>(
-      "post",
-      {},
-      { pks: pks.map(String) },
-      `${api.baseApi}/impact`
-    );
-    return res?.data ?? null;
-  } catch {
-    return null;
-  }
+  // 无 impact 权限时后端必 403：不发起必失败的请求，直接按「不可用」降级
+  if (!hasAuth("impact:SystemMenu")) return null;
+  const res = await api.impact(pks).catch(() => null);
+  return (res?.data as ImpactPayload | undefined) ?? null;
 }
 
 /** 确认内容：级联范围 + 影响面明细 + 恢复路径 */

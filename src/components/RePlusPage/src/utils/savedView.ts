@@ -73,10 +73,23 @@ export function sortViews(
  */
 export function createApplySavedView(options: {
   searchFields: Ref<RecordType>;
+  tablePagination?: Ref<{ currentPage?: number; pageSize?: number }>;
   reload: () => void;
 }): (conditions: RecordType) => void {
   return conditions => {
-    options.searchFields.value = cloneDeep(conditions ?? {});
+    const current = options.searchFields.value ?? {};
+    const next: RecordType = cloneDeep(conditions ?? {});
+    // 视图只存筛选条件：分页参数保留当前值（否则后端回落默认 size=20，
+    // 表格 pageSize 仍是用户选择值，每页条数与数据窗口错位），页码回到第一页
+    if (current.size !== undefined) next.size = current.size;
+    if (current.ordering !== undefined) next.ordering = current.ordering;
+    next.page = 1;
+    options.searchFields.value = next;
+    if (options.tablePagination?.value) {
+      options.tablePagination.value.currentPage = 1;
+      if (typeof next.size === "number")
+        options.tablePagination.value.pageSize = next.size;
+    }
     options.reload();
   };
 }

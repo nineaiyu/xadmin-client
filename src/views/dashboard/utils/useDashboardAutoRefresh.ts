@@ -18,6 +18,9 @@ export const AUTO_REFRESH_OPTIONS = [
 
 /** 展板（kiosk）模式默认刷新间隔：挂屏无人操作，必须自动轮看 */
 const KIOSK_DEFAULT_REFRESH_SECONDS = 60;
+/** 实时档：超过该窗口没有推送帧即本机回落 HTTP 重拉（服务端 beat 15s 一推） */
+export const REALTIME_STALE_MS = 30_000;
+const REALTIME_WATCHDOG_MS = 15_000;
 
 /**
  * 仪表盘自动刷新：档位选择 + 定时触发。
@@ -30,12 +33,15 @@ const KIOSK_DEFAULT_REFRESH_SECONDS = 60;
 export function useDashboardAutoRefresh({
   kiosk,
   requestedSeconds,
-  refresh
+  refresh,
+  lastFrameAt
 }: {
   kiosk: Ref<boolean>;
   /** 地址栏 ?refresh= 的原始值（字符串/数组/undefined 均可） */
   requestedSeconds: unknown;
   refresh: () => void;
+  /** 推送帧到达时刻（实时档回落判据；缺省视为没有推送通道） */
+  lastFrameAt?: Ref<number>;
 }) {
   function resolveInitialSeconds(): number {
     if (!kiosk.value) return 0;
@@ -46,6 +52,7 @@ export function useDashboardAutoRefresh({
   }
 
   const seconds = ref(resolveInitialSeconds());
+  const realtimeFallback = ref(false);
   let timer: number | undefined;
 
   const stop = () => {
@@ -55,13 +62,30 @@ export function useDashboardAutoRefresh({
     }
   };
 
+  const frameClock = lastFrameAt;
+  const fallbackTick = () => {
+    if (seconds.value !== REALTIME_REFRESH_SECONDS) return;
+    const last = frameClock?.value ?? 0;
+    if (Date.now() - last < REALTIME_STALE_MS) {
+      realtimeFallback.value = false;
+      return;
+    }
+    // 推送通道不可用/无帧：本机重拉，并在下一窗口内不重复触发
+    realtimeFallback.value = true;
+    if (frameClock) frameClock.value = Date.now();
+    refresh();
+  };
+
   // immediate：kiosk 初值非 0 时也要在挂载即建定时器（否则永远不刷新）
   watch(
     seconds,
     value => {
       stop();
+      realtimeFallback.value = false;
       if (value > 0) {
         timer = window.setInterval(refresh, value * 1000);
+      } else if (value === REALTIME_REFRESH_SECONDS) {
+        timer = window.setInterval(fallbackTick, REALTIME_WATCHDOG_MS);
       }
     },
     { immediate: true }
@@ -69,5 +93,5 @@ export function useDashboardAutoRefresh({
 
   onBeforeUnmount(stop);
 
-  return { seconds, stop };
+  return { seconds, stop, realtimeFallback };
 }

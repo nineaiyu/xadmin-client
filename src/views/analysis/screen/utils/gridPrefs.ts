@@ -28,3 +28,18 @@ export function readGridSnap(): FreeGridSnap {
 export function writeGridSnap(value: FreeGridSnap): void {
   writeScreenStorage(GRID_SNAP_KEY, value);
 }
+
+/** 规范化并同时落本地记忆：非法步长回落缺省（编辑器工具栏入口用） */
+export function applyGridSnap(
+  target: { value: FreeGridSnap },
+  next: FreeGridSnap
+): void {
+  const value: FreeGridSnap = {
+    enabled: Boolean(next.enabled),
+    step: FREE_GRID_STEPS.includes(next.step)
+      ? next.step
+      : FREE_GRID_DEFAULT_STEP
+  };
+  target.value = value;
+  writeGridSnap(value);
+}

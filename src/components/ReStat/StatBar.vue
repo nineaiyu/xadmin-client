@@ -88,13 +88,17 @@ const onClick = (item: StatItem) => {
           :type="item.type"
           size="small"
           effect="plain"
-          :class="{ 'cursor-pointer': item.clickable }"
+          :class="{
+            'cursor-pointer': item.clickable,
+            'is-active': item.active
+          }"
           :role="item.clickable ? 'button' : undefined"
           :tabindex="item.clickable ? 0 : undefined"
           :title="item.title"
           :data-testid="`stat-${item.key}`"
           @click="onClick(item)"
           @keydown.enter="onClick(item)"
+          @keydown.space.prevent="onClick(item)"
         >
           {{ chipText(item) }}
         </el-tag>
@@ -128,5 +132,11 @@ const onClick = (item: StatItem) => {
   background: var(--el-fill-color-light);
   border: 1px solid var(--divider);
   border-radius: var(--radius-sm);
+}
+
+.re-stat-bar :deep(.el-tag.is-active) {
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary);
 }
 </style>

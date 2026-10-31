@@ -9,6 +9,16 @@ import type { CodegenFormState } from "./payload";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
+/** 业务失败时响应体是 JSON blob：解析出服务端 detail（解析失败按空处理） */
+async function blobDetail(blob: Blob): Promise<string> {
+  try {
+    const payload = JSON.parse(await blob.text()) as { detail?: string };
+    return String(payload?.detail || "");
+  } catch {
+    return "";
+  }
+}
+
 /** 代码包下载：单模型 / 批量共用，失败原因供内联错误态展示。 */
 export function useCodegenDownload({
   t,
@@ -53,19 +63,11 @@ export function useCodegenDownload({
         return;
       }
       // 200 + 业务失败（JSON 错误体被当作 blob 下载）不能当成功：
-      // 否则会下载一个 .zip 后缀的 JSON 并提示「已开始下载」
-      const contentType = String(res.headers?.["content-type"] || "");
-      if (contentType.includes("application/json")) {
-        let detail = "";
-        try {
-          const payload = JSON.parse(await (res.data as Blob).text()) as {
-            detail?: string;
-          };
-          detail = String(payload?.detail || "");
-        } catch {
-          detail = "";
-        }
-        downloadError.value = detail || t("results.failed");
+      // 否则会下载一个 .zip 后缀的 JSON 并提示「已开始下载」。
+      // 改走 blob 响应形态判据：拦截器对 JSON 响应直接返回响应体（此时就是 Blob，
+      // 不带 headers），成功时返回完整 response 对象（blob 在 .data）
+      if (res instanceof Blob) {
+        downloadError.value = (await blobDetail(res)) || t("results.failed");
         return;
       }
       if (!res.data || (res.data as Blob).size === 0) {
@@ -75,10 +77,11 @@ export function useCodegenDownload({
       const name =
         mode.value === "batch"
           ? "generated-codegen.zip"
-          : `generated-${state.model.replace(".", "-")}.zip`;
+          : `generated-${state.model.replaceAll(".", "-")}.zip`;
       downloadByData(res.data, name);
-      // 已下载当前配置：后续未改动时离开不再提示
-      baselineSignature.value = payloadSignature.value;
+      // 已下载当前配置：后续未改动时离开不再提示（批量下载不影响单模型草稿基线）
+      if (mode.value === "single")
+        baselineSignature.value = payloadSignature.value;
       message(t("codegen.downloadStarted"), { type: "success" });
     } finally {
       downloadLoading.value = false;

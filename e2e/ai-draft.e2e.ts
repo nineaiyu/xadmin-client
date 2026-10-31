@@ -132,7 +132,7 @@ test("AI 字段草案：生成 → 人审采纳 → 合并进字段配置", asyn
     // 采纳：弹窗关闭 + 字段配置表回填显示名
     await dialog.getByTestId("ai-draft-apply").click();
     await expect(dialog).toBeHidden({ timeout: 10_000 });
-    await expect(page.locator(".el-message").first()).toBeVisible({
+    await expect(page.locator(".el-message").last()).toBeVisible({
       timeout: 10_000
     });
     const labelInput = page

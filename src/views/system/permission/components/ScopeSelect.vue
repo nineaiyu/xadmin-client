@@ -2,6 +2,7 @@
 import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import { computed, isRef, nextTick, ref, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useFormDisabled } from "element-plus";
 import type { FilterNodeMethodFunction, TreeInstance } from "element-plus";
 import { MenuChoices } from "@/views/system/constants";
 import { translateMenuTitle } from "@/components/RePermissionPreview";
@@ -24,7 +25,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   rows: () => [],
-  disabled: false
+  // Boolean 缺省用 undefined：让 useFormDisabled 的 el-form 级联可落到 form.disabled
+  disabled: undefined
 });
 
 /** 菜单数据异步到达（晚于弹层渲染）时仍能回显与统计 */
@@ -36,6 +38,9 @@ const rowsValue = computed<MenuScopeRow[]>(() =>
 const modelValue = defineModel<string[]>({ default: () => [] });
 
 const { t } = useI18n();
+/** el-form 的 disabled 级联：自定义 renderField 组件不自动继承，这里显式接入 */
+const formDisabled = useFormDisabled();
+const disabledState = computed(() => props.disabled || formDisabled.value);
 
 const dialogVisible = ref(false);
 const keyword = ref("");
@@ -113,7 +118,7 @@ function handleOpened() {
 }
 
 function openDialog() {
-  if (props.disabled) return;
+  if (disabledState.value) return;
   keyword.value = "";
   dialogVisible.value = true;
 }
@@ -136,7 +141,7 @@ function handleConfirm() {
       class="scope-trigger"
       data-testid="scope-trigger"
       plain
-      :disabled="disabled"
+      :disabled="disabledState"
       @click="openDialog"
     >
       <span class="truncate">{{ summary }}</span>
@@ -146,6 +151,7 @@ function handleConfirm() {
       link
       size="small"
       type="primary"
+      :disabled="disabledState"
       @click="modelValue = []"
     >
       {{ t("buttons.reset") }}

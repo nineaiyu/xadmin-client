@@ -93,7 +93,31 @@ if (process.argv.includes("--update")) {
     note: "首屏入口（src/main.ts / src/App.vue）顶层静态导入白名单。新增条目必须确认其依赖链应进首屏闭包（否则改动态 import()）；--update 登记并在提交说明中给出理由。",
     ...current
   };
-  writeFileSync(BASELINE_PATH, JSON.stringify(payload, null, 2) + "\n");
+  const serialized = `${JSON.stringify(payload, null, 2)}\n`;
+  const previous = existsSync(BASELINE_PATH)
+    ? readFileSync(BASELINE_PATH, "utf-8")
+    : null;
+  if (previous === serialized) {
+    console.log(
+      "首屏入口白名单与基线一致，未写入（--update 只在内容确有变化时落盘）。"
+    );
+    process.exit(0);
+  }
+  if (previous) {
+    const previousData = JSON.parse(previous);
+    const diffs = [];
+    for (const rel of ENTRY_FILES) {
+      const base = new Set(previousData[rel] ?? []);
+      const now = new Set(current[rel]);
+      const added = [...now].filter(spec => !base.has(spec));
+      const removed = [...base].filter(spec => !now.has(spec));
+      for (const spec of added) diffs.push(`+ ${rel}: ${spec}`);
+      for (const spec of removed) diffs.push(`- ${rel}: ${spec}`);
+    }
+    console.log(`差异摘要（${diffs.length} 条）：`);
+    for (const item of diffs) console.log(`  ${item}`);
+  }
+  writeFileSync(BASELINE_PATH, serialized);
   console.log(`已写回基线：scripts/entry-closure-baseline.json`);
   process.exit(0);
 }

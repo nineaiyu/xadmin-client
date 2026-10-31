@@ -88,6 +88,20 @@ const rows = computed(() => {
     }));
 });
 
+/** 递归掩码：嵌套对象/数组里的敏感键（password/token/...）同样脱敏 */
+function maskSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(maskSensitive);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, child]) => [
+        key,
+        SENSITIVE_PARAM_KEYS.has(key) ? "••••••" : maskSensitive(child)
+      ])
+    );
+  }
+  return value;
+}
+
 function formatValue(key: string, value: unknown): string {
   if (typeof value === "boolean") {
     return value ? t("chat.yes") : t("chat.no");
@@ -99,12 +113,14 @@ function formatValue(key: string, value: unknown): string {
   if (Array.isArray(value)) {
     return value
       .map(item =>
-        typeof item === "object" ? JSON.stringify(item) : String(item)
+        typeof item === "object" && item !== null
+          ? JSON.stringify(maskSensitive(item))
+          : String(item)
       )
       .join("、");
   }
   if (value !== null && typeof value === "object") {
-    return Object.entries(value as Record<string, unknown>)
+    return Object.entries(maskSensitive(value) as Record<string, unknown>)
       .map(([childKey, childValue]) => `${childKey}: ${String(childValue)}`)
       .join("; ");
   }
@@ -114,20 +130,26 @@ function formatValue(key: string, value: unknown): string {
 async function onExecute() {
   if (state.value === "loading") return;
   state.value = "loading";
-  const result = await props.executor(props.draft);
-  if (result.ok) {
-    state.value = "done";
-    detail.value = result.detail || t("chat.actionDone");
-    return;
+  try {
+    const result = await props.executor(props.draft);
+    if (result.ok) {
+      state.value = "done";
+      detail.value = result.detail || t("chat.actionDone");
+      return;
+    }
+    if (result.pending) {
+      // 412 审批协议：审批通过后再次点击确认即原样重发（拦截器自动携带令牌）
+      state.value = "pending";
+      detail.value = result.detail || t("chat.actionPending");
+      return;
+    }
+    state.value = "failed";
+    detail.value = result.detail || t("results.failed");
+  } catch (error) {
+    // executor 抛错（网络/未捕获异常）必须回到可重试状态，不能永久 loading
+    state.value = "failed";
+    detail.value = error instanceof Error ? error.message : t("results.failed");
   }
-  if (result.pending) {
-    // 412 审批协议：审批通过后再次点击确认即原样重发（拦截器自动携带令牌）
-    state.value = "pending";
-    detail.value = result.detail || t("chat.actionPending");
-    return;
-  }
-  state.value = "failed";
-  detail.value = result.detail || t("results.failed");
 }
 </script>
 

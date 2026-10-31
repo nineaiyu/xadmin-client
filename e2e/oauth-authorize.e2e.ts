@@ -1,6 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { login } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * OAuth 授权码同意页：第三方发起 → 同意页展示 → 同意回跳携带 code /
@@ -33,6 +41,7 @@ function authorizeUrl(clientId: string) {
 
 test("OAuth 同意页：同意后回跳携带授权码", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const clientId = await createApplication(page, `E2E OAuth ${Date.now()}`);
   // 回跳目标用本地监听端口不可达，拦截请求给一个静态页即可断言 URL
   await page.route(`${CALLBACK}*`, route =>
@@ -58,6 +67,7 @@ test("OAuth 同意页：同意后回跳携带授权码", async ({ page }) => {
 
 test("OAuth 同意页：拒绝后回跳携带 access_denied", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const clientId = await createApplication(
     page,
     `E2E OAuth 拒绝 ${Date.now()}`
@@ -82,6 +92,7 @@ test("OAuth 同意页：拒绝后回跳携带 access_denied", async ({ page }) =
 
 test("OAuth 同意页：未登记的 redirect_uri 被拒绝", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const clientId = await createApplication(
     page,
     `E2E OAuth 非法回跳 ${Date.now()}`

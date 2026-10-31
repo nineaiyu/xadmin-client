@@ -7,6 +7,7 @@ import {
   computeNodeStatusMap,
   computeSelectionStats,
   countFieldSelection,
+  expandMenuSelection,
   foldFullMenuSelection,
   invertSelection,
   matchPermissionNode,
@@ -394,5 +395,26 @@ describe("splitHighlight", () => {
       { text: "角色管理", hit: false }
     ]);
     expect(splitHighlight("", "用户")).toEqual([{ text: "", hit: false }]);
+  });
+});
+
+describe("expandMenuSelection 历史页面键回显", () => {
+  const index = buildPermissionTreeIndex(buildTree());
+
+  it("仅存页面键的旧授权展开为显式权限点（不再折叠）", () => {
+    const expanded = expandMenuSelection(index, ["a1"]);
+    expect(expanded.has("a1")).toBe(true);
+    expect(expanded.has("a1-1")).toBe(true);
+    expect(expanded.has("a1-2")).toBe(true);
+    // 回显不做折叠：权限点仍显式在勾选集中
+    expect(expanded.size).toBeGreaterThan(1);
+  });
+
+  it("部分勾选保持原样并补齐祖先", () => {
+    const expanded = expandMenuSelection(
+      index,
+      cascadeSelection(index, "a1-1", true, [])
+    );
+    expect([...expanded].sort()).toEqual(["a", "a1", "a1-1"]);
   });
 });

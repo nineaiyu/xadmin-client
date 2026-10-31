@@ -89,14 +89,16 @@ function filterChildrenTree(data: RouteRecordRaw[]): RouteRecordRaw[] {
   return newTree;
 }
 
-/** 判断两个数组彼此是否存在相同值（任一侧非数组时按历史语义返回 true） */
+/** 判断两个数组彼此是否存在相同值；路由未声明 roles 时放行，声明了但用户角色缺失则拒绝 */
 function isOneOfArray(
   a: Array<string> | undefined,
   b: Array<string> | undefined
 ) {
-  return Array.isArray(a) && Array.isArray(b)
-    ? intersection(a, b).length > 0
-    : true;
+  // 未声明 roles 的路由不参与角色门禁（历史语义保留）
+  if (!Array.isArray(a)) return true;
+  // 声明了 roles 但当前用户角色不是数组：fail-closed，不能当成「全部允许」
+  if (!Array.isArray(b)) return false;
+  return intersection(a, b).length > 0;
 }
 
 /**

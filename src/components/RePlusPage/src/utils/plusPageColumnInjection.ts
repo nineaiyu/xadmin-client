@@ -1,6 +1,6 @@
 import { formatPublicLabels, uniqueArrayObj } from "./index";
 import type { OperationButtonsRow } from "../components/ButtonOperation";
-import { renderSwitch } from "./handle";
+import { renderBooleanTag, renderSwitch } from "./handle";
 import { OPERATION_COLUMN_KEY, SELECTION_COLUMN_KEY } from "./constants";
 import { DEFAULT_OPERATION_COLUMN_WIDTH } from "./operationColumnWidth";
 import type { Ref } from "vue";
@@ -18,7 +18,8 @@ export function applyBooleanColumnRenderers({
   api,
   auth,
   switchLoadMap,
-  switchStyle
+  switchStyle,
+  tagStyle
 }: {
   listColumns: Ref<PageColumn[]>;
   t: TFunction;
@@ -26,18 +27,30 @@ export function applyBooleanColumnRenderers({
   auth: { partialUpdate?: unknown; update?: unknown };
   switchLoadMap: Ref<Record<string, unknown>>;
   switchStyle: unknown;
+  tagStyle: Ref<(status: boolean) => Record<string, string>>;
 }) {
   listColumns.value.forEach((column: PageColumn) => {
     switch (column._column?.input_type) {
       case "boolean":
         // pure-table ****** start
+        // 元数据 read_only（如 SerializerMethodField）只展示标签，不能发 PATCH
+        if (column._column?.read_only) {
+          column["cellRenderer"] = renderBooleanTag({
+            t,
+            tagStyle: tagStyle as never,
+            field: column.prop
+          });
+          break;
+        }
         column["cellRenderer"] = renderSwitch({
           t,
           updateApi: api.partialUpdate as never,
           switchLoadMap,
           switchStyle: switchStyle as never,
           field: column.prop,
-          disabled: () => !(auth.partialUpdate || auth.update)
+          // 权限位 + 行级 is_owner（与编辑/删除按钮同口径；后端仍兜底）
+          disabled: (row?: Record<string, unknown>) =>
+            !(auth.partialUpdate || auth.update) || row?.is_owner === false
         });
         break;
       // pure-table ****** end
@@ -74,10 +87,20 @@ export function injectOperationColumn({
   getOperationButtons: () => OperationButtonsRow[];
 }) {
   const { operation, operationButtonsProps, localeName } = props;
-  const hasOperations = uniqueArrayObj(getOperationButtons(), "code").filter(
-    (item: OperationButtonsRow) => item?.show
+  const auth = props.auth ?? {};
+  const hasPermissionButton = Boolean(
+    auth.update || auth.partialUpdate || auth.destroy || auth.changeHistory
   );
-  if (!(operation && hasOperations.length > 0)) return;
+  const showDetail = operationButtonsProps?.hideDetail !== true;
+  const hasOperations = uniqueArrayObj(getOperationButtons(), "code").filter(
+    (item: OperationButtonsRow) => {
+      if (typeof item?.show === "function") return hasPermissionButton;
+      return typeof item?.show === "boolean" ? item.show : hasPermissionButton;
+    }
+  );
+  // 详情默认按钮不依赖写权限；其余按钮都要求至少一个操作权限位，
+  // 否则「仅 list 权限 + hideDetail」会注入一条永远空白的操作列
+  if (!(operation && (showDetail || hasOperations.length > 0))) return;
   listColumns.value.push({
     _column: { key: OPERATION_COLUMN_KEY },
     label:

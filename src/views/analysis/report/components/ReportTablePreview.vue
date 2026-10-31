@@ -52,8 +52,10 @@ const cellText = (row: Record<string, unknown>, column: string) => {
   return typeof value === "object" ? JSON.stringify(value) : String(value);
 };
 
+let loadSeq = 0;
 const load = async () => {
   if (!props.datasetPk) return;
+  const seq = ++loadSeq;
   loading.value = true;
   errorMsg.value = "";
   try {
@@ -62,6 +64,7 @@ const load = async () => {
     const res = await datasetApi.execute<ExecuteResult>(props.datasetPk, {
       max_rows: props.limit
     });
+    if (seq !== loadSeq) return;
     if (!isSuccess(res)) {
       errorMsg.value = String(res.detail ?? t("dataReport.tableLoadFailed"));
       return;
@@ -72,10 +75,11 @@ const load = async () => {
     rows.value = allRows.value.slice(0, props.limit);
     total.value = result?.total ?? rows.value.length;
   } catch (error) {
+    if (seq !== loadSeq) return;
     errorMsg.value =
       normalizeError(error).detail || String(t("dataReport.tableLoadFailed"));
   } finally {
-    loading.value = false;
+    if (seq === loadSeq) loading.value = false;
   }
 };
 

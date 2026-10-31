@@ -255,12 +255,21 @@ useScreenShortcuts({
 });
 
 /** 模式切换：只改模式（坐标不互转），切回另一模式即见原布局；未保存过则标脏 */
+let modeDirtySeq = -1;
 function switchMode(next: ScreenLayoutMode) {
   if (next === mode.value) return;
+  const saved = choiceValue(screen.value?.layout_mode);
   mode.value = next;
   grid.clearSelection();
   free.clearSelection();
-  if (choiceValue(screen.value?.layout_mode) !== next) markDirty();
+  if (saved !== next) {
+    markDirty();
+    modeDirtySeq = editSeq;
+  } else if (modeDirtySeq === editSeq) {
+    // 切走又切回已保存模式且期间没有其它编辑：草稿与已保存一致，复位脏标记
+    dirty.value = false;
+    modeDirtySeq = -1;
+  }
 }
 
 /* 装载时序（进场校验 / 载荷装载 / 引用数据 / 时钟起表，见 useDesignerBootstrap） */
@@ -360,6 +369,7 @@ const back = () => {
       :templates="freeTemplates"
       :server-templates="freeServerTemplates"
       :grid-snap="freeGridSnap"
+      :rollback-template="free.rollbackTemplate"
       @zoom="free.setZoom"
       @fit="free.fitToView"
       @copy="free.copy"
@@ -459,7 +469,6 @@ const back = () => {
         }}</span>
       </aside>
     </div>
-
     <VersionHistoryDialog
       v-model="versionsVisible"
       :title="t('dataScreen.versionHistory')"
@@ -471,30 +480,4 @@ const back = () => {
   </div>
 </template>
 
-<style lang="scss" scoped>
-/* 画布恒深色（与投屏页同底），保证设计所见即投屏所得 */
-.designer-root {
-  background: var(--screen-canvas);
-}
-
-.designer-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.designer-inspector {
-  flex: none;
-  width: 260px;
-  padding: var(--space-3);
-  overflow: auto;
-  background: var(--screen-surface);
-  border-left: 1px solid var(--screen-border);
-}
-
-.designer-hint {
-  font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
-  color: var(--screen-fg-dim);
-}
-</style>
+<style lang="scss" scoped src="./designer.scss"></style>

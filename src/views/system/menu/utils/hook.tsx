@@ -42,11 +42,13 @@ export function useMenu() {
   const data = useMenuData();
   const filter = useMenuFilter(data.treeData);
   const renderedTree = useRenderedTree(filter.visibleTree);
-  // 定位目标由交互域提供（树引用晚于本模块创建，以回调延迟取用）
+  // 树引用晚于 reveal 创建：用晚绑定回调，避免闭包引用后声明的 interactions（前向引用/TDZ）
+  // eslint-disable-next-line prefer-const -- 交互域在其后才创建，无法在声明处初始化
+  let scrollToTreePk: ((pk: string) => void) | undefined;
   const reveal = useMenuReveal({
     filterExpandPks: filter.expandPks,
     rowIndex: data.rowIndex,
-    scrollToPk: pk => interactions.tree.scrollToPk(pk)
+    scrollToPk: pk => scrollToTreePk?.(pk)
   });
 
   const drawer = useMenuDrawer({
@@ -82,6 +84,8 @@ export function useMenu() {
     reveal,
     drawer
   });
+  // 交互域创建完成后再接通树滚动（revealRow 只会在用户动作后调用）
+  scrollToTreePk = pk => interactions.tree.scrollToPk(pk);
 
   useMenuInit({ data, auth });
 

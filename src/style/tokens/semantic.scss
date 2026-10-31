@@ -200,12 +200,14 @@ html.dark {
 :root {
   /** 主题色 */
   --pure-theme-sub-menu-active-text: initial;
-  --pure-theme-menu-bg: none;
-  --pure-theme-menu-hover: none;
+
+  /* 未知 data-theme 回落亮色皮肤：不能给 none/initial（侧栏底色与文字会失效） */
+  --pure-theme-menu-bg: #fff;
+  --pure-theme-menu-hover: #f4f4f5;
   --pure-theme-sub-menu-bg: transparent;
-  --pure-theme-menu-text: initial;
-  --pure-theme-sidebar-logo: none;
-  --pure-theme-menu-title-hover: initial;
+  --pure-theme-menu-text: hsl(var(--fg));
+  --pure-theme-sidebar-logo: #fff;
+  --pure-theme-menu-title-hover: hsl(var(--fg));
   --pure-theme-menu-active-before: transparent;
 
   /* 菜单激活态：底色与文字色成对声明（浅色皮肤 = 主色浅底 + 主色文字；

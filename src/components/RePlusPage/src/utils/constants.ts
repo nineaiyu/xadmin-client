@@ -19,7 +19,8 @@ export const INJECTED_COLUMN_KEYS = [
   OPERATION_COLUMN_KEY
 ] as const;
 
-export const selectBooleanOptions = [
+/** 渲染期取文案：语言运行时切换后布尔选项标签同步更新（模块常量会冻结在首次求值） */
+export const selectBooleanOptions = () => [
   {
     label: transformI18n($t("labels.enable")),
     value: true

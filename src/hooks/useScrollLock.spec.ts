@@ -103,4 +103,23 @@ describe("useScrollLock", () => {
     locked.value = true;
     expect(target.style.getPropertyValue("scrollbar-gutter")).toBe("stable");
   });
+
+  it("多个弹层并存：按目标引用计数，全部解锁后不在容器上残留 stable", async () => {
+    const target = buildLayoutTarget();
+    const first = mountLock();
+    await nextTick();
+    await nextTick();
+
+    const second = mountLock();
+    await nextTick();
+    await nextTick();
+    expect(target.style.getPropertyValue("scrollbar-gutter")).toBe("stable");
+
+    // 后开的先关：仍有一个弹层上锁，补偿必须保留
+    second.locked.value = false;
+    expect(target.style.getPropertyValue("scrollbar-gutter")).toBe("stable");
+
+    first.locked.value = false;
+    expect(target.style.getPropertyValue("scrollbar-gutter")).toBe("");
+  });
 });

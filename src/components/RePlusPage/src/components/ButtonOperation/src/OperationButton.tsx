@@ -47,6 +47,28 @@ export default defineComponent({
   emits: ["action"],
   setup(props, { emit }) {
     const loading = ref(false);
+
+    /**
+     * popconfirm 淡出时长：读取弹层实际的 transition-duration（主题/密度可调），
+     * 取不到时回落 260ms（EP 默认淡出窗口）。固定延时不随样式变化，低端机上会错位。
+     */
+    const POPOVER_LEAVE_FALLBACK_MS = 260;
+    const popperLeaveMs = () => {
+      const popper = Array.from(document.querySelectorAll(".el-popconfirm"))
+        .map(node => node.closest<HTMLElement>(".el-popper"))
+        .find(el => !!el && el.getBoundingClientRect().width > 0);
+      if (!popper) return POPOVER_LEAVE_FALLBACK_MS;
+      const max = getComputedStyle(popper)
+        .transitionDuration.split(",")
+        .reduce((result, part) => {
+          const value = Number.parseFloat(part);
+          if (Number.isNaN(value)) return result;
+          const ms = part.trim().endsWith("ms") ? value : value * 1000;
+          return Math.max(result, ms);
+        }, 0);
+      return max > 0 ? max : POPOVER_LEAVE_FALLBACK_MS;
+    };
+
     // 确认框收起完成后再关下拉（见 onAfterLeave）：两者并发会让确认框
     // 因 reference 突然消失而定位跳变（视觉卡顿）
     /**
@@ -59,7 +81,7 @@ export default defineComponent({
      */
     const closeDropdownAfterConfirm = () => {
       if (!props.isSubButton) return;
-      setTimeout(() => props.closeDropdown?.(), 260);
+      setTimeout(() => props.closeDropdown?.(), popperLeaveMs());
     };
 
     /**

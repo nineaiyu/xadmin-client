@@ -1,6 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { BACKEND_URL, login } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 创建令牌（工具栏入口 → 创建弹层填名称 → 明文弹层取明文并关闭）。
@@ -46,6 +54,7 @@ async function createToken(page: Page, tokenName: string): Promise<string> {
 
 test("访问令牌：创建 → Pat 头调 API → 吊销后 401", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto("/#/account-settings");
   // 进入「访问令牌」页签
   await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
@@ -90,6 +99,7 @@ test("访问令牌：创建 → Pat 头调 API → 吊销后 401", async ({ page
  */
 test("访问令牌 IP 白名单：未命中拒绝 / 命中放行", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto("/#/account-settings");
   await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
 
@@ -145,6 +155,7 @@ test("访问令牌 IP 白名单：未命中拒绝 / 命中放行", async ({ page
  */
 test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto("/#/account-settings");
   await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
 
@@ -196,6 +207,7 @@ test("访问令牌 scope 方法前缀：GET 放行 / POST 拒绝", async ({ page
  */
 test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto("/#/account-settings");
   await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
 
@@ -258,6 +270,7 @@ test("访问令牌 scope：命中 200 / 越界 403 / 吊销 401", async ({ page 
  */
 test("访问令牌接口范围：勾选有权限的接口即生效", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await page.goto("/#/account-settings");
   await page.locator(".el-menu-item", { hasText: "访问令牌" }).first().click();
 

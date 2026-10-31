@@ -92,16 +92,8 @@ export function useScreenFormOptions({
         }
       },
       formProps: {
-        rules: {
-          // 轮播清单至少一个：与原手写表单的提交前校验一致
-          dashboards: [
-            {
-              required: true,
-              message: t("dataScreen.required"),
-              trigger: "change"
-            }
-          ]
-        }
+        // 与服务端同口径：dashboards 允许空数组（画布屏/非 UI 途径创建的屏仍可编辑改名与可见性）
+        rules: {}
       }
     }
   });

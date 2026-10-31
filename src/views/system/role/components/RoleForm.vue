@@ -5,6 +5,7 @@ import { isSuccess } from "@/api/types";
 import { getKeyList } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import MenuPermissionTree from "@/components/ReMenuPermissionTree";
 import { menuFieldKey } from "@/components/ReMenuPermissionTree";
 import type {
@@ -129,12 +130,9 @@ function getCheckedMenu(pk?: string) {
       })
       .catch(error => {
         handleLoadFailed();
-        message(
-          String(error?.detail || error?.message || t("results.failed")),
-          {
-            type: "error"
-          }
-        );
+        message(normalizeError(error).detail || t("results.failed"), {
+          type: "error"
+        });
       })
       .finally(() => {
         loading.value = false;

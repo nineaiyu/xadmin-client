@@ -58,6 +58,7 @@ const serverDir = path.resolve(
 );
 // 种子按应用分层：平台层 loadjson/ + 各应用 <app>/seeds/（同一模型可能来自多个文件）
 function collectMenuSeedFiles(root) {
+  if (!existsSync(root)) return [];
   const files = [path.join(root, "loadjson", "menu.json")];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
@@ -145,7 +146,8 @@ const WHITELIST_A = new Set([
   "retrieve:SystemFlower", // 文档外链类：Celery Flower 监控页外链打开
   "create:SystemFlower", // 文档外链类：同上（仅配对方法位存在，无前端交互）
   "enable:SystemTask", // 前端启停走 batch-enable / partialUpdate，单任务端点无前端交互
-  "syncRepoStatus:AiKnowledge" // 前端只调 sync-repo 触发同步，状态经列表刷新获得
+  "syncRepoStatus:AiKnowledge", // 前端只调 sync-repo 触发同步，状态经列表刷新获得
+  "all:SystemApprovalDelegation" // 服务端取值域授权（get_queryset 判「查看全部委托」），无独立路由与前端调用位
 ]);
 
 /** 方向 B 白名单：前端有权限检查、种子无对应码，属预期（menu-maintenance.md §5） */
@@ -301,7 +303,10 @@ const defaultActions = (() => {
   return actions.length ? actions : FALLBACK_DEFAULT_ACTIONS;
 })();
 
-const allText = [...fileText.values()].join("\n");
+/** 剥注释：端点证据不得由注释里的路径字样满足 */
+const stripComments = text =>
+  text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+const allText = [...fileText.values()].map(stripComments).join("\n");
 const literalCodes = new Set();
 for (const text of fileText.values()) {
   for (const match of text.matchAll(CODE_PATTERN)) literalCodes.add(match[1]);
@@ -334,14 +339,27 @@ for (const site of authSites) {
  * 其余字面段连成的尾路径以 "/<tail>" 形态出现在 src 内（`${baseApi}/动作` 拼装处）。
  * 切分点动态尝试，覆盖 baseApi 与动作路径分属两处（基类通用方法 / 子类配置）的拼装形态；
  * 尾段必须带前导斜杠整体匹配，避免普通单词（如类名 / 注释里的词）误当端点证据。 */
+/** 端点尾路径必须出现在字符串字面量内（引号/模板插值边界），避免路径片段出现在
+ *  任意标识符、注释或更长路径里被当成消费证据 */
+function tailConsumed(tail) {
+  const escaped = tail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`["'\`}]/${escaped}(?:["'\`?/]|$)`).test(allText);
+}
+
 function endpointConsumed(pathStr) {
   const segments = seedSegments(pathStr);
   if (segments[0] !== "api") return false;
   for (let k = 1; k < segments.length; k++) {
     const anchor = `api/${segments.slice(1, k + 1).join("/")}`;
-    if (!allText.includes(anchor)) continue;
+    // 基类地址同样是字面量（baseApi = "/api/..."）：限定在引号内出现
+    if (
+      !new RegExp(
+        `["'\`]/?${anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`
+      ).test(allText)
+    )
+      continue;
     const tails = segments.slice(k + 1).filter(segment => segment !== "*");
-    if (!tails.length || allText.includes(`/${tails.join("/")}`)) return true;
+    if (!tails.length || tailConsumed(tails.join("/"))) return true;
   }
   return false;
 }

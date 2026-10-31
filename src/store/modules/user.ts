@@ -6,10 +6,17 @@ import { transformI18n } from "@/plugins/i18n";
 // store → api/auth 的顶层静态边会与 api/auth → utils/http → store 的链路成环，
 // 环内 api 模块的类声明可能在基类就绪前求值。环检测脚本守护此约束。
 import type { TokenInfo, UserInfo, UserInfoResult } from "@/api/auth";
-import { getRefreshToken, removeToken, setToken, userKey } from "@/utils/auth";
+import {
+  getRefreshToken,
+  getToken,
+  removeToken,
+  setToken,
+  userKey
+} from "@/utils/auth";
 import { encryptCredential } from "@/utils/aes";
 import { clearPendingApprovals } from "@/utils/http/pendingApproval";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
+import { publishCrossTab, subscribeCrossTab } from "@/utils/crossTabSync";
 
 import { routerArrays, storageLocal, store, type userType } from "../utils";
 
@@ -87,7 +94,8 @@ export const useUserStore = defineStore("pure-user", {
       this.email = data.email;
       this.phone = data.phone;
       this.pk = data.pk;
-      this.roles = data?.roles;
+      // 后端可能不下发 roles：保持数组形态，避免角色门禁拿到 undefined
+      this.roles = Array.isArray(data?.roles) ? data.roles : [];
       // 平台超管标记随用户信息刷新（「非本人也可管理」入口据此放行）
       this.is_superuser = Boolean(data?.is_superuser);
       // 巡检处置联动：改密要求随用户信息刷新（App.vue 观察后引导，改密即清除）
@@ -175,6 +183,8 @@ export const useUserStore = defineStore("pure-user", {
     async logOut() {
       this.username = "";
       this.roles = [];
+      // 登出即广播：其他标签持有同一份 token，必须一并清理并回到登录页
+      publishCrossTab({ type: "user:logout" });
       // 审批令牌绑定申请人：登出即清空，防跨账号残留（不依赖整页 reload）
       clearPendingApprovals();
       const { logoutApi } = await import("@/api/auth");
@@ -198,6 +208,30 @@ export const useUserStore = defineStore("pure-user", {
         })
         // token 已失效时 logoutApi 会 reject（拦截器已 redirectToLogin）：
         // 补终端 catch 防 unhandled rejection（finally 的清理与 reload 照常执行）
+        .catch(() => undefined);
+    },
+    /**
+     * 收到其他标签的登出事件：同步清理本标签的登录态并回到登录页。
+     *
+     * 与本地 logOut 的差异：不再调用登出接口（token 已被登出方吊销），
+     * 也不整页 reload——保留当前页签，路由跳登录让守卫接管回跳参数。
+     */
+    async handleRemoteLogout() {
+      if (!getToken() && !getRefreshToken()) return;
+      this.username = "";
+      this.roles = [];
+      clearPendingApprovals();
+      useNoticeStoreHook().disconnect();
+      removeToken();
+      useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+      // 路由重置动态引入：store ↔ router 顶层静态引用会成环（门禁守护）
+      const { resetRouter, router } = await import("@/router");
+      resetRouter();
+      useWatermarkStoreHook().reset();
+      const current = router.currentRoute.value;
+      if (current.path === "/login") return;
+      await router
+        .push({ path: "/login", query: { redirect: current.fullPath } })
         .catch(() => undefined);
     },
     /**
@@ -249,4 +283,14 @@ export const useUserStore = defineStore("pure-user", {
 
 export function useUserStoreHook() {
   return useUserStore(store);
+}
+
+// 跨标签登出同步：任一标签登出（或令牌被吊销）后，其他标签一并回到登录页。
+// 订阅在模块加载时安装一次（BroadcastChannel 优先，storage 事件兜底）。
+if (typeof window !== "undefined") {
+  subscribeCrossTab(message => {
+    if (message.type === "user:logout") {
+      void useUserStoreHook().handleRemoteLogout();
+    }
+  });
 }

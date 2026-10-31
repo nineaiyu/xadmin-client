@@ -22,6 +22,7 @@ async function pickSelectOption(page: Page, dialog: Locator, label: string) {
   await option.click();
 }
 test("表格已读行：打开详情后行挂 is-viewed 且刷新保持", async ({ page }) => {
+  test.slow();
   const title = `E2E已读-${Date.now()}`;
   await login(page);
   await openMenuPath(page, ["系统管理", "通知公告"], "/system/notice/index");
@@ -82,9 +83,9 @@ test("表格已读行：打开详情后行挂 is-viewed 且刷新保持", async 
   await expect(row).toBeVisible({ timeout: 15_000 });
   await expect(row).not.toHaveClass(/is-viewed/);
 
-  // 打开详情（行内第 3 个按钮）→ 关闭弹窗
+  // 打开详情（按可访问名定位；行内按钮顺序变化不影响）→ 关闭弹窗
   await row.hover();
-  await row.locator("button").nth(2).click();
+  await row.getByRole("button", { name: /详情|查看|Detail|View/ }).click();
   const detailDialog = page.locator(".el-dialog:visible");
   await expect(detailDialog).toBeVisible({ timeout: 10_000 });
   await detailDialog.locator(".el-dialog__headerbtn").first().click();

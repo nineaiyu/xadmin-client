@@ -24,8 +24,11 @@ export function usePermissionPreview<T>(
 
   onMounted(() => {
     data.value = null;
+    const pk = row();
+    // 缺主键时不能拼出 `/undefined/preview/`：按空态呈现并跳过请求
+    if (pk === undefined || pk === null || String(pk).trim() === "") return;
     // 挂载自动加载失败按空态呈现，不向全局抛未处理拒绝；显式 load() 仍原样上抛供调用方处理
-    load(String(row())).catch(() => undefined);
+    load(String(pk)).catch(() => undefined);
   });
 
   return { loading, data, load };

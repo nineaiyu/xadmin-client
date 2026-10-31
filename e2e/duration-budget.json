@@ -8,8 +8,14 @@
   },
   "darwin-local-full": {
     "4": {
-      "seconds": 792,
-      "recorded_at": "2026-09-30T08:13:10.607Z"
+      "seconds": 1225,
+      "recorded_at": "2026-10-31T08:44:00.000Z"
+    }
+  },
+  "darwin-ci-full": {
+    "2": {
+      "seconds": 1935,
+      "recorded_at": "2026-10-31T13:52:29.252Z"
     }
   }
 }

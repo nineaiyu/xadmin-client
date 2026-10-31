@@ -54,6 +54,26 @@ import {
 const AUTH_EXEMPT_URLS = ["/api/identity/refresh", "/api/identity/login"];
 
 /**
+ * 错误响应体归一：`responseType: "blob"` 时 4xx 的 body 是 Blob，
+ * 400/401 等策略读 `data.detail` 只能得到空串（导出失败弹空提示）。
+ * 这里把 Blob 读成文本并尽量解析为 JSON，再交给统一策略。
+ */
+async function normalizeErrorBody(data: unknown): Promise<unknown> {
+  if (!(data instanceof Blob)) return data;
+  try {
+    const text = await data.text();
+    if (!text) return { detail: "" };
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { detail: text };
+    }
+  } catch {
+    return { detail: "" };
+  }
+}
+
+/**
  * multipart/form-data 对象展开序列化（FormData 上传协议 v1 唯一收敛点）。
  *
  * 嵌套对象按点分键拆分成表单字段（a.0.b → a[0][b] 语义），后端
@@ -169,7 +189,7 @@ class PureHttp {
         .then(response => {
           resolve(response as T);
         })
-        .catch(error => {
+        .catch(async error => {
           // 路由切换主动取消的请求静默失败，不打扰用户
           if (Axios.isCancel(error) || error.code === "ERR_CANCELED") {
             reject(error);
@@ -180,7 +200,9 @@ class PureHttp {
             reject(error);
             return;
           }
-          const data = error.response?.data;
+          const data = (await normalizeErrorBody(
+            error.response?.data
+          )) as SendErrorContext["data"];
           if (error.response && error.response.status) {
             // 状态码/业务类型分发：命中策略即已落定 Promise，未命中走默认兜底
             const ctx: SendErrorContext = {

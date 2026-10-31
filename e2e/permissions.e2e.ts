@@ -53,7 +53,10 @@ test.describe("数据权限", () => {
     await login(page, LEADER_USER);
     await openUserManagement(page);
     const rows = page.locator(".el-table__row");
-    await expect(rows).toHaveCount(2, { timeout: 15_000 });
+    // 不写死行数：同分片其它 spec 可能向该部门加人；改钉「目标成员在、对照不在」
+    await expect
+      .poll(() => rows.count(), { timeout: 15_000 })
+      .toBeGreaterThanOrEqual(2);
     await expect(page.locator(".el-table")).toContainText(LEADER_USER.username);
     await expect(page.locator(".el-table")).toContainText(
       LEADER_MEMBER_USERNAME

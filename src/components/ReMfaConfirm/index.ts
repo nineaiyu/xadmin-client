@@ -12,8 +12,8 @@ export type MfaConfirmResult = {
   expire_at: number | null;
 };
 
-/** 进行中的验证共享 Promise：并发 412 只弹一个窗，全部等待同一次验证 */
-let pendingConfirm: Promise<MfaConfirmResult> | null = null;
+/** 进行中的验证共享 Promise：同一确认类型并发 412 只弹一个窗；不同类型各弹各的 */
+const pendingConfirm = new Map<string, Promise<MfaConfirmResult>>();
 
 /**
  * 命令式唤起身份二次验证对话框。
@@ -22,9 +22,10 @@ let pendingConfirm: Promise<MfaConfirmResult> | null = null;
  * 验证成功 resolve、用户取消 reject；包装层在结束后自动卸载组件。
  */
 export function confirmMfa(confirmType = "mfa"): Promise<MfaConfirmResult> {
-  if (pendingConfirm) return pendingConfirm;
+  const pending = pendingConfirm.get(confirmType);
+  if (pending) return pending;
 
-  pendingConfirm = new Promise<MfaConfirmResult>((resolve, reject) => {
+  const promise = new Promise<MfaConfirmResult>((resolve, reject) => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     let app: ReturnType<typeof createApp> | null = null;
@@ -44,8 +45,7 @@ export function confirmMfa(confirmType = "mfa"): Promise<MfaConfirmResult> {
       reject: () => {
         reject(new Error("mfa-confirm-cancelled"));
         setTimeout(destroy, 300);
-      },
-      destroy
+      }
     });
     // 命令式挂载不在主应用组件树内，需手动安装 i18n 与 Element Plus，
     // 否则模板内 el-* 组件与 v-loading 指令全部解析失败（console 告警 + 弹窗渲染异常）
@@ -53,10 +53,11 @@ export function confirmMfa(confirmType = "mfa"): Promise<MfaConfirmResult> {
     useElementPlus(app);
     app.mount(container);
   }).finally(() => {
-    pendingConfirm = null;
+    pendingConfirm.delete(confirmType);
   });
 
-  return pendingConfirm;
+  pendingConfirm.set(confirmType, promise);
+  return promise;
 }
 
 /** 前端类型引用：供消费方判断 412 载荷 */

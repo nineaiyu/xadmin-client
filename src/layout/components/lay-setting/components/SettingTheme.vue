@@ -153,7 +153,13 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
         class="theme-color__item"
         :class="{ 'is-active': item.themeColor === layoutTheme.themeColor }"
         :title="t(item.labelKey)"
+        role="button"
+        tabindex="0"
+        :aria-pressed="item.themeColor === layoutTheme.themeColor"
+        :aria-label="t(item.labelKey)"
         @click="setLayoutThemeColor(item.themeColor)"
+        @keydown.enter.prevent="setLayoutThemeColor(item.themeColor)"
+        @keydown.space.prevent="setLayoutThemeColor(item.themeColor)"
       >
         <span class="theme-color__box">
           <span

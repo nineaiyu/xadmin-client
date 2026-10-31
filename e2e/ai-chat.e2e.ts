@@ -1,6 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { FRONT_URL, login, openMenuPath } from "./helpers";
+import {
+  cleanupAiIsolation,
+  resetAiIsolation,
+  startAiIsolation
+} from "./ai-isolation";
 
 /**
  * 聊天室 AI 流式对话 E2E：思考过程面板 + 增量回答上屏（指向桩 LLM，SSE）。
@@ -11,6 +16,9 @@ import { FRONT_URL, login, openMenuPath } from "./helpers";
 
 const STUB_LLM_URL =
   process.env.E2E_STUB_LLM_URL ?? "http://127.0.0.1:18897/v1";
+
+test.beforeEach(() => resetAiIsolation());
+test.afterEach(async ({ page }) => cleanupAiIsolation(page));
 
 async function jsonRequest(
   page: Page,
@@ -51,6 +59,7 @@ async function useStubProfile(page: Page) {
 
 test("聊天室 AI 多轮：思考过程 + 流式回答（桩 LLM）", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
   await useStubProfile(page);
 
   await openMenuPath(page, [], "/default/chat/index");
@@ -80,6 +89,7 @@ test("SSE 增量到达守护：帧必须多次到达（防退化回一次性输�
   page
 }) => {
   await login(page);
+  await startAiIsolation(page);
   await useStubProfile(page);
 
   // 浏览器内 fetch 采样：记录每次 read 到达的时间与累计长度。

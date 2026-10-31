@@ -145,6 +145,9 @@ test.describe("暗色模式主题一致性", () => {
   test.afterEach(async ({ page }) => {
     // 兜底还原：主题是服务端共享配置，深色残留会打穿 visual 基线与其它页断言
     await switchTheme(page, "light").catch(() => undefined);
+    // 皮肤（data-theme）是共享 localStorage 状态：失败路径不还原会让后续
+    // 「浅色应为浅表面」的断言误报（2026-09-25 皮肤残留案例同源）
+    await ensureLightSkin(page).catch(() => undefined);
   });
 
   test("深色下核心页转为深表面 + 浅文本，切回浅色恢复", async ({ page }) => {

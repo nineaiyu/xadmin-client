@@ -104,16 +104,15 @@ const itemTagType = (itemStatus: string) =>
           effect="plain"
         >
           <span class="font-medium">{{ item.label }}</span>
+          {{ t("labels.colon") }}
           <template v-if="item.group === 'resource'">
-            ：{{ item.value ?? "—" }}{{ item.unit ?? ""
+            {{ item.value ?? "—" }}{{ item.unit ?? ""
             }}<span class="text-(--el-text-color-secondary)">
               / {{ item.threshold }}{{ item.unit ?? "" }}</span
             >
           </template>
           <template v-else>
-            ：{{
-              t(ITEM_STATUS_KEY[item.status] ?? "systemMonitor.itemUnknown")
-            }}
+            {{ t(ITEM_STATUS_KEY[item.status] ?? "systemMonitor.itemUnknown") }}
           </template>
         </el-tag>
       </div>
@@ -121,12 +120,15 @@ const itemTagType = (itemStatus: string) =>
         class="ml-auto flex items-center gap-4 text-xs text-(--el-text-color-regular)"
       >
         <span>
-          {{ t("systemMonitor.alertsFiring") }}：
+          {{ t("systemMonitor.alertsFiring") }}{{ t("labels.colon") }}
           <b :class="firing > 0 ? 'text-(--el-color-danger)' : ''">{{
             firing
           }}</b>
         </span>
-        <span>{{ t("systemMonitor.checkedAt") }}：{{ checkedAt }}</span>
+        <span
+          >{{ t("systemMonitor.checkedAt") }}{{ t("labels.colon")
+          }}{{ checkedAt }}</span
+        >
       </div>
     </div>
   </el-card>

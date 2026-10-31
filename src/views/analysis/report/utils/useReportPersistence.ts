@@ -80,7 +80,7 @@ export function useReportPersistence(deps: {
         message(t("dataReport.designSaved"), { type: "success" });
         return;
       }
-      if (res.detail) message(String(res.detail), { type: "warning" });
+      message(String(res.detail || t("results.failed")), { type: "warning" });
     } finally {
       deps.saving.value = false;
     }
@@ -107,7 +107,7 @@ export function useReportPersistence(deps: {
         message(t("dataReport.runOk"), { type: "success" });
         return;
       }
-      if (res.detail) message(String(res.detail), { type: "warning" });
+      message(String(res.detail || t("results.failed")), { type: "warning" });
     } finally {
       running.value = false;
     }

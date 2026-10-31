@@ -1,7 +1,7 @@
 import { message } from "@/utils/message";
 import { handleOperation } from "./handle";
 import { confirmImpact } from "./impact";
-import type { Ref } from "vue";
+import { ref, type Ref } from "vue";
 import type { BaseApi } from "@/api/base";
 import type { PlusPageFormApi } from "./plusPageFormApi";
 import type { useI18n } from "vue-i18n";
@@ -46,19 +46,28 @@ export function createDeleteActions({
     });
   };
 
+  /** 批量删除请求中的 loading（影响面预检 → 请求结束全程），防重复点击 */
+  const batchDeleteLoading = ref(false);
+
   const handleManyDelete = async () => {
     if (selectedNum.value === 0) {
       message(t("results.noSelectedData"), { type: "error" });
       return;
     }
+    if (batchDeleteLoading.value) return;
     const pks = getSelectPks("pk");
+    batchDeleteLoading.value = true;
     if (!(await confirmImpact(rawApi as BaseApi, pks, t))) {
+      batchDeleteLoading.value = false;
       return;
     }
 
     handleOperation({
       t,
       apiReq: api.batchDestroy(pks, { impact_confirmed: true }),
+      requestEnd() {
+        batchDeleteLoading.value = false;
+      },
       success(res) {
         const failures =
           (res?.data as { failures?: Array<{ pk: string; detail: string }> })
@@ -81,5 +90,5 @@ export function createDeleteActions({
     });
   };
 
-  return { handleDelete, handleManyDelete };
+  return { handleDelete, handleManyDelete, batchDeleteLoading };
 }

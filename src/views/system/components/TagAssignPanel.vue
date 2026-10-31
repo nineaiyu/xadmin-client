@@ -40,12 +40,15 @@ const selected = ref<string[]>([]);
 const mode = ref<"add" | "remove" | "replace">("add");
 const newName = ref("");
 const creating = ref(false);
+/** 单对象回显是否成功：失败时按 replace 提交会把对象既有标签全部清空（fail-open 写路径） */
+const assignReady = ref(true);
 
 /** 批量模式（无单对象 pk、但有多个目标） */
 const isBatch = computed(() => !props.pk && (props.pks?.length ?? 0) > 0);
 
 const load = async () => {
   loading.value = true;
+  assignReady.value = !props.pk;
   try {
     // 全量拉取（逐页循环），固定 size 会在标签超过接口分页上限时静默截断
     const list = await fetchAllRows<TagItem>(tagApi.list);
@@ -59,9 +62,17 @@ const load = async () => {
       const current = await tagApi.getObjectTags(props.resource, props.pk);
       if (isSuccess(current)) {
         selected.value = (current.data?.tags ?? []).map(item => item.pk);
+        assignReady.value = true;
+      } else {
+        assignReady.value = false;
+        message(String(current.detail ?? t("tag.loadFailed")), {
+          type: "warning"
+        });
       }
     }
   } catch {
+    // 回显失败：禁止提交（replace 语义下空选择 = 清空全部既有标签）
+    assignReady.value = false;
     // http 层已统一提示（无权限/网络错误），这里收尾防止 unhandled rejection
   } finally {
     loading.value = false;
@@ -108,11 +119,19 @@ const getPayload = () => ({
     "add" | "remove" | "replace"
 });
 
-defineExpose({ getPayload });
+defineExpose({ getPayload, isReady: () => assignReady.value });
 </script>
 
 <template>
   <div v-loading="loading">
+    <el-alert
+      v-if="!assignReady"
+      :title="t('tag.loadFailed')"
+      :closable="false"
+      show-icon
+      type="warning"
+      class="mb-2"
+    />
     <el-select
       v-model="selected"
       multiple

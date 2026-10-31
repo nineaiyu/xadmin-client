@@ -78,6 +78,7 @@ pnpm check:bundle-size                    # 首屏体积基线（代码/i18n 双
 pnpm check:module-cycles                  # 顶层静态导入图成环检测（豁免项按批次登记）
 pnpm check:as-unknown                     # `as unknown as` 双重断言防回潮
 pnpm check:hook-length                    # 超长 hook（≥120 行）防回潮
+pnpm check:e2e-waits                      # E2E 固定延时基线（新增 waitForTimeout 需登记理由）
 ```
 
 契约变更流程（服务端为唯一真源）：后端改 `xadmin-server/docs/schema/` 后，在本仓执行

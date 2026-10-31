@@ -11,6 +11,7 @@ const overlay = createOverlayStore<DrawerOptions<any>>();
 export const drawerStore = overlay.store;
 export const getDrawerUid = overlay.getUid;
 export const closeDrawer = overlay.close;
+export const finalizeDrawer = overlay.finalize;
 export const updateDrawer = overlay.update;
 export const closeAllDrawer = overlay.closeAll;
 

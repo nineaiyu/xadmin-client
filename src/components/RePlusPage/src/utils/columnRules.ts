@@ -85,10 +85,11 @@ export function columnDefaultValue(column: ColumnMeta): unknown {
     return { value };
   }
   if (column.input_type === "labeled_multiple_choice") {
-    return [{ value }];
+    const items = Array.isArray(value) ? value : [value];
+    return items.map(item => ({ value: item }));
   }
   if (column.input_type === "multiple choice") {
-    return [value];
+    return Array.isArray(value) ? value : [value];
   }
   return value;
 }

@@ -2,7 +2,7 @@
 import { computed, h, onMounted, ref, watch, type Component } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { cloneDeep } from "@pureadmin/utils";
+import { cloneDeep, isEqual } from "@pureadmin/utils";
 import View from "~icons/ep/view";
 import { addDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
@@ -67,12 +67,29 @@ const currentConditions = computed(() =>
   cleanViewConditions(props.conditions as Record<string, unknown>)
 );
 
-// 搜索条件被清空（重置 / 清筛选）后不再对应任何视图，按钮回到默认态
+const activeView = computed(
+  () =>
+    rows.value.find(item => String(item.pk) === String(currentPk.value)) ?? null
+);
+
+// 当前条件一旦偏离视图快照（手工改条件 / 清空筛选）就不再是「当前视图」：
+// 只按「是否还有条件」判定会让按钮一直显示已偏离的视图名
 watch(
-  () => hasViewConditions(props.conditions as Record<string, unknown>),
-  active => {
-    if (!active) currentPk.value = "";
-  }
+  currentConditions,
+  conditions => {
+    const view = activeView.value;
+    if (!view) {
+      currentPk.value = "";
+      return;
+    }
+    if (
+      !hasViewConditions(conditions) ||
+      !isEqual(cleanViewConditions(view.conditions ?? {}), conditions)
+    ) {
+      currentPk.value = "";
+    }
+  },
+  { deep: true }
 );
 
 const load = async () => {

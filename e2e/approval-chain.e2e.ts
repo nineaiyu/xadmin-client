@@ -8,7 +8,8 @@ import {
   FRONT_URL,
   getAccessToken,
   login,
-  openMenuPath
+  openMenuPath,
+  setSystemConfigByKey
 } from "./helpers";
 
 /** WS 站内信通知（右上角 5s 自动关）会盖住行内按钮：关键点击前等它退场 */
@@ -34,15 +35,9 @@ async function waitNotificationsGone(page: Page) {
  * 创建并在 finally 停用，避免污染 approval.e2e.ts 等既有用例的全局审批人行为。
  */
 
-const APPROVAL_PATHS_CONFIG_PK = "e9a6b7c8-d9e0-4f1a-9b2c-3d4e5f6a7b0f";
-
 async function setApprovalPaths(page: Page, token: string, paths: string[]) {
-  // router 为 trailing_slash=False：detail 路由不能带尾斜杠（否则 Django 404 HTML 页）
-  const response = await page.request.patch(
-    `${BACKEND_URL}/api/system/config/system/${APPROVAL_PATHS_CONFIG_PK}`,
-    { headers: { Authorization: `Bearer ${token}` }, data: { value: paths } }
-  );
-  expect(response.ok(), await response.text()).toBeTruthy();
+  // 主键按 key 查询（种子 UUID 换库/重建即变），不与具体种子主键绑定
+  await setSystemConfigByKey(page, "APPROVAL_REQUIRED_PATHS", paths, token);
 }
 
 interface ChainRule {

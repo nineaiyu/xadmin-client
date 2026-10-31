@@ -29,7 +29,10 @@ export function credentialStatus(
   return { type: "info", text: t("credential.empty") };
 }
 
-/** 更换入口 → 目标页只读权限：无权限时不展示「去更换」，避免落到 403 空白页 */
+/** 更换入口 → 目标页只读权限：无权限时不展示「去更换」，避免落到 403 空白页
+ *
+ * 逐页登记实际列表/读取权限点（与页面菜单种子一致）；未登记的入口交给路由守卫兜底。
+ */
 const CHANGE_ENTRY_PERMISSIONS: Array<{
   prefix: string;
   permissions: string[];
@@ -43,11 +46,23 @@ const CHANGE_ENTRY_PERMISSIONS: Array<{
     permissions: ["list:AiAssistantConfig"]
   },
   {
-    prefix: "/settings/ledger/index",
-    permissions: ["list:SystemSetting"]
+    prefix: "/settings/message",
+    permissions: ["list:SettingMessage"]
   },
   {
-    prefix: "/settings/",
+    prefix: "/settings/sms",
+    permissions: ["retrieve:SmsSetting"]
+  },
+  {
+    prefix: "/settings/basic",
+    permissions: ["retrieve:SettingBasic"]
+  },
+  {
+    prefix: "/settings/ldap",
+    permissions: ["retrieve:LdapServerSetting"]
+  },
+  {
+    prefix: "/settings/ledger/index",
     permissions: ["list:SystemSetting"]
   }
 ];

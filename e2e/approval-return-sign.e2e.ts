@@ -10,6 +10,12 @@ import {
   login,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 审批流动作 E2E：退回指定节点 + 减签。
@@ -84,6 +90,7 @@ async function openInstanceCenter(page: Page) {
 
 test("流程审批：通过初审后退回 → 待办重开 + 轨迹留痕", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E退回-${stamp}`;
@@ -141,7 +148,7 @@ test("流程审批：通过初审后退回 → 待办重开 + 轨迹留痕", asy
     .getByRole("button", { name: /保存|确定/ })
     .first()
     .click();
-  await expect(approverPage.locator(".el-message").first()).toContainText(
+  await expect(approverPage.locator(".el-message").last()).toContainText(
     /已退回/,
     { timeout: 15_000 }
   );
@@ -164,6 +171,7 @@ test("流程审批：通过初审后退回 → 待办重开 + 轨迹留痕", asy
 
 test("流程审批：会签加签后减签 → 剩余候选通过即流转", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E减签-${stamp}`;
@@ -215,7 +223,7 @@ test("流程审批：会签加签后减签 → 剩余候选通过即流转", asy
       .first()
       .click({ timeout: 5_000 });
   }).toPass({ timeout: PANEL_ACTION_TIMEOUT });
-  await expect(approverPage.locator(".el-message").first()).toContainText(
+  await expect(approverPage.locator(".el-message").last()).toContainText(
     /已移除加签审批人/,
     { timeout: 15_000 }
   );

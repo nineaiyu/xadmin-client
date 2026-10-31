@@ -19,6 +19,7 @@
  */
 import { spawn, execSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const total = Number(process.env.E2E_PARALLEL ?? "4");
@@ -93,17 +94,36 @@ function checkDurationBudget(seconds) {
   }
   const key = String(total);
   const entry = data[ENV_KEY]?.[key];
-  if (process.env.E2E_BUDGET_UPDATE === "1" || !entry) {
-    data[ENV_KEY] = {
-      ...(data[ENV_KEY] ?? {}),
-      [key]: {
-        seconds: Math.round(seconds),
-        recorded_at: new Date().toISOString()
-      }
+  if (!entry) {
+    // 首次记录只在显式更新模式下落盘：机器负载异常不应被自动写进基线
+    if (process.env.E2E_BUDGET_UPDATE === "1") {
+      data[ENV_KEY] = {
+        ...(data[ENV_KEY] ?? {}),
+        [key]: {
+          seconds: Math.round(seconds),
+          recorded_at: new Date().toISOString()
+        }
+      };
+      writeFileSync(BUDGET_FILE, `${JSON.stringify(data, null, 2)}\n`);
+      console.log(
+        `[e2e-budget] 基线已记录：env=${ENV_KEY} shards=${key} seconds=${Math.round(seconds)}`
+      );
+    } else {
+      console.warn(
+        `[e2e-budget] 无基线（env=${ENV_KEY} shards=${key}），本次不落盘；` +
+          "需要记录基线请设 E2E_BUDGET_UPDATE=1"
+      );
+    }
+    return;
+  }
+  if (process.env.E2E_BUDGET_UPDATE === "1") {
+    data[ENV_KEY][key] = {
+      seconds: Math.round(seconds),
+      recorded_at: new Date().toISOString()
     };
     writeFileSync(BUDGET_FILE, `${JSON.stringify(data, null, 2)}\n`);
     console.log(
-      `[e2e-budget] 基线已记录：env=${ENV_KEY} shards=${key} seconds=${Math.round(seconds)}`
+      `[e2e-budget] 基线已刷新：env=${ENV_KEY} shards=${key} seconds=${Math.round(seconds)}`
     );
     return;
   }
@@ -178,9 +198,20 @@ function partitionByWeight(files, weights, shards) {
 }
 
 const weights = loadWeights();
-const specFiles = readdirSync(SPEC_DIR)
-  .filter(name => name.endsWith(".e2e.ts") && !name.startsWith("_"))
-  .sort();
+/** 递归收集 spec：新增子目录用例不能从权重分片里消失 */
+function collectSpecFiles(dir, base = "") {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      out.push(...collectSpecFiles(path.join(dir, entry.name), rel));
+    } else if (entry.name.endsWith(".e2e.ts") && !entry.name.startsWith("_")) {
+      out.push(rel);
+    }
+  }
+  return out;
+}
+const specFiles = collectSpecFiles(SPEC_DIR).sort();
 const shardGroups = weights
   ? partitionByWeight(specFiles, weights, total)
   : undefined;
@@ -233,8 +264,9 @@ const jobs = Array.from({ length: total }, (_, i) => {
     "exec",
     "playwright",
     "test",
-    // 有权重表：显式文件清单（均衡分片）；否则回落 Playwright 原生按条数分片
-    ...(group
+    // 有权重表：显式文件清单（均衡分片）；否则回落 Playwright 原生按条数分片。
+    // 空分组必须走 `--shard`，否则命令既无文件参数也无分片参数 → 会跑整个 testDir
+    ...(group && group.files.length > 0
       ? group.files.map(file => `e2e/${file}`)
       : [`--shard=${i + 1}/${total}`]),
     // 每个 shard 独立产物目录：共用 ./test-results 时各 shard 启动阶段会并发清理/写入

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
+import { MESSAGE_WINDOW_LIMIT } from "@/components/ChatMessageList/messageWindow";
 import { useHistoryPagination } from "./useHistoryPagination";
 
 type Message = { id: number };
@@ -96,5 +97,19 @@ describe("useHistoryPagination", () => {
     await loadHistory("room-1");
     await loadMore();
     expect(fetchPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("超过窗口上限时裁掉最旧消息，保留最近 N 条", async () => {
+    const fetchPage = vi.fn<FetchPage>().mockResolvedValue(page([1], false));
+    const { loadHistory, messages } = setup(fetchPage);
+    await loadHistory("room-1");
+    messages.value = Array.from(
+      { length: MESSAGE_WINDOW_LIMIT + 5 },
+      (_, index) => ({ id: index + 1 })
+    );
+    await nextTick();
+    await nextTick();
+    expect(messages.value).toHaveLength(MESSAGE_WINDOW_LIMIT);
+    expect(messages.value[0]).toEqual({ id: 6 });
   });
 });

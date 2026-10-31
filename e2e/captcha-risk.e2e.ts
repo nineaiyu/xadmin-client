@@ -10,7 +10,37 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Cookie, type Page } from "@playwright/test";
 
-import { ADMIN, FRONT_URL, login, loginWithForm } from "./helpers";
+import {
+  ADMIN,
+  FRONT_URL,
+  captureSettings,
+  login,
+  loginWithForm,
+  restoreSettings
+} from "./helpers";
+
+/** 设置页原值捕获面：不假设部署默认值（服务端/种子变更后仍能原样还原） */
+const SETTING_PATHS = [
+  "/api/settings/captcha/general",
+  "/api/settings/captcha/interactive",
+  "/api/settings/login/auth",
+  "/api/settings/captcha/risk"
+];
+const SETTING_KEYS = [
+  "CAPTCHA_ENABLED",
+  "CAPTCHA_ENABLED_TYPES",
+  "CAPTCHA_TRACK_CHECK_ENABLED",
+  "SECURITY_LOGIN_CAPTCHA_ENABLED",
+  "CAPTCHA_RISK_MODE",
+  "CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS",
+  "CAPTCHA_RISK_T_ALLOW",
+  "CAPTCHA_RISK_T_LIGHT",
+  "CAPTCHA_RISK_T_HARD",
+  "CAPTCHA_RISK_T_DENY",
+  "CAPTCHA_FAIL_STEP",
+  "CAPTCHA_POW_ENABLED",
+  "CAPTCHA_POW_BITS_LIGHT"
+];
 
 const ENV = {
   v: 1,
@@ -85,36 +115,32 @@ async function configure(page: Page, risk: object) {
   await waitForFlow(page, "adaptive");
 }
 
-async function restore(page: Page) {
-  await patchSetting(page, "/api/settings/captcha/risk", {
-    CAPTCHA_RISK_MODE: "off",
-    CAPTCHA_RISK_TRUST_PRIVATE_NETWORKS: true,
-    CAPTCHA_RISK_T_ALLOW: 20,
-    CAPTCHA_RISK_T_LIGHT: 40,
-    CAPTCHA_RISK_T_HARD: 70,
-    CAPTCHA_RISK_T_DENY: 90,
-    CAPTCHA_FAIL_STEP: "3,8,20"
-  });
-  await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true
-  });
-  await patchSetting(page, "/api/settings/login/auth", {
-    SECURITY_LOGIN_CAPTCHA_ENABLED: false
-  });
-  await waitForFlow(page, "always");
+async function restoreCaptchaSettings(
+  page: Page,
+  baseline: Awaited<ReturnType<typeof captureSettings>>
+) {
+  await restoreSettings(page, baseline);
+  // 风险模式决定能力清单里的 captcha_flow：等热更到位再交给下一 spec
+  const mode = baseline["/api/settings/captcha/risk"]?.CAPTCHA_RISK_MODE;
+  if (mode !== undefined)
+    await waitForFlow(page, mode === "off" ? "always" : "adaptive").catch(
+      () => undefined
+    );
 }
 
 test.describe("验证码风险分级 enforce", () => {
   let adminCookies: Cookie[] = [];
+  let settingsBaseline: Awaited<ReturnType<typeof captureSettings>> = {};
 
   test.beforeEach(async ({ page }) => {
     await login(page);
     adminCookies = await page.context().cookies();
+    settingsBaseline = await captureSettings(page, SETTING_PATHS, SETTING_KEYS);
   });
 
   test.afterEach(async ({ page }) => {
     await page.context().addCookies(adminCookies);
-    await restore(page).catch(() => undefined);
+    await restoreCaptchaSettings(page, settingsBaseline).catch(() => undefined);
   });
 
   test("可信网段：enforce 下静默 PoW 后登录", async ({ page }) => {

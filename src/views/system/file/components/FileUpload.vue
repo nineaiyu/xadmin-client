@@ -6,7 +6,7 @@ let defaultSizeWarned = false;
 
 <script lang="ts" setup>
 import { SUCCESS_CODE, isSuccess } from "@/api/types";
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import type {
   UploadFile,
   UploadProgressEvent,
@@ -135,9 +135,13 @@ const uploadRequest = async (option: UploadRequestOptions) => {
   } catch (error) {
     // 业务码失败 HTTP 层不 toast，这里补提示；网络错误由 http 层统一提示
     if (error instanceof ChunkUploadBusinessError) {
-      message(`${option.file.name} ${t("results.failed")}，${error.message}`, {
-        type: "error"
-      });
+      message(
+        t("systemUploadFile.uploadFailed", {
+          name: option.file.name,
+          detail: error.message
+        }),
+        { type: "error" }
+      );
     }
     throw error;
   } finally {
@@ -159,6 +163,14 @@ const onRemoveUpload = (file: UploadFile) => {
   uploadAborters.delete(key);
   uploadSessions.delete(key);
 };
+
+onUnmounted(() => {
+  // 弹层关闭后不能继续上传：中止在途分片并 close 服务端会话
+  for (const controller of uploadAborters.values()) controller.abort();
+  for (const session of uploadSessions.values()) abortChunkSession(session);
+  uploadAborters.clear();
+  uploadSessions.clear();
+});
 const refreshData = throttle(() => props.tableRef?.handleGetData?.(), 2000);
 const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
   if (isSuccess(response)) {
@@ -170,9 +182,13 @@ const uploadSuccess = (response: UploadResult, uploadFile: UploadFile) => {
     });
   } else {
     uploadFile.status = "fail";
-    message(`${uploadFile.name} ${t("results.failed")}，${response.detail}`, {
-      type: "error"
-    });
+    message(
+      t("systemUploadFile.uploadFailed", {
+        name: uploadFile.name,
+        detail: response.detail ?? ""
+      }),
+      { type: "error" }
+    );
   }
 };
 const beforeUpload = (rawFile: UploadRawFile) => {

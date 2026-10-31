@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { FRONT_URL, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /** 顶部指标条高度（px） */
 const barHeight = (page: import("@playwright/test").Page) =>
@@ -16,6 +24,7 @@ const barHeight = (page: import("@playwright/test").Page) =>
  */
 test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   // 基线统计（?no_cache=1 穿透服务端 10s 短缓存，保证读到真实值）
   const baseResp = await page.request.get(
@@ -142,6 +151,7 @@ test("文件中心：上传刷新统计卡片 + 分类下拉筛选", async ({ pa
  */
 test("文件中心：重复上传同一文件复用磁盘副本", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   const filename = `e2e-dedup-${Date.now()}.txt`;
   const content = "dedup e2e content";
@@ -224,6 +234,7 @@ async function uploadViaApi(
 
 test("文件中心：图片在线预览（行内按钮 → 抽屉大图）", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await openMenuPath(page, ["系统管理"], "/system/file/index");
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
@@ -254,6 +265,7 @@ test("文件中心：图片在线预览（行内按钮 → 抽屉大图）", asy
 
 test("文件中心：不支持预览的类型不显示预览按钮", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const filename = `e2e-nopreview-${Date.now()}.zip`;
   await uploadViaApi(
     page,
@@ -296,6 +308,7 @@ test("文件中心：大文件上传走分片协议并落库", async ({ page }) 
   });
 
   await login(page);
+  await startResourceIsolation(page);
   await openMenuPath(page, ["系统管理"], "/system/file/index");
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
@@ -379,6 +392,7 @@ test.describe("文件中心布局", () => {
 
   test("统计区收敛为指标条，列表高度不再被统计图表挤压", async ({ page }) => {
     await login(page);
+    await startResourceIsolation(page);
     await openMenuPath(page, ["系统管理"], "/system/file/index");
     await expect(page.locator(".el-table").first()).toBeVisible({
       timeout: 15_000

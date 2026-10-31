@@ -23,8 +23,8 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SCAN_DIR = "src";
 const EXCLUDE_DIRS = new Set(["node_modules", "__tests__", "tests"]);
 
-/** 匹配「<template> 换行之后、第一个非空节点是注释」 */
-const ROOT_COMMENT = /<template>\s*\n[ \t]*<!--/;
+/** 匹配「<template> 之后第一个非空节点是注释」（同行写法同样会形成根级注释） */
+const ROOT_COMMENT = /<template>\s*<!--/;
 
 function walk(dir) {
   const rows = [];

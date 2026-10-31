@@ -56,7 +56,7 @@ export function createReportVersionActions(deps: {
         });
         return true;
       }
-      if (res.detail) message(String(res.detail), { type: "warning" });
+      message(String(res.detail || t("results.failed")), { type: "warning" });
       return false;
     } finally {
       deps.saving.value = false;

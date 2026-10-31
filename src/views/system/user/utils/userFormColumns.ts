@@ -1,4 +1,5 @@
 import { handleTree } from "@/utils/tree";
+import { transformI18n } from "@/plugins/i18n";
 import type { useI18n } from "vue-i18n";
 import type { PasswordRule } from "@/api/auth";
 import type { RecordType } from "plus-pro-components";
@@ -53,6 +54,11 @@ export function buildDeptColumn({
 }: {
   column: Record<string, unknown>;
 }) {
+  const meta = column["_column"] as
+    { choices?: object[]; choices_truncated?: boolean } | undefined;
+  // 关联候选超过后端上限会被截断（choices_truncated）：级联只能看到子集，
+  // 必须开启本地过滤并给出明确提示，避免深层部门「静默不可选」。
+  const truncated = Boolean(meta?.choices_truncated);
   column["valueType"] = "cascader";
   column["fieldProps"] = {
     ...(column["fieldProps"] as object),
@@ -61,9 +67,12 @@ export function buildDeptColumn({
       label: "name",
       emitPath: false,
       checkStrictly: true
-    }
+    },
+    ...(truncated ? { filterable: true } : {})
   };
-  const meta = column["_column"] as { choices?: object[] } | undefined;
+  if (truncated) {
+    column["tooltip"] = transformI18n("systemUser.deptChoicesTruncated");
+  }
   column["options"] = handleTree(meta?.choices ?? [], "pk", "parent_id");
   return column;
 }

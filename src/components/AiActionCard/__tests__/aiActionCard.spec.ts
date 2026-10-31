@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { describe, expect, it, vi } from "vitest";
 
@@ -109,6 +109,35 @@ describe("AiActionCard 受限动作草稿卡", () => {
 
     await retry.trigger("click");
     expect(wrapper.text()).toContain("后端拒绝了");
+  });
+
+  it("executor 抛错回到可重试失败态（不永久 loading）", async () => {
+    const executor = vi.fn().mockRejectedValue(new Error("网络中断"));
+    const wrapper = mountCard({ executor });
+    await wrapper.get('[data-testid="ai-action-confirm"]').trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("网络中断");
+    expect(wrapper.find('[data-testid="ai-action-confirm"]').exists()).toBe(
+      true
+    );
+  });
+
+  it("嵌套对象的敏感键同样脱敏（password/token 不明文展示）", () => {
+    const wrapper = mountCard({
+      draft: {
+        ...draft,
+        params: {
+          ...draft.params,
+          account: { password: "s3cret", token: "tk-1", name: "张三" }
+        }
+      }
+    });
+    const text = wrapper.text();
+    expect(text).toContain("password: ••••••");
+    expect(text).toContain("token: ••••••");
+    expect(text).not.toContain("s3cret");
+    expect(text).not.toContain("tk-1");
+    expect(text).toContain("张三");
   });
 
   it("取消后落终态；不可执行时展示禁用提示且无按钮", async () => {

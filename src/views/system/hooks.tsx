@@ -82,6 +82,9 @@ export const formatFormColumns = (
  * - keepKeys：弹层内保留的字段（其余 hideInForm）
  * - disabledKeys：只读展示的字段
  * - wideKeys：需要占半行的大宽度字段
+ *
+ * 纯函数：只返回新列对象，绝不回写入参（入参同时是用户/部门主表单的列来源，
+ * 就地改 hideInForm/colProps 会让主表单字段集合与布局被静默改变）。
  */
 export const buildRoleRulesColumns = (
   addOrEditColumns: PageColumn[],
@@ -92,32 +95,32 @@ export const buildRoleRulesColumns = (
   }
 ): PageColumn[] => {
   const { keepKeys, disabledKeys, wideKeys = [] } = options;
-  const columns = cloneDeep(addOrEditColumns);
-  columns.forEach((column: PageColumn) => {
+  return addOrEditColumns.map((source: PageColumn) => {
+    const column = cloneDeep(source);
     const key = column._column?.key;
     if (!key || !keepKeys.includes(key)) {
       column.hideInForm = true;
     }
     if (key && disabledKeys.includes(key)) {
-      (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
+      column["fieldProps"] = {
+        ...((column["fieldProps"] as Record<string, unknown>) ?? {}),
+        disabled: true
+      };
     }
     if (key && ["roles", "rules"].includes(key)) {
       column.options = customRolePermissionOptions(
         (column._column?.choices ?? []) as Array<RolePermissionItem>
       );
     }
-  });
-  // "pk" / "roles" / "rules" 在新增、编辑主表单中隐藏
-  addOrEditColumns.forEach((column: PageColumn) => {
-    const key = column._column?.key;
+    // "pk" / "roles" / "rules" 在新增、编辑主表单中隐藏
     if (key && ["pk", "roles", "rules"].includes(key)) {
       column.hideInForm = true;
     }
     if (key && wideKeys.includes(key)) {
       column["colProps"] = { xs: 24, sm: 24, md: 24, lg: 12, xl: 12 };
     }
+    return column;
   });
-  return columns;
 };
 
 export const customRolePermissionOptions = (

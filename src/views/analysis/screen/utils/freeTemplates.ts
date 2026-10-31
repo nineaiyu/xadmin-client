@@ -61,129 +61,153 @@ function textPane(
 export function builtinTemplates(t: TranslateFn): FreeTemplate[] {
   const design: FreeDesign = { ...FREE_DESIGN_DEFAULTS };
   return [
-    {
-      id: "builtin-promo",
-      name: t("dataScreen.tplPromo"),
-      builtin: true,
-      design,
-      updated_at: 0,
-      panes: [
-        {
-          pk: "tpl-promo-clock",
-          type: "clock",
-          x: 820,
-          y: 240,
-          w: 280,
-          h: 90,
-          size: 56
-        },
-        textPane(
-          "promo-title",
-          { x: 160, y: 430, w: 1600, h: 150 },
-          t("dataScreen.tplPromoTitle"),
-          88,
-          "center"
-        ),
-        textPane(
-          "promo-subtitle",
-          { x: 360, y: 600, w: 1200, h: 70 },
-          t("dataScreen.tplPromoSubtitle"),
-          32,
-          "center"
-        )
-      ]
-    },
-    {
-      id: "builtin-report",
-      name: t("dataScreen.tplReport"),
-      builtin: true,
-      design,
-      updated_at: 0,
-      panes: [
-        textPane(
-          "report-title",
-          { x: 80, y: 70, w: 1400, h: 80 },
-          t("dataScreen.tplReportTitle"),
-          48,
-          "left"
-        ),
-        textPane(
-          "report-body-1",
-          { x: 80, y: 230, w: 1180, h: 70 },
-          t("dataScreen.tplReportBody"),
-          28,
-          "left"
-        ),
-        textPane(
-          "report-body-2",
-          { x: 80, y: 340, w: 1180, h: 70 },
-          t("dataScreen.tplReportBody"),
-          28,
-          "left"
-        ),
-        textPane(
-          "report-body-3",
-          { x: 80, y: 450, w: 1180, h: 70 },
-          t("dataScreen.tplReportBody"),
-          28,
-          "left"
-        ),
-        textPane(
-          "report-footer",
-          { x: 80, y: 980, w: 1760, h: 40 },
-          t("dataScreen.tplReportFooter"),
-          20,
-          "left"
-        )
-      ]
-    },
-    {
-      id: "builtin-skeleton",
-      name: t("dataScreen.tplSkeleton"),
-      builtin: true,
-      design,
-      updated_at: 0,
-      panes: [
-        textPane(
-          "skeleton-title",
-          { x: 80, y: 60, w: 1200, h: 70 },
-          t("dataScreen.tplSkeletonTitle"),
-          44,
-          "left"
-        ),
-        textPane(
-          "skeleton-section-1",
-          { x: 80, y: 160, w: 560, h: 48 },
-          t("dataScreen.tplSkeletonSection"),
-          28,
-          "left"
-        ),
-        textPane(
-          "skeleton-section-2",
-          { x: 680, y: 160, w: 560, h: 48 },
-          t("dataScreen.tplSkeletonSection"),
-          28,
-          "left"
-        ),
-        textPane(
-          "skeleton-section-3",
-          { x: 1280, y: 160, w: 560, h: 48 },
-          t("dataScreen.tplSkeletonSection"),
-          28,
-          "left"
-        ),
-        {
-          pk: "tpl-skeleton-clock",
-          type: "clock",
-          x: 1700,
-          y: 60,
-          w: 160,
-          h: 64,
-          size: 44
-        }
-      ]
-    }
+    builtinPromoTemplate(t, design),
+    builtinReportTemplate(t, design),
+    builtinSkeletonTemplate(t, design)
   ];
+}
+
+/** 宣传页内置模板：时钟 + 主标题 + 副标题 */
+function builtinPromoTemplate(
+  t: TranslateFn,
+  design: FreeDesign
+): FreeTemplate {
+  return {
+    id: "builtin-promo",
+    name: t("dataScreen.tplPromo"),
+    builtin: true,
+    design,
+    updated_at: 0,
+    panes: [
+      {
+        pk: "tpl-promo-clock",
+        type: "clock",
+        x: 820,
+        y: 240,
+        w: 280,
+        h: 90,
+        size: 56
+      },
+      textPane(
+        "promo-title",
+        { x: 160, y: 430, w: 1600, h: 150 },
+        t("dataScreen.tplPromoTitle"),
+        88,
+        "center"
+      ),
+      textPane(
+        "promo-subtitle",
+        { x: 360, y: 600, w: 1200, h: 70 },
+        t("dataScreen.tplPromoSubtitle"),
+        32,
+        "center"
+      )
+    ]
+  };
+}
+
+/** 报告页内置模板：标题 + 三段正文 + 页脚 */
+function builtinReportTemplate(
+  t: TranslateFn,
+  design: FreeDesign
+): FreeTemplate {
+  return {
+    id: "builtin-report",
+    name: t("dataScreen.tplReport"),
+    builtin: true,
+    design,
+    updated_at: 0,
+    panes: [
+      textPane(
+        "report-title",
+        { x: 80, y: 70, w: 1400, h: 80 },
+        t("dataScreen.tplReportTitle"),
+        48,
+        "left"
+      ),
+      textPane(
+        "report-body-1",
+        { x: 80, y: 230, w: 1180, h: 70 },
+        t("dataScreen.tplReportBody"),
+        28,
+        "left"
+      ),
+      textPane(
+        "report-body-2",
+        { x: 80, y: 340, w: 1180, h: 70 },
+        t("dataScreen.tplReportBody"),
+        28,
+        "left"
+      ),
+      textPane(
+        "report-body-3",
+        { x: 80, y: 450, w: 1180, h: 70 },
+        t("dataScreen.tplReportBody"),
+        28,
+        "left"
+      ),
+      textPane(
+        "report-footer",
+        { x: 80, y: 980, w: 1760, h: 40 },
+        t("dataScreen.tplReportFooter"),
+        20,
+        "left"
+      )
+    ]
+  };
+}
+
+/** 骨架页内置模板：标题 + 三段分区 + 时钟 */
+function builtinSkeletonTemplate(
+  t: TranslateFn,
+  design: FreeDesign
+): FreeTemplate {
+  return {
+    id: "builtin-skeleton",
+    name: t("dataScreen.tplSkeleton"),
+    builtin: true,
+    design,
+    updated_at: 0,
+    panes: [
+      textPane(
+        "skeleton-title",
+        { x: 80, y: 60, w: 1200, h: 70 },
+        t("dataScreen.tplSkeletonTitle"),
+        44,
+        "left"
+      ),
+      textPane(
+        "skeleton-section-1",
+        { x: 80, y: 160, w: 560, h: 48 },
+        t("dataScreen.tplSkeletonSection"),
+        28,
+        "left"
+      ),
+      textPane(
+        "skeleton-section-2",
+        { x: 680, y: 160, w: 560, h: 48 },
+        t("dataScreen.tplSkeletonSection"),
+        28,
+        "left"
+      ),
+      textPane(
+        "skeleton-section-3",
+        { x: 1280, y: 160, w: 560, h: 48 },
+        t("dataScreen.tplSkeletonSection"),
+        28,
+        "left"
+      ),
+      {
+        pk: "tpl-skeleton-clock",
+        type: "clock",
+        x: 1700,
+        y: 60,
+        w: 160,
+        h: 64,
+        size: 44
+      }
+    ]
+  };
 }
 
 /** 我的模板（读盘 + 结构校验；内置项不落盘，防人工改坏） */
@@ -268,7 +292,9 @@ export function saveTemplate({
   const mine = listMyTemplates();
   if (mine.length >= FREE_TEMPLATE_LIMIT) return { ok: false, error: "limit" };
   const template: FreeTemplate = {
-    id: `tpl-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`,
+    id: `tpl-${Date.now().toString(36)}-${Math.random()
+      .toString(16)
+      .slice(2, 8)}`,
     name: trimmed.slice(0, 40),
     builtin: false,
     source: "local",

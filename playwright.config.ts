@@ -39,9 +39,13 @@ const apiURL = `http://127.0.0.1:${apiPort}`;
 const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
 const cspPageURL = `${cspTls ? "https" : "http"}://127.0.0.1:${cspPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
+// E2E 超管密码：本地默认固定口令（仅回环地址可访问）；通过 webServer.env 传递，
+// 不拼进 shell 命令（密码含引号/空格时会破坏命令）。CI 可用 E2E_ADMIN_PASSWORD 覆盖。
+const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "E2E-Admin-2026!";
+const pythonPath = process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`;
 
 // smoke 档 = 只跑 @smoke 用例 + 只跑 chromium，把 dev push 的反馈从 ~9min 压到 ~3min；
-// 全量档（PR / main / 夜间 / 手动）保持全部用例 × 双浏览器（当前双浏览器合计约 300 例：
+// 全量档（PR / main / 夜间 / 手动）保持全部用例 × 双浏览器（2026-10-31 --list 合计 848 例：
 // 本地串行成本高，日常用 smoke 档反馈、CI 走并行分片）
 const smokeOnly = process.env.E2E_SMOKE === "1";
 
@@ -54,9 +58,14 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 1,
-  reporter: process.env.CI
-    ? [["list"], ["github"], ["html", { open: "never" }]]
-    : [["list"]],
+  // E2E_JSON_REPORT=1：编排脚本（e2e-parallel）按 shard 注入
+  // PLAYWRIGHT_JSON_OUTPUT_DIR/NAME，供分片权重与抖动榜单解析
+  reporter:
+    process.env.E2E_JSON_REPORT === "1"
+      ? [["list"], ["json"]]
+      : process.env.CI
+        ? [["list"], ["github"], ["html", { open: "never" }]]
+        : [["list"]],
   outputDir: "./test-results",
   use: {
     baseURL,
@@ -83,11 +92,12 @@ export default defineConfig({
       // 必须用 daphne 以 ASGI 承载：manage.py runserver（channels 未入 INSTALLED_APPS）
       // 是纯 WSGI，/ws/message/* 升级请求一律 404，站内信实时推送用例无法工作
       command:
-        `PYTHON=${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`}; ` +
-        `ADMIN='${process.env.E2E_ADMIN_PASSWORD ?? "E2E-Admin-2026!"}'; ` +
-        `export DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD="$ADMIN"; ` +
-        `${process.env.E2E_SEED !== "0" ? `$PYTHON scripts/e2e_seed.py && ` : ""}` +
-        `$PYTHON -m daphne -b 127.0.0.1 -p ${apiPort} server.asgi:application`,
+        `${process.env.E2E_SEED !== "0" ? `"${pythonPath}" scripts/e2e_seed.py && ` : ""}` +
+        `"${pythonPath}" -m daphne -b 127.0.0.1 -p ${apiPort} server.asgi:application`,
+      env: {
+        DJANGO_SETTINGS_MODULE: "tests.settings_e2e",
+        XADMIN_ADMIN_PASSWORD: adminPassword
+      },
       cwd: serverDir,
       url: `${apiURL}/api/common/api/health`,
       // 默认不复用已存在服务：历史上复用旧后端进程会造成「改了后端却跑旧行为」的假失败。
@@ -98,7 +108,7 @@ export default defineConfig({
     {
       // 桩 LLM（scripts/stub_llm.py）：E2E 无真实模型，AI 动作草稿等链路
       // 需要确定性的 chat/completions 回答；AI 配置指向 http://127.0.0.1:<port>/v1
-      command: `${process.env.E2E_PYTHON ?? `${serverDir}/.venv/bin/python`} scripts/stub_llm.py`,
+      command: `"${pythonPath}" scripts/stub_llm.py`,
       cwd: serverDir,
       url: `${stubLlmURL}/health`,
       reuseExistingServer: !process.env.CI && !!process.env.E2E_REUSE_SERVER,

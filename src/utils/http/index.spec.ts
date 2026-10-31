@@ -437,3 +437,34 @@ describe("PureHttp 412 敏感操作审批（code=1002）令牌生命周期", () 
     ).toBeUndefined();
   });
 });
+
+describe("PureHttp blob 错误体", () => {
+  beforeEach(() => {
+    instanceMock.request.mockReset();
+    elMessageMock.mockReset();
+  });
+
+  it("4xx 的 Blob 错误体被解析，提示不是空串", async () => {
+    instanceMock.request.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        statusText: "Bad Request",
+        headers: {},
+        data: new Blob(
+          [JSON.stringify({ code: 1001, detail: "导出失败：文件名过长" })],
+          { type: "application/json" }
+        )
+      }
+    });
+
+    await expect(
+      http.get("/api/demo/book/export-data", undefined, {
+        responseType: "blob"
+      })
+    ).rejects.toBeTruthy();
+
+    expect(elMessageMock).toHaveBeenCalledWith("导出失败：文件名过长", {
+      type: "error"
+    });
+  });
+});

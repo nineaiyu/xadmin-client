@@ -1,3 +1,4 @@
+import { defineComponent, h } from "vue";
 import type { RouteMeta, RouteRecordRaw, Router } from "vue-router";
 import { cloneDeep, storageLocal } from "@pureadmin/utils";
 import { isExternalRoute } from "@/utils/rules/url";
@@ -16,6 +17,14 @@ import { resolveComponentKey } from "./resolve-component";
 import { ascending, formatFlatteningRoutes } from "./route-tree";
 
 const IFrame = () => import("@/layout/frame.vue");
+/** 组件未匹配的兜底页：不再渲染空白（后端脏数据 / 二开页面缺失时给出可读提示） */
+const MissingRoutePage = defineComponent({
+  name: "MissingRoutePage",
+  setup() {
+    return () =>
+      h("div", { class: "p-6" }, "页面组件未找到，请联系管理员检查菜单配置。");
+  }
+});
 // https://cn.vitejs.dev/guide/features.html#glob-import
 const modulesRoutes = import.meta.glob([
   "/src/views/**/*.{vue,tsx}",
@@ -233,15 +242,19 @@ function addAsyncRoutes(
       // 后端对这类节点可能不下发 component，也可能残留历史脏值（如 /system/notice/ 上
       // 挂着 system/notify/index），两种情况都不是「组件漏配」，开发态不报错
       const hasChildren = Boolean(v.children?.length);
-      if (index === -1 && import.meta.env.DEV && !hasChildren) {
-        // 开发态显式报错：叶子菜单 component 与页面目录未匹配（运行期表现为空白路由）
+      if (index === -1 && !hasChildren) {
+        // 叶子菜单组件未匹配：生产态也要留痕（否则用户只看到空白页，无任何诊断线索）
         console.error(
           `[xadmin] 动态路由组件未匹配：component=${String(rawComponent ?? "")} path=${String(v.path ?? "")}——` +
             "请确认 src/views 或 src/extensions 下存在对应页面文件（后端下发的 component 需为文件路径片段）。"
         );
       }
       v.component =
-        index === -1 ? undefined : modulesRoutes[modulesRoutesKeys[index]];
+        index === -1
+          ? hasChildren
+            ? undefined
+            : MissingRoutePage
+          : modulesRoutes[modulesRoutesKeys[index]];
     }
     if (v?.children && v.children.length) {
       addAsyncRoutes(v.children);

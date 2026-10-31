@@ -1,6 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { login, openSettingPanel, switchSettingTab } from "./helpers";
+import {
+  captureSiteConfig,
+  login,
+  openSettingPanel,
+  restoreSiteConfig,
+  switchSettingTab,
+  type SiteConfigSnapshot
+} from "./helpers";
 
 /**
  * 主题可见性门禁：各调色板档位（浅色 / 暗色 / 半暗侧栏 / 半暗顶栏）下，
@@ -11,6 +18,23 @@ import { login, openSettingPanel, switchSettingTab } from "./helpers";
  * 回溯到首个不透明底色，前景若带透明度则与背景混合后计算。
  */
 const MIN_CONTRAST = 3;
+
+let siteConfig: SiteConfigSnapshot | null = null;
+
+test.afterEach(async ({ page }) => {
+  // 失败路径也复位：站点布局/主题/标题是跨 spec 共享态
+  await page
+    .evaluate(() => {
+      document.documentElement.classList.remove(
+        "dark",
+        "semi-dark-sidebar",
+        "semi-dark-header"
+      );
+    })
+    .catch(() => undefined);
+  await restoreSiteConfig(page, siteConfig);
+  siteConfig = null;
+});
 
 /** 计算 fg 元素文字色与 bg 元素（回溯）底色的对比度 */
 async function contrastOf(page: Page, fgSelector: string, bgSelector: string) {
@@ -121,6 +145,7 @@ test.describe("主题可见性（对比度门禁）", () => {
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
+    siteConfig = await captureSiteConfig(page);
 
     await setHtmlClass(page, {
       remove: ["dark", "semi-dark-sidebar", "semi-dark-header"]
@@ -155,6 +180,7 @@ test.describe("主题可见性（对比度门禁）", () => {
   test("混合布局：半暗顶栏下顶栏一级菜单与品牌标题可见", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await login(page);
+    siteConfig = await captureSiteConfig(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
     const block = page

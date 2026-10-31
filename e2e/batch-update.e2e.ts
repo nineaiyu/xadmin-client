@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 批量更新通用弹窗（角色列表为入口页）。
@@ -13,6 +21,7 @@ import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
  */
 test("角色列表：批量更新启用状态（通用弹窗端到端）", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   const token = await getAccessToken(page);
   const suffix = Date.now();

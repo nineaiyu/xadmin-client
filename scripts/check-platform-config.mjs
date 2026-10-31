@@ -9,6 +9,10 @@
 //   2. 断链：经 injectResponsiveStorage 注入偏好存储的键，必须同步登记在
 //      siteConfig 的整包 PATCH 清单里（否则设置面板改动无法回写后端）。
 //
+// 判定口径：逐文件剥离注释与字符串字面量后再匹配属性访问——注释里提到某键、
+// 或字符串里出现 `config.X` 字样都不算消费点（此前全源码拼串后子串搜索会把它们
+// 误判为「有消费」）。偏好注册表按行结构解析（允许单/双引号与跨行）。
+//
 // 白名单新增必须给出理由（CONSUME_EXEMPT / SYNC_EXEMPT）。
 //
 // 用法：node scripts/check-platform-config.mjs
@@ -34,6 +38,58 @@ const SYNC_EXEMPT = new Map([
 
 const camel = key => key[0].toLowerCase() + key.slice(1);
 
+/**
+ * 剥离注释与字符串字面量：只保留代码标识符与结构。
+ *
+ * 注释里的 `config.Title` 与字符串里的 `"config.Title"` 都不是消费点，
+ * 剥离后属性访问的正则只会命中真实代码。
+ */
+function stripCode(source) {
+  let out = "";
+  let index = 0;
+  while (index < source.length) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (char === '"' || char === "'" || char === "`") {
+      const quote = char;
+      let closed = false;
+      index += 1;
+      while (index < source.length) {
+        if (source[index] === "\\") {
+          index += 2;
+          continue;
+        }
+        if (source[index] === quote) {
+          index += 1;
+          closed = true;
+          break;
+        }
+        index += 1;
+      }
+      out += `${quote}${quote}`;
+      if (!closed) break;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      while (index < source.length && source[index] !== "\n") index += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      index += 2;
+      while (
+        index < source.length &&
+        !(source[index] === "*" && source[index + 1] === "/")
+      )
+        index += 1;
+      index += 2;
+      continue;
+    }
+    out += char;
+    index += 1;
+  }
+  return out;
+}
+
 function walk(dir) {
   const rows = [];
   for (const entry of readdirSync(dir)) {
@@ -48,15 +104,18 @@ function walk(dir) {
   return rows;
 }
 
-const sources = walk(join(ROOT, "src"))
-  .map(file => readFileSync(file, "utf-8"))
-  .join("\n");
-const respSrc = readFileSync(RESPONSIVE_PATH, "utf-8");
+/** 每个源文件的「去注释去字符串」代码（逐文件判定，不拼串） */
+const sources = walk(join(ROOT, "src")).map(file =>
+  stripCode(readFileSync(file, "utf-8"))
+);
+const respSrc = stripCode(readFileSync(RESPONSIVE_PATH, "utf-8"));
+// 注册表本身就是「字面量行」，必须读原文（stripCode 会把键名清空）；
+// 行结构匹配只认 `["服务端键", "本地 key", 缺省值]` 形态，注释里不会出现该形态。
 const siteSrc = readFileSync(SITE_CONFIG_PATH, "utf-8");
 const config = JSON.parse(readFileSync(CONFIG_PATH, "utf-8"));
 const keys = Object.keys(config);
 
-/** 1. 死参数：每个键必须有消费点 */
+/** 1. 死参数：每个键必须有真实消费点（属性访问形态） */
 const dead = [];
 for (const key of keys) {
   const c = camel(key);
@@ -67,21 +126,24 @@ for (const key of keys) {
     new RegExp(`\\bconfig\\.${key}\\b`),
     // $config.X（组件内全局属性）
     new RegExp(`\\$config\\.${key}\\b`),
-    // configure.camelX（偏好存储消费）
-    new RegExp(`configure\\??\\.${c}\\b`)
+    // configure?.camelX（偏好存储消费）
+    new RegExp(`\\bconfigure\\??\\.${c}\\b`)
   ];
-  if (!patterns.some(p => p.test(sources)) && !CONSUME_EXEMPT.has(key)) {
+  const hasConsumer = sources.some(src => patterns.some(p => p.test(src)));
+  if (!hasConsumer && !CONSUME_EXEMPT.has(key)) {
     dead.push(key);
   }
 }
 
 /** 2. 断链：注入偏好的键必须在 siteConfig 的 PATCH 清单里 */
 const injected = new Set(
-  [...respSrc.matchAll(/config\.([A-Z]\w+)/g)].map(m => m[1])
+  [...respSrc.matchAll(/\bconfig\.([A-Z]\w+)/g)].map(m => m[1])
 );
 const patched = new Set(
-  // 偏好注册表行格式：[服务端键, 本地 key, 缺省值]
-  [...siteSrc.matchAll(/\[\s*"[A-Z]\w+",\s*"(\w+)",/g)].map(m => camel(m[1]))
+  // 偏好注册表行格式：[服务端键, 本地 key, 缺省值]（允许单/双引号与跨行）
+  [...siteSrc.matchAll(/\[\s*["']([A-Z]\w*)["']\s*,\s*["'](\w+)["']\s*,/g)].map(
+    m => camel(m[1])
+  )
 );
 const notSynced = [...injected].filter(
   key => !patched.has(camel(key)) && !SYNC_EXEMPT.has(key)
@@ -96,7 +158,7 @@ if (dead.length > 0) {
   failed = true;
   console.error("\n以下配置键没有消费点（配置了但不生效）：");
   for (const key of dead)
-    console.error(`  ⚠ ${key} = ${JSON.stringify(config[key])}`);
+    console.error(`  警告 ${key} = ${JSON.stringify(config[key])}`);
   console.error(
     "处理：补消费点，或从 platform-config.json 移除并登记 CONSUME_EXEMPT。"
   );
@@ -106,7 +168,7 @@ if (notSynced.length > 0) {
   console.error(
     "\n以下配置键注入了偏好存储，但不在站点配置 PATCH 清单（改动无法回写后端）："
   );
-  for (const key of notSynced) console.error(`  ⚠ ${key}`);
+  for (const key of notSynced) console.error(`  警告 ${key}`);
   console.error(
     "处理：登记到 siteConfig.saveSiteConfig 的 configObj，或加 SYNC_EXEMPT。"
   );

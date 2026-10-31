@@ -9,13 +9,16 @@
 //   node scripts/check-hook-length.mjs            # 门禁（CI 用）
 //   node scripts/check-hook-length.mjs --report   # 仅报告分布，恒不失败
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SCAN_DIR = "src";
 const THRESHOLD = 120;
 const HOOK_PATTERN = /^(use[A-Z].*|hook)\.(ts|tsx)$/;
+/** 目录形态 hook：`src/` 下 `useXxx/` 目录里的 index.ts（与 hook.ts 同口径） */
+const HOOK_DIR_PATTERN = /^(use[A-Z].*|hook)$/;
+const HOOK_INDEX = /^index\.(ts|tsx)$/;
 
 // 存量基线：相对路径 -> 行数（只减不增；拆到 <120 即从此表移除）。
 // 2026-10-08：初始登记（此前 R3 滚动债余量 45 个后又自然增长，门禁首次覆盖 120 线）。
@@ -24,16 +27,22 @@ const HOOK_PATTERN = /^(use[A-Z].*|hook)\.(ts|tsx)$/;
 // 2026-10-11：偏好二期与底座改造陆续回潮 4 个（usePreferenceAttributes / useTagDelete /
 //             useLayout / useNavState），按「存量只减不增」冻结。
 // 2026-10-11（收尾）：上列 4 个已按「实现域下沉（纯函数模块）+ hook 只留接线」拆分下线，基线清零。
-const BASELINE = {};
+const BASELINE = {
+  // 历史分页 hook 已随长会话窗口裁剪下沉实现域，当前无超限文件；新增超限请先拆分。
+};
 
 function walk(dir) {
   const rows = [];
+  const dirName = basename(dir);
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
       if (entry === "__tests__" || entry === "node_modules") continue;
       rows.push(...walk(full));
-    } else if (HOOK_PATTERN.test(entry) && !entry.includes(".spec.")) {
+    } else if (
+      (HOOK_PATTERN.test(entry) && !entry.includes(".spec.")) ||
+      (HOOK_INDEX.test(entry) && HOOK_DIR_PATTERN.test(dirName))
+    ) {
       rows.push(full);
     }
   }

@@ -9,7 +9,9 @@ const setConfig = (cfg?: unknown) => {
   config = Object.assign(config, cfg);
 };
 
-const getConfig = (key?: string): PlatformConfigs => {
+function getConfig(): PlatformConfigs;
+function getConfig<T = unknown>(key: string): T;
+function getConfig(key?: string): PlatformConfigs | unknown {
   if (typeof key === "string") {
     const arr = key.split(".");
     if (arr && arr.length) {
@@ -23,11 +25,11 @@ const getConfig = (key?: string): PlatformConfigs => {
           data = null;
         }
       });
-      return data as PlatformConfigs;
+      return data;
     }
   }
   return config as PlatformConfigs;
-};
+}
 
 /** 平台配置拉取的最大尝试次数（含重试）：防畸形配置把 boot 挂成无限请求循环 */
 const PLATFORM_CONFIG_MAX_ATTEMPTS = 3;
@@ -67,7 +69,14 @@ export const getPlatformConfig = async (
       }
       return $config;
     })
-    .catch(async () => {
+    .catch(async error => {
+      // 区分「文件缺失/网络失败」与「配置文件字段畸形」：后者不能改写成前者
+      if (
+        error instanceof Error &&
+        error.message.includes("missing the required Locale")
+      ) {
+        throw error;
+      }
       if (url === null && attempt + 1 < PLATFORM_CONFIG_MAX_ATTEMPTS) {
         return await getPlatformConfig(app, defaultConfigUrl, attempt + 1);
       } else {

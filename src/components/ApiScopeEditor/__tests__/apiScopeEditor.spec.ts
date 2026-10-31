@@ -181,6 +181,33 @@ describe("ApiScopeEditor 接口范围编辑器", () => {
     });
     expect(wrapper.find(".stub-input").exists()).toBe(true);
   });
+
+  it("选项失败时已保存条目不被清空（空 scope = 不限，等于放大权限）", async () => {
+    const wrapper = mountEditor({
+      modelValue: ["GET ^/api/identity/user/?$", "POST ^/api/oauth/token$"],
+      loadOptions: vi.fn().mockRejectedValue(new Error("boom"))
+    });
+    await vi.waitFor(() => {
+      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
+    });
+    const last = wrapper.emitted("update:modelValue")!.at(-1)![0] as string[];
+    expect(last).toEqual([
+      "GET ^/api/identity/user/?$",
+      "POST ^/api/oauth/token$"
+    ]);
+
+    // 业务失败（HTTP 200 + code 非 1000）同样保留
+    const wrapper2 = mountEditor({
+      modelValue: ["GET ^/api/identity/user/?$"],
+      loadOptions: vi.fn().mockResolvedValue({ code: 1001, detail: "失败" })
+    });
+    await vi.waitFor(() => {
+      expect(wrapper2.emitted("update:modelValue")).toBeTruthy();
+    });
+    expect(wrapper2.emitted("update:modelValue")!.at(-1)![0]).toEqual([
+      "GET ^/api/identity/user/?$"
+    ]);
+  });
 });
 
 describe("ApiScopeEditor 纯逻辑", () => {

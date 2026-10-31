@@ -255,6 +255,9 @@ export type MonitorEventsParams = {
   range?: string;
   status?: MonitorAlertStatus | "";
   item?: string;
+  /** 分页窗口（后端有上限，超出需翻页） */
+  limit?: number;
+  offset?: number;
 };
 
 /**
@@ -268,6 +271,8 @@ export type MonitorEvents<K extends MonitorEventKind = MonitorEventKind> = {
     : K extends "error"
       ? MonitorErrorEvent
       : MonitorTaskEvent)[];
+  total?: number;
+  truncated?: boolean;
   counts?: { firing: number; total_24h: number; resolved_24h: number };
 };
 

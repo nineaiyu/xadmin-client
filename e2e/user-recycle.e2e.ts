@@ -3,6 +3,14 @@ import { expect, test } from "@playwright/test";
 import { AesEncrypted } from "../src/utils/aes";
 
 import { BACKEND_URL, getAccessToken, login } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 用户回收站 E2E：删除 → 抽屉可见 → 恢复 → 列表重现。
@@ -14,6 +22,7 @@ test("用户回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   const username = `e2e_recycle_u_${Date.now()}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = {
     Authorization: `Bearer ${token}`,

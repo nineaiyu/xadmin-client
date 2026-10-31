@@ -34,52 +34,54 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <template v-if="!editing">
-    <el-button
-      link
-      type="primary"
-      :icon="Download"
-      :title="t('dashboard.exportImage')"
-      :loading="exporting"
-      data-testid="card-export-image"
-      @click="emit('exportImage')"
-    />
-    <el-button
-      link
-      type="primary"
-      :icon="View"
-      :title="t('dashboard.drillViewData')"
-      :aria-label="t('dashboard.drillViewData')"
-      data-testid="card-drill-open"
-      @click="emit('drill')"
-    />
-  </template>
-  <template v-else>
-    <el-button
-      link
-      type="primary"
-      :icon="ArrowUp"
-      :title="t('dashboard.moveUp')"
-      :aria-label="t('dashboard.moveUp')"
-      @click="emit('move', -1)"
-    />
-    <el-button
-      link
-      type="primary"
-      :icon="ArrowDown"
-      :title="t('dashboard.moveDown')"
-      :aria-label="t('dashboard.moveDown')"
-      @click="emit('move', 1)"
-    />
-    <el-button
-      link
-      type="primary"
-      :icon="Setting"
-      :title="t('dashboard.cardSettings')"
-      @click="emit('settings')"
-    />
-    <el-button link type="danger" @click="emit('remove')">
-      {{ t("dashboard.remove") }}
-    </el-button>
-  </template>
+  <div class="contents">
+    <template v-if="!editing">
+      <el-button
+        link
+        type="primary"
+        :icon="Download"
+        :title="t('dashboard.exportImage')"
+        :loading="exporting"
+        data-testid="card-export-image"
+        @click="emit('exportImage')"
+      />
+      <el-button
+        link
+        type="primary"
+        :icon="View"
+        :title="t('dashboard.drillViewData')"
+        :aria-label="t('dashboard.drillViewData')"
+        data-testid="card-drill-open"
+        @click="emit('drill')"
+      />
+    </template>
+    <template v-else>
+      <el-button
+        link
+        type="primary"
+        :icon="ArrowUp"
+        :title="t('dashboard.moveUp')"
+        :aria-label="t('dashboard.moveUp')"
+        @click="emit('move', -1)"
+      />
+      <el-button
+        link
+        type="primary"
+        :icon="ArrowDown"
+        :title="t('dashboard.moveDown')"
+        :aria-label="t('dashboard.moveDown')"
+        @click="emit('move', 1)"
+      />
+      <el-button
+        link
+        type="primary"
+        :icon="Setting"
+        :title="t('dashboard.cardSettings')"
+        @click="emit('settings')"
+      />
+      <el-button link type="danger" @click="emit('remove')">
+        {{ t("dashboard.remove") }}
+      </el-button>
+    </template>
+  </div>
 </template>

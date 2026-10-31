@@ -40,9 +40,17 @@ const ADMIN = {
 /** 采集后稳定等待：懒加载卡片 / 图表动画仍会继续影响 LCP 与长任务 */
 const SETTLE_MS = Number(process.env.PROFILE_SETTLE ?? "2500");
 
-/** 采集候选页：入口（登录后落地）与最重的列表页（整页直达，口径=真实首屏） */
+/**
+ * 采集候选页（口径=真实首屏整页直达）：
+ * - login：匿名首屏（未登录落地，独立 context 采集，不复用登录态 Cookie）
+ * - welcome：登录后的首页落地（含仪表盘卡片/图表）
+ * - 列表页 / 全屏仪表盘：整页直达的重页面，用于观察列表与图表链路的首屏成本
+ * 新增页面时在这里登记名称 + 路由 + 就绪选择器（`--pages <name>` 可按名筛选）。
+ */
 const PAGES = [
+  { name: "login", path: "/login", anonymous: true, ready: "form" },
   { name: "welcome", path: "/" },
+  { name: "dashboard-display", path: "/analysis/dashboard/display" },
   { name: "system-user", path: "/system/user/index" }
 ].filter(p => !pagesFilter || pagesFilter.includes(p.name));
 
@@ -189,7 +197,9 @@ async function collectPage(context, pageDef) {
 
   // 整页直达（hash 路由整页 goto 才能真正采集「首屏」：资源瀑布从导航起算）
   await page.goto(pageDef.path === "/" ? "/" : `/#${pageDef.path}`);
-  await page.waitForSelector("#main-content", { timeout: 20_000 });
+  await page.waitForSelector(pageDef.ready ?? "#main-content", {
+    timeout: 20_000
+  });
   await page.waitForLoadState("load").catch(() => undefined);
   await page.waitForTimeout(SETTLE_MS);
 
@@ -205,12 +215,15 @@ async function collectPage(context, pageDef) {
 
 async function main() {
   const browser = await chromium.launch();
-  const context = await browser.newContext({
+  const contextOptions = {
     baseURL,
     locale: "zh-CN",
     // 与 e2e/helpers.ts 对齐：UA 影响后端临时 Token 与限流指纹
     userAgent: "e2e-test"
-  });
+  };
+  const context = await browser.newContext(contextOptions);
+  // 匿名 context：登录页必须无 Cookie，否则会被重定向回首页
+  const anonymousContext = await browser.newContext(contextOptions);
   const page = await context.newPage();
   // 登录一次，后续页面复用同一 context（Cookie 生效）
   await page.goto("/#/login");
@@ -224,7 +237,8 @@ async function main() {
 
   const out = {};
   for (const def of PAGES) {
-    const r = await collectPage(context, def);
+    const targetContext = def.anonymous ? anonymousContext : context;
+    const r = await collectPage(targetContext, def);
     out[def.name] = r;
     console.log(
       `[firstscreen][${ENV_KEY}][${def.name}] ttfb=${r.ttfb} fcp=${r.fcp} ` +
@@ -239,22 +253,31 @@ async function main() {
     const baseline = existsSync(BASELINE_FILE)
       ? JSON.parse(readFileSync(BASELINE_FILE, "utf-8"))
       : {};
+    const previousPages = baseline.firstscreen?.[ENV_KEY] ?? {};
     // --pages 只采部分页面时按页面合并，不能让未采集页面的基线被整体覆盖
     baseline.firstscreen = {
       ...(baseline.firstscreen ?? {}),
       [ENV_KEY]: {
-        ...(baseline.firstscreen?.[ENV_KEY] ?? {}),
+        ...previousPages,
         ...out
       }
     };
-    writeFileSync(
-      BASELINE_FILE,
-      `${JSON.stringify(baseline, null, 2)}\n`,
-      "utf-8"
-    );
-    console.log(
-      `[firstscreen] 已写入 ${BASELINE_FILE} → firstscreen.${ENV_KEY}`
-    );
+    const serialized = `${JSON.stringify(baseline, null, 2)}\n`;
+    if (
+      existsSync(BASELINE_FILE) &&
+      readFileSync(BASELINE_FILE, "utf-8") === serialized
+    ) {
+      console.log("[firstscreen] 基线与本次采集一致，未写入。");
+    } else {
+      writeFileSync(BASELINE_FILE, serialized, "utf-8");
+      const diffs = Object.keys(out).map(
+        name =>
+          `${name}: lcp ${previousPages[name]?.lcp ?? "-"} → ${out[name].lcp}`
+      );
+      console.log(
+        `[firstscreen] 已写入 ${BASELINE_FILE} → firstscreen.${ENV_KEY}（${diffs.join("；")}）`
+      );
+    }
   }
 
   await browser.close();

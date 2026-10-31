@@ -7,6 +7,11 @@ import {
   openEntityPanel,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupAiIsolation,
+  resetAiIsolation,
+  startAiIsolation
+} from "./ai-isolation";
 
 /**
  * AI 助手主链路：覆盖全局开关、多档案管理（CRUD/激活）、助手页引导渲染，
@@ -16,6 +21,9 @@ import {
 
 const STUB_LLM_URL =
   process.env.E2E_STUB_LLM_URL ?? "http://127.0.0.1:18897/v1";
+
+test.beforeEach(() => resetAiIsolation());
+test.afterEach(async ({ page }) => cleanupAiIsolation(page));
 
 async function jsonRequest(
   page: Page,
@@ -72,6 +80,7 @@ const ensureSwitchOn = async (
 
 test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
 
   // ---- 助手页：双浏览器共享同一 E2E 库，先跑的浏览器可能已开启开关——
   // 「未启用引导」与「可用问答页」都算合法初始态（toPass 轮询两者其一） ----
@@ -91,7 +100,7 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   await page.getByRole("tab", { name: "功能开关" }).click();
   await ensureSwitchOn(page, "ai-assistant-enabled");
   await page.getByRole("button", { name: "保存", exact: true }).click();
-  await expect(page.locator(".el-message").first()).toBeVisible({
+  await expect(page.locator(".el-message").last()).toBeVisible({
     timeout: 15_000
   });
 
@@ -135,14 +144,31 @@ test("AI 配置：全局开关 + 档案创建激活 + 助手页引导", async ({
   await page.getByTestId("ai-ask-input").fill("数据集如何做数据权限过滤？");
   await page.getByTestId("ai-send").click();
   // E2E 环境无真实供应商：任何可读提示（失败文案）都算 UI 链路通过
-  await expect(page.locator(".el-message").first()).toBeVisible({
+  await expect(page.locator(".el-message").last()).toBeVisible({
     timeout: 30_000
   });
 });
 
 test("命令面板问 AI：搜索词直达助手页并预填输入框", async ({ page }) => {
   await login(page);
-  // 前置：首个用例已开启全局开关并激活档案（同库串行），助手页输入框可用
+  await startAiIsolation(page);
+  // 本用例自备助手开关与档案：不得依赖前一个用例留下的站点级共享态
+  const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
+    AI_ASSISTANT_ENABLED: true
+  });
+  expect(saved.code).toBe(1000);
+  const created = await jsonRequest(page, "post", "/api/ai/profiles", {
+    name: `E2E-命令面板档案-${Date.now()}`,
+    base_url: STUB_LLM_URL,
+    api_key: "sk-e2e-stub",
+    model: "stub-model"
+  });
+  expect(created.code).toBe(1000);
+  await jsonRequest(
+    page,
+    "post",
+    `/api/ai/profiles/${String(created.data?.pk ?? "")}/activate`
+  );
   await page.keyboard.press("Control+k");
   const input = page.locator(".pure-search-dialog input").first();
   await input.fill("命令面板预填验证问题");
@@ -163,6 +189,7 @@ test("命令面板问 AI：搜索词直达助手页并预填输入框", async ({
 
 test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
 
   // 配置页：全局开关开启 AI 助手 + NL 查数（不配真实 LLM，解释动作将得到可读错误）
   // 配置中心三分栏，开关在「功能开关」面板（默认落在档案面板）
@@ -174,7 +201,7 @@ test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   await ensureSwitchOn(page, "ai-assistant-enabled");
   await ensureSwitchOn(page, "ai-nl-query-enabled");
   await page.getByRole("button", { name: "保存", exact: true }).click();
-  await expect(page.locator(".el-message").first()).toBeVisible();
+  await expect(page.locator(".el-message").last()).toBeVisible();
 
   // 助手页：数据查询入口出现 → 解释 → 无真实 LLM 得可读错误（UI 链路验证）。
   // 开关保存经 pub/sub 异步回写 settings，留缓冲并刷新页面读最新状态；
@@ -198,13 +225,14 @@ test("NL 查数：灰度开启后解释卡片渲染", async ({ page }) => {
   });
   await page.getByTestId("ai-ask-input").fill("列出启用用户");
   await page.getByTestId("ai-send").click();
-  await expect(page.locator(".el-message").first()).toBeVisible({
+  await expect(page.locator(".el-message").last()).toBeVisible({
     timeout: 30_000
   });
 });
 
 test("文档问答：流式回答 + 思考过程展示（指向桩 LLM）", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
 
   // 前置（API 化，避免 UI 长链路）：全局开关 + 知识文档（保证检索命中）+
   // 指向桩 LLM 的档案并激活——这也是「多档案激活优先」通路的实测。
@@ -271,6 +299,7 @@ test("文档问答：流式回答 + 思考过程展示（指向桩 LLM）", asyn
 
 test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
 
   // 前置（API 化）：助手开关 + 动作灰度 + 指向桩 LLM 的激活档案
   const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {
@@ -347,6 +376,7 @@ test("指令执行：草稿确认卡片 + 确认执行（指向桩 LLM）", asyn
  */
 test("AI 配置：档案管理抽屉渲染资料与动作", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
   const name = `E2E-抽屉档案-${Date.now()}`;
   const created = await jsonRequest(page, "post", "/api/ai/profiles", {
     name,
@@ -386,6 +416,7 @@ test("首页 AI 日报卡：指标芯片渲染 + 失败任务直达任务日志"
   page
 }) => {
   await login(page);
+  await startAiIsolation(page);
 
   // 站点级开关：开启后首页渲染整卡（双浏览器共享库，用例结束复位避免影响视觉基线）
   const saved = await jsonRequest(page, "patch", "/api/ai/assistant/config", {

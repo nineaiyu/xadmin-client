@@ -2,6 +2,10 @@ import type { Plugin } from "vite";
 import { isArray } from "@pureadmin/utils";
 import compressPlugin from "vite-plugin-compression";
 
+/** 压缩收益面：文本类资源。图片/字体/视频等二进制压缩无收益，只会增大镜像 */
+const COMPRESSIBLE = /\.(?:js|mjs|cjs|css|html|json|svg|xml|txt|webmanifest)$/i;
+const compressible = (file: string) => COMPRESSIBLE.test(file);
+
 export const configCompressPlugin = (
   compress: ViteCompression
 ): Plugin | Plugin[] | null => {
@@ -12,8 +16,8 @@ export const configCompressPlugin = (
     ext: ".gz",
     // 体积大于threshold才会被压缩
     threshold: 0,
-    // 默认压缩.js|mjs|json|css|html后缀文件，设置成true，压缩全部文件
-    filter: () => true,
+    // 只压缩文本类资源（默认全量会把二进制也生成 .gz）
+    filter: compressible,
     // 压缩后是否删除原始文件
     deleteOriginFile: false
   };
@@ -21,7 +25,7 @@ export const configCompressPlugin = (
     ext: ".br",
     algorithm: "brotliCompress",
     threshold: 0,
-    filter: () => true,
+    filter: compressible,
     deleteOriginFile: false
   };
 

@@ -188,11 +188,8 @@ test("菜单管理：搜索命中深层节点（自动展开定位）", async ({
 
 test("菜单管理：生成权限码为干跑预览（可关闭且不落库）", async ({ page }) => {
   await openPage(page);
-  const name = uniqueName("C");
-  await createMenu(page, name);
-
-  // 选中节点：点标题打开编辑抽屉（未修改，生成权限码时会先收起抽屉再开弹窗）
-  await row(page, name).locator(".menu-row__title").click();
+  // 生成权限码只对页面菜单开放（目录/权限点不可作为父级）：直接选种子里的「用户管理」页
+  await row(page, "用户管理").locator(".menu-row__title").click();
   await expect(page.locator(".el-drawer:visible").first()).toBeVisible({
     timeout: 15_000
   });
@@ -221,8 +218,6 @@ test("菜单管理：生成权限码为干跑预览（可关闭且不落库）",
   // 取消：不落库（真正的写入由后端 permissions 接口承担，前端只发 dry_run）
   await dialog.getByRole("button", { name: "取消" }).click();
   await expect(dialog).toBeHidden({ timeout: 10_000 });
-
-  await removeMenu(page, name);
 });
 
 test("菜单管理：权限检测弹窗（只读缺口报告）", async ({ page }) => {

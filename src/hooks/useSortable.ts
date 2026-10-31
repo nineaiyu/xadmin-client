@@ -50,11 +50,13 @@ export function useSortable(
   options: UseSortableOptions = {}
 ) {
   let instance: SortableInstance | null = null;
+  let instanceEl: HTMLElement | null = null;
   let disposed = false;
 
   const destroy = () => {
     instance?.destroy();
     instance = null;
+    instanceEl = null;
   };
 
   const wrap = (cb?: (payload: SortableDragPayload) => void) =>
@@ -83,12 +85,19 @@ export function useSortable(
       onEnd: wrap(options.onEnd),
       onUpdate: wrap(options.onUpdate)
     });
+    instanceEl = el;
   };
 
-  // 目标元素就绪后初始化；flush: post 确保在 DOM 更新完成后读取目标节点
+  // 目标元素就绪后初始化；flush: post 确保在 DOM 更新完成后读取目标节点。
+  // 目标被替换（如 el-table 空态/数据切换重建 tbody）时必须先销毁旧实例再重建，
+  // 否则拖拽仍绑在游离节点上，表现为「手柄无反应且无报错」。
   watch(
     () => toValue(target),
-    value => void (value && init()),
+    value => {
+      if (disposed) return;
+      if (instance && (value !== instanceEl || !value)) destroy();
+      if (value) void init();
+    },
     {
       immediate: true,
       flush: "post"

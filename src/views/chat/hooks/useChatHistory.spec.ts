@@ -160,3 +160,26 @@ describe("useChatHistory before_id 游标分页", () => {
     expect(ctx.loadingMore.value).toBe(false);
   });
 });
+
+describe("useChatHistory 失败态", () => {
+  beforeEach(() => {
+    historyMock.mockReset();
+  });
+
+  it("业务码失败：标记 loadFailed（不把失败伪装成空会话）", async () => {
+    historyMock.mockResolvedValue({ code: 1001, detail: "无权限" });
+    const ctx = build();
+    await ctx.loadHistory(2);
+    expect(ctx.loadFailed.value).toBe(true);
+    expect(ctx.messages.value).toEqual([]);
+    expect(ctx.loadingHistory.value).toBe(false);
+  });
+
+  it("网络异常不逃逸：loadHistory 自行收口并标记失败", async () => {
+    historyMock.mockRejectedValue(new Error("network"));
+    const ctx = build();
+    await expect(ctx.loadHistory(3)).resolves.toBeUndefined();
+    expect(ctx.loadFailed.value).toBe(true);
+    expect(ctx.loadingHistory.value).toBe(false);
+  });
+});

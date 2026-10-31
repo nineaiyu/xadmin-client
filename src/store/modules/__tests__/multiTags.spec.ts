@@ -150,3 +150,24 @@ describe("multiTags store", () => {
     expect(localStorage.getItem("xadmin-tags")).toBeNull();
   });
 });
+
+describe("multiTags 持久化时序", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    seedLayout();
+    setActivePinia(createPinia());
+  });
+
+  it("equal 重置立即落盘（reload 前不丢防抖窗口）", () => {
+    const store = useMultiTagsStore();
+    store.multiTagsCacheChange(true);
+    store.handleTags("equal", [tagOf("/logout-reset", "重置")]);
+
+    const persisted = JSON.parse(
+      localStorage.getItem("responsive-tags") ?? "[]"
+    );
+    expect(persisted.map((tag: { path: string }) => tag.path)).toEqual([
+      "/logout-reset"
+    ]);
+  });
+});

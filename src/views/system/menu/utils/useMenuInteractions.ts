@@ -64,6 +64,7 @@ export function useMenuInteractions({
     visibleTree: filter.visibleTree,
     expandPks: reveal.expandPks,
     firstMatchPk: filter.firstMatchPk,
+    auth,
     onNodeClick: rowActions.onNodeClick,
     onDrop: order.handleDrag,
     onCheck: selection.setChecked

@@ -284,6 +284,7 @@ const moduleColumns = computed<ReadonlyColumn[]>(() => [
               <el-switch
                 :model-value="draftEnabled.has(row.id)"
                 :disabled="row.level === 'core' || !canApply"
+                :aria-label="`${row.label} ${t('systemModule.enableSwitch')}`"
                 @change="value => onToggle(row.id, value)"
               />
             </el-tooltip>

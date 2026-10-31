@@ -3,6 +3,7 @@
 // 关键帧一律用独立变换属性 `translate` / `scale`：窗格自身可能带 `transform: rotate()`
 // （视觉旋转），用 transform 做动画会把旋转顶掉、动画结束再跳回去。
 // 播放条件（编辑态不播、只播一次）由组件用类名控制，见 `utils/paneEffects.ts`。
+// 时长使用 320ms 字面量：大屏展板有独立节奏，有意不跟随 --duration-base。
 
 .screen-pane {
   &.pane-animation--fade {

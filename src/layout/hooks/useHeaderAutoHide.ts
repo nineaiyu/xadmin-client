@@ -3,15 +3,9 @@ import { useEventListener } from "@vueuse/core";
 import { useGlobal } from "@pureadmin/utils";
 
 /**
- * 顶栏滚动自动隐藏：向下滚动超过阈值隐藏「固定头部」（顶栏 + 页签条），
- * 向上滚动立即恢复；回到顶部始终显示。
- *
- * - 开关取自 `$storage.configure.headerAutoHide`（项目设置面板 →「通用」）；
- * - **滚动源用捕获型 `scroll` 监听**：固定头布局下滚动发生在 `el-scrollbar`
- *   内部容器（`window.scrollY` 恒为 0），`useWindowScroll` 收不到事件；
- * - 内容区让位由 lay-content 依据 `hidden` 直接计算 padding（不改 `:root` 令牌：
- *   隐藏的是「顶栏 + 页签条」整体，单一 `--layout-header-h` 不足以表达，
- *   且滚动期间写根变量会触发整树样式重算）。
+ * 顶栏滚动自动隐藏：向下滚动超过阈值隐藏固定头部，向上滚动恢复；回到顶部始终显示。
+ * 滚动源用捕获型 scroll 监听（固定头布局滚动发生在 el-scrollbar 内部）。
+ * 内容区让位由 lay-content 依据 hidden 直接计算 padding，不改根令牌。
  */
 
 /** 下滚隐藏阈值（px）：越过一段距离才隐藏，避免顶部轻微滚动引起抖动 */
@@ -21,7 +15,11 @@ export const HEADER_SHOW_OFFSET = 12;
 /** 隐藏态切换后的静默窗（ms）：覆盖过渡动画期内的钳制/锚定补偿滚动事件 */
 export const TOGGLE_SILENCE_MS = 450;
 
-export function useHeaderAutoHide(enabled?: () => boolean) {
+export function useHeaderAutoHide(
+  enabled?: () => boolean,
+  /** auto-scroll：任意滚动方向都隐藏（仅在回到顶部时恢复）；auto 则上滚即恢复 */
+  alwaysHide?: () => boolean
+) {
   const { $storage } = useGlobal<GlobalPropertiesApi>();
   const hidden = ref(false);
   const scrollTop = ref(0);
@@ -94,7 +92,10 @@ export function useHeaderAutoHide(enabled?: () => boolean) {
       // 按方向与阈值切换
       if (top - lastTop > 0 && top > HEADER_HIDE_OFFSET) {
         hidden.value = true;
-      } else if (lastTop - top > HEADER_SHOW_OFFSET) {
+      } else if (
+        !(alwaysHide?.() ?? false) &&
+        lastTop - top > HEADER_SHOW_OFFSET
+      ) {
         hidden.value = false;
       }
     },

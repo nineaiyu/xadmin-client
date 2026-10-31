@@ -77,7 +77,7 @@ export function useReport(tableRef: Ref) {
       }
       return;
     }
-    if (res.detail) message(String(res.detail), { type: "warning" });
+    message(String(res.detail || t("results.failed")), { type: "warning" });
   };
 
   /** 报表设计器：新开独立页（保存走 partialUpdate，需编辑权限） */

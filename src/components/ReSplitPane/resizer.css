@@ -77,7 +77,10 @@
   transform: translate(-50%, -50%);
   width: 18px;
   height: 18px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
+  font: inherit;
   color: var(--el-text-color-secondary);
   background: var(--el-bg-color);
   box-shadow: var(--shadow-sm);

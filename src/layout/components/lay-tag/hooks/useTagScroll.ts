@@ -1,4 +1,4 @@
-import { nextTick, ref } from "vue";
+import { nextTick, onBeforeUnmount, ref } from "vue";
 import { isEqual, isAllEmpty } from "@pureadmin/utils";
 import { computeScrollTranslate, computeTagView } from "./tagScrollMath";
 import type { useTags } from "../../../hooks/useTag";
@@ -82,7 +82,12 @@ export function useTagScroll(ctx: TagScrollContext) {
     smoothScroll(offset);
   };
 
+  let scrollRaf: number | null = null; // 连续 wheel 会起新循环：必须取消上一个，避免帧率叠加
+  onBeforeUnmount(() => {
+    if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
+  });
   const smoothScroll = (offset: number): void => {
+    if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
     // 每帧滚动的距离
     const scrollAmount = 20;
     let remaining = Math.abs(offset);
@@ -94,11 +99,13 @@ export function useTagScroll(ctx: TagScrollContext) {
       remaining -= Math.abs(scrollOffset);
 
       if (remaining > 0) {
-        requestAnimationFrame(scrollStep);
+        scrollRaf = requestAnimationFrame(scrollStep);
+      } else {
+        scrollRaf = null;
       }
     };
 
-    requestAnimationFrame(scrollStep);
+    scrollRaf = requestAnimationFrame(scrollStep);
   };
 
   return {

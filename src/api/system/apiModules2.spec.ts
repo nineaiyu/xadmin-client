@@ -261,7 +261,7 @@ describe("periodicTaskApi 定时任务", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/task/crontab",
-      { params: { page: 1 }, data: {} },
+      { params: { page: 1 }, data: undefined },
       {}
     );
 
@@ -269,7 +269,7 @@ describe("periodicTaskApi 定时任务", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/task/interval",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
 

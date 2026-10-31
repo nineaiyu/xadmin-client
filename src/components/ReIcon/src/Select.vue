@@ -46,7 +46,8 @@ const tabsList = [
 
 /** 当前图标集下的搜索结果（前端过滤；翻页与「总数变化回首页」由 usePagination 承担） */
 const filteredIconList = computed(() =>
-  copyIconList[currentActiveType.value].filter(i =>
+  // 非「前缀:」形态（斜杠 / iconfont / URL / 内联 svg）没有对应图标集：兜底空集，避免 TypeError
+  (copyIconList[currentActiveType.value] ?? []).filter(i =>
     i.includes(filterValue.value)
   )
 );
@@ -83,18 +84,22 @@ const iconItemStyle = computed((): ParameterCSSProperties => {
 });
 
 function setVal() {
-  currentActiveType.value = inputValue.value.substring(
-    0,
-    inputValue.value.indexOf(":") + 1
-  );
-  icon.value = inputValue.value.substring(inputValue.value.indexOf(":") + 1);
+  // 非「前缀:」形态的图标值（斜杠 / iconfont / URL / svg）回落默认集合并保留原值展示
+  const separator = inputValue.value.indexOf(":");
+  if (separator < 0) {
+    currentActiveType.value = "ep:";
+    icon.value = inputValue.value;
+    return;
+  }
+  currentActiveType.value = inputValue.value.substring(0, separator + 1);
+  icon.value = inputValue.value.substring(separator + 1);
 }
 
 function onBeforeEnter() {
   if (isAllEmpty(icon.value) || isAllEmpty(inputValue.value)) return;
   setVal();
   // 寻找当前图标在第几页（未命中回落首页）
-  const curIconIndex = copyIconList[currentActiveType.value].findIndex(
+  const curIconIndex = (copyIconList[currentActiveType.value] ?? []).findIndex(
     i => i === icon.value
   );
   setCurrentPage(

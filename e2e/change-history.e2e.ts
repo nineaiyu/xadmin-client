@@ -8,6 +8,14 @@ import {
   openMenuPath,
   openUserPanel
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 行级变更历史（用户管理，object_pk 回溯操作日志）：
@@ -17,6 +25,7 @@ import {
 
 test("变更历史：编辑用户后行按钮弹窗展示字段级 diff", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   // API 直接建用户（create 权限走超管 JWT），避免 UI 新增的长链路
   const username = `e2e_hist_${Date.now()}`;

@@ -49,8 +49,13 @@ type Violation = { directive: string; blocked: string; source: string };
 
 /** 逐文档采集 CSP 违规（init script 在每次导航的新文档里重新挂载） */
 const COLLECT_VIOLATIONS = () => {
-  const target = window as unknown as { __cspViolations?: Violation[] };
+  const target = window as unknown as {
+    __cspViolations?: Violation[];
+    __cspDocumentId?: string;
+  };
   target.__cspViolations = [];
+  // 文档身份：游标只在文档重建时归零（SPA 哈希导航不重建文档，违规数组继续累计）
+  target.__cspDocumentId = `${Date.now()}-${Math.random()}`;
   document.addEventListener("securitypolicyviolation", event => {
     target.__cspViolations!.push({
       directive: event.effectiveDirective,
@@ -63,7 +68,10 @@ const COLLECT_VIOLATIONS = () => {
 const readViolations = (page: Page) =>
   page.evaluate(
     () =>
-      (window as unknown as { __cspViolations: Violation[] }).__cspViolations
+      window as unknown as {
+        __cspViolations: Violation[];
+        __cspDocumentId: string;
+      }
   );
 
 /** 核心页面清单：覆盖外壳资源、列表页、图表、WS、富文本、设计器 */
@@ -107,8 +115,16 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
 
   const collected: Array<{ page: string; items: Violation[] }> = [];
   let seen = 0;
+  let lastDocument = "";
   const record = async (name: string) => {
-    const all = await readViolations(page);
+    const { __cspViolations: all, __cspDocumentId: documentId } =
+      await readViolations(page);
+    // 新文档（整页导航）会重建违规数组：游标归零；同文档的 SPA 导航不得归零，
+    // 否则会把前序页面的违规重复计入当前页（归属错配）
+    if (documentId !== lastDocument) {
+      lastDocument = documentId;
+      seen = 0;
+    }
     collected.push({ page: name, items: all.slice(seen) });
     seen = all.length;
   };
@@ -195,7 +211,7 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
   await page.goto("/__csp_probe");
   const report = await reportReceived;
   expect(report.status(), "页面层 report-uri 未达后端（期望 204）").toBe(204);
-  const probe = await readViolations(page);
+  const probe = (await readViolations(page)).__cspViolations;
   const probeRan = await page.evaluate(
     () => (window as unknown as { __cspProbeRan?: boolean }).__cspProbeRan
   );
@@ -206,7 +222,7 @@ test("页面层 CSP：核心页面零违规 + 探针负对照命中", async ({ p
   ).toBeGreaterThan(0);
   // 内联 <script> 的 effectiveDirective 在 Chrome 为 script-src-elem（回落 script-src）
   expect(
-    probe.some(item => item.directive.startsWith("script-src")),
+    probe.some((item: Violation) => item.directive.startsWith("script-src")),
     `探针违规未落在 script-src：${JSON.stringify(probe)}`
   ).toBeTruthy();
 

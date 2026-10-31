@@ -7,15 +7,30 @@ export function useRiskQuickFilter(tableRef: Ref) {
     ...params,
     ...quickFilter.value
   });
-  const onStatsChip = (payload: { group: string; chip: { key: string } }) => {
+  const filterOf = (payload: { group: string; chip: { key: string } }) => {
     const next: Record<string, string> = {};
     if (payload.group === "level") next.level = payload.chip.key;
     else if (payload.group === "status") next.status = payload.chip.key;
     else if (payload.group === "type") next.risk_type = payload.chip.key;
     else if (payload.group === "overview" && payload.chip.key === "pending")
       next.status = "pending";
-    quickFilter.value = next;
+    return next;
+  };
+  const onStatsChip = (payload: { group: string; chip: { key: string } }) => {
+    const next = filterOf(payload);
+    // 再次点击同一 chip = 取消该快捷筛选（否则条件隐形且永久残留）
+    const same =
+      Object.keys(next).length === Object.keys(quickFilter.value).length &&
+      Object.entries(next).every(
+        ([key, value]) => quickFilter.value[key] === value
+      );
+    quickFilter.value = same ? {} : next;
     tableRef.value?.handleGetData?.();
   };
-  return { beforeSearchSubmit, onStatsChip };
+  const clearQuickFilter = () => {
+    if (!Object.keys(quickFilter.value).length) return;
+    quickFilter.value = {};
+    tableRef.value?.handleGetData?.();
+  };
+  return { beforeSearchSubmit, onStatsChip, quickFilter, clearQuickFilter };
 }

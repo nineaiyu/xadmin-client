@@ -113,7 +113,11 @@ html.dark {
   --el-color-success: hsl(var(--success));
   --el-color-warning: hsl(var(--warning));
   --el-color-danger: hsl(var(--danger));
+  --el-color-info: hsl(var(--info));
   --el-color-error: hsl(var(--danger));
+
+  /* 遮罩：EP 弹层遮罩统一走 --overlay 语义槽（带透明度） */
+  --el-overlay-color-lighter: hsl(var(--overlay));
 
   /* 成功文本（正文可读档）：success / dark-2 档做数字与徽标装饰色，但白底上
      对比度不足 4.5:1（WCAG AA，axe color-contrast 拦截）；正文级绿字（增长

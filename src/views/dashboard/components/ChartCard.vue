@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ReSkeleton from "@/components/ReSkeleton";
 import { useDark, useECharts } from "@pureadmin/utils";
+import { useChartDrill } from "./useChartDrill";
 import type { UtilsEChartsOption } from "@pureadmin/utils";
 import { usePageLoading } from "@/hooks/usePageLoading";
 import {
@@ -129,6 +130,7 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
   if (props.card.chart_type === "pie") {
     const colors = palette();
     return {
+      aria: { enabled: true },
       tooltip: { trigger: "item", ...tooltipStyle },
       legend: {
         bottom: 0,
@@ -159,8 +161,9 @@ const buildSeriesOptions = (result: AggregateResult): UtilsEChartsOption => {
     };
   }
   const isLine = props.card.chart_type === "line";
-  const primary = epColor("primary");
+  const primary = epColor("primary", colorScope.value);
   return {
+    aria: { enabled: true },
     tooltip: { trigger: "axis", ...tooltipStyle },
     grid: { top: "24px", left: "48px", right: "24px", bottom: "36px" },
     xAxis: {
@@ -297,24 +300,14 @@ const loadData = () => runWithLoading(fetchData);
 
 /** 最近一次聚合序列（下钻点击时按维度名反查 raw 原始值） */
 const lastSeries = ref<AggregateResult["series"]>([]);
-let drillBound = false;
-
-/**
- * 图表点击下钻：点击柱/扇区派发该维度项（name 为可读 label，raw 为过滤原值；
- * 趋势序列无 raw——派发后由父级回落为全量明细）。实例由 useECharts 延迟创建，
- * 首次渲染成功后挂载一次。
- */
-function bindDrillClick() {
-  if (drillBound || !props.drillable) return;
-  const instance = getInstance();
-  if (!instance || typeof instance.on !== "function") return;
-  instance.on("click", (params: { name?: string }) => {
-    if (!props.drillable || !params?.name) return;
-    const hit = lastSeries.value.find(item => item.name === params.name);
-    emit("drill", { name: params.name, raw: hit?.raw });
-  });
-  drillBound = true;
-}
+/** 图表点击下钻（实例重建后的重绑见 useChartDrill） */
+const { bindDrillClick } = useChartDrill({
+  isDrillable: () => Boolean(props.drillable),
+  getInstance: () => getInstance() as EChartsLike | null,
+  series: lastSeries,
+  theme,
+  emitDrill: point => emit("drill", point)
+});
 
 /** 渲染聚合数据（HTTP 拉取与 WS 注入共用同一渲染路径） */
 const renderAggregate = async (result: AggregateResult) => {
@@ -400,6 +393,10 @@ watch(
  * number 卡（无 ECharts 实例）返回 null，由调用方跳过并提示。
  */
 async function renderImage(): Promise<ExportedImage | null> {
+  // 数字/指标卡没有 ECharts 实例：图表容器 v-show=false（0 尺寸），
+  // getInstance() 会懒初始化出一个 0 尺寸实例并返回非空 dataURL → 空白 PNG
+  if (props.card.chart_type === "number" || props.card.chart_type === "metric")
+    return null;
   const { renderEchartsImage } = await import("@/utils/imageExport");
   return renderEchartsImage(getInstance() as EChartsLike | null, {
     pixelRatio: 2,

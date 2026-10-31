@@ -35,6 +35,7 @@ const text = ref("");
 const truncated = ref(false);
 const preparing = ref(false);
 const error = ref("");
+let disposed = false;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -48,9 +49,11 @@ async function fetchPreview(kind: string) {
 /** Office：首次请求触发后端转换（heavy 队列），425 表示转换中 → 轮询重试 */
 async function fetchOfficeWithRetry() {
   for (let attempt = 0; ; attempt++) {
+    if (disposed) throw new DOMException("preview closed", "AbortError");
     try {
       return await fetchPreview("office");
     } catch (err) {
+      if (disposed) throw new DOMException("preview closed", "AbortError");
       const code = (err as { code?: number })?.code;
       if (code === PREVIEW_PREPARING_CODE && attempt < OFFICE_RETRY_MAX) {
         preparing.value = true;
@@ -82,6 +85,15 @@ async function load() {
         String(response.headers?.["x-preview-truncated"] ?? "0") === "1";
       text.value = await blob.text();
     } else {
+      // 内容类型白名单：服务端固定 image/jpeg 与 application/pdf，
+      // 类型不符说明响应被替换（如上传 mime 回显），不进入 iframe/img 渲染
+      const expected = kind === "image" ? "image/jpeg" : "application/pdf";
+      if (String(blob?.type || "").toLowerCase() !== expected) {
+        error.value = t("systemUploadFile.previewFailed");
+        return;
+      }
+      if (disposed) return;
+      if (objectUrl.value) URL.revokeObjectURL(objectUrl.value);
       objectUrl.value = URL.createObjectURL(blob);
     }
   } catch {
@@ -95,6 +107,7 @@ async function load() {
 
 onMounted(load);
 onUnmounted(() => {
+  disposed = true;
   if (objectUrl.value) URL.revokeObjectURL(objectUrl.value);
 });
 </script>
@@ -117,13 +130,17 @@ onUnmounted(() => {
         class="preview-image"
       />
     </template>
+    <!-- PDF/Office（转换产物统一为 PDF）以不透明源运行：内容类型白名单已在 load()
+      强制 application/pdf，不含可执行 HTML；沙箱不放开 allow-same-origin，避免预览
+      文档读取应用同源会话。若后续确需同源能力（如 PDF 表单脚本），必须改独立源 /
+      签名中转，不得在此直接放开。 -->
     <SafeFrame
       v-else-if="
         ['pdf', 'office'].includes(String(row?.preview_kind)) && objectUrl
       "
       :src="objectUrl"
       title="file-preview"
-      sandbox="allow-scripts allow-same-origin"
+      sandbox="allow-scripts"
       referrerpolicy="no-referrer"
       class="preview-frame"
     />

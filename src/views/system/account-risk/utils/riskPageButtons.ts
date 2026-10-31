@@ -56,9 +56,10 @@ export function buildRiskPageButtons({
       {
         text: t("accountRisk.detail"),
         code: "detail",
+        // 合并到框架默认详情按钮：保留权限位/可访问名，只覆盖点击行为
+        update: true,
         props: { type: "primary", link: true },
-        onClick: ({ row }) => openDetail(row as RecordType),
-        show: true
+        onClick: ({ row }) => openDetail(row as RecordType)
       },
       {
         text: t("accountRisk.handle"),

@@ -1,3 +1,4 @@
+import { choiceValue } from "@/utils/dict";
 import { onBeforeUnmount, watch, type Ref } from "vue";
 import { WS } from "@/utils/websocket";
 import {
@@ -51,6 +52,7 @@ export function useScreenChannel(deps: {
   /** 上报当前页（screen_page_state，仅轮播模式）：WS 未开静默跳过（重连后 onOpen 补报） */
   const reportPageState = () => {
     if (!ws || deps.dashboards.value.length === 0) return;
+    if (choiceValue(deps.screen.value?.layout_mode) === "free") return;
     if ((deps.screen.value?.layout ?? []).length > 0) return;
     const serverIndex = localIndexToServer(
       serverDashboards(),

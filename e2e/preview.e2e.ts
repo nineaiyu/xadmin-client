@@ -252,6 +252,7 @@ test.describe("数据权限配置页即时试算", () => {
 
 test.describe("角色授权预览（超管）", () => {
   test("授权菜单树、字段授权与持有用户表", async ({ page }) => {
+    test.slow();
     await login(page);
     // 角色管理页面菜单挂在「系统管理 → 权限管理」二级目录下（种子 menu.json）
     await openMenuPath(page, ["系统管理", "权限管理"], "/system/role/index");

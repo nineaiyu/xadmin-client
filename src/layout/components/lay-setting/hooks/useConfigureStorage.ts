@@ -5,9 +5,13 @@ export function useConfigureStorage() {
   const { $storage } = useGlobal<GlobalPropertiesApi>();
 
   function storageConfigureChange<T>(key: string, val: T): void {
-    const storageConfigure = $storage.configure;
-    (storageConfigure as Record<string, unknown>)[key] = val;
-    $storage.configure = storageConfigure;
+    // 必须换引用：responsive-storage 只在给 `$storage.configure` 赋新对象时
+    // 才同步落 localStorage；原地改字段再赋同一引用会让 saveSiteConfig 读到旧值，
+    // 表现为「面板已生效、自动保存判定无差异而跳过」。
+    $storage.configure = {
+      ...($storage.configure as Record<string, unknown>),
+      [key]: val
+    } as typeof $storage.configure;
   }
 
   return { storageConfigureChange };

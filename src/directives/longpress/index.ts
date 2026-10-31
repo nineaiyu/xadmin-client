@@ -18,6 +18,15 @@ export const longpress: Directive = {
       } else if (binding.arg) {
         num = Number(binding.arg);
       }
+      if (
+        !Number.isFinite(num) ||
+        num < 0 ||
+        (isInter && (!Number.isFinite(interNum) || (interNum as number) <= 0))
+      ) {
+        throw new Error(
+          "[Directive: longpress]: invalid delay/interval argument"
+        );
+      }
 
       const clear = () => {
         if (timer) {
@@ -51,14 +60,20 @@ export const longpress: Directive = {
         }
       };
 
-      // Register using addEventListener on mounted, and removeEventListener automatically on unmounted
+      // 卸载时清掉长按计时器（连续模式）与在途超时
+      (el as HTMLElement & { _longpressClear?: () => void })._longpressClear =
+        clear;
       useEventListener(el, "pointerdown", onDown);
       useEventListener(el, "pointerup", clear);
       useEventListener(el, "pointerleave", clear);
+      useEventListener(el, "pointercancel", clear);
     } else {
       throw new Error(
         '[Directive: longpress]: need callback and callback must be a function! Like v-longpress="callback"'
       );
     }
+  },
+  unmounted(el: HTMLElement) {
+    (el as HTMLElement & { _longpressClear?: () => void })._longpressClear?.();
   }
 };

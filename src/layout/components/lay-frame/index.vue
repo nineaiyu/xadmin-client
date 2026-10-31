@@ -24,23 +24,32 @@ const keep = computed(() => {
 // 避免重新渲染 LayFrame
 const normalComp = computed(() => !keep.value && props.currComp);
 
-watch(useMultiTagsStoreHook().multiTags, (tags: RouteConfigs[]) => {
-  // 清理不依赖当前路由形态：关掉 iframe 页签时用户可能正停在普通页面，
-  // 若以 keep 为门禁则缓存组件与远端资源会一直驻留到下次进入 iframe 路由
-  if (!Array.isArray(tags)) {
-    return;
-  }
-  const iframeTags = tags.filter(i => i.meta?.frameSrc);
-  // tags必须是小于MAP，才是做了关闭动作，因为MAP插入的顺序在tags变化后发生
-  if (iframeTags.length < MAP.size) {
+// getter 取最新数组：`handleTags("equal")` 会整体替换 store 字段，直接传数组
+// 引用会让 watch 继续观察旧数组，后续 push/splice 不再触发清理
+watch(
+  () => useMultiTagsStoreHook().multiTags,
+  (tags: RouteConfigs[]) => {
+    // 清理不依赖当前路由形态：关掉 iframe 页签时用户可能正停在普通页面，
+    // 若以 keep 为门禁则缓存组件与远端资源会一直驻留到下次进入 iframe 路由
+    if (!Array.isArray(tags)) {
+      return;
+    }
+    // 用集合差集判定关闭：数量相等但「关一个、开一个」时也要清理旧缓存
+    const activePaths = new Set(
+      tags
+        .filter(i => i.meta?.frameSrc)
+        .map(i => String((i as { fullPath?: string }).fullPath ?? i.path ?? ""))
+    );
+    let changed = false;
     for (const i of MAP.keys()) {
-      if (!tags.some(s => s.path === i)) {
+      if (!activePaths.has(i)) {
         delMap(i);
-        compList.value = getMap() as [string, unknown][];
+        changed = true;
       }
     }
+    if (changed) compList.value = getMap() as [string, unknown][];
   }
-});
+);
 
 watch(
   () => props.currRoute.fullPath,

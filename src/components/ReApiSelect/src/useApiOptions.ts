@@ -52,6 +52,8 @@ export function useApiOptions(config: () => ApiOptionsConfig) {
   const loading = ref(false);
   const loaded = ref(false);
   const extraParams = ref<Record<string, unknown>>({});
+  // 请求序号：乱序响应只允许最新一次写回（快速切参数/重复打开时旧响应不得覆盖新结果）
+  let requestSeq = 0;
 
   function transform(list: unknown[]): ApiOption[] {
     const c = config();
@@ -78,6 +80,7 @@ export function useApiOptions(config: () => ApiOptionsConfig) {
     const c = config();
     if (!c.api) return;
     if (loaded.value && !force && !c.alwaysLoad) return;
+    const seq = ++requestSeq;
     loading.value = true;
     try {
       let params = { ...(c.params ?? {}), ...extraParams.value };
@@ -85,6 +88,7 @@ export function useApiOptions(config: () => ApiOptionsConfig) {
         params = (await c.beforeFetch(params)) ?? params;
       }
       const res = await c.api(params);
+      if (seq !== requestSeq) return;
       let data = (res as { data?: unknown })?.data ?? res;
       if (c.resultField) {
         data = get(data as object, c.resultField);
@@ -95,11 +99,11 @@ export function useApiOptions(config: () => ApiOptionsConfig) {
       options.value = transform(Array.isArray(data) ? data : []);
       loaded.value = true;
     } catch {
-      // 取数失败降级为空选项（消费方多为可选下拉，失败不应阻断表单与 unhandled rejection）；
-      // 不置 loaded，下一次打开或 reload 可自动重试
-      options.value = [];
+      if (seq !== requestSeq) return;
+      // 失败刷新保留已加载选项（只在从未成功时降级为空）；不置 loaded，下次可重试
+      if (!loaded.value) options.value = [];
     } finally {
-      loading.value = false;
+      if (seq === requestSeq) loading.value = false;
     }
   }
 

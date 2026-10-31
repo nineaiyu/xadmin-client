@@ -82,15 +82,24 @@ class MenuApi extends BaseApi {
       `${this.baseApi}/permission-audit`
     );
   };
-  rank = (data?: object) => {
+  rank = (data: (string | number)[]) => {
     return this.request<BaseResult>("post", {}, data, `${this.baseApi}/rank`);
   };
   apiUrl = () => {
     return this.request<DataListResult>(
       "get",
       {},
-      {},
+      undefined,
       `${this.baseApi}/api-url`
+    );
+  };
+  /** 删除前影响面预检（角色引用 / 后代范围） */
+  impact = (pks: Array<string | number>) => {
+    return this.request<DetailResult<unknown>>(
+      "post",
+      {},
+      { pks: pks.map(String) },
+      `${this.baseApi}/impact`
     );
   };
   /** 批量更新（白名单：is_active）：逐项走序列化器校验，部分成功语义 */

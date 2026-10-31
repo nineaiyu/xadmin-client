@@ -21,7 +21,7 @@ export function createScreenVersionActions(deps: {
   preview: Ref<boolean>;
 }) {
   async function rollbackTo(version: number): Promise<ScreenItem | null> {
-    const { screen, saving, readonly, preview } = deps;
+    const { t, screen, saving, readonly, preview } = deps;
     if (!screen.value || saving.value || readonly.value || preview.value)
       return null;
     saving.value = true;
@@ -33,7 +33,7 @@ export function createScreenVersionActions(deps: {
         screen.value = { ...screen.value, ...res.data };
         return screen.value;
       }
-      if (res.detail) message(String(res.detail), { type: "warning" });
+      message(String(res.detail || t("results.failed")), { type: "warning" });
       return null;
     } finally {
       saving.value = false;

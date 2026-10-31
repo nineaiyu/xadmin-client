@@ -39,44 +39,44 @@ const formRefs = ref<Record<number, InstanceType<typeof PlusForm>>>({});
  * 这里给出可读解释，避免误判为数据丢失（白名单是部署前提，见 docs/architecture/permission.md）。
  */
 const isBlankDetail = computed(() => {
-  const values = Object.values(newFormInline.value ?? {});
-  return (
-    values.length > 0 && values.every(value => value === null || value === "")
-  );
+  // 真实空记录同样有空值：只有「行对象缺少详情列的绝大部分键」才像字段权限裁空
+  const row = newFormInline.value ?? {};
+  const keys = Object.keys(row);
+  const expected = props.columns
+    .map(column => column.prop)
+    .filter((prop): prop is string => Boolean(prop));
+  if (!keys.length || !expected.length) return false;
+  const present = expected.filter(prop => keys.includes(prop)).length;
+  return present < expected.length;
 });
 
-const isTabs = computed(() => {
-  return (
-    props.columns.length > 0 &&
-    props.columns[0]._column?.tabs_index !== undefined
-  );
-});
+const isTabs = computed(() =>
+  props.columns.some(column => column._column?.tabs_index !== undefined)
+);
 
 const tabsColumns = computed(() => {
-  const _tabsColumns: Record<string | number, typeof props.columns> = {};
-  const _tabsLabels: Record<string | number, string> = {};
+  const explicit = props.columns
+    .map(column => column._column?.tabs_index)
+    .filter((index): index is number => typeof index === "number");
+  const first = explicit.length ? Math.min(...explicit) : 0;
+  const indices = Array.from(new Set([first, ...explicit])).sort(
+    (a, b) => a - b
+  );
+  const _tabsColumns: Record<number, typeof props.columns> = {};
+  const _tabsLabels: Record<number, string> = {};
   props.columns.forEach(column => {
-    const index = column._column.tabs_index;
-    _tabsLabels[index] = column._column.tabs_label;
-    if (_tabsColumns[index]) {
-      _tabsColumns[index].push(column);
-    } else {
-      _tabsColumns[index] = [column];
+    // 页面注入的扩展列没有 tabs_index：并入第一个页签，而不是生成 undefined 分组
+    const index = column._column?.tabs_index ?? first;
+    if (column._column?.tabs_label) {
+      _tabsLabels[index] = column._column.tabs_label;
     }
+    (_tabsColumns[index] ??= []).push(column);
   });
-  const result: Array<{
-    label: string;
-    index: number;
-    columns: typeof props.columns;
-  }> = [];
-  for (let i = 0; i < Object.keys(_tabsLabels).length; i++) {
-    result.push({
-      label: _tabsLabels[i],
-      index: i,
-      columns: _tabsColumns[i]
-    });
-  }
-  return result;
+  return indices.map((index, order) => ({
+    label: _tabsLabels[index] ?? String(order + 1),
+    index: order,
+    columns: _tabsColumns[index]
+  }));
 });
 
 const setFormRef = (el: unknown, index: number) => {

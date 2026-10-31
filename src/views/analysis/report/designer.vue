@@ -86,7 +86,9 @@ const disabledTitle = computed(() =>
 const tableRef = ref<InstanceType<typeof ReportTablePreview>>();
 const cardRefs = ref<Record<string, { loadData?: () => void } | null>>({});
 const setCardRef = (id: string) => (el: unknown) => {
-  cardRefs.value[id] = el as { loadData?: () => void } | null;
+  const handle = el as { loadData?: () => void } | null;
+  if (handle) cardRefs.value[id] = handle;
+  else delete cardRefs.value[id];
 };
 
 const components = computed(() => design.value.components ?? []);
@@ -140,7 +142,10 @@ useReportBootstrap({
 
 const refreshData = () => {
   tableRef.value?.load?.();
-  Object.values(cardRefs.value).forEach(handle => handle?.loadData?.());
+  // 只刷新当前设计里的组件：已删除组件的旧句柄不能继续发取数请求
+  components.value.forEach(component => {
+    cardRefs.value[component.id]?.loadData?.();
+  });
 };
 
 /** 保存 / 立即运行（校验与落库口径见 utils/useReportPersistence.ts，行数门禁抽出） */

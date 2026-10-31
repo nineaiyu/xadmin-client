@@ -1,6 +1,7 @@
 /* 大屏「仪表盘轮播」形态的卡片样式（投屏页用；画布态走 ScreenPane）。
    与画布态共用 --screen-* 令牌，故深色 / 浅色主题下自动换肤；由 display.vue 在
-   scoped 样式里 @use（与 screen-animations 同一用法，编译期内联）。 */
+   scoped 样式里 @use（与 screen-animations 同一用法，编译期内联）。
+   间距/圆角使用字面量：按大屏比例尺设计，有意不跟随桌面端 --space-* 令牌。 */
 
 .screen-grid {
   position: relative;

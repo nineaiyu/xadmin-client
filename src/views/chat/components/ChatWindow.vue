@@ -58,6 +58,8 @@ const props = defineProps<{
   loading: boolean;
   hasMore: boolean;
   loadingMore: boolean;
+  /** 首屏历史加载失败：空态文案不能与「确实没有消息」混用 */
+  loadFailed?: boolean;
   /** AI 流式回答（SSE）：roomId 为归属会话，reasoning/content 为已到达增量 */
   streaming: { roomId: number; content: string; reasoning: string } | null;
   connected: boolean;
@@ -291,7 +293,7 @@ watch(
     :empty-visible="
       Boolean(room) && !groups.length && !loading && !activeStreaming
     "
-    :empty-text="t('chat.emptyMessages')"
+    :empty-text="loadFailed ? t('chat.historyFailed') : t('chat.emptyMessages')"
     :pending-count="pendingCount"
     @toggle="emit('toggleSidebar')"
     @scroll="emit('scroll')"

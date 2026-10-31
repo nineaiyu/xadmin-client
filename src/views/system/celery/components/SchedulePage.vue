@@ -4,7 +4,7 @@ import type { RePlusPageProps } from "@/components/RePlusPage";
 
 /**
  * crontab / interval 两页共用薄壳：两个菜单与权限点保持独立，
- * 仅收敛重复的 RePlusPage 装配（P2-067）。
+ * 仅收敛重复的 RePlusPage 装配。
  */
 defineOptions({ name: "SchedulePage" });
 

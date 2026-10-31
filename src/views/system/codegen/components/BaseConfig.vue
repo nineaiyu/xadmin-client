@@ -2,7 +2,9 @@
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReIconPicker from "@/components/ReIconPicker";
+import { isSuccess } from "@/api/types";
 import { menuApi } from "@/api/system/menu";
+import { message } from "@/utils/message";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { transformI18n } from "@/plugins/i18n";
 import type { CodegenModelItem } from "@/api/system/codegen";
@@ -43,6 +45,10 @@ async function loadMenus() {
   try {
     // fetchAllRows 用 size 分页参数自动翻页；菜单行 menu_type/parent 是 {label,value/pk} 形态
     const res = await fetchAllRows(menuApi.list);
+    if (!isSuccess(res)) {
+      message(String(res.detail || t("results.failed")), { type: "warning" });
+      return;
+    }
     const rows = (res.data?.results ?? []) as Array<Record<string, unknown>>;
     const pickValue = (raw: unknown): number =>
       typeof raw === "object" && raw !== null
@@ -77,6 +83,8 @@ async function loadMenus() {
       else tree.push(node);
     }
     menuTree.value = tree;
+  } catch {
+    message(t("results.failed"), { type: "warning" });
   } finally {
     menuLoading.value = false;
   }

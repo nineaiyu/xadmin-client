@@ -273,11 +273,6 @@ class ChatApi extends BaseRequest {
       config
     );
   };
-  /** 附件取件地址（图片 `size=thumb|preview`；文件不带参即下载，均需登录态） */
-  attachmentUrl = (messageId: number, size?: "thumb" | "preview") => {
-    const base = `${import.meta.env.VITE_API_DOMAIN ?? ""}/api/chat/message/${messageId}/file`;
-    return size ? `${base}?size=${size}` : base;
-  };
   /** 最近在线联系人 */
   contacts = (params?: { limit?: number }) => {
     return this.request<DetailResult<ChatContactResult>>(

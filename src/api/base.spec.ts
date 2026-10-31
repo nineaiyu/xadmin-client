@@ -207,6 +207,28 @@ describe("BaseApi 导出 / 导入", () => {
       expect.objectContaining({ headers: { "Content-Type": "text/xlsx" } })
     );
   });
+
+  it("CSV 判定以扩展名为主：Windows 上 File.type 为空也按 CSV 发送", () => {
+    const csvWithoutType = new File([""], "数据.CSV", { type: "" });
+    api.importData({}, csvWithoutType);
+    expect(uploadMock).toHaveBeenLastCalledWith(
+      "/api/demo/book/import-data",
+      {},
+      csvWithoutType,
+      expect.objectContaining({ headers: { "Content-Type": "text/csv" } })
+    );
+
+    const csvWithOddType = new File([""], "a.csv", {
+      type: "application/vnd.ms-excel"
+    });
+    api.importValidate({}, csvWithOddType);
+    expect(uploadMock).toHaveBeenLastCalledWith(
+      "/api/demo/book/import-validate",
+      {},
+      csvWithOddType,
+      expect.objectContaining({ headers: { "Content-Type": "text/csv" } })
+    );
+  });
 });
 
 describe("ViewBaseApi 参数形态", () => {

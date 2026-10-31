@@ -7,18 +7,22 @@ ARG VERSION
 
 COPY . .
 
-RUN sed -i "s@\"Version\": .*@\"Version\": \"${VERSION}\",@" public/platform-config.json  \
-    && sed -i "s@\"version\": .*@\"version\": \"${VERSION}\",@" package.json
+# VERSION 参与 sed 改写两个 JSON：先去掉可能的 `v` 前缀并校验为 semver（可带预发布
+# 后缀），避免空值/特殊字符把构建命令改坏或写出非法 JSON。发布 tag 是 `vX.Y.Z`，
+# 而 package.json / platform-config 里的版本不带 `v`，故统一归一化后再写入。
+RUN set -eu; \
+    V="${VERSION#v}"; \
+    printf '%s' "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$' \
+      || { echo "[build] VERSION 非法（需 semver，如 5.0.2 或 v5.0.2-rc.1）：'${VERSION}'" >&2; exit 1; }; \
+    sed -i "s@\"Version\": .*@\"Version\": \"${V}\",@" public/platform-config.json; \
+    sed -i "s@\"version\": .*@\"version\": \"${V}\",@" package.json
 
 # 依赖按仓库 lock 精确安装：base 镜像的 node_modules 为构建期快照，lock 更新
 # （overrides/传递依赖修复线）不重装则不生效
 RUN pnpm install --frozen-lockfile
 
-# 图标/动画子集是 gitignore 的生成物，由 prebuild 产出：pnpm 默认不执行
-# pre/post 脚本，且 install 在依赖已就绪时会跳过根 postinstall，故必须显式生成，
-# 否则 vite 解析 ../data/subsets/*.json 与 @/style/animate-subset.css 直接失败
-RUN pnpm run prebuild
-
+# 图标/动画子集是 gitignore 的生成物：`pnpm build` 已显式串联 `pnpm run prebuild`
+# （pnpm 默认不执行 pre/post 生命周期脚本，不能依赖 install 的 postinstall）。
 RUN pnpm build
 
 FROM nginx:1.31.5-alpine

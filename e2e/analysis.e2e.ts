@@ -1,6 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { FRONT_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 数据分析二期主链路：
@@ -53,7 +61,10 @@ const pickMultiSelectOptions = async (
 };
 
 test("报表与大屏主链路", async ({ page }) => {
+  // 4 次 UI 建资源 + 投屏 + WS 遥控：默认 60s 在并行/CI 下会被击穿（抖动榜常客）
+  test.slow();
   await login(page);
+  await startResourceIsolation(page);
 
   // 名称唯一约束（Dataset/Dashboard/Report/Screen.name unique）+ 双浏览器共享同一
   // 独立库：固定名字会让后跑的浏览器撞唯一约束（曾表现为 webkit 稳定失败、隔离
@@ -143,7 +154,10 @@ test("报表与大屏主链路", async ({ page }) => {
 });
 
 test("大屏远程控制：管理端下发切换，展示端实时跟随", async ({ page }) => {
+  // 双标签页 + WS 往返：给足超时预算
+  test.slow();
   await login(page);
+  await startResourceIsolation(page);
 
   const suffix = Math.random().toString(36).slice(2, 8);
   const datasetName = `E2E遥控数据集-${suffix}`;

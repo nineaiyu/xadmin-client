@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import ReEmpty from "@/components/ReEmpty";
@@ -69,7 +69,6 @@ const {
   dirty,
   editing,
   layout,
-  layoutKey,
   moveCard,
   removeCard,
   rowRef,
@@ -102,10 +101,12 @@ const onToggleEdit = async () => {
 };
 
 /* ---------------- 自动刷新（挂屏轮看场景）：间隔选择 + 定时 bump refreshKey ---------------- */
+const dashboardDataFrameAt = ref(Date.now());
 const { seconds: autoRefreshSeconds } = useDashboardAutoRefresh({
   kiosk,
   requestedSeconds: route.query.refresh,
-  refresh: refreshCards
+  refresh: refreshCards,
+  lastFrameAt: dashboardDataFrameAt
 });
 
 /** 卡片图片导出（composable：句柄收集 + 单卡导出，控制页面体积） */
@@ -120,7 +121,8 @@ useDashboardChannel({
       autoRefreshSeconds.value === REALTIME_REFRESH_SECONDS && !editing.value
   ),
   dashboardPk: computed(() => current.value?.pk ?? null),
-  applyFrame: frame => applyDashboardFrame(frame, cardRefs.value)
+  applyFrame: frame => applyDashboardFrame(frame, cardRefs.value),
+  dataFrameAt: dashboardDataFrameAt
 });
 
 /** 快照导出：整盘卡片按页面布局合成单张 PNG（标题/时间戳/水印叠加） */
@@ -154,7 +156,9 @@ const { removeDashboard } = useDashboardDelete({
   syncQuery: view.syncDashboardQuery
 });
 
+const canManageDatasets = computed(() => hasAuth("list:DataDataset"));
 const goDatasetPage = () => {
+  if (!canManageDatasets.value) return;
   // 护栏：URL 命名空间 /analysis/dataset/index ≠ 组件目录
   // views/dashboard/dataset/，靠 menu.json 种子（DataDataset）的显式映射存活，
   // 线上库菜单行已按该 path 落库。口径结论：保留映射，勿"顺手修齐"（改 URL 或
@@ -230,6 +234,7 @@ onMounted(async () => {
       :editing="editing"
       :saving="saving"
       :exporting-snapshot="exportingSnapshot"
+      :can-manage-datasets="canManageDatasets"
       @select="selectDashboard"
       @create="openCreateDashboard"
       @toggle-edit="onToggleEdit"
@@ -312,6 +317,7 @@ onMounted(async () => {
                 </el-tag>
                 <div class="flex-1" />
                 <CardHeaderActions
+                  v-if="!kiosk"
                   :editing="editing"
                   :exporting="exportingCard === card.id"
                   @export-image="exportCardImage(card)"
@@ -323,11 +329,11 @@ onMounted(async () => {
               </div>
             </template>
             <ChartCard
-              :key="`${layoutKey}-${card.id}`"
+              :key="card.id"
               :ref="setCardRef(card.id)"
               :card="card"
               :refresh-token="refreshKey"
-              :drillable="!editing"
+              :drillable="!editing && !kiosk"
               :linkage-filter="payloadFor(card)"
               @drill="point => onCardPoint(card, point)"
             />

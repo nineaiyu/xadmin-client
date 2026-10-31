@@ -348,8 +348,8 @@ export interface paths {
          *
          *     数据源 = AiUsageRecord（逐次记账，保留期随 MONITOR_RETENTION_DAYS 清理）；
          *     合计与档案 / 模型维度带成功率与延迟（均值恒给，P95 样本足够才给）；
-         *     与 status/metrics 共用权限点路径正则（`(status|metrics|history|tools|usage)$`），
-         *     不新增权限点。
+         *     与 status/metrics/history/tools/daily-report 共用权限点路径正则
+         *     （`(status|metrics|history|tools|usage|daily-report)$`），不新增权限点。
          */
         get: operations["api_ai_assistant_usage_retrieve"];
         put?: never;
@@ -1306,7 +1306,7 @@ export interface paths {
         /**
          * @description 回滚到历史版本
          *
-         *     快照写入活定义并落新版本；有 PENDING 实例时拒绝
+         *     快照写入活定义并落新版本；在途实例按建单时钉住的版本继续，回滚只影响新单
          */
         post: operations["api_approval_approval_flows_rollback_create"];
         delete?: never;
@@ -7034,7 +7034,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 绑定一个 Passkey 凭据 */
+        /**
+         * @description 绑定一个 Passkey 凭据
+         *
+         *     持久凭据可为账号接管提供入口：绑定前需本人密码二次确认（同重置 MFA 口径）
+         */
         post: operations["api_identity_passkeys_register_create"];
         delete?: never;
         options?: never;
@@ -8551,7 +8555,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 重置用户密码 */
+        /**
+         * @description 重置用户密码
+         *
+         *     账号接管面，与重置 MFA 同口径：管理员需本人密码二次确认
+         */
         post: operations["api_identity_user_reset_password_create"];
         delete?: never;
         options?: never;
@@ -8794,6 +8802,7 @@ export interface paths {
          *
          *     校验动态码后写入密钥，并自动开启登录 MFA
          *
+         *     绑定的落库动作同样要求密码二次确认：仅持有会话不足以接管登录因子。
          *     绑定成功同时生成一批恢复码（``data.recovery_codes``，明文仅此一次展示）。
          */
         post: operations["api_mfa_otp_confirm_create"];
@@ -8900,6 +8909,8 @@ export interface paths {
          * @description 发起绑定
          *
          *     生成候选密钥与 otpauth URI（前端渲染二维码）
+         *
+         *     绑定会改变登录因子：与关闭/解绑同口径，需本人密码二次确认（未确认返回 412）。
          */
         post: operations["api_mfa_otp_start_create"];
         delete?: never;
@@ -10935,7 +10946,11 @@ export interface paths {
         /** @description 获取{cls}的列表 */
         get: operations["api_system_codegen_plans_list"];
         put?: never;
-        /** @description 添加{cls}数据 */
+        /**
+         * @description 保存代码生成方案
+         *
+         *     同名方案按当前用户覆盖保存（幂等），不产生重复行。
+         */
         post: operations["api_system_codegen_plans_create"];
         delete?: never;
         options?: never;
@@ -10951,10 +10966,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** @description 整体更新{cls}信息 */
+        /** @description 更新代码生成方案 */
         put: operations["api_system_codegen_plans_update"];
         post?: never;
-        /** @description 删除{cls}数据 */
+        /** @description 删除代码生成方案 */
         delete: operations["api_system_codegen_plans_destroy"];
         options?: never;
         head?: never;
@@ -12499,7 +12514,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description {cls}排序 */
+        /**
+         * @description {cls}排序
+         *
+         *     排序走批量 UPDATE，不触发 post_save：必须手动失效菜单相关缓存，
+         *     否则侧边栏路由快照最长 24h 保持旧顺序。
+         */
         post: operations["api_system_menu_rank_create"];
         delete?: never;
         options?: never;
@@ -13115,7 +13135,7 @@ export interface paths {
         /**
          * @description 物理清除{cls}回收站数据
          *
-         *     不传 pks 时清除全部超过保留期的数据
+         *     不可恢复的高危动作：与删除/批删同口径纳入审批，避免硬删绕过审批。
          */
         delete: operations["api_system_permission_recycle_purge_destroy"];
         options?: never;
@@ -16853,10 +16873,10 @@ export interface components {
              */
             description: string;
             /**
-             * Field permission mode
+             * 字段权限模式
              * @description strict = role without field permission config sees no columns; inherit = no extra pruning
              * @default {
-             *       "label": "Inherit",
+             *       "label": "继承",
              *       "value": "inherit"
              *     }
              */
@@ -18082,7 +18102,7 @@ export interface components {
              * 删除时间
              * Format: date-time
              */
-            deleted_at?: string | null;
+            readonly deleted_at: string | null;
             /**
              * 激活状态
              * @default true
@@ -18137,7 +18157,7 @@ export interface components {
              * 主键ID
              * Format: uuid
              */
-            pk?: string;
+            readonly pk: string;
             /**
              * 排序
              * @default 9999
@@ -18349,6 +18369,14 @@ export interface components {
                 pk?: string;
             };
             readonly form_name: string;
+            /**
+             * 审批实例
+             * @description null
+             */
+            readonly instance: {
+                /** @description pk field */
+                pk?: string;
+            } | null;
             /**
              * 主键ID
              * Format: uuid
@@ -20308,10 +20336,10 @@ export interface components {
              */
             description: string;
             /**
-             * Field permission mode
+             * 字段权限模式
              * @description strict = role without field permission config sees no columns; inherit = no extra pruning
              * @default {
-             *       "label": "Inherit",
+             *       "label": "继承",
              *       "value": "inherit"
              *     }
              */
@@ -21074,7 +21102,7 @@ export interface components {
              * 删除时间
              * Format: date-time
              */
-            deleted_at?: string | null;
+            readonly deleted_at?: string | null;
             /**
              * 激活状态
              * @default true
@@ -21129,7 +21157,7 @@ export interface components {
              * 主键ID
              * Format: uuid
              */
-            pk?: string;
+            readonly pk?: string;
             /**
              * 排序
              * @default 9999
@@ -21837,6 +21865,7 @@ export interface components {
          *     布局」，放行不可见引用只会把 400 推迟到应用模板那一刻。
          */
         PatchedScreenTemplate: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -23706,6 +23735,7 @@ export interface components {
          *     布局」，放行不可见引用只会把 400 推迟到应用模板那一刻。
          */
         ScreenTemplate: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -32148,16 +32178,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        celery_error?: string;
                         celery_status?: boolean;
                         /** Format: float */
                         celery_time?: number;
+                        db_error?: string;
                         db_status?: boolean;
                         /** Format: float */
                         db_time?: number;
+                        redis_error?: string;
                         redis_status?: boolean;
                         /** Format: float */
                         redis_time?: number;
                         status?: boolean;
+                        storage_error?: string;
                         storage_status?: boolean;
                         /** Format: float */
                         storage_time?: number;
@@ -50441,7 +50475,7 @@ export interface operations {
                 ordering?: string;
                 /** @description 分页结果集中的页码。 */
                 page?: number;
-                pk?: string;
+                pk?: number;
                 /** @description 每页返回的结果数量。 */
                 size?: number;
                 spm?: unknown;
@@ -50980,7 +51014,7 @@ export interface operations {
                 owner_id?: number[];
                 /** @description 分页结果集中的页码。 */
                 page?: number;
-                pk?: string;
+                pk?: number;
                 /** @description 每页返回的结果数量。 */
                 size?: number;
                 spm?: unknown;
@@ -54458,18 +54492,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: {
+            /** @description No response body */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        code?: number;
-                        detail?: string;
-                        requestId?: string;
-                        timestamp?: string;
-                    };
-                };
+                content?: never;
             };
         };
     };

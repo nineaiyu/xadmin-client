@@ -45,56 +45,58 @@ const autoplay = flag("autoplay");
 </script>
 
 <template>
-  <el-form-item :label="t('dataScreen.paneUrl')" required>
-    <el-input
-      :model-value="pane.url ?? ''"
-      :placeholder="t('dataScreen.urlPlaceholder')"
-      data-testid="inspector-media-url"
-      @update:model-value="emit('update', { url: $event })"
-    />
-    <div v-if="urlError" class="pane-media__error">{{ urlError }}</div>
-  </el-form-item>
-
-  <template v-if="isVideo">
-    <el-form-item :label="t('dataScreen.panePoster')">
+  <div class="contents">
+    <el-form-item :label="t('dataScreen.paneUrl')" required>
       <el-input
-        :model-value="pane.poster ?? ''"
+        :model-value="pane.url ?? ''"
         :placeholder="t('dataScreen.urlPlaceholder')"
-        data-testid="inspector-video-poster"
-        @update:model-value="emit('update', { poster: $event })"
+        data-testid="inspector-media-url"
+        @update:model-value="emit('update', { url: $event })"
       />
-      <div v-if="pane.poster && posterError" class="pane-media__error">
-        {{ posterError }}
-      </div>
+      <div v-if="urlError" class="pane-media__error">{{ urlError }}</div>
     </el-form-item>
-    <el-form-item :label="t('dataScreen.imageFit')">
-      <el-radio-group
-        :model-value="pane.fit ?? 'cover'"
-        data-testid="inspector-video-fit"
-        @change="emit('update', { fit: $event as 'cover' })"
-      >
-        <el-radio-button value="cover">
-          {{ t("dataScreen.fitCover") }}
-        </el-radio-button>
-        <el-radio-button value="contain">
-          {{ t("dataScreen.fitContain") }}
-        </el-radio-button>
-      </el-radio-group>
-    </el-form-item>
-    <el-form-item :label="t('dataScreen.videoMuted')">
-      <el-switch v-model="muted" data-testid="inspector-video-muted" />
-    </el-form-item>
-    <el-form-item :label="t('dataScreen.videoLoop')">
-      <el-switch v-model="loop" data-testid="inspector-video-loop" />
-    </el-form-item>
-    <el-form-item :label="t('dataScreen.videoAutoplay')">
-      <el-switch v-model="autoplay" data-testid="inspector-video-autoplay" />
-    </el-form-item>
-    <div class="pane-media__hint">{{ t("dataScreen.videoHint") }}</div>
-  </template>
 
-  <div v-if="isHtml" class="pane-media__hint">
-    {{ t("dataScreen.embedHint") }}
+    <template v-if="isVideo">
+      <el-form-item :label="t('dataScreen.panePoster')">
+        <el-input
+          :model-value="pane.poster ?? ''"
+          :placeholder="t('dataScreen.urlPlaceholder')"
+          data-testid="inspector-video-poster"
+          @update:model-value="emit('update', { poster: $event })"
+        />
+        <div v-if="pane.poster && posterError" class="pane-media__error">
+          {{ posterError }}
+        </div>
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.imageFit')">
+        <el-radio-group
+          :model-value="pane.fit ?? 'cover'"
+          data-testid="inspector-video-fit"
+          @change="emit('update', { fit: $event as 'cover' })"
+        >
+          <el-radio-button value="cover">
+            {{ t("dataScreen.fitCover") }}
+          </el-radio-button>
+          <el-radio-button value="contain">
+            {{ t("dataScreen.fitContain") }}
+          </el-radio-button>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.videoMuted')">
+        <el-switch v-model="muted" data-testid="inspector-video-muted" />
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.videoLoop')">
+        <el-switch v-model="loop" data-testid="inspector-video-loop" />
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.videoAutoplay')">
+        <el-switch v-model="autoplay" data-testid="inspector-video-autoplay" />
+      </el-form-item>
+      <div class="pane-media__hint">{{ t("dataScreen.videoHint") }}</div>
+    </template>
+
+    <div v-if="isHtml" class="pane-media__hint">
+      {{ t("dataScreen.embedHint") }}
+    </div>
   </div>
 </template>
 

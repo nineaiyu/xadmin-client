@@ -49,6 +49,11 @@ export function useTagAssign(tableRef?: Ref) {
 
     /** 读取并校验载荷：未选标签时点名提示（批量/单对象同口径） */
     const readPayload = (): TagAssignPayload | null => {
+      // 回显失败时拒绝提交：replace 语义下会把对象既有标签全部清空
+      if (childRef?.isReady?.() === false) {
+        message(t("tag.loadFailed"), { type: "warning" });
+        return null;
+      }
       const payload = childRef?.getPayload?.();
       if (!payload) return null;
       if (!payload.tags.length && payload.mode !== "replace") {

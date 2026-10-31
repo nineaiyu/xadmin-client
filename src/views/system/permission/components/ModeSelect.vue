@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, isRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useFormDisabled } from "element-plus";
 import { ModeChoices } from "@/views/system/constants";
 import { parseFormMode } from "./utils/trial";
 
@@ -11,13 +12,19 @@ interface Props {
   modelValue?: unknown;
   /** 当前规则条数（少于 2 条时且/或等价，服务端统一按或模式保存） */
   ruleCount?: number | Ref<number>;
+  /** 列级只读（表单 el-form 的 disabled 由 useFormDisabled 叠加） */
+  disabled?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), { disabled: undefined });
 
 const emit = defineEmits<{ "update:modelValue": [value: number] }>();
 
 const { t } = useI18n();
+/** el-form 的 disabled 级联：自定义 renderField 组件不自动继承，这里显式接入 */
+const formDisabled = useFormDisabled();
+
+const disabledState = computed(() => props.disabled || formDisabled.value);
 
 const model = computed<number>({
   get: () => parseFormMode(props.modelValue) ?? ModeChoices.OR,
@@ -33,7 +40,7 @@ const count = computed(() =>
 
 <template>
   <div class="flex flex-col items-start gap-1">
-    <el-radio-group v-model="model" :disabled="count < 2">
+    <el-radio-group v-model="model" :disabled="disabledState || count < 2">
       <el-radio-button :value="ModeChoices.OR">
         {{ t("systemPermission.modeOr") }}
       </el-radio-button>

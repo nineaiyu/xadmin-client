@@ -57,7 +57,7 @@ function memberLabel(user: ChatUserOption) {
 }
 
 function avatarText(peer: ChatPeer) {
-  return (peer.nickname || peer.username || "?").slice(0, 1).toUpperCase();
+  return Array.from(peer.nickname || peer.username || "?")[0].toUpperCase();
 }
 
 function mergeMemberOptions(rows: ChatUserOption[]) {

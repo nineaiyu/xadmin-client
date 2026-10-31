@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { EventType, ArgsType, DialogOptions } from "./type";
-import { closeDialog, dialogStore, getDialogUid } from "./store";
+import {
+  closeDialog,
+  dialogStore,
+  getDialogUid,
+  finalizeDialog
+} from "./store";
 import { ref, computed } from "vue";
 import { isFunction } from "@pureadmin/utils";
 import Fullscreen from "~icons/ri/fullscreen-fill";
@@ -9,6 +14,7 @@ import { useI18n } from "vue-i18n";
 import { useOverlayFooter } from "@/components/overlay/useOverlayFooter";
 import { useOverlayScrollLock } from "@/components/overlay/useOverlayScrollLock";
 import { dialogDomProps } from "./attrs";
+import { buttonDomProps } from "@/components/overlay/domProps";
 
 defineOptions({
   name: "ReDialog"
@@ -102,6 +108,12 @@ function handleChange(options: DialogOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
 }
 
+/** EP `@closed`：离场过渡结束才出队，避免动画中途卸载 */
+function handleClosed(options: DialogOptions, index: number) {
+  handleClose(options, index);
+  finalizeDialog(options);
+}
+
 /**
  * 内容组件 props：既有 `options.props` + （启用载荷通道时）注入 `getData/setData`。
  * 仅在显式传入 `payload` 的弹层注入，未传的弹层零影响
@@ -129,7 +141,7 @@ function contentProps(options: DialogOptions) {
     :before-close="
       (done: (cancel?: boolean) => void) => handleBeforeClose(options, done)
     "
-    @closed="handleClose(options, index)"
+    @closed="handleClosed(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @openAutoFocus="eventsCallBack('openAutoFocus', options, index)"
     @closeAutoFocus="eventsCallBack('closeAutoFocus', options, index)"
@@ -191,12 +203,20 @@ function contentProps(options: DialogOptions) {
             "
           >
             <template #reference>
-              <el-button v-bind="btn">{{ btn?.label }}</el-button>
+              <el-button
+                v-bind="buttonDomProps(btn)"
+                :loading="
+                  btn.code === 'sure' &&
+                  sureBtnMap[getDialogUid(options) ?? index]?.loading
+                "
+              >
+                {{ btn?.label }}
+              </el-button>
             </template>
           </el-popconfirm>
           <el-button
             v-else
-            v-bind="btn"
+            v-bind="buttonDomProps(btn)"
             :loading="
               btn.code === 'sure' &&
               sureBtnMap[getDialogUid(options) ?? index]?.loading

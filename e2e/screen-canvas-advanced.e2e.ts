@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 大屏画布进阶：旋转几何 / 模板版本回滚 / 跨设备（云端）剪贴板。
@@ -82,6 +90,7 @@ test("画布进阶：旋转几何命中 / 视觉盒对齐 / 模板版本回滚 /
   const templateGroup = "版本分组";
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const screen = await postJson(
     page,
@@ -364,8 +373,13 @@ test("画布进阶：旋转几何命中 / 视觉盒对齐 / 模板版本回滚 /
       resp.request().method() === "POST"
   );
   await page.getByTestId("free-copy").click();
-  const cloudBody = (await (await cloudWrite).json()) as { code: number };
+  const cloudBody = (await (await cloudWrite).json()) as {
+    code: number;
+    data?: { pk?: string };
+  };
   expect(cloudBody.code).toBe(1000);
+  // 记录本次写出的槽位 pk，清理时精确删除（不再取全局第一条，避免误删他人数据）
+  const clipboardPk = cloudBody.data?.pk;
   await expect(page.getByText(/已复制 1 个窗格/)).toBeVisible();
 
   // 抹掉本地剪贴板：后面的插入只可能来自云端槽位
@@ -401,15 +415,9 @@ test("画布进阶：旋转几何命中 / 视觉盒对齐 / 模板版本回滚 /
     `${BACKEND_URL}/api/dataset/screen-templates/${templatePk}`,
     { headers: auth(token) }
   );
-  const slotRes = await page.request.get(
-    `${BACKEND_URL}/api/dataset/screen-clipboard?page=1&size=1`,
-    { headers: auth(token) }
-  );
-  const slot = ((await slotRes.json()).data.results ?? [])[0] as
-    { pk: string } | undefined;
-  if (slot?.pk) {
+  if (clipboardPk) {
     await page.request.delete(
-      `${BACKEND_URL}/api/dataset/screen-clipboard/${slot.pk}`,
+      `${BACKEND_URL}/api/dataset/screen-clipboard/${clipboardPk}`,
       { headers: auth(token) }
     );
   }

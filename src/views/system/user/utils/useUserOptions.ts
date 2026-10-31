@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import { deptApi } from "@/api/identity/dept";
 import { hasAuth } from "@/router/utils";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { fetchAllRows } from "@/utils/fetchAllRows";
 import { handleTree, type TreeResult } from "@/utils/tree";
 import type { Ref } from "vue";
@@ -32,7 +33,11 @@ export function useUserOptions(tableRef: Ref) {
             message(`${t("results.failed")}，${res.detail}`, { type: "error" });
           }
         })
-        .catch(() => undefined)
+        .catch(error =>
+          message(`${t("results.failed")}，${normalizeError(error).detail}`, {
+            type: "error"
+          })
+        )
         .finally(() => {
           // 在请求真正结束后再关闭加载态（原实现在发起请求后立即置 false）
           treeLoading.value = false;

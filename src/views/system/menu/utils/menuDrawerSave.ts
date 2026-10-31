@@ -42,7 +42,13 @@ export function createMenuNodeSaver({
       const rows = cascadePks
         .map(pk => rowIndex.value.byPk.get(String(pk)))
         .filter((row): row is MenuRow => Boolean(row));
-      await setRowsActive(rows, false);
+      const cascaded = await setRowsActive(rows, false);
+      if (!cascaded) {
+        // 父节点已保存，但子级未停用：不能继续提示「成功」掩盖半完成状态
+        message(t("systemMenu.result.cascadeFailed"), { type: "warning" });
+        onSaved?.(model.pk, isAdd);
+        return true;
+      }
     }
     message(t("results.success"), { type: "success" });
     onSaved?.(model.pk, isAdd);

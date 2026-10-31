@@ -21,6 +21,16 @@ import {
   resolveColumnLabel
 } from "./columnRules";
 import { detailFallbackRenderer } from "./renderers-detail";
+
+/**
+ * 列对象克隆：`options` 为 computed（语言切换需响应式重算），cloneDeep 会连
+ * ComputedRef 的 effect 图一起深拷贝并冻结依赖；此处保持 options 引用，其余深拷贝。
+ */
+function cloneColumn(item: PageColumn): PageColumn {
+  const clone = cloneDeep({ ...item, options: undefined });
+  if (item.options !== undefined) clone.options = item.options;
+  return clone;
+}
 import { formatAddOrEditOptions } from "./renders";
 import { getApiSearchComponents } from "./apiSearch";
 
@@ -103,9 +113,20 @@ export function useBaseColumns(localeName: string) {
         hideInTable: false,
         // pure-table ****** start
         showOverflowTooltip: true,
-        cellRenderer: ({ row }) => (
-          <span v-copy={row[column.key]}>{row[column.key]}</span>
-        )
+        cellRenderer: ({ row }) => {
+          const value = row[column.key];
+          if (value !== null && typeof value === "object") {
+            // 对象/数组值（未登记渲染器）在列表侧也要可诊断，并降级为 JSON 文本
+            if (import.meta.env.DEV) {
+              console.warn(
+                `[RePlusPage] 字段 "${column.key}"（input_type=${column.input_type}）无列表渲染器，对象值已降级为 JSON 文本`
+              );
+            }
+            const text = JSON.stringify(value);
+            return <span v-copy={text}>{text}</span>;
+          }
+          return <span v-copy={value}>{value}</span>;
+        }
         // pure-table ****** end
       };
       // pure-table ****** start
@@ -132,7 +153,7 @@ export function useBaseColumns(localeName: string) {
         item["fieldProps"] = { autosize: { minRows: 3 } };
       }
       if (!column.read_only) {
-        addOrEditColumns.value.push(cloneDeep(item));
+        addOrEditColumns.value.push(cloneColumn(item));
       }
 
       if (column.hasOwnProperty("default")) {
@@ -142,9 +163,9 @@ export function useBaseColumns(localeName: string) {
         const detailRenderer =
           getDetailRenderer(detailInputType(column)) ?? detailFallbackRenderer;
         detailRenderer(item, buildContext(column));
-        detailColumns.value.push(cloneDeep(item));
+        detailColumns.value.push(cloneColumn(item));
         if (column.table_show) {
-          const tableItem = cloneDeep(item);
+          const tableItem = cloneColumn(item);
           // 表头排序：仅元数据声明 sortable 的列开启，排序走服务端 ordering 参数
           if (column.sortable) tableItem.sortable = "custom";
           // 受控高级筛选：透传字段级可用 lookup（未下发的字段不进入候选）

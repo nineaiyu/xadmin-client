@@ -35,6 +35,9 @@ onMounted(() => emit("ready", scrollEl.value));
     ref="scrollEl"
     class="grow overflow-y-auto px-2 py-3"
     :data-testid="testid"
+    role="log"
+    aria-live="polite"
+    aria-relevant="additions"
     @scroll.passive="emit('scroll')"
   >
     <!-- 历史首屏加载：骨架气泡占位（切换会话时消息已清空，加载态与空态互斥） -->

@@ -88,7 +88,7 @@ export function useMenuData() {
     getMenuData,
     getMenuApiList: meta.getMenuApiList,
     loadModels: meta.loadModels,
-    loadViews: meta.loadViews,
+    loadViews: () => meta.loadViews(flatRows.value),
     upsertRow,
     dropRows,
     patchRows,

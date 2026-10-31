@@ -19,4 +19,6 @@ export interface ReScrollbarProps {
   always?: boolean;
   /** 滚动区域的可访问名（屏幕阅读器标识该区域；缺省不设置） */
   label?: string;
+  /** 显式要求键盘可达（方向键 / PageUp / PageDown 滚动）：默认不占用 Tab 停靠点 */
+  keyboard?: boolean;
 }

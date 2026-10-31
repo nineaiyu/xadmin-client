@@ -88,7 +88,7 @@ test("忘记密码：入口 → 发送验证码 → 错误验证码提交被拒"
       .nth(1)
       .fill("NewStrong@2026");
     await page.getByRole("button", { name: /确定/ }).last().click();
-    await expect(page.locator(".el-message--error").first()).toBeVisible({
+    await expect(page.locator(".el-message--error").last()).toBeVisible({
       timeout: 10_000
     });
     // 仍在重置表单（未回登录页）

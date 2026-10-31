@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue";
 import { usePlusSearch } from "./hooks";
-import { ClickOutside as vClickOutside } from "element-plus";
 import type { PlusSearchProps } from "./types";
 import { deviceDetection } from "@pureadmin/utils";
 
@@ -35,7 +34,6 @@ const selectRef = ref();
 const tableRef = ref();
 const {
   t,
-  selectVisible,
   defaultPagination,
   onSure,
   onClear,
@@ -43,7 +41,6 @@ const {
   removeTag,
   searchComplete,
   handleRowClick,
-  handleClickOutSide,
   handleSelectionChange
 } = usePlusSearch(selectRef, tableRef, selectValue, props);
 
@@ -63,7 +60,6 @@ watch(
   <el-select
     ref="selectRef"
     v-model="selectValue"
-    v-click-outside="handleClickOutSide"
     :max-collapse-tags="10"
     :value-key="props.valueProps.value"
     clearable
@@ -73,7 +69,6 @@ watch(
     @clear="onClear"
     @visible-change="
       val => {
-        selectVisible = val;
         if (val) {
           tableRef?.handleGetData();
         }

@@ -168,10 +168,11 @@ function onPointerDown(event: PointerEvent, dir = "") {
 
 /** 交 `snap` 钩子吸附（命中信息经 `snapping` 回传给调用方绘制参考线） */
 function applySnap(next: Box, dir: string): Box {
-  const result = props.snap?.(next, dir);
-  if (!result) return next;
-  emit("snapping", result.guides ?? []);
-  return result.box;
+  if (!props.snap) return next;
+  const result = props.snap(next, dir);
+  // 未命中时也要发空 guides：否则离开吸附位后参考线要等手势结束才被清掉
+  emit("snapping", result?.guides ?? []);
+  return result?.box ?? next;
 }
 
 function onPointerMove(event: PointerEvent) {

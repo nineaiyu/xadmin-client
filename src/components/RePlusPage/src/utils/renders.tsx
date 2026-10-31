@@ -12,7 +12,7 @@ export const renderBooleanSegmentedOption = (
     return (
       <Segmented
         defaultValue={value ? 0 : 1}
-        options={options ?? selectBooleanOptions}
+        options={options ?? selectBooleanOptions()}
         onChange={({ option }) => {
           onChange(option?.value);
         }}

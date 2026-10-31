@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { formatBytes } from "@pureadmin/utils";
 import ReCropper from "@/components/ReCropper";
 import avatar from "@/assets/avatar.png";
@@ -10,7 +10,7 @@ defineOptions({
   name: "RePictureUpload"
 });
 
-defineProps({
+const props = defineProps({
   imgSrc: String,
   errSrc: String,
   type: String,
@@ -27,6 +27,10 @@ const popoverRef = ref();
 const refCropper = ref();
 const showPopover = ref(false);
 const cropperImg = ref<string>("");
+/** 图片加载/裁剪器初始化失败：解除 loading 遮罩并给出失败提示 */
+const loadFailed = ref(false);
+/** 用户主动关闭过弹层：不再恢复 loading 遮罩（等待父级换图或再次触发） */
+const dismissed = ref(false);
 
 function onCropper({
   base64,
@@ -43,19 +47,42 @@ function onCropper({
 }
 
 function hidePopover() {
-  popoverRef.value.hide();
+  popoverRef.value?.hide();
+  dismissed.value = true;
 }
+
+function onCropperError() {
+  loadFailed.value = true;
+}
+
+// 换图（src / 兜底图变化）时复位失败与关闭态，重新给一次机会
+watch(
+  () => props.imgSrc,
+  () => {
+    loadFailed.value = false;
+    dismissed.value = false;
+    showPopover.value = false;
+  }
+);
 
 defineExpose({ hidePopover });
 </script>
 
 <template>
-  <div v-loading="!showPopover" element-loading-background="transparent">
+  <div
+    v-loading="!showPopover && !loadFailed && !dismissed"
+    element-loading-background="transparent"
+  >
     <el-popover
       ref="popoverRef"
-      :visible="showPopover"
+      :visible="showPopover && !dismissed"
       placement="right"
       width="18vw"
+      @update:visible="
+        value => {
+          if (!value) dismissed = true;
+        }
+      "
     >
       <template #reference>
         <div class="w-[18vw]">
@@ -70,7 +97,14 @@ defineExpose({ hidePopover });
             :type="type"
             @cropper="onCropper"
             @readied="showPopover = true"
+            @error="onCropperError"
           />
+          <p
+            v-if="loadFailed"
+            class="mt-1 text-center text-xs text-(--el-text-color-secondary)"
+          >
+            {{ t("avatarUpload.loadFailed") }}
+          </p>
           <p v-show="showPopover" class="mt-1 text-center">
             {{ t("avatarUpload.tips") }}
           </p>
@@ -100,6 +134,11 @@ defineExpose({ hidePopover });
               })
             }}
           </p>
+        </div>
+        <div class="mt-2 w-full text-center">
+          <el-button size="small" @click="hidePopover">
+            {{ t("buttons.close") }}
+          </el-button>
         </div>
       </div>
     </el-popover>

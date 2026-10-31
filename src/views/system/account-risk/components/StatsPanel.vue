@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { StatBar, type StatItem } from "@/components/ReStat";
 import type { StatsGroup } from "../utils/stats";
 
@@ -12,14 +13,23 @@ import type { StatsGroup } from "../utils/stats";
  */
 defineOptions({ name: "AccountRiskStatsPanel" });
 
+const { t } = useI18n();
+
 const props = defineProps<{
   groups: StatsGroup[];
+  /** 当前快捷筛选 chip 的原始 key（无筛选为空） */
+  activeKey?: string;
 }>();
 
 const emit = defineEmits<{
   /** chip 点击：按分组映射为列表筛选条件 */
   chipClick: [payload: { group: string; chip: { key: string } }];
+  /** 清除快捷筛选 */
+  clear: [];
 }>();
+
+const activeKeyIncludes = (group: string, key: string) =>
+  props.activeKey === key || props.activeKey === `${group}.${key}`;
 
 /** key 以分组前缀，跨组同名 chip 不冲突 */
 const items = computed<StatItem[]>(() =>
@@ -31,6 +41,7 @@ const items = computed<StatItem[]>(() =>
       type: chip.type,
       tag: true,
       clickable: true,
+      active: activeKeyIncludes(group.key, chip.key),
       group: group.title
     }))
   )
@@ -52,5 +63,11 @@ const onItemClick = (item: StatItem) => {
     class="mb-3 gap-x-8! px-3!"
     data-testid="account-risk-stats"
     @item-click="onItemClick"
-  />
+  >
+    <template v-if="activeKey" #extra>
+      <el-button link type="primary" size="small" @click="emit('clear')">
+        {{ t("accountRisk.clearQuickFilter") }}
+      </el-button>
+    </template>
+  </StatBar>
 </template>

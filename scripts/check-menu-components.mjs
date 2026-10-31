@@ -56,7 +56,9 @@ function candidatesOf(component) {
   for (const candidate of [
     alternative,
     `${alternative}.vue`,
-    `${alternative}.tsx`
+    `${alternative}.tsx`,
+    `${alternative}/index.vue`,
+    `${alternative}/index.tsx`
   ]) {
     if (!list.includes(candidate)) list.push(candidate);
   }

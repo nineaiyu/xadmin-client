@@ -9,6 +9,7 @@ import { getColourTypeByIndex } from "./index";
 import { SOLID_TAG_STYLE } from "@/utils/tagTone";
 import { colorBlockStyle } from "@/utils/cellRender";
 import { sanitizeHtml } from "@/utils/sanitize";
+import { isUrl } from "@/utils/rules/url";
 import { mediaDetailRenderers } from "./renderers-detail-media";
 import type {
   ChoiceOptionItem,
@@ -155,6 +156,8 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
     const renderLink = (value: unknown) => {
       if (!value) return <span>—</span>;
       const href = String(value);
+      // 历史/旁路数据可能是非 http(s) 协议：降级为纯文本，不让点击执行脚本
+      if (!isUrl(href)) return <span v-copy={href}>{href}</span>;
       return h(
         ElLink,
         {
@@ -251,7 +254,7 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
   },
   ...mediaDetailRenderers,
   boolean: item => {
-    item["options"] = computed(() => selectBooleanOptions);
+    item["options"] = computed(() => selectBooleanOptions());
     delete item["renderField"];
   },
   list: (item, { column }) => {

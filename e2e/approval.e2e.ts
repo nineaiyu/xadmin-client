@@ -8,8 +8,15 @@ import {
   FRONT_URL,
   getAccessToken,
   login,
-  openMenuPath
+  openMenuPath,
+  setSystemConfigByKey
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 敏感操作审批 E2E：开启拦截 → 管理员删除用户 → 提示已提交审批（1002）→
@@ -20,15 +27,9 @@ import {
  * 一次性通行令牌由前端 http 层暂存并在重发时自动携带（X-Approval-Id）。
  */
 
-const APPROVAL_PATHS_CONFIG_PK = "e9a6b7c8-d9e0-4f1a-9b2c-3d4e5f6a7b0f";
-
 async function setApprovalPaths(page: Page, token: string, paths: string[]) {
-  // router 为 trailing_slash=False：detail 路由不能带尾斜杠（否则 Django 404 HTML 页）
-  const response = await page.request.patch(
-    `${BACKEND_URL}/api/system/config/system/${APPROVAL_PATHS_CONFIG_PK}`,
-    { headers: { Authorization: `Bearer ${token}` }, data: { value: paths } }
-  );
-  expect(response.ok(), await response.text()).toBeTruthy();
+  // 主键按 key 查询（种子 UUID 换库/重建即变），不与具体种子主键绑定
+  await setSystemConfigByKey(page, "APPROVAL_REQUIRED_PATHS", paths, token);
 }
 
 test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 → 重发成功", async ({
@@ -36,6 +37,7 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
 }) => {
   const username = `e2e_approve_u_${Date.now()}`;
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -71,7 +73,7 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
       .click();
 
     // 1002 提示：已提交审批，行仍在（业务未执行）；从提示提取单号（pk 前 8 位）
-    const approvalMsg = page.locator(".el-message").first();
+    const approvalMsg = page.locator(".el-message").last();
     await expect(approvalMsg).toBeVisible({ timeout: 10_000 });
     await expect(approvalMsg).toContainText("已提交审批");
     const approvalNo = ((await approvalMsg.innerText()).match(
@@ -160,6 +162,7 @@ test("敏感操作审批：删除用户 → 提交审批 → 审批中心通过 
 test("审批中心：待办角标 → 批量驳回 → 角标归零", async ({ page }) => {
   const suffix = Date.now();
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const approvalNos: string[] = [];

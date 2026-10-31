@@ -176,7 +176,7 @@ describe("menuApi 权限码与排序", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/menu/api-url",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
   });
@@ -209,7 +209,7 @@ describe("脱敏 / 模型字段", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/system/field/lookups",
-      { params: { parent: 0 }, data: {} },
+      { params: { parent: 0 }, data: undefined },
       {}
     );
 
@@ -303,7 +303,7 @@ describe("loginPolicyApi 登录策略", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/identity/login-policies/choices",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
   });

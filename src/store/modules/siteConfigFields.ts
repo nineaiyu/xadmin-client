@@ -213,3 +213,43 @@ export function serverPreferenceConfig(
   }
   return config;
 }
+
+/** 按服务端键筛出注册表中对应字段（跨标签同步只前移实际变更键的基线） */
+export function preferenceFieldsFor(
+  serverKeys: readonly string[]
+): PreferenceField[] {
+  if (serverKeys.length === 0) return [];
+  const keys = new Set(serverKeys);
+  return PREFERENCE_FIELDS.filter(field => keys.has(field.serverKey));
+}
+
+/** 值等价判定：原始值身份比较 + 结构序列化比较（数组 / 对象按内容比较） */
+function isSameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 本地存储三段与基线（最近一次服务端同步值）的差异 → 最小化扁平 PATCH 载荷。
+ *
+ * 只提交本地实际变更的键：站点配置由多个管理员共享，整包 PATCH 会把「本标签
+ * 启动时的旧快照」覆盖到其他管理员刚改过的键上（回滚他人改动）。基线缺失时
+ * 由调用方回落整包（见 siteConfig store）。
+ */
+export function diffPreferenceConfig(
+  current: PreferenceSections,
+  base: PreferenceSections
+): Record<string, unknown> {
+  const config: Record<string, unknown> = {};
+  for (const field of PREFERENCE_FIELDS) {
+    const currentValue = current[field.section][field.localKey];
+    if (!isSameValue(currentValue, base[field.section][field.localKey])) {
+      config[field.serverKey] = currentValue;
+    }
+  }
+  return config;
+}

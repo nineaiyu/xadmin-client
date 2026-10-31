@@ -1,6 +1,14 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 数据权限配置页（抽屉式新增/编辑 + 行内规则编辑器）E2E 回归。
@@ -69,6 +77,7 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
     });
 
     await login(page);
+    await startResourceIsolation(page);
     await openMenuPath(
       page,
       ["系统管理", "权限管理"],
@@ -211,7 +220,9 @@ test.describe("数据权限配置（抽屉式新增/编辑）", () => {
   });
 
   test("编辑：页面首次打开生效接口弹窗即回显已选接口", async ({ page }) => {
+    test.slow();
     await login(page);
+    await startResourceIsolation(page);
     await openMenuPath(
       page,
       ["系统管理", "权限管理"],

@@ -1,6 +1,14 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 导入列映射与模板（用户管理）：
@@ -24,8 +32,7 @@ async function openDialogOnUserPage(page: Page) {
   // 按可访问名定位「导入」：工具栏是图标按钮（无文本，hasText 匹配不到），且按钮
   // 集合会随功能演进（高级筛选/视图等），序号定位会错点
   await page
-    .locator("div.flex.mr-4")
-    .first()
+    .getByTestId("table-bar-buttons")
     .getByRole("button", { name: "导入", exact: true })
     .click();
   const dialog = page.locator(".el-dialog", { hasText: "导入" }).first();
@@ -35,6 +42,7 @@ async function openDialogOnUserPage(page: Page) {
 
 async function openImportDialog(page: Page) {
   await login(page);
+  await startResourceIsolation(page);
   return openDialogOnUserPage(page);
 }
 

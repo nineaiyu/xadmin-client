@@ -22,6 +22,8 @@ export interface StatItem {
   tag?: boolean;
   /** chip 可点击：点击时 StatBar 抛出 `itemClick` */
   clickable?: boolean;
+  /** chip 处于激活筛选态 */
+  active?: boolean;
   /** 悬浮提示（缺省取展示值） */
   title?: string;
   /** 分组标题：StatBar 中相邻同组项渲染为一行 */

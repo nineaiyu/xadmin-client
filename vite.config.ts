@@ -44,7 +44,10 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
     server: {
       // 端口号
       port: VITE_PORT,
-      host: "0.0.0.0",
+      // 默认只绑回环地址：dev 端口带 /api 代理与测试超管上下文，绑 0.0.0.0 会让
+      // 同一局域网主机借代理访问开发/E2E 后台。确需局域网访问时显式设置
+      // VITE_DEV_HOST=0.0.0.0（E2E/CI 默认走回环即可）。
+      host: process.env.VITE_DEV_HOST ?? "127.0.0.1",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: createProxyConfig({
         [`http://127.0.0.1:${apiPort}`]: ["/api", "/media", "/api-docs"],
@@ -142,7 +145,6 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
       }
     },
     define: {
-      __INTLIFY_PROD_DEVTOOLS__: false,
       __APP_INFO__: JSON.stringify(__APP_INFO__)
     }
   };

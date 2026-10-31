@@ -13,6 +13,7 @@ import { onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ReEmpty from "@/components/ReEmpty";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { useMfaVerify } from "@/hooks/useMfaVerify";
 import {
   mfaConfirmApi,
@@ -31,8 +32,6 @@ const props = defineProps<{
   resolve: (_result: { expire_at: number | null }) => void;
   /** 取消回调 */
   reject: () => void;
-  /** 弹窗销毁回调（动画结束后由包装层卸载组件） */
-  destroy: () => void;
 }>();
 
 const { t } = useI18n();
@@ -40,6 +39,8 @@ const { t } = useI18n();
 const visible = ref(true);
 const infoLoading = ref(false);
 const methods = ref<MfaMethod[]>([]);
+/** 拉取验证方式失败：与「确实没有可用方式」区分展示 */
+const infoError = ref(false);
 const formRef = ref();
 
 const {
@@ -85,12 +86,17 @@ const rules = {
 
 const loadMethods = () => {
   infoLoading.value = true;
+  infoError.value = false;
   mfaConfirmInfoApi({ confirm_type: props.confirmType ?? "mfa" })
     .then(res => {
       if (isSuccess(res)) {
-        methods.value = res.data.methods;
+        methods.value = res.data.methods ?? [];
+        return;
       }
+      infoError.value = true;
+      message(res.detail || t("mfa.methodsLoadFailed"), { type: "error" });
     })
+    .catch(normalizeError)
     .finally(() => (infoLoading.value = false));
 };
 
@@ -112,8 +118,6 @@ const handleVerify = () => {
 };
 
 onMounted(loadMethods);
-
-const emit = defineEmits<{ destroy: [] }>();
 </script>
 
 <template>
@@ -125,7 +129,6 @@ const emit = defineEmits<{ destroy: [] }>();
     destroy-on-close
     :close-on-click-modal="false"
     @close="handleCancel"
-    @closed="emit('destroy')"
   >
     <div v-loading="infoLoading">
       <el-alert
@@ -185,6 +188,15 @@ const emit = defineEmits<{ destroy: [] }>();
           />
         </el-form-item>
       </el-form>
+      <ReEmpty
+        v-else-if="!infoLoading && infoError"
+        :description="$t('mfa.methodsLoadFailed')"
+        size="small"
+      >
+        <el-button type="primary" link @click="loadMethods">
+          {{ $t("buttons.retry") }}
+        </el-button>
+      </ReEmpty>
       <ReEmpty
         v-else-if="!infoLoading"
         :description="$t('mfa.noAvailableMethod')"

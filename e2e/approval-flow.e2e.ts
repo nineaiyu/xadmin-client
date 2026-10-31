@@ -8,6 +8,12 @@ import {
   login,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 全量审批流引擎一期 E2E：
@@ -66,6 +72,7 @@ async function openInstanceCenter(page: Page) {
 
 test("审批中心：操作审批 / 流程审批资源页签可切换", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   await openMenuPath(page, ["审批管理"], "/approval/index");
   await expect(page.getByRole("tab", { name: "操作审批" })).toBeVisible({
     timeout: 20_000
@@ -76,6 +83,7 @@ test("审批中心：操作审批 / 流程审批资源页签可切换", async ({
 
 test("流程审批：发起申请 → 两级会签通过 → 我的申请已通过", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E申请-${stamp}`;
@@ -202,6 +210,7 @@ test("流程审批：发起申请 → 两级会签通过 → 我的申请已通�
 
 test("流程审批：驳回链路（必填原因）→ 我的申请已驳回", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E驳回-${stamp}`;
@@ -275,6 +284,7 @@ test("流程审批：驳回链路（必填原因）→ 我的申请已驳回", a
 
 test("流程定义：列表可见 + 编辑配置抽屉展示节点", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const code = `e2e_def_${stamp}`;
@@ -338,6 +348,7 @@ async function tokenFor(
 
 test("流程定义：有在途实例时可改版，在途单按自身版本走完", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const code = `e2e_inflight_${stamp}`;

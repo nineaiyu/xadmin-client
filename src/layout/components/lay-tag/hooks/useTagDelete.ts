@@ -70,6 +70,7 @@ export function useTagDelete({
       dynamicTagView();
     };
 
+    if (tag !== "other" && valueIndex < 0) return;
     if (tag === "other") {
       spliceRoute(1, 1, true);
     } else if (tag === "left") {

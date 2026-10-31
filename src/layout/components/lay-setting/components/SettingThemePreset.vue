@@ -47,7 +47,13 @@ function selectPreset(type: string) {
         class="theme-preset__item"
         :class="{ 'is-active': currentPreset === item.type }"
         :title="t(item.labelKey)"
+        role="button"
+        tabindex="0"
+        :aria-pressed="currentPreset === item.type"
+        :aria-label="t(item.labelKey)"
         @click="selectPreset(item.type)"
+        @keydown.enter.prevent="selectPreset(item.type)"
+        @keydown.space.prevent="selectPreset(item.type)"
       >
         <span class="theme-preset__box">
           <span
@@ -71,7 +77,13 @@ function selectPreset(type: string) {
         class="theme-preset__item theme-preset__custom"
         :class="{ 'is-active': currentPreset === CUSTOM_THEME_PRESET }"
         :title="t('layout.themePresetNames.custom')"
+        role="button"
+        tabindex="0"
+        :aria-pressed="currentPreset === CUSTOM_THEME_PRESET"
+        :aria-label="t('layout.themePresetNames.custom')"
         @click="selectPreset(CUSTOM_THEME_PRESET)"
+        @keydown.enter.prevent="selectPreset(CUSTOM_THEME_PRESET)"
+        @keydown.space.prevent="selectPreset(CUSTOM_THEME_PRESET)"
       >
         <span class="theme-preset__box">
           <span class="theme-preset__swatch theme-preset__swatch--custom">

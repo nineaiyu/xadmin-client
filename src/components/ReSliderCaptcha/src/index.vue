@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { actionOffset } from "./geometry";
+import { actionOffset, measureWidth } from "./geometry";
 
 defineOptions({ name: "ReSliderCaptcha" });
 
@@ -57,7 +57,7 @@ let startTime = 0;
 let keyboardMoved = false;
 
 const offset = computed(() =>
-  actionOffset(wrapperRef.value?.offsetWidth ?? 0, props.actionWidth)
+  actionOffset(measureWidth(wrapperRef.value), props.actionWidth)
 );
 
 const actionStyle = computed(() => ({
@@ -66,7 +66,7 @@ const actionStyle = computed(() => ({
 }));
 
 const barStyle = computed(() => {
-  const full = wrapperRef.value?.offsetWidth ?? 0;
+  const full = measureWidth(wrapperRef.value);
   const width = isPassing.value ? full : moveX.value + props.actionWidth / 2;
   return { width: `${width}px` };
 });

@@ -15,7 +15,7 @@ export function useUserPasswordRules({ t }: { t: TFunction }) {
       t,
       apiReq: rulesPasswordApi(),
       success(res) {
-        passwordRules.value = res?.data?.password_rules;
+        passwordRules.value = res?.data?.password_rules ?? [];
       },
       showSuccessMsg: false
     });

@@ -78,6 +78,154 @@ const collect = (
 ): UserActionItem[] =>
   items.filter((item): item is UserActionItem => Boolean(item));
 
+/** 分组构建上下文（权限、跨模块开关、处理器与行级判据） */
+type ActionContext = {
+  t: TFunction;
+  auth: UserActionAuth;
+  flags: UserActionFlags;
+  handlers: UserActionHandlers;
+  /** 非超管不得操作超管账号（后端同口径拒绝） */
+  superuserTargetBlocked: (row: RecordType) => boolean;
+  currentUsername?: string;
+};
+
+/** 账号类动作：重置密码/二次验证/头像/下线/模拟 */
+function accountActions(ctx: ActionContext): UserActionItem[] {
+  const { t, auth, handlers, superuserTargetBlocked, currentUsername } = ctx;
+  return collect(
+    auth.resetPassword && {
+      code: "resetPassword",
+      label: t("systemUser.resetPassword"),
+      description: t("systemUser.resetPasswordTip"),
+      icon: Password,
+      disabled: superuserTargetBlocked,
+      run: handlers.resetPassword
+    },
+    auth.resetMfa && {
+      code: "resetMfa",
+      label: t("systemUser.resetMfa"),
+      description: t("systemUser.resetMfaTip"),
+      icon: ShieldKeyhole,
+      type: "warning",
+      disabled: superuserTargetBlocked,
+      run: handlers.resetMfa
+    },
+    auth.upload && {
+      code: "upload",
+      label: t("systemUser.editAvatar"),
+      description: t("systemUser.editAvatarTip"),
+      icon: Avatar,
+      disabled: superuserTargetBlocked,
+      run: handlers.uploadAvatar
+    },
+    auth.logout && {
+      code: "logout",
+      label: t("systemUser.logout"),
+      description: t("systemUser.logoutTip"),
+      icon: Logout,
+      type: "danger",
+      // 无在线会话时不可用（与行内按钮同一口径）
+      disabled: (row: RecordType) =>
+        superuserTargetBlocked(row) || Number(row?.online_count ?? 0) === 0,
+      run: handlers.logout
+    },
+    auth.impersonate && {
+      code: "impersonate",
+      label: t("systemUser.impersonate"),
+      description: t("systemUser.impersonateTip"),
+      icon: Impersonate,
+      type: "warning",
+      // 超管不可模拟（防提权）、停用账号无法使用、模拟自己无意义（后端同口径拒绝）
+      disabled: (row: RecordType) =>
+        Boolean(row?.is_superuser) ||
+        row?.is_active === false ||
+        (Boolean(currentUsername) && row?.username === currentUsername),
+      run: handlers.impersonate
+    }
+  );
+}
+
+/** 授权类动作：角色分配与权限预览 */
+function permissionActions(ctx: ActionContext): UserActionItem[] {
+  const { t, auth, handlers, superuserTargetBlocked } = ctx;
+  return collect(
+    auth.empower && {
+      code: "empower",
+      label: t("systemUser.assignRoles"),
+      description: t("systemUser.assignRolesTip"),
+      icon: Role,
+      disabled: superuserTargetBlocked,
+      run: handlers.assignRoles
+    },
+    auth.preview && {
+      code: "preview",
+      label: t("systemUser.preview"),
+      description: t("systemUser.previewTip"),
+      icon: View,
+      run: handlers.preview
+    }
+  );
+}
+
+/** 生命周期动作：邀请激活 */
+function lifecycleActions(ctx: ActionContext): UserActionItem[] {
+  const { t, auth, handlers, superuserTargetBlocked } = ctx;
+  return collect(
+    auth.invite && {
+      code: "invite",
+      label: t("systemUser.invite"),
+      description: t("systemUser.inviteTip"),
+      icon: MailSendLine,
+      type: "warning",
+      disabled: superuserTargetBlocked,
+      run: handlers.invite
+    }
+  );
+}
+
+/** 协作类动作：通知/IM 绑定/标签（跨模块权限逐项单判） */
+function collaborationActions(ctx: ActionContext): UserActionItem[] {
+  const { t, auth, flags, handlers, superuserTargetBlocked } = ctx;
+  return collect(
+    flags.sendNotice && {
+      code: "sendNotice",
+      label: t("systemUser.sendNotice"),
+      description: t("systemUser.sendNoticeTip"),
+      icon: Bell,
+      run: handlers.sendNotice
+    },
+    auth.imBinding && {
+      code: "imBinding",
+      label: t("systemUser.imBinding"),
+      description: t("systemUser.imBindingTip"),
+      icon: Message,
+      disabled: superuserTargetBlocked,
+      run: handlers.imBinding
+    },
+    flags.assignTags && {
+      code: "tags",
+      label: t("tag.assignTitle"),
+      description: t("systemUser.tagsTip"),
+      icon: Tag,
+      run: handlers.assignTags
+    }
+  );
+}
+
+/** 记录类动作：变更历史 */
+function recordActions(ctx: ActionContext): UserActionItem[] {
+  const { t, auth, handlers } = ctx;
+  return collect(
+    auth.changeHistory && {
+      code: "changeHistory",
+      label: t("buttons.changeHistory"),
+      description: t("systemUser.changeHistoryTip"),
+      icon: History,
+      run: handlers.changeHistory
+    }
+  );
+}
+
 /**
  * 用户管理动作清单：面板按分组渲染，权限缺失的动作与随之变空的分组一并剔除。
  * 纯函数便于用显隐矩阵单测覆盖（不依赖组件挂载）。
@@ -101,138 +249,39 @@ export function buildUserActionGroups({
 }): UserActionGroup[] {
   const superuserTargetBlocked = (row: RecordType) =>
     Boolean(row?.is_superuser) && !currentUserIsSuperuser;
+  const ctx: ActionContext = {
+    t,
+    auth,
+    flags,
+    handlers,
+    superuserTargetBlocked,
+    currentUsername
+  };
   const groups: UserActionGroup[] = [
     {
       key: "account",
       title: t("systemUser.actionGroups.account"),
-      actions: collect(
-        auth.resetPassword && {
-          code: "resetPassword",
-          label: t("systemUser.resetPassword"),
-          description: t("systemUser.resetPasswordTip"),
-          icon: Password,
-          disabled: superuserTargetBlocked,
-          run: handlers.resetPassword
-        },
-        auth.resetMfa && {
-          code: "resetMfa",
-          label: t("systemUser.resetMfa"),
-          description: t("systemUser.resetMfaTip"),
-          icon: ShieldKeyhole,
-          type: "warning",
-          disabled: superuserTargetBlocked,
-          run: handlers.resetMfa
-        },
-        auth.upload && {
-          code: "upload",
-          label: t("systemUser.editAvatar"),
-          description: t("systemUser.editAvatarTip"),
-          icon: Avatar,
-          disabled: superuserTargetBlocked,
-          run: handlers.uploadAvatar
-        },
-        auth.logout && {
-          code: "logout",
-          label: t("systemUser.logout"),
-          description: t("systemUser.logoutTip"),
-          icon: Logout,
-          type: "danger",
-          // 无在线会话时不可用（与行内按钮同一口径）
-          disabled: (row: RecordType) =>
-            superuserTargetBlocked(row) || Number(row?.online_count ?? 0) === 0,
-          run: handlers.logout
-        },
-        auth.impersonate && {
-          code: "impersonate",
-          label: t("systemUser.impersonate"),
-          description: t("systemUser.impersonateTip"),
-          icon: Impersonate,
-          type: "warning",
-          // 超管不可模拟（防提权）、停用账号无法使用、模拟自己无意义（后端同口径拒绝）
-          disabled: (row: RecordType) =>
-            Boolean(row?.is_superuser) ||
-            row?.is_active === false ||
-            (Boolean(currentUsername) && row?.username === currentUsername),
-          run: handlers.impersonate
-        }
-      )
+      actions: accountActions(ctx)
     },
     {
       key: "permission",
       title: t("systemUser.actionGroups.permission"),
-      actions: collect(
-        auth.empower && {
-          code: "empower",
-          label: t("systemUser.assignRoles"),
-          description: t("systemUser.assignRolesTip"),
-          icon: Role,
-          disabled: superuserTargetBlocked,
-          run: handlers.assignRoles
-        },
-        auth.preview && {
-          code: "preview",
-          label: t("systemUser.preview"),
-          description: t("systemUser.previewTip"),
-          icon: View,
-          run: handlers.preview
-        }
-      )
+      actions: permissionActions(ctx)
     },
     {
       key: "lifecycle",
       title: t("systemUser.actionGroups.lifecycle"),
-      actions: collect(
-        auth.invite && {
-          code: "invite",
-          label: t("systemUser.invite"),
-          description: t("systemUser.inviteTip"),
-          icon: MailSendLine,
-          type: "warning",
-          disabled: superuserTargetBlocked,
-          run: handlers.invite
-        }
-      )
+      actions: lifecycleActions(ctx)
     },
     {
       key: "collaboration",
       title: t("systemUser.actionGroups.collaboration"),
-      actions: collect(
-        flags.sendNotice && {
-          code: "sendNotice",
-          label: t("systemUser.sendNotice"),
-          description: t("systemUser.sendNoticeTip"),
-          icon: Bell,
-          run: handlers.sendNotice
-        },
-        auth.imBinding && {
-          code: "imBinding",
-          label: t("systemUser.imBinding"),
-          description: t("systemUser.imBindingTip"),
-          icon: Message,
-          disabled: superuserTargetBlocked,
-          run: handlers.imBinding
-        },
-        flags.assignTags && {
-          code: "tags",
-          label: t("tag.assignTitle"),
-          description: t("systemUser.tagsTip"),
-          icon: Tag,
-          run: handlers.assignTags
-        }
-      )
+      actions: collaborationActions(ctx)
     },
     {
       key: "record",
       title: t("systemUser.actionGroups.record"),
-      actions: collect(
-        auth.changeHistory && {
-          code: "changeHistory",
-          label: t("buttons.changeHistory"),
-          description: t("systemUser.changeHistoryTip"),
-          icon: History,
-          run: handlers.changeHistory
-        }
-      )
+      actions: recordActions(ctx)
     }
   ];
 

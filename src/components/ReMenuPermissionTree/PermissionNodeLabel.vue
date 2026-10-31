@@ -199,7 +199,7 @@ const showRootActions = computed(
     max-width: 26%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: var(--el-font-family-mono, monospace);
+    font-family: var(--font-family-mono);
     font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
     white-space: nowrap;

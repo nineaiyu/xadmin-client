@@ -7,6 +7,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { userInfoApi } from "@/api/user/userinfo";
 import { AesEncrypted } from "@/utils/aes";
 import { isSuccess } from "@/api/types";
@@ -17,6 +18,7 @@ import LockIcon from "~icons/ri/lock-2-line";
 
 const { t, logout } = useNav();
 const { isLocked, lockedAt, unlock } = useLockScreen();
+const lockRoot = ref<HTMLElement | null>(null);
 const userStore = useUserStoreHook();
 
 const password = ref("");
@@ -63,12 +65,15 @@ async function submit() {
   }
 }
 
+// 模态焦点圈定：Tab 不会落到底层页面；Esc 不越过口令直接解锁（锁屏是遮挡，
+// 不是鉴权），而是把焦点送回口令框，避免 Esc 变成绕过路径
+useFocusTrap(lockRoot, isLocked, {
+  initialFocus: "#lock-screen-password",
+  onEscape: () => document.getElementById("lock-screen-password")?.focus()
+});
+
 onMounted(() => {
   timer = setInterval(() => (now.value = new Date()), 1000);
-  // 锁屏期间键盘焦点留在口令框，避免输入落到被遮挡的页面上
-  requestAnimationFrame(() => {
-    document.getElementById("lock-screen-password")?.focus();
-  });
 });
 
 onBeforeUnmount(() => {
@@ -85,10 +90,12 @@ function handleLogout() {
 <template>
   <div
     v-if="isLocked"
+    ref="lockRoot"
     class="lock-screen"
     :style="{ zIndex: Z_INDEX.lockScreen }"
     role="dialog"
     aria-modal="true"
+    tabindex="-1"
     :aria-label="t('layout.lockScreen')"
   >
     <div class="lock-screen__card">

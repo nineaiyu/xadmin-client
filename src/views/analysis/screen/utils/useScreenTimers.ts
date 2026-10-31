@@ -1,4 +1,5 @@
 import { onBeforeUnmount, type Ref } from "vue";
+import { choiceValue } from "@/utils/dict";
 import { i18n } from "@/plugins/i18n";
 import type { ScreenItem } from "@/api/dataset/analysis";
 import type { DashboardItem } from "@/api/dataset/datasets";
@@ -50,16 +51,20 @@ export function useScreenTimers(deps: {
     stopTimers();
     const interval = Math.max((deps.screen.value?.interval ?? 15) * 1000, 5000);
     const refresh = Math.max((deps.screen.value?.refresh ?? 60) * 1000, 10000);
-    pageTimer = window.setInterval(() => {
-      if (
-        deps.paused.value ||
-        deps.controlMode.value === "manual" ||
-        deps.dashboards.value.length === 0
-      )
-        return;
-      deps.pageIndex.value =
-        (deps.pageIndex.value + 1) % deps.dashboards.value.length;
-    }, interval);
+    // 自由画布没有页码/轮播语义：不建翻页定时器，避免周期性无效 pageIndex 变化
+    const canvas = choiceValue(deps.screen.value?.layout_mode) === "free";
+    if (!canvas) {
+      pageTimer = window.setInterval(() => {
+        if (
+          deps.paused.value ||
+          deps.controlMode.value === "manual" ||
+          deps.dashboards.value.length === 0
+        )
+          return;
+        deps.pageIndex.value =
+          (deps.pageIndex.value + 1) % deps.dashboards.value.length;
+      }, interval);
+    }
     refreshTimer = window.setInterval(() => {
       // screen_data 推送活跃（回落窗口内收到过帧）时本机重拉静默，避免双通道并发取数
       if (Date.now() - deps.dataFrameAt.at < refresh * DATA_FALLBACK_FACTOR)

@@ -29,9 +29,14 @@ const props = defineProps<{
   redis?: MonitorRedisInfo["redis"];
   celery: MonitorCelery;
   queues: [string, number][];
+  /** Redis / Celery 区块接口失败：显示「不可用 + 重试」，不渲染 0 / 空态结论 */
+  redisUnavailable?: boolean;
+  celeryUnavailable?: boolean;
   /** 最近一次采集（决定 uptime 行是否展示，与页面侧原「有 latest 即展示」口径一致） */
   latest?: { boot_time: number } | null;
 }>();
+
+const emit = defineEmits<{ retry: [] }>();
 
 const { t } = useI18n();
 /** 后端未就绪时 redis 可能整体缺失，统一回落到空对象（与页面侧原口径一致） */
@@ -107,7 +112,18 @@ const workerColumns = computed<ReadonlyColumn[]>(() => [
     <el-col :xs="24" :md="8">
       <el-card shadow="never">
         <template #header>{{ t("systemMonitor.redis") }}</template>
-        <div class="flex flex-col gap-2 text-sm">
+        <template v-if="redisUnavailable">
+          <el-alert
+            :title="t('systemMonitor.dataUnavailable')"
+            type="warning"
+            :closable="false"
+            show-icon
+          />
+          <el-button class="mt-3" size="small" @click="emit('retry')">
+            {{ t("systemMonitor.refresh") }}
+          </el-button>
+        </template>
+        <div v-else class="flex flex-col gap-2 text-sm">
           <div class="flex justify-between">
             <span class="text-(--el-text-color-regular)">{{
               t("systemMonitor.version")
@@ -146,29 +162,43 @@ const workerColumns = computed<ReadonlyColumn[]>(() => [
     <el-col :xs="24" :md="8">
       <el-card shadow="never">
         <template #header>
-          {{ t("systemMonitor.celery") }} ({{ celery.total }})
+          {{ t("systemMonitor.celery")
+          }}<template v-if="!celeryUnavailable"> ({{ celery.total }})</template>
         </template>
-        <ReReadonlyTable
-          v-if="celery.workers.length"
-          :columns="workerColumns"
-          :rows="celery.workers"
-          size="small"
-        />
-        <div v-else class="text-sm text-(--el-text-color-secondary)">
-          {{
-            celery.skipped
-              ? t("systemMonitor.celerySkipped")
-              : t("systemMonitor.noWorker")
-          }}
-        </div>
-        <div
-          v-if="queues.length"
-          class="mt-3 flex flex-wrap gap-3 text-xs text-(--el-text-color-regular)"
-        >
-          <span v-for="[name, length] in queues" :key="name">
-            {{ name }}: {{ length }}
-          </span>
-        </div>
+        <template v-if="celeryUnavailable">
+          <el-alert
+            :title="t('systemMonitor.dataUnavailable')"
+            type="warning"
+            :closable="false"
+            show-icon
+          />
+          <el-button class="mt-3" size="small" @click="emit('retry')">
+            {{ t("systemMonitor.refresh") }}
+          </el-button>
+        </template>
+        <template v-else>
+          <ReReadonlyTable
+            v-if="celery.workers.length"
+            :columns="workerColumns"
+            :rows="celery.workers"
+            size="small"
+          />
+          <div v-else class="text-sm text-(--el-text-color-secondary)">
+            {{
+              celery.skipped
+                ? t("systemMonitor.celerySkipped")
+                : t("systemMonitor.noWorker")
+            }}
+          </div>
+          <div
+            v-if="queues.length"
+            class="mt-3 flex flex-wrap gap-3 text-xs text-(--el-text-color-regular)"
+          >
+            <span v-for="[name, length] in queues" :key="name">
+              {{ name }}: {{ length }}
+            </span>
+          </div>
+        </template>
       </el-card>
     </el-col>
   </el-row>

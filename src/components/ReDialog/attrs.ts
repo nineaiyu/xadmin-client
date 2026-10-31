@@ -1,4 +1,5 @@
 import type { DialogOptions } from "./type";
+import { overlayDomProps } from "@/components/overlay/domProps";
 
 /**
  * ReDialog 自有选项键（非 Element Plus `el-dialog` 属性）。
@@ -27,6 +28,10 @@ export const RE_DIALOG_INTERNAL_KEYS = [
   "hideFooter",
   "popconfirm",
   "sureBtnLoading",
+  "sureBtnText",
+  // 打开/关闭延迟由 overlay/store 自行消费，透传给 EP 会被二次延迟
+  "openDelay",
+  "closeDelay",
   "beforeCancel",
   "beforeSure",
   "beforeClose",
@@ -42,49 +47,11 @@ export const RE_DIALOG_INTERNAL_KEYS = [
   "fullscreenIcon"
 ] as const;
 
-const INTERNAL = new Set<string>(RE_DIALOG_INTERNAL_KEYS);
-
 /**
- * EP 原生属性中取值可为对象的例外（其余对象值一律视为框架配置对象剔除）：
- * - `style`：内联样式对象；
- * - `appendTo`：可选择器字符串或 DOM 元素；
- * - `transition`：过渡名字符串或配置对象；
- * - `closeIcon`：图标组件。
- */
-const OBJECT_VALUED_EP_PROPS = new Set([
-  "style",
-  "appendTo",
-  "transition",
-  "closeIcon"
-]);
-
-/**
- * 过滤出可安全 `v-bind` 到 `el-dialog` 的选项：
- * - 剔除 ReDialog 自有键；
- * - 剔除值仍为函数 / 对象 / 数组的未知键（渲染函数与配置对象的兜底，
- *   它们在 DOM 上只会得到 `[object Object]` 或函数源码字符串）。
- *
- * 基础类型（string / number / boolean）原样保留——EP 的属性集合是开放的，
- * 这里不做白名单式收窄，避免新 EP 属性被误伤。
+ * 过滤出可安全 `v-bind` 到 `el-dialog` 的选项（规则见 overlay/domProps）。
  */
 export function dialogDomProps(
   options: DialogOptions
 ): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(options)) {
-    if (INTERNAL.has(key)) continue;
-    if (value === null || value === undefined) {
-      result[key] = value;
-      continue;
-    }
-    const type = typeof value;
-    if (type === "string" || type === "number" || type === "boolean") {
-      result[key] = value;
-      continue;
-    }
-    if (OBJECT_VALUED_EP_PROPS.has(key)) {
-      result[key] = value;
-    }
-  }
-  return result;
+  return overlayDomProps(options, RE_DIALOG_INTERNAL_KEYS);
 }

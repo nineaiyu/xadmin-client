@@ -7,6 +7,14 @@ import {
   openList,
   openUserPanel
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 用户管理行操作抽屉：
@@ -22,6 +30,7 @@ test.use({ viewport: { width: 1280, height: 1080 } });
 
 test("用户抽屉：管理入口、分组动作与二级弹窗", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await openList(page, "/system/user/index", {
     placeholder: "请输入用户名",
     value: "xadmin"
@@ -55,6 +64,7 @@ test("用户抽屉：管理入口、分组动作与二级弹窗", async ({ page 
 
 test("用户抽屉：点击用户名打开同一抽屉", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await openList(page, "/system/user/index", {
     placeholder: "请输入用户名",
     value: "xadmin"
@@ -76,6 +86,7 @@ test("用户抽屉：点击用户名打开同一抽屉", async ({ page }) => {
 
 test("用户抽屉：无在线会话时强制下线不可用", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   // 自建临时账号：online_count 恒为 0（共享库下 e2e_user 等账号可能被并行用例登录）。
   // 密码选型有坑：服务端会先按密文协议解密，明文若恰好被 base64 解码成空串会被判

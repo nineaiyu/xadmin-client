@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 报表设计器：
@@ -34,6 +42,7 @@ test("报表设计器：模板 → 组件 → 保存落库", async ({ page }) =>
   const reportName = `E2E设计报表-${suffix}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const dataset = await postJson(

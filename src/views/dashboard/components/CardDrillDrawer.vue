@@ -35,13 +35,26 @@ const loading = ref(false);
 const failed = ref("");
 const result = ref<ExecuteResult | null>(null);
 const filtered = ref(false);
+/** 下钻明细本地分页：一次最多 5000 行，整表渲染会阻塞抽屉交互 */
+const DRILL_PAGE_SIZE = 50;
+const drillPage = ref(1);
+const drillRows = computed(() => {
+  const rows = result.value?.rows ?? [];
+  const start = (drillPage.value - 1) * DRILL_PAGE_SIZE;
+  return rows.slice(start, start + DRILL_PAGE_SIZE);
+});
+watch(result, () => {
+  drillPage.value = 1;
+});
 
 const visible = computed({
   get: () => props.modelValue,
   set: (val: boolean) => emit("update:modelValue", val)
 });
 
+let loadSeq = 0;
 async function load(useFilter: boolean) {
+  const seq = ++loadSeq;
   loading.value = true;
   failed.value = "";
   try {
@@ -60,6 +73,7 @@ async function load(useFilter: boolean) {
     const res = await datasetApi
       .execute<ExecuteResult>(props.dataset, payload)
       .catch(() => null);
+    if (seq !== loadSeq) return;
     if (res && isSuccess(res) && res.data) {
       result.value = res.data;
     } else {
@@ -67,13 +81,19 @@ async function load(useFilter: boolean) {
       result.value = null;
     }
   } finally {
-    loading.value = false;
+    if (seq === loadSeq) loading.value = false;
   }
 }
 
-/** 打开时拉取（沿用当前过滤态）；过滤被移除后重拉全量 */
+/** 打开时拉取（沿用当前过滤态）；抽屉已打开时同数据集换维度（filter 变化）也重拉 */
 watch(
-  () => [props.modelValue, props.dataset] as const,
+  () =>
+    [
+      props.modelValue,
+      props.dataset,
+      props.filter?.field ?? "",
+      String(props.filter?.value ?? "")
+    ] as const,
   ([open]) => {
     if (open) {
       filtered.value = Boolean(props.filter);
@@ -128,7 +148,7 @@ function reload() {
       </ReEmpty>
       <div v-else v-loading="loading">
         <DataTable
-          :data="result?.rows ?? []"
+          :data="drillRows"
           max-height="calc(100vh - 220px)"
           :label="t('dashboard.drillRows')"
         >
@@ -145,6 +165,14 @@ function reload() {
             </template>
           </el-table-column>
         </DataTable>
+        <el-pagination
+          v-if="(result?.rows ?? []).length > DRILL_PAGE_SIZE"
+          v-model:current-page="drillPage"
+          class="mt-2 justify-end"
+          :page-size="DRILL_PAGE_SIZE"
+          :total="(result?.rows ?? []).length"
+          layout="prev, pager, next"
+        />
         <div class="mt-2 text-xs text-(--el-text-color-secondary)">
           {{
             t("dashboard.drillTotal", {

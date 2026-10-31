@@ -2,6 +2,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { useWebAuthn } from "@/hooks/useWebAuthn";
 import { useCountdownCooldown } from "@/hooks/useCountdownCooldown";
 import { createVerifySubmitters } from "./internal/mfaVerifySubmit";
@@ -58,14 +59,17 @@ export function useMfaVerify<
 
   const handleSendCode = () => {
     if (!currentMethod.value) return;
-    options.sendCode(currentMethod.value).then(res => {
-      if (isSuccess(res)) {
-        message(res.detail || t("mfa.codeSent"), { type: "success" });
-        startCooldown(MFA_CODE_COOLDOWN_SECONDS);
-      } else {
-        message(res.detail, { type: "warning" });
-      }
-    });
+    options
+      .sendCode(currentMethod.value)
+      .then(res => {
+        if (isSuccess(res)) {
+          message(res.detail || t("mfa.codeSent"), { type: "success" });
+          startCooldown(MFA_CODE_COOLDOWN_SECONDS);
+        } else {
+          message(res.detail, { type: "warning" });
+        }
+      })
+      .catch(normalizeError);
   };
 
   const { submitCode, submitPasskey, handleVerify } = createVerifySubmitters({

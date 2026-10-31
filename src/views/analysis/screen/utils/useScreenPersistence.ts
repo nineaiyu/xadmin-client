@@ -45,8 +45,10 @@ export function useScreenPersistence(options: {
   const confirm = useConfirm();
 
   async function save() {
-    const { screen, saving, readonly, dirty } = options;
-    if (!screen.value || saving.value || readonly.value) return;
+    const { screen, saving, readonly, preview, dirty } = options;
+    if (!screen.value || saving.value || readonly.value || preview.value) {
+      return;
+    }
     saving.value = true;
     try {
       // 保存发起时快照编辑序号：往返期间的新编辑（序号前进）未进本次载荷，
@@ -89,7 +91,7 @@ export function useScreenPersistence(options: {
         message(t("dataScreen.layoutSaved"), { type: "success" });
         return;
       }
-      if (res.detail) message(String(res.detail), { type: "warning" });
+      message(String(res.detail || t("results.failed")), { type: "warning" });
     } finally {
       saving.value = false;
     }

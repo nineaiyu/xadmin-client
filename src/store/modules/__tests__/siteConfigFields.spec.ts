@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PREFERENCE_FIELDS,
+  diffPreferenceConfig,
   localPreferenceSections,
   serverPreferenceConfig
 } from "../siteConfigFields";
@@ -35,5 +36,16 @@ describe("preference registry", () => {
   it("ThemeColor 缺省跟随 Theme", () => {
     const sections = localPreferenceSections({ Theme: "dark" });
     expect(sections.layout.themeColor).toBe("dark");
+  });
+
+  it("diffPreferenceConfig 只输出与基线不同的键（最小化 PATCH）", () => {
+    const base = localPreferenceSections({});
+    const current = localPreferenceSections({});
+    current.configure.hideTabs = true;
+    current.locale.locale = "en";
+    const payload = diffPreferenceConfig(current, base);
+    expect(payload).toEqual({ Locale: "en", HideTabs: true });
+    // 未改动的键（含其他管理员可能改过的站点级键）不进入载荷
+    expect(payload.Title).toBeUndefined();
   });
 });

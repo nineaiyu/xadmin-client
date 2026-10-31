@@ -70,6 +70,7 @@ const editorConfig = {
 const handleCreated = (editor: unknown) => {
   // 记录 editor 实例，重要！
   editorRef.value = editor;
+  loading.value = false;
 };
 
 // 组件销毁时，也及时销毁编辑器
@@ -79,7 +80,7 @@ onBeforeUnmount(() => {
   editor.destroy();
 });
 
-const loading = ref(false);
+const loading = ref(true);
 
 /** 系统通知内容以 v-html 渲染，展示前经 DOMPurify 净化（服务端 bleach 净化的兜底） */
 const sanitizedMessage = computed(() =>
@@ -122,8 +123,8 @@ const isMarkdown = computed(
       />
       <div v-else class="wangeditor">
         <Editor
-          v-model="newFormInline.message"
           v-loading="loading"
+          :model-value="sanitizedMessage"
           :defaultConfig="editorConfig"
           :mode="mode"
           style="min-height: 500px; overflow-y: hidden"

@@ -2,8 +2,10 @@ import type { Reactive, Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import type { menuApi } from "@/api/system/menu";
 import { flattenMenuTree } from "./normalize";
+import { persistMenuOrder } from "./menuOrderPersist";
 import type { MenuRow, MoveDirection } from "./types";
 
 /**
@@ -37,16 +39,6 @@ export function useMenuOrder({
 }: MenuOrderDeps) {
   const { t } = useI18n();
 
-  /** 前序 pk 顺序 + rank 写回（rank 取前序序号，与后端 rank 接口口径一致） */
-  const persistOrder = async (pks: Array<string | number>) => {
-    const patch = new Map<string, Record<string, unknown>>();
-    pks.forEach((pk, index) => patch.set(String(pk), { rank: index + 1 }));
-    patchRows(patch);
-    const ok = await submitRank(pks);
-    if (!ok) reload();
-    return ok;
-  };
-
   /** 同层移动：把 pk 序列在所属兄弟区间内重排后提交 */
   const moveSibling = async (row: MenuRow, direction: MoveDirection) => {
     const parentKey = row.parent === null ? "" : String(row.parent);
@@ -74,7 +66,7 @@ export function useMenuOrder({
       order[position] = reordered[i];
     });
 
-    const ok = await persistOrder(order);
+    const ok = await persistMenuOrder(order, { patchRows, submitRank, reload });
     if (ok) message(t("systemMenu.result.sorted"), { type: "success" });
     return ok;
   };
@@ -91,27 +83,29 @@ export function useMenuOrder({
   ) => {
     const node = (draggingNode as { data?: MenuRow } | null | undefined)?.data;
     const target = (dropNode as { data?: MenuRow } | null | undefined)?.data;
-    if (!node || !target) return;
+    if (!node || !target) return false;
     const nextParent =
       dropType === "inner"
         ? target.pk
         : (target.parent as number | string | null);
 
     if (String(nextParent ?? "") !== String(node.parent ?? "")) {
-      const res = await api.partialUpdate(node.pk as number, {
-        parent: nextParent ?? null
-      });
+      const res = await api
+        .partialUpdate(node.pk as number, {
+          parent: nextParent ?? null
+        })
+        .catch(normalizeError);
       if (!isSuccess(res)) {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
         reload();
-        return;
+        return false;
       }
       patchRows(new Map([[String(node.pk), { parent: nextParent ?? null }]]));
     }
 
     // el-tree 已就地改写渲染树：按渲染树的前序顺序提交 rank
     const order = flattenMenuTree(renderedTree.value).map(item => item.pk);
-    const ok = await persistOrder(order);
+    const ok = await persistMenuOrder(order, { patchRows, submitRank, reload });
     if (ok) message(t("systemMenu.result.sorted"), { type: "success" });
   };
 

@@ -34,13 +34,32 @@ const ElTableColumnStub = defineComponent({
   name: "ElTableColumn",
   props: {
     prop: { type: String, default: "" },
-    label: { type: String, default: "" }
+    label: { type: String, default: "" },
+    formatter: {
+      type: Function as PropType<
+        (
+          row: Record<string, unknown>,
+          column: unknown,
+          value: unknown,
+          index: number
+        ) => string
+      >,
+      default: undefined
+    }
   },
   inject: { rows: { from: "stubRows", default: () => [] } },
+  methods: {
+    cellText(row: Record<string, unknown>, index: number) {
+      if (this.formatter) {
+        return this.formatter(row, {}, row[this.prop], index);
+      }
+      return row[this.prop];
+    }
+  },
   template:
     '<div class="stub-col" :data-prop="prop"><span class="stub-head">{{ label }}</span>' +
     '<span v-for="(row, index) in rows" :key="index" class="stub-cell">' +
-    '<slot :row="row" :index="index">{{ row[prop] }}</slot></span></div>'
+    '<slot :row="row" :index="index">{{ cellText(row, index) }}</slot></span></div>'
 });
 
 const ElPaginationStub = defineComponent({
@@ -79,6 +98,24 @@ describe("ReReadonlyTable", () => {
       "状态"
     ]);
     expect(wrapper.find(".status").text()).toBe("ok");
+  });
+
+  it("formatter 参与单元格文本渲染（时间列不再原样输出 ISO）", () => {
+    const wrapper = mount(ReReadonlyTable, {
+      props: {
+        columns: [
+          {
+            prop: "created_time",
+            label: "时间",
+            formatter: (row: Record<string, unknown>) =>
+              String(row.created_time).replace("T", " ").slice(0, 19)
+          }
+        ],
+        rows: [{ pk: 1, created_time: "2026-10-30T12:00:00Z" }]
+      },
+      global
+    });
+    expect(wrapper.find(".stub-cell").text()).toBe("2026-10-30 12:00:00");
   });
 
   it("指定分页时上抛 page-change（数据仍由父级拉取）", async () => {

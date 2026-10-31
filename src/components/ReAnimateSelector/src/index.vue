@@ -5,6 +5,7 @@ import { cloneDeep } from "@pureadmin/utils";
 import ReEmpty from "@/components/ReEmpty";
 import { $t, transformI18n } from "@/plugins/i18n";
 import { filterAnimates } from "./filter";
+import { useI18n } from "vue-i18n";
 
 defineOptions({
   name: "ReAnimateSelector"
@@ -13,9 +14,12 @@ defineOptions({
 defineProps({
   placeholder: {
     type: String,
-    default: transformI18n($t("reAnimateSelector.placeholder"))
+    // 默认值在渲染期取（模块求值期固定会把首次语言文案冻结）
+    default: undefined
   }
 });
+
+const { t } = useI18n();
 
 const inputValue = defineModel({ type: String });
 const searchVal = ref();
@@ -81,7 +85,7 @@ function onMouseleave() {
   <el-select
     :filter-method="filterMethod"
     :model-value="inputValue"
-    :placeholder="placeholder"
+    :placeholder="placeholder ?? t('reAnimateSelector.placeholder')"
     clearable
     filterable
     popper-class="pure-animate-popper"
@@ -99,9 +103,14 @@ function onMouseleave() {
             <li
               v-for="(animate, index) in animatesList"
               :key="index"
+              role="option"
+              tabindex="0"
+              :aria-selected="inputValue === animate"
               :class="animateClass"
               :style="animateStyle(animate)"
               @click="onChangeIcon(animate)"
+              @keydown.enter.prevent="onChangeIcon(animate)"
+              @keydown.space.prevent="onChangeIcon(animate)"
               @mouseenter.prevent="onMouseEnter(index)"
               @mouseleave.prevent="onMouseleave"
             >

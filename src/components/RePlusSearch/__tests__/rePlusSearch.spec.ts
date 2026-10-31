@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
-import { describe, expect, it } from "vitest";
+import { nextTick } from "vue";
+import { describe, expect, it, vi } from "vitest";
 
 import Component from "../src/index.vue";
 import type { PlusSearchProps } from "../src/types";
@@ -35,15 +36,21 @@ const RePlusPageStub = {
   template: '<div class="stub-page" />'
 };
 
+const blurSpy = vi.fn();
+
 const stubs = {
   RePlusPage: RePlusPageStub,
   "el-select": {
     name: "ElSelect",
     props: {
       modelValue: { type: [Object, Array, String], default: undefined },
-      multiple: Boolean
+      multiple: Boolean,
+      maxCollapseTags: Number,
+      collapseTags: Boolean,
+      collapseTagsTooltip: Boolean
     },
-    emits: ["update:modelValue"],
+    emits: ["update:modelValue", "visible-change"],
+    methods: { blur: blurSpy },
     template: '<div class="stub-select"><slot name="empty" /></div>'
   },
   "el-tag": { name: "ElTag", template: "<span><slot /></span>" },
@@ -105,5 +112,21 @@ describe("RePlusSearch 实体搜索下拉", () => {
     expect(wrapper.emitted("change")?.at(-1)).toEqual([
       [{ pk: 2, label: "乙" }]
     ]);
+  });
+
+  it("折叠标签走 el-select 公开 prop：max-collapse-tags 为数值绑定", () => {
+    const wrapper = mountSearch();
+    const select = wrapper.findComponent({ name: "ElSelect" });
+    expect(select.props("maxCollapseTags")).toBe(10);
+    expect(select.props("collapseTags")).toBe(true);
+    expect(select.props("collapseTagsTooltip")).toBe(true);
+  });
+
+  it("确定按钮只调用公开 blur()（不读写 expanded / visible 内部字段）", async () => {
+    blurSpy.mockClear();
+    const wrapper = mountSearch();
+    await wrapper.get("button").trigger("click");
+    await nextTick();
+    expect(blurSpy).toHaveBeenCalledTimes(1);
   });
 });
