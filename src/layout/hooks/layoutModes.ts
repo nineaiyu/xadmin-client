@@ -135,6 +135,19 @@ export function isTwoColumnSidebar(layout: unknown): boolean {
 }
 
 /**
+ * 双列一级窄列是否显示「当前一级的子菜单」：
+ * - 混合双列（`header-mixed-nav`）由顶栏承担一级导航，窄列显示当前一级的子菜单；
+ * - 顶栏被配置隐藏（一级导航不复存在）时回落为全局一级菜单，否则无法切换模块。
+ * 双列菜单（`sidebar-mixed-nav`）的窄列恒为全局一级，不参与该判定。
+ */
+export function narrowColumnShowsSubmenu(
+  layout: unknown,
+  headerHidden: unknown
+): boolean {
+  return isHeaderMixedNav(layout) && !headerHidden;
+}
+
+/**
  * 侧栏是否显示「当前一级路由的子菜单」（运行期判定，含 `navigationSplit` 开关）：
  * - 双列布局与 `header-mixed-nav`：一级导航在窄列 / 顶栏，侧栏恒为子菜单；
  * - `mix`：一级导航在顶栏，`navigationSplit` 关时侧栏回到完整菜单树

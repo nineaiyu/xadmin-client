@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import { groupMenuChildren } from "@/utils/menuGroups";
 import type { menuType } from "@/layout/types";
-import { isHeaderMixedNav, type LayoutMode } from "./layoutModes";
+import type { LayoutMode } from "./layoutModes";
 import { findMenuByActivePath } from "./navPresentation";
 
 /**
@@ -18,15 +18,13 @@ import { findMenuByActivePath } from "./navPresentation";
  */
 export function useSidebarNarrow(
   sidebarMode: Ref<LayoutMode>,
+  narrowSubmenuMode: Ref<boolean>,
   splitMenus: Ref<menuType[]>,
   defaultActive: Ref<string>,
   topLevelActive: Ref<string>,
   menuData: Ref<menuType[]>
 ) {
   const router = useRouter();
-
-  /** 混合双列：窄列承担「当前一级的子菜单」（其余双列形态的窄列是全局一级） */
-  const narrowSubmenuMode = computed(() => isHeaderMixedNav(sidebarMode.value));
 
   /** 窄列菜单数据：混合双列为当前一级的子菜单；双列菜单为全局一级菜单 */
   const narrowMenuData = computed<menuType[]>(() =>

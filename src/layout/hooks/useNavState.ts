@@ -6,6 +6,7 @@ import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { isAllEmpty, useGlobal } from "@pureadmin/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
+import { resolveLayoutMode } from "./layoutModes";
 import {
   createLocaleDropdownStyles,
   mixedExtraCollapsed
@@ -58,6 +59,18 @@ export function useNavState() {
 
   const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
 
+  const device = computed(() => pureApp.getDevice);
+
+  /**
+   * 有效布局模式：移动端强制回落竖排（与外壳 `resolveLayoutMode` 同源）。
+   * 组件层的形态判定（顶栏菜单 / 品牌区 / 菜单折叠标题等）必须使用有效模式——
+   * 直接用持久化偏好会让「手机打开曾选过的混合布局」仍渲染顶栏菜单条，
+   * 与外壳回落竖排的 DOM 结构错位。
+   */
+  const layout = computed((): string =>
+    resolveLayoutMode($storage?.layout?.layout, device.value === "mobile")
+  );
+
   /**
    * 侧栏折叠态：主折叠（sidebarStatus）或双列布局的「额外收起」偏好
    * （设置面板 →「布局」→「额外收起」，仅双列布局生效；语义见 mixedExtraCollapsed）。
@@ -66,15 +79,11 @@ export function useNavState() {
     return (
       !pureApp.getSidebarStatus ||
       mixedExtraCollapsed(
-        $storage?.layout?.layout,
+        layout.value,
         $storage?.configure?.sidebarExtraCollapse
       )
     );
   });
-
-  const device = computed(() => pureApp.getDevice);
-
-  const layout = computed((): string => $storage?.layout?.layout ?? "vertical");
 
   /** 站点标题：偏好（设置面板 / 站点配置同步）优先，回落 platform-config 的 Title */
   const title = computed(() => $storage?.configure?.title || $config.Title);

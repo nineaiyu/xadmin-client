@@ -14,9 +14,21 @@ export interface ChromeHeightInput {
   headerHidden: boolean;
   /** 页签风格（chrome / card / plain…，非 chrome 一律按 compact 高度） */
   tagsStyle: string;
+  /**
+   * 额外让位高度（px）：用户模拟横幅等位于固定头部内的常驻条。
+   * 必须计入同一口径——侧栏停在头部下方（mix / header-sidebar-nav）与内容区
+   * 让位都消费该值，漏计会让侧栏压住横幅、内容被头部遮挡。
+   */
+  extraPx?: number;
 }
 
 export function resolveChromeHeight(input: ChromeHeightInput): string {
+  const base = resolveBaseChromeHeight(input);
+  const extra = Math.max(0, Math.round(input.extraPx ?? 0));
+  return extra > 0 ? `calc(${base} + ${extra}px)` : base;
+}
+
+function resolveBaseChromeHeight(input: ChromeHeightInput): string {
   if (input.fullContent) return "0px";
   // 隐藏页签：只剩顶栏；顶栏也隐藏则为 0
   if (input.hideTabs) {

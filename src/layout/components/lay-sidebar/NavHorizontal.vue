@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
 import { useNav } from "@/layout/hooks/useNav";
-import { ref, nextTick, computed, onMounted } from "vue";
+import { ref, nextTick, computed, onMounted, watch } from "vue";
 import {
   isAllEmpty,
   useDark,
@@ -64,6 +64,12 @@ nextTick(() => {
 });
 
 useResizeObserver(headerRef, relayoutMenu);
+
+/**
+ * 菜单数据异步装配（权限快照晚于布局挂载）后必须重算 EP 的溢出收纳：
+ * 容器宽度不变，ResizeObserver 不会触发，漏算时新出现的一级项会盖到右侧动作区。
+ */
+watch(topMenuData, relayoutMenu);
 
 onMounted(() => {
   relayoutMenu();

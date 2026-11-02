@@ -18,10 +18,36 @@ export function mixedExtraCollapsed(
 }
 
 /**
- * 在菜单列表中查找命中激活路径的项（前缀匹配、取最深命中；无命中返回 null）。
- * 用于双列窄列的激活高亮与次级菜单复位。
+ * 在菜单列表中查找命中激活路径的项（供双列窄列的激活高亮与次级菜单复位）。
+ *
+ * 层级判定以菜单树的 `children` 关系为准，而不是 URL 前缀：
+ * 目录路径与页面路径不保证同前缀（如「日志管理」目录 `/system/logs` 下挂着
+ * `/system/online/index`、`/system/account-risk/index`）。按前缀推断会把这类页面
+ * 判成「不属于任何窄列项」，点击后次级列被当成空列收起。
+ * 仅当菜单树中找不到时才回落到前缀匹配（兼容 activePath 指向树外页面）。
  */
 export function findMenuByActivePath(
+  menus: menuType[],
+  path: string
+): menuType | null {
+  if (!path) return null;
+  for (const item of menus) {
+    if (String(item.path ?? "") === path || containsMenuPath(item, path)) {
+      return item;
+    }
+  }
+  return findMenuByPathPrefix(menus, path);
+}
+
+/** 菜单项的任意后代是否命中路径 */
+function containsMenuPath(item: menuType, path: string): boolean {
+  return (item.children ?? []).some(
+    child => String(child.path ?? "") === path || containsMenuPath(child, path)
+  );
+}
+
+/** 兜底：路径前缀匹配、取最深命中（历史口径，仅在菜单树未命中时使用） */
+function findMenuByPathPrefix(
   menus: menuType[],
   path: string
 ): menuType | null {

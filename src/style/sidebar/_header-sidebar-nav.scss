@@ -20,12 +20,25 @@ body[layout="header-sidebar-nav"] {
     top: var(--layout-chrome-h, var(--layout-header-h));
     height: calc(100% - var(--layout-chrome-h, var(--layout-header-h)));
 
+    /* 顶栏滚动自动隐藏时侧栏一并上移占满全高（否则顶部留下与侧栏同宽的空白）；
+       top / height 与顶栏滑出同节奏过渡 */
+    transition:
+      width var(--duration-base),
+      top var(--duration-base) var(--ease-standard),
+      height var(--duration-base) var(--ease-standard);
+
     /* Logo 归顶栏时侧栏品牌区不渲染（顶栏隐藏兜底场景保留，按整高计算滚动区） */
     &.has-logo .el-scrollbar.pc {
       height: calc(
         100% - var(--sidebar-logo-h) - var(--sidebar-collapse-bar-h)
       );
     }
+  }
+
+  /* 顶栏滚动自动隐藏：整块头部移出视口，侧栏跟随上移并补足高度 */
+  .app-wrapper.header-auto-hidden .sidebar-container {
+    top: 0;
+    height: 100%;
   }
 
   /* 品牌区在顶栏左端（Logo + 面包屑 + 动作区）：顶栏转 flex 行，
@@ -50,7 +63,10 @@ body[layout="header-sidebar-nav"] {
 
     .sidebar-container {
       width: var(--sidebar-collapse-width) !important;
-      transition: width var(--duration-base);
+      transition:
+        width var(--duration-base),
+        top var(--duration-base) var(--ease-standard),
+        height var(--duration-base) var(--ease-standard);
     }
 
     .main-container {

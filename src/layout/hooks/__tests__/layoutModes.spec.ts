@@ -16,6 +16,7 @@ import {
   isSideMode,
   isSidebarMixedNav,
   isTwoColumnSidebar,
+  narrowColumnShowsSubmenu,
   normalizeLayoutMode,
   resolveHeaderMode,
   resolveLayoutMode,
@@ -27,6 +28,19 @@ import {
  * （`layout.includes("mix")` 会把 `sidebar-mixed-nav` 误判；`header-sidebar-nav`
  * 两个分支都不命中）。7 种模式的特征位须逐项吻合。
  */
+
+describe("双列窄列的数据源", () => {
+  it("混合双列：顶栏可见时窄列为当前一级子菜单，顶栏隐藏后回落全局一级", () => {
+    expect(narrowColumnShowsSubmenu("header-mixed-nav", false)).toBe(true);
+    expect(narrowColumnShowsSubmenu("header-mixed-nav", true)).toBe(false);
+  });
+
+  it("双列菜单的窄列恒为全局一级；单列布局不参与判定", () => {
+    expect(narrowColumnShowsSubmenu("sidebar-mixed-nav", false)).toBe(false);
+    expect(narrowColumnShowsSubmenu("sidebar-mixed-nav", true)).toBe(false);
+    expect(narrowColumnShowsSubmenu("vertical", true)).toBe(false);
+  });
+});
 
 describe("normalizeLayoutMode", () => {
   it("已知模式原样返回，未知 / 空值回落 vertical", () => {

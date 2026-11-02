@@ -127,13 +127,6 @@
 
     .fixed-header {
       width: 100%;
-
-      /* 保留 !important：页签最大化（main-hidden）时顶栏已隐藏，lay-content 的
-         内联 padding-top（calc(chromeHeight)）不知情仍按「顶栏+页签」让位——
-         本规则以内联样式为对手，把让位收敛到页签条高度（37px） */
-      + .app-main {
-        padding-top: var(--layout-tags-item-h) !important;
-      }
     }
   }
 
@@ -162,8 +155,11 @@
     background: var(--sidebar);
     border-right: 1px solid var(--pure-theme-sidebar-border);
 
-    /* 展开动画 */
-    transition: width var(--duration-base);
+    /* 展开动画：宽度与「排在顶栏下方」布局的纵向偏移同节奏（切布局不跳变） */
+    transition:
+      width var(--duration-base),
+      top var(--duration-base) var(--ease-standard),
+      height var(--duration-base) var(--ease-standard);
 
     /* 菜单区顶部留白（padding-top 8px） */
     .el-scrollbar__view {

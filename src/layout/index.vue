@@ -14,7 +14,7 @@ import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
 import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
 import { createTagsPreferences } from "@/layout/hooks/tagViewsConfig";
-import { resolveChromeHeight } from "@/layout/hooks/chromeHeight";
+import { useLayoutChrome } from "@/layout/hooks/useLayoutChrome";
 import { mixedExtraCollapsed } from "@/layout/hooks/useNavState";
 import { useLayoutShortcutKeys } from "@/layout/hooks/useLayoutShortcutKeys";
 import { useLockScreen } from "@/layout/hooks/useLockScreen";
@@ -134,14 +134,14 @@ const fullContent = computed(() => isFullContent(layoutMode.value));
  * - 隐藏页签：只剩顶栏；隐藏顶栏（CSS 级）：只剩页签条；全屏内容：0。
  */
 const { tagsStyle } = createTagsPreferences();
-const chromeHeight = computed(() =>
-  resolveChromeHeight({
-    fullContent: fullContent.value,
-    hideTabs: Boolean($storage?.configure?.hideTabs),
-    headerHidden: headerHiddenByConfig.value,
-    tagsStyle: tagsStyle.value
-  })
-);
+const { chromeHeight, impersonationExtra } = useLayoutChrome({
+  fullContent: () => fullContent.value,
+  hideTabs: () => Boolean($storage?.configure?.hideTabs),
+  headerHidden: () =>
+    headerHiddenByConfig.value || Boolean(pureSetting.hiddenSideBar),
+  tagsStyle: () => tagsStyle.value,
+  impersonating: () => Boolean(useUserStoreHook().impersonator)
+});
 
 // 顶栏滚动自动隐藏：开关与「固定顶栏」同时成立才启用（非固定头布局与全屏内容下无固定头部可隐藏）
 const { hidden: headerHidden } = useHeaderAutoHide(
@@ -266,6 +266,13 @@ function applyLayoutTheme(menuLayout: string) {
   window.document.body.setAttribute("layout", menuLayout);
 }
 
+/**
+ * 有效布局模式 → body[layout]：设备档或偏好变化时 CSS 作用域同步跟随。
+ * 移动端强制竖排（顶栏与双列侧栏在窄屏下不可用），但持久化偏好保持不变——
+ * 只写运行时属性，窄屏刷新不会把用户选择的 mix / horizontal 覆盖成 vertical。
+ */
+watch(layoutMode, mode => applyLayoutTheme(mode), { immediate: true });
+
 function setTheme(menuLayout: string) {
   applyLayoutTheme(menuLayout);
   $storage.layout = {
@@ -355,7 +362,6 @@ onBeforeMount(() => {
 
 /** 顶栏（含设置入口）的隐藏只跟随「内容全屏」内存态：设置面板的「隐藏侧栏」只隐藏侧栏 */
 const headerHiddenByStore = computed(() => pureSetting.hiddenSideBar);
-
 const LayHeader = defineComponent({
   name: "LayHeader",
   render() {
@@ -377,7 +383,7 @@ const LayHeader = defineComponent({
           !headerHiddenByStore.value && !headerHiddenByConfig.value
             ? layoutMode.value === "horizontal"
               ? h(NavHorizontal)
-              : h(LayNavbar)
+              : h(LayNavbar, { sidebarHidden: sidebarHidden.value })
             : null,
           // 用户模拟横幅：模拟态全局常驻（置于导航栏与页签之间，三种布局均可见）
           h(LayImpersonation),
@@ -392,11 +398,26 @@ const LayHeader = defineComponent({
 <template>
   <div
     ref="appWrapperRef"
-    :class="['app-wrapper', set.classes, { 'no-sidebar': !sidebarVisible }]"
-    :style="{ '--layout-chrome-h': chromeHeight }"
+    :class="[
+      'app-wrapper',
+      set.classes,
+      {
+        'no-sidebar': !sidebarVisible,
+        'header-auto-hidden': headerHidden
+      }
+    ]"
+    :style="{
+      '--layout-chrome-h': chromeHeight,
+      '--layout-banner-h': `${impersonationExtra}px`
+    }"
   >
     <div
-      v-show="set.device === 'mobile' && set.sidebar.opened && sidebarVisible"
+      v-show="
+        set.device === 'mobile' &&
+        set.sidebar.opened &&
+        sidebarVisible &&
+        !sidebarHidden
+      "
       class="app-mask"
       @click="useAppStoreHook().toggleSideBar()"
     />

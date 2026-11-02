@@ -20,6 +20,7 @@ import MoreIcon from "~icons/ri/more-line";
  */
 const {
   t,
+  layout,
   logout,
   onPanel,
   username,
@@ -58,8 +59,8 @@ const preferencesEntry = computed(() =>
   resolvePreferencesEntry({
     enablePreferences: $storage?.configure?.enablePreferences,
     preferencesPosition: $storage?.configure?.preferencesPosition,
-    horizontal: String($storage?.layout?.layout ?? "vertical") === "horizontal",
-    fullContent: isFullContent($storage?.layout?.layout),
+    horizontal: layout.value === "horizontal",
+    fullContent: isFullContent(layout.value),
     headerHidden: $storage?.configure?.headerHidden === true
   })
 );

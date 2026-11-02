@@ -20,7 +20,7 @@ const SettingTabs = defineAsyncComponent(
   () => import("./components/SettingTabs.vue")
 );
 
-const { t } = useNav();
+const { t, layout } = useNav();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const { layoutTheme } = useLayout();
 const { setMenuLayout } = useMenuLayout();
@@ -34,8 +34,8 @@ const preferencesEntry = computed(() =>
   resolvePreferencesEntry({
     enablePreferences: $storage?.configure?.enablePreferences,
     preferencesPosition: $storage?.configure?.preferencesPosition,
-    horizontal: String($storage?.layout?.layout ?? "vertical") === "horizontal",
-    fullContent: isFullContent($storage?.layout?.layout),
+    horizontal: layout.value === "horizontal",
+    fullContent: isFullContent(layout.value),
     headerHidden: $storage?.configure?.headerHidden === true
   })
 );

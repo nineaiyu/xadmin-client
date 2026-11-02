@@ -4,4 +4,10 @@ body[layout="full-content"] {
   .main-container {
     margin-left: 0;
   }
+
+  /* 用户模拟横幅在全屏内容下位于文档流内（不是固定头部的一部分）：
+     固定头模式的内容区高度需扣掉横幅，避免底部 32px 被外壳裁切 */
+  .app-main {
+    height: calc(100dvh - var(--layout-banner-h, 0px));
+  }
 }

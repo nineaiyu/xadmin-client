@@ -92,6 +92,40 @@ const cases: Array<{
       tagsStyle: "plain"
     },
     expected: "calc(var(--layout-tags-compact-h) - var(--layout-header-h))"
+  },
+  {
+    name: "额外常驻条（用户模拟横幅）：计入同一让位口径",
+    input: {
+      fullContent: false,
+      hideTabs: false,
+      headerHidden: false,
+      tagsStyle: "chrome",
+      extraPx: 32
+    },
+    expected: "calc(var(--layout-tags-chrome-h) + 32px)"
+  },
+  {
+    name: "顶栏隐藏 + 横幅：页签条让位后仍叠加横幅高度",
+    input: {
+      fullContent: false,
+      hideTabs: false,
+      headerHidden: true,
+      tagsStyle: "plain",
+      extraPx: 32
+    },
+    expected:
+      "calc(calc(var(--layout-tags-compact-h) - var(--layout-header-h)) + 32px)"
+  },
+  {
+    name: "非法 / 负数额外高度按 0 处理",
+    input: {
+      fullContent: false,
+      hideTabs: false,
+      headerHidden: false,
+      tagsStyle: "chrome",
+      extraPx: -10
+    },
+    expected: "var(--layout-tags-chrome-h)"
   }
 ];
 

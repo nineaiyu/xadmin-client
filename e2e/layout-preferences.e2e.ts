@@ -2641,6 +2641,23 @@ test.describe("布局偏好（面板实时生效）", () => {
     await setSwitch(page, "隐藏侧栏", true, "SidebarHidden");
     await closePanel(page);
     await expect(container).toBeHidden();
+    // 侧栏不可见时顶栏折叠入口同步隐藏（点击不会有任何反馈，属死交互）
+    await expect(page.locator(".navbar .hamburger-container")).toHaveCount(0);
+    // 持久化「隐藏侧栏」只隐藏侧栏，顶栏仍然渲染：内容区必须按「顶栏 + 页签」
+    // 让位（不能按页签最大化的「仅页签高度」处理，否则页面顶部被顶栏压住）
+    const hiddenSidebarGeometry = await page.evaluate(() => {
+      const header = document.querySelector(".fixed-header");
+      const main = document.querySelector("section.app-main");
+      return {
+        headerBottom: header?.getBoundingClientRect().bottom ?? 0,
+        paddingTop: main
+          ? Number.parseFloat(getComputedStyle(main).paddingTop)
+          : 0
+      };
+    });
+    expect(hiddenSidebarGeometry.paddingTop).toBeGreaterThanOrEqual(
+      hiddenSidebarGeometry.headerBottom - 2
+    );
 
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
@@ -2958,6 +2975,210 @@ test.describe("布局偏好（面板实时生效）", () => {
     await expect(
       page.locator(".sidebar-container .sidebar-main")
     ).toBeVisible();
+
+    // 复位竖排
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：移动端回落竖排且不渲染顶栏菜单，恢复宽度后回到所选布局", async ({
+    page
+  }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(page, "Layout", "mix", async () => {
+      await block.locator('.pref-choice__item[data-choice="mix"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='mix']")).toHaveCount(1);
+    await expect(page.locator(".fixed-header .horizontal-header")).toHaveCount(
+      1
+    );
+
+    // 窄屏：外壳回落竖排（不渲染顶栏菜单条、不进入双列形态）
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator(".app-wrapper.mobile")).toHaveCount(1);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+    await expect(page.locator(".fixed-header .horizontal-header")).toHaveCount(
+      0
+    );
+    await expect(page.locator(".sidebar-container.is-two-column")).toHaveCount(
+      0
+    );
+
+    // 恢复桌面宽度：回到用户选择的混合布局（持久化偏好未被窄屏覆盖）
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expect(page.locator(".app-wrapper.mobile")).toHaveCount(0);
+    await expect(page.locator("body[layout='mix']")).toHaveCount(1);
+    await expect(page.locator(".fixed-header .horizontal-header")).toHaveCount(
+      1
+    );
+
+    // 复位竖排
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：隐藏侧栏时双列窄列不再让位，内容区占满整宽", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "sidebar-mixed-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="sidebar-mixed-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+    // 首页一级仅一项：二级列不渲染，侧栏进入窄列独显
+    await page.goto("/#/welcome");
+    const container = page.locator(".sidebar-container").first();
+    await expect(container).toHaveClass(/is-narrow-only/);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "隐藏侧栏", true, "SidebarHidden");
+    await closePanel(page);
+    await expect(container).toBeHidden();
+    const geometry = await page.evaluate(() => {
+      const main = document.querySelector(".main-container");
+      const header = document.querySelector(".fixed-header");
+      return {
+        marginLeft: main
+          ? Number.parseFloat(getComputedStyle(main).marginLeft)
+          : -1,
+        headerWidth: header?.getBoundingClientRect().width ?? -1,
+        viewport: window.innerWidth
+      };
+    });
+    // 侧栏已隐藏：内容区与顶栏不得再按 80px 窄列宽度留边（左侧空白）
+    expect(geometry.marginLeft).toBe(0);
+    expect(Math.abs(geometry.headerWidth - geometry.viewport)).toBeLessThan(2);
+
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, "隐藏侧栏", false, "SidebarHidden");
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：隐藏顶栏后混合布局侧栏回落到完整菜单树", async ({ page }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(page, "Layout", "mix", async () => {
+      await block.locator('.pref-choice__item[data-choice="mix"]').click();
+    });
+    await closePanel(page);
+    await page.goto("/#/welcome");
+
+    // 导航切割开启：侧栏只显示当前一级的子菜单（首页下仅一项）
+    const entries = page.locator(
+      ".sidebar-container .sidebar-main .el-menu.outer-most " +
+        "> .el-sub-menu, .sidebar-container .sidebar-main .el-menu.outer-most > a[role=menuitem]"
+    );
+    await expect(entries.first()).toBeVisible();
+    const splitCount = await entries.count();
+
+    // 顶栏（一级菜单条）被隐藏后，侧栏必须回到完整菜单树，否则无法切换一级模块
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, /显示顶栏|Show header/, false, "HeaderHidden", true);
+    await closePanel(page);
+    await expect(page.locator(".navbar")).toHaveCount(0);
+    await expect
+      .poll(() => entries.count(), { timeout: 10_000 })
+      .toBeGreaterThan(splitCount);
+
+    // 还原顶栏与竖排布局
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    await setSwitch(page, /显示顶栏|Show header/, true, "HeaderHidden", false);
+    await waitForSiteConfigPatch(page, "Layout", "vertical", async () => {
+      await block.locator('.pref-choice__item[data-choice="vertical"]').click();
+    });
+    await closePanel(page);
+    await expect(page.locator("body[layout='vertical']")).toHaveCount(1);
+  });
+
+  test("布局：混合双列点击二级叶子页后第二列保持展开（目录路径非 URL 前缀）", async ({
+    page
+  }) => {
+    await ensureVerticalLayout(page);
+    await openSettingPanel(page);
+    await switchSettingTab(page, "布局");
+    const block = page
+      .locator(".right-panel .pref-block")
+      .filter({ hasText: /菜单布局/ })
+      .first();
+    await waitForSiteConfigPatch(
+      page,
+      "Layout",
+      "header-mixed-nav",
+      async () => {
+        await block
+          .locator('.pref-choice__item[data-choice="header-mixed-nav"]')
+          .click();
+      }
+    );
+    await closePanel(page);
+
+    // 日志管理目录（/system/logs）下挂着不同前缀的叶子页：在线用户 / 账号安全
+    await page.goto("/#/system/logs/operation/index");
+    const container = page.locator(".sidebar-container").first();
+    const mainColumn = page.locator(".sidebar-container .sidebar-main");
+    await expect(mainColumn).toBeVisible();
+    await expect(container).not.toHaveClass(/is-narrow-only/);
+
+    const clickLeaf = async (title: string, target: string) => {
+      await page
+        .locator(".sidebar-main .el-menu-item")
+        .filter({ hasText: title })
+        .first()
+        .click();
+      await expect(page).toHaveURL(new RegExp(target));
+      // 关键回归：URL 前缀与目录不一致时，第二列不得被当成空列收起
+      await expect(container).not.toHaveClass(/is-narrow-only/);
+      await expect(mainColumn).toBeVisible();
+      await expect(
+        page
+          .locator(".sidebar-mixed-menu .el-menu-item.is-active")
+          .filter({ hasText: "日志管理" })
+      ).toBeVisible();
+    };
+
+    await clickLeaf("在线用户", "/system/online/index");
+    await clickLeaf("账号安全", "/system/account-risk/index");
 
     // 复位竖排
     await openSettingPanel(page);

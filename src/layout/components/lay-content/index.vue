@@ -2,14 +2,18 @@
 import { useI18n } from "vue-i18n";
 import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
-import { isFullContent, isHeaderNav } from "@/layout/hooks/layoutModes";
+import {
+  isFullContent,
+  isHeaderNav,
+  resolveLayoutMode
+} from "@/layout/hooks/layoutModes";
 import { useRouteLoading } from "@/utils/routeLoading";
 import { isNumber, useGlobal } from "@pureadmin/utils";
+import { useAppStoreHook } from "@/store/modules/app";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 import ReBackTop from "@/components/ReBackTop";
 import { computed, defineComponent, h, Transition, type PropType } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { useUserStoreHook } from "@/store/modules/user";
 
 const props = defineProps({
   fixedHeader: Boolean,
@@ -61,7 +65,13 @@ const transitions = computed(() => {
 });
 
 /** 页脚显隐：配置关闭或全屏内容（不渲染外壳，只显示内容主体）时隐藏 */
-const fullContent = computed(() => isFullContent($storage?.layout.layout));
+const layoutMode = computed(() =>
+  resolveLayoutMode(
+    $storage?.layout.layout,
+    useAppStoreHook().device === "mobile"
+  )
+);
+const fullContent = computed(() => isFullContent(layoutMode.value));
 const hideFooter = computed(
   () => $storage?.configure.hideFooter || fullContent.value
 );
@@ -70,14 +80,6 @@ const stretch = computed(() => {
   return $storage?.configure.stretch;
 });
 
-/** 用户模拟横幅高度（fixed-header 时内容区 padding 需同步让位，与横幅 CSS 保持一致） */
-const IMPERSONATION_BANNER_HEIGHT = 32;
-const impersonationExtra = computed(() => {
-  return useUserStoreHook().impersonator ? IMPERSONATION_BANNER_HEIGHT : 0;
-});
-
-/** 布局语义模式（全屏内容不渲染固定头部） */
-const layoutMode = computed(() => $storage?.layout.layout);
 /**
  * 是否需要为固定头部预留内边距。
  *
@@ -102,23 +104,19 @@ const getMainWidth = computed(() => {
 
 const getSectionStyle = computed(() => {
   // 顶栏自动隐藏态：固定头部整体移出视口，内容区不再让位（剩余算式同口径取 0px）
-  const chrome = props.headerHidden ? "0px" : props.chromeHeight;
-  // impersonationExtra > 0 时各项 padding-top 同步让位横幅高度（非 fixed-header
-  // 模式由末项整体重置 padding，不受影响）
-  const pad = (base: string) =>
-    `padding-top: calc(${base} + ${impersonationExtra.value}px);`;
+  // 固定头部总高已在 `chromeHeight` 内含用户模拟横幅，此处不再二次叠加
   return [
     reserveHeader.value
       ? props.headerHidden
         ? "padding-top: 0;"
-        : pad(chrome)
+        : `padding-top: ${props.chromeHeight};`
       : "",
     // 非 fixed-header：不预留 padding，改为最小高度兜底。先写 vh 再写 dvh——
     // 不支持 dvh 的浏览器保留 vh 声明（整条声明不会因解析失败被丢弃），支持者
     // 用 dvh 兼顾移动端浏览器工具栏收放
     props.fixedHeader
       ? ""
-      : `padding-top: 0;min-height: calc(100vh - ${chrome});min-height: calc(100dvh - ${chrome});`
+      : `padding-top: 0;min-height: calc(100vh - ${props.chromeHeight});min-height: calc(100dvh - ${props.chromeHeight});`
   ];
 });
 

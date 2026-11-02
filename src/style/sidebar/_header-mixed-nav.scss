@@ -24,12 +24,15 @@ body[layout="header-mixed-nav"] {
   }
 
   /* 主列（次级列）无内容：侧栏收为窄列宽度，顶栏与内容区随之占满
-     （extra 隐藏） */
+     （extra 隐藏）。侧栏整体不渲染（.no-sidebar，当前一级无子菜单）或用户
+     隐藏侧栏（.main-hidden）时不参与——否则内容区仍按窄列宽度让位留白。 */
   .sidebar-container.is-narrow-only {
     width: $narrow !important;
   }
 
-  .is-narrow-only ~ .main-container {
+  .app-wrapper:not(.no-sidebar)
+    .is-narrow-only
+    ~ .main-container:not(.main-hidden) {
     margin-left: $narrow !important;
 
     .fixed-header {

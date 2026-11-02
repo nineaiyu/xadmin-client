@@ -9,12 +9,16 @@ body[layout="sidebar-mixed-nav"] {
   @include merge-style($sideBarWidth, calc(-1 * #{$sideBarWidth}));
 
   /* 主列（二级展开列）无内容：当前一级是叶子菜单（如「关于」）时没有子菜单可展示，
-     侧栏收为窄列宽度、内容区随之占满（extra 隐藏） */
+     侧栏收为窄列宽度、内容区随之占满（extra 隐藏）。
+     侧栏整体不渲染（.no-sidebar）或用户隐藏侧栏（.main-hidden）时不得参与——
+     否则内容区仍按窄列宽度让位，左侧留下一条 80px 空白。 */
   .sidebar-container.is-narrow-only {
     width: $narrow !important;
   }
 
-  .is-narrow-only ~ .main-container {
+  .app-wrapper:not(.no-sidebar)
+    .is-narrow-only
+    ~ .main-container:not(.main-hidden) {
     margin-left: $narrow !important;
 
     .fixed-header {

@@ -9,6 +9,7 @@ import {
   hasSidebar,
   isHeaderMixedNav,
   isMixedNav,
+  narrowColumnShowsSubmenu,
   resolveLayoutMode,
   sidebarShowsSubmenu
 } from "./layoutModes";
@@ -33,9 +34,22 @@ export function useSplitSidebar(defaultActive?: Ref<string>) {
     )
   );
 
-  /** 是否处于切割形态（侧栏显示子菜单） */
-  const splitActive = computed(() =>
-    sidebarShowsSubmenu(sidebarMode.value, $storage?.configure?.navigationSplit)
+  /** 顶栏被配置隐藏（设置面板「显示顶栏」关闭）：顶栏承载的一级导航随之消失 */
+  const headerHidden = computed(
+    () => $storage?.configure?.headerHidden ?? false
+  );
+
+  /**
+   * 是否处于切割形态（侧栏显示子菜单）：
+   * 混合布局的顶栏被隐藏后，一级导航（顶栏菜单条）不复存在，侧栏必须回到
+   * 完整菜单树，否则用户会被锁死在当前一级模块内。
+   */
+  const splitActive = computed(
+    () =>
+      sidebarShowsSubmenu(
+        sidebarMode.value,
+        $storage?.configure?.navigationSplit
+      ) && !(headerHidden.value && isMixedNav(sidebarMode.value))
   );
 
   /** 菜单数据源路径：优先调用方传入的高亮路径，其次路由 activePath，最后当前路径 */
@@ -67,11 +81,18 @@ export function useSplitSidebar(defaultActive?: Ref<string>) {
    */
   const hiddenByEmptySplit = computed(() => {
     const mode = sidebarMode.value;
+    // 顶栏隐藏时混合双列的一级窄列承担全站一级导航，不能因当前一级无子菜单而整体隐藏
+    if (headerHidden.value) return false;
     const governs =
       (isMixedNav(mode) && ($storage?.configure?.navigationSplit ?? true)) ||
       isHeaderMixedNav(mode);
     return governs && splitMenus.value.length === 0;
   });
+
+  /** 双列一级窄列的数据源（混合双列顶栏隐藏时回落全局一级，判据见 layoutModes） */
+  const narrowSubmenuMode = computed(() =>
+    narrowColumnShowsSubmenu(sidebarMode.value, headerHidden.value)
+  );
 
   /** 布局层面是否渲染侧栏（水平布局与全屏内容不渲染） */
   const sidebarEnabled = computed(() => hasSidebar(sidebarMode.value));
@@ -81,6 +102,8 @@ export function useSplitSidebar(defaultActive?: Ref<string>) {
     splitActive,
     splitMenus,
     hiddenByEmptySplit,
-    sidebarEnabled
+    sidebarEnabled,
+    headerHidden,
+    narrowSubmenuMode
   };
 }

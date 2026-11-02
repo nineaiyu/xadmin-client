@@ -11,6 +11,12 @@ import NavbarActions from "./NavbarActions.vue";
 
 const { layout, device, pureApp, toggleSideBar } = useNav();
 
+/**
+ * 侧栏被隐藏（持久化「隐藏侧栏」/ 页签最大化）：折叠入口不应继续渲染——
+ * 点击不会让侧栏出现，属于无反馈的死交互。
+ */
+const props = defineProps({ sidebarHidden: Boolean });
+
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 /** 面包屑显隐（设置面板 →「布局」→「顶栏」） */
@@ -42,6 +48,7 @@ const breadcrumbMode = computed(
 const headerToggleVisible = computed(
   () =>
     device.value !== "mobile" &&
+    !props.sidebarHidden &&
     (layout.value === "vertical" || layout.value === "header-mixed-nav")
 );
 </script>
@@ -49,7 +56,7 @@ const headerToggleVisible = computed(
 <template>
   <div class="navbar bg-bg-card">
     <LaySidebarTopCollapse
-      v-if="device === 'mobile'"
+      v-if="device === 'mobile' && !sidebarHidden"
       class="hamburger-container"
       :is-active="pureApp.sidebar.opened"
       @toggleClick="toggleSideBar"
@@ -83,6 +90,16 @@ const headerToggleVisible = computed(
   height: var(--layout-header-h);
   overflow: hidden;
   border-bottom: 1px solid hsl(var(--border-light));
+
+  /* 窄屏：动作区不再强制预留 280px（汉堡 + 动作区在 320~360px 视口会溢出，
+     用户名被裁切）；交由内容自适应，右侧留白由动作区自身提供 */
+  @media (width <= 768px) {
+    .vertical-header-right {
+      flex: none;
+      min-width: 0;
+      margin-left: auto;
+    }
+  }
 
   .hamburger-container {
     float: left;

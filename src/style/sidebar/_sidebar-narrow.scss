@@ -12,6 +12,13 @@
   background: var(--sidebar-deep);
 }
 
+/* 双列次级列的滚动区恒按「分区标题 + 底部折叠条」扣高：
+   品牌位图片与文字都关（no-logo）时通用规则不再扣品牌高度，但次级列顶部的
+   分区标题仍在（高度同品牌位），漏扣会让菜单底部落到折叠条下方被容器裁切。 */
+.sidebar-container.is-two-column .sidebar-main .el-scrollbar.pc {
+  height: calc(100% - var(--sidebar-logo-h) - var(--sidebar-collapse-bar-h));
+}
+
 /* 窄列菜单项：竖排布局（覆盖公共菜单的横向项高与缩进） */
 .sidebar-container.is-two-column .sidebar-mixed-menu .el-menu-item {
   display: flex;

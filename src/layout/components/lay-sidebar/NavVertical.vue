@@ -82,7 +82,8 @@ const defaultActive = computed(() =>
 );
 
 /** 侧栏语义模式 + 切割形态（口径见 useSplitSidebar，与外壳守卫同一来源） */
-const { sidebarMode, splitActive, splitMenus } = useSplitSidebar(defaultActive);
+const { sidebarMode, splitActive, splitMenus, narrowSubmenuMode } =
+  useSplitSidebar(defaultActive);
 /** 双列侧栏（一级窄列 + 二级展开列） */
 const twoColumn = computed(() => isTwoColumnSidebar(sidebarMode.value));
 
@@ -143,6 +144,7 @@ const {
   topMenuData
 } = useSidebarNarrow(
   sidebarMode,
+  narrowSubmenuMode,
   splitMenus,
   defaultActive,
   topLevelActive,
