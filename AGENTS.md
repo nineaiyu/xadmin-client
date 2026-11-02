@@ -25,6 +25,7 @@
 ## 二、常用命令
 
 ```bash
+# 需 Node ≥ 24 / pnpm ≥ 11（package.json engines；npm/yarn 会被 preinstall 拒绝）
 pnpm install
 pnpm dev                     # :8848，代理 /api /media /api-docs（http）与 /ws（ws）→ :8896（后端）
 pnpm build                   # 生产构建（含图标/动画子集预生成 + 版本文件）
