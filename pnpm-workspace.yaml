@@ -78,3 +78,6 @@ peerDependencyRules:
 auditConfig:
   ignoreGhsas:
     - GHSA-vfj7-8cjw-p6xm
+minimumReleaseAgeExclude:
+  # Renovate security update: qs@6.16.1
+  - qs@6.16.1
