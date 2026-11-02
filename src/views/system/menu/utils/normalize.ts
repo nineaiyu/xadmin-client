@@ -57,9 +57,9 @@ function pkOf(value: unknown): number | string | null {
 
 /** 接口行 → 归一化菜单行（不含树结构，children 由 buildMenuTree 填充） */
 export function normalizeMenuRow(raw: Record<string, unknown>): MenuRow {
-  const sourceMeta = (raw.meta ?? {}) as Record<string, unknown>;
+  const sourceMeta = (raw.meta ?? {}) as Partial<MenuMeta>;
   // 历史行缺失的 meta 键保持缺失：保存时不再静默写入新默认值（缺省值只用于新建表单）
-  const meta: Record<string, unknown> = { ...sourceMeta };
+  const meta: Partial<MenuMeta> = { ...sourceMeta };
   if (sourceMeta.title !== undefined)
     meta.title = String(sourceMeta.title ?? "");
   if (sourceMeta.icon !== undefined) meta.icon = String(sourceMeta.icon ?? "");
@@ -96,7 +96,8 @@ export function normalizeMenuRow(raw: Record<string, unknown>): MenuRow {
     rank: Number(raw.rank ?? 0),
     isActive: raw.is_active !== false,
     modelPks,
-    meta: meta as unknown as MenuMeta,
+    // 历史行 meta 允许键缺失（保存不回填默认值），缺失键由消费侧按空值兜底
+    meta: meta as MenuMeta,
     raw,
     children: [],
     depth: 1,
