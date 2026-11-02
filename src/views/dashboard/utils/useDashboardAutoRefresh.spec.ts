@@ -10,22 +10,30 @@ import {
 function mountAutoRefresh(options: {
   kiosk: boolean;
   requestedSeconds?: unknown;
+  lastFrameAt?: Ref<number>;
 }) {
   const kiosk = ref(options.kiosk);
   const refresh = vi.fn();
   let seconds: Ref<number>;
+  let realtimeFallback: Ref<boolean>;
   const Harness = defineComponent({
     setup() {
-      ({ seconds } = useDashboardAutoRefresh({
+      ({ seconds, realtimeFallback } = useDashboardAutoRefresh({
         kiosk,
         requestedSeconds: options.requestedSeconds,
-        refresh
+        refresh,
+        lastFrameAt: options.lastFrameAt
       }));
       return () => null;
     }
   });
   const wrapper = mount(Harness);
-  return { wrapper, refresh, seconds: seconds! };
+  return {
+    wrapper,
+    refresh,
+    seconds: seconds!,
+    realtimeFallback: realtimeFallback!
+  };
 }
 
 describe("useDashboardAutoRefresh 挂屏自动刷新", () => {
@@ -82,21 +90,35 @@ describe("useDashboardAutoRefresh 实时档", () => {
     vi.useRealTimers();
   });
 
-  it("实时档（-1）不开本机定时器，数据帧由推送通道驱动", async () => {
-    const { refresh, seconds } = mountAutoRefresh({
+  it("实时档（-1）无推送帧时本机回落轮询", async () => {
+    const { refresh, seconds, realtimeFallback } = mountAutoRefresh({
       kiosk: true,
       requestedSeconds: "-1"
     });
     expect(seconds.value).toBe(REALTIME_REFRESH_SECONDS);
 
-    await vi.advanceTimersByTimeAsync(300_000);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(refresh).toHaveBeenCalled();
+    expect(realtimeFallback.value).toBe(true);
+  });
+
+  it("实时档收到新鲜帧时 watchdog 静默", async () => {
+    const frameAt = ref(Date.now());
+    const { refresh } = mountAutoRefresh({
+      kiosk: true,
+      requestedSeconds: "-1",
+      lastFrameAt: frameAt
+    });
+    await vi.advanceTimersByTimeAsync(15_000);
+    frameAt.value = Date.now();
+    await vi.advanceTimersByTimeAsync(10_000);
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("普通模式也可切到实时档：切档不创建定时器", async () => {
+  it("普通模式切到实时档也启用回落", async () => {
     const { refresh, seconds } = mountAutoRefresh({ kiosk: false });
     seconds.value = REALTIME_REFRESH_SECONDS;
-    await vi.advanceTimersByTimeAsync(120_000);
-    expect(refresh).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(refresh).toHaveBeenCalled();
   });
 });

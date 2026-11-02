@@ -109,6 +109,7 @@ watch(() => [props.rows, props.columns, a11yLabel.value], syncA11y, {
         :align="column.align"
         :show-overflow-tooltip="column.showOverflowTooltip"
         :fixed="column.fixed"
+        :formatter="column.formatter"
       >
         <!-- 复杂单元格（tag/进度/操作）由调用方插槽渲染：作用域与 el-table-column 一致 -->
         <template v-if="column.slot" #default="scope">

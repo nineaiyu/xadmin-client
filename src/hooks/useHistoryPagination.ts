@@ -1,4 +1,5 @@
 import { nextTick, ref, type Ref } from "vue";
+import { bindMessageWindow } from "@/components/ChatMessageList/messageWindow";
 
 /** 历史分页每页条数（两线同口径：首屏与上翻各取 20 条） */
 const PAGE_SIZE = 20;
@@ -11,9 +12,9 @@ export interface HistoryPage<T> {
 
 /**
  * 消息历史分页共享层（聊天室 / AI 控制台共用）：before_id 游标向上翻页，
- * 保留滚动位置。消息数组与滚动状态由调用方持有，本层只负责拉取与拼接；
- * 域差异（按房间 / 按入口的端点与参数）经 fetchPage 注入，业务成功码的判定
- * 也在 fetchPage 内完成（成功返回数据面，失败返回 null）。
+ * 保留滚动位置；超长会话在数据层裁剪到最近 N 条，避免消息行无界堆积。
+ * 消息数组与滚动状态由调用方持有，本层只负责拉取与拼接（域差异经 fetchPage 注入，
+ * 业务成功码的判定也在 fetchPage 内完成：成功返回数据面，失败返回 null）。
  */
 export function useHistoryPagination<T extends { id: number }, Scope = void>({
   messages,
@@ -38,13 +39,17 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
   const hasMore = ref(false);
   const loadingHistory = ref(false);
   const loadingMore = ref(false);
+  /** 首屏历史加载失败（业务码失败或网络异常）：空态文案必须与「确实没有消息」区分 */
+  const loadFailed = ref(false);
 
   /** 首屏历史请求令牌：只允许最新一次 loadHistory 回填 */
   let historySeq = 0;
+  bindMessageWindow({ messages, scroller, loadingMore, scrollToBottom });
 
   async function loadHistory(scope: Scope) {
     const seq = ++historySeq;
     loadingHistory.value = true;
+    loadFailed.value = false;
     messages.value = [];
     pendingCount.value = 0;
     try {
@@ -55,7 +60,13 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
       if (page) {
         messages.value = page.results;
         hasMore.value = page.hasMore;
+      } else {
+        loadFailed.value = true;
       }
+    } catch {
+      // 网络异常不逃逸出 loadHistory（调用方无 catch 会成为 unhandled rejection）；
+      // 错误提示由 http 层统一给出，这里只记录失败态供空态文案区分
+      if (seq === historySeq) loadFailed.value = true;
     } finally {
       if (seq === historySeq) {
         loadingHistory.value = false;
@@ -97,5 +108,12 @@ export function useHistoryPagination<T extends { id: number }, Scope = void>({
     }
   }
 
-  return { hasMore, loadingHistory, loadingMore, loadHistory, loadMore };
+  return {
+    hasMore,
+    loadingHistory,
+    loadingMore,
+    loadFailed,
+    loadHistory,
+    loadMore
+  };
 }

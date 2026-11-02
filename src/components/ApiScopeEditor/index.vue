@@ -38,6 +38,10 @@ const groups = ref<ScopeGroup[]>([]);
 const picked = ref<string[]>([]);
 /** 自定义条目文本（一行一条） */
 const customText = ref("");
+/** 选项加载完成前禁止 merge：避免「空勾选 + 新输入」覆盖已保存条目 */
+const ready = ref(false);
+/** 选项加载失败：保留原条目，页面提示手动填写 */
+const optionsFailed = ref(false);
 
 const knownValues = computed(
   () =>
@@ -55,14 +59,32 @@ const merge = () => {
 const labelOf = (title: string) =>
   title ? (te(title) ? t(title) : title) : t("apiScope.other");
 
-watch([picked, customText], merge);
+watch([picked, customText], () => {
+  if (ready.value) merge();
+});
+
+/** 选项不可用时的保底：已保存条目整体落到自定义，提交语义不变 */
+const fallbackToSavedScopes = () => {
+  const saved = scopes.value ?? [];
+  picked.value = [];
+  customText.value = saved.join("\n");
+  ready.value = true;
+  merge();
+};
 
 onMounted(() => {
   loading.value = true;
   props
     .loadOptions()
     .then(res => {
-      if (!isSuccess(res)) return;
+      if (!isSuccess(res)) {
+        optionsFailed.value = true;
+        fallbackToSavedScopes();
+        message(String(res.detail || t("apiScope.optionsLoadFailed")), {
+          type: "warning"
+        });
+        return;
+      }
       const payload = res.data ?? {};
       groups.value = payload.groups ?? [];
       // 已有条目分流：命中选项的进勾选，其余进自定义（不丢历史/正则条目）
@@ -70,11 +92,14 @@ onMounted(() => {
       const split = splitSavedScopes(saved, knownValues.value);
       picked.value = split.picked;
       if (split.rest.length) customText.value = split.rest.join("\n");
+      ready.value = true;
       merge();
     })
     .catch(() => {
-      // 选项拉取失败不阻塞：自定义条目仍可用，用户可手填路径
-      message(t("results.failed"), { type: "error" });
+      // 选项拉取失败不阻塞：已保存条目整体保留为自定义，用户可继续编辑
+      optionsFailed.value = true;
+      fallbackToSavedScopes();
+      message(t("apiScope.optionsLoadFailed"), { type: "error" });
     })
     .finally(() => {
       loading.value = false;
@@ -90,6 +115,13 @@ defineExpose({ merge });
       type="info"
       :closable="false"
       :title="t('apiScope.grantTip')"
+      class="mb-3"
+    />
+    <el-alert
+      v-if="optionsFailed"
+      type="warning"
+      :closable="false"
+      :title="t('apiScope.optionsLoadFailed')"
       class="mb-3"
     />
 

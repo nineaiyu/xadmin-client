@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, defineAsyncComponent, ref } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import type { JsonViewerAction, JsonViewerProps } from "./types";
@@ -31,6 +31,7 @@ const emit = defineEmits<{ copied: [event: JsonViewerAction] }>();
 const { t } = useI18n();
 
 const copiedPath = ref<null | string>(null);
+let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** vue-json-pretty 复制动作传入的节点 */
 interface JsonNode {
@@ -47,10 +48,17 @@ function handleCopy(node: JsonNode, defaultCopy: () => void) {
     text: JSON.stringify(node.content),
     trigger: node.el ?? document.body
   });
-  setTimeout(() => {
+  if (copiedTimer) clearTimeout(copiedTimer);
+  copiedTimer = setTimeout(() => {
     if (copiedPath.value === node.path) copiedPath.value = null;
+    copiedTimer = null;
   }, 2000);
 }
+
+onBeforeUnmount(() => {
+  if (copiedTimer) clearTimeout(copiedTimer);
+  copiedTimer = null;
+});
 
 // 字符串入参按 JSON 解析；对象直接透传（解析失败降级为空对象，不抛错打断页面）
 const jsonData = computed(() => {
@@ -85,7 +93,6 @@ const prettyTheme = computed<"light" | "dark">(() =>
       show-icon
       :theme="prettyTheme"
       :collapsed-node-length="previewMode ? 0 : Infinity"
-      :render-node-actions="copyable"
     >
       <template #renderNodeActions="{ node, defaultActions }">
         <slot name="copy" :node="node" :default-actions="defaultActions">

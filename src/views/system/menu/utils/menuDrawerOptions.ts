@@ -12,11 +12,18 @@ import type {
   ModelTreeItem
 } from "./types";
 
-/** 菜单抽屉构建上下文（状态归 useMenuDrawerCore，本模块只组装抽屉配置） */
-export type MenuDrawerOptionContext = {
+/** 抽屉打开态快照：复用同一实例切换节点时按引用更新（`seq` 用于表单重挂载） */
+export interface MenuDrawerState {
   title: string;
   model: MenuFormModel;
   isAdd: boolean;
+  pk?: number | string;
+  seq: number;
+}
+
+/** 菜单抽屉构建上下文（状态归 useMenuDrawerCore，本模块只组装抽屉配置） */
+export type MenuDrawerOptionContext = {
+  state: Ref<MenuDrawerState | null>;
   auth: MenuAuths;
   formRef: Ref;
   treeData: Ref<MenuRow[]>;
@@ -43,9 +50,7 @@ export function buildMenuDrawerOptions(
   ctx: MenuDrawerOptionContext
 ): DrawerOptions {
   const {
-    title,
-    model,
-    isAdd,
+    state,
     auth,
     formRef,
     treeData,
@@ -60,7 +65,7 @@ export function buildMenuDrawerOptions(
   } = ctx;
 
   return {
-    title,
+    title: state.value?.title ?? "",
     size: drawerSize("md"),
     destroyOnClose: true,
     closeOnClickModal: false,
@@ -70,20 +75,31 @@ export function buildMenuDrawerOptions(
     modal: false,
     modalPenetrable: true,
     lockScroll: false,
-    contentRenderer: () =>
-      h(MenuDrawerForm, {
+    contentRenderer: () => {
+      const current = state.value;
+      if (!current) return h("div");
+      return h(MenuDrawerForm, {
+        // 复用同一抽屉实例切换节点：换 key 让表单按新模型重新初始化，
+        // 否则表单只在 setup 时读一次 props.model（会残留上一个节点）
+        key: `menu-form-${current.seq}`,
         ref: formRef,
-        model,
-        isAdd,
+        model: current.model,
+        isAdd: current.isAdd,
         auth,
         treeData: treeData.value,
         choicesDict: choicesDict.value,
         modelList: modelList.value,
         viewList: viewList.value,
         menuUrlList: menuUrlList.value
-      }),
+      });
+    },
     beforeSure: (done, { closeLoading }) => {
       const form = formRef.value;
+      const current = state.value;
+      if (!current) {
+        closeLoading();
+        return;
+      }
       form
         ?.validate?.()
         .then(async (valid: boolean) => {
@@ -95,7 +111,7 @@ export function buildMenuDrawerOptions(
           const cascade = (form.getCascadePks?.() ?? []) as Array<
             number | string
           >;
-          const ok = await submit(payload, isAdd, cascade);
+          const ok = await submit(payload, current.isAdd, cascade);
           if (ok) {
             onSuccess();
             done();

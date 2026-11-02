@@ -45,6 +45,7 @@ import {
   getRoundedCanvas,
   resolveImageQuality
 } from "./utils";
+import { cropperActionProps } from "./toolbarA11y";
 
 /** 裁剪器命令：模板按钮 / 长按手势触发的动作集合（对应 Cropper 实例方法） */
 type CropperCommand =
@@ -66,9 +67,15 @@ export default defineComponent({
 
     let scaleX = 1;
     let scaleY = 1;
+    /** 当前右键菜单的 tippy 销毁器：每次右键先回收旧实例，避免浮层与监听堆积 */
+    let menuTippyDestroy: (() => void) | null = null;
+    let menuClickBound = false;
+    let imageErrorRetries = 0;
     const onImageError = () => {
       inSrc.value = props.errSrc;
       cropper.value?.destroy();
+      // 兜底图也加载失败时限制重试次数（否则 400ms 间隔无限循环）
+      if (imageErrorRetries++ >= 2) return;
       delay(400).then(() => {
         init();
       });
@@ -107,6 +114,8 @@ export default defineComponent({
 
     onUnmounted(() => {
       cropper.value?.destroy();
+      menuTippyDestroy?.();
+      menuTippyDestroy = null;
       isReady.value = false;
       cropper.value = null;
       imgBase64.value = "";
@@ -122,6 +131,8 @@ export default defineComponent({
     async function init() {
       const imgEl = unref(imgElRef);
       if (!imgEl) return;
+      // 换图/重试前先销毁旧实例：旧容器与全局监听否则永不释放
+      cropper.value?.destroy();
       cropper.value = new Cropper(imgEl, {
         ...defaultOptions,
         ready: () => {
@@ -239,6 +250,22 @@ export default defineComponent({
         longpress
       },
       setup() {
+        const download = () =>
+          downloadByBase64(imgBase64.value, "cropping.png");
+        const toggleCircle = () => {
+          inCircled.value = !inCircled.value;
+          realTimeCroppered();
+        };
+        const move = (x: number, y: number) => () =>
+          handCropper("move", [x, y]);
+        const zoom = (delta: number) => () => handCropper("zoom", delta);
+        const rotate = (angle: number) => () => handCropper("rotate", angle);
+        const openUpload = (event: KeyboardEvent) => {
+          // ElUpload 的触发区是外层 div：键盘激活转成一次点击打开选择器
+          (event.currentTarget as HTMLElement)
+            ?.closest(".el-upload")
+            ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        };
         return () => (
           <div class="flex flex-wrap w-15 justify-between">
             <ElUpload
@@ -248,6 +275,7 @@ export default defineComponent({
             >
               <Upload
                 class={iconClass.value}
+                {...cropperActionProps(t("cropper.upload"), openUpload)}
                 v-tippy={{
                   content: t("cropper.upload"),
                   placement: "left-start"
@@ -256,25 +284,27 @@ export default defineComponent({
             </ElUpload>
             <DownloadIcon
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.download"), download)}
               v-tippy={{
                 content: t("cropper.download"),
                 placement: "right-start"
               }}
-              onClick={() => downloadByBase64(imgBase64.value, "cropping.png")}
+              onClick={download}
             />
             <ChangeIcon
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.change"), toggleCircle)}
               v-tippy={{
                 content: t("cropper.change"),
                 placement: "left-start"
               }}
-              onClick={() => {
-                inCircled.value = !inCircled.value;
-                realTimeCroppered();
-              }}
+              onClick={toggleCircle}
             />
             <Reload
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.reset"), () =>
+                handCropper("reset")
+              )}
               v-tippy={{
                 content: t("cropper.reset"),
                 placement: "right-start"
@@ -283,38 +313,45 @@ export default defineComponent({
             />
             <ArrowUp
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.up"), move(0, -10))}
               v-tippy={{
                 content: t("cropper.up"),
                 placement: "left-start"
               }}
-              v-longpress={[() => handCropper("move", [0, -10]), "0:100"]}
+              v-longpress={[move(0, -10), "0:100"]}
             />
             <ArrowDown
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.down"), move(0, 10))}
               v-tippy={{
                 content: t("cropper.down"),
                 placement: "right-start"
               }}
-              v-longpress={[() => handCropper("move", [0, 10]), "0:100"]}
+              v-longpress={[move(0, 10), "0:100"]}
             />
             <ArrowLeft
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.left"), move(-10, 0))}
               v-tippy={{
                 content: t("cropper.left"),
                 placement: "left-start"
               }}
-              v-longpress={[() => handCropper("move", [-10, 0]), "0:100"]}
+              v-longpress={[move(-10, 0), "0:100"]}
             />
             <ArrowRight
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.right"), move(10, 0))}
               v-tippy={{
                 content: t("cropper.right"),
                 placement: "right-start"
               }}
-              v-longpress={[() => handCropper("move", [10, 0]), "0:100"]}
+              v-longpress={[move(10, 0), "0:100"]}
             />
             <ArrowH
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.flipHorizontal"), () =>
+                handCropper("scaleX", -1)
+              )}
               v-tippy={{
                 content: t("cropper.flipHorizontal"),
                 placement: "left-start"
@@ -323,6 +360,9 @@ export default defineComponent({
             />
             <ArrowV
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.flipVertical"), () =>
+                handCropper("scaleY", -1)
+              )}
               v-tippy={{
                 content: t("cropper.flipVertical"),
                 placement: "right-start"
@@ -331,35 +371,39 @@ export default defineComponent({
             />
             <RotateLeft
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.anticlockwise"), rotate(-45))}
               v-tippy={{
                 content: t("cropper.anticlockwise"),
                 placement: "left-start"
               }}
-              onClick={() => handCropper("rotate", -45)}
+              onClick={rotate(-45)}
             />
             <RotateRight
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.clockwise"), rotate(45))}
               v-tippy={{
                 content: t("cropper.clockwise"),
                 placement: "right-start"
               }}
-              onClick={() => handCropper("rotate", 45)}
+              onClick={rotate(45)}
             />
             <SearchPlus
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.zoomIn"), zoom(0.1))}
               v-tippy={{
                 content: t("cropper.zoomIn"),
                 placement: "left-start"
               }}
-              v-longpress={[() => handCropper("zoom", 0.1), "0:100"]}
+              v-longpress={[zoom(0.1), "0:100"]}
             />
             <SearchMinus
               class={iconClass.value}
+              {...cropperActionProps(t("cropper.zoomOut"), zoom(-0.1))}
               v-tippy={{
                 content: t("cropper.zoomOut"),
                 placement: "right-start"
               }}
-              v-longpress={[() => handCropper("zoom", -0.1), "0:100"]}
+              v-longpress={[zoom(-0.1), "0:100"]}
             />
           </div>
         );
@@ -369,6 +413,8 @@ export default defineComponent({
     function onContextmenu(event: MouseEvent) {
       event.preventDefault();
 
+      // 每次右键先回收上一份实例（tippy 浮层与 popper DOM 不自动销毁）
+      menuTippyDestroy?.();
       const { show, setProps, destroy, state } = useTippy(tippyElRef, {
         content: menuContent,
         arrow: false,
@@ -392,10 +438,15 @@ export default defineComponent({
       });
 
       show();
+      menuTippyDestroy = destroy;
 
       if (isInClose.value) {
         if (!state.value.isShown && !state.value.isVisible) return;
-        useEventListener(tippyElRef, "click", destroy);
+        // 只注册一次：事件内重复注册会让监听器随右键次数线性增长
+        if (!menuClickBound) {
+          menuClickBound = true;
+          useEventListener(tippyElRef, "click", destroy);
+        }
       }
     }
 

@@ -57,6 +57,13 @@ const loadScope = async () => {
     // 异常归一为失败结果：HTTP 层错误与业务失败走同一分支提示
     const res = await deptApi.managed().catch(normalizeError);
     if (isSuccess(res)) {
+      // 建树在数据落位时一次性完成（不在 computed 内改写响应对象）
+      treeData.value = handleTree<ManagedDeptItem>(
+        res.data?.depts ?? [],
+        "pk",
+        "parent_id",
+        "children"
+      ) as ScopeTreeNode[];
       scope.value = res.data;
     } else {
       loadError.value = String(res.detail || t("results.failed"));
@@ -123,10 +130,8 @@ interface ScopeTreeNode extends ManagedDeptItem {
   children?: ScopeTreeNode[];
 }
 
-/** 层级视图：按 parent_id 建树（父部门不在管辖内时视为根） */
-const treeData = computed<ScopeTreeNode[]>(() =>
-  handleTree<ManagedDeptItem>(depts.value, "pk", "parent_id", "children")
-);
+/** 层级视图：按 parent_id 建树（父部门不在管辖内时视为根）；由 loadScope 落位时构建 */
+const treeData = ref<ScopeTreeNode[]>([]);
 
 // —— 层级视图：虚拟树（el-tree-v2）+ 全量展开语义 ——
 const { pageRef, panelHeight, measure } = useFullHeightPanel();

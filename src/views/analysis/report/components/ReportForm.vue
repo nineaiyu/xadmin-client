@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { isSuccess } from "@/api/types";
 import { choiceValue } from "@/utils/dict";
 import { message } from "@/utils/message";
 import type { DatasetItem } from "@/api/dataset/datasets";
@@ -103,13 +104,35 @@ const mergeUsers = (rows: ReportUserOption[]) => {
   }
 };
 
+/** 远程搜索：300ms 防抖 + 请求序号（慢响应不覆盖新结果），失败给一次轻提示 */
+const userSearching = ref(false);
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let searchSeq = 0;
+
 const searchUsers = (keyword: string) => {
   const value = (keyword ?? "").trim();
+  if (searchTimer) clearTimeout(searchTimer);
   if (!value) return;
-  searchReportUsers({ keyword: value })
-    .then(res => mergeUsers(res?.data ?? []))
-    .catch(() => undefined);
+  searchTimer = setTimeout(async () => {
+    searchTimer = null;
+    const seq = ++searchSeq;
+    userSearching.value = true;
+    const res = await searchReportUsers({ keyword: value }).catch(() => null);
+    if (seq !== searchSeq) return;
+    userSearching.value = false;
+    if (res && isSuccess(res)) {
+      mergeUsers(res.data ?? []);
+      return;
+    }
+    if (res) {
+      message(String(res.detail || t("results.failed")), { type: "warning" });
+    }
+  }, 300);
 };
+
+onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer);
+});
 
 /** 编辑既有报表：按主键回显已选接收人（避免无边界的通讯录枚举） */
 onMounted(async () => {
@@ -387,6 +410,7 @@ defineExpose({ getPayload });
         reserve-keyword
         clearable
         :remote-method="searchUsers"
+        :loading="userSearching"
         :placeholder="t('dataReport.imRecipientsHint')"
       >
         <el-option

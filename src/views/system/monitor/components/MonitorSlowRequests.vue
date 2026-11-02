@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { formatDateTime } from "@/utils/format";
 import type { MonitorSlow } from "@/api/system/monitor";
 import {
   ReReadonlyTable,
@@ -11,7 +12,11 @@ import {
 defineProps<{
   rows: MonitorSlow["results"];
   threshold: number;
+  /** 该区块接口失败：显示「不可用 + 重试」，不把未知渲染成「无慢请求」 */
+  unavailable?: boolean;
 }>();
+
+const emit = defineEmits<{ retry: [] }>();
 
 const { t } = useI18n();
 
@@ -33,7 +38,13 @@ const columns = computed<ReadonlyColumn[]>(() => [
   { label: t("systemMonitor.cost"), width: 100, slot: "cost" },
   { prop: "status_code", label: t("systemMonitor.statusCode"), width: 90 },
   { prop: "creator__username", label: t("systemMonitor.creator"), width: 110 },
-  { prop: "created_time", label: t("systemMonitor.time"), width: 170 }
+  {
+    prop: "created_time",
+    label: t("systemMonitor.time"),
+    width: 170,
+    formatter: (row: { created_time?: string }) =>
+      formatDateTime(row.created_time)
+  }
 ]);
 </script>
 
@@ -43,11 +54,27 @@ const columns = computed<ReadonlyColumn[]>(() => [
       <div class="flex flex-wrap items-center gap-3">
         <span>
           {{ t("systemMonitor.slowRequests") }}
-          (≥ {{ threshold }}s / 24h)
+          {{
+            t("systemMonitor.slowWindow", {
+              threshold
+            })
+          }}
         </span>
       </div>
     </template>
+    <template v-if="unavailable">
+      <el-alert
+        :title="t('systemMonitor.dataUnavailable')"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-button class="mt-3" size="small" @click="emit('retry')">
+        {{ t("systemMonitor.refresh") }}
+      </el-button>
+    </template>
     <ReReadonlyTable
+      v-else
       :columns="columns"
       :rows="rows"
       size="small"

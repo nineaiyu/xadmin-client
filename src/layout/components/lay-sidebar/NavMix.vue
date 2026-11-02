@@ -8,7 +8,7 @@ import { ref, toRaw, computed, watch, onMounted, nextTick } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { getParentPaths, findRouteByPath } from "@/router/utils";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { groupMenuChildren } from "@/utils/menuGroups";
+import { groupMenuChildren, isMenuGroupNode } from "@/utils/menuGroups";
 import LaySidebarExtraIcon from "../lay-sidebar/components/SidebarExtraIcon.vue";
 import LaySidebarItem from "./components/SidebarItem.vue";
 import NavbarActions from "../lay-navbar/NavbarActions.vue";
@@ -41,6 +41,13 @@ const navigationSplit = computed(() =>
 /** 完整菜单树渲染序列：支持一级菜单按 groupName/groupRank 分组（仅影响展示层） */
 const topMenuData = computed(() =>
   groupMenuChildren(usePermissionStoreHook().wholeMenus)
+);
+
+/** 切割态一级项：按分组序列拉平（组虚拟节点只保留其子项，不渲染组标题） */
+const splitMenuData = computed(() =>
+  topMenuData.value.flatMap(route =>
+    isMenuGroupNode(route as never) ? (route.children ?? []) : [route]
+  )
 );
 
 /** 高亮项：一级菜单取「当前路由所属一级路由的第一个子菜单」 */
@@ -106,10 +113,12 @@ watch(
           :base-path="route.path"
         />
       </template>
-      <!-- 切割：仅一级菜单，点击进入该一级下的首个子页 -->
+      <!-- 切割：仅一级菜单，点击进入该一级下的首个子页。
+           EP 横向菜单不支持 el-menu-item-group（会破坏横向布局/溢出收纳），
+           分组只按分组序列拉平一级项（顺序与未切割态一致，不渲染组标题） -->
       <template v-else>
         <el-menu-item
-          v-for="route in usePermissionStoreHook().wholeMenus"
+          v-for="route in splitMenuData"
           :key="route.path"
           :index="resolvePath(route) || route.redirect || ''"
         >

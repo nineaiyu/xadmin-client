@@ -1,7 +1,7 @@
 import { intervalScheduleApi } from "@/api/task/task";
-import dayjs from "dayjs";
 import { defineListPage, formatPageColumns } from "@/components/RePlusPage";
 import { useScheduleDelete } from "../../components/useScheduleDelete";
+import { buildIntervalEveryText } from "./everyText";
 
 /**
  * 固定间隔调度管理（django_celery_beat IntervalSchedule）。
@@ -10,14 +10,6 @@ import { useScheduleDelete } from "../../components/useScheduleDelete";
  * 行内值形如 {value:"minutes", label:"分钟"}，由 RePlusPage 内置
  * 渲染器直出可读标签，无需前端二次格式化。
  */
-const PERIOD_UNITS: Record<string, dayjs.ManipulateType> = {
-  days: "day",
-  hours: "hour",
-  minutes: "minute",
-  seconds: "second",
-  microseconds: "millisecond"
-};
-
 export function useTaskInterval() {
   return defineListPage({
     api: intervalScheduleApi,
@@ -25,16 +17,9 @@ export function useTaskInterval() {
     columns: ({ t, columns }) =>
       formatPageColumns(columns, {
         every: column => {
-          column["cellRenderer"] = ({ row }) => {
-            const period = String(
-              (row as { period?: { value?: string } }).period?.value ?? ""
-            );
-            const unit = PERIOD_UNITS[period];
-            const every = Number((row as { every?: number }).every ?? 0);
-            if (!unit || !every) return String(every);
-            const next = dayjs().add(every, unit).format("MM-DD HH:mm:ss");
-            return t("systemTaskInterval.nextApprox", { time: next });
-          };
+          // 周期数保留原值 + 单位，并追加下次触发时间；microseconds 按 1000µs=1ms 换算
+          column["cellRenderer"] = ({ row }) =>
+            buildIntervalEveryText(row as never, t as never);
         }
       }),
     buttons: ({ t, api, auth, tableRef }) =>

@@ -100,9 +100,12 @@ const flagText = (field: CodegenFieldOverride) => {
   if (field.read_only) flags.push(t("codegen.aiDraftFlagReadonly"));
   if (field.in_table) flags.push(t("codegen.aiDraftFlagInTable"));
   if (field.in_search) flags.push(t("codegen.aiDraftFlagInSearch"));
-  if (field.input_type) flags.push(`input_type: ${field.input_type}`);
-  if (field.dict_code) flags.push(`dict: ${field.dict_code}`);
-  if (field.field_class) flags.push(field.field_class);
+  if (field.input_type)
+    flags.push(`${t("codegen.aiDraftFlagInputType")}: ${field.input_type}`);
+  if (field.dict_code)
+    flags.push(`${t("codegen.aiDraftFlagDict")}: ${field.dict_code}`);
+  if (field.field_class)
+    flags.push(`${t("codegen.aiDraftFlagFieldClass")}: ${field.field_class}`);
   return flags.join(" · ");
 };
 

@@ -15,7 +15,7 @@ defineOptions({
 const props = defineProps<ChatMessageAvatarProps>();
 
 const avatarText = computed(() =>
-  (props.name || "?").slice(0, 1).toUpperCase()
+  Array.from(props.name || "?")[0].toUpperCase()
 );
 </script>
 

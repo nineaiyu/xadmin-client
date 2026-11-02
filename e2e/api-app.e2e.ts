@@ -6,6 +6,14 @@ import {
   openEntityPanel,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 开放平台 API 应用：管理页新建应用 → 一次性密钥只展示一次。
@@ -14,6 +22,7 @@ import {
 
 test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
   await expect(
     page.getByRole("button", { name: "新增", exact: true })
@@ -64,6 +73,7 @@ test("API 应用：新建应用并展示一次性密钥", async ({ page }) => {
  */
 test("API 应用：接口范围勾选后列表显示条数", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   await openMenuPath(page, ["集成管理"], "/integration/api-app/index");
   await expect(
     page.getByRole("button", { name: "新增", exact: true })
@@ -108,6 +118,7 @@ test("API 应用：接口范围勾选后列表显示条数", async ({ page }) =>
  */
 test("API 应用：资源授权配置保存并回显", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const name = `E2E 授权应用 ${Date.now()}`;
   // 应用经 API 创建（本用例只验证授权配置的 UI 主链路）
   const created = await page.request.post("/api/identity/api-applications", {
@@ -175,6 +186,7 @@ test("API 应用：资源授权配置保存并回显", async ({ page }) => {
  */
 test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const name = `E2E 用量应用 ${Date.now()}`;
   const created = await page.request.post("/api/identity/api-applications", {
     data: { name, rate_limit_per_minute: 0 }
@@ -228,6 +240,7 @@ test("API 应用：管理抽屉内打开用量报表", async ({ page }) => {
  */
 test("API 应用：管理抽屉资料与密钥重置确认", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const name = `E2E 抽屉应用 ${Date.now()}`;
   const created = await page.request.post("/api/identity/api-applications", {
     data: { name, rate_limit_per_minute: 30 }

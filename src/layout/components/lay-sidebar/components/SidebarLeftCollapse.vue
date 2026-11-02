@@ -46,10 +46,15 @@ const toggleClick = () => {
         hideOnClick: 'toggle',
         placement: 'right'
       }"
+      role="button"
+      tabindex="0"
+      :aria-label="isActive ? t('layout.fold') : t('layout.unfold')"
       :class="[iconClass, themeColor === 'light' ? '' : 'text-primary']"
       :icon="MenuFold"
       :style="{ transform: isActive ? 'none' : 'rotateY(180deg)' }"
       @click="toggleClick"
+      @keydown.enter.prevent="toggleClick"
+      @keydown.space.prevent="toggleClick"
     />
   </div>
 </template>

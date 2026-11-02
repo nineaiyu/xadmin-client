@@ -89,13 +89,17 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
         aggregateResult.value = res.data as never;
       } else {
         aggregateResult.value = null;
-        if (res?.detail) message(String(res.detail), { type: "warning" });
+        message(String(res?.detail || t("results.failed")), {
+          type: "warning"
+        });
       }
     } finally {
       aggregateLoading.value = false;
     }
   };
 
+  /** 预览请求序号：快速连续点不同行时，先发后到的旧响应不能覆盖新状态 */
+  let previewSeq = 0;
   /** 预览取数：行内「预览」按钮经 onClick 上下文注入 loading（按钮自旋） */
   const openPreview = async (
     row: DatasetItem,
@@ -110,9 +114,11 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
     aggregateForm.group_by = row.columns[0] ?? "";
     aggregateForm.value_field = "";
     if (loading) loading.value = true;
+    const seq = ++previewSeq;
     try {
       // http 层失败已统一提示，归一为 null：预览弹窗不打开
       const res = await datasetApi.execute(row.pk).catch(() => null);
+      if (seq !== previewSeq) return;
       if (!res) {
         message(t("dataDataset.previewNetworkFailed"), { type: "error" });
       } else if (isSuccess(res) && res.data) {
@@ -125,7 +131,7 @@ export function useDatasetPreview({ t }: { t: TFunction }) {
         });
       }
     } finally {
-      if (loading) loading.value = false;
+      if (loading && seq === previewSeq) loading.value = false;
     }
   };
 

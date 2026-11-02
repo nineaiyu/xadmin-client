@@ -84,5 +84,5 @@ test("重复发码：限流窗口内返回可读剩余秒提示", async ({ page 
 
   expect(rateLimited.status, `限流响应状态码：${rateLimited.status}`).toBe(429);
   expectReadableRateLimit(rateLimited.text);
-  await expect(page.locator(".el-message--error").first()).toContainText(/\d+/);
+  await expect(page.locator(".el-message--error").last()).toContainText(/\d+/);
 });

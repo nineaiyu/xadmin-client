@@ -8,6 +8,14 @@ import {
   openMenuPath,
   openUserManagement
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 字段级数据脱敏：
@@ -21,10 +29,12 @@ test("脱敏规则：创建、列表展示、预览（行内预填 + 批量样�
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
 
-  const model = "system.userinfo";
-  // 用不存在的字段名建规则：只验证管理/预览链路，不影响真实用户数据展示
-  const field = `phone_${Date.now()}`;
+  const model = "identity.userinfo";
+  // 用真实字段（字段注册表已同步时后端会拒绝未知字段）：description 无内置规则，
+  // 删除后行数断言不受种子规则干扰；超管对脱敏豁免，规则存在期间不影响本用例
+  const field = "description";
   const createResp = await page.request.post(
     `${FRONT_URL}/api/audit/mask-rules`,
     {
@@ -102,10 +112,35 @@ test("脱敏规则：创建、列表展示、预览（行内预填 + 批量样�
   );
 });
 
+/** 清理规则：失败路径同样执行；当前会话可能仍是 e2e_dp（无删除权限），切回管理员重试 */
+async function cleanupMaskRule(
+  page: import("@playwright/test").Page,
+  rulePk: string
+) {
+  try {
+    let resp = await page.request.delete(
+      `${FRONT_URL}/api/audit/mask-rules/${rulePk}`
+    );
+    if (!resp.ok()) {
+      await logout(page);
+      await login(page);
+      resp = await page.request.delete(
+        `${FRONT_URL}/api/audit/mask-rules/${rulePk}`
+      );
+    }
+    if (!resp.ok()) {
+      console.warn(`[e2e] 数据掩码规则清理失败（${resp.status()}）：${rulePk}`);
+    }
+  } catch (error) {
+    console.warn(`[e2e] 数据掩码规则清理异常：${String(error)}`);
+  }
+}
+
 test("原文通道：列表见掩码、编辑表单见原文、原样保存后库内仍是原文", async ({
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   // 取种子账号 e2e_dp 的主键与角色（规则按角色生效，作用面收窄到该账号）
   const listResp = await page.request.get(
@@ -134,7 +169,7 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
     `${FRONT_URL}/api/audit/mask-rules`,
     {
       data: {
-        model: "system.userinfo",
+        model: "identity.userinfo",
         field: "nickname",
         mask_type: "name",
         keep_head: 1,
@@ -155,62 +190,65 @@ test("原文通道：列表见掩码、编辑表单见原文、原样保存后�
     (rulePayload.data.roles ?? []).map((item: { pk: string }) => item.pk)
   ).toContain(rolePk);
 
-  {
-    // 必须先登出：已登录状态下 goto /#/login 会被路由重定向回首页，登录表单不会出现
+  // 规则按 e2e_dp 角色收窄：一旦中途失败，不清理会波及同库所有使用该角色的 spec
+  try {
+    {
+      // 必须先登出：已登录状态下 goto /#/login 会被路由重定向回首页，登录表单不会出现
+      await logout(page);
+      await login(page, DP_USER);
+      await startResourceIsolation(page);
+      await openUserManagement(page);
+      const rows = page.locator(".el-table__row");
+      await expect(rows).toHaveCount(1, { timeout: 15_000 });
+
+      // 列表口径：掩码（详情/导出同口径）
+      await expect(page.locator(".el-table")).toContainText(maskedNickname);
+      await expect(page.locator(".el-table")).not.toContainText(
+        originalNickname
+      );
+
+      // 接口口径先行断言：详情 + ?mask=false 必须返回原文（字段白名单/门禁任一
+      // 不满足时，UI 断言会给出无上下文的「值不对」，这里先锁定协议层）
+      const detailResp = await page.request.get(
+        `${FRONT_URL}/api/identity/user/${dpRow.pk}?mask=false`
+      );
+      expect(
+        (await detailResp.json())?.data?.nickname,
+        "原文通道应返回原文"
+      ).toBe(originalNickname);
+
+      // 编辑表单口径：原文（前端编辑态走 ?mask=false + 更新权限通道）
+      await rows.first().getByRole("button", { name: "编辑" }).first().click();
+      const editDialog = page
+        .locator(".el-dialog:visible, .el-drawer:visible")
+        .first();
+      await expect(editDialog).toBeVisible({ timeout: 15_000 });
+      const nicknameInput = editDialog
+        .locator(".el-form-item:has-text('昵称') input")
+        .first();
+      await expect(nicknameInput).toHaveValue(originalNickname, {
+        timeout: 15_000
+      });
+
+      // 原样保存：掩码值不得回写覆盖原文（写路径守护 + 原文通道共同生效）
+      await editDialog
+        .getByRole("button", { name: /保存|确定/ })
+        .first()
+        .click();
+      await expect(editDialog).toBeHidden({ timeout: 15_000 });
+    }
+
+    // 切回管理员会话：登出会吊销令牌，登出前抓的 Bearer 不能复用于后续校验/清理
     await logout(page);
-    await login(page, DP_USER);
-    await openUserManagement(page);
-    const rows = page.locator(".el-table__row");
-    await expect(rows).toHaveCount(1, { timeout: 15_000 });
+    await login(page);
+    await startResourceIsolation(page);
 
-    // 列表口径：掩码（详情/导出同口径）
-    await expect(page.locator(".el-table")).toContainText(maskedNickname);
-    await expect(page.locator(".el-table")).not.toContainText(originalNickname);
-
-    // 接口口径先行断言：详情 + ?mask=false 必须返回原文（字段白名单/门禁任一
-    // 不满足时，UI 断言会给出无上下文的「值不对」，这里先锁定协议层）
-    const detailResp = await page.request.get(
-      `${FRONT_URL}/api/identity/user/${dpRow.pk}?mask=false`
+    // 库内原文未被掩码值污染
+    const afterResp = await page.request.get(
+      `${FRONT_URL}/api/identity/user/${dpRow.pk}`
     );
-    expect(
-      (await detailResp.json())?.data?.nickname,
-      "原文通道应返回原文"
-    ).toBe(originalNickname);
-
-    // 编辑表单口径：原文（前端编辑态走 ?mask=false + 更新权限通道）
-    await rows.first().getByRole("button", { name: "编辑" }).first().click();
-    const editDialog = page
-      .locator(".el-dialog:visible, .el-drawer:visible")
-      .first();
-    await expect(editDialog).toBeVisible({ timeout: 15_000 });
-    const nicknameInput = editDialog
-      .locator(".el-form-item:has-text('昵称') input")
-      .first();
-    await expect(nicknameInput).toHaveValue(originalNickname, {
-      timeout: 15_000
-    });
-
-    // 原样保存：掩码值不得回写覆盖原文（写路径守护 + 原文通道共同生效）
-    await editDialog
-      .getByRole("button", { name: /保存|确定/ })
-      .first()
-      .click();
-    await expect(editDialog).toBeHidden({ timeout: 15_000 });
+    expect((await afterResp.json())?.data?.nickname).toBe(originalNickname);
+  } finally {
+    await cleanupMaskRule(page, rulePk);
   }
-
-  // 切回管理员会话：登出会吊销令牌，登出前抓的 Bearer 不能复用于后续校验/清理
-  await logout(page);
-  await login(page);
-
-  // 库内原文未被掩码值污染
-  const afterResp = await page.request.get(
-    `${FRONT_URL}/api/identity/user/${dpRow.pk}`
-  );
-  expect((await afterResp.json())?.data?.nickname).toBe(originalNickname);
-
-  // 清理规则：作用面已按角色收窄，这里仍及时删除，避免影响同进程内的其他用例
-  const cleanupResp = await page.request.delete(
-    `${FRONT_URL}/api/audit/mask-rules/${rulePk}`
-  );
-  expect((await cleanupResp.json()).code, "cleanup rule").toBe(1000);
 });

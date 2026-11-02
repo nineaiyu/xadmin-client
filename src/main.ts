@@ -54,6 +54,22 @@ if (typeof window !== "undefined") {
   });
 }
 
+/** 启动期失败兜底：配置/语言包加载失败时给出可读提示，而不是停在 loader */
+function renderBootFailure(error: unknown) {
+  console.error("[boot] startup failed:", error);
+  const root = document.getElementById("app");
+  if (!root) return;
+  root.innerHTML =
+    '<div style="padding:24px;font-family:system-ui,sans-serif;color:var(--el-color-danger)">' +
+    "<h3>应用启动失败</h3>" +
+    '<p style="margin:8px 0;color:var(--el-text-color-regular)">平台配置或语言包加载失败，请刷新页面重试；若持续失败请联系管理员。</p>' +
+    '<button type="button" style="padding:6px 14px;cursor:pointer">刷新页面</button>' +
+    "</div>";
+  root
+    .querySelector("button")
+    ?.addEventListener("click", () => window.location.reload());
+}
+
 // 自定义指令
 import * as directives from "@/directives";
 Object.keys(directives).forEach(key => {
@@ -90,55 +106,60 @@ void Promise.all([
   ws.setReconnectTokenProvider(token.getUsedAccessToken);
 });
 
-getPlatformConfig(app).then(async config => {
-  injectResponsiveStorage(app, config);
-  // 平台出厂默认值快照：必须在下面的站点配置同步之前捕获——
-  // getSiteConfig 会把服务端站点配置合并进全局 $config，之后 getConfig() 不再等于
-  // platform-config.json（「恢复站点默认」依赖这份快照）
-  capturePlatformDefaults();
-  setupStore(app);
-  // index.html 是静态产物（构建期不知道运行时标题），装配后回填：初始 title
-  // 占位在首次路由跳转前与 platform-config 的 Title 保持一致
-  const siteTitle = resolveSiteTitle();
-  if (siteTitle) document.title = siteTitle;
-  if (getToken()) {
-    try {
-      await useSiteConfigStoreHook().getSiteConfig();
-    } catch (error) {
-      console.warn("Failed to fetch site config, using default config:", error);
+getPlatformConfig(app)
+  .then(async config => {
+    injectResponsiveStorage(app, config);
+    // 平台出厂默认值快照：必须在下面的站点配置同步之前捕获——
+    // getSiteConfig 会把服务端站点配置合并进全局 $config，之后 getConfig() 不再等于
+    // platform-config.json（「恢复站点默认」依赖这份快照）
+    capturePlatformDefaults();
+    setupStore(app);
+    // index.html 是静态产物（构建期不知道运行时标题），装配后回填：初始 title
+    // 占位在首次路由跳转前与 platform-config 的 Title 保持一致
+    const siteTitle = resolveSiteTitle();
+    if (siteTitle) document.title = siteTitle;
+    if (getToken()) {
+      try {
+        await useSiteConfigStoreHook().getSiteConfig();
+      } catch (error) {
+        console.warn(
+          "Failed to fetch site config, using default config:",
+          error
+        );
+      }
     }
-  }
-  /**
-   * 实际生效的初始语言（html.lang 也按它回填，影响无障碍：屏幕阅读器发音 /
-   * 浏览器翻译判定）。必须在站点配置同步之后判定——服务端 Locale 会经
-   * `getSiteConfig` 覆写本地语言存储（而 i18n 实例的 locale 仍是创建时的值），
-   * 布局 / 登录页随后按存储值恢复语言。若此处沿用同步前的值，en 语料不会被
-   * 预加载，首帧就会报 "Not found 'xxx' key in 'en' locale messages" 并回退中文。
-   */
-  const appliedLocale = resolveBootLocale(
-    storageLocal().getItem<StorageConfigs>(
-      `${responsiveStorageNameSpace()}locale`
-    )?.locale,
-    config?.Locale
-  );
-  document.documentElement.lang =
-    appliedLocale === "zh" ? "zh-CN" : appliedLocale;
-  // 装配期应用主题：全屏路由（大屏投屏 / 设计器）与登录页不挂 Layout，布局内的
-  // 初始化不会执行；须在 mount 前完成（首帧即正确，无闪烁）。布局内调用保留，
-  // 站点配置异步到达后仍可重应用（两处写入同值，幂等）。
-  applyBootTheme();
-  app.use(router);
-  await router.isReady();
-  // @pureadmin/table 不在此全局注册：唯一消费方 RePlusPage 内部按需 import
-  // （<pure-table> 由该文件的局部 import 解析），避免表格栈进入首屏闭包
-  app
-    .use(MotionPlugin)
-    .use(useI18n)
-    .use(useElementPlus)
-    .use(usePlusProComponents)
-    .use(useEcharts);
-  // 初始语言按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）：
-  // 传「实际生效语言」，避免首帧出现 locale 已是 en 而语料未就绪的空窗
-  await ensureLocale(appliedLocale);
-  app.mount("#app");
-});
+    /**
+     * 实际生效的初始语言（html.lang 也按它回填，影响无障碍：屏幕阅读器发音 /
+     * 浏览器翻译判定）。必须在站点配置同步之后判定——服务端 Locale 会经
+     * `getSiteConfig` 覆写本地语言存储（而 i18n 实例的 locale 仍是创建时的值），
+     * 布局 / 登录页随后按存储值恢复语言。若此处沿用同步前的值，en 语料不会被
+     * 预加载，首帧就会报 "Not found 'xxx' key in 'en' locale messages" 并回退中文。
+     */
+    const appliedLocale = resolveBootLocale(
+      storageLocal().getItem<StorageConfigs>(
+        `${responsiveStorageNameSpace()}locale`
+      )?.locale,
+      config?.Locale
+    );
+    document.documentElement.lang =
+      appliedLocale === "zh" ? "zh-CN" : appliedLocale;
+    // 装配期应用主题：全屏路由（大屏投屏 / 设计器）与登录页不挂 Layout，布局内的
+    // 初始化不会执行；须在 mount 前完成（首帧即正确，无闪烁）。布局内调用保留，
+    // 站点配置异步到达后仍可重应用（两处写入同值，幂等）。
+    applyBootTheme();
+    app.use(router);
+    await router.isReady();
+    // @pureadmin/table 不在此全局注册：唯一消费方 RePlusPage 内部按需 import
+    // （<pure-table> 由该文件的局部 import 解析），避免表格栈进入首屏闭包
+    app
+      .use(MotionPlugin)
+      .use(useI18n)
+      .use(useElementPlus)
+      .use(usePlusProComponents)
+      .use(useEcharts);
+    // 初始语言按需加载语言包（en 不随首屏闭包；zh 为 eager，无额外开销）：
+    // 传「实际生效语言」，避免首帧出现 locale 已是 en 而语料未就绪的空窗
+    await ensureLocale(appliedLocale);
+    app.mount("#app");
+  })
+  .catch(renderBootFailure);

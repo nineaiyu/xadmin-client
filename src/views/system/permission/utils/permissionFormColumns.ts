@@ -25,6 +25,16 @@ type ColumnCtx = {
 /** 返回空值 = 该列不参与表单（框架跳过该键） */
 type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown> | undefined;
 
+/**
+ * 自定义 renderField 不受 el-form 的 `disabled` 级联影响（plus-pro 只把列级
+ * fieldProps 透传给渲染组件）。这里从第三个参数取列级 disabled，组件内部再叠加
+ * el-form 的 disabled 上下文，保证只读弹层里的自定义控件同样不可交互。
+ */
+const disabledByColumn = (props?: { fieldProps?: unknown }) => {
+  const fieldProps = props?.fieldProps as { disabled?: boolean } | undefined;
+  return fieldProps?.disabled === true;
+};
+
 const hideInForm: ColumnHandler = ({ column }) => {
   if (!column) return undefined;
   column["hideInForm"] = true;
@@ -69,11 +79,13 @@ export function buildPermissionFormColumns({
     column["hasLabel"] = true;
     column["renderField"] = (
       value: unknown,
-      onChange: (val: unknown) => void
+      onChange: (val: unknown) => void,
+      props?: { fieldProps?: unknown }
     ) =>
       h(ScopeSelect, {
         rows: menuRows,
         modelValue: (Array.isArray(value) ? value : []) as string[],
+        disabled: disabledByColumn(props),
         "onUpdate:modelValue": onChange
       });
     return column;
@@ -83,11 +95,13 @@ export function buildPermissionFormColumns({
     if (!column) return undefined;
     column["renderField"] = (
       value: unknown,
-      onChange: (val: unknown) => void
+      onChange: (val: unknown) => void,
+      props?: { fieldProps?: unknown }
     ) =>
       h(ModeSelect, {
         modelValue: value,
         ruleCount: ruleCountOf(formValue),
+        disabled: disabledByColumn(props),
         "onUpdate:modelValue": onChange
       });
     return column;
@@ -98,7 +112,8 @@ export function buildPermissionFormColumns({
     column["hasLabel"] = false;
     column["renderField"] = (
       value: unknown,
-      onChange: (val: unknown) => void
+      onChange: (val: unknown) => void,
+      props?: { fieldProps?: unknown }
     ) =>
       h(RuleListEditor, {
         class: ["w-full"],
@@ -108,6 +123,7 @@ export function buildPermissionFormColumns({
         ruleList: fieldLookupsData.value,
         fieldRuleList: fieldLookupsRole.value,
         menus: menuContextOptions.value,
+        disabled: disabledByColumn(props),
         // 表单值 Ref：试算面板据此自动带入且/或模式与绑定菜单（草稿与保存同语义）
         formValue,
         onChange

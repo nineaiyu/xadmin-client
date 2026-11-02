@@ -63,7 +63,10 @@ export function useTask() {
   });
 
   // 新增/编辑表单：任务路径下拉（已注册任务）装配
-  const { baseColumnsFormat } = useTaskFormColumns({ api: page.api });
+  const { baseColumnsFormat } = useTaskFormColumns({
+    api: page.api,
+    canLoad: () => Boolean(page.auth.create || page.auth.update)
+  });
 
   return { ...page, baseColumnsFormat };
 }

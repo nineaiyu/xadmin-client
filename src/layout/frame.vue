@@ -73,12 +73,14 @@ watch(
     if (props.frameInfo?.fullPath === path && isRedirect) {
       loading.value = true;
       clearFallbackTimer();
+      // 基于 URL 对象改 query：frameSrc 含 #fragment 时字符串拼接会把 t 落进片段
+      // （iframe 地址不变 → 缓存击穿失效）
       const url = new URL(
         props.frameInfo.frameSrc ?? "",
         window.location.origin
       );
-      const joinChar = url.search ? "&" : "?";
-      frameSrc.value = `${props.frameInfo.frameSrc}${joinChar}t=${Date.now()}`;
+      url.searchParams.set("t", String(Date.now()));
+      frameSrc.value = url.toString();
       fallbackTimer.value = window.setTimeout(() => {
         if (loading.value) {
           hideLoading();

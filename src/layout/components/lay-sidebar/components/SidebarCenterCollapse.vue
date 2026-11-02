@@ -36,7 +36,12 @@ const toggleClick = () => {
       placement: 'right'
     }"
     class="center-collapse"
+    role="button"
+    tabindex="0"
+    :aria-label="isActive ? t('layout.fold') : t('layout.unfold')"
     @click="toggleClick"
+    @keydown.enter.prevent="toggleClick"
+    @keydown.space.prevent="toggleClick"
   >
     <IconifyIconOffline
       :class="[iconClass, themeColor === 'light' ? '' : 'text-primary']"

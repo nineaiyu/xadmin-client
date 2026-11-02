@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { login } from "./helpers";
 
 /**
@@ -27,7 +27,7 @@ const OFFSET_BOTTOM = 110;
 /** 允许 1px 舍入（重算带 1px 余量）与库内重算的 1px 差 */
 const TOLERANCE = 3;
 
-async function measure(page: import("@playwright/test").Page) {
+async function measure(page: Page) {
   return page.evaluate(() => {
     const table = document.querySelector(
       ".re-plus-page .pure-table .el-table"
@@ -53,6 +53,22 @@ async function measure(page: import("@playwright/test").Page) {
   });
 }
 
+/** 连续两次测量一致才视为布局收敛（替代固定毫秒盲等）。 */
+async function waitForLayoutSettled(page: Page) {
+  let previous: string | null = null;
+  await expect
+    .poll(
+      async () => {
+        const snapshot = JSON.stringify(await measure(page));
+        const settled = snapshot === previous;
+        previous = snapshot;
+        return settled;
+      },
+      { timeout: 10_000, intervals: [100, 200, 300, 400] }
+    )
+    .toBe(true);
+}
+
 test.describe("列表页表格自适应高度", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -64,16 +80,16 @@ test.describe("列表页表格自适应高度", () => {
         .locator(".re-plus-page .el-table__body tbody tr")
         .first();
       await row.waitFor({ timeout: 20_000 });
-      await page.waitForTimeout(900);
+      await waitForLayoutSettled(page);
 
       await page.reload();
       await row.waitFor({ timeout: 20_000 });
-      await page.waitForTimeout(1200);
+      await waitForLayoutSettled(page);
       const afterReload = await measure(page);
 
       // 微调视口宽度（模拟用户随手拖动窗口）
       await page.setViewportSize({ width: 1442, height: 900 });
-      await page.waitForTimeout(700);
+      await waitForLayoutSettled(page);
       const afterResize = await measure(page);
 
       expect(

@@ -80,8 +80,12 @@ export function useAiProfileActions({
       .probe(row.pk, withVision ? { vision: true } : undefined)
       .catch(normalizeError);
     if (isSuccess(res)) {
-      const data = ((res as { data?: Record<string, { ok?: boolean }> }).data ??
-        {}) as Record<string, { ok?: boolean } | undefined>;
+      const raw = (res.data ?? {}) as Record<string, unknown>;
+      // 生产返回 {task_id,state}（异步探测待轮询）：本次没有能力结论
+      const data = ("task_id" in raw ? {} : raw) as Record<
+        string,
+        { ok?: boolean } | undefined
+      >;
       const okList = ["json", "tool_calls", "reasoning"]
         .concat(withVision ? ["vision"] : [])
         .filter(key => data[key]?.ok);

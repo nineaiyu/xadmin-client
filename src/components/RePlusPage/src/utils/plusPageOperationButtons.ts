@@ -1,3 +1,4 @@
+import { computed } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { handleShowChangeHistory } from "./handle-history";
 import View from "~icons/ep/view";
@@ -21,6 +22,7 @@ export function buildDefaultOperationButtons({
   api,
   auth,
   hideEdit,
+  editAllowed,
   hideDetail,
   hideChangeHistory,
   hasDetailFetch,
@@ -33,6 +35,7 @@ export function buildDefaultOperationButtons({
   api: Partial<BaseApi>;
   auth: Partial<ApiAuthProps>;
   hideEdit: boolean;
+  editAllowed?: (row: Record<string, unknown>) => boolean;
   hideDetail: boolean;
   hideChangeHistory: boolean;
   /** 页面挂了详情兜底拉取：拉取期间按钮 loading（加载中兜底） */
@@ -54,7 +57,7 @@ export function buildDefaultOperationButtons({
 
   return [
     {
-      text: t("buttons.edit"),
+      text: computed(() => t("buttons.edit")),
       code: "update",
       props: {
         type: "primary",
@@ -68,11 +71,14 @@ export function buildDefaultOperationButtons({
       index: -30,
       show: row =>
         Boolean(
-          !hideEdit && (auth.partialUpdate || auth.update) && ownerAllows(row)
+          !hideEdit &&
+          (auth.partialUpdate || auth.update) &&
+          ownerAllows(row) &&
+          (!editAllowed || editAllowed(row))
         )
     },
     {
-      text: t("buttons.delete"),
+      text: computed(() => t("buttons.delete")),
       code: "delete",
       confirm: { title: t("buttons.confirmDelete") },
       props: {
@@ -116,7 +122,7 @@ export function buildDefaultOperationButtons({
       show: hideDetail ? false : Boolean(auth.list || auth.retrieve)
     },
     {
-      text: t("buttons.changeHistory"),
+      text: computed(() => t("buttons.changeHistory")),
       code: "changeHistory",
       props: {
         type: "info",

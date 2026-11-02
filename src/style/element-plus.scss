@@ -138,7 +138,7 @@
     }
   }
 
-  /* 基准字号走令牌，且必须在响应式规则之前（同特异性后写覆盖） */
+  /* 基准字号走令牌，必须写在响应式规则之前：同特异性下后写规则胜出 */
   .el-input__inner {
     font-size: var(--font-size-md);
   }
@@ -163,23 +163,23 @@
 
   /* Firefox */
   scrollbar-width: thin; /* 可选值为 'auto', 'thin', 'none' */
-  ::-webkit-scrollbar {
+  &::-webkit-scrollbar {
     width: 6px; /* 滚动条宽度 */
   }
 
   /* 滚动条轨道 */
-  ::-webkit-scrollbar-track {
+  &::-webkit-scrollbar-track {
     background: transparent; /* 轨道颜色 */
   }
 
   /* 滚动条滑块（与 EP 边框色同源，暗色由 --border 自动反转） */
-  ::-webkit-scrollbar-thumb {
+  &::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
     border-radius: var(--radius-sm);
   }
 
   /* 滚动条滑块：hover状态 */
-  ::-webkit-scrollbar-thumb:hover {
+  &::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--border-strong)); /* 滑块hover颜色 */
   }
 }

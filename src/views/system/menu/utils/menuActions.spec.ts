@@ -15,6 +15,7 @@ vi.mock("@/plugins/i18n", () => ({
 }));
 
 vi.mock("@/utils/message", () => ({ message: vi.fn() }));
+vi.mock("@/router/utils", () => ({ hasAuth: () => true }));
 
 // 确认框内容以 vnode 传给 useConfirm，单测捕获后断言其文本
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: vi.fn() }));
@@ -151,8 +152,7 @@ describe("confirmMenuDelete", () => {
       return true;
     });
     const api = {
-      baseApi: "/api/system/menu",
-      request: vi.fn().mockResolvedValue({
+      impact: vi.fn().mockResolvedValue({
         data: {
           results: [
             {

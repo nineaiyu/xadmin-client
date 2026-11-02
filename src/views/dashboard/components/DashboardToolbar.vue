@@ -13,6 +13,7 @@ defineOptions({ name: "DataDashboardToolbar" });
 
 const props = defineProps<{
   canEdit: boolean;
+  canManageDatasets?: boolean;
   canCreate: boolean;
   canDestroy: boolean;
   current: DashboardItem | null;
@@ -155,7 +156,12 @@ const { t } = useI18n();
           :label="t(item.labelKey)"
         />
       </el-select>
-      <el-button link type="primary" @click="emit('goDatasets')">
+      <el-button
+        v-if="canManageDatasets"
+        link
+        type="primary"
+        @click="emit('goDatasets')"
+      >
         {{ t("dashboard.manageDatasets") }}
       </el-button>
     </div>

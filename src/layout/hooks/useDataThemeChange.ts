@@ -1,5 +1,4 @@
-import { onMounted, onUnmounted, ref } from "vue";
-import { useLayout } from "./useLayout";
+import { computed, ref } from "vue";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useGlobal } from "@pureadmin/utils";
 import {
@@ -12,13 +11,33 @@ import { normalizeThemeMode } from "./themeMode";
 import { withCircleReveal } from "@/utils/viewTransition";
 
 /**
+ * 布局存储引用缓存：useGlobal 依赖 getCurrentInstance，而本 hook 也会在
+ * matchMedia 回调 / 命令面板回调里被调用——事件期没有组件实例，getCurrentInstance
+ * 返回 null，$storage 变 undefined 后读 layout 直接抛 TypeError
+ * （表现为挂载时首次同步生效，之后系统明暗切换与命令面板「切换主题」静默失效）。
+ * 首次调用必发生在布局 setup 内，缓存后事件回调复用同一引用。
+ */
+let cachedStorage: GlobalPropertiesApi["$storage"] | null = null;
+
+function resolveStorage() {
+  if (cachedStorage) return cachedStorage;
+  const { $storage } = useGlobal<GlobalPropertiesApi>();
+  if ($storage) cachedStorage = $storage;
+  return $storage;
+}
+
+/**
  * 深浅色与主题色切换：主题色方案见 themeColorScheme.ts，重置流程见 appReset.ts，
  * 明暗切换的圆形揭示动效见 utils/viewTransition.ts。
  */
 export function useDataThemeChange() {
-  const { layoutTheme, layout } = useLayout();
-
-  const { $storage } = useGlobal<GlobalPropertiesApi>();
+  // 事件回调期首次调用时（极端情况）storage 仍可能为空：仅用于读取默认值，
+  // 写入路径发生在布局内的调用点，storage 必然已初始化
+  const $storage = resolveStorage() as GlobalPropertiesApi["$storage"];
+  const layoutTheme = computed(
+    () => $storage?.layout ?? ({} as typeof $storage.layout)
+  );
+  const layout = computed(() => $storage?.layout?.layout ?? "vertical");
   const dataTheme = ref<boolean>($storage?.layout?.darkMode ?? false);
   const themeMode = ref<string>($storage?.layout?.themeMode ?? "");
   const body = document.documentElement as HTMLElement;
@@ -55,7 +74,7 @@ export function useDataThemeChange() {
     } else {
       setLayoutThemeColor(useEpThemeStoreHook().epTheme, false);
     }
-    if (!dataTheme.value && $storage.layout.themeColor === "light") {
+    if (!dataTheme.value && $storage?.layout?.themeColor === "light") {
       setLayoutThemeColor("light", false);
     }
 
@@ -85,34 +104,4 @@ export function useDataThemeChange() {
     setCustomThemeColor,
     applyThemePreset
   };
-}
-
-/**
- * 「跟随系统」的常驻监听：操作系统明暗变化时即时应用（仅 `themeMode === "system"` 生效）。
- *
- * 挂在布局层而非设置面板内——面板内容按需挂载（打开时才渲染），监听若随面板卸载
- * 会丢；模式判定读 `$storage.layout.themeMode`（面板改动写入同一处，避免快照过期）。
- */
-export function useSystemThemeWatch() {
-  const { $storage } = useGlobal<GlobalPropertiesApi>();
-  const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
-
-  function applySystemTheme() {
-    if (($storage?.layout?.themeMode ?? "") !== "system") return;
-    const { dataTheme, dataThemeChange } = useDataThemeChange();
-    dataTheme.value = mediaQueryList.matches;
-    // 外部事件（含挂载时的首次同步）不播揭示动效：无用户指针落点可作圆心
-    dataThemeChange("system", { animate: false });
-  }
-
-  onMounted(() => {
-    applySystemTheme();
-    mediaQueryList.addEventListener("change", applySystemTheme);
-  });
-
-  onUnmounted(() =>
-    mediaQueryList.removeEventListener("change", applySystemTheme)
-  );
-
-  return { applySystemTheme };
 }

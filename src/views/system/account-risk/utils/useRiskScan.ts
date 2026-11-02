@@ -12,7 +12,7 @@ const POLL_INTERVAL = 1000;
 const MAX_POLL_MS = 10 * 60 * 1000;
 
 /**
- * 异步巡检（P2-112）：投递后轮询 scan-status，页面显示 progress/stage；
+ * 异步巡检：投递后轮询 scan-status，页面显示 progress/stage；
  * 终态刷新列表与统计。同步接口时代的长耗时请求不再阻塞浏览器。
  */
 export function useRiskScan({

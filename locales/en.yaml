@@ -185,6 +185,7 @@ accountRisk:
   scanRunning: Scan in progress, please wait…
   scanDone: "Scan completed: {total} risk item(s)"
   scanFailed: Scan failed, please try again later
+  clearQuickFilter: Clear quick filter
   scanStatusFailed: Failed to query scan progress
   scanTimeout: Timed out waiting for the scan; check task center later
   batchHandle: Batch Handle
@@ -316,6 +317,7 @@ avatarUpload:
   tips: "Tips: Right-click the cropping area can open the function menu"
   imageSize: "Image size: { x } x { y } pixels"
   fileSize: "File size: { x } ({ y } bytes)"
+  loadFailed: "Failed to load the image, please try another one"
 
 tagInput:
   placeholder: Enter to continue
@@ -708,6 +710,7 @@ layout:
   shortcutEnable: Enable shortcuts
   shortcutEnableTip: Turning this off disables all shortcuts (header buttons keep working)
   shortcutSearch: Global search
+  commandPaletteEntry: Command palette
   shortcutSearchTip: Opens the command palette; the header icon keeps working when disabled
   shortcutLock: Lock screen
   shortcutLockTip: Ignored while typing in a form field
@@ -865,6 +868,9 @@ labels:
   yes: Yes
   no: No
   noData: No data
+  loading: Loading…
+  colon: ": "
+  labelValue: "{label}: {value}"
 
 exportImport:
   import: Import
@@ -877,7 +883,7 @@ exportImport:
   create: Create
   update: Update
   upload: Upload
-  uploadRuleTip: upload file not exist
+  uploadRuleTip: File cannot be empty
   uploadTip: Drag file here or click here to upload
   pleaseSelectFile: Please select a file first
   downloadTip: Download { action } template
@@ -1072,6 +1078,7 @@ tag:
   assignDone: Tags updated
   selectPlaceholder: Select tags
   selectRequired: Select at least one tag
+  loadFailed: Failed to load current tags; submitting is blocked to avoid clearing them
   batchAssignTitle: Tag objects in bulk
   batchHint: "Bulk: the selected mode is applied to every chosen object"
   batchDone: Tagged {success} object(s)
@@ -1155,6 +1162,7 @@ results:
   operateConfirmTitle: Confirm the operation?
   success: Executed successfully
   failed: Execution failure
+  failedWithDetail: "Failed: {detail}"
   loadFailedRetry: Failed to load data. Please close and try again
   batchDestroy: Batch deletes the { count } items
   batchRead: Batch read the { count } items
@@ -1194,6 +1202,8 @@ buttons:
   maximize: Maximize
   restoreMaximize: Restore
   pinTab: Pin Tab
+  scrollLeft: Scroll tags left
+  scrollRight: Scroll tags right
   unpinTab: Unpin Tab
   openInNewWindow: Open in new window
   fullScreenToggle: Toggle full screen
@@ -1285,9 +1295,9 @@ menus:
   taskManage: Task Management
   taskMonitor: Task Monitor
   taskExecution: Execution History
-  personalCenter: UserInfo
-  accountSettings: Account
-  messageCenter: Notice
+  personalCenter: Personal Center
+  accountSettings: Account Settings
+  messageCenter: Message Center
   chat: Chat
   apiDocs: Api Docs
   exportCenter: Download Center
@@ -1730,6 +1740,7 @@ mfa:
   resendAfter: "Resend in {seconds}s"
   codeSent: The verification code has been sent
   noAvailableMethod: No available verification method, please contact the administrator
+  methodsLoadFailed: Failed to load verification methods, please retry
   cancel: Cancel
   verify: Confirm
   verifySuccess: Verification successful
@@ -1805,6 +1816,7 @@ systemUser:
   nickname: Nickname
   gender: Gender
   dept: Department
+  deptChoicesTruncated: Department options were truncated by the backend limit, so the list is incomplete. Use the filter to search by keyword, or ask an administrator to raise the option limit.
   date_joined: Registration Date
   last_login: Last Login Date
   recentLogins: Recent logins
@@ -2145,6 +2157,7 @@ permissionPreview:
   emptyApis: No API permissions
   fieldDisabled: Field permission disabled, cropping inactive
   fieldBlank: Models without a field whitelist have their fields trimmed to empty (invisible at runtime)
+  fieldEmpty: This role has no field whitelist configured
   codeTag: Code
   roleMenus: Menus Granted to Role
   roleFields: Field Grants
@@ -2217,22 +2230,22 @@ systemMenu:
   type: Type
   title: Title
   icon: Icon
-  transitionLeave: LeaveAnimation
-  transitionEnter: EntryAnimation
+  transitionLeave: Leave Animation
+  transitionEnter: Enter Animation
   cache: Cache
-  componentName: ComponentName
-  componentPath: ComponentPath
-  exampleComponentName: "For example: 'user', if the external network address needs internal link access, start with 'http(s)://'"
-  exampleRoutePath: "Route address for access, such as' /user ', '/system/about'"
-  exampleComponentPath: "The access component path, such as' system/user/index ', defaults to the 'views' directory"
-  exampleCache: "If yes is selected, it will be cached by 'keep-alive', and the name and address of the matching component must be consistent"
+  componentName: Component Name
+  componentPath: Component Path
+  exampleComponentName: "For example: `user`, must match the component name defined in the frontend; external addresses accessed via internal links must start with `http(s)://`"
+  exampleRoutePath: "Route address for access, e.g. `/user`, `/system/about`"
+  exampleComponentPath: "Component path for access, e.g. `system/user/index`, defaults to the `views` directory"
+  exampleCache: "If Yes, it will be cached by `keep-alive`; the component `name` must match the route address"
   exampleShowLink: "Hide the route will not appear in the sidebar, but it will still be accessible"
   exampleMenuStatus: "If disabled, the route will not appear in the sidebar and cannot be accessed"
   exampleRequestStatus: "Select Disable to invalidate permissions"
   exampleExternalLink: "If it exists, the address needs to start with 'http(s)://'"
   verifyExampleExternalLink: "Default is empty unless there is an external link"
   exampleAnimation: "The embedded iframe page loads the animation for the first time"
-  examplePermissionCode: "Controller the permissions defined in character, such as: PreAuthorize(`permission.HashPermission('menu: query)`)"
+  examplePermissionCode: "Permission code defined in the controller, e.g. PreAuthorize(`permission.hashPermission('menu:query')`)"
   path: RoutePath
   verifyType: Please choice menu type
   verifyTitle: Please enter menu title
@@ -2244,15 +2257,15 @@ systemMenu:
   verifyPermissionName: Please enter permission name
   verifyPermissionCode: Please enter permission code
   pathError: The route path must start with '/'
-  parentNode: ParentNode
-  showParentMenu: ShowParentMenu
-  showLink: ShowLink
-  externalLink: ExternalLink
+  parentNode: Parent Node
+  showParentMenu: Show Parent Menu
+  showLink: Show Link
+  externalLink: External Link
   animation: Animation
-  permissionName: PermissionName
-  permissionCode: PermissionCode
-  permissionPath: PermissionPath
-  requestMethod: RequestMethod
+  permissionName: Permission Name
+  permissionCode: Permission Code
+  permissionPath: Permission Path
+  requestMethod: Request Method
   directory: Directory
   menu: Menu
   permissions: Permissions
@@ -2359,6 +2372,7 @@ systemMenu:
     batchActive: "{ count } menu(s) updated"
     batchMixedTypes: Selection contains mixed menu node types; batch activate only supports a single type
     batchPermissionMixed: Permission codes cannot be batch updated together with menus or directories (their state is independent of menu activation)
+    cascadeFailed: The node was saved, but its children could not be disabled; please retry
     batchFailed: "All { count } items failed"
     batchPartial: "Partially applied: { ok } updated, { failed } failed"
     sorted: Order saved
@@ -2414,7 +2428,7 @@ logsOperation:
   browser: Browser
   path: Request Path
   creator: Creator
-  body: Response Body
+  body: Request Body
   response_code: Status Code
   status_code: Business Code
   created_time: Created time
@@ -2577,6 +2591,8 @@ systemUploadFile:
   uploadTip: Files with a size less than
   defaultSizeTip: Upload size config is unavailable; using the default limit ({size})
   quotaTip: Re-uploading the same file reuses the stored copy, while the quota still counts each record in full
+  quotaUsage: "{used} used / {quota} quota"
+  uploadFailed: "{name} upload failed: {detail}"
   usageRate: Usage
   usedSpace: Used
   remainingSpace: Remaining
@@ -2622,7 +2638,8 @@ chat:
   emptyRooms: No chats
   loadRoomsFailed: Failed to load conversations, please retry
   emptyContacts: No contacts
-  emptyMessages: No messages yet, say hello
+  emptyMessages: No messages yet
+  historyFailed: Failed to load message history, please retry, say hello
   selectRoom: Select a chat to start
   online: Online
   offline: Offline
@@ -2763,7 +2780,7 @@ login:
   phoneCorrectReg: Please enter the correct phone number format
   emailReg: Please enter the email
   emailCorrectReg: Please enter the correct email format
-  passwordRuleReg: The password format should be any combination of 8-18 digits
+  passwordRuleReg: The password must be any two of 8-18 digits, letters, and symbols
   passwordSureReg: Please enter confirm password
   passwordDifferentReg: The two passwords do not match!
   passwordUpdateReg: Password has been updated
@@ -2914,6 +2931,7 @@ apiScope:
   grantTip: The list shows the APIs you are allowed to call. Once selected, the credential can only call those (out-of-scope requests get 403). Empty = unrestricted, and you can adjust it later
   selectPlaceholder: Search and select the APIs to allow
   noOptions: No API available for authorization (ask an administrator to grant menu permissions)
+  optionsLoadFailed: Failed to load interface options; existing entries are kept and stay editable in the custom list
   selected: "{n} selected"
   emptyMeansUnlimited: Nothing selected = unrestricted (every API you can access)
   custom: Custom entries (advanced)
@@ -3063,7 +3081,7 @@ settingAccountSecurity:
 
 settingPassword:
   tips: Password should be
-  minLength: Min Length ｛length｝
+  minLength: Min Length {length}
   upperCase: Upper Case
   lowerCase: Lower Case
   number: Number
@@ -3343,6 +3361,8 @@ recycleBin:
 
 systemMonitor:
   thresholdNoPermission: Missing thresholds:SystemMonitor; threshold settings are unavailable
+  slowWindow: "(≥ {threshold}s / 24h)"
+  taskHealthTitle: Task health
   eventsDenied: Missing events:SystemMonitor; events are unavailable
   eventsLoadFailed: Failed to load events, please retry
   worker: Worker
@@ -3532,6 +3552,7 @@ mask:
   previewBtn: Preview
   previewRoles: Viewer Roles
   previewRolesTip: Simulates a non-superuser viewer's role set; empty means no roles
+  previewRolesFixed: Previewing as the roles bound to the rule (no role list permission; switching is disabled)
   previewNotApplied: Selected viewer roles do not match this rule; the field is not masked in lists
   previewRolesLoadFailed: Failed to load role options
   customOnlyTip: Only used for custom type
@@ -3659,12 +3680,12 @@ dataDataset:
   required: Name, model and columns are required
   saveOk: Saved
   deleteConfirm: Delete dataset "{name}"? Dashboard cards and reports referencing it will no longer resolve data
-  dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need |date
+  dateFieldTip: Default group field for line-trend cards (optional); JSON date columns need {'|'}date
   fieldPermissionMode: Field permission mode
   fieldPermissionInherit: Inherit (no pruning when unconfigured)
   fieldPermissionStrict: Strict (empty result when unconfigured)
   fieldPermissionTip: Use strict for shared datasets; run dataset_field_permission_audit before switching
-  jsonColumnTip: "JSON path columns: {roots}.key; add |number for numeric, |date for date/trend (value must be YYYY-MM-DD)"
+  jsonColumnTip: "JSON path columns: {roots}.key; add {'|'}number for numeric, {'|'}date for date/trend (value must be YYYY-MM-DD)"
   exportCsv: Export CSV
   previewRows: Rows
   previewAggregate: Aggregate
@@ -3755,7 +3776,7 @@ dataScreen:
   paneTextFormat: Text format
   textFormatPlain: Plain
   textFormatRich: Rich
-  richTextHint: "Markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c] [text](https://…) ![image](https://…); '- ' bullet lists, '1. ' ordered lists, and | a | b | tables with a |---| separator row"
+  richTextHint: "Markup: **bold** *italic* __underline__ ~~strike~~ [c=#rrggbb]color[/c] [text](https://…) ![image](https://…); '- ' bullet lists, '1. ' ordered lists, and {'|'} a {'|'} b {'|'} tables with a {'|'}---{'|'} separator row"
   richBold: Bold
   richItalic: Italic
   richUnderline: Underline
@@ -5009,6 +5030,11 @@ codegen:
   aiDraftFlagReadonly: read-only
   aiDraftFlagInTable: in table
   aiDraftFlagInSearch: searchable
+  aiDraftFlagInputType: input type
+  aiDraftFlagDict: dictionary
+  aiDraftFlagFieldClass: field class
+  aiDraftUnknownFields: "{names} are not in the current model plan; appended from the draft (preview/download may be rejected by the server)"
+  planImportTooLarge: Plan file is too large (max {size} MB); split it before importing
   aiDraftNeedModel: Pick a model to use AI draft
   planRename: Rename plan
   planRenamePrompt: Enter a new plan name
@@ -5066,6 +5092,8 @@ codegen:
   fieldConfig: Field Config
   fieldSummary: "{enabled}/{total} fields enabled (drag to reorder)"
   resetFields: Reset
+  moveFieldUp: Move field up
+  moveFieldDown: Move field down
   fieldName: Field
   fieldLabel: Label
   colTable: Table

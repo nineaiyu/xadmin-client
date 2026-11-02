@@ -1,4 +1,4 @@
-import { onBeforeUnmount, watch, type Ref } from "vue";
+import { onBeforeUnmount, ref, watch, type Ref } from "vue";
 import { WS } from "@/utils/websocket";
 import {
   isOutboundMessage,
@@ -51,8 +51,11 @@ export function useDashboardChannel(deps: {
   dashboardPk: Ref<string | null>;
   /** 应用服务端聚合数据帧（dashboard_data，按 card 免拉刷新；由调用方路由到卡片句柄） */
   applyFrame: (frame: DashboardDataPayload) => void;
+  /** 帧到达时刻（与自动刷新共用；缺省由本通道自建） */
+  dataFrameAt?: Ref<number>;
 }) {
   let ws: WS | null = null;
+  const dataFrameAt = deps.dataFrameAt ?? ref(Date.now());
 
   const startWs = (pk: string) => {
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -69,6 +72,7 @@ export function useDashboardChannel(deps: {
       )
         return;
       if (!isSuccess(res) || !res.data) return;
+      dataFrameAt.value = Date.now();
       deps.applyFrame(res.data);
     });
   };
@@ -90,5 +94,5 @@ export function useDashboardChannel(deps: {
 
   onBeforeUnmount(stopWs);
 
-  return { stopWs };
+  return { stopWs, dataFrameAt };
 }

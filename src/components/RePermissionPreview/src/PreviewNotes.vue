@@ -7,8 +7,8 @@ defineProps<{ notes: string[] }>();
 
 <template>
   <el-alert
-    v-for="note in notes"
-    :key="note"
+    v-for="(note, index) in notes"
+    :key="`${index}-${note}`"
     :title="note"
     class="mt-2"
     :closable="false"

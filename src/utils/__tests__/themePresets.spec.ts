@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { hslTripletToHex } from "@/utils/color";
 import {
   CUSTOM_THEME_PRESET,
   DEFAULT_THEME_PRESET,
@@ -58,6 +59,20 @@ describe("主题预设：主色接管口径", () => {
     expect(themePresetPrimaryHex("not-a-preset", true)).toBe("");
   });
 
+  it("SCSS 预设块的主色与 TS 清单逐项一致（不只比集合）", () => {
+    for (const type of coloredTypes) {
+      for (const dark of [false, true]) {
+        const selector = `html${dark ? ".dark" : ""}[data-theme-preset="${type}"]`;
+        const block = SCSS.split(selector)[1]?.split("}")[0] ?? "";
+        const primary = block.match(/--primary:\s*([^;]+);/)?.[1]?.trim();
+        expect(primary, `${type} ${dark ? "dark" : "light"}`).toBeTruthy();
+        expect(themePresetPrimaryHex(type, dark)).toBe(
+          hslTripletToHex(primary as string)
+        );
+      }
+    }
+  });
+
   it("内置预设按明暗取配套主色（中性预设暗色用亮色主色）", () => {
     expect(themePresetPrimary("zinc", false)).not.toBe(
       themePresetPrimary("zinc", true)
@@ -65,6 +80,31 @@ describe("主题预设：主色接管口径", () => {
     for (const type of coloredTypes) {
       expect(themePresetPrimaryHex(type, false)).toMatch(/^#[0-9a-f]{6}$/);
       expect(themePresetPrimaryHex(type, true)).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+});
+
+/** 取预设块内的 --primary 三元组（dark=false 取亮色块） */
+function scssPrimary(type: string, dark: boolean): string | undefined {
+  const selector = dark
+    ? `html.dark[data-theme-preset="${type}"]`
+    : `html[data-theme-preset="${type}"]`;
+  const start = SCSS.indexOf(`${selector} {`);
+  if (start < 0) return undefined;
+  const block = SCSS.slice(start, SCSS.indexOf("}", start));
+  return /--primary:\s*([^;]+);/.exec(block)?.[1]?.trim();
+}
+
+describe("主题预设：主色值与 TS 清单逐项一致", () => {
+  it("每个着色预设的亮/暗主色与 presets.scss 完全相等", () => {
+    for (const item of themePresets) {
+      if (item.type === DEFAULT_THEME_PRESET) continue;
+      expect(scssPrimary(item.type, false), `${item.type} 亮色主色`).toBe(
+        item.primary
+      );
+      expect(scssPrimary(item.type, true), `${item.type} 暗色主色`).toBe(
+        item.darkPrimary ?? item.primary
+      );
     }
   });
 });

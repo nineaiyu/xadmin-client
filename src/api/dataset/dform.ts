@@ -256,7 +256,7 @@ class DesignerApi extends BaseApi {
     return this.request<DetailResult<DynamicFormItem>>(
       "get",
       {},
-      {},
+      undefined,
       `${this.baseApi}/${pk}`
     );
   };

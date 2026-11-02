@@ -132,11 +132,20 @@ function onImportClick() {
   fileInput.value?.click();
 }
 
+/** 导入文件大小上限（MB）：超大 JSON 会阻塞主线程并连发大量写请求 */
+const IMPORT_MAX_MB = 2;
+
 async function onImportChange(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   input.value = "";
   if (!file) return;
+  if (file.size > IMPORT_MAX_MB * 1024 * 1024) {
+    message(t("codegen.planImportTooLarge", { size: IMPORT_MAX_MB }), {
+      type: "warning"
+    });
+    return;
+  }
   emit("importPlans", await file.text());
 }
 

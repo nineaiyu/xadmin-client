@@ -13,6 +13,11 @@ type BatchAssignResult = {
   failures?: unknown[];
   detail?: string;
   code?: number;
+  /** DetailResult 载荷：后端把逐对象明细放在 data 里 */
+  data?: {
+    success?: unknown[];
+    failures?: unknown[];
+  };
 };
 
 /** 打标提交公共依赖（弹窗由 useTagAssign 持有，提交后负责关闭与刷新） */
@@ -47,8 +52,10 @@ export async function submitTagBatchAssign({
     .batchAssign({ resource, pks, tags, mode })
     .catch(normalizeError)) as BatchAssignResult;
   if (isSuccess(res)) {
-    const ok = res.success?.length ?? 0;
-    const failed = res.failures?.length ?? 0;
+    // 明细在 data 里（{code, detail, data:{success, failures}}）：读顶层会恒为 0，
+    // 逐对象失败也永远不会提示
+    const ok = res.data?.success?.length ?? 0;
+    const failed = res.data?.failures?.length ?? 0;
     if (failed) {
       message(t("tag.batchDonePartial", { success: ok, failures: failed }), {
         type: "warning"

@@ -19,7 +19,6 @@ export function usePlusSearch(
   /** 展示字段名（valueProps.label 支持字符串/Ref，统一取值兜底 "label"） */
   const labelKey = computed(() => unref(valueProps?.label) ?? "label");
   const { t } = useI18n();
-  const selectVisible = ref(false);
 
   /** 分页配置 */
   const defaultPagination = reactive<PaginationProps>({
@@ -60,7 +59,9 @@ export function usePlusSearch(
             label: formatValue(row, labelKey.value)
           };
           if (isArray(selectValue.value)) {
-            selectValue.value.push(item);
+            // 不可变更新：v-model 数组只经 update:modelValue 换新引用，
+            // 父级按数组身份/浅监听时的更新才能被感知
+            selectValue.value = [...selectValue.value, item];
           }
         }
       });
@@ -72,7 +73,9 @@ export function usePlusSearch(
           valPks.indexOf(row.pk) === -1
         ) {
           if (isArray(selectValue.value)) {
-            selectValue.value.splice(getSelectPks().indexOf(row.pk), 1);
+            selectValue.value = selectValue.value.filter(
+              item => item.pk !== row.pk
+            );
           }
         }
       });
@@ -96,21 +99,19 @@ export function usePlusSearch(
     selectValue.value = props.multiple ? [] : undefined;
   };
 
+  /**
+   * 确定：关闭下拉并失焦。
+   *
+   * 只调用 `el-select` 的公开方法 `blur()`（内部同步收起面板再失焦），
+   * 不再读写 `expanded` / `visible` 这类非公开状态——EP 升级改名即静默失效。
+   */
   const onSure = async () => {
-    selectVisible.value = false;
-    selectRef.value.expanded = false;
     await nextTick();
-    selectRef.value.blur();
+    selectRef.value?.blur();
   };
 
-  function handleClickOutSide() {
-    if (selectVisible.value) {
-      selectRef.value.visible = true;
-    }
-  }
-
   const searchComplete = ({ res: { data } }: { res: DetailResult }) => {
-    dataList.value = data?.results;
+    dataList.value = data?.results ?? [];
     nextTick(() => {
       const { toggleRowSelection } = tableRef.value.getTableRef().getTableRef();
       if (props.multiple) {
@@ -149,7 +150,6 @@ export function usePlusSearch(
   return {
     t,
     selectValue,
-    selectVisible,
     defaultPagination,
     onSure,
     onClear,
@@ -157,7 +157,6 @@ export function usePlusSearch(
     removeTag,
     searchComplete,
     handleRowClick,
-    handleClickOutSide,
     handleSelectionChange
   };
 }

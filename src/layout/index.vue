@@ -8,10 +8,8 @@ import { emitter } from "@/utils/mitt";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useUserStoreHook } from "@/store/modules/user";
-import {
-  useDataThemeChange,
-  useSystemThemeWatch
-} from "@/layout/hooks/useDataThemeChange";
+import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import { useSystemThemeWatch } from "@/layout/hooks/useSystemThemeWatch";
 import { useHeaderAutoHide } from "@/layout/hooks/useHeaderAutoHide";
 import { usePreferenceAttributes } from "@/layout/hooks/usePreferenceAttributes";
 import { useSplitSidebar } from "@/layout/hooks/useSplitSidebar";
@@ -34,6 +32,7 @@ import {
   getCurrentInstance,
   h,
   onBeforeMount,
+  onBeforeUnmount,
   onMounted,
   reactive,
   ref,
@@ -149,7 +148,8 @@ const { hidden: headerHidden } = useHeaderAutoHide(
   () =>
     fixedHeader.value &&
     headerModeToAutoHide(headerMode.value) &&
-    !fullContent.value
+    !fullContent.value,
+  () => headerMode.value === "auto-scroll"
 );
 
 // 圆角 / 字号 / 侧栏宽度 / 灰度色弱 / 半暗侧栏同步到 <html>，随设置面板改动实时生效；
@@ -197,6 +197,12 @@ window.addEventListener("pointerdown", endStartupQuiet, {
 window.addEventListener("keydown", endStartupQuiet, {
   once: true,
   capture: true
+});
+// 初次交互后 once 监听自动移除；无交互即卸载（布局重挂载）时必须显式清理，避免累积
+onBeforeUnmount(() => {
+  window.removeEventListener("pointerdown", endStartupQuiet, true);
+  window.removeEventListener("keydown", endStartupQuiet, true);
+  cancelAnimationFrame(resizeFrame);
 });
 watch(
   () => [$storage.layout, $storage.configure],
@@ -281,45 +287,50 @@ function toggle(device: string, bool: boolean) {
 // 判断是否可自动关闭菜单栏
 let isAutoCloseSidebar = true;
 
+let resizeFrame = 0;
 useResizeObserver(appWrapperRef, entries => {
-  const entry = entries[0];
-  const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
-  // 视口尺寸无条件同步（SettingStretch 等消费方在移动端也需真实尺寸）；
-  // 移动端的自动折叠/布局回落逻辑仍跳过，避免覆写桌面偏好
-  useAppStoreHook().setViewportSize({ width, height });
-  if (isMobile) return;
-  if (width <= BREAKPOINTS.md) {
-    // 窄屏临时回落竖排：只改运行时 body 属性，不覆写持久化布局偏好——
-    // 否则窄屏下刷新页面会把用户的 mix / horizontal 选择永久覆盖成 vertical
-    // （渲染侧由 resolveLayoutMode 的 mobile 强制回落兜底，无需落库）
-    applyLayoutTheme("vertical");
-  } else {
-    setTheme(useAppStoreHook().layout);
-  }
-  /** width app-wrapper类容器宽度（断点见 src/utils/breakpoints.ts，与 SCSS 侧同源）
-   * 0 < width <= md(768) 隐藏侧边栏
-   * md(768) < width <= lg(1024) 折叠侧边栏
-   * width > lg(1024) 展开侧边栏
-   */
-  if (width > 0 && width <= BREAKPOINTS.md) {
-    toggle("mobile", false);
-    isAutoCloseSidebar = true;
-  } else if (width > BREAKPOINTS.md && width <= BREAKPOINTS.lg) {
-    if (isAutoCloseSidebar) {
-      toggle("desktop", false);
+  // observer 在窄/宽边界来回拖动时逐事件触发；合并到每帧一次，避免高频写 store
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(() => {
+    const entry = entries[0];
+    const [{ inlineSize: width, blockSize: height }] = entry.borderBoxSize;
+    // 视口尺寸无条件同步（SettingStretch 等消费方在移动端也需真实尺寸）；
+    // 移动端的自动折叠/布局回落逻辑仍跳过，避免覆写桌面偏好
+    useAppStoreHook().setViewportSize({ width, height });
+    if (isMobile) return;
+    if (width <= BREAKPOINTS.md) {
+      // 窄屏临时回落竖排：只改运行时 body 属性，不覆写持久化布局偏好——
+      // 否则窄屏下刷新页面会把用户的 mix / horizontal 选择永久覆盖成 vertical
+      // （渲染侧由 resolveLayoutMode 的 mobile 强制回落兜底，无需落库）
+      applyLayoutTheme("vertical");
+    } else {
+      setTheme(useAppStoreHook().layout);
+    }
+    /** width app-wrapper类容器宽度（断点见 src/utils/breakpoints.ts，与 SCSS 侧同源）
+     * 0 < width <= md(768) 隐藏侧边栏
+     * md(768) < width <= lg(1024) 折叠侧边栏
+     * width > lg(1024) 展开侧边栏
+     */
+    if (width > 0 && width <= BREAKPOINTS.md) {
+      toggle("mobile", false);
+      isAutoCloseSidebar = true;
+    } else if (width > BREAKPOINTS.md && width <= BREAKPOINTS.lg) {
+      if (isAutoCloseSidebar) {
+        toggle("desktop", false);
+        isAutoCloseSidebar = false;
+      }
+    } else if (width > BREAKPOINTS.lg && !set.sidebar.isClickCollapse) {
+      // 目标态已是「桌面 + 展开」时跳过：observer 高频触发，重复 toggle 会在
+      // 每次事件里写一次 storage（sidebarStatus 落盘）
+      if (!set.sidebar.opened || set.device !== "desktop")
+        toggle("desktop", true);
+      isAutoCloseSidebar = true;
+    } else {
+      // 宽屏 + 用户手动折叠：折叠是既成事实，只补设备档同步，不再写折叠态
+      if (set.device !== "desktop") useAppStoreHook().toggleDevice("desktop");
       isAutoCloseSidebar = false;
     }
-  } else if (width > BREAKPOINTS.lg && !set.sidebar.isClickCollapse) {
-    // 目标态已是「桌面 + 展开」时跳过：observer 高频触发，重复 toggle 会在
-    // 每次事件里写一次 storage（sidebarStatus 落盘）
-    if (!set.sidebar.opened || set.device !== "desktop")
-      toggle("desktop", true);
-    isAutoCloseSidebar = true;
-  } else {
-    // 宽屏 + 用户手动折叠：折叠是既成事实，只补设备档同步，不再写折叠态
-    if (set.device !== "desktop") useAppStoreHook().toggleDevice("desktop");
-    isAutoCloseSidebar = false;
-  }
+  });
 });
 
 onMounted(() => {
@@ -381,11 +392,7 @@ const LayHeader = defineComponent({
 <template>
   <div
     ref="appWrapperRef"
-    :class="[
-      'app-wrapper',
-      set.classes,
-      { 'header-off': headerHiddenByConfig, 'no-sidebar': !sidebarVisible }
-    ]"
+    :class="['app-wrapper', set.classes, { 'no-sidebar': !sidebarVisible }]"
     :style="{ '--layout-chrome-h': chromeHeight }"
   >
     <div

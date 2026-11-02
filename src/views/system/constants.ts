@@ -1,10 +1,3 @@
-export const MethodChoices = {
-  GET: "GET",
-  POST: "POST",
-  PUT: "PUT",
-  DELETE: "DELETE"
-};
-
 export const MenuChoices = {
   DIRECTORY: 0,
   MENU: 1,

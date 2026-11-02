@@ -72,6 +72,10 @@ export type SearchColumnsData = {
    */
   max_length?: number;
   /**
+   * 字符长度下限（DRF min_length，字段声明时下发）
+   */
+  min_length?: number;
+  /**
    * 数值下限（DRF min_value，字段声明时下发；前端 input-number 消费）
    */
   min_value?: number;

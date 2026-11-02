@@ -1,61 +1,79 @@
 shellEmulator: true
-shamefullyHoist: true
+# 依赖解析策略（供应链加固）：
+# - shamefullyHoist 关闭：只把直接依赖放到根 node_modules，未声明却恰好被提升的
+#   依赖不会再“本地可用、严格环境失败”；
+# - strictPeerDependencies 开启：peer 版本不兼容直接失败，不再静默告警；
+#   当前 lock 内各插件 peer 范围均覆盖 vite 8 / eslint 10 / stylelint 17，
+#   若未来新增插件不兼容，在下方 peerDependencyRules.allowedVersions 精确放行并写明理由；
+# - enablePrePostScripts 关闭：pre/post 脚本在 CI/Docker 中不可依赖（构建脚本显式调用），
+#   避免 `pnpm install` 隐式执行生命周期脚本；
+# - minimumReleaseAge 1440：新发布版本冷却 1 天，降低投毒版本立即进入安装的风险。
+shamefullyHoist: false
 enablePrePostScripts: false
-strictPeerDependencies: false
-minimumReleaseAge: 0
+strictPeerDependencies: true
+minimumReleaseAge: 1440
 
 # 供应链治理：传递依赖已知漏洞版本强制升到修复线（官方源 pnpm audit 驱动，2026-09-07）
 # 原则：仅范围内最小跳版；上游发布包含修复后应删除对应条目
 overrides:
-  'preact@<10.28.2': '>=10.28.2'
-  'devalue@<5.9.3': '>=5.9.3'
-  'source-map-js@<1.2.2': '>=1.2.2'
-  'minimatch@>=9 <9.0.7': '>=9.0.7'
-  'rollup@<4.59': '>=4.59.0'
-  'flatted@<3.4.2': '>=3.4.2'
-  'path-to-regexp@>=8 <8.4': '>=8.4.0'
-  'lodash-es@<4.18.1': '>=4.18.1'
-  'defu@<=6.1.4': '>=6.1.5'
-  'fast-uri@<3.1.6': '>=3.1.6'
-  'fast-uri@>=4.0.0 <4.2.3': '>=4.2.3'
-  'nanoid@<3.3.18': '>=3.3.18'
-  'browserslist@<=4.28.6': '>=4.28.7'
-  'esbuild': '>=0.28.1'
-  'svelte@<5.55.7': '>=5.55.7'
-  'ajv@>=7 <8.18': '>=8.18.0'
-  'brace-expansion@<2.0.3': '>=2.1.4'
-  'picomatch@<2.3.2': '>=2.3.2'
-  'yaml@<2.8.3': '>=2.8.3'
-  'postcss@<8.5.23': '>=8.5.28'
-  'js-yaml@<4.3': '>=4.3.1'
-  '@humanfs/node@<0.16.8': '>=0.16.8'
-  'postcss-selector-parser@>=7.1.0 <7.1.3': '>=7.1.3'
-  'follow-redirects@>=1.16.0 <1.16.1': '>=1.16.1'
+  "preact@<10.28.2": ">=10.28.2"
+  "devalue@<5.9.3": ">=5.9.3"
+  "source-map-js@<1.2.2": ">=1.2.2"
+  "minimatch@>=9 <9.0.7": ">=9.0.7"
+  "rollup@<4.59": ">=4.59.0"
+  "flatted@<3.4.2": ">=3.4.2"
+  "path-to-regexp@>=8 <8.4": ">=8.4.0"
+  "lodash-es@<4.18.1": ">=4.18.1"
+  "defu@<=6.1.4": ">=6.1.5"
+  "fast-uri@<3.1.6": ">=3.1.6"
+  "fast-uri@>=4.0.0 <4.2.3": ">=4.2.3"
+  "nanoid@<3.3.18": ">=3.3.18"
+  "browserslist@<=4.28.6": ">=4.28.7"
+  "esbuild": ">=0.28.1"
+  "svelte@<5.55.7": ">=5.55.7"
+  "ajv@>=7 <8.18": ">=8.18.0"
+  "brace-expansion@<2.0.3": ">=2.1.4"
+  "picomatch@<2.3.2": ">=2.3.2"
+  "yaml@<2.8.3": ">=2.8.3"
+  "postcss@<8.5.23": ">=8.5.28"
+  "js-yaml@<4.3": ">=4.3.1"
+  "@humanfs/node@<0.16.8": ">=0.16.8"
+  "postcss-selector-parser@>=7.1.0 <7.1.3": ">=7.1.3"
+  "follow-redirects@>=1.16.0 <1.16.1": ">=1.16.1"
 
 allowedDeprecatedVersions:
-  are-we-there-yet: '*'
-  sourcemap-codec: '*'
-  lodash.isequal: '*'
-  domexception: '*'
-  w3c-hr-time: '*'
-  inflight: '*'
-  npmlog: '*'
-  rimraf: '*'
-  stable: '*'
-  gauge: '*'
-  abab: '*'
-  glob: '*'
-  ini: '*'
+  are-we-there-yet: "*"
+  sourcemap-codec: "*"
+  lodash.isequal: "*"
+  domexception: "*"
+  w3c-hr-time: "*"
+  inflight: "*"
+  npmlog: "*"
+  rimraf: "*"
+  stable: "*"
+  gauge: "*"
+  abab: "*"
+  glob: "*"
+  ini: "*"
 
 allowBuilds:
-  '@tailwindcss/oxide': false
-  '@parcel/watcher': true
+  "@tailwindcss/oxide": false
+  "@parcel/watcher": true
   vue-demi: true
   esbuild: true
   es5-ext: true
   core-js: true
   typeit: true
   node-pty: false
+
+# 审计豁免（与 .github/workflows/security.yml、build-image.yml 的 --ignore 保持一致）：
+# braces 栈溢出（经 fast-glob > micromatch 进入构建期 devDependencies，调用方传字面
+# glob pattern，不进生产 bundle）；上游发布修复版本后三处一并删除。
+# 严格的 peer 检查下唯一存量例外：openapi-typescript 声明 typescript ^5，
+# 项目统一使用 typescript 6；类型生成器只消费 AST，实测兼容。
+peerDependencyRules:
+  allowedVersions:
+    "openapi-typescript>typescript": "6"
 
 auditConfig:
   ignoreGhsas:

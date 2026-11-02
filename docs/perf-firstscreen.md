@@ -41,8 +41,11 @@
 ## 二、资源瀑布 / Long Task / LCP
 
 `scripts/firstscreen-profile.mjs`：Playwright chromium + CDP `Network.*` 事件与
-`PerformanceObserver`（`longtask` / `largest-contentful-paint`），整页直达目标路由，
-登录复用一次上下文。TBT = FCP 之后、load 之前 Long Task 超出 50ms 的累计。
+`PerformanceObserver`（`longtask` / `largest-contentful-paint`），整页直达目标路由。
+采集页在脚本的 `PAGES` 登记（`--pages <name>` 可筛）：`login`（匿名 context，未登录
+落地）、`welcome`（登录后首页 / 仪表盘卡片）、`dashboard-display`（全屏仪表盘）与
+`system-user`（重列表页）；新增核心页时在 `PAGES` 加名称 + 路由 + 就绪选择器。
+TBT = FCP 之后、load 之前 Long Task 超出 50ms 的累计。
 
 **生产产物口径**（dist + `/api` 代理，`scripts/csp-page-server.mjs`，darwin-local）：
 

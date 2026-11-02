@@ -20,7 +20,8 @@ withDefaults(
     allowfullscreen?: boolean;
   }>(),
   {
-    title: "embedded-content",
+    // 调用方应尽量传更具体的内容名；缺省值只作占位（同页多 iframe 时读屏仍难区分）
+    title: "嵌入式内容",
     // 不默认给 same-origin：对同源文档等于无沙箱；可信预览场景由调用方显式开启。
     sandbox: "allow-scripts allow-forms allow-popups",
     referrerpolicy: "strict-origin-when-cross-origin",

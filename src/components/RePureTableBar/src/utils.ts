@@ -1,4 +1,5 @@
-import type { ComputedRef, PropType, Ref } from "vue";
+import { computed, ref, type ComputedRef, type PropType, type Ref } from "vue";
+import { delay } from "@pureadmin/utils";
 import { transformI18n } from "@/plugins/i18n";
 import { cn } from "@/utils/cn";
 
@@ -43,6 +44,14 @@ export const tableBarProps = {
   tableKey: {
     type: [String, Number] as PropType<string | number>,
     default: "0"
+  },
+  /**
+   * 父级刷新请求的真实状态（可选）：回传后刷新图标跟随实际请求，
+   * 未回传（null）时退回 500ms 兜底动画。
+   */
+  refreshLoading: {
+    type: Boolean as PropType<boolean | null>,
+    default: null
   }
 };
 
@@ -111,6 +120,28 @@ export function rendTippyProps(content: string) {
   } as const;
 }
 
+/**
+ * 刷新按钮 loading 状态。
+ *
+ * 父级回传真实请求状态（`refreshLoading`）时完全由父级驱动，
+ * 否则退回固定 `fallbackMs` 兜底动画——避免长请求已结束仍转、短请求转不够。
+ */
+export function createRefreshState(
+  pending: ComputedRef<boolean | null>,
+  requestRefresh: () => void,
+  fallbackMs = 500
+) {
+  const fallback = ref(false);
+  const loading = computed(() => pending.value ?? fallback.value);
+  function onReFresh() {
+    requestRefresh();
+    if (pending.value !== null) return;
+    fallback.value = true;
+    delay(fallbackMs).then(() => (fallback.value = false));
+  }
+  return { loading, onReFresh };
+}
+
 /** 密度下拉项样式（选中项主色底白字）：消费方传当前密度与主题色 */
 export function buildDropdownItemStyle(
   size: Ref<string>,
@@ -123,4 +154,28 @@ export function buildDropdownItemStyle(
         ? "var(--el-color-white)"
         : "var(--el-text-color-primary)"
   });
+}
+
+/**
+ * 列设置面板的勾选态（勾选项 / 全选 / 半选）。
+ *
+ * 必须基于「应用偏好后的列」计算：偏好把某列 hide=true 时，勾选项要同步移除，
+ * 否则面板显示全选、实际表格少列，用户点一次「全选」也恢复不了被偏好隐藏的列。
+ */
+export function resolveColumnCheckState(columns: TableColumnLike[]): {
+  checked: string[];
+  all: boolean;
+  indeterminate: boolean;
+} {
+  const labels = (items: TableColumnLike[]) =>
+    items
+      .map(item => (typeof item?.label === "string" ? item.label : ""))
+      .filter(Boolean);
+  const total = labels(columns ?? []);
+  const checked = labels((columns ?? []).filter(item => item?.hide !== true));
+  return {
+    checked,
+    all: total.length > 0 && checked.length === total.length,
+    indeterminate: checked.length > 0 && checked.length < total.length
+  };
 }

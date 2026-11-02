@@ -97,3 +97,28 @@ describe("resolvePreferencesEntry", () => {
     }
   });
 });
+
+describe("resolvePreferencesEntry 顶栏隐藏", () => {
+  it("默认 header 位置 + 顶栏隐藏：回落悬浮球（不留无入口状态）", () => {
+    expect(resolvePreferencesEntry({ headerHidden: true })).toEqual({
+      header: false,
+      floating: true,
+      dropdown: false
+    });
+  });
+
+  it("头像菜单档 + 顶栏隐藏：头像菜单也在 Navbar 内，同样回落悬浮球", () => {
+    expect(
+      resolvePreferencesEntry({
+        preferencesPosition: "user-dropdown",
+        headerHidden: true
+      })
+    ).toEqual({ header: false, floating: true, dropdown: false });
+  });
+
+  it("显式关闭入口仍尊重用户选择（不强行出现悬浮球）", () => {
+    expect(
+      resolvePreferencesEntry({ enablePreferences: false, headerHidden: true })
+    ).toEqual({ header: false, floating: false, dropdown: true });
+  });
+});

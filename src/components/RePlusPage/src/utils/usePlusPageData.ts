@@ -62,7 +62,7 @@ export function usePlusPageData({
     routeParams
   });
 
-  // 数据获取
+  const canFetchFields = props.fetchSearchFields !== false && auth.list;
   const handleGetData = createPageRequest({
     props,
     t,
@@ -75,7 +75,12 @@ export function usePlusPageData({
     tablePagination,
     getColumnData,
     columnsInitCallback,
-    fieldsInitCallback
+    fieldsInitCallback,
+    // 内联缺单侧时的回退口径与「分离请求」一致（权限 / fetchSearchFields 同源）
+    inlineMetaFallbacks: {
+      columns: auth.list ? props.api.columns : null,
+      fields: canFetchFields ? props.api.fields : null
+    }
   });
 
   const fetchColumnsSeparately = createFetchColumnsSeparately({

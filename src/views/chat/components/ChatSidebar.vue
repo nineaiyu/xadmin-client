@@ -130,7 +130,7 @@ function roomAvatar(room: ChatRoomItem) {
 }
 
 function avatarText(peer: ChatPeer) {
-  return (peer.nickname || peer.username || "?").slice(0, 1).toUpperCase();
+  return Array.from(peer.nickname || peer.username || "?")[0].toUpperCase();
 }
 </script>
 
@@ -197,7 +197,7 @@ function avatarText(peer: ChatPeer) {
                 <component :is="useRenderIcon(GroupIcon)" />
               </el-icon>
               <span v-else>{{
-                (room.peer?.nickname || room.peer?.username || "?").slice(0, 1)
+                Array.from(room.peer?.nickname || room.peer?.username || "?")[0]
               }}</span>
             </el-avatar>
             <div class="min-w-0 grow">

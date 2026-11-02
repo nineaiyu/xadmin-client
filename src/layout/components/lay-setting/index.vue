@@ -35,7 +35,8 @@ const preferencesEntry = computed(() =>
     enablePreferences: $storage?.configure?.enablePreferences,
     preferencesPosition: $storage?.configure?.preferencesPosition,
     horizontal: String($storage?.layout?.layout ?? "vertical") === "horizontal",
-    fullContent: isFullContent($storage?.layout?.layout)
+    fullContent: isFullContent($storage?.layout?.layout),
+    headerHidden: $storage?.configure?.headerHidden === true
   })
 );
 const floatingVisible = computed(() => preferencesEntry.value.floating);

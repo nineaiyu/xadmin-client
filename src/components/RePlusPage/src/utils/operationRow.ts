@@ -9,7 +9,8 @@ import type { RecordType } from "plus-pro-components";
  * cellRenderer 绕行。
  *
  * - row 有内容：原样返回（副本也够展示用，保持既有行为）
- * - row 为空：按 index 从 dataList 取真实行
+ * - row 为空：按「表格扁平行号」从 dataList 取真实行；树表的 index 是展开后的
+ *   扁平行号，必须先把树按渲染顺序摊平再取，直接按顶层下标会落到别人的行上
  * - 双双缺失：返回空对象（与旧行为一致，不抛错）
  */
 export function resolveOperationRow(
@@ -19,8 +20,17 @@ export function resolveOperationRow(
 ): RecordType {
   if (row && Object.keys(row).length) return row;
   const idx = Number(index);
-  if (Number.isInteger(idx) && dataList?.[idx]) {
-    return dataList[idx];
+  if (!Number.isInteger(idx) || !dataList) return row ?? {};
+  if (dataList.some(item => Array.isArray(item?.children))) {
+    const flattened: RecordType[] = [];
+    const walk = (items: RecordType[]) => {
+      for (const item of items) {
+        flattened.push(item);
+        if (Array.isArray(item?.children)) walk(item.children as RecordType[]);
+      }
+    };
+    walk(dataList);
+    if (flattened[idx]) return flattened[idx];
   }
-  return row ?? {};
+  return dataList[idx] ?? row ?? {};
 }

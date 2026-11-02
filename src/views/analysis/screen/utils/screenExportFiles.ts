@@ -25,14 +25,15 @@ export async function collectScreenImages(deps: {
   currentCards: Pick<DashboardCard, "id" | "title">[];
   cardRefs: Record<string, CardRenderHandle | undefined>;
   paneRefs: Record<string, PaneRenderHandle | null>;
-  /** 画布模式：可见窗格与其卡片列表（应有图片数 = 窗格卡片数之和） */
-  layoutPanes: { dashboard?: string }[];
+  /** 画布模式：可见窗格与其卡片列表（应有图片数 = 窗格卡片数之和，指标卡按 1 计） */
+  layoutPanes: { dashboard?: string; type?: string }[];
   paneCards: (_pane: { dashboard?: string }) => DashboardCard[];
 }): Promise<{ images: CollectedImage[]; total: number }> {
   const images: CollectedImage[] = [];
   if (deps.isCanvas) {
     const total = deps.layoutPanes.reduce(
-      (count, pane) => count + deps.paneCards(pane).length,
+      (count, pane) =>
+        count + (pane.type === "metric" ? 1 : deps.paneCards(pane).length),
       0
     );
     for (const handle of Object.values(deps.paneRefs)) {

@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 import ReRenderContent from "@/components/ReRenderContent";
+import { TABLE_HEADER_CELL_STYLE } from "@/utils/tableHeader";
 
 import type { AiResultTableProps } from "./types";
 /**
@@ -104,7 +105,7 @@ function keyValueTable(data: Record<string, unknown>): {
     ([key, value]) =>
       key !== "columns" && key !== "rows" && !Array.isArray(value)
   );
-  if (!entries.length || entries.length > 12) return null;
+  if (!entries.length) return null;
   return {
     // 列名是取值键，展示名走 labels（此前把翻译当键用，单元格恒为空）
     columns: ["name", "value"],
@@ -112,7 +113,8 @@ function keyValueTable(data: Record<string, unknown>): {
       name: t("ai.resultName"),
       value: t("ai.resultValue")
     },
-    rows: entries.map(([key, value]) => ({
+    // 键值兜底表最多展示 12 项：超出时保留总数提示（此前 >12 直接整表不渲染）
+    rows: entries.slice(0, 12).map(([key, value]) => ({
       name: key,
       value:
         value === null || value === undefined
@@ -144,7 +146,13 @@ function valueOf(row: Record<string, unknown>, column: string) {
     >
       {{ t("ai.resultRows", { count: table.total, shown: table.rows.length }) }}
     </div>
-    <el-table :data="table.rows" max-height="280" size="small">
+    <el-table
+      :data="table.rows"
+      max-height="280"
+      size="small"
+      :header-cell-style="TABLE_HEADER_CELL_STYLE"
+      :aria-label="t('tableA11y.dataTable')"
+    >
       <el-table-column
         v-for="col in table.columns"
         :key="col"

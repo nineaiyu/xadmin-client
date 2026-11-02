@@ -125,13 +125,16 @@ const tableColumns = computed(() => [
   }
 ]);
 
+let loadSeq = 0;
 async function loadData() {
+  const seq = ++loadSeq;
   loading.value = true;
   try {
     const res = await props.api.recycleList({
       page: pagination.value.page,
-      pageSize: pagination.value.pageSize
+      size: pagination.value.pageSize
     });
+    if (seq !== loadSeq) return;
     // 业务失败（code 非 1000）时 data 为空：先判成功再取结果，避免只留 finally
     // 的裸 await——失败会抛到事件循环，界面停在上一批数据上看似「已刷新」
     if (!isSuccess(res)) {
@@ -151,14 +154,15 @@ async function loadData() {
     rows.value = [];
     pagination.value.total = 0;
   } finally {
-    loading.value = false;
+    if (seq === loadSeq) loading.value = false;
   }
 }
 
 async function open() {
   visible.value = true;
-  pagination.value.page = 1;
-  await loadData();
+  // page 变化由 watch 触发一次加载；仅当已在第一页时才显式请求，避免双请求
+  if (pagination.value.page !== 1) pagination.value.page = 1;
+  else await loadData();
 }
 
 async function onChanged() {
@@ -213,122 +217,130 @@ defineExpose({ open });
 </script>
 
 <template>
-  <el-button v-if="!disabled" :icon="useRenderIcon(Delete)" plain @click="open">
-    {{ title || t("recycleBin.title") }}
-  </el-button>
+  <span class="inline-flex">
+    <!-- 单根：入口按钮与抽屉（Teleport）包一层 inline-flex 容器，保持工具栏内联排布 -->
+    <el-button
+      v-if="!disabled"
+      :icon="useRenderIcon(Delete)"
+      plain
+      @click="open"
+    >
+      {{ title || t("recycleBin.title") }}
+    </el-button>
 
-  <OverlayDrawer
-    v-model="visible"
-    :title="title || t('recycleBin.title')"
-    :size="drawerSize('lg')"
-    destroy-on-close
-    class="recycle-bin-drawer"
-  >
-    <div v-if="canRestore || canPurge" class="mb-3 flex flex-wrap gap-2">
-      <el-popconfirm
-        v-if="canRestore"
-        :title="t('recycleBin.restoreConfirm', { count: selectedPks.length })"
-        :disabled="selectedPks.length === 0"
-        @confirm="handleRestore(selectedPks)"
-      >
-        <template #reference>
-          <el-button
-            type="primary"
-            plain
-            :disabled="selectedPks.length === 0 || submitting"
-            :loading="submitting"
-            :icon="useRenderIcon(RefreshRight)"
-          >
-            {{ t("recycleBin.restore") }}
-          </el-button>
-        </template>
-      </el-popconfirm>
-      <template v-if="canPurge">
+    <OverlayDrawer
+      v-model="visible"
+      :title="title || t('recycleBin.title')"
+      :size="drawerSize('lg')"
+      destroy-on-close
+      class="recycle-bin-drawer"
+    >
+      <div v-if="canRestore || canPurge" class="mb-3 flex flex-wrap gap-2">
         <el-popconfirm
-          :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
+          v-if="canRestore"
+          :title="t('recycleBin.restoreConfirm', { count: selectedPks.length })"
           :disabled="selectedPks.length === 0"
-          @confirm="handlePurge(selectedPks)"
+          @confirm="handleRestore(selectedPks)"
         >
           <template #reference>
             <el-button
-              type="danger"
+              type="primary"
               plain
               :disabled="selectedPks.length === 0 || submitting"
-              :icon="useRenderIcon(Delete)"
+              :loading="submitting"
+              :icon="useRenderIcon(RefreshRight)"
             >
-              {{ t("recycleBin.purge") }}
+              {{ t("recycleBin.restore") }}
             </el-button>
           </template>
         </el-popconfirm>
-        <el-popconfirm
-          :title="t('recycleBin.purgeExpiredConfirm')"
-          @confirm="handlePurge()"
-        >
-          <template #reference>
-            <el-button type="warning" plain :disabled="submitting">
-              {{ t("recycleBin.purgeExpired") }}
-            </el-button>
-          </template>
-        </el-popconfirm>
-      </template>
-    </div>
-
-    <el-table
-      v-loading="loading"
-      :data="rows"
-      row-key="pk"
-      border
-      @selection-change="val => (selection = val)"
-    >
-      <el-table-column type="selection" width="42" />
-      <el-table-column
-        v-for="column in tableColumns"
-        :key="column.prop"
-        :prop="column.prop"
-        :label="column.label"
-        :formatter="column.formatter"
-        show-overflow-tooltip
-      >
-        <template v-if="column.cellRenderer" #default="{ row, $index }">
-          <cell-content :column="column" :row="row" :index="$index" />
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="canRestore"
-        :label="t('recycleBin.actions')"
-        width="90"
-        fixed="right"
-      >
-        <template #default="{ row }">
+        <template v-if="canPurge">
           <el-popconfirm
-            :title="t('recycleBin.restoreOneConfirm')"
-            @confirm="handleRestore([String(row.pk)])"
+            :title="t('recycleBin.purgeConfirm', { count: selectedPks.length })"
+            :disabled="selectedPks.length === 0"
+            @confirm="handlePurge(selectedPks)"
           >
             <template #reference>
               <el-button
-                link
-                type="primary"
-                size="small"
-                :disabled="submitting"
+                type="danger"
+                plain
+                :disabled="selectedPks.length === 0 || submitting"
+                :icon="useRenderIcon(Delete)"
               >
-                {{ t("recycleBin.restore") }}
+                {{ t("recycleBin.purge") }}
+              </el-button>
+            </template>
+          </el-popconfirm>
+          <el-popconfirm
+            :title="t('recycleBin.purgeExpiredConfirm')"
+            @confirm="handlePurge()"
+          >
+            <template #reference>
+              <el-button type="warning" plain :disabled="submitting">
+                {{ t("recycleBin.purgeExpired") }}
               </el-button>
             </template>
           </el-popconfirm>
         </template>
-      </el-table-column>
-      <template #empty>
-        <ReEmpty :description="t('recycleBin.empty')" size="small" />
-      </template>
-    </el-table>
+      </div>
 
-    <el-pagination
-      v-model:current-page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      layout="total, prev, pager, next"
-      size="small"
-      class="mt-3 justify-end"
-    />
-  </OverlayDrawer>
+      <el-table
+        v-loading="loading"
+        :data="rows"
+        row-key="pk"
+        border
+        @selection-change="val => (selection = val)"
+      >
+        <el-table-column type="selection" width="42" />
+        <el-table-column
+          v-for="column in tableColumns"
+          :key="column.prop"
+          :prop="column.prop"
+          :label="column.label"
+          :formatter="column.formatter"
+          show-overflow-tooltip
+        >
+          <template v-if="column.cellRenderer" #default="{ row, $index }">
+            <cell-content :column="column" :row="row" :index="$index" />
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-if="canRestore"
+          :label="t('recycleBin.actions')"
+          width="90"
+          fixed="right"
+        >
+          <template #default="{ row }">
+            <el-popconfirm
+              :title="t('recycleBin.restoreOneConfirm')"
+              @confirm="handleRestore([String(row.pk)])"
+            >
+              <template #reference>
+                <el-button
+                  link
+                  type="primary"
+                  size="small"
+                  :disabled="submitting"
+                >
+                  {{ t("recycleBin.restore") }}
+                </el-button>
+              </template>
+            </el-popconfirm>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <ReEmpty :description="t('recycleBin.empty')" size="small" />
+        </template>
+      </el-table>
+
+      <el-pagination
+        v-model:current-page="pagination.page"
+        :page-size="pagination.pageSize"
+        :total="pagination.total"
+        layout="total, prev, pager, next"
+        size="small"
+        class="mt-3 justify-end"
+      />
+    </OverlayDrawer>
+  </span>
 </template>

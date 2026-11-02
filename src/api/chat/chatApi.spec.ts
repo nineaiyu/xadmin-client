@@ -126,14 +126,6 @@ describe("chatApi 消息与联系人", () => {
     expect(form).toBeInstanceOf(FormData);
     expect((form as FormData).get("kind")).toBe("image");
     expect(((form as FormData).get("file") as File).name).toBe("pic.png");
-
-    expect(chatApi.attachmentUrl(66)).toBe("/api/chat/message/66/file");
-    expect(chatApi.attachmentUrl(66, "thumb")).toBe(
-      "/api/chat/message/66/file?size=thumb"
-    );
-    expect(chatApi.attachmentUrl(66, "preview")).toBe(
-      "/api/chat/message/66/file?size=preview"
-    );
   });
 
   it("recall / aiMessage", () => {

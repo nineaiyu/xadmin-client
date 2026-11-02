@@ -9,6 +9,7 @@ import {
   closeAllDrawer,
   closeDrawer,
   drawerStore,
+  finalizeDrawer,
   getDrawerUid,
   updateDrawer,
   ReDrawer
@@ -55,19 +56,42 @@ describe("ReDrawer 抽屉容器", () => {
     expect(Object.keys(options)).not.toContain("_uid");
   });
 
-  it("updateDrawer 改属性；closeDrawer 回调并延迟出栈", async () => {
+  it("updateDrawer 改属性；closeDrawer 回调后等 @closed 出栈", async () => {
     const closeCallBack = vi.fn();
     addDrawer({ title: "旧", size: 400, closeCallBack });
     updateDrawer(560, "size", 0);
     expect(drawerStore.value[0].size).toBe(560);
 
     closeDrawer(drawerStore.value[0], 0, { command: "close" });
-    expect(drawerStore.value[0].visible).toBe(false);
+    const options = drawerStore.value[0];
+    expect(options.visible).toBe(false);
+    expect(closeCallBack).toHaveBeenCalledTimes(1);
     expect(closeCallBack).toHaveBeenCalledWith(
       expect.objectContaining({ args: { command: "close" } })
     );
+    // 重复进入关闭路径（EP @closed 会再次调用）不得重复回调
+    closeDrawer(options, 0, { command: "close" });
+    expect(closeCallBack).toHaveBeenCalledTimes(1);
+    // 关闭动画期间条目仍在队列：出队由 EP @closed → finalizeDrawer 驱动
     vi.advanceTimersByTime(200);
     await nextTick();
+    expect(drawerStore.value).toHaveLength(1);
+    finalizeDrawer(options);
+    await nextTick();
+    expect(drawerStore.value).toHaveLength(0);
+  });
+
+  it("updateDrawer 按实例引用定位：出队后下标漂移不误改其他抽屉", () => {
+    const first = { title: "一" };
+    const second = { title: "二" };
+    addDrawer(first);
+    addDrawer(second);
+    finalizeDrawer(first);
+    updateDrawer("新二", "title", second);
+    expect(drawerStore.value[0].title).toBe("新二");
+
+    finalizeDrawer(second);
+    updateDrawer("幽灵", "title", second);
     expect(drawerStore.value).toHaveLength(0);
   });
 

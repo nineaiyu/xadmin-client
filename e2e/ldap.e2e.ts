@@ -48,11 +48,11 @@ test("LDAP 设置：渲染 → 保存 → 连接测试失败可读 → 本地登
   await serverUri.fill("ldap://127.0.0.1:3890");
   await searchBase.fill("dc=corp,dc=com");
   await page.getByRole("button", { name: "保存", exact: true }).first().click();
-  await expect(page.locator(".el-message").first()).toBeVisible();
+  await expect(page.locator(".el-message").last()).toBeVisible();
 
   // 连接测试：目录不可达 → 失败提示可读（不裸 500 / 不白屏）
   await page.getByRole("button", { name: "测试", exact: true }).first().click();
-  await expect(page.locator(".el-message").first()).toBeVisible({
+  await expect(page.locator(".el-message").last()).toBeVisible({
     timeout: 15_000
   });
 

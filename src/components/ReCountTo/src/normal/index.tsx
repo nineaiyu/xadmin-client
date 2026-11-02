@@ -2,6 +2,7 @@ import {
   computed,
   defineComponent,
   onMounted,
+  onUnmounted,
   reactive,
   unref,
   watch
@@ -67,6 +68,7 @@ export default defineComponent({
       state.paused = false;
       state.color = color;
       state.fontSize = fontSize;
+      if (state.rAF) cancelAnimationFrame(state.rAF);
       state.rAF = requestAnimationFrame(count);
       emit("started");
     }
@@ -90,7 +92,7 @@ export default defineComponent({
       state.startTime = null;
       state.localDuration = +(state.remaining as number);
       state.localStartVal = +(state.printVal as number);
-      requestAnimationFrame(count);
+      state.rAF = requestAnimationFrame(count);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -172,6 +174,10 @@ export default defineComponent({
         start();
       }
       emit("mounted");
+    });
+
+    onUnmounted(() => {
+      if (state.rAF) cancelAnimationFrame(state.rAF);
     });
 
     return () => (

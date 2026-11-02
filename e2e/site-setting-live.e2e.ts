@@ -73,7 +73,8 @@ test("项目设置实时生效并自动保存（灰色模式）", async ({ page 
   // 防抖窗内的后续 PATCH 需观察一段时间，才能断言「只发一次」（自动保存经 pub/sub
   // 异步回写），无终止事件可等，保留固定观察窗
   await page.waitForTimeout(1200);
-  expect(patchCount).toBeLessThanOrEqual(2);
+  // 防抖自动保存应恰好一次；宽松上限会把「重复保存风暴」放行
+  expect(patchCount).toBe(1);
   page.off("request", onRequest);
 
   // 模拟另一台设备：清掉本地 configure 缓存后刷新，服务器值应重新渲染

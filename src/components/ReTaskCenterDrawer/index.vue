@@ -40,7 +40,8 @@ const PAGE_PATHS = {
   approval: "/approval/index",
   // 统一入口：任务日志（任务管理下）承载执行历史与产物任务的取消/重跑/下载
   task: "/system/celery/logs/index",
-  export: "/system/export/index"
+  export: "/system/export/index",
+  import: "/system/export/index?tab=import"
 };
 
 const { t } = useI18n();
@@ -131,7 +132,7 @@ const sections = computed(() => [
   {
     key: "import",
     title: t("taskCenter.recentImports"),
-    path: PAGE_PATHS.export,
+    path: PAGE_PATHS.import,
     rows: importRows.value
   }
 ]);
@@ -180,9 +181,9 @@ defineExpose({ load });
             {{ item.rows.length }}
           </el-tag>
         </span>
-        <el-link type="primary" underline="never" @click="goPage(item.path)">
+        <el-button link type="primary" @click="goPage(item.path)">
           {{ t("taskCenter.viewAll") }}
-        </el-link>
+        </el-button>
       </div>
       <ReEmpty
         v-if="item.rows.length === 0"

@@ -130,6 +130,16 @@ describe("AiResultTable 只读结果表", () => {
     ]);
   });
 
+  it("键值兜底超过 12 项时截断展示并保留总数（不再整表不渲染）", () => {
+    const metrics = Object.fromEntries(
+      Array.from({ length: 14 }, (_, index) => [`k${index}`, index])
+    );
+    const wrapper = mountTable({ metrics });
+    expect(wrapper.find('[data-testid="ai-result-table"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain("共 14 行，展示 12 行");
+    expect(wrapper.findAll(".stub-cell")).toHaveLength(24);
+  });
+
   it("无可成表结构时不渲染", () => {
     const wrapper = mountTable({
       big: Array.from({ length: 40 }, (_, i) => i)

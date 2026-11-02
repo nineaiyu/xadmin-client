@@ -17,7 +17,8 @@ const props = defineProps<{
 }>();
 
 const badgeText = computed(
-  () => props.profile.badgeText || props.profile.name?.slice(0, 1) || "?"
+  () =>
+    props.profile.badgeText || Array.from(props.profile.name || "")[0] || "?"
 );
 </script>
 

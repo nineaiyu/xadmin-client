@@ -13,6 +13,9 @@ import { downloadBlob as baseDownloadBlob } from "@/utils/download";
 /** ECharts 实例最小接口（避免引入 echarts 类型依赖，测试可注入桩） */
 export interface EChartsLike {
   getDataURL(options?: Record<string, unknown>): string;
+  /** 事件绑定（下钻点击等）：可缺省，测试桩可不实现 */
+  on?(event: string, handler: (params: { name?: string }) => void): void;
+  off?(event: string, handler: (params: { name?: string }) => void): void;
 }
 
 export interface ExportedImage {

@@ -223,15 +223,20 @@ watch(() => props.refreshKey, refreshDiagnostics);
 const handleSubmitSettings = (data: FieldValues) => {
   // 回车/连点会重复提交：上一次未结束前直接忽略（按钮 loading 挡不住表单回车）
   if (submitLoading.value) return;
-  emit("submit", data);
+  // 只提交本页签字段：共用端点的其它页签字段未渲染，不能随全量表单回写
+  const scopedData = pickBy(data as RecordType, (_value, key) =>
+    keepField(key)
+  );
+  emit("submit", scopedData as FieldValues);
   if (props.autoSubmit) {
     submitLoading.value = true;
     handleOperation({
       t,
-      apiReq: props.api.partialUpdate(props.queryParams, data),
+      apiReq: props.api.partialUpdate(props.queryParams, scopedData),
       success: res => {
         const payload = (res?.data ?? {}) as RecordType;
-        const { effective, ...response } = payload;
+        const { effective, ...allResponse } = payload;
+        const response = pickBy(allResponse, (_value, key) => keepField(key));
         // 保存响应同样携带诊断:横幅随保存即时刷新,无需重进页面
         applyEffective(effective);
         addOrEditData.value.defaultData = response;

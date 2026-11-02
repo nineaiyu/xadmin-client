@@ -144,6 +144,8 @@ onMounted(() => {
 
 // 模板中 el-table 行作用域为 DefaultRow（Record<PropertyKey, any>），
 // 三个行操作按该类型接收后再使用，避免与订阅行类型在模板侧冲突
+const backendSnapshots = new Map<string, Record<string, boolean>>();
+const backendWriteSeq = new Map<string, number>();
 const onCheckReceiveBackend = (row: DefaultRow) => {
   const backends = [];
   for (const [name, checked] of Object.entries(row.receiveBackends)) {
@@ -151,11 +153,36 @@ const onCheckReceiveBackend = (row: DefaultRow) => {
       backends.push(name);
     }
   }
+  const key = String(row.pk);
+  if (!backendSnapshots.has(key)) {
+    backendSnapshots.set(key, { ...row.receiveBackends });
+  }
+  const seq = (backendWriteSeq.get(key) ?? 0) + 1;
+  backendWriteSeq.set(key, seq);
+  const settle = () => {
+    if (backendWriteSeq.get(key) === seq) {
+      backendSnapshots.delete(key);
+      backendWriteSeq.delete(key);
+    }
+  };
+  const rollback = () => {
+    if (backendWriteSeq.get(key) !== seq) return;
+    const snapshot = backendSnapshots.get(key);
+    if (snapshot) {
+      for (const name of Object.keys(row.receiveBackends)) {
+        row.receiveBackends[name] = snapshot[name] ?? false;
+      }
+    }
+    settle();
+  };
   handleOperation({
     t,
     apiReq: props.api?.partialUpdate(row.pk, {
       receive_backends: backends
-    })
+    }),
+    success: settle,
+    failed: rollback,
+    exception: rollback
   });
 };
 
@@ -227,6 +254,7 @@ const receiverLabels = (row: DefaultRow) => {
     default-expand-all
     row-key="pk"
     :header-cell-style="TABLE_HEADER_CELL_STYLE"
+    :aria-label="t('tableA11y.dataTable')"
   >
     <el-table-column
       :label="t('messageNotifications.messageType')"

@@ -24,6 +24,8 @@ const props = defineProps<{
   modelValue: boolean;
   templateId: string;
   templateName: string;
+  /** 父层回滚实现：返回成功与否后本弹窗再重拉，避免用固定延时猜网络完成时机 */
+  rollbackHandler?: (_version: number) => Promise<boolean>;
 }>();
 
 const emit = defineEmits<{
@@ -62,9 +64,11 @@ async function onRollback(version: number) {
   ) {
     return;
   }
+  if (props.rollbackHandler) {
+    if (await props.rollbackHandler(version)) await reload();
+    return;
+  }
   emit("rollback", version);
-  // 回滚成功与否由组合层提示；这里等一拍再重拉，历史里会多出「回滚那一版」
-  setTimeout(() => void reload(), 400);
 }
 
 const formatTime = (value?: string) => formatDateTime(value);

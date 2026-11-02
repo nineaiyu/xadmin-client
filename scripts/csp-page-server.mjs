@@ -134,8 +134,23 @@ const proxyHttp = (req, res) => {
 
 const serveStatic = (req, res) => {
   const { pathname } = new URL(req.url ?? "/", "http://csp-page");
-  let filePath = path.join(DIST, decodeURIComponent(pathname));
-  if (!filePath.startsWith(DIST)) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    // 畸形编码（如 %E0%A4%A）直接拒绝，不能让它抛异常打断请求处理
+    respond(
+      res,
+      400,
+      { "content-type": "text/plain; charset=utf-8" },
+      "bad request"
+    );
+    return;
+  }
+  let filePath = path.join(DIST, decoded);
+  // 按路径边界判断：`DIST` 的兄弟目录（如 dist-other）不应因字符串前缀相同而放行
+  const relative = path.relative(DIST, filePath);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
     respond(
       res,
       403,

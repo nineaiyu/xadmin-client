@@ -73,7 +73,10 @@ export function useLeaveFormOptions({
             applyServerErrors(formRef, err?.errors, {
               activateTab: setActiveName
             });
-          }
+          },
+          // 自定义 saveCallback 必须自行收口 loading（默认回调在 plusPageEdit 传了 closeLoading），
+          // 否则 400 校验失败后保存按钮永久 loading
+          requestEnd: () => closeLoading()
         });
       },
       minWidth: "560px"

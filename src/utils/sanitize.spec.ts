@@ -26,6 +26,25 @@ describe("sanitizeHtml（前端兜底）", () => {
     expect(cleaned).toContain("<b>hi</b>");
   });
 
+  it("style 只保留排版白名单属性：外链背景与定位被剥离", () => {
+    const cleaned = sanitizeHtml(
+      '<p style="background-image: url(https://tracker.example/p.gif); position: fixed; text-align: center; color: red;">正文</p>'
+    );
+    expect(cleaned).not.toContain("url(");
+    expect(cleaned).not.toContain("position");
+    expect(cleaned).toContain("text-align: center");
+    expect(cleaned).toContain("color: red");
+    expect(cleaned).toContain("正文");
+  });
+
+  it("style 全为危险属性时整体移除，文本保留", () => {
+    const cleaned = sanitizeHtml(
+      '<span style="background-image: url(//evil.example/x); position: absolute">x</span>'
+    );
+    expect(cleaned).not.toContain("style=");
+    expect(cleaned).toContain("x");
+  });
+
   it("空值返回空串", () => {
     expect(sanitizeHtml("")).toBe("");
     expect(sanitizeHtml(null)).toBe("");

@@ -17,6 +17,8 @@ import type { CaptchaDisplay, CaptchaSubmitPayload } from "./types";
 import { buildVerifyBody } from "./verifyPayload";
 import { VerifySignError } from "./verifySign";
 import ReCaptchaBody from "./ReCaptchaBody.vue";
+import { useSuccessFinish } from "@/hooks/useSuccessFinish";
+import { useChallengeSession } from "./useChallengeSession";
 
 defineOptions({ name: "ReCaptchaChallenge" });
 
@@ -107,9 +109,22 @@ function reloadType(): CaptchaType | undefined {
     : undefined;
 }
 
-let pending: Promise<string> | null = null;
-let resolvePending: ((_ticket: string) => void) | null = null;
-let rejectPending: ((_reason: Error) => void) | null = null;
+const session = useChallengeSession({
+  deactivate,
+  onSuccess: ticket => emit("success", ticket),
+  onOpen: () => {
+    // 新会话重置 honeypot：浏览器自动填充过一次后不能污染后续所有挑战
+    honeyPot.value = "";
+    activate();
+    void loadChallenge();
+  }
+});
+
+/** 模板关闭入口（ESC / 关闭按钮）：与 defineExpose.close 共用同一取消语义 */
+const cancel = session.cancel;
+
+const { schedule: scheduleSuccess, clear: clearSuccessTimer } =
+  useSuccessFinish(session.finish);
 
 function isActive() {
   return (
@@ -118,12 +133,6 @@ function isActive() {
     floatActive.value ||
     boundActive.value
   );
-}
-
-function clearPending() {
-  resolvePending = null;
-  rejectPending = null;
-  pending = null;
 }
 
 function activate() {
@@ -140,6 +149,7 @@ function activate() {
 }
 
 function deactivate() {
+  clearSuccessTimer();
   visible.value = false;
   inlineActive.value = false;
   floatActive.value = false;
@@ -205,38 +215,10 @@ async function loadChallenge(
   }
 }
 
-function finish(ticket: string) {
-  if (!resolvePending) return;
-  const resolve = resolvePending;
-  clearPending();
-  deactivate();
-  resolve(ticket);
-  emit("success", ticket);
-}
-
-function cancel() {
-  if (!rejectPending) return;
-  const reject = rejectPending;
-  clearPending();
-  deactivate();
-  reject(new Error("captcha-cancelled"));
-}
-
 /** 打开挑战并等待 ticket；重复调用返回同一个进行中的 Promise */
 function open(): Promise<string> {
-  if (pending) {
-    activate();
-    return pending;
-  }
-  // 新会话重置 honeypot：浏览器自动填充过一次后不能污染后续所有挑战
-  honeyPot.value = "";
-  pending = new Promise<string>((_resolve, _reject) => {
-    resolvePending = _resolve;
-    rejectPending = _reject;
-  });
-  activate();
-  void loadChallenge();
-  return pending;
+  if (session.hasPending()) activate();
+  return session.open();
 }
 
 async function buildPayload(payload: CaptchaSubmitPayload) {
@@ -252,7 +234,8 @@ async function buildPayload(payload: CaptchaSubmitPayload) {
 }
 
 async function onSubmit(payload: CaptchaSubmitPayload) {
-  if (!challenge.value || submitting.value) return;
+  // 已通过后不再发第二次 verify（服务端挑战通常一次/限次，会抖出失败）
+  if (!challenge.value || submitting.value || success.value) return;
   submitting.value = true;
   error.value = "";
   try {
@@ -267,7 +250,7 @@ async function onSubmit(payload: CaptchaSubmitPayload) {
       success.value = true;
       const ticket = data.ticket;
       // 成功态保活 ≥1s：读屏 aria-live 需要可感知的播报窗口
-      setTimeout(() => finish(ticket), 1000);
+      scheduleSuccess(ticket);
       return;
     }
     // 失败响应不携带剩余次数（防探测）：给出可读文案并换题，保持可重试
@@ -291,7 +274,13 @@ async function onSubmit(payload: CaptchaSubmitPayload) {
 }
 
 async function onPowSolve() {
-  if (!challenge.value?.pow || powSolving.value || submitting.value) return;
+  if (
+    !challenge.value?.pow ||
+    powSolving.value ||
+    submitting.value ||
+    success.value
+  )
+    return;
   powSolving.value = true;
   error.value = "";
   try {
@@ -321,10 +310,10 @@ function reset() {
   challenge.value = null;
   error.value = "";
   success.value = false;
-  if (rejectPending) cancel();
+  if (session.hasPending()) session.cancel();
 }
 
-defineExpose({ open, reset, refresh, close: cancel });
+defineExpose({ open, reset, refresh, close: session.cancel });
 </script>
 
 <template>

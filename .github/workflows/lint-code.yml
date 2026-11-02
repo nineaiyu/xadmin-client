@@ -49,14 +49,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Prettier format check
-        run: pnpm lint:prettier:check
-
       - name: Start Lint Code
         run: |
           # frozen：CI 必须按 pnpm-lock.yaml 精确安装，lockfile 漂移应显式失败而非被静默消化
           pnpm install --frozen-lockfile
-          pnpm lint
+          # 验证 ≠ 自动修复：CI 只跑 check 形态（--fix 会让违规在本地被修掉后「通过」，
+          # 校验结果与提交内容不一致）；本地开发仍可用 pnpm lint 自动修复
+          pnpm lint:eslint:check
+          pnpm lint:prettier:check
+          pnpm lint:stylelint:check
           # strict 全仓单轨（src / build / mock / types / e2e，含 e2e）：任何 strict 回归即失败。
           # 2026-09-26 双轨收敛：tsconfig.strict.json 已删除，typecheck 本身即 strict 门禁
           pnpm typecheck
@@ -106,6 +107,11 @@ jobs:
         # 超长 hook 形态文件防回潮：useXxx / hook 文件 ≥120 行新增即失败（scripts/check-hook-length.mjs）
         run: pnpm check:hook-length
 
+      - name: Function length gate (anti-regression)
+        # 单函数 ≤100 行（工作区红线）：新超限函数即失败，存量按文件::函数名基线只减不增
+        # （scripts/check-function-length.mjs）
+        run: pnpm check:function-length
+
       - name: First-screen entry closure gate
         # 首屏入口白名单：main.ts / App.vue 的顶层静态导入逐条登记（新增即失败）。
         # bundle-size 的 15KB 预算是总账，拦不住数 KB 级块悄然进闭包；
@@ -122,10 +128,28 @@ jobs:
         # 注入偏好存储的键必须登记在站点配置 PATCH 清单（scripts/check-platform-config.mjs）
         run: pnpm check:platform-config
 
+      - name: Template single-root gate
+        # SFC 模板首个节点是注释会让 dev 根退化为 Fragment，配合 Transition 造成整页白屏
+        # （真实事故的守护，scripts/check-template-root.mjs）
+        run: pnpm check:template-root
+
+      - name: E2E fixed-wait gate
+        # 固定延时只允许已登记的时间域例外（captcha 轨迹 / 动画 / 负向观察窗）；
+        # 新增 waitForTimeout 必须同步 allowlist 并说明理由（scripts/check-e2e-waits.mjs）
+        run: pnpm check:e2e-waits
+
+      - name: Color literal gate
+        # 裸 hex/rgb/hsl 与 Tailwind 调色板类（含 dark:/hover: 变体）只减不增
+        run: pnpm check:color-literals
+
+      - name: Font size literal gate
+        # 裸 px 字号绕开全局字号档位缩放（scripts/check-font-size-literals.mjs）
+        run: pnpm check:font-size-literals
+
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
-        # 两侧 key 集合必须完全对称；词条值含 <tag> 会让 unplugin-vue-i18n 转换期
-        # 直接抛错（locale 模块整块失败），门禁一并拦截（scripts/check-i18n-keys.mjs）
+        # 两侧键集合 / 值类型 / 占位符必须对称；词条值含 <tag> 或裸 | / @ 会让
+        # vue-i18n 的 message-compiler 编译或渲染异常（scripts/check-i18n-keys.mjs）
         run: pnpm check:i18n
 
       - name: Bundle size snapshot gate
@@ -195,6 +219,16 @@ jobs:
         env:
           XADMIN_SERVER_DIR: xadmin-server
         run: pnpm check:menu-permissions
+
+      - name: Menu component paths exist
+        # 种子引用的页面组件必须真实存在（断链平时无报错，用户点菜单直接 404）
+        env:
+          XADMIN_SERVER_DIR: xadmin-server
+        run: pnpm check:menu-components
+
+      - name: Component docs props reconcile
+        # xadmin-docs 组件示例里绑定的属性必须真实存在于 props（缺兄弟仓时脚本自跳过）
+        run: pnpm check:docs-components
 
       - name: Ledger ids stay out of source
         # 防台账编号回潮：ADR 决策编号与任务编号只允许出现在提交信息与 docs/ 台账本体

@@ -19,6 +19,10 @@ export function createSearchEvents({
 }) {
   const initSearchFields = () => {
     searchFields.value = cloneDeep(defaultValue.value);
+    // fetchSearchFields=false 且内联响应缺 search_fields 时 defaultValue 为 {}：
+    // 兜底当前分页值，避免重置后 pageSize/page 变成 undefined
+    searchFields.value.size ??= tablePagination.value.pageSize;
+    searchFields.value.page ??= 1;
     tablePagination.value.pageSize = searchFields.value.size;
     tablePagination.value.currentPage = searchFields.value.page;
   };

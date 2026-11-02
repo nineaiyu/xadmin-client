@@ -1,10 +1,16 @@
 import { computed, onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { normalizeError } from "@/utils/apiError";
+import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 import { systemUploadFileApi } from "@/api/file/file";
 import { getDictItems } from "@/utils/dict";
 import type { PageColumn } from "@/components/RePlusPage";
-import { UPLOAD_CATEGORY_DICT, type FileStats } from "./fileStats";
+import {
+  UPLOAD_CATEGORY_DICT,
+  mapCategoryOptions,
+  type FileStats
+} from "./fileStats";
 
 /**
  * 文件配额统计与分类下拉选项。
@@ -24,6 +30,11 @@ export function useFileQuotaStats({ hasStatsAuth }: { hasStatsAuth: boolean }) {
       .catch(normalizeError)
       .then(res => {
         if (isSuccess(res)) stats.value = res.data as FileStats;
+        else
+          message(String(res.detail || transformI18n("results.failed")), {
+            type: "warning",
+            grouping: true
+          });
       });
   };
   onMounted(loadStats);
@@ -32,10 +43,7 @@ export function useFileQuotaStats({ hasStatsAuth }: { hasStatsAuth: boolean }) {
   // 选项来源与 DictChoiceField 保持同源（upload_category 字典），保证与表单下拉一致
   const categoryOptions = ref<Array<{ label: string; value: unknown }>>([]);
   getDictItems(UPLOAD_CATEGORY_DICT).then(items => {
-    categoryOptions.value = items.map(item => ({
-      label: String(item.label ?? item.value ?? ""),
-      value: item.value
-    }));
+    categoryOptions.value = mapCategoryOptions(items);
   });
 
   /** 搜索区 category 列：改为下拉（选项与上传表单同源） */

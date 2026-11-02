@@ -1,12 +1,17 @@
+import { isDeepStrictEqual } from "node:util";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import {
   ADMIN,
   HIGH_LOAD,
+  captureSiteConfig,
   login,
   openMenuPath,
   openSettingPanel,
-  switchSettingTab
+  restoreSiteConfig,
+  switchSettingTab,
+  type SiteConfigSnapshot
 } from "./helpers";
 
 /**
@@ -113,36 +118,58 @@ type PreferenceField =
   | "HeaderMode"
   | "Layout";
 
-/** 正则转义：键位串含 `+`（量词）等元字符，直接内插会让匹配语义漂移 */
-const escapeRegExp = (text: string) =>
-  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 /**
  * 等待面板触发的站点配置 PATCH 落库（自动保存防抖 600ms）。
  *
  * 只认「目标字段值」的那一次保存：切换前后可能各有一次在途的旧配置保存，
  * 只等第一个 PATCH 会等到旧值、随后的刷新断言落空。
+ * 保存响应即服务端权威值：同时断言 HTTP 成功与目标字段已落库，
+ * 避免「没发请求 / 请求被拒」时后续 DOM 断言变成空断言。
  */
 async function waitForSiteConfigPatch(
   page: Page,
   field: PreferenceField,
-  value: string | boolean | number,
-  action: () => Promise<void>
+  value: unknown,
+  action: () => Promise<void>,
+  /** 同一 PATCH 内其它字段的附加校验（如 widgetPositions 与镜像旧键） */
+  verify?: (config: Record<string, unknown>) => void
 ) {
-  const saved = page
-    .waitForResponse(
-      resp =>
-        resp.request().method() === "PATCH" &&
-        resp.url().includes(SITE_CONFIG_URL) &&
-        new RegExp(
-          `"${field}"\\s*:\\s*"?${escapeRegExp(String(value))}"?`
-        ).test(resp.request().postData() ?? ""),
-      { timeout: SITE_CONFIG_PATCH_TIMEOUT }
-    )
-    .catch(() => null);
+  const saved = page.waitForResponse(
+    resp => {
+      if (
+        resp.request().method() !== "PATCH" ||
+        !resp.url().includes(SITE_CONFIG_URL)
+      ) {
+        return false;
+      }
+      try {
+        const payload = JSON.parse(resp.request().postData() ?? "{}");
+        return isDeepStrictEqual(payload?.[field], value);
+      } catch {
+        return false;
+      }
+    },
+    { timeout: SITE_CONFIG_PATCH_TIMEOUT }
+  );
   await action();
   const response = await saved;
-  await response?.finished().catch(() => undefined);
+  expect(
+    response.ok(),
+    `站点配置保存失败（${response.status()}）：${field}=${JSON.stringify(value)}`
+  ).toBeTruthy();
+  const body = (await response.json()) as {
+    code?: number;
+    config?: Record<string, unknown>;
+  };
+  expect(
+    body.code,
+    `站点配置保存业务码异常：${field}=${JSON.stringify(value)}`
+  ).toBe(1000);
+  expect(
+    body.config?.[field],
+    `站点配置未落库：${field}=${JSON.stringify(value)}`
+  ).toEqual(value);
+  verify?.(body.config ?? {});
 }
 
 /** 键位字段（Pascal）→ 本地存储键（camel） */
@@ -181,13 +208,15 @@ async function setSwitch(
   page: Page,
   label: string | RegExp,
   value: boolean,
-  field: BooleanPreferenceField
+  field: BooleanPreferenceField,
+  /** 落库字段期望值：控件方向与字段语义相反时指定（如「显示顶栏」↔ HeaderHidden） */
+  fieldValue: boolean = value
 ) {
   const target = row(page, label);
   await expect(target).toBeVisible({ timeout: 10_000 });
   const input = target.locator("input[type=checkbox]").first();
   if ((await input.isChecked()) !== value) {
-    await waitForSiteConfigPatch(page, field, value, async () => {
+    await waitForSiteConfigPatch(page, field, fieldValue, async () => {
       await target.locator(".el-switch").click();
     });
   }
@@ -491,24 +520,49 @@ async function setWidgetPosition(
   page: Page,
   label: string | RegExp,
   optionLabel: string | RegExp,
-  value: string
+  widgetKey: string,
+  position: "header" | "more" | "user-dropdown"
 ) {
   const item = page
     .locator(".right-panel .navbar-widgets__item")
     .filter({ hasText: label })
     .first();
   await expect(item).toBeVisible({ timeout: 10_000 });
-  await waitForSiteConfigPatch(page, "NavbarMoreWidgets", value, async () => {
-    await item.locator(".el-select").click();
-    const listId = await item
-      .locator("[aria-controls]")
-      .first()
-      .getAttribute("aria-controls");
-    const option = listId
-      ? page.locator(`#${listId} .el-select-dropdown__item`)
-      : page.locator(".el-select-dropdown__item");
-    await option.filter({ hasText: optionLabel }).first().click();
-  });
+  // 最小化 PATCH 只提交实际变更键：以本地现有落位为基线构造期望对象，
+  // 不再等兼容镜像 NavbarMoreWidgets（未变化时不会进入载荷）。
+  const current =
+    (await page.evaluate(() => {
+      const raw = localStorage.getItem("responsive-configure");
+      return raw
+        ? (JSON.parse(raw).widgetPositions as
+            Record<string, unknown> | undefined)
+        : undefined;
+    })) ?? {};
+  const expectedPositions = { ...current, [widgetKey]: position };
+  await waitForSiteConfigPatch(
+    page,
+    "WidgetPositions",
+    expectedPositions,
+    async () => {
+      await item.locator(".el-select").click();
+      const listId = await item
+        .locator("[aria-controls]")
+        .first()
+        .getAttribute("aria-controls");
+      const option = listId
+        ? page.locator(`#${listId} .el-select-dropdown__item`)
+        : page.locator(".el-select-dropdown__item");
+      await option.filter({ hasText: optionLabel }).first().click();
+    },
+    config => {
+      const positions = config.WidgetPositions as
+        Record<string, unknown> | undefined;
+      expect(positions?.[widgetKey], `落位未生效：${widgetKey}`).toBe(position);
+      const more = (config.NavbarMoreWidgets as unknown[] | undefined) ?? [];
+      if (position === "more") expect(more).toContain(widgetKey);
+      else expect(more).not.toContain(widgetKey);
+    }
+  );
 }
 
 /** 按坐标中键点击（页签条带过渡动画，webkit 下 click 会卡在稳定性等待） */
@@ -653,23 +707,32 @@ async function readSiteConfig(page: Page) {
  * 读缓存，直写后页面刷新仍见旧值。写入后回读确认：在途自动保存可能晚到覆盖。
  */
 async function patchSiteConfig(page: Page, patch: Record<string, unknown>) {
+  let after: Record<string, unknown> = {};
   for (let attempt = 0; attempt < 3; attempt++) {
     const current = await readSiteConfig(page);
     await page.request.patch("/api/system/configs/WEB_SITE_CONFIG", {
       data: { ...current, ...patch }
     });
-    const after = await readSiteConfig(page);
+    after = await readSiteConfig(page);
     const ok = Object.entries(patch).every(
       ([key, expected]) => after[key] === expected
     );
     if (ok) return;
     await page.waitForTimeout(400);
   }
+  throw new Error(
+    `站点配置写回失败（3 次重试后仍不一致）：${JSON.stringify(patch)} → ${JSON.stringify(
+      Object.fromEntries(Object.keys(patch).map(key => [key, after[key]]))
+    )}`
+  );
 }
+
+let siteConfig: SiteConfigSnapshot | null = null;
 
 test.describe("布局偏好（面板实时生效）", () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    siteConfig = await captureSiteConfig(page);
     // 布局残留防御：切换菜单布局的用例会把 Layout 落库（站点配置），跨用例 /
     // 跨浏览器批次残留时页面会以横向或混合布局启动，依赖纵向形态的断言随之失败
     await ensureVerticalLayout(page);
@@ -717,266 +780,14 @@ test.describe("布局偏好（面板实时生效）", () => {
       await page.keyboard.press("Alt+s").catch(() => undefined);
     }
 
-    // 复位：所有被本用例改过的偏好都回到默认，避免污染其它用例与视觉基线。
-    // 面板文案可能被语言用例切成英文，行/页签定位一律中英双语。
-    await openSettingPanel(page).catch(() => undefined);
-
-    // 面板头部吸顶开关（Pin 按钮，不属任何页签）：关闭态点回开启
-    const pinButton = page.locator(
-      ".right-panel .lay-panel__header button[aria-pressed]"
-    );
-    if (
-      (await pinButton.getAttribute("aria-pressed").catch(() => "true")) ===
-      "false"
-    ) {
-      await pinButton.click().catch(() => undefined);
-    }
-
-    await switchSettingTab(page, /外观|Appearance/).catch(() => undefined);
-    // 自定义主色：仅自定义态需要回退（点回亮白色块 = 默认皮肤 + 默认主色）
-    if (
-      (await page
-        .locator(".right-panel .theme-color__custom.is-custom-active")
-        .count()) > 0
-    ) {
-      await page
-        .locator(".right-panel .theme-color li")
-        .first()
-        .click()
-        .catch(() => undefined);
-    }
-    await setScale(
-      page,
-      /圆角|Radius/,
-      /默认|Default/,
-      "Radius",
-      "default"
-    ).catch(() => undefined);
-    await setScale(
-      page,
-      /字号|Font size/,
-      /默认|Default/,
-      "FontScale",
-      "default"
-    ).catch(() => undefined);
-
-    await switchSettingTab(page, /布局|Layout/).catch(() => undefined);
-    await setHeaderMode(page, "fixed").catch(() => undefined);
-    await setSwitch(page, /面包屑|Breadcrumb/, true, "BreadcrumbVisible").catch(
-      () => undefined
-    );
-    await setSwitch(page, /菜单搜索|Menu search/, true, "NavbarSearch").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /语言切换|Language switch/,
-      true,
-      "NavbarLanguage"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /全屏按钮|Fullscreen button/,
-      true,
-      "NavbarFullscreen"
-    ).catch(() => undefined);
-    await setSwitch(page, /消息通知|Notifications/, true, "NavbarNotice").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /锁屏按钮|Lock screen button/,
-      true,
-      "NavbarLock"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /半暗侧栏|Semi-dark sidebar/,
-      false,
-      "SemiDarkSidebar"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /半暗顶栏|Semi-dark header/,
-      false,
-      "SemiDarkHeader"
-    ).catch(() => undefined);
-    await setNumber(page, /侧栏宽度|Sidebar width/, "SidebarWidth", 210).catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /手风琴展开|Accordion/,
-      true,
-      "SidebarAccordion"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /中键关闭|Middle-click close/,
-      true,
-      "TagsMiddleClickClose"
-    ).catch(() => undefined);
-    await setNumber(page, /最大数量|Max count/, "MaxTagsCount", 0).catch(
-      () => undefined
-    );
-
-    await switchSettingTab(page, /通用|General/).catch(() => undefined);
-    await setSelect(page, /语言|Language/, /简体中文/, "Locale", "zh").catch(
-      () => undefined
-    );
-    await setSwitch(page, /紧凑模式|Compact mode/, false, "CompactMode").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /顶栏自动隐藏|Auto-hide header/,
-      false,
-      "HeaderAutoHide"
-    ).catch(() => undefined);
-    await setSwitch(page, /动态标题|Dynamic title/, true, "DynamicTitle").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /显示复制偏好按钮|Show copy-preferences button/,
-      true,
-      "EnableCopyPreferences"
-    ).catch(() => undefined);
-    await setTransitionCard(page, "fade-transform").catch(() => undefined);
-
-    // 快捷键页签：总开关与各动作键位全部复位（键位串比较走本地存储，值一致即跳过录制）
-    await switchSettingTab(page, /快捷键|Shortcuts/).catch(() => undefined);
-    await setSwitch(
-      page,
-      /快捷键开关|Enable shortcuts/,
-      true,
-      "ShortcutEnable"
-    ).catch(() => undefined);
-    await recordShortcut(
-      page,
-      /锁屏|Lock screen/,
-      "Alt+l",
-      "ShortcutLockKeys",
-      "alt+l"
-    ).catch(() => undefined);
-    await recordShortcut(
-      page,
-      /折叠侧栏|Toggle sidebar/,
-      "Alt+s",
-      "ShortcutSidebarKeys",
-      "alt+s"
-    ).catch(() => undefined);
-    await recordShortcut(
-      page,
-      /全局搜索|Global search/,
-      "Control+k",
-      "ShortcutSearchKeys",
-      "mod+k"
-    ).catch(() => undefined);
-    await recordShortcut(
-      page,
-      /打开项目配置|Open preferences/,
-      "Control+,",
-      "ShortcutPreferencesKeys",
-      "mod+,"
-    ).catch(() => undefined);
-    await clearShortcut(page, /退出登录|Sign out/, "ShortcutLogoutKeys").catch(
-      () => undefined
-    );
-
-    // 页签细分 / 面包屑细分 / 顶栏补充按钮复位（布局页签区块）
-    await switchSettingTab(page, /布局|Layout/).catch(() => undefined);
-    await setSwitch(page, /页签图标|Tab icons/, true, "TagsShowIcon").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /刷新按钮|Refresh button/,
-      true,
-      "TagsShowRefresh"
-    ).catch(() => undefined);
-    await setSwitch(page, /更多按钮|More button/, true, "TagsShowMore").catch(
-      () => undefined
-    );
-    await setSwitch(
-      page,
-      /面包屑图标|Breadcrumb icons/,
-      true,
-      "BreadcrumbShowIcon"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /显示首页|Show home/,
-      false,
-      "BreadcrumbShowHome"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /仅一项时隐藏|Hide when single/,
-      false,
-      "BreadcrumbHideOnlyOne"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /悬停展开|Expand on hover/,
-      true,
-      "SidebarExpandOnHover"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /拖拽调宽|Drag to resize/,
-      false,
-      "SidebarDraggable"
-    ).catch(() => undefined);
-    await setBreadcrumbStyle(page, "normal").catch(() => undefined);
-    await setSwitch(
-      page,
-      /顶栏刷新|Header refresh/,
-      true,
-      "NavbarRefresh"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /顶栏折叠|Header sidebar toggle/,
-      false,
-      "NavbarSidebarToggle"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /顶栏明暗切换|Header theme toggle/,
-      false,
-      "NavbarThemeToggle"
-    ).catch(() => undefined);
-
-    // 偏好入口复位（通用页签）：开关与位置
-    await switchSettingTab(page, /通用|General/).catch(() => undefined);
-    await setSwitch(
-      page,
-      /设置入口|Settings entry/,
-      true,
-      "EnablePreferences"
-    ).catch(() => undefined);
-    await setPrefChoice(
-      page,
-      "header",
-      "PreferencesPosition",
-      /入口位置|Entry position/
-    ).catch(() => undefined);
-
-    // 过渡开关复位（通用页签）
-    await switchSettingTab(page, /通用|General/).catch(() => undefined);
-    await setSwitch(
-      page,
-      /顶部进度条|Top progress bar/,
-      true,
-      "TransitionProgress"
-    ).catch(() => undefined);
-    await setSwitch(
-      page,
-      /内容区 loading|Content loading/,
-      false,
-      "TransitionLoading"
-    ).catch(() => undefined);
+    // 复位：整包快照写回即可收敛全部站点级偏好（逐个控件复位会在每个设置项上
+    // 额外等一次 PATCH，50+ 项让本 spec 的 afterEach 拖到分钟级）。先等自动保存
+    // 的 600ms 防抖 + 在途请求落地，避免写回被晚到的旧值 PATCH 覆盖。
+    await page.waitForTimeout(900);
+    // 整包快照写回：Layout/Title/主题等所有站点级偏好回到用例开始前的值，
+    // 失败路径也不会把状态留给后续 spec（helpers 内回读校验 + 重试）
+    await restoreSiteConfig(page, siteConfig);
+    siteConfig = null;
   });
 
   test("偏好抽屉为四页签结构，紧凑模式实时生效并持久化", async ({ page }) => {
@@ -1448,12 +1259,13 @@ test.describe("布局偏好（面板实时生效）", () => {
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
 
-    await setSwitch(page, /显示顶栏|Show header/, false, "HeaderHidden");
+    // 「显示顶栏」开关与 HeaderHidden 语义相反：关闭开关 = HeaderHidden 落库 true
+    await setSwitch(page, /显示顶栏|Show header/, false, "HeaderHidden", true);
     await expect(page.locator(".navbar")).toHaveCount(0);
     // 页签条保留（还原入口仍在）
     await expect(page.locator(".tags-view")).toBeVisible();
 
-    await setSwitch(page, /显示顶栏|Show header/, true, "HeaderHidden");
+    await setSwitch(page, /显示顶栏|Show header/, true, "HeaderHidden", false);
     await expect(page.locator(".navbar")).toHaveCount(1);
   });
 
@@ -2155,13 +1967,21 @@ test.describe("布局偏好（面板实时生效）", () => {
     const box = await resizer.boundingBox();
     expect(box, "拖拽把手应可见").not.toBeNull();
 
-    // 拖 +60px：拖拽中只改 CSS 变量，松开才落库
-    await page.mouse.move((box?.x ?? 0) + 2, (box?.y ?? 0) + 200);
-    await page.mouse.down();
-    await page.mouse.move((box?.x ?? 0) + 62, (box?.y ?? 0) + 200, {
-      steps: 10
-    });
-    await page.mouse.up();
+    // 拖 +60px：拖拽中只改 CSS 变量，松开才落库；等落库 PATCH 落在服务端
+    // 再复位，否则防抖窗口内「拖拽 + 复位」合并成一次无差异保存而被跳过。
+    await waitForSiteConfigPatch(
+      page,
+      "SidebarWidth",
+      expectedWidth,
+      async () => {
+        await page.mouse.move((box?.x ?? 0) + 2, (box?.y ?? 0) + 200);
+        await page.mouse.down();
+        await page.mouse.move((box?.x ?? 0) + 62, (box?.y ?? 0) + 200, {
+          steps: 10
+        });
+        await page.mouse.up();
+      }
+    );
 
     // 基准 + 60px 落库到站点配置（宽度可调范围 160-320，拖拽量在范围内）
     await expect
@@ -2843,7 +2663,7 @@ test.describe("布局偏好（面板实时生效）", () => {
     await ensureVerticalLayout(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setWidgetPosition(page, "顶栏刷新", "更多下拉", '["refresh"]');
+    await setWidgetPosition(page, "顶栏刷新", "更多下拉", "refresh", "more");
     await closePanel(page);
 
     await expect(page.locator("#header-more")).toBeVisible();
@@ -2862,7 +2682,7 @@ test.describe("布局偏好（面板实时生效）", () => {
 
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setWidgetPosition(page, "顶栏刷新", "顶栏", "[]");
+    await setWidgetPosition(page, "顶栏刷新", "顶栏", "refresh", "header");
     await closePanel(page);
     await expect(page.locator("#header-refresh")).toBeVisible();
     await expect(page.locator("#header-more")).toHaveCount(0);
@@ -2878,7 +2698,8 @@ test.describe("布局偏好（面板实时生效）", () => {
       page,
       "顶栏刷新",
       /头像菜单|User menu/,
-      JSON.stringify({ refresh: "user-dropdown" })
+      "refresh",
+      "user-dropdown"
     );
     await closePanel(page);
     await expect(
@@ -2894,7 +2715,8 @@ test.describe("布局偏好（面板实时生效）", () => {
       page,
       "顶栏刷新",
       /顶栏|Header/,
-      JSON.stringify({ refresh: "header" })
+      "refresh",
+      "header"
     );
     await closePanel(page);
     await expect(page.locator("#header-refresh")).toBeVisible();
@@ -2908,7 +2730,13 @@ test.describe("布局偏好（面板实时生效）", () => {
     await switchSettingTab(page, "布局");
 
     // 刷新按钮落位改「更多下拉」：顶栏不再直挂，「更多」入口出现
-    await setWidgetPosition(page, "顶栏刷新", /更多下拉|More/, '["refresh"]');
+    await setWidgetPosition(
+      page,
+      "顶栏刷新",
+      /更多下拉|More/,
+      "refresh",
+      "more"
+    );
     await closePanel(page);
     await expect(
       page.locator(".vertical-header-right > #header-refresh")
@@ -2931,7 +2759,13 @@ test.describe("布局偏好（面板实时生效）", () => {
     // 复位：顶栏（同时把 widgetPositions 与镜像旧键都归位）
     await openSettingPanel(page);
     await switchSettingTab(page, "布局");
-    await setWidgetPosition(page, "顶栏刷新", /顶栏|Header/, "[]");
+    await setWidgetPosition(
+      page,
+      "顶栏刷新",
+      /顶栏|Header/,
+      "refresh",
+      "header"
+    );
     await closePanel(page);
     await expect(
       page.locator(".vertical-header-right > #header-refresh")

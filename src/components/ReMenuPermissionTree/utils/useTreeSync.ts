@@ -2,7 +2,7 @@ import { nextTick, ref, watch, type Ref } from "vue";
 import type { TreeInstance } from "element-plus";
 import {
   collectSelectionPayload,
-  foldFullMenuSelection,
+  expandMenuSelection,
   type PermissionSubmitPayload,
   type PermissionTreeIndex,
   type PermissionTreeNode
@@ -59,16 +59,17 @@ export function useTreeSync(deps: {
   function applyPending() {
     if (!pendingKeys.value || !treeData.value.length) return;
     const keys = pendingKeys.value;
-    // 回显折叠：拥有页面全部后代时呈现为页面级勾选（保存提交页面键，后端再展开为权限点）
-    const folded = [...foldFullMenuSelection(index.value, keys)];
-    baseline.value = folded;
-    selection.value = new Set(folded);
+    // 回显不做「整页折叠」：折叠成页面键后无法再单独取消某个权限点
+    // （页面键会重新展开为全部权限）。历史页面键先展开为权限点再回显。
+    const expanded = [...expandMenuSelection(index.value, keys)];
+    baseline.value = expanded;
+    selection.value = new Set(expanded);
     // 等 el-tree 完成 setData（其内部 watch 与本次同批执行）后再回显勾选
     nextTick(() => {
       if (!treeRef.value || pendingKeys.value !== keys) return;
       pendingKeys.value = null;
-      treeRef.value.setCheckedKeys(folded, false);
-      deps.expandAncestors(folded);
+      treeRef.value.setCheckedKeys(expanded, false);
+      deps.expandAncestors(expanded);
     });
   }
 

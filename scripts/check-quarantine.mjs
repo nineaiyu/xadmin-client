@@ -9,13 +9,16 @@
  *   - project 字段存在（字符串；空串=两个浏览器都适用）；
  *   - reason 属于四分类：时序 | 数据 | 环境 | 外部依赖；
  *   - issue 字段存在（可为空字符串；外部依赖类必须非空）；
- *   - expires 为合法 ISO 日期（YYYY-MM-DD）且不早于今天（过期即失败）。
+ *   - expires 为合法 ISO 日期（YYYY-MM-DD）且不早于今天（过期即失败）；
+ *   - spec 文件存在，且 title 能命中该 spec 内至少一个用例标题（按字面量子串，
+ *     与 e2e-run 拼 `--grep(-invert)` 时的转义口径一致）。
  *
  * 用法：
  *   node scripts/check-quarantine.mjs [--file e2e/quarantine.json] [--help]
  *   node scripts/check-quarantine.mjs --count              # 只打印条目数（供 workflow 判定）
  *   node scripts/check-quarantine.mjs --hint <report.json> # 依据抖动榜单给出移出提示
  */
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -117,6 +120,44 @@ function parseDay(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/** 枚举 spec 内的全部用例标题（collect-only，不启动浏览器/服务）。 */
+const specTitleCache = new Map();
+function listSpecTitles(spec) {
+  if (specTitleCache.has(spec)) return specTitleCache.get(spec);
+  const cli = resolve("node_modules/@playwright/test/cli.js");
+  let titles = null;
+  if (existsSync(cli)) {
+    try {
+      const output = execFileSync(
+        process.execPath,
+        [cli, "test", spec, "--list", "--reporter=json"],
+        {
+          encoding: "utf-8",
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 120_000
+        }
+      );
+      const report = JSON.parse(output.slice(output.indexOf("{")));
+      titles = [];
+      const walk = suites => {
+        for (const suite of suites ?? []) {
+          for (const item of suite.specs ?? [])
+            if (typeof item.title === "string") titles.push(item.title);
+          walk(suite.suites);
+        }
+      };
+      walk(report.suites);
+    } catch (error) {
+      titles = null;
+      console.warn(
+        `[quarantine] 无法枚举 ${spec} 的用例标题：${error.message.split("\n")[0]}`
+      );
+    }
+  }
+  specTitleCache.set(spec, titles);
+  return titles;
+}
+
 function todayUtc() {
   const now = new Date();
   return new Date(
@@ -127,11 +168,6 @@ function todayUtc() {
 function main() {
   const opts = parseArgs(process.argv.slice(2));
 
-  if (opts.count) {
-    const countData = extractEntries(readManifest(opts.file));
-    console.log(countData ? String(countData.length) : "0");
-    return;
-  }
   if (opts.hint) {
     printHint(opts.hint);
     return;
@@ -175,6 +211,25 @@ function main() {
     )
       errors.push(`${at}：外部依赖类必须填写 issue`);
 
+    // spec / title 必须真实存在：否则条目永远不会命中任何用例，隔离形同虚设
+    // （--count 供 workflow 快速判定，跳过需要启动 Playwright 的标题枚举）
+    if (!opts.count && typeof entry.spec === "string" && entry.spec.trim()) {
+      if (!existsSync(resolve(entry.spec.trim()))) {
+        errors.push(`${at}：spec 文件不存在（${entry.spec}）`);
+      } else if (typeof entry.title === "string" && entry.title.trim()) {
+        const titles = listSpecTitles(entry.spec.trim());
+        if (titles === null) {
+          errors.push(
+            `${at}：无法枚举 ${entry.spec} 的用例标题，无法校验 title`
+          );
+        } else if (!titles.some(title => title.includes(entry.title.trim()))) {
+          errors.push(
+            `${at}：title 未命中任何用例标题（${JSON.stringify(entry.title)}；该 spec 共 ${titles.length} 条）`
+          );
+        }
+      }
+    }
+
     const expires = parseDay(entry.expires);
     if (!expires) {
       errors.push(
@@ -193,6 +248,11 @@ function main() {
     process.exit(1);
   }
 
+  if (opts.count) {
+    // 与完整校验共用字段/到期检查后再输出数量：清单损坏或有过期项时不能静默通过
+    console.log(String(entries.length));
+    return;
+  }
   console.log(`[quarantine] 校验通过：${entries.length} 条隔离条目（${file}）`);
 }
 

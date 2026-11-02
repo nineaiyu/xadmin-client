@@ -31,8 +31,11 @@ const { exiting, exitImpersonation } = useImpersonationExit();
     v-if="visible"
     class="impersonation-banner"
     role="status"
+    tabindex="0"
     :aria-label="t('layout.impersonateExit')"
     @click="exitImpersonation"
+    @keydown.enter.prevent="exitImpersonation"
+    @keydown.space.prevent="exitImpersonation"
   >
     <IconifyIconOffline :icon="UserShared" class="banner-icon" />
     <span class="banner-text">

@@ -17,7 +17,7 @@ import FormFieldOptionsDialog from "./FormFieldOptionsDialog.vue";
  * 字段设计表（从 DynamicFormForm 拆出，行数门禁）：行内编辑 key/标签/控件，
  * 拖拽手柄排序 + 上移/下移按钮 + 属性弹窗入口 + 删除。
  *
- * 复杂选项（普通选项 / 明细子表列 / 级联路径）交给结构化弹窗编辑（P2-159），
+ * 复杂选项（普通选项 / 明细子表列 / 级联路径）交给结构化弹窗编辑，
  * 不再在单元格里用逗号/竖线文本协议。
  */
 defineOptions({ name: "FormFieldTable" });

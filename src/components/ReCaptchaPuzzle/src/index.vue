@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useResizeObserver } from "@vueuse/core";
 
@@ -15,6 +15,7 @@ import {
   pieceGeometry,
   sliderMax
 } from "@/components/ReCaptchaChallenge/src/geometry";
+import { measureWidth } from "@/components/ReSliderCaptcha/src/geometry";
 
 defineOptions({ name: "ReCaptchaPuzzle" });
 
@@ -41,12 +42,19 @@ let startedAt = 0;
 let lastSampleAt = 0;
 let inputMode: "pointer" | "keyboard" = "pointer";
 
-useResizeObserver(stageRef, entries => {
-  stageWidth.value = entries[0]?.contentRect.width ?? 0;
-});
-useResizeObserver(sliderHostRef, entries => {
-  sliderWidth.value = entries[0]?.contentRect.width ?? 0;
-});
+/**
+ * 宽度量测：底板取 clientWidth（padding 盒，拼接块以 padding 盒为定位基准），
+ * 滑条宿主取 offsetWidth（与 ReSliderCaptcha 内部 max 同一 border-box 口径），
+ * 两处不再混用 contentRect，避免末端答案被两套量法差出的 1~2px 吃掉容差。
+ */
+function syncWidths() {
+  stageWidth.value = stageRef.value?.clientWidth ?? 0;
+  sliderWidth.value = measureWidth(sliderHostRef.value);
+}
+
+useResizeObserver(stageRef, syncWidths);
+useResizeObserver(sliderHostRef, syncWidths);
+onMounted(syncWidths);
 
 const naturalWidth = computed(() => props.challenge.width ?? 320);
 const naturalHeight = computed(() => props.challenge.height ?? 180);
@@ -78,6 +86,7 @@ function pushTrack(t: number, ev?: string) {
 }
 
 function onStart() {
+  syncWidths();
   track.value = [];
   startedAt = Date.now();
   displayX.value = 0;

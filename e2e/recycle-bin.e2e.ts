@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 回收站 E2E（遗留收口）：角色删除 → 回收站可见 → 恢复 → 列表重现。
@@ -12,6 +20,7 @@ test("角色回收站：删除 → 回收站恢复 → 列表重现", async ({ p
   const roleCode = `e2e_recycle_${Date.now()}`;
 
   await login(page);
+  await startResourceIsolation(page);
 
   // API 创建待删角色（表单创建链路已由其他用例覆盖）；先创建后进页面，
   // 使新角色自然出现在首屏列表，无需手动刷新

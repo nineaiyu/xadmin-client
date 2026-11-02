@@ -55,11 +55,21 @@ test("问 AI：搜索词直达 AI 控制台（可用时预填输入框）", asyn
   await expect(page).toHaveURL(/#\/integration\/ai\/index/, {
     timeout: 15_000
   });
-  // AI 已启用且已配置时输入框可见且预填（未启用时页面显示引导占位，
-  // 强断言版本见 ai.e2e.ts——该文件首个用例会开启全局开关）
-  const askInput = page.getByTestId("ai-ask-input");
-  if (await askInput.isVisible()) {
+  // 两种形态都必须给出确定结果，禁止条件式跳过：
+  // - 已启用且已配置：输入框可见且预填搜索词（核心行为）；
+  // - 未启用/未配置：必须命中明确的引导占位（[data-testid="ai-status-state"]）。
+  const consoleRoot = page
+    .locator('[data-testid="ai-console"], [data-testid="ai-status-state"]')
+    .first();
+  await expect(consoleRoot).toBeVisible({ timeout: 15_000 });
+  if (await page.getByTestId("ai-console").isVisible()) {
+    const askInput = page.getByTestId("ai-ask-input");
+    await expect(askInput).toBeVisible({ timeout: 15_000 });
     await expect(askInput).toHaveValue("如何配置数据权限");
+  } else {
+    await expect(page.getByTestId("ai-status-state")).toContainText(
+      /未启用|未配置|加载失败|disabled|not configured|configure/i
+    );
   }
 });
 

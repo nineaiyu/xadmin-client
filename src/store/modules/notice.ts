@@ -228,7 +228,10 @@ export const useNoticeStore = defineStore("pure-notice", {
       const socket = new PureWebSocket(identity, "xadmin", {
         openCallback: () => {
           socket.onMessage(data => {
-            onMessage(data);
+            // onMessage 内含 await（markdown 分包加载）：拒绝必须有接住的地方
+            void onMessage(data).catch(error => {
+              console.warn("[notice] push message handling failed:", error);
+            });
           });
         }
       });

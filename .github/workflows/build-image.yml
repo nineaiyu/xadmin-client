@@ -46,6 +46,26 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm test:run
 
+      - name: Run Static Gates (tag release)
+        # tag 事件不经过 lint-code.yml（它只监听 main/dev）；发布镜像前必须把
+        # 只依赖本仓的门禁再跑一遍，避免用未过 lint/类型/红线的提交产出镜像。
+        # 跨仓门禁（contract / menu-* / docs-components / version）在 lint-code.yml 里跑，
+        # 发布 tag 签发前应已在 main 验证。
+        run: |
+          pnpm lint:eslint:check
+          pnpm lint:prettier:check
+          pnpm typecheck
+          node scripts/check-file-length.mjs
+          node scripts/check-function-length.mjs
+          pnpm check:template-root
+          pnpm check:tables
+          pnpm check:overlays
+          pnpm check:as-unknown
+          pnpm check:i18n
+          pnpm check:api-routes
+          pnpm check:contract-usage
+          pnpm check:ledger-ids
+
   security-scan:
     needs: [test]
     runs-on: ubuntu-latest
@@ -73,8 +93,8 @@ jobs:
       # 会让 audit 以 ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS 报错退出（假红）
       # --ignore GHSA-vfj7-8cjw-p6xm（braces stack-exhaustion）：上游无修复版本
       # （3.0.3 即 latest，advisory 覆盖 <=3.0.3 且 patched=None），且仅经
-      # fast-glob>micromatch>braces 进入构建期 devDependencies（unplugin-vue-i18n /
-      # stylelint），调用方传字面 glob pattern，不存在「深度嵌套 pattern」利用前提，
+      # fast-glob>micromatch>braces 进入构建期 devDependencies（stylelint /
+      # unplugin 链路），调用方传字面 glob pattern，不存在「深度嵌套 pattern」利用前提，
       # 亦不进生产 bundle。上游发布修复后删除本豁免与 pnpm-workspace 注释。
       - name: Dependency audit (blocking)
         run: pnpm audit --audit-level high --registry=https://registry.npmjs.org --ignore GHSA-vfj7-8cjw-p6xm

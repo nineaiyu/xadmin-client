@@ -139,6 +139,17 @@ function writeOrder(keys: string[]) {
   storageConfigureChange("navbarOrder", keys);
 }
 
+/** 键盘调序（handle 上的 ↑/↓）：与拖拽写回同一份 navbarOrder */
+function moveWidget(key: string, delta: number) {
+  const list = orderedKeys.value.slice();
+  const index = list.indexOf(key);
+  const next = index + delta;
+  if (index < 0 || next < 0 || next >= list.length) return;
+  list.splice(index, 1);
+  list.splice(next, 0, key);
+  writeOrder(list);
+}
+
 /** 拖拽调序：松手后按 DOM 顺序写回偏好 */
 useSortable(listDom, {
   animation: 200,
@@ -176,6 +187,9 @@ useSortable(listDom, {
           tabindex="0"
           :title="t('layout.navbarWidgetsDesc')"
           :aria-label="t('layout.navbarWidgetsDesc')"
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          @keydown.up.prevent="moveWidget(item.key, -1)"
+          @keydown.down.prevent="moveWidget(item.key, 1)"
         >
           <IconifyIconOffline :icon="DraggableIcon" />
         </span>

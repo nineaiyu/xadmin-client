@@ -44,6 +44,8 @@ export function createTtlCache<R>(
   const { ttl: defaultTtl = 60 * 1000, shouldCache, clone } = options;
   const store = new Map<string, { value: R; expires: number }>();
   const inflight = new Map<string, Promise<R>>();
+  // 失效代次：写操作触发的 invalidate 之后，失效前发出的请求即使晚到也不得回填缓存
+  let generation = 0;
 
   const through = (value: R): R => (clone ? clone(value) : value);
 
@@ -62,8 +64,10 @@ export function createTtlCache<R>(
       if (pending) return pending.then(through);
     }
 
+    const startedAt = generation;
     const request = fetcher().then(value => {
-      if (!shouldCache || shouldCache(value)) {
+      // 失效代次已变化：本次结果来自写操作之前的快照，直接返回给调用方但不入缓存
+      if (startedAt === generation && (!shouldCache || shouldCache(value))) {
         store.set(key, { value, expires: Date.now() + ttl });
       }
       return value;
@@ -80,8 +84,15 @@ export function createTtlCache<R>(
   }
 
   function invalidate(key?: string) {
-    if (key) store.delete(key);
-    else store.clear();
+    generation += 1;
+    if (key) {
+      store.delete(key);
+      // 在途请求同步作废：失效后新的 get 不能复用写前快照的 Promise
+      inflight.delete(key);
+    } else {
+      store.clear();
+      inflight.clear();
+    }
   }
 
   return { get, invalidate };

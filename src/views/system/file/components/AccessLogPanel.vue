@@ -87,10 +87,17 @@ onMounted(load);
         type="info"
         effect="light"
       >
-        {{ actionLabel(action) }}：{{ count }}
+        {{
+          t("labels.labelValue", { label: actionLabel(action), value: count })
+        }}
       </el-tag>
       <el-tag v-if="data" type="success" effect="plain">
-        {{ t("fileAccess.total") }}：{{ data.total }}
+        {{
+          t("labels.labelValue", {
+            label: t("fileAccess.total"),
+            value: data.total
+          })
+        }}
       </el-tag>
     </div>
     <ReReadonlyTable

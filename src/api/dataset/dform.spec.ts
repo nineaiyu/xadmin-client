@@ -40,7 +40,7 @@ describe("dynamicFormApi 表单定义", () => {
       "/api/dataset/dynamic-forms",
       {
         params: { page: 1 },
-        data: {}
+        data: undefined
       },
       {}
     );
@@ -55,7 +55,7 @@ describe("dynamicFormApi 表单定义", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/dataset/dynamic-forms/f1",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
   });
@@ -65,7 +65,7 @@ describe("dynamicFormApi 表单定义", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/dataset/dynamic-forms/f1",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
   });

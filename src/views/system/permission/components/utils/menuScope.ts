@@ -163,3 +163,19 @@ export function countTreePermissions(nodes: ScopeNode[]): number {
     return sum + countTreePermissions(node.children ?? []);
   }, 0);
 }
+
+/**
+ * 试算菜单上下文候选 = 页面菜单（绑定菜单的授权只在该页面上下文生效）。
+ * 标题未命中词条时 translate 返回空串（非 nullish），用 `||` 兜底为主键。
+ */
+export function buildMenuContextOptions(
+  rows: MenuScopeRow[],
+  translate: MenuTitleTranslator = title => title ?? ""
+): Array<{ value: string; label: string }> {
+  return rows
+    .filter(item => menuTypeOf(item) === MenuChoices.MENU)
+    .map(item => ({
+      value: String(item.pk),
+      label: translate(item.meta?.title) || String(item.pk)
+    }));
+}

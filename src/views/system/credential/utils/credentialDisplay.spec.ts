@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 const auths: Record<string, boolean> = {
   "list:SystemConfig": true,
   "list:AiAssistantConfig": false,
-  "list:SystemSetting": true
+  "list:SystemSetting": true,
+  "list:SettingMessage": false,
+  "retrieve:SmsSetting": true,
+  "retrieve:SettingBasic": false,
+  "retrieve:LdapServerSetting": true
 };
 vi.mock("@/router/utils", () => ({
   hasAuth: (code: string) => Boolean(auths[code])
@@ -45,6 +49,9 @@ describe("credentialDisplay", () => {
     expect(canOpenChangeEntry("/system/config/system/index")).toBe(true);
     expect(canOpenChangeEntry("/settings/ledger/index")).toBe(true);
     expect(canOpenChangeEntry("/settings/ldap")).toBe(true);
+    expect(canOpenChangeEntry("/settings/message")).toBe(false);
+    expect(canOpenChangeEntry("/settings/sms")).toBe(true);
+    expect(canOpenChangeEntry("/settings/basic")).toBe(false);
     expect(canOpenChangeEntry("/integration/ai/config")).toBe(false);
     expect(canOpenChangeEntry("/unknown/entry")).toBe(true);
     expect(canOpenChangeEntry("")).toBe(false);

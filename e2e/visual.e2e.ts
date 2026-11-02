@@ -17,8 +17,9 @@ import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
  * 数据随运行时刻变化的页面不入基线，避免 flaky。实测排除（2026-09-25）：
  * - 系统监控：心跳/告警数据与图表时间轴随运行时刻变化（差 3%）；
  * - AI 控制台：对话历史服务端持久化，跑批会累积消息（差 3%）；
- * - 操作日志：日志行数据依赖其它用例产生的操作记录。
- * 注：chat 页依赖「公共聊天室为空」的 seed 初始态，若后续出现同类 flaky 按同口径移除。
+ * - 操作日志：日志行数据依赖其它用例产生的操作记录；
+ * - 聊天室：公共房间历史由 chat / notice-push 等用例持续写入且无可用的清空接口，
+ *   非 fresh 库上整页截图必然漂移，已移出基线面。
  */
 
 test.skip(
@@ -79,12 +80,6 @@ const CORE_PAGES: CorePage[] = [
     open: async page => {
       // 全屏投屏页（无 layout 静态路由），示例大屏仅一张看板、不轮播
       await page.goto(`/#/analysis/screen/display?pk=${SCREEN_PK}`);
-    }
-  },
-  {
-    name: "chat",
-    open: async page => {
-      await openMenuPath(page, [], "/default/chat/index");
     }
   }
 ];

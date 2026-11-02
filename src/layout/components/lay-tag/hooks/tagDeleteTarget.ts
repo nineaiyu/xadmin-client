@@ -1,3 +1,4 @@
+import { isEqual } from "lodash-es";
 import type { RouteConfigs } from "../../../types";
 import type { useTags } from "../../../hooks/useTag";
 import { readConfigurePreferences } from "@/utils/preferences";
@@ -10,11 +11,11 @@ export function findTagIndex(tags: RouteConfigs[], obj: RouteConfigs): number {
   return tags.findIndex(item => {
     if (item.query) {
       if (item.path === obj.path) {
-        return item.query === obj.query;
+        return isEqual(item.query, obj.query);
       }
     } else if (item.params) {
       if (item.path === obj.path) {
-        return item.params === obj.params;
+        return isEqual(item.params, obj.params);
       }
     } else {
       return item.path === obj.path;

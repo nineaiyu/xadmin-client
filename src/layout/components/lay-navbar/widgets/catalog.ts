@@ -195,9 +195,11 @@ export function resolveNavbarLayout(
         (key): key is string => typeof key === "string"
       )
     : [];
+  // 偏好里的重复键去重：否则同一个组件会被渲染两次（实例与请求翻倍）
+  const uniqueConfigured = [...new Set(configured)];
   const order = [
-    ...configured.filter(key => Boolean(findNavbarWidget(key))),
-    ...DEFAULT_NAVBAR_ORDER.filter(key => !configured.includes(key))
+    ...uniqueConfigured.filter(key => Boolean(findNavbarWidget(key))),
+    ...DEFAULT_NAVBAR_ORDER.filter(key => !uniqueConfigured.includes(key))
   ];
 
   const entries = order

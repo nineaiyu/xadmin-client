@@ -61,8 +61,17 @@ export const builtinSearchRenderers: PlusColumnRegistry = {
     item.options = computed(() => {
       const options = formatAddOrEditOptions(column.choices ?? []);
       options?.forEach(option => {
-        const labels = String(option.label ?? "").split(" ");
-        option.label = `${formatPublicLabels(t, te, labels[0] as string, localeName) ?? labels[0]} ${formatPublicLabels(t, te, labels[1] as string, localeName) ?? labels[1]}`;
+        // 后端 label = "<verbose_name> ascending|descending"；verbose_name 可能含空格，
+        // 只能从末尾匹配方向词，不能按空格切分（多词字段会把方向词拆坏）
+        const text = String(option.label ?? "");
+        const matched = text.match(/^(.*?)\s+(ascending|descending)$/i);
+        if (!matched) {
+          option.label = formatPublicLabels(t, te, text, localeName) ?? text;
+          return;
+        }
+        const fieldLabel = matched[1].trim();
+        const direction = matched[2].toLowerCase();
+        option.label = `${formatPublicLabels(t, te, fieldLabel, localeName) ?? fieldLabel} ${formatPublicLabels(t, te, direction, localeName) ?? direction}`;
       });
       return options;
     });

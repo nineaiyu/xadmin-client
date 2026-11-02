@@ -151,21 +151,31 @@ export const i18n: I18n = createI18n({
  * 并写入 i18n（setLocaleMessage）。调用点：app.mount 前（初始语言为 en 时）与语言切换处。
  */
 let enLoaded = false;
+/** 进行中的 en 加载：并发调用复用同一 Promise，避免重复拉取语料 */
+let enLoading: Promise<void> | null = null;
 export async function ensureLocale(locale?: string) {
   // legacy: false 下 global 为 Composer（I18n 类型的 locale 是 string | WritableComputedRef 联合，此处收窄）
   const rawLocale = i18n.global.locale;
   const current = typeof rawLocale === "string" ? rawLocale : rawLocale.value;
   const target = locale ?? String(current);
   if (target !== "en" || enLoaded) return;
-  const [yaml, ep] = await Promise.all([
-    loadLazyLocale("en"),
-    import("element-plus/es/locale/lang/en")
-  ]);
-  (i18n.global as Composer).setLocaleMessage("en", {
-    ...yaml,
-    ...ep.default
+  if (enLoading) return enLoading;
+  enLoading = (async () => {
+    const [yaml, ep] = await Promise.all([
+      loadLazyLocale("en"),
+      import("element-plus/es/locale/lang/en")
+    ]);
+    (i18n.global as Composer).setLocaleMessage("en", {
+      ...yaml,
+      ...ep.default
+    });
+    enLoaded = true;
+    enLoading = null;
+  })().catch(error => {
+    enLoading = null;
+    throw error;
   });
-  enLoaded = true;
+  return enLoading;
 }
 
 // 兜底：任何路径把 locale 切成 en（站点配置恢复、布局初始化等）时自动补齐语言包，

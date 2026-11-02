@@ -1,5 +1,4 @@
 import { $t, transformI18n } from "@/plugins/i18n";
-import type { CheckboxValueType } from "element-plus";
 import { useSortable } from "@/hooks/useSortable";
 import {
   computed,
@@ -10,13 +9,7 @@ import {
   unref,
   watch
 } from "vue";
-import {
-  cloneDeep,
-  delay,
-  getKeyList,
-  isBoolean,
-  isFunction
-} from "@pureadmin/utils";
+import { cloneDeep, getKeyList, isBoolean, isFunction } from "@pureadmin/utils";
 
 import PinAngle from "~icons/bi/pin-angle";
 import Fullscreen from "~icons/ri/fullscreen-fill";
@@ -33,14 +26,16 @@ import {
   ICON_CLASS,
   TOP_CLASS,
   buildRenderClass,
+  createRefreshState,
   rendTippyProps,
-  resolveFixedState,
+  resolveColumnCheckState,
   tableBarProps,
   toggleRowExpansionAll,
   type TableColumnLike
 } from "./utils";
 import { useTablePrefs } from "./useTablePrefs";
 import { createSizeDropdown } from "./dropdown";
+import { createColumnSettings } from "./columnSettings";
 
 export default defineComponent({
   name: "PureTableBar",
@@ -50,7 +45,6 @@ export default defineComponent({
     // 表格偏好：列显隐/顺序/密度跨刷新保持（本地 + 可选跨设备同步）
     const tablePrefs = useTablePrefs();
     const size = ref(tablePrefs.size.value);
-    const loading = ref(false);
     const checkAll = ref(true);
     const isFullscreen = ref(false);
     const isIndeterminate = ref(false);
@@ -74,25 +68,34 @@ export default defineComponent({
 
     const iconClass = computed(() => ICON_CLASS);
 
-    const topClass = computed(() => TOP_CLASS);
-
     const renderClass = computed(() => buildRenderClass(isFullscreen.value));
 
-    /**
-     * 持久化当前列状态（本地即写 + 远端防抖）：只在用户交互路径调用
-     * （列勾选/全选、密度切换、列拖拽排序、重置列）。
-     * 元数据装配与首帧同步同样会改列并走 handleChange（emit 给父组件），
-     * 但绝不落远端——否则每打开一个列表页都会 PATCH 一次站点配置。
-     */
+    /** 列状态持久化（本地即写 + 远端防抖）：只在用户交互路径调用 */
     const persistPrefs = () => {
       tablePrefs.save(dynamicColumns.value, size.value);
     };
 
-    function onReFresh() {
-      loading.value = true;
-      emit("refresh");
-      delay(500).then(() => (loading.value = false));
-    }
+    /** 刷新 loading：优先跟随父级回传的请求状态，缺省时 500ms 兜底 */
+    const { loading, onReFresh } = createRefreshState(
+      computed(() => props.refreshLoading),
+      () => emit("refresh")
+    );
+
+    /** 图标按钮的键盘激活（Enter/Space）：与点击同路径 */
+    const iconKeydown = (handler: () => void) => (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      handler();
+    };
+
+    /** 下拉/弹层触发图标：键盘激活时派发 click 交给 EP 的触发器 */
+    const triggerKeydown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      (event.currentTarget as HTMLElement).dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true })
+      );
+    };
 
     function onExpand() {
       isExpandAll.value = !isExpandAll.value;
@@ -105,60 +108,33 @@ export default defineComponent({
       emit("fullscreen", isFullscreen.value);
     }
 
-    function handleCheckAllChange(val: CheckboxValueType) {
-      checkedColumns.value = val ? checkColumnList.value : [];
-      isIndeterminate.value = false;
-      dynamicColumns.value.map((column: TableColumnLike) =>
-        val ? (column.hide = false) : (column.hide = true)
-      );
-      persistPrefs();
-    }
-
-    function handleCheckedColumnsChange(value: CheckboxValueType[]) {
-      checkedColumns.value = value;
-      const checkedCount = value.length;
-      checkAll.value = checkedCount === checkColumnList.value.length;
-      isIndeterminate.value =
-        checkedCount > 0 && checkedCount < checkColumnList.value.length;
-    }
-
-    function handleCheckColumnListChange(
-      val: CheckboxValueType,
-      label: string
-    ) {
-      dynamicColumns.value.filter(
-        (item: TableColumnLike) =>
-          transformI18n(item.label) === transformI18n(label)
-      )[0].hide = !val;
-      persistPrefs();
-    }
-
-    function handleToggleColumnFixed(
-      fixed: boolean | "left" | "right",
-      label: string
-    ) {
-      const column = dynamicColumns.value.find(
-        (item: TableColumnLike) =>
-          transformI18n(item.label) === transformI18n(label)
-      );
-      if (column) {
-        column.fixed = fixed;
-      }
-    }
+    const {
+      handleCheckAllChange,
+      handleCheckedColumnsChange,
+      handleCheckColumnListChange,
+      handleToggleColumnFixed,
+      isFixedColumn
+    } = createColumnSettings({
+      dynamicColumns,
+      checkedColumns,
+      checkAll,
+      isIndeterminate,
+      checkColumnList,
+      persistPrefs
+    });
 
     async function onReset(persist = false) {
-      checkAll.value = true;
-      isIndeterminate.value = false;
       dynamicColumns.value = cloneDeep(props?.columns);
       tablePrefs.apply(dynamicColumns.value);
       checkColumnList.value = getKeyList(
         cloneDeep(props?.columns ?? []),
         "label"
       );
-      checkedColumns.value = getKeyList(
-        cloneDeep(filterColumns.value),
-        "label"
-      );
+      // 勾选态跟随「应用偏好后」的列：偏好隐藏的列不得显示为已勾选
+      const state = resolveColumnCheckState(dynamicColumns.value);
+      checkedColumns.value = state.checked;
+      checkAll.value = state.all;
+      isIndeterminate.value = state.indeterminate;
       if (persist) persistPrefs();
     }
 
@@ -170,9 +146,13 @@ export default defineComponent({
       });
     };
 
-    watch(props?.columns, () => {
-      onReset();
-    });
+    watch(
+      props?.columns,
+      () => {
+        onReset();
+      },
+      { deep: true }
+    );
 
     // 首帧即应用偏好（放在 change watcher 之前，父组件先拿到带偏好的列）
     onReset();
@@ -243,14 +223,6 @@ export default defineComponent({
       });
     };
 
-    const isFixedColumn = (label: string) => {
-      const column = dynamicColumns.value.find(
-        (item: TableColumnLike) =>
-          transformI18n(item.label) === transformI18n(label)
-      );
-      return resolveFixedState(column);
-    };
-
     const reference = {
       reference: () => (
         <SettingIcon
@@ -259,13 +231,19 @@ export default defineComponent({
           // a11y：图标按钮需可访问名；显式 aria-hidden=false 保证名称生效
           aria-label={t("tableBar.columnSettings")}
           aria-hidden={false}
+          role="button"
+          tabindex={0}
+          onKeydown={triggerKeydown}
         />
       )
     };
 
     return () => (
       <>
-        <div {...attrs} class={[slots?.default ? renderClass.value : ""]}>
+        <div
+          {...attrs}
+          class={[attrs.class, slots?.default ? renderClass.value : ""]}
+        >
           <div class="flex justify-between w-full h-15 p-4">
             {slots?.title ? (
               slots.title()
@@ -274,7 +252,9 @@ export default defineComponent({
             )}
             <div class="flex-ac">
               {slots?.buttons ? (
-                <div class="flex mr-4">{slots.buttons()}</div>
+                <div class="flex mr-4" data-testid="table-bar-buttons">
+                  {slots.buttons()}
+                </div>
               ) : null}
               {props.tableRef?.size ? (
                 <>
@@ -294,7 +274,10 @@ export default defineComponent({
                         : t("tableBar.unfold")
                     }
                     aria-hidden={false}
+                    role="button"
+                    tabindex={0}
                     onClick={() => onExpand()}
+                    onKeydown={iconKeydown(onExpand)}
                   />
                   <el-divider direction="vertical" />
                 </>
@@ -308,7 +291,10 @@ export default defineComponent({
                 v-tippy={rendTippyProps(t("tableBar.refresh"))}
                 aria-label={t("tableBar.refresh")}
                 aria-hidden={false}
+                role="button"
+                tabindex={0}
                 onClick={() => onReFresh()}
+                onKeydown={iconKeydown(onReFresh)}
               />
               <el-divider direction="vertical" />
               <el-dropdown
@@ -320,6 +306,9 @@ export default defineComponent({
                   class={["w-4", iconClass.value]}
                   aria-label={t("tableBar.density")}
                   aria-hidden={false}
+                  role="button"
+                  tabindex={0}
+                  onKeydown={triggerKeydown}
                 />
               </el-dropdown>
               <el-divider direction="vertical" />
@@ -331,7 +320,7 @@ export default defineComponent({
                 width="245"
                 trigger="click"
               >
-                <div class={[topClass.value]}>
+                <div class={[TOP_CLASS]}>
                   <el-checkbox
                     class="-mr-1!"
                     label={t("tableBar.columnDisplay")}
@@ -410,12 +399,20 @@ export default defineComponent({
                                     : transformI18n($t("tableBar.pinLeft"))
                                 }
                                 aria-hidden={false}
+                                role="button"
+                                tabindex={0}
                                 onClick={() =>
                                   handleToggleColumnFixed(
                                     left ? false : "left",
                                     item
                                   )
                                 }
+                                onKeydown={iconKeydown(() =>
+                                  handleToggleColumnFixed(
+                                    left ? false : "left",
+                                    item
+                                  )
+                                )}
                               />
                               <iconify-icon-offline
                                 class={[
@@ -438,12 +435,20 @@ export default defineComponent({
                                     : transformI18n($t("tableBar.pinRight"))
                                 }
                                 aria-hidden={false}
+                                role="button"
+                                tabindex={0}
                                 onClick={() =>
                                   handleToggleColumnFixed(
                                     right ? false : "right",
                                     item
                                   )
                                 }
+                                onKeydown={iconKeydown(() =>
+                                  handleToggleColumnFixed(
+                                    right ? false : "right",
+                                    item
+                                  )
+                                )}
                               />
                             </div>
                           );
@@ -469,7 +474,10 @@ export default defineComponent({
                     : t("tableBar.fullscreen")
                 }
                 aria-hidden={false}
+                role="button"
+                tabindex={0}
                 onClick={() => onFullscreen()}
+                onKeydown={iconKeydown(onFullscreen)}
               />
             </div>
           </div>

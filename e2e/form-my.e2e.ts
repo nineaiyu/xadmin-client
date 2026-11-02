@@ -62,7 +62,10 @@ test("我的填报：卡片填报 → 框架列表 → 详情抽屉", async ({ p
     ).toBeVisible();
     await expect(tableArea.locator(".el-pagination")).toBeVisible();
     // 工具栏：框架默认按钮（导出/刷新/密度/列设置）随权限渲染
-    await expect(tableArea.getByRole("img", { name: "列设置" })).toBeVisible();
+    // 列设置图标是键盘可达的按钮（role=button），不再按 img 定位
+    await expect(
+      tableArea.getByRole("button", { name: "列设置" })
+    ).toBeVisible();
     // 搜索区由框架按 search-columns 生成（提交人列已按个人页语义隐藏）
     await expect(
       tableArea.getByRole("button", { name: "搜索" }).first()

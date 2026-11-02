@@ -196,14 +196,32 @@ class SystemCodeGenApi extends BaseApi {
       { responseType: "blob" }
     );
   };
-  /** 方案列表（取值域「本人 + 共享」，服务端分页） */
-  planList = () => {
-    return this.request<ListResult<CodegenPlanItem>>(
+  /** 方案列表（取值域「本人 + 共享」，按服务端 max_page_size=100 翻页取全量） */
+  planList = async () => {
+    const size = 100;
+    const first = await this.request<ListResult<CodegenPlanItem>>(
       "get",
-      { page: 1, size: 1000 },
-      {},
+      { page: 1, size },
+      undefined,
       PLANS_BASE
     );
+    const results = [...(first.data?.results ?? [])];
+    const total = Number(first.data?.total ?? results.length);
+    for (let page = 2; results.length < total; page += 1) {
+      const next = await this.request<ListResult<CodegenPlanItem>>(
+        "get",
+        { page, size },
+        undefined,
+        PLANS_BASE
+      );
+      const rows = next.data?.results ?? [];
+      if (!rows.length) break;
+      results.push(...rows);
+    }
+    return {
+      ...first,
+      data: first.data ? { ...first.data, results } : first.data
+    };
   };
   /** 保存方案（同名覆盖，服务端 upsert） */
   planSave = (payload: CodegenPlanPayload) => {

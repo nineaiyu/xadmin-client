@@ -81,12 +81,21 @@ export const handleExportData = (options: exportDataOptions) => {
       try {
         if (formData.range === "all") {
           await exportBy(formData);
-        } else if (formData.range === "search" && searchFields) {
-          // 参数归一（区间拆分 / pk 扁平化 / 剔分页）见 buildExportSearchParams：
-          // 在副本上变换，直接写 searchFields 会污染列表页查询条件
-          await exportBy(
-            buildExportSearchParams(toRaw(searchFields.value), formData["type"])
-          );
+        } else if (formData.range === "search") {
+          if (!searchFields) {
+            // 自定义入口漏传 searchFields：不能按成功关闭（用户会看不到文件）
+            ok = false;
+            failed(t("results.failed"));
+          } else {
+            // 参数归一（区间拆分 / pk 扁平化 / 剔分页）见 buildExportSearchParams：
+            // 在副本上变换，直接写 searchFields 会污染列表页查询条件
+            await exportBy(
+              buildExportSearchParams(
+                toRaw(searchFields.value),
+                formData["type"]
+              )
+            );
+          }
         } else if (formData.range === "selected") {
           const res = await resourcesIDCacheApi(formData.pks);
           if (!isSuccess(res) || !res.spm) {

@@ -14,11 +14,17 @@ const form = ctx.model;
 const isMenu = computed(() => form.menuType === MenuChoices.MENU);
 const isPermission = computed(() => form.menuType === MenuChoices.PERMISSION);
 
-/** 组件路径联动：路由地址自动补 "/"，组件名取视图组件 name */
+/** 组件路径联动：路由地址自动补 "/"（仅在未手填或仍是上次联动值时），组件名取视图组件 name */
+let derivedPath = "";
 const onComponentChange = (value: string) => {
   if (!value) return;
-  form.path = `/${value}`;
-  form.name = ctx.viewList[value] ?? form.name;
+  if (!form.path || form.path === derivedPath) {
+    form.path = `/${value}`;
+    derivedPath = form.path;
+  }
+  // 清单只收录菜单元数据里的既有名称；未知组件保持手填（空名不能覆盖已填名称）
+  const name = ctx.viewList[value];
+  if (name) form.name = name;
 };
 
 /** 排序值上限：与后端 rank 整数域对齐（自动生成权限点从 10000 起，手工菜单留足调整余量） */
@@ -90,7 +96,7 @@ const MENU_RANK_MAX = 100000;
     </template>
     <el-input
       v-model="form.name"
-      :disabled="isMenu"
+      :disabled="isMenu && Boolean(ctx.viewList[form.component ?? ''])"
       :placeholder="t('systemMenu.componentName')"
       clearable
     />

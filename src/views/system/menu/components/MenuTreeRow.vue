@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import ReTreeLine from "@/components/ReTreeLine";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import type { TreeNode } from "element-plus/es/components/tree-v2/src/types";
 import { MenuChoices } from "@/views/system/constants";
 import { displayTitle } from "../utils/useMenuFilter";
 import { menuTypeTagType, rowPathText } from "../utils/normalize";
@@ -34,7 +35,7 @@ const props = withDefaults(
 );
 
 /** ReTreeLine 的节点入参为 tree-v2 的 TreeNode 结构，与 el-tree 实例同构，此处按边界收窄 */
-const lineNode = computed(() => props.node as never);
+const lineNode = computed(() => props.node as TreeNode);
 
 const emit = defineEmits<{
   "toggle-active": [row: MenuRow, value: boolean];
@@ -306,7 +307,7 @@ const onSwitch = (value: boolean | string | number) => {
     max-width: 320px;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: var(--el-font-family-mono, monospace);
+    font-family: var(--font-family-mono);
     font-size: var(--el-font-size-extra-small);
 
     /* 小字号需 AA 对比度：secondary 在白底仅 3:1，改 regular 并靠字号/等宽维持层级 */

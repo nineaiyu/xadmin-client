@@ -16,12 +16,23 @@ import { fixedTagRoutes } from "@/router/constants";
 /** 标签页持久化防抖句柄：标签增删频繁，合并写盘避免逐次同步序列化阻塞主线程 */
 let tagsCacheTimer: ReturnType<typeof setTimeout> | null = null;
 
+const tagsStorageKey = () => `${responsiveStorageNameSpace()}tags`;
+
 function scheduleTagsCache(multiTags: RouteConfigs[]) {
   if (tagsCacheTimer) clearTimeout(tagsCacheTimer);
   tagsCacheTimer = setTimeout(() => {
-    storageLocal().setItem(`${responsiveStorageNameSpace()}tags`, multiTags);
+    storageLocal().setItem(tagsStorageKey(), multiTags);
     tagsCacheTimer = null;
   }, 150);
+}
+
+/** 同步落盘：登出/切换身份会在写入后立即 reload，防抖定时器会被丢弃 */
+function flushTagsCache(multiTags: RouteConfigs[]) {
+  if (tagsCacheTimer) {
+    clearTimeout(tagsCacheTimer);
+    tagsCacheTimer = null;
+  }
+  storageLocal().setItem(tagsStorageKey(), multiTags);
 }
 
 /**
@@ -89,10 +100,13 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
         storageLocal().removeItem(`${responsiveStorageNameSpace()}tags`);
       }
     },
-    tagsCache(multiTags: RouteConfigs[]) {
+    tagsCache(multiTags: RouteConfigs[], immediate = false) {
       if (this.getMultiTagsCache) {
+        // 整体替换（登出/切换身份）必须同步落盘：随后立刻 reload 会把防抖定时器
+        // 一起丢弃，下一会话会恢复上一账号的页签
+        if (immediate) flushTagsCache(multiTags);
         // 防抖写盘：标签增删很频繁，逐次同步序列化整个标签数组会阻塞主线程
-        scheduleTagsCache(multiTags);
+        else scheduleTagsCache(multiTags);
       }
     },
     handleTags(
@@ -107,7 +121,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
           } else if (value) {
             this.multiTags = [value as RouteConfigs];
           }
-          this.tagsCache(this.multiTags);
+          this.tagsCache(this.multiTags, true);
           break;
         case "push":
           {
@@ -150,7 +164,8 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
             }
             this.multiTags.push(tagVal);
             const maxTagsCount = resolveMaxTagsCount();
-            if (maxTagsCount > 0 && this.multiTags.length > maxTagsCount) {
+            // 上限调小后可能一次超多条：循环回收直到回落（全固定时允许短暂超限）
+            while (maxTagsCount > 0 && this.multiTags.length > maxTagsCount) {
               // 关闭最早打开的可关闭页签：跳过首页固定页签（索引 0）、右键固定的
               // 页签，以及**刚打开的这一项**（否则已有页签全固定时会立刻把新页签
               // 淘汰，表现为「点了菜单但标签页不出现」）。
@@ -164,6 +179,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
               // 其余页签全固定时没有可淘汰项：固定是用户的显式保留意图，
               // 此时允许短暂超限（不强行摘除固定页签）；取消固定后下一次 push 回收
               if (removableIndex > 0) this.multiTags.splice(removableIndex, 1);
+              else break;
             }
             this.tagsCache(this.multiTags);
           }

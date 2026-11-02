@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
+import { normalizeError } from "@/utils/apiError";
 import { copyText } from "@/utils/clipboard";
 import { menuApi } from "@/api/system/menu";
 import type {
@@ -123,6 +124,11 @@ const groups = computed<AuditGroup[]>(() => [
   }
 ]);
 
+/** 问题总数：后端 summary.total 不含「自定义动作」命名空间，前端按五组长度自行求和 */
+const issueCount = computed(() =>
+  groups.value.reduce((sum, group) => sum + group.rows.length, 0)
+);
+
 /** 建议文案：后端下发稳定的 suggestion 枚举，本地化在展示层完成 */
 const suggestText = (value: MenuPermissionAuditItem["suggestion"]) => {
   const map = {
@@ -146,7 +152,7 @@ const fetchAudit = async () => {
     }
   } catch (error) {
     result.value = null;
-    message(String((error as { detail?: string })?.detail ?? error), {
+    message(normalizeError(error).detail || t("results.failed"), {
       type: "error"
     });
   } finally {
@@ -174,7 +180,7 @@ const onLocateRow = (pk: string | null) => {
           t("systemMenu.permissionAudit.summary", {
             routes: result.summary.routes,
             permissions: result.summary.permissions,
-            total: result.summary.total
+            total: issueCount
           })
         }}
       </span>
@@ -188,7 +194,7 @@ const onLocateRow = (pk: string | null) => {
     </div>
 
     <el-alert
-      v-if="result && result.summary.total === 0"
+      v-if="result && issueCount === 0"
       :closable="false"
       show-icon
       type="success"

@@ -1,10 +1,17 @@
 <script lang="ts" setup>
 import type { DrawerOptions, EventType, ArgsType } from "./type";
-import { closeDrawer, drawerStore, getDrawerUid } from "./store";
+import {
+  closeDrawer,
+  drawerStore,
+  getDrawerUid,
+  finalizeDrawer
+} from "./store";
 import { isFunction } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import { useOverlayFooter } from "@/components/overlay/useOverlayFooter";
 import { useOverlayScrollLock } from "@/components/overlay/useOverlayScrollLock";
+import { drawerDomProps } from "./attrs";
+import { buttonDomProps } from "@/components/overlay/domProps";
 
 defineOptions({
   name: "ReDrawer"
@@ -57,6 +64,12 @@ function handleChange(options: DrawerOptions, index: number, values: unknown) {
   options?.onChange && options.onChange({ options, index, values });
 }
 
+/** EP `@closed`：离场过渡结束才出队，避免动画中途卸载 */
+function handleClosed(options: DrawerOptions, index: number) {
+  handleClose(options, index);
+  finalizeDrawer(options);
+}
+
 /**
  * 内容组件 props：既有 `options.props` + （启用载荷通道时）注入 `getData/setData`。
  * 仅在显式传入 `payload` 的抽屉注入，未传的抽屉零影响
@@ -79,12 +92,12 @@ function contentProps(options: DrawerOptions) {
     v-model="options.visible"
     :append-to="options?.appendTo ? options.appendTo : 'body'"
     class="pure-drawer"
-    v-bind="options"
+    v-bind="drawerDomProps(options)"
     :close-on-press-escape="options.closeOnPressEscape ?? true"
     :before-close="
       (done: (cancel?: boolean) => void) => handleBeforeClose(options, done)
     "
-    @closed="handleClose(options, index)"
+    @closed="handleClosed(options, index)"
     @opened="eventsCallBack('open', options, index)"
     @open-auto-focus="eventsCallBack('openAutoFocus', options, index)"
     @close-auto-focus="eventsCallBack('closeAutoFocus', options, index)"
@@ -131,7 +144,15 @@ function contentProps(options: DrawerOptions) {
             "
           >
             <template #reference>
-              <el-button v-bind="btn">{{ btn?.label }}</el-button>
+              <el-button
+                v-bind="buttonDomProps(btn)"
+                :loading="
+                  btn.code === 'sure' &&
+                  sureBtnMap[getDrawerUid(options) ?? index]?.loading
+                "
+              >
+                {{ btn?.label }}
+              </el-button>
             </template>
           </el-popconfirm>
           <el-button
@@ -140,7 +161,7 @@ function contentProps(options: DrawerOptions) {
               btn.code === 'sure' &&
               sureBtnMap[getDrawerUid(options) ?? index]?.loading
             "
-            v-bind="btn"
+            v-bind="buttonDomProps(btn)"
             @click="
               btn.btnClick?.({
                 drawer: { options, index },

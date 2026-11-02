@@ -200,6 +200,7 @@ const onPreview = () => {
     <el-form-item :label="t('mask.previewRoles')">
       <div class="w-full">
         <el-select
+          v-if="canReadRoles"
           v-model="viewerRoles"
           multiple
           clearable
@@ -213,6 +214,9 @@ const onPreview = () => {
             :value="opt.pk"
           />
         </el-select>
+        <el-text v-else type="info">
+          {{ t("mask.previewRolesFixed") }}
+        </el-text>
         <div class="text-xs/5 text-(--el-text-color-secondary)">
           {{ t("mask.previewRolesTip") }}
         </div>

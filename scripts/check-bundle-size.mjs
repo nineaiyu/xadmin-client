@@ -149,9 +149,41 @@ function renderMarkdown(baseline, delta) {
   return lines.join("\n");
 }
 
+/** 基线可比较字段（排除 updated：仅日期变化不算内容变化） */
+function measurable(snapshotLike) {
+  return JSON.stringify({
+    budget_kb: snapshotLike.budget_kb,
+    i18n_budget_kb: snapshotLike.i18n_budget_kb,
+    closure_gzip9_kb: snapshotLike.closure_gzip9_kb,
+    code_gzip9_kb: snapshotLike.code_gzip9_kb,
+    i18n_gzip9_kb: snapshotLike.i18n_gzip9_kb,
+    main_chunk_gzip9_kb: snapshotLike.main_chunk_gzip9_kb,
+    chunks: snapshotLike.chunks
+  });
+}
+
 if (shouldUpdate) {
+  const previous = existsSync(baselinePath)
+    ? JSON.parse(readFileSync(baselinePath, "utf-8"))
+    : null;
+  if (previous && measurable(previous) === measurable(snapshot)) {
+    console.log(
+      "[bundle-size] 基线与当前产物一致，未写入（--update 只在内容确有变化时落盘）。"
+    );
+    console.log(renderMarkdown(previous, 0));
+    process.exit(0);
+  }
   writeFileSync(baselinePath, `${JSON.stringify(snapshot, null, 2)}\n`);
   console.log(`[bundle-size] 基线已刷新：${baselinePath}`);
+  if (previous) {
+    const previousAccounting = splitAccounting(previous.chunks ?? []);
+    const changes = [
+      `closure ${round1(previous.closure_gzip9_kb)} → ${snapshot.closure_gzip9_kb} KB`,
+      `code ${round1(previousAccounting.code)} → ${snapshot.code_gzip9_kb} KB`,
+      `i18n ${round1(previousAccounting.i18n)} → ${snapshot.i18n_gzip9_kb} KB`
+    ].join("；");
+    console.log(`[bundle-size] 差异摘要：${changes}`);
+  }
   console.log(renderMarkdown());
   process.exit(0);
 }
@@ -170,8 +202,23 @@ const delta = round1(snapshot.closure_gzip9_kb - baseline.closure_gzip9_kb);
 const codeDelta = round1(snapshot.code_gzip9_kb - baselineAccounting.code);
 const i18nDelta = round1(snapshot.i18n_gzip9_kb - baselineAccounting.i18n);
 
+// 预算判定对两种输出格式都生效：`--format md` 只是报告渲染方式，
+// 不能成为绕过门禁的路径（超预算同样非零退出）。
+const overBudget = [];
+if (codeDelta > BUDGET_KB)
+  overBudget.push(`代码账本增长 ${codeDelta} KB 超出预算 ${BUDGET_KB} KB`);
+if (i18nDelta > I18N_BUDGET_KB)
+  overBudget.push(
+    `i18n 账本增长 ${i18nDelta} KB 超出预算 ${I18N_BUDGET_KB} KB`
+  );
+
 if (format === "md") {
   console.log(renderMarkdown(baseline, delta));
+  if (overBudget.length) {
+    console.error(`[bundle-size] ${overBudget.join("；")}。`);
+    process.exit(1);
+  }
+  console.log("[bundle-size] 在预算内，通过。");
   process.exit(0);
 }
 
@@ -190,14 +237,6 @@ console.log(
 console.log(
   `[bundle-size] 主 chunk ${snapshot.main_chunk_gzip9_kb} KB（基线 ${baseline.main_chunk_gzip9_kb} KB）`
 );
-
-const overBudget = [];
-if (codeDelta > BUDGET_KB)
-  overBudget.push(`代码账本增长 ${codeDelta} KB 超出预算 ${BUDGET_KB} KB`);
-if (i18nDelta > I18N_BUDGET_KB)
-  overBudget.push(
-    `i18n 账本增长 ${i18nDelta} KB 超出预算 ${I18N_BUDGET_KB} KB`
-  );
 
 if (overBudget.length) {
   console.error(

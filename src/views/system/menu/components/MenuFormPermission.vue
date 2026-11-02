@@ -45,6 +45,8 @@ const cascaderOptions = computed(() => ctx.modelList as CascaderOption[]);
       class="w-full"
       clearable
       filterable
+      allow-create
+      default-first-option
       :placeholder="t('systemMenu.verifyPermissionPath')"
     >
       <el-option

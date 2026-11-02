@@ -4,7 +4,7 @@ import { nextTick } from "vue";
 import { describe, expect, it } from "vitest";
 
 import ReSliderCaptcha from "../src/index.vue";
-import { actionOffset } from "../src/geometry";
+import { actionOffset, measureWidth } from "../src/geometry";
 
 const i18n = createI18n({
   legacy: false,
@@ -49,6 +49,17 @@ describe("ReSliderCaptcha 滑块验证码", () => {
   it("actionOffset 保证非负", () => {
     expect(actionOffset(200, 40, 6)).toBe(154);
     expect(actionOffset(30, 40, 6)).toBe(0);
+  });
+
+  it("容器宽度统一按 offsetWidth（与滑块内部 max 同一口径）", () => {
+    const element = document.createElement("div");
+    Object.defineProperty(element, "offsetWidth", {
+      value: 300,
+      configurable: true
+    });
+    expect(measureWidth(element)).toBe(300);
+    expect(measureWidth(null)).toBe(0);
+    expect(measureWidth(undefined)).toBe(0);
   });
 
   it("拖到末端判定通过：发 success 且回写 v-model，文案切为通过态", async () => {

@@ -24,3 +24,26 @@ describe("resolveTimezoneOptions", () => {
     expect(FALLBACK_TIMEZONES).toContain("Asia/Shanghai");
   });
 });
+
+import { timezoneOffsetMinutes } from "../timezoneOptions";
+
+describe("timezoneOffsetMinutes", () => {
+  it("标准时区：上海 +480 / 加德满都 +345 / 纽约冬令时 -300", () => {
+    const winter = new Date("2026-01-15T00:00:00Z");
+    expect(timezoneOffsetMinutes("Asia/Shanghai", winter)).toBe(480);
+    expect(timezoneOffsetMinutes("Asia/Kathmandu", winter)).toBe(345);
+    expect(timezoneOffsetMinutes("America/New_York", winter)).toBe(-300);
+  });
+
+  it("DST：纽约夏令时为 -240（toLocaleString 往返解析易错的场景）", () => {
+    const summer = new Date("2026-07-15T00:00:00Z");
+    expect(timezoneOffsetMinutes("America/New_York", summer)).toBe(-240);
+  });
+
+  it("非法时区回落浏览器本地偏移（不抛错）", () => {
+    const date = new Date("2026-01-15T00:00:00Z");
+    expect(timezoneOffsetMinutes("Not/AZone", date)).toBe(
+      -date.getTimezoneOffset()
+    );
+  });
+});

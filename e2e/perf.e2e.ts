@@ -41,7 +41,7 @@ const BASELINE_FILE = fileURLToPath(
  * 列首帧隐藏，见 RePlusPage 组件内注释）；剩余为登录页/
  * 布局页脚等页面级小位移（各 ≤ 0.008）。
  */
-const CEILINGS = { ttfb: 2000, lcp: 5000, cls: 0.5 };
+const CEILINGS = { ttfb: 2000, lcp: 5000, cls: 0.25 };
 
 type PagePerfMetrics = {
   ttfb: number;
@@ -254,15 +254,19 @@ test.describe("前端体验基线（chromium，dev 链路）", () => {
       }
 
       // 兜底护栏：只为拦「离谱回归」，不替代预算
-      expect(metrics.ttfb, "TTFB 超出兜底上限（2s）").toBeLessThanOrEqual(
-        CEILINGS.ttfb
-      );
-      expect(metrics.lcp ?? 0, "LCP 超出兜底上限（5s）").toBeLessThanOrEqual(
-        CEILINGS.lcp
-      );
-      expect(metrics.cls, "CLS 超出兜底上限（0.25）").toBeLessThanOrEqual(
-        CEILINGS.cls
-      );
+      // 文案插入常量值，避免阈值调整后注释/报错与实际判定不一致
+      expect(
+        metrics.ttfb,
+        `TTFB 超出兜底上限（${CEILINGS.ttfb}ms）`
+      ).toBeLessThanOrEqual(CEILINGS.ttfb);
+      expect(
+        metrics.lcp ?? 0,
+        `LCP 超出兜底上限（${CEILINGS.lcp}ms）`
+      ).toBeLessThanOrEqual(CEILINGS.lcp);
+      expect(
+        metrics.cls,
+        `CLS 超出兜底上限（${CEILINGS.cls}）`
+      ).toBeLessThanOrEqual(CEILINGS.cls);
     });
   }
 });

@@ -4,7 +4,7 @@ import { hasAuth } from "@/router/utils";
 import { openInstanceDetail } from "@/views/approval/instance/utils/instanceDialogs";
 import type { OperationProps } from "@/components/RePlusPage";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { RESUBMITTABLE, statusOf } from "./leaveRules";
+import { EDITABLE_STATUSES, RESUBMITTABLE, statusOf } from "./leaveRules";
 import Check from "~icons/ep/check";
 import RefreshLeft from "~icons/ep/refresh-left";
 import View from "~icons/ep/view";
@@ -40,6 +40,8 @@ export function useLeaveButtons(deps: {
     // 否则超出默认 3 个会被折叠进「更多」下拉（用例与用户都要多点一次）
     width: 300,
     showNumber: 6,
+    // 审批中/已通过的单据是审批留痕：编辑入口按行收敛（服务端同样拒绝）
+    editAllowed: row => EDITABLE_STATUSES.includes(statusOf(row)),
     buttons: [
       {
         code: "submit",

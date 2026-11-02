@@ -12,6 +12,7 @@ import {
   isValidPaneImageUrl,
   paneBody
 } from "./layout";
+import { clampRotate } from "./paneEffects";
 
 /**
  * 模板 JSON 的序列化与反序列化（纯函数，单测见 `__tests__/templateJson.spec.ts`）。
@@ -26,6 +27,14 @@ import {
 export const TEMPLATE_JSON_VERSION = 1;
 /** 导入文件大小上限（生成的模板 JSON 通常只有几 KB；挡住误选的大文件） */
 export const TEMPLATE_JSON_MAX_BYTES = 256 * 1024;
+/** 文本/时钟字号范围（与服务端 SCREEN_PANE_SIZE_MIN/MAX 同口径） */
+const PANE_SIZE_MIN = 14;
+const PANE_SIZE_MAX = 200;
+
+function clampPaneSize(value: unknown, fallback: number): number {
+  const size = isFiniteNumber(value) ? Math.round(value) : fallback;
+  return Math.min(Math.max(size, PANE_SIZE_MIN), PANE_SIZE_MAX);
+}
 
 /**
  * 导入类型白名单：必须与服务端 `screen_layout.py::SCREEN_PANE_TYPES` 同源
@@ -98,6 +107,12 @@ function parsePane(raw: unknown, design: FreeDesign): ScreenLayoutPane | null {
     type,
     ...box
   } as ScreenLayoutPane;
+  // 表达类字段也按服务端范围夹取：导入即把注定被拒的越界字号/角度收敛，
+  // 避免画布被 99999px 字号撑炸后才在保存时收到 400
+  if (type === "text" || type === "clock") {
+    source.size = clampPaneSize(item.size, type === "clock" ? 40 : 24);
+  }
+  source.rotate = clampRotate(isFiniteNumber(item.rotate) ? item.rotate : 0);
   return { ...paneBody(source), ...box };
 }
 

@@ -11,6 +11,12 @@ import {
   openMenuPath,
   PLAIN_USER
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 审批批量转交 + 导出（CSV）+ 节点进度（达标线）E2E：
@@ -79,6 +85,7 @@ async function openInstanceCenter(page: Page) {
 
 test("审批：批量转交多条待办给同一人", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const titles = [`E2E批量A-${stamp}`, `E2E批量B-${stamp}`];
@@ -143,8 +150,8 @@ test("审批：批量转交多条待办给同一人", async ({ page }) => {
     .getByRole("button", { name: /保存|确定/ })
     .first()
     .click();
-  await expect(approverPage.locator(".el-message").first()).toContainText(
-    /条已转交|transferred/i,
+  await expect(approverPage.locator(".el-message").last()).toContainText(
+    /已转交|transferred/i,
     { timeout: 15_000 }
   );
   // 两条都离开「待我审批」
@@ -159,6 +166,7 @@ test("审批：批量转交多条待办给同一人", async ({ page }) => {
 test("审批：导出 CSV 真下载 + 详情展示节点进度", async ({ page }) => {
   test.slow();
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const stamp = Date.now();
   const title = `E2E导出-${stamp}`;

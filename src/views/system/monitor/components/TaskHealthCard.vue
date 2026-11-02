@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { formatDateTime } from "@/utils/format";
 import type { MonitorTaskHealth } from "@/api/system/monitor";
 import {
   ReReadonlyTable,
@@ -11,7 +12,13 @@ import {
  * 后台任务健康度卡片：成功率 / 健康色三档 / 高频任务 Top / 近期失败。
  * 独立组件避免监控主页（index.vue）超 400 行红线；数据由 useMonitor 统一拉取。
  */
-const props = defineProps<{ health: MonitorTaskHealth | null }>();
+const props = defineProps<{
+  health: MonitorTaskHealth | null;
+  /** 该区块接口失败：显示「不可用 + 重试」，不把未知渲染成「无失败任务」 */
+  unavailable?: boolean;
+}>();
+
+const emit = defineEmits<{ retry: [] }>();
 
 const { t } = useI18n();
 
@@ -65,85 +72,104 @@ const failureColumns = computed<ReadonlyColumn[]>(() => [
   {
     prop: "date_finished",
     label: t("systemMonitor.taskFinished"),
-    width: 170
+    width: 170,
+    formatter: (row: { date_finished?: string }) =>
+      formatDateTime(row.date_finished)
   }
 ]);
 </script>
 
 <template>
-  <el-card v-if="health" shadow="never">
+  <el-card v-if="unavailable || health" shadow="never">
     <template #header>
       <el-space>
-        {{ t("systemMonitor.taskHealth", { n: health.window_days }) }}
-        <el-tag :type="stateMeta.tag" size="small">
+        {{
+          health
+            ? t("systemMonitor.taskHealth", { n: health.window_days })
+            : t("systemMonitor.taskHealthTitle")
+        }}
+        <el-tag v-if="health" :type="stateMeta.tag" size="small">
           {{ t(`systemMonitor.${stateMeta.key}`) }}
         </el-tag>
       </el-space>
     </template>
-    <el-descriptions :column="4" size="small" border class="mb-3">
-      <el-descriptions-item :label="t('systemMonitor.taskSuccessRate')">
-        {{
-          health.success_rate === null
-            ? t("systemMonitor.taskSuccessRateNone")
-            : `${(health.success_rate * 100).toFixed(2)}%`
-        }}
-      </el-descriptions-item>
-      <el-descriptions-item :label="t('systemMonitor.taskTotal')">
-        {{ health.total }}
-      </el-descriptions-item>
-      <el-descriptions-item :label="t('systemMonitor.taskRunning')">
-        {{ health.running + health.pending }}
-      </el-descriptions-item>
-      <el-descriptions-item :label="t('systemMonitor.taskAvgCost')">
-        {{
-          health.avg_cost_seconds === null
-            ? "—"
-            : `${health.avg_cost_seconds.toFixed(3)}s`
-        }}
-      </el-descriptions-item>
-    </el-descriptions>
+    <template v-if="unavailable">
+      <el-alert
+        :title="t('systemMonitor.dataUnavailable')"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-button class="mt-3" size="small" @click="emit('retry')">
+        {{ t("systemMonitor.refresh") }}
+      </el-button>
+    </template>
+    <template v-else-if="health">
+      <el-descriptions :column="4" size="small" border class="mb-3">
+        <el-descriptions-item :label="t('systemMonitor.taskSuccessRate')">
+          {{
+            health.success_rate === null
+              ? t("systemMonitor.taskSuccessRateNone")
+              : `${(health.success_rate * 100).toFixed(2)}%`
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('systemMonitor.taskTotal')">
+          {{ health.total }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('systemMonitor.taskRunning')">
+          {{ health.running + health.pending }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('systemMonitor.taskAvgCost')">
+          {{
+            health.avg_cost_seconds === null
+              ? "—"
+              : `${health.avg_cost_seconds.toFixed(3)}s`
+          }}
+        </el-descriptions-item>
+      </el-descriptions>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :md="12">
-        <p class="mb-1 text-sm font-bold">
-          {{ t("systemMonitor.taskPerTask") }}
-        </p>
-        <ReReadonlyTable
-          :columns="perTaskColumns"
-          :rows="health.per_task"
-          size="small"
-          max-height="220"
-        >
-          <template #rate="{ row }">
-            {{
-              row.success_rate === null
-                ? "—"
-                : `${(row.success_rate * 100).toFixed(1)}%`
-            }}
-          </template>
-        </ReReadonlyTable>
-      </el-col>
-      <el-col :xs="24" :md="12">
-        <p class="mb-1 text-sm font-bold">
-          {{ t("systemMonitor.taskRecentFailures") }}
-        </p>
-        <ReReadonlyTable
-          :columns="failureColumns"
-          :rows="health.recent_failures"
-          size="small"
-          max-height="220"
-          :empty-text="t('systemMonitor.taskNoFailures')"
-        >
-          <template #status="{ row }">
-            <el-tag
-              :type="row.status === 'FAILURE' ? 'danger' : 'info'"
-              size="small"
-            >
-              {{ row.status }}
-            </el-tag>
-          </template>
-        </ReReadonlyTable>
-      </el-col>
-    </el-row>
+      <el-row :gutter="12">
+        <el-col :xs="24" :md="12">
+          <p class="mb-1 text-sm font-bold">
+            {{ t("systemMonitor.taskPerTask") }}
+          </p>
+          <ReReadonlyTable
+            :columns="perTaskColumns"
+            :rows="health.per_task"
+            size="small"
+            max-height="220"
+          >
+            <template #rate="{ row }">
+              {{
+                row.success_rate === null
+                  ? "—"
+                  : `${(row.success_rate * 100).toFixed(1)}%`
+              }}
+            </template>
+          </ReReadonlyTable>
+        </el-col>
+        <el-col :xs="24" :md="12">
+          <p class="mb-1 text-sm font-bold">
+            {{ t("systemMonitor.taskRecentFailures") }}
+          </p>
+          <ReReadonlyTable
+            :columns="failureColumns"
+            :rows="health.recent_failures"
+            size="small"
+            max-height="220"
+            :empty-text="t('systemMonitor.taskNoFailures')"
+          >
+            <template #status="{ row }">
+              <el-tag
+                :type="row.status === 'FAILURE' ? 'danger' : 'info'"
+                size="small"
+              >
+                {{ row.status }}
+              </el-tag>
+            </template>
+          </ReReadonlyTable>
+        </el-col>
+      </el-row>
+    </template>
   </el-card>
 </template>

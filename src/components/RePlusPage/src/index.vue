@@ -138,6 +138,7 @@ const {
   handleGetData,
   handleAddOrEdit,
   handleManyDelete,
+  batchDeleteLoading,
   handleSizeChange,
   handleFullscreen,
   onSelectionCancel,
@@ -150,6 +151,7 @@ const {
 // 我的视图：把保存的筛选条件写回搜索区并刷新列表（实现见 utils/savedView）
 const applySavedView = createApplySavedView({
   searchFields,
+  tablePagination,
   reload: handleGetData
 });
 
@@ -313,6 +315,7 @@ defineExpose({
             v-if="tableBar"
             :columns="listColumns"
             v-bind="pureTableBarProps"
+            :refresh-loading="loadingStatus"
             @refresh="handleGetData"
             @change="handleTableBarChange"
             @fullscreen="handleFullscreen"
@@ -352,6 +355,7 @@ defineExpose({
                     <template #reference>
                       <el-button
                         :icon="useRenderIcon(Delete)"
+                        :loading="batchDeleteLoading"
                         plain
                         type="danger"
                       >
@@ -364,7 +368,7 @@ defineExpose({
                   v-if="advancedFilter && auth?.list"
                   v-model="searchFields"
                   :columns="tableBarData.dynamicColumns as never"
-                  @applied="handleGetData"
+                  @applied="handleSearch"
                 />
                 <saved-views
                   v-if="savedViews && auth?.list"

@@ -6,7 +6,6 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { loadEcharts } from "@/plugins/echarts";
 import { message } from "@/utils/message";
-import { normalizeError } from "@/utils/apiError";
 import { copyText } from "@/utils/clipboard";
 import { hasAuth } from "@/router/utils";
 import { monitorApi, type MonitorMetric } from "@/api/system/monitor";
@@ -110,7 +109,11 @@ watch([range, interval], () => {
 watch(
   metrics,
   () => {
-    if (!metrics.value.length) metrics.value = [...DEFAULT_METRICS];
+    if (!metrics.value.length) {
+      // 清空即回落默认指标：本次不请求，等 watch 因赋值再次触发时只发一次
+      metrics.value = [...DEFAULT_METRICS];
+      return;
+    }
     loadHistory();
     syncQuery();
   },
@@ -152,10 +155,8 @@ const exportReport = async (command: string) => {
       });
     }
     message(t("systemMonitor.exportDone"), { type: "success" });
-  } catch (error) {
-    message(normalizeError(error).detail, {
-      type: "error"
-    });
+  } catch {
+    // 失败提示由 http 层统一出口负责，这里不再重复弹一次
   } finally {
     exporting.value = false;
   }
@@ -345,6 +346,9 @@ onMounted(() => {
       :celery="celery"
       :queues="queues"
       :latest="overview.latest"
+      :redis-unavailable="Boolean(sectionErrors.redis)"
+      :celery-unavailable="Boolean(sectionErrors.celery)"
+      @retry="refreshAll"
     />
 
     <MonitorAlertPanel
@@ -357,7 +361,16 @@ onMounted(() => {
     />
 
     <event-panel ref="eventPanelRef" class="mb-4" />
-    <task-health-card :health="taskHealth" />
-    <MonitorSlowRequests :rows="slowRows" :threshold="slow.threshold" />
+    <task-health-card
+      :health="taskHealth"
+      :unavailable="Boolean(sectionErrors.taskHealth)"
+      @retry="refreshAll"
+    />
+    <MonitorSlowRequests
+      :rows="slowRows"
+      :threshold="slow.threshold"
+      :unavailable="Boolean(sectionErrors.slow)"
+      @retry="refreshAll"
+    />
   </RePage>
 </template>

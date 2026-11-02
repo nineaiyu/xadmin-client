@@ -75,7 +75,7 @@ describe("大屏控制（ws_screen 落态协议）", () => {
     expect(requestMock).toHaveBeenLastCalledWith(
       "get",
       "/api/dataset/reports/choices",
-      { params: {}, data: {} },
+      { params: {}, data: undefined },
       {}
     );
   });

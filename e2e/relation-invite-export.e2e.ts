@@ -11,6 +11,14 @@ import {
   openMenuPath,
   openUserPanel
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 跨页联动与导出 E2E：
@@ -32,6 +40,7 @@ type ApiBody = {
 
 test("角色列表用户数可点击，跳转到按角色筛选的用户列表", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Date.now();
@@ -84,6 +93,7 @@ test("角色列表用户数可点击，跳转到按角色筛选的用户列表",
 
 test("邀请激活：发送邀请后状态列显示待接受", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Date.now();
@@ -125,6 +135,7 @@ test("仪表盘卡片导出图片触发下载且文件非空", async ({ page }) 
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(String(error)));
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const headers = { Authorization: `Bearer ${token}` };
   const suffix = Date.now();

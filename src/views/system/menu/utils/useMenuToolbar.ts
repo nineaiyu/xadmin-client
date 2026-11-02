@@ -9,6 +9,7 @@ import type { useI18n } from "vue-i18n";
 import { addDialog, closeDialog } from "@/components/ReDialog";
 import { dialogSize } from "@/components/ReDialog/size";
 import MenuPermissionAuditDialog from "../components/MenuPermissionAuditDialog.vue";
+import { MenuChoices } from "@/views/system/constants";
 import type { useMenuData } from "./useMenuData";
 import type { useMenuFilter } from "./useMenuFilter";
 import type { useMenuDrawer } from "./useMenuDrawer";
@@ -47,6 +48,8 @@ export function useMenuToolbar({
 
   const onGeneratePermissions = () => {
     if (!currentRow.value) return;
+    // 权限码只能挂在页面（菜单）下：目录/权限点作为父级会生成语义错误的脏数据
+    if (currentRow.value.menuType !== MenuChoices.MENU) return;
     // 二级弹层前先收起抽屉（未保存时走守卫，不强收）
     const target = currentRow.value;
     void openWithGuard(() => {

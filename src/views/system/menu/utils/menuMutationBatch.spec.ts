@@ -51,6 +51,7 @@ function api(): MenuMutationApi {
     destroy: vi.fn(),
     batchDestroy: vi.fn(),
     rank: vi.fn(),
+    impact: vi.fn(),
     batchUpdate: vi.fn().mockResolvedValue({
       code: SUCCESS_CODE,
       data: { success: [], failures: [] }
@@ -140,5 +141,36 @@ describe("setMenuRowsActive", () => {
     expect(menuApi.batchUpdate).toHaveBeenCalledWith(["p1", "p2"], {
       is_active: true
     });
+  });
+});
+
+describe("setMenuRowsActive 嵌套勾选", () => {
+  it("全选目录时 checkedNodes 含后代：折叠为顶层后正常提交", async () => {
+    const permission = row("p1", MenuChoices.PERMISSION);
+    const page = row("m1", MenuChoices.MENU, [permission]);
+    const directory = row("d1", MenuChoices.DIRECTORY, [page]);
+    const menuApi = api();
+    vi.mocked(menuApi.batchUpdate).mockResolvedValue({
+      code: SUCCESS_CODE,
+      data: { success: ["d1", "m1"], failures: [] }
+    } as never);
+
+    const result = await setMenuRowsActive({
+      api: menuApi,
+      t,
+      // el-tree 非严格模式全选父级时的载荷：目录 + 页面 + 权限点
+      rows: [directory, page, permission],
+      isActive: false,
+      patchRows: vi.fn()
+    });
+
+    expect(result).toBe(true);
+    expect(menuApi.batchUpdate).toHaveBeenCalledWith(["d1", "m1"], {
+      is_active: false
+    });
+    expect(vi.mocked(message)).not.toHaveBeenCalledWith(
+      "systemMenu.result.batchMixedTypes",
+      { type: "error" }
+    );
   });
 });

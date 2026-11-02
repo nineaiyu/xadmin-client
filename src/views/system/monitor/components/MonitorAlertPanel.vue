@@ -47,8 +47,20 @@ const columns = computed<ReadonlyColumn[]>(() => [
   { prop: "value", label: t("systemMonitor.alertValue"), width: 110 },
   { prop: "threshold", label: t("systemMonitor.alertThreshold"), width: 90 },
   { prop: "count", label: t("systemMonitor.alertCount"), width: 90 },
-  { prop: "first_time", label: t("systemMonitor.alertFirstTime"), width: 170 },
-  { prop: "last_time", label: t("systemMonitor.alertLastTime"), width: 170 },
+  {
+    prop: "first_time",
+    label: t("systemMonitor.alertFirstTime"),
+    width: 170,
+    // 后端 .values() 下发的是 UTC ISO：统一按浏览器本地时区展示，
+    // 与同页 resolved_time / 趋势图横轴口径一致
+    formatter: (row: { first_time?: string }) => formatDateTime(row.first_time)
+  },
+  {
+    prop: "last_time",
+    label: t("systemMonitor.alertLastTime"),
+    width: 170,
+    formatter: (row: { last_time?: string }) => formatDateTime(row.last_time)
+  },
   {
     label: t("systemMonitor.alertResolvedTime"),
     width: 170,
@@ -107,7 +119,7 @@ const columns = computed<ReadonlyColumn[]>(() => [
         effect="plain"
         type="info"
       >
-        {{ item.label }}：{{ item.value }}
+        {{ t("labels.labelValue", { label: item.label, value: item.value }) }}
       </el-tag>
       <span class="text-xs text-(--el-text-color-secondary)">
         {{

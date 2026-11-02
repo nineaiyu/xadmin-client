@@ -2,6 +2,7 @@
 import ReEmpty from "@/components/ReEmpty";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useFormDisabled } from "element-plus";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-circle-line";
 import EditPen from "~icons/ep/edit-pen";
@@ -50,6 +51,8 @@ interface Props {
   formValue?: unknown;
   /** 匹配符中文文案（后端 choices 下发，与预览解码同源） */
   matchTexts?: Record<string, string>;
+  /** 列级只读（表单 el-form 的 disabled 由 useFormDisabled 叠加） */
+  disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -58,12 +61,16 @@ const props = withDefaults(defineProps<Props>(), {
   ruleList: () => [],
   fieldRuleList: () => [],
   menus: () => [],
-  matchTexts: () => ({})
+  matchTexts: () => ({}),
+  // Boolean 缺省用 undefined：让 useFormDisabled 的 el-form 级联可落到 form.disabled
+  disabled: undefined
 });
-
 const emit = defineEmits<{ change: [rules: FieldRuleRow[]] }>();
 
 const { t } = useI18n();
+/** el-form 的 disabled 级联：自定义 renderField 组件不自动继承，这里显式接入 */
+const formDisabled = useFormDisabled();
+const disabledState = computed(() => props.disabled || formDisabled.value);
 
 const rules = ref<EditableRule[]>([]);
 /** 编辑中的行稳定身份；null 表示不在编辑既有行 */
@@ -178,12 +185,14 @@ function isEditing(rule: EditableRule): boolean {
 }
 
 function handleAdd() {
+  if (disabledState.value) return;
   draft.value = emptyRule();
   creating.value = true;
   editingRid.value = null;
 }
 
 function handleEdit(rule: EditableRule) {
+  if (disabledState.value) return;
   const { _rid, ...source } = rule;
   draft.value = source;
   editingRid.value = _rid;
@@ -191,21 +200,23 @@ function handleEdit(rule: EditableRule) {
 }
 
 function handleCopy(rule: EditableRule) {
+  if (disabledState.value) return;
   rules.value = copyRule(rules.value, rule._rid);
 }
 
 function handleRemove(rule: EditableRule) {
+  if (disabledState.value) return;
   rules.value = removeRule(rules.value, rule._rid);
   // 编辑中的行被删除：草稿随之作废，避免提交时覆盖到别的规则
   if (isEditing(rule)) handleCancelEdit();
 }
-
 function handleCancelEdit() {
   editingRid.value = null;
   creating.value = false;
 }
 
 function handleSubmitEdit() {
+  if (disabledState.value) return;
   if (creating.value) {
     rules.value = appendRule(rules.value, draft.value);
   } else if (editingRid.value !== null) {
@@ -214,9 +225,9 @@ function handleSubmitEdit() {
   editingRid.value = null;
   creating.value = false;
 }
-
 /** 常用模板：只预置类型与匹配符；「全部数据」直接落成完整规则 */
 function applyPreset(preset: RulePreset) {
+  if (disabledState.value) return;
   if (preset.wildcard) {
     const exists = rules.value.some(rule => rule.type === preset.type);
     if (!exists) {
@@ -265,6 +276,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
         :icon="useRenderIcon(AddFill)"
         size="small"
         type="primary"
+        :disabled="disabledState"
         @click="handleAdd"
       >
         {{ t("systemPermission.editor.addRule") }}
@@ -280,6 +292,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
         :key="preset.key"
         plain
         size="small"
+        :disabled="disabledState"
         @click="applyPreset(preset)"
       >
         {{ t(`systemPermission.preset_${preset.key}`) }}
@@ -319,6 +332,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
               link
               size="small"
               type="primary"
+              :disabled="disabledState"
               @click="handleEdit(rule)"
             />
             <el-button
@@ -328,6 +342,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
               link
               size="small"
               type="primary"
+              :disabled="disabledState"
               @click="handleCopy(rule)"
             />
             <el-popconfirm
@@ -341,6 +356,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
                   link
                   size="small"
                   type="danger"
+                  :disabled="disabledState"
                 />
               </template>
             </el-popconfirm>

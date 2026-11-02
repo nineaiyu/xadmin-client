@@ -45,15 +45,16 @@ export function usePlusPageForm({
   // 这里显式收窄类型避免逐处判空（行为不变：缺方法时与原先一样抛错）
   const api = rawApi as PlusPageFormApi;
 
-  const { handleDelete, handleManyDelete } = createDeleteActions({
-    rawApi: rawApi as BaseApi,
-    api,
-    t,
-    selectedNum,
-    getSelectPks,
-    onSelectionCancel,
-    handleGetData
-  });
+  const { handleDelete, handleManyDelete, batchDeleteLoading } =
+    createDeleteActions({
+      rawApi: rawApi as BaseApi,
+      api,
+      t,
+      selectedNum,
+      getSelectPks,
+      onSelectionCancel,
+      handleGetData
+    });
 
   const handleDetail = createDetailAction({ props, t, detailColumns });
 
@@ -68,5 +69,11 @@ export function usePlusPageForm({
     handleGetData
   });
 
-  return { handleAddOrEdit, handleDetail, handleDelete, handleManyDelete };
+  return {
+    handleAddOrEdit,
+    handleDetail,
+    handleDelete,
+    handleManyDelete,
+    batchDeleteLoading
+  };
 }

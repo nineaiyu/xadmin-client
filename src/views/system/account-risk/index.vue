@@ -27,6 +27,8 @@ const {
   refreshStats,
   beforeSearchSubmit,
   onStatsChip,
+  quickFilter,
+  clearQuickFilter,
   tableBarButtonsProps,
   operationButtonsProps,
   listColumnsFormat,
@@ -64,7 +66,9 @@ const {
     <StatsPanel
       v-else-if="auth.stats && statsGroups.length"
       :groups="statsGroups"
+      :active-key="Object.values(quickFilter)[0]"
       @chip-click="onStatsChip"
+      @clear="clearQuickFilter"
     />
     <RePlusPage
       ref="tableRef"

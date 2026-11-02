@@ -6,10 +6,13 @@ import {
 } from "@playwright/test";
 
 import {
+  captureSiteConfig,
   login,
   openSettingPanel,
+  restoreSiteConfig,
   switchSettingTab,
-  PLAIN_USER
+  PLAIN_USER,
+  type SiteConfigSnapshot
 } from "./helpers";
 
 /**
@@ -22,6 +25,14 @@ import {
 const SITE_CONFIG_URL = "/api/system/configs/WEB_SITE_CONFIG";
 /** 后端直连地址（匿名请求用；与 playwright.config.ts 的 E2E_API_PORT 对齐） */
 const API_BASE = `http://127.0.0.1:${process.env.E2E_API_PORT ?? "8896"}`;
+
+let siteConfig: SiteConfigSnapshot | null = null;
+
+test.afterEach(async ({ page }) => {
+  // 用例尾部复位在失败路径不会执行；站点级外观必须无条件写回
+  await restoreSiteConfig(page, siteConfig);
+  siteConfig = null;
+});
 
 /** 面板行（`.setting li` 契约）：`:visible` 过滤非活动页签里的同名行 */
 function row(page: Page, label: string | RegExp) {
@@ -92,6 +103,7 @@ test.describe("站点级外观配置", () => {
     const marker = `E2E站点标题${Date.now()}`;
 
     await login(page);
+    siteConfig = await captureSiteConfig(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "通用");
 
@@ -143,6 +155,7 @@ test.describe("站点级外观配置", () => {
     const defaultTitle = platformConfig.Title as string;
 
     await login(page);
+    siteConfig = await captureSiteConfig(page);
     await openSettingPanel(page);
     await switchSettingTab(page, "通用");
     const input = titleInput(page);

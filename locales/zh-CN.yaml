@@ -185,6 +185,7 @@ accountRisk:
   scanRunning: 巡检进行中，请稍候…
   scanDone: 巡检完成：共发现 {total} 项风险
   scanFailed: 巡检失败，请稍后重试
+  clearQuickFilter: 清除快捷筛选
   scanStatusFailed: 巡检进度查询失败
   scanTimeout: 巡检等待超时，可稍后在任务中心查看进度
   batchHandle: 批量处置
@@ -316,6 +317,7 @@ avatarUpload:
   tips: 温馨提示：右键上方裁剪区可开启功能菜单
   imageSize: 图像大小：{ x } x { y } 像素
   fileSize: 文件大小：{ x } （{ y } 字节）
+  loadFailed: 图片加载失败，请更换图片重试
 
 tagInput:
   placeholder: 按下 Enter 继续输入
@@ -707,6 +709,7 @@ layout:
   shortcutEnable: 快捷键开关
   shortcutEnableTip: 关闭后所有快捷键失效（顶栏按钮不受影响）
   shortcutSearch: 全局搜索
+  commandPaletteEntry: 命令面板
   shortcutSearchTip: 唤起命令面板；关闭后仍可点顶栏搜索图标
   shortcutLock: 锁屏
   shortcutLockTip: 输入框聚焦时不响应，避免打字误触发
@@ -865,6 +868,9 @@ labels:
   yes: 是
   no: 否
   noData: 暂无数据
+  loading: 加载中…
+  colon: "："
+  labelValue: "{label}：{value}"
 
 exportImport:
   import: 导入
@@ -1072,6 +1078,7 @@ tag:
   assignDone: 标签已更新
   selectPlaceholder: 请选择标签
   selectRequired: 请至少选择一个标签
+  loadFailed: 标签回显失败，已禁止提交（避免清空既有标签）
   batchAssignTitle: 批量打标
   batchHint: 批量：按所选应用方式作用于已选对象
   batchDone: 已为 {success} 个对象打标
@@ -1155,6 +1162,7 @@ results:
   operateConfirmTitle: 确定操作？
   success: 执行成功
   failed: 执行失败
+  failedWithDetail: "执行失败：{detail}"
   loadFailedRetry: 数据加载失败，请关闭后重试
   batchDestroy: 批量删除 { count } 条数据
   batchRead: 批量已读 { count } 条数据
@@ -1194,6 +1202,8 @@ buttons:
   maximize: 最大化
   restoreMaximize: 还原
   pinTab: 固定标签
+  scrollLeft: 向左滚动页签
+  scrollRight: 向右滚动页签
   unpinTab: 取消固定
   openInNewWindow: 新窗口打开
   fullScreenToggle: 全屏切换
@@ -1730,6 +1740,7 @@ mfa:
   resendAfter: "{seconds} 秒后可重新发送"
   codeSent: 验证码已发送
   noAvailableMethod: 暂无可用的验证方式，请联系管理员
+  methodsLoadFailed: 验证方式加载失败，请重试
   cancel: 取消
   verify: 确认验证
   verifySuccess: 验证通过
@@ -1805,6 +1816,7 @@ systemUser:
   nickname: 昵称
   gender: 性别
   dept: 所属部门
+  deptChoicesTruncated: 部门候选超过后端上限已被截断，可选范围不完整；请开启下拉过滤并按关键字查找，或联系管理员调整候选上限
   date_joined: 注册时间
   last_login: 上次登录时间
   recentLogins: 最近登录
@@ -2145,6 +2157,7 @@ permissionPreview:
   emptyApis: 无 API 权限码
   fieldDisabled: 字段权限未启用，裁剪不生效
   fieldBlank: 未配置字段白名单的模型，其字段会被裁剪为空（运行时不可见）
+  fieldEmpty: 该角色尚未配置字段白名单
   codeTag: 权限码
   roleMenus: 该角色授权的菜单
   roleFields: 字段授权
@@ -2359,6 +2372,7 @@ systemMenu:
     batchActive: "已更新 { count } 个菜单状态"
     batchMixedTypes: 勾选中包含不同类型的菜单节点，批量启停仅支持同一类型
     batchPermissionMixed: 权限点不能与菜单/目录混合批量启停（权限点状态不受菜单启停影响）
+    cascadeFailed: 当前节点已保存，但子级未能一并停用，请检查后重试
     batchFailed: "{ count } 条全部失败"
     batchPartial: "部分成功：{ ok } 条已更新，{ failed } 条失败"
     sorted: 排序已保存
@@ -2577,6 +2591,8 @@ systemUploadFile:
   uploadTip: 上传文件大小需要小于
   defaultSizeTip: 未能读取上传大小配置，当前使用默认限制（{size}）
   quotaTip: 同一文件重复上传会复用磁盘副本，配额仍按记录全量计入
+  quotaUsage: "已用 {used} / 配额 {quota}"
+  uploadFailed: "{name} 上传失败：{detail}"
   usageRate: 使用率
   usedSpace: 已用空间
   remainingSpace: 剩余空间
@@ -2623,6 +2639,7 @@ chat:
   loadRoomsFailed: 会话列表加载失败，请重试
   emptyContacts: 暂无联系人
   emptyMessages: 还没有消息，说点什么吧
+  historyFailed: 历史消息加载失败，请重试
   selectRoom: 选择一个会话开始聊天
   online: 在线
   offline: 离线
@@ -2914,6 +2931,7 @@ apiScope:
   grantTip: 下拉列出的是你有权限的接口，勾选后凭证只能调用这些接口（越界返回 403）；留空 = 不限，保存后可随时回来调整
   selectPlaceholder: 搜索并选择允许调用的接口
   noOptions: 暂无可授权的接口（请联系管理员开通菜单权限）
+  optionsLoadFailed: 接口选项加载失败：已保留原有条目，可继续在自定义条目中编辑
   selected: "已选 {n} 条"
   emptyMeansUnlimited: 未选择 = 不限（可调用你权限内的全部接口）
   custom: 自定义条目（高级）
@@ -3343,6 +3361,8 @@ recycleBin:
 
 systemMonitor:
   thresholdNoPermission: 缺少 thresholds:SystemMonitor 权限，无法查看阈值配置
+  slowWindow: "（≥ {threshold}s / 24h）"
+  taskHealthTitle: 任务健康
   eventsDenied: 缺少 events:SystemMonitor 权限，无法查看事件
   eventsLoadFailed: 事件加载失败，请重试
   worker: Worker
@@ -3532,6 +3552,7 @@ mask:
   previewBtn: 预览
   previewRoles: 预览视角角色
   previewRolesTip: 模拟非超管查看者的角色集合；留空表示无任何角色
+  previewRolesFixed: 以规则绑定角色视角预览（无角色列表权限，不可切换视角）
   previewNotApplied: 所选视角角色未命中该规则，列表中该字段不脱敏
   previewRolesLoadFailed: 角色选项加载失败
   customOnlyTip: 仅 custom 类型使用
@@ -3659,12 +3680,12 @@ dataDataset:
   required: 请完整填写名称、模型与数据列
   saveOk: 保存成功
   deleteConfirm: 确定删除数据集「{name}」吗？引用它的仪表盘卡片与报表将无法取数
-  dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 |date 标注
+  dateFieldTip: 折线趋势卡片的默认分组字段（可选）；JSON 日期列需 {'|'}date 标注
   fieldPermissionMode: 字段权限模式
   fieldPermissionInherit: 继承（未配置不裁剪）
   fieldPermissionStrict: 严格（未配置即空结果）
   fieldPermissionTip: 共享数据集建议使用严格模式；切换前请先运行 dataset_field_permission_audit 巡检
-  jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 |number，日期（趋势用）加 |date（值须为 YYYY-MM-DD）"
+  jsonColumnTip: "支持 JSON 路径列：{roots}.键；数值加 {'|'}number，日期（趋势用）加 {'|'}date（值须为 YYYY-MM-DD）"
   exportCsv: 导出 CSV
   previewRows: 明细
   previewAggregate: 聚合
@@ -3755,7 +3776,7 @@ dataScreen:
   paneTextFormat: 文本格式
   textFormatPlain: 纯文本
   textFormatRich: 富文本
-  richTextHint: "标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c] [文本](https://…) ![图片](https://…)；“- ”无序列表、“1. ”有序列表、| a | b | 表格用 |---| 分隔行"
+  richTextHint: "标记：**粗体** *斜体* __下划线__ ~~删除线~~ [c=#rrggbb]彩字[/c] [文本](https://…) ![图片](https://…)；“- ”无序列表、“1. ”有序列表、{'|'} a {'|'} b {'|'} 表格用 {'|'}---{'|'} 分隔行"
   richBold: 粗体
   richItalic: 斜体
   richUnderline: 下划线
@@ -5005,6 +5026,11 @@ codegen:
   aiDraftFlagReadonly: 只读
   aiDraftFlagInTable: 入列
   aiDraftFlagInSearch: 可搜索
+  aiDraftFlagInputType: 输入类型
+  aiDraftFlagDict: 字典
+  aiDraftFlagFieldClass: 字段类型
+  aiDraftUnknownFields: "{names} 不在当前模型计划中，已按草案追加（预览/下载可能被服务端拒绝）"
+  planImportTooLarge: 方案文件过大（上限 {size} MB），请拆分后导入
   aiDraftNeedModel: 选择模型后可用 AI 起草
   planRename: 重命名方案
   planRenamePrompt: 输入新的方案名称
@@ -5062,6 +5088,8 @@ codegen:
   fieldConfig: 字段配置
   fieldSummary: 已启用 {enabled}/{total} 个字段（拖拽调整顺序）
   resetFields: 恢复默认
+  moveFieldUp: 上移字段
+  moveFieldDown: 下移字段
   fieldName: 字段
   fieldLabel: 显示名
   colTable: 表格列

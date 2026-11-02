@@ -7,6 +7,14 @@ import {
   login,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 通用标签中心（双浏览器）：标签页新建 → 对象打标 → 列表按标签筛选 → 引用保护。
@@ -19,8 +27,6 @@ import {
  *   「被引用标签删除保护」——行内打标弹窗的交互由组件逻辑与接口集成测试覆盖，
  *   避免行操作折叠进「更多」下拉后的定位脆弱性（见 e2e/README 陷阱表）。
  */
-const TAG_NAME = `E2E标签${Date.now()}`;
-const USERNAME = `e2etag${Date.now()}`;
 
 async function openTagCenter(page: import("@playwright/test").Page) {
   await openMenuPath(page, ["系统管理"], "/system/tag/index");
@@ -42,7 +48,13 @@ async function expandSearchCard(page: import("@playwright/test").Page) {
 
 test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", async ({ page }) => {
   if (HIGH_LOAD) test.slow();
+  // 唯一名在用例内生成：模块级常量在 --repeat-each / 重试 / 同 worker 复用时会复用
+  // 同一用户名与标签名，撞 UserInfo.username / Tag.name 唯一约束
+  const RUN_TAG = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const TAG_NAME = `E2E标签${RUN_TAG}`;
+  const USERNAME = `e2etag${RUN_TAG}`;
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   const auth = { Authorization: `Bearer ${token}` };
 
@@ -168,4 +180,13 @@ test("标签中心：新建 → 打标 → 按标签筛选 → 引用保护", as
     .first();
   await expect(stillThere).toBeVisible();
   await expect(stillThere).toContainText("1");
+
+  // 6) 自清理：解绑后才能删除标签（引用保护用例不能把标签/用户留给共享库）
+  await page.request.post(`${FRONT_URL}/api/system/tags/assign`, {
+    headers: auth,
+    data: { resource: "identity.userinfo", pk: userId, tags: [] }
+  });
+  await page.request.delete(`${FRONT_URL}/api/system/tags/${tagPk}`, {
+    headers: auth
+  });
 });

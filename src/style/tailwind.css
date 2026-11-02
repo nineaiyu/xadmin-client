@@ -21,6 +21,7 @@
   --color-fg-placeholder: hsl(var(--fg-placeholder));
   --color-border: hsl(var(--border));
   --color-border-light: hsl(var(--border-light));
+  --color-border-lighter: hsl(var(--border-lighter));
   --color-fill: hsl(var(--fill));
   --color-fill-muted: hsl(var(--fill-muted));
   --color-fill-subtle: hsl(var(--fill-subtle));
@@ -171,7 +172,7 @@
 }
 
 @utility navbar-bg-hover {
-  @apply select-none dark:text-white dark:hover:bg-fill-muted;
+  @apply select-none dark:text-fg dark:hover:bg-fill-muted;
 }
 
 /* 顶栏动作项统一热区（规格见 tokens/primitives.scss 的 --navbar-action-*）：

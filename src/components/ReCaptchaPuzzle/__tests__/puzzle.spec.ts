@@ -79,4 +79,43 @@ describe("ReCaptchaPuzzle", () => {
       CHALLENGE.piece
     );
   });
+
+  it("滑条与底板统一量法：末端答案对齐自然像素（不再被边框吃掉容差）", () => {
+    const wrapper = mount(ReCaptchaPuzzle, {
+      props: { challenge: CHALLENGE },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          ReSliderCaptcha: {
+            name: "ReSliderCaptcha",
+            emits: ["start", "move", "end"],
+            template: "<div class='slider-stub' />"
+          }
+        }
+      }
+    });
+    const stage = wrapper.find(".re-captcha-puzzle__stage")
+      .element as HTMLElement;
+    Object.defineProperty(stage, "clientWidth", {
+      value: CHALLENGE.width,
+      configurable: true
+    });
+    const host = wrapper.find(".mt-3").element as HTMLElement;
+    Object.defineProperty(host, "offsetWidth", {
+      value: 300,
+      configurable: true
+    });
+
+    const slider = wrapper.findComponent({ name: "ReSliderCaptcha" });
+    slider.vm.$emit("start");
+    // 300 - 40(滑块) - 6(间隙) = 254
+    slider.vm.$emit("move", { event: new Event("pointermove"), moveX: 254 });
+    slider.vm.$emit("end");
+
+    const payload = wrapper.emitted("submit")?.at(-1)?.[0] as {
+      answer: { x: number };
+    };
+    // 拖到末端即自然图最右侧可放拼块的位置：320 - 56
+    expect(payload.answer.x).toBe(CHALLENGE.width - CHALLENGE.piece_size);
+  });
 });

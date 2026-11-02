@@ -36,6 +36,7 @@
   "src/views/login/components/LoginMfa.vue": "登录二次验证流程：登录前无权限上下文，无模型元数据",
   "src/views/login/components/Register.vue": "注册流程：登录前无权限上下文，无模型元数据",
   "src/views/login/components/ResetPassword.vue": "重置密码流程：匿名端点，密码表单为安全流程专用",
+  "src/views/system/user/utils/userResetPasswordDialog.tsx": "重置密码弹窗：单字段动作表单（含强度进度条），无模型元数据面",
   "src/views/settings/login-policy/components/PolicyPreviewPanel.vue": "登录策略命中预演：只读试算结果展示，无模型写入",
   "src/views/settings/message/components/MessageTemplateForm.vue": "消息模板：后端 GenericViewSet 无 search-fields 元数据，正文为模板语法编辑器",
   "src/views/settings/open-platform/components/OAuthProviderCard.vue": "第三方登录 provider 列表：单个 provider 为嵌套配置对象（含组映射 JSON），元数据表单只能表达单对象字段，无法表达数组项增删与逐项编辑",

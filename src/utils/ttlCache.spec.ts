@@ -74,3 +74,43 @@ describe("createTtlCache", () => {
     }
   });
 });
+
+describe("createTtlCache invalidate 与在途请求", () => {
+  it("失效前发出的请求晚到不回填缓存（写后读仍拿到新数据）", async () => {
+    let resolveOld: (value: string) => void = () => undefined;
+    const oldFetcher = vi.fn(
+      () => new Promise<string>(resolve => (resolveOld = resolve))
+    );
+    const cache = createTtlCache<string>();
+
+    const pending = cache.get("k", oldFetcher);
+    // 写操作发生：缓存失效（但在途请求尚未返回）
+    cache.invalidate("k");
+    const freshFetcher = vi.fn(() => Promise.resolve("new"));
+    expect(await cache.get("k", freshFetcher)).toBe("new");
+
+    resolveOld("old");
+    await pending;
+    const again = await cache.get("k", freshFetcher);
+    expect(again).toBe("new");
+    expect(freshFetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("force 拉取也会被失效代次拦截：失效前发出的强刷不写回旧值", async () => {
+    let resolveOld: (value: string) => void = () => undefined;
+    const oldFetcher = vi.fn(
+      () => new Promise<string>(resolve => (resolveOld = resolve))
+    );
+    const cache = createTtlCache<string>();
+
+    const forced = cache.get("k", oldFetcher, { force: true });
+    cache.invalidate("k");
+    const freshFetcher = vi.fn(() => Promise.resolve("new"));
+    await cache.get("k", freshFetcher);
+
+    resolveOld("old");
+    await forced;
+    expect(await cache.get("k", freshFetcher)).toBe("new");
+    expect(freshFetcher).toHaveBeenCalledTimes(1);
+  });
+});

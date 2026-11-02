@@ -9,10 +9,30 @@
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { ADMIN, FRONT_URL, login } from "./helpers";
+import {
+  ADMIN,
+  FRONT_URL,
+  captureSettings,
+  login,
+  restoreSettings
+} from "./helpers";
 
 const TYPES = ["slide", "rotate", "click"] as const;
 type CaptchaType = (typeof TYPES)[number];
+
+/** 设置页原值捕获面：每个用例结束按用例开始前的值写回（不假设部署默认值） */
+const SETTING_PATHS = [
+  "/api/settings/captcha/general",
+  "/api/settings/captcha/interactive",
+  "/api/settings/login/auth"
+];
+const SETTING_KEYS = [
+  "CAPTCHA_ENABLED",
+  "CAPTCHA_ENABLED_TYPES",
+  "CAPTCHA_TRACK_CHECK_ENABLED",
+  "CAPTCHA_IMAGE_FALLBACK_ENABLED",
+  "SECURITY_LOGIN_CAPTCHA_ENABLED"
+];
 
 async function patchSetting(page: Page, path: string, data: object) {
   const resp = await page.request.patch(`${FRONT_URL}${path}`, { data });
@@ -66,18 +86,16 @@ async function enableInteractive(
     .toBe(imageFallback);
 }
 
-async function restoreDefaults(page: Page) {
-  await patchSetting(page, "/api/settings/captcha/general", {
-    CAPTCHA_ENABLED: true
-  });
-  await patchSetting(page, "/api/settings/captcha/interactive", {
-    CAPTCHA_ENABLED_TYPES: [...TYPES],
-    CAPTCHA_IMAGE_FALLBACK_ENABLED: false
-  });
-  await patchSetting(page, "/api/settings/login/auth", {
-    SECURITY_LOGIN_CAPTCHA_ENABLED: false
-  });
-  await waitForTypes(page, [...TYPES]);
+async function restoreCaptchaSettings(
+  page: Page,
+  baseline: Awaited<ReturnType<typeof captureSettings>>
+) {
+  await restoreSettings(page, baseline);
+  const types =
+    baseline["/api/settings/captcha/interactive"]?.CAPTCHA_ENABLED_TYPES;
+  // 等热更生效，避免下一 spec 读到本轮改写的题型
+  if (Array.isArray(types))
+    await waitForTypes(page, types.map(String)).catch(() => undefined);
 }
 
 /** 从挑战面板读取题目元数据（答案不落 DOM） */
@@ -178,6 +196,11 @@ test("交互式验证码：三种题型均可通过真实 UI 登录", async ({ p
   // 用例中途清 Cookie 后仍能在 finally 恢复设置，避免污染后续套件
   await login(page);
   const adminCookies = await page.context().cookies();
+  const settingsBaseline = await captureSettings(
+    page,
+    SETTING_PATHS,
+    SETTING_KEYS
+  );
 
   try {
     for (const type of TYPES) {
@@ -202,13 +225,18 @@ test("交互式验证码：三种题型均可通过真实 UI 登录", async ({ p
     }
   } finally {
     await page.context().addCookies(adminCookies);
-    await restoreDefaults(page).catch(() => undefined);
+    await restoreCaptchaSettings(page, settingsBaseline).catch(() => undefined);
   }
 });
 
 test("无障碍回退：开启后可从挑战切换到图片码", async ({ page }) => {
   await login(page);
   const adminCookies = await page.context().cookies();
+  const settingsBaseline = await captureSettings(
+    page,
+    SETTING_PATHS,
+    SETTING_KEYS
+  );
   try {
     await enableInteractive(page, "slide", true);
     await page.context().clearCookies();
@@ -231,7 +259,7 @@ test("无障碍回退：开启后可从挑战切换到图片码", async ({ page 
     await expect(page.getByTestId("captcha-image-input")).toBeVisible();
   } finally {
     await page.context().addCookies(adminCookies);
-    await restoreDefaults(page).catch(() => undefined);
+    await restoreCaptchaSettings(page, settingsBaseline).catch(() => undefined);
   }
 });
 

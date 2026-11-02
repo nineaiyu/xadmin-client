@@ -13,7 +13,6 @@ const levelList = ref<menuType[]>([]);
 const router = useRouter();
 // options.routes 为 readonly，去除 readonly 以复用 findRouteByPath / getParentPaths 的签名
 const routes = router.options.routes as RouteRecordRaw[];
-const multiTags = useMultiTagsStoreHook().multiTags;
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 
 /** 面包屑细分偏好（设置面板 →「布局」→「顶栏」） */
@@ -55,20 +54,28 @@ const getBreadcrumb = (): void => {
   // 当前路由信息
   let currentRoute: menuType = { value: undefined };
 
+  // 每次取最新 store 数组（不要在 setup 期捕获引用，页面关闭/替换后会失效）
+  const multiTags = useMultiTagsStoreHook().multiTags;
+  let matchedTag = false;
   if (Object.keys(route.query).length > 0) {
-    multiTags.forEach(item => {
+    for (const item of multiTags) {
       if (isEqual(route.query, item?.query)) {
         currentRoute = toRaw(item) as menuType;
+        matchedTag = true;
+        break;
       }
-    });
+    }
   } else if (Object.keys(route.params).length > 0) {
-    multiTags.forEach(item => {
+    for (const item of multiTags) {
       if (isEqual(route.params, item?.params)) {
         currentRoute = toRaw(item) as menuType;
+        matchedTag = true;
+        break;
       }
-    });
-  } else {
-    // findRouteByPath 返回路由树原始节点：经 toMenuNode 转为菜单消费面
+    }
+  }
+  if (!matchedTag) {
+    // URL 带 query/params 但页签未命中（首次直达/页签已关）也要保留当前层
     const node = findRouteByPath(router.currentRoute.value.path, routes);
     if (node) currentRoute = toMenuNode(node);
   }
@@ -135,7 +142,7 @@ onMounted(() => {
 });
 
 watch(
-  () => route.path,
+  () => route.fullPath,
   () => {
     getBreadcrumb();
   },
@@ -158,7 +165,7 @@ watch(
         :key="item.path"
         class="inline! items-stretch!"
       >
-        <a @click.prevent="handleLink(item)">
+        <a :href="item.path" @click.prevent="handleLink(item)">
           <span
             v-if="breadcrumbShowIcon && item.meta?.icon"
             class="breadcrumb-icon"

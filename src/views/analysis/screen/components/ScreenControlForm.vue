@@ -65,7 +65,7 @@ const loadState = async (syncTargetOnLoad = true) => {
     apiFailure(error, { state: state.value })
   );
   if (!isSuccess(res)) {
-    if (res.detail) message(String(res.detail), { type: "warning" });
+    message(String(res.detail || t("results.failed")), { type: "warning" });
     return;
   }
   state.value = res.data.state;
@@ -86,7 +86,7 @@ const apply = async (payload: ScreenCommandPayload) => {
       message(t("dataScreen.controlSent"), { type: "success" });
       return;
     }
-    if (res.detail) message(String(res.detail), { type: "warning" });
+    message(String(res.detail || t("results.failed")), { type: "warning" });
   } finally {
     loading.value = false;
   }

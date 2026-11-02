@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSiteConfigStoreHook } from "./siteConfig";
+import { useAppStoreHook } from "./app";
 
 /** vi.mock 工厂共享桩：PATCH 调用 / 提示调用 / 内存 storage */
 const mocks = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ vi.mock("@/utils/message", () => ({
 
 vi.mock("@/config", () => ({
   setConfig: vi.fn(),
+  getConfig: () => ({ SidebarStatus: true, Layout: "vertical" }),
   responsiveStorageNameSpace: () => "responsive-"
 }));
 
@@ -97,7 +99,7 @@ describe("siteConfig 实时自动保存", () => {
     expect(store.shouldSkipAutoSave()).toBe(true);
   });
 
-  it("保存待发/在途时禁止跳过（防抖窗内改回原值也不丢回写）", async () => {
+  it("保存待发/在途时禁止跳过；无本地差异时不发空 PATCH", async () => {
     const store = useSiteConfigStoreHook();
     store.captureSyncedSnapshot();
     // 模拟一次变更：此刻值仍与快照相等，但保存已排入防抖窗
@@ -106,13 +108,22 @@ describe("siteConfig 实时自动保存", () => {
     expect(store.shouldSkipAutoSave()).toBe(false);
 
     await vi.advanceTimersByTimeAsync(600);
-    expect(mocks.setSiteConfig).toHaveBeenCalledTimes(1);
+    // 最小化载荷：没有差异就不发空请求（服务端已是这些值）
+    expect(mocks.setSiteConfig).not.toHaveBeenCalled();
     // 保存完成：pending 复位，值未再变化 → 恢复「无差异跳过」
     expect(store.autoSavePending).toBe(false);
     expect(store.shouldSkipAutoSave()).toBe(true);
   });
 
   it("自动保存失败时提示一次，不静默丢配置", async () => {
+    const configure = mocks.storage.get("responsive-configure") as Record<
+      string,
+      unknown
+    >;
+    mocks.storage.set("responsive-configure", {
+      ...configure,
+      hideTabs: true
+    });
     mocks.setSiteConfig.mockRejectedValueOnce(new Error("network"));
     const store = useSiteConfigStoreHook();
     store.autoSaveSiteConfig();
@@ -122,6 +133,14 @@ describe("siteConfig 实时自动保存", () => {
   });
 
   it("手动保存成功弹提示（保留既有行为）", async () => {
+    const configure = mocks.storage.get("responsive-configure") as Record<
+      string,
+      unknown
+    >;
+    mocks.storage.set("responsive-configure", {
+      ...configure,
+      hideTabs: true
+    });
     const store = useSiteConfigStoreHook();
     await store.saveSiteConfig();
     expect(mocks.message).toHaveBeenCalledWith("项目配置保存成功", {
@@ -157,6 +176,74 @@ describe("siteConfig 站点配置完整性", () => {
   });
 });
 
+describe("siteConfig 最小化 PATCH（并发管理员改动不被回滚）", () => {
+  it("只提交本地实际变更的键，其他管理员改过的键不进入载荷", async () => {
+    const store = useSiteConfigStoreHook();
+    store.captureSyncedSnapshot();
+    // 其他管理员在服务端改了站点标题 / Logo（本地存储没有这两个键的变更）
+    // 本标签只把「选项卡风格」从 chrome 改成 card
+    mocks.storage.set("responsive-configure", {
+      ...(mocks.storage.get("responsive-configure") as Record<string, unknown>),
+      hideTabs: true
+    });
+    await store.saveSiteConfig(true);
+    expect(mocks.setSiteConfig).toHaveBeenCalledTimes(1);
+    const payload = mocks.setSiteConfig.mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
+    expect(payload).toEqual({ HideTabs: true });
+    // 全量载荷会携带的旧快照键（如 Title / LogoSource）不得出现
+    expect(payload.Title).toBeUndefined();
+    expect(payload.LogoSource).toBeUndefined();
+  });
+
+  it("保存后基线前移：改回原值只提交这一个键", async () => {
+    const store = useSiteConfigStoreHook();
+    store.captureSyncedSnapshot();
+    const configure = mocks.storage.get("responsive-configure") as Record<
+      string,
+      unknown
+    >;
+    mocks.storage.set("responsive-configure", { ...configure, hideTabs: true });
+    await store.saveSiteConfig(true);
+    mocks.storage.set("responsive-configure", {
+      ...configure,
+      hideTabs: false
+    });
+    await store.saveSiteConfig(true);
+    expect(mocks.setSiteConfig).toHaveBeenCalledTimes(2);
+    expect(mocks.setSiteConfig.mock.calls[1][0]).toEqual({ HideTabs: false });
+  });
+
+  it("无本地变更时不发空 PATCH", async () => {
+    const store = useSiteConfigStoreHook();
+    store.captureSyncedSnapshot();
+    await store.saveSiteConfig(true);
+    expect(mocks.setSiteConfig).not.toHaveBeenCalled();
+  });
+});
+
+describe("siteConfig 跨标签偏好同步", () => {
+  it("收到其他标签的偏好后同步布局 store 并重捕快照", () => {
+    const store = useSiteConfigStoreHook();
+    mocks.storage.set("responsive-layout", {
+      layout: "horizontal",
+      sidebarStatus: false,
+      theme: "dark"
+    });
+    store.applyRemotePreferences(["Layout", "SidebarStatus", "Theme"]);
+    const app = useAppStoreHook();
+    expect(app.layout).toBe("horizontal");
+    expect(app.sidebar.opened).toBe(false);
+    expect(store.syncedSnapshot?.layout).toMatchObject({
+      layout: "horizontal",
+      sidebarStatus: false
+    });
+    expect(store.syncedSnapshot?.locale).toEqual({ locale: "zh" });
+  });
+});
+
 describe("siteConfig 面板级批量偏好落库（撤销 / 恢复站点默认共用）", () => {
   it("立即整包 PATCH 并弹自定义成功提示，同时捕获已同步快照", async () => {
     const store = useSiteConfigStoreHook();
@@ -173,6 +260,14 @@ describe("siteConfig 面板级批量偏好落库（撤销 / 恢复站点默认�
   });
 
   it("落库失败弹失败提示，不抛错（调用方无需 catch）", async () => {
+    const configure = mocks.storage.get("responsive-configure") as Record<
+      string,
+      unknown
+    >;
+    mocks.storage.set("responsive-configure", {
+      ...configure,
+      hideTabs: true
+    });
     mocks.setSiteConfig.mockRejectedValueOnce(new Error("network"));
     const store = useSiteConfigStoreHook();
     await expect(

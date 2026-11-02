@@ -13,6 +13,14 @@ import { pathToFileURL } from "node:url";
 import { expect, test } from "@playwright/test";
 
 import { FRONT_URL, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * Office 在线预览 E2E：docx → heavy 队列 LibreOffice 转 PDF →
@@ -84,6 +92,7 @@ test("文件中心：Office 在线预览（docx 转换后 PDF 内嵌渲染）", 
 }) => {
   test.skip(!SOFFICE, "本机未安装 LibreOffice，跳过 Office 预览链路");
   await login(page);
+  await startResourceIsolation(page);
 
   const filename = `e2e-office-${Date.now()}.docx`;
   const uploadResp = await page.request.post(

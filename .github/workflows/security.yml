@@ -21,5 +21,8 @@ jobs:
 
       - name: Run pnpm audit
         # 显式官方源：镜像源不实现 security/advisories 端点，会让 audit 报
-        # ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS（与真实漏洞无关的假红）
-        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org
+        # ERR_PNPM_AUDIT_ENDPOINT_NOT_EXISTS（与真实漏洞无关的假红）。
+        # 豁免与 build-image.yml / pnpm-workspace.yaml 的 auditConfig 保持一致：
+        # braces 栈溢出仅经构建期 devDependencies 进入，调用方传字面 glob pattern，
+        # 上游发布修复版本后三处一并删除。
+        run: pnpm audit --audit-level high --registry=https://registry.npmjs.org --ignore GHSA-vfj7-8cjw-p6xm

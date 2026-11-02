@@ -70,7 +70,7 @@ export function buildRuntimeItems(t: TFunction, live: MonitorLive | null) {
     {
       key: "swap",
       label: t("systemMonitor.swap"),
-      value: `${live.swap_percent ?? 0}%`
+      value: live.swap_percent == null ? "—" : `${live.swap_percent}%`
     }
   ];
 }

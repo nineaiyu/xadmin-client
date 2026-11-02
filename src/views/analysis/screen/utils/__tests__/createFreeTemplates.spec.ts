@@ -5,8 +5,8 @@ vi.mock("@/utils/message", () => ({ message: vi.fn() }));
 vi.mock("@/utils/download", () => ({ downloadTextFile: vi.fn(() => true) }));
 vi.mock("../serverTemplates", () => ({
   fetchServerTemplates: vi.fn(async () => []),
-  saveServerTemplate: vi.fn(async () => true),
-  renameServerTemplate: vi.fn(async () => true),
+  saveServerTemplate: vi.fn(async () => ({ ok: true, detail: "" })),
+  renameServerTemplate: vi.fn(async () => ({ ok: true, detail: "" })),
   removeServerTemplate: vi.fn(async () => true),
   fetchTemplateVersions: vi.fn(async () => []),
   rollbackTemplate: vi.fn(async () => ({ pk: "t1", name: "回滚后" })),

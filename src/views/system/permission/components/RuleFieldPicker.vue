@@ -93,7 +93,11 @@ const fieldMetaText = computed(() => {
   return parts.join(" · ");
 });
 
+/** 候选请求序号：切字段后旧响应不得覆盖新字段的匹配符 */
+let lookupsSeq = 0;
+
 async function loadMatchOptions() {
+  const seq = ++lookupsSeq;
   matchOptions.value = [];
   fieldMeta.value = null;
   lookupError.value = "";
@@ -103,6 +107,7 @@ async function loadMatchOptions() {
   const res = await modelLabelFieldApi
     .lookups({ table: table.value, field: field.value })
     .catch(() => null);
+  if (seq !== lookupsSeq) return;
   if (!res) {
     lookupError.value = t("systemPermission.editor.lookupFailed");
     return;

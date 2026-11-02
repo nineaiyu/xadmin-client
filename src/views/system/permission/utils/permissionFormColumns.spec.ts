@@ -76,4 +76,49 @@ describe("数据权限表单列装配", () => {
     ]);
     expect(row.rules({ rawRow: {} })).toEqual([]);
   });
+
+  it("自定义 renderField 透传列级 disabled（只读弹层控件不可交互）", () => {
+    const { columns } = build();
+    const handlers = {
+      menu: columns.menu,
+      mode_type: columns.mode_type,
+      rules: columns.rules
+    };
+    type Key = keyof typeof handlers;
+    const renderOf = (key: Key, ctx: Record<string, unknown>) => {
+      const column: Record<string, unknown> = { prop: key };
+      const keep = (handlers[key] as (ctx: Record<string, unknown>) => unknown)(
+        {
+          ...ctx,
+          column
+        }
+      );
+      expect(keep).toBe(column);
+      return column["renderField"] as (
+        value: unknown,
+        onChange: (value: unknown) => void,
+        props?: { fieldProps?: unknown }
+      ) => { props?: Record<string, unknown> };
+    };
+    const valueOf = (key: Key) =>
+      key === "menu" ? [] : key === "rules" ? [] : 0;
+
+    const props = { fieldProps: { disabled: true } };
+    (["menu", "mode_type", "rules"] as Key[]).forEach(key => {
+      const vnode = renderOf(key, {
+        column: { prop: key },
+        formValue: ref<RecordType>({})
+      })(valueOf(key), () => undefined, props);
+      expect(vnode.props?.disabled).toBe(true);
+    });
+
+    // 未声明列级 disabled 时保持可编辑
+    (["menu", "mode_type", "rules"] as Key[]).forEach(key => {
+      const vnode = renderOf(key, {
+        column: { prop: key },
+        formValue: ref<RecordType>({})
+      })(valueOf(key), () => undefined);
+      expect(vnode.props?.disabled).toBe(false);
+    });
+  });
 });

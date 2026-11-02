@@ -156,8 +156,8 @@ const locked = () => props.preview || props.readonly;
       type="primary"
       size="small"
       :loading="saving"
-      :disabled="readonly"
-      :title="readonly ? t('dataScreen.readonlyHint') : undefined"
+      :disabled="locked()"
+      :title="locked() ? t('dataScreen.readonlyHint') : undefined"
       data-testid="designer-save"
       @click="emit('save')"
     >

@@ -215,6 +215,8 @@ interface DrawerOptions<T = Record<string, unknown>> extends DrawerProps {
   popConfirm?: PopConfirm;
   /** 点击确定按钮后是否开启 `loading` 加载动画 */
   sureBtnLoading?: boolean;
+  /** 确定按钮文案覆盖（默认 buttons.save）；用于「保存并提交」等语义更强的动作 */
+  sureBtnText?: string;
   /**
    * @description 自定义抽屉标题的内容渲染器
    * @see {@link https://element-plus.org/zh-CN/component/drawer.html#%E6%8F%92%E6%A7%BD}

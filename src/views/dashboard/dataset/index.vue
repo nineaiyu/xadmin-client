@@ -2,7 +2,7 @@
 import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
 import DataTable from "@/components/DataTable";
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDataset } from "./utils/hook";
 
@@ -34,6 +34,21 @@ const {
   exportAggregateCsv,
   canAggregate
 } = useDataset(tableRef);
+
+/** 预览行本地分页：服务端单次最多 5000 行，整表塞进 el-table 会卡死渲染 */
+const PREVIEW_PAGE_SIZE = 50;
+const previewPage = ref(1);
+const previewRows = computed(() => {
+  const rows = preview.value?.rows ?? [];
+  const start = (previewPage.value - 1) * PREVIEW_PAGE_SIZE;
+  return rows.slice(start, start + PREVIEW_PAGE_SIZE);
+});
+watch(
+  () => preview.value,
+  () => {
+    previewPage.value = 1;
+  }
+);
 </script>
 
 <template>
@@ -82,7 +97,7 @@ const {
           {{ t("dataDataset.total") }}: {{ preview?.total ?? 0 }}
         </div>
         <DataTable
-          :data="preview?.rows ?? []"
+          :data="previewRows"
           max-height="380"
           :label="t('dataDataset.preview')"
         >
@@ -101,6 +116,14 @@ const {
             </template>
           </el-table-column>
         </DataTable>
+        <el-pagination
+          v-if="(preview?.rows ?? []).length > PREVIEW_PAGE_SIZE"
+          v-model:current-page="previewPage"
+          class="mt-2 justify-end"
+          :page-size="PREVIEW_PAGE_SIZE"
+          :total="(preview?.rows ?? []).length"
+          layout="prev, pager, next"
+        />
       </template>
 
       <!-- 聚合视图：分组 / 指标 / 数值字段 / 时间粒度 → 序列表（与图表数据源同口径） -->

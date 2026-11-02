@@ -206,19 +206,17 @@ test("勾选保存后重新打开正确回显", async ({ page }) => {
     await dialog.getByRole("button", { name: "保存", exact: true }).click();
     await expect(dialog).toBeHidden({ timeout: 20_000 });
 
-    // 重新打开：折叠回显为页面级勾选（勾选数收敛、目录状态已选、子节点不散点勾选）
+    // 重新打开：回显为完整权限点集合（回显不做「整页折叠」——折叠成页面键后
+    // 无法再单独取消某个权限点，见 useTreeSync 的 applyPending 说明）
     const reopened = await openEditDialog(page, roleName);
     const reopenedContent = nodeContent(reopened, "数据分析");
     await expect(reopenedContent.locator(NODE_STATUS)).toHaveText("已选", {
       timeout: 15_000
     });
     const restored = readTotal(await reopened.locator(TOTAL).innerText());
-    expect(restored.checked).toBeGreaterThan(0);
-    expect(restored.checked).toBeLessThan(saved.checked);
-    // 折叠回显的核心特征由上面两点断言覆盖：目录行状态「已选」（页面级勾选）
-    // 且勾选数显著小于保存前的散点数（全后代收敛为单点）
+    expect(restored.checked).toBe(saved.checked);
 
-    // 折叠态直接保存往返：授权不变（服务端把页面级勾选展开为权限点集合）
+    // 原样保存往返：授权不变
     await reopened.getByRole("button", { name: "保存", exact: true }).click();
     await expect(reopened).toBeHidden({ timeout: 20_000 });
     const reopenedAgain = await openEditDialog(page, roleName);

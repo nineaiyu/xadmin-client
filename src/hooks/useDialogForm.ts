@@ -64,49 +64,55 @@ export function useDialogForm<TPayload>(options: {
   const readPayload =
     options.readPayload ?? (() => options.formRef?.value?.getPayload());
 
+  /** 定位首个校验错误项（长表单不靠 toast 猜位置） */
+  const focusInvalid = () => {
+    if (options.scrollToError) options.scrollToError();
+    else if (options.scrollToError !== false && options.formRef?.value) {
+      scrollToFirstError(options.formRef.value);
+    }
+  };
+
   /**
    * 供 ReDialog `beforeSure` 直接使用：
    * 校验守卫 → 提交（异常归一）→ 成功 `done()` / 失败提示并 `closeLoading()`。
    */
   async function beforeSure(done: () => void, ctx: BeforeSureContext) {
-    if (options.validate) {
-      const valid = await options.validate();
-      if (!valid) {
-        if (options.scrollToError) options.scrollToError();
-        else if (options.scrollToError !== false && options.formRef?.value) {
-          scrollToFirstError(options.formRef.value);
+    try {
+      if (options.validate) {
+        const valid = await options.validate();
+        if (!valid) {
+          focusInvalid();
+          ctx.closeLoading();
+          return;
         }
+      }
+      const payload = readPayload();
+      if (payload === null || payload === undefined) {
+        // 校验未通过：必须复位 loading，否则确定按钮永久转圈
+        focusInvalid();
         ctx.closeLoading();
         return;
       }
-    }
-    const payload = readPayload();
-    if (payload === null || payload === undefined) {
-      // 校验未通过：滚动到首个错误字段（长表单不靠 toast 猜位置），
-      // 并必须复位 loading，否则确定按钮永久转圈
-      if (options.scrollToError) {
-        options.scrollToError();
-      } else if (options.scrollToError !== false && options.formRef?.value) {
-        scrollToFirstError(options.formRef.value);
+      const res = await options.submit(payload).catch(normalizeError);
+      if (isSuccess(res)) {
+        if (options.successText) {
+          message(options.successText, { type: "success" });
+        }
+        done();
+        options.onSuccess?.(res);
+        return;
+      }
+      if (options.onFail) {
+        options.onFail(res);
+      } else if (res.detail) {
+        message(String(res.detail), { type: options.failType ?? "warning" });
       }
       ctx.closeLoading();
-      return;
+    } catch (error) {
+      // validate / getPayload 抛错同样要收口 loading（否则确定按钮永久转圈）
+      ctx.closeLoading();
+      console.warn("[useDialogForm] beforeSure failed:", error);
     }
-    const res = await options.submit(payload).catch(normalizeError);
-    if (isSuccess(res)) {
-      if (options.successText) {
-        message(options.successText, { type: "success" });
-      }
-      done();
-      options.onSuccess?.(res);
-      return;
-    }
-    if (options.onFail) {
-      options.onFail(res);
-    } else if (res.detail) {
-      message(String(res.detail), { type: options.failType ?? "warning" });
-    }
-    ctx.closeLoading();
   }
 
   return { beforeSure };

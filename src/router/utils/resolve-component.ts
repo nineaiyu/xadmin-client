@@ -49,5 +49,13 @@ export function resolveComponentKey(
   }
   // 历史宽松口径兜底：路径片段包含匹配（兼容「后端片段与文件路径非严格前缀」
   // 的既有写法，如 `views/system/user` 对应 `/src/views/system/user/index.vue`）
-  return keys.findIndex(key => key.includes(target));
+  const matches = keys.filter(key => key.includes(target));
+  if (matches.length > 1) {
+    // 多候选时按顺序取第一个仍可能绑错页（如 system/user ↔ system/user-role）：
+    // 至少留下可定位告警，避免静默绑定到名字相近的错误页面
+    console.warn(
+      `[xadmin] 组件路径 ${target} 命中多个候选：${matches.join(" / ")}，将使用第一个`
+    );
+  }
+  return matches.length ? keys.indexOf(matches[0]) : -1;
 }

@@ -74,7 +74,7 @@ describe("normalizeMenuRow", () => {
     expect(menu.modelPks).toEqual([]);
   });
 
-  it("meta 缺省字段补默认值（水印默认关闭）", () => {
+  it("meta 缺省字段保持缺失（缺省值只给新建记录，保存不回写历史行）", () => {
     const row = normalizeMenuRow({
       pk: 9,
       name: "x",
@@ -83,9 +83,9 @@ describe("normalizeMenuRow", () => {
       is_active: true,
       meta: { title: "X" }
     });
-    expect(row.meta.watermark).toBe(false);
-    expect(row.meta.is_show_menu).toBe(true);
-    expect(row.meta.is_keepalive).toBe(true);
+    expect(row.meta.watermark).toBeUndefined();
+    expect(row.meta.is_show_menu).toBeUndefined();
+    expect(row.meta.is_keepalive).toBeUndefined();
   });
 
   it("侧栏装饰字段归一：badge_type 取标量（对象形态）、其余按文本", () => {
@@ -113,7 +113,7 @@ describe("normalizeMenuRow", () => {
     expect(row.meta.active_path).toBe("/list");
   });
 
-  it("装饰字段缺省值：徽标形态 normal、分组排序 null", () => {
+  it("装饰字段缺省保持缺失（不在历史行上补 normal / null）", () => {
     const row = normalizeMenuRow({
       pk: 12,
       name: "y",
@@ -122,10 +122,10 @@ describe("normalizeMenuRow", () => {
       is_active: true,
       meta: { title: "Y" }
     });
-    expect(row.meta.badge_type).toBe("normal");
-    expect(row.meta.group_rank).toBeNull();
-    expect(row.meta.badge).toBe("");
-    expect(row.meta.active_path).toBe("");
+    expect(row.meta.badge_type).toBeUndefined();
+    expect(row.meta.group_rank).toBeUndefined();
+    expect(row.meta.badge).toBeUndefined();
+    expect(row.meta.active_path).toBeUndefined();
   });
 });
 
@@ -268,6 +268,35 @@ describe("表单模型与提交载荷", () => {
       parent: unknown;
     };
     expect(payload.parent).toBeNull();
+  });
+
+  it("历史行缺键不补默认：保存载荷只回写原有关键字段", () => {
+    const row = normalizeMenuRow({
+      pk: 30,
+      name: "legacy",
+      path: "/legacy",
+      menu_type: MenuChoices.MENU,
+      is_active: true,
+      meta: { title: "历史页" }
+    });
+    const payload = toPayload(toFormModel(row)) as {
+      meta: Record<string, unknown>;
+    };
+    expect(payload.meta.title).toBe("历史页");
+    ["watermark", "is_keepalive", "is_show_menu", "frame_loading"].forEach(
+      key => {
+        expect(payload.meta).not.toHaveProperty(key);
+      }
+    );
+  });
+
+  it("新建记录仍按默认值全量下发 meta（提交契约不变）", () => {
+    const payload = toPayload(emptyFormModel(null, MenuChoices.MENU)) as {
+      meta: Record<string, unknown>;
+    };
+    expect(payload.meta).toHaveProperty("watermark", false);
+    expect(payload.meta).toHaveProperty("is_keepalive", true);
+    expect(payload.meta).toHaveProperty("frame_loading", false);
   });
 });
 

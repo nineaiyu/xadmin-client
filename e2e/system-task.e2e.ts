@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 定时任务 E2E：手动执行 → 实时日志弹窗 → 执行历史 → crontab 页渲染。
@@ -87,6 +95,7 @@ async function searchTaskByName(
 test("定时任务：立即执行 → 实时日志弹窗 → 执行历史闭环", async ({ page }) => {
   const taskName = `e2e-periodic-${Date.now()}`;
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -128,6 +137,7 @@ test("定时任务：立即执行 → 实时日志弹窗 → 执行历史闭环"
 test("执行历史：手动执行产生记录，状态成功、触发人可见", async ({ page }) => {
   const taskName = `e2e-history-${Date.now()}`;
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -159,6 +169,7 @@ test("定时任务：批量执行 → 执行历史产生多条成功记录", asy
   const suffix = Date.now();
   const names = [`e2e-batch-${suffix}-a`, `e2e-batch-${suffix}-b`];
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -215,6 +226,7 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
     `e2e-logdel-${suffix}-3`
   ];
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -266,6 +278,7 @@ test("执行历史：行删除与批量删除后记录消失", async ({ page }) 
 test("定时任务：克隆 → 生成停用副本", async ({ page }) => {
   const taskName = `e2e-clone-${Date.now()}`;
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -308,6 +321,7 @@ test("定时任务：批量停用 → 批量启用", async ({ page }) => {
   const suffix = Date.now();
   const names = [`e2e-batchen-${suffix}-a`, `e2e-batchen-${suffix}-b`];
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const crontabPk = await createCrontab(page, token);
@@ -376,6 +390,7 @@ test("定时任务：批量停用 → 批量启用", async ({ page }) => {
 
 test("定时表达式页：crontab 列表渲染", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
   // 造一条特殊 minute（7），验证列表页展示
   const res = await page.request.post(`${BACKEND_URL}/api/task/crontab`, {
@@ -411,6 +426,7 @@ test("间隔调度页：新增间隔 → 周期任务引用后列表显示可读
     200000 + (Date.now() % 500000) + Math.floor(Math.random() * 997);
   const taskName = `e2e-interval-${Date.now()}`;
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   // 1) 间隔调度页 UI 新增：周期数 + 间隔周期=分钟

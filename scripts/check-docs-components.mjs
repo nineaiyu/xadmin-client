@@ -4,9 +4,11 @@
 //
 // 口径（散文式文档的机械化对账）：
 // - 只校验 ```vue 围栏内的组件标签（<ReXxx ...> / <AiXxx ...> / <ChatXxx ...> 等
-//   能在 src/components/<Name>/ 解析到实现的组件；el-* 原生 Element Plus 跳过）；
-// - 提取静态属性（attr="..."）与绑定属性（:attr="..." / v-bind），kebab-case
+//   能在 src/components/<Name>/ 或 COMPONENT_DIR_OVERRIDES 注册表解析到实现的组件；
+//   el-* 原生 Element Plus 跳过）；
+// - 提取静态属性（attr="..."）与绑定属性（:attr="..." / v-bind / v-on:），kebab-case
 //   归一为 camelCase 后与 defineProps（对象式键 + 类型式字段）比对；
+// - 递归扫描 components 目录（含子目录文档）；
 // - v-model 归一为 modelValue，v-model:xxx 归一为 xxx；
 // - 指令 / 透传类（v-if/v-for/ref/class/key/style/slot/data-* / aria-*）跳过。
 // - 单仓检出（缺 xadmin-docs 兄弟仓）时跳过。
@@ -80,10 +82,12 @@ function interfaceFields(text, interfaceName, names) {
 }
 
 /** 组件 props 面：对象式键 + 内联/命名类型字段 + emits（@ 事件对账用） */
-function propNamesOf(componentDir) {
+function propNamesOf(componentPath) {
   const names = new Set(["modelValue"]);
   const emits = new Set();
-  const files = walkFiles(componentDir, [".vue", ".tsx", ".ts"]);
+  const files = statSync(componentPath).isDirectory()
+    ? walkFiles(componentPath, [".vue", ".tsx", ".ts"])
+    : [componentPath];
   const texts = files.map(file => [file, readFileSync(file, "utf-8")]);
   for (const [, text] of texts) {
     // 对象式：defineProps({ key: ... })
@@ -182,12 +186,34 @@ function collectTypeFields(block, names) {
 }
 
 const propCache = new Map();
+/** 组件名 → 实现路径覆盖（目录名不等于组件名 / 聚合目录下的组件） */
+const COMPONENT_DIR_OVERRIDES = {
+  OverlayDialog: "overlay/OverlayDialog.vue",
+  OverlayDrawer: "overlay/OverlayDrawer.vue",
+  DataTable: "DataTable/src/index.vue"
+};
 function declOfTag(tag) {
   if (propCache.has(tag)) return propCache.get(tag);
-  const dir = join(COMPONENTS_DIR, tag);
-  const decl = existsSync(dir) ? propNamesOf(dir) : null;
+  const override = COMPONENT_DIR_OVERRIDES[tag];
+  let decl = null;
+  if (override) {
+    const file = join(COMPONENTS_DIR, override);
+    decl = existsSync(file) ? propNamesOf(file) : null;
+  } else {
+    const dir = join(COMPONENTS_DIR, tag);
+    decl = existsSync(dir) ? propNamesOf(dir) : null;
+  }
   propCache.set(tag, decl);
   return decl;
+}
+
+/** 递归收集文档（顶层 + 子目录），避免子目录示例逃过对账 */
+function* markdownFiles(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) yield* markdownFiles(full);
+    else if (entry.name.endsWith(".md")) yield full;
+  }
 }
 
 /** vue 围栏内的组件标签 → 绑定属性清单 */
@@ -212,8 +238,11 @@ function* docTagBinds(mdFile) {
 }
 
 function normalizeBind(raw) {
-  const isEvent = raw.startsWith("@");
-  let attr = raw.replace(/^v-bind:/, "").replace(/^[:@]/, "");
+  const isEvent = raw.startsWith("@") || raw.startsWith("v-on:");
+  let attr = raw
+    .replace(/^v-bind:/, "")
+    .replace(/^v-on:/, "")
+    .replace(/^[:@]/, "");
   if (attr.startsWith("v-model")) {
     const named = attr.match(/^v-model:([\w-]+)/);
     return { kind: "prop", name: named ? camelize(named[1]) : "modelValue" };
@@ -225,8 +254,8 @@ function normalizeBind(raw) {
 
 const violations = [];
 let checkedBinds = 0;
-for (const md of readdirSync(DOCS_DIR).filter(f => f.endsWith(".md"))) {
-  for (const { tag, binds } of docTagBinds(join(DOCS_DIR, md))) {
+for (const md of markdownFiles(DOCS_DIR)) {
+  for (const { tag, binds } of docTagBinds(md)) {
     const decl = declOfTag(tag);
     if (decl === null) continue; // 非本仓组件（el-* 小写开头已天然不匹配 <A-Z 模式）
     for (const raw of binds) {

@@ -24,7 +24,6 @@ if (value.value) {
       url: props.isImageFile ? (value.value as string) : defaultFile
     }
   ];
-  emit("change", undefined);
 }
 const fileAccept = () => {
   if (props.isImageFile) {

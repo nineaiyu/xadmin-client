@@ -58,7 +58,7 @@ export function useOperationLog() {
   });
 
   const detailRowFetch = (row: Record<string, unknown>) =>
-    fetchOperationLogDetail({ t, row });
+    fetchOperationLogDetail({ row });
 
   return {
     ...page,

@@ -48,7 +48,7 @@ export function usePlusPageColumns({
   getOperationButtons: () => OperationButtonsRow[];
 }) {
   const { api, auth, selection } = props;
-  const { switchStyle } = usePublicHooks();
+  const { switchStyle, tagStyle } = usePublicHooks();
 
   // 表格字段自定义渲染
   const formatColumnsRender = () => {
@@ -58,7 +58,8 @@ export function usePlusPageColumns({
       api,
       auth,
       switchLoadMap,
-      switchStyle
+      switchStyle,
+      tagStyle
     });
     injectSelectionColumn(listColumns, selection);
     injectOperationColumn({ listColumns, props, t, te, getOperationButtons });

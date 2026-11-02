@@ -40,4 +40,31 @@ if (version !== serverVersion) {
   );
   process.exit(1);
 }
-console.log(`[ok] 前后端版本一致：${version}`);
+const platformConfig = JSON.parse(
+  readFileSync("public/platform-config.json", "utf-8")
+);
+if (platformConfig.Version !== version) {
+  console.error(
+    `[fail] public/platform-config.json 版本不一致：${platformConfig.Version} != ${version}`
+  );
+  process.exit(1);
+}
+
+const docsDir = path.resolve(process.env.XADMIN_DOCS_DIR ?? "../xadmin-docs");
+const demoDoc = path.join(docsDir, "guide", "demo.md");
+if (existsSync(demoDoc)) {
+  const docMatch = readFileSync(demoDoc, "utf-8").match(
+    /^VERSION=(["']?)v?([^"'\s]+)\1/m
+  );
+  if (!docMatch) {
+    console.error(`[fail] 未能从 ${demoDoc} 解析 VERSION=vX.Y.Z`);
+    process.exit(1);
+  }
+  if (docMatch[2] !== version) {
+    console.error(
+      `[fail] xadmin-docs/guide/demo.md 版本不一致：${docMatch[2]} != ${version}`
+    );
+    process.exit(1);
+  }
+}
+console.log(`[ok] 前后端与平台配置版本一致：${version}`);

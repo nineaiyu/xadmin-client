@@ -206,6 +206,7 @@ async function recall(item: ChatMessageItem) {
       :loading="chat.loadingHistory.value"
       :has-more="chat.hasMore.value"
       :loading-more="chat.loadingMore.value"
+      :load-failed="chat.loadFailed.value"
       :streaming="chat.streaming.value"
       :connected="chat.connected.value"
       :denied="chat.denied.value"

@@ -44,6 +44,8 @@ export function useMenuDrawer({
   reload,
   onSaved
 }: MenuDrawerDeps) {
+  /** 详情请求序号：快速切换节点时旧节点的详情不得覆盖新抽屉 */
+  let detailSeq = 0;
   const save = createMenuNodeSaver({
     t,
     saveNode,
@@ -90,7 +92,10 @@ export function useMenuDrawer({
     openEdit: async (row: MenuRow) => {
       // 编辑前取一次详情：列表行是快照，可能已被其他管理员改动；
       // 失败（无 retrieve 权限 / 网络异常）回退行快照，不阻断编辑。
+      const seq = ++detailSeq;
       const res = await api.detail(row.pk as string).catch(normalizeError);
+      // 快速先后点两个节点：先发的详情后返回时不得把旧节点抽屉盖上来
+      if (seq !== detailSeq) return;
       // 详情先归一再合并：详情接口的 parent/meta 是对象形态
       // （normalizeMenuRow 注释亦写明），直接 spread 会把未归一对象盖到已归一行上，
       // 表单回显 badge/上级丢失、保存时可能把对象提交给后端
@@ -109,7 +114,6 @@ export function useMenuDrawer({
     openPermission,
     confirmSwitch,
     saveCurrent,
-    close: core.close,
-    api
+    close: core.close
   };
 }

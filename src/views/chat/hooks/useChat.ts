@@ -42,6 +42,7 @@ export function useChat() {
     hasMore: core.hasMore,
     loadingHistory: core.loadingHistory,
     loadingMore: core.loadingMore,
+    loadFailed: core.loadFailed,
     streaming: core.streaming,
     connected: core.connected,
     denied: core.denied,

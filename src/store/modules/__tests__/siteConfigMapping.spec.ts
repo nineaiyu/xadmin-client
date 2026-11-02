@@ -26,7 +26,7 @@ describe("站点配置读写映射", () => {
   });
 
   it("save/get 均从注册表派生，不再手写两张映射", () => {
-    expect(source).toContain("serverPreferenceConfig({");
+    expect(source).toContain("serverPreferenceConfig(");
     expect(source).toContain("localPreferenceSections(");
     // 手工名单的典型特征：config.<PascalKey> ?? 缺省值
     expect(source).not.toMatch(/config\.[A-Z][A-Za-z0-9]*\s*\?\?/);

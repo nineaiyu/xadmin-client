@@ -1,9 +1,9 @@
 /* 登录页外壳样式（认证链路不挂布局壳，样式随页面入口加载）。
  * 尺寸为该页固定比例（插画 500px / 表单 360px / 间距 rem），不映射间距令牌——
  * 它们是插画构图的一部分而非通用排版；颜色与字体族消费语义令牌。
- * 类名只在 views/login/ 内使用（迁移时已核对外部零引用）。 */
+ * 类名统一 login- 命名空间（全局样式，避免 .img/.avatar 这类通用名跨页串味）。 */
 
-.wave {
+.login-wave {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -35,11 +35,11 @@
     }
   }
 
-  .img {
+  .login-img {
     justify-content: flex-start;
   }
 
-  .wave {
+  .login-wave {
     right: 0;
     left: auto;
     transform: scaleX(-1);
@@ -51,7 +51,7 @@
     grid-template-columns: 1fr;
   }
 
-  .img {
+  .login-img {
     display: none;
   }
 
@@ -60,7 +60,7 @@
   }
 }
 
-.img {
+.login-img {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -90,7 +90,7 @@
   }
 }
 
-.avatar {
+.login-avatar {
   width: 350px;
   height: 80px;
 }
@@ -109,19 +109,19 @@
     }
   }
 
-  .img img {
+  .login-img img {
     width: 360px;
   }
 
-  .avatar {
+  .login-avatar {
     width: 280px;
     height: 80px;
   }
 }
 
 @media screen and (width <= 968px) {
-  .wave,
-  .img {
+  .login-wave,
+  .login-img {
     display: none;
   }
 

@@ -348,8 +348,8 @@ export interface paths {
          *
          *     数据源 = AiUsageRecord（逐次记账，保留期随 MONITOR_RETENTION_DAYS 清理）；
          *     合计与档案 / 模型维度带成功率与延迟（均值恒给，P95 样本足够才给）；
-         *     与 status/metrics 共用权限点路径正则（`(status|metrics|history|tools|usage)$`），
-         *     不新增权限点。
+         *     与 status/metrics/history/tools/daily-report 共用权限点路径正则
+         *     （`(status|metrics|history|tools|usage|daily-report)$`），不新增权限点。
          */
         get: operations["api_ai_assistant_usage_retrieve"];
         put?: never;
@@ -1306,7 +1306,7 @@ export interface paths {
         /**
          * @description 回滚到历史版本
          *
-         *     快照写入活定义并落新版本；有 PENDING 实例时拒绝
+         *     快照写入活定义并落新版本；在途实例按建单时钉住的版本继续，回滚只影响新单
          */
         post: operations["api_approval_approval_flows_rollback_create"];
         delete?: never;
@@ -7034,7 +7034,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 绑定一个 Passkey 凭据 */
+        /**
+         * @description 绑定一个 Passkey 凭据
+         *
+         *     持久凭据可为账号接管提供入口：绑定前需本人密码二次确认（同重置 MFA 口径）
+         */
         post: operations["api_identity_passkeys_register_create"];
         delete?: never;
         options?: never;
@@ -8551,7 +8555,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 重置用户密码 */
+        /**
+         * @description 重置用户密码
+         *
+         *     账号接管面，与重置 MFA 同口径：管理员需本人密码二次确认
+         */
         post: operations["api_identity_user_reset_password_create"];
         delete?: never;
         options?: never;
@@ -8794,6 +8802,7 @@ export interface paths {
          *
          *     校验动态码后写入密钥，并自动开启登录 MFA
          *
+         *     绑定的落库动作同样要求密码二次确认：仅持有会话不足以接管登录因子。
          *     绑定成功同时生成一批恢复码（``data.recovery_codes``，明文仅此一次展示）。
          */
         post: operations["api_mfa_otp_confirm_create"];
@@ -8900,6 +8909,8 @@ export interface paths {
          * @description 发起绑定
          *
          *     生成候选密钥与 otpauth URI（前端渲染二维码）
+         *
+         *     绑定会改变登录因子：与关闭/解绑同口径，需本人密码二次确认（未确认返回 412）。
          */
         post: operations["api_mfa_otp_start_create"];
         delete?: never;
@@ -9561,10 +9572,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         get: operations["api_scim_v2_Groups_retrieve"];
         put?: never;
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         post: operations["api_scim_v2_Groups_create"];
         delete?: never;
         options?: never;
@@ -9579,16 +9598,32 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         get: operations["api_scim_v2_Groups_retrieve_2"];
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         put: operations["api_scim_v2_Groups_update"];
         post?: never;
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         delete: operations["api_scim_v2_Groups_destroy"];
         options?: never;
         head?: never;
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         patch: operations["api_scim_v2_Groups_partial_update"];
         trace?: never;
     };
@@ -9599,7 +9634,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description SCIM 基类：独立凭证鉴权 + 凭证级限流 + 统一错误文档。 */
+        /**
+         * @description SCIM 基类
+         *
+         *     独立凭证鉴权 + 凭证级限流 + 统一错误文档。
+         */
         get: operations["api_scim_v2_ResourceTypes_retrieve"];
         put?: never;
         post?: never;
@@ -10935,7 +10974,11 @@ export interface paths {
         /** @description 获取{cls}的列表 */
         get: operations["api_system_codegen_plans_list"];
         put?: never;
-        /** @description 添加{cls}数据 */
+        /**
+         * @description 保存代码生成方案
+         *
+         *     同名方案按当前用户覆盖保存（幂等），不产生重复行。
+         */
         post: operations["api_system_codegen_plans_create"];
         delete?: never;
         options?: never;
@@ -10951,10 +10994,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** @description 整体更新{cls}信息 */
+        /** @description 更新代码生成方案 */
         put: operations["api_system_codegen_plans_update"];
         post?: never;
-        /** @description 删除{cls}数据 */
+        /** @description 删除代码生成方案 */
         delete: operations["api_system_codegen_plans_destroy"];
         options?: never;
         head?: never;
@@ -12499,7 +12542,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description {cls}排序 */
+        /**
+         * @description {cls}排序
+         *
+         *     排序走批量 UPDATE，不触发 post_save：必须手动失效菜单相关缓存，
+         *     否则侧边栏路由快照最长 24h 保持旧顺序。
+         */
         post: operations["api_system_menu_rank_create"];
         delete?: never;
         options?: never;
@@ -13115,7 +13163,7 @@ export interface paths {
         /**
          * @description 物理清除{cls}回收站数据
          *
-         *     不传 pks 时清除全部超过保留期的数据
+         *     不可恢复的高危动作：与删除/批删同口径纳入审批，避免硬删绕过审批。
          */
         delete: operations["api_system_permission_recycle_purge_destroy"];
         options?: never;
@@ -14832,7 +14880,7 @@ export interface components {
              */
             AI_BASE_URL?: string;
             /**
-             * AI codegen draft
+             * AI 代码生成草稿
              * @description 代码生成器的自然语言字段草案：AI 给出字段覆盖建议，人工审核采纳（绝不直接写代码）
              * @default false
              */
@@ -14952,9 +15000,10 @@ export interface components {
             readonly created_time: string | null;
             /** 创建人 */
             readonly creator: string | null;
+            /** 摄取错误 */
             readonly ingest_error: string;
             /**
-             * Ingest status
+             * 摄取状态
              * @description null
              */
             readonly ingest_status: {
@@ -15295,6 +15344,7 @@ export interface components {
              *     单对象序列化（无注解）回退为单次 EXISTS。
              */
             readonly form_schema_locked: boolean;
+            /** 发起角色 */
             initiator_roles?: unknown;
             /**
              * 激活状态
@@ -15679,7 +15729,7 @@ export interface components {
         BasicSetting: {
             /**
              * 数据导出限制
-             * @description Limit the maximum number of rows of exported data (>=1)
+             * @description 限制导出数据的最大行数（>=1）
              */
             EXPORT_MAX_LIMIT?: number;
             /**
@@ -16657,10 +16707,10 @@ export interface components {
              * @default
              */
             label_en: string;
-            /** Last consumed at */
+            /** 最后消费时间 */
             readonly last_used_at: string | null;
             /**
-             * Consumption failures
+             * 消费失败次数
              * @description 消费端加载失败次数（Redis 观测；失败不影响消费）。
              */
             readonly load_failure_count: number | null;
@@ -16684,7 +16734,7 @@ export interface components {
              */
             readonly updated_time: string | null;
             /**
-             * Consumption count
+             * 消费次数
              * @description 消费次数（仅类型行；字典项行不展示）。
              */
             readonly usage_count: number | null;
@@ -16853,10 +16903,10 @@ export interface components {
              */
             description: string;
             /**
-             * Field permission mode
-             * @description strict = role without field permission config sees no columns; inherit = no extra pruning
+             * 字段权限模式
+             * @description strict = 未配置字段权限的角色看不到列；inherit = 不额外裁剪
              * @default {
-             *       "label": "Inherit",
+             *       "label": "继承",
              *       "value": "inherit"
              *     }
              */
@@ -17597,7 +17647,7 @@ export interface components {
             };
             /** ID */
             readonly pk: number;
-            /** Referenced tasks */
+            /** 被引用任务 */
             readonly reference_count: number;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
@@ -17720,7 +17770,7 @@ export interface components {
             };
             /**
              * 同步分页大小
-             * @description Directory page size per search request during scheduled sync (10-5000)
+             * @description 定时同步时每次搜索请求的目录页大小（10-5000）
              * @default 500
              */
             LDAP_SYNC_PAGE_SIZE: number;
@@ -18082,7 +18132,7 @@ export interface components {
              * 删除时间
              * Format: date-time
              */
-            deleted_at?: string | null;
+            readonly deleted_at: string | null;
             /**
              * 激活状态
              * @default true
@@ -18137,7 +18187,7 @@ export interface components {
              * 主键ID
              * Format: uuid
              */
-            pk?: string;
+            readonly pk: string;
             /**
              * 排序
              * @default 9999
@@ -18350,6 +18400,14 @@ export interface components {
             };
             readonly form_name: string;
             /**
+             * 审批实例
+             * @description null
+             */
+            readonly instance: {
+                /** @description pk field */
+                pk?: string;
+            } | null;
+            /**
              * 主键ID
              * Format: uuid
              */
@@ -18528,7 +18586,7 @@ export interface components {
             readonly ipaddress: string | null;
             /** 请求方式 */
             readonly method: string | null;
-            /** Source model */
+            /** 来源模型 */
             readonly model_label: string;
             /** 模块 */
             readonly module: string | null;
@@ -18579,6 +18637,7 @@ export interface components {
             /** 浏览器 */
             readonly browser: string | null;
             changes?: unknown;
+            /** 变更已截断 */
             readonly changes_truncated: boolean;
             /**
              * 创建时间
@@ -18604,7 +18663,7 @@ export interface components {
             readonly ipaddress: string | null;
             /** 请求方式 */
             readonly method: string | null;
-            /** Source model */
+            /** 来源模型 */
             readonly model_label: string;
             /** 模块 */
             readonly module: string | null;
@@ -19217,7 +19276,7 @@ export interface components {
              */
             AI_BASE_URL?: string;
             /**
-             * AI codegen draft
+             * AI 代码生成草稿
              * @description 代码生成器的自然语言字段草案：AI 给出字段覆盖建议，人工审核采纳（绝不直接写代码）
              * @default false
              */
@@ -19337,9 +19396,10 @@ export interface components {
             readonly created_time?: string | null;
             /** 创建人 */
             readonly creator?: string | null;
+            /** 摄取错误 */
             readonly ingest_error?: string;
             /**
-             * Ingest status
+             * 摄取状态
              * @description null
              */
             readonly ingest_status?: {
@@ -19682,6 +19742,7 @@ export interface components {
              *     单对象序列化（无注解）回退为单次 EXISTS。
              */
             readonly form_schema_locked?: boolean;
+            /** 发起角色 */
             initiator_roles?: unknown;
             /**
              * 激活状态
@@ -19746,7 +19807,7 @@ export interface components {
         PatchedBasicSetting: {
             /**
              * 数据导出限制
-             * @description Limit the maximum number of rows of exported data (>=1)
+             * @description 限制导出数据的最大行数（>=1）
              */
             EXPORT_MAX_LIMIT?: number;
             /**
@@ -20112,10 +20173,10 @@ export interface components {
              * @default
              */
             label_en: string;
-            /** Last consumed at */
+            /** 最后消费时间 */
             readonly last_used_at?: string | null;
             /**
-             * Consumption failures
+             * 消费失败次数
              * @description 消费端加载失败次数（Redis 观测；失败不影响消费）。
              */
             readonly load_failure_count?: number | null;
@@ -20139,7 +20200,7 @@ export interface components {
              */
             readonly updated_time?: string | null;
             /**
-             * Consumption count
+             * 消费次数
              * @description 消费次数（仅类型行；字典项行不展示）。
              */
             readonly usage_count?: number | null;
@@ -20308,10 +20369,10 @@ export interface components {
              */
             description: string;
             /**
-             * Field permission mode
-             * @description strict = role without field permission config sees no columns; inherit = no extra pruning
+             * 字段权限模式
+             * @description strict = 未配置字段权限的角色看不到列；inherit = 不额外裁剪
              * @default {
-             *       "label": "Inherit",
+             *       "label": "继承",
              *       "value": "inherit"
              *     }
              */
@@ -20718,7 +20779,7 @@ export interface components {
             };
             /** ID */
             readonly pk?: number;
-            /** Referenced tasks */
+            /** 被引用任务 */
             readonly reference_count?: number;
         };
         /** @description 与 BaseSettingViewSet.perform_update 配对的保存契约（详见模块 docstring）。 */
@@ -20841,7 +20902,7 @@ export interface components {
             };
             /**
              * 同步分页大小
-             * @description Directory page size per search request during scheduled sync (10-5000)
+             * @description 定时同步时每次搜索请求的目录页大小（10-5000）
              * @default 500
              */
             LDAP_SYNC_PAGE_SIZE: number;
@@ -21074,7 +21135,7 @@ export interface components {
              * 删除时间
              * Format: date-time
              */
-            deleted_at?: string | null;
+            readonly deleted_at?: string | null;
             /**
              * 激活状态
              * @default true
@@ -21129,7 +21190,7 @@ export interface components {
              * 主键ID
              * Format: uuid
              */
-            pk?: string;
+            readonly pk?: string;
             /**
              * 排序
              * @default 9999
@@ -21713,7 +21774,7 @@ export interface components {
             SCIM_RATE_LIMIT: string;
             /**
              * SCIM Bearer 令牌
-             * @description Encrypted at rest and never returned by the API; submit empty to keep the current token. Generate a random token below if you do not have one
+             * @description 加密存储且 API 永不返回；留空保持当前令牌。没有令牌可在下方生成随机令牌
              */
             SCIM_TOKEN?: string;
             /** SCIM 令牌已配置 */
@@ -21775,6 +21836,7 @@ export interface components {
              * @default 60
              */
             refresh: number;
+            /** 渲染模式 */
             readonly render_mode?: string;
             /**
              * 主题
@@ -21837,6 +21899,7 @@ export interface components {
          *     布局」，放行不可见引用只会把 400 推迟到应用模板那一刻。
          */
         PatchedScreenTemplate: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -22307,7 +22370,7 @@ export interface components {
             SECURITY_LOGIN_LIMIT_TIME?: number;
             /**
              * 最大并发会话数
-             * @description Kick the least recently active session beyond this limit (0 = unlimited)
+             * @description 超出该上限时踢出最近最少活跃的会话（0 = 不限制）
              * @default 0
              */
             SECURITY_LOGIN_MAX_SESSIONS: number;
@@ -22346,7 +22409,7 @@ export interface components {
             SECURITY_MFA_LOGIN_TOKEN_TTL: number;
             /**
              * 允许的二次验证方式
-             * @description Global whitelist of MFA methods available to accounts (empty = all enabled methods)
+             * @description 账号可用的 MFA 方法全局白名单（空 = 全部已启用方法）
              * @default []
              */
             SECURITY_MFA_METHODS: components["schemas"]["SECURITYMFAMETHODSEnum"][];
@@ -22408,19 +22471,19 @@ export interface components {
             SECURITY_ADMIN_USER_PASSWORD_MIN_LENGTH?: number;
             /**
              * 密码有效期（天）
-             * @description Force password change after N days (0 = never)
+             * @description 密码 N 天后强制修改（0 = 不强制）
              * @default 90
              */
             SECURITY_PASSWORD_EXPIRATION_DAYS: number;
             /**
              * 密码历史次数
-             * @description Recent passwords that cannot be reused (0 = disabled)
+             * @description 不可复用的近期密码数量（0 = 关闭）
              * @default 3
              */
             SECURITY_PASSWORD_HISTORY_COUNT: number;
             /**
              * 密码泄露检测
-             * @description Reject passwords found in known breach corpora
+             * @description 拒绝已知泄露密码库中的密码
              * @default true
              */
             SECURITY_PASSWORD_LEAK_CHECK_ENABLED: boolean;
@@ -22649,21 +22712,20 @@ export interface components {
              */
             file_url?: (string) | null;
             /** 文件名称 */
-            filename?: string;
+            readonly filename?: string;
             /** 文件大小 */
-            filesize?: number;
+            readonly filesize?: number;
             /**
              * 临时文件
              * @description 临时文件会被定时任务自动清理
-             * @default false
              */
-            is_tmp: boolean;
+            readonly is_tmp?: boolean;
             /** 上传文件 */
             readonly is_upload?: boolean;
             /** 文件MD5 */
-            md5sum?: string;
+            readonly md5sum?: string;
             /** 文件类型 */
-            mime_type?: string;
+            readonly mime_type?: string;
             /** ID */
             readonly pk?: number;
             /** 预览类型 */
@@ -22994,7 +23056,7 @@ export interface components {
              * @description 事件键（来自 EVENT_CATALOG）
              */
             events?: unknown;
-            /** Secret configured */
+            /** 密钥已配置 */
             readonly has_secret?: boolean;
             /**
              * 激活状态
@@ -23570,7 +23632,7 @@ export interface components {
             SCIM_RATE_LIMIT: string;
             /**
              * SCIM Bearer 令牌
-             * @description Encrypted at rest and never returned by the API; submit empty to keep the current token. Generate a random token below if you do not have one
+             * @description 加密存储且 API 永不返回；留空保持当前令牌。没有令牌可在下方生成随机令牌
              */
             SCIM_TOKEN?: string;
             /** SCIM 令牌已配置 */
@@ -23632,6 +23694,7 @@ export interface components {
              * @default 60
              */
             refresh: number;
+            /** 渲染模式 */
             readonly render_mode: string;
             /**
              * 主题
@@ -23706,6 +23769,7 @@ export interface components {
          *     布局」，放行不可见引用只会把 400 推迟到应用模板那一刻。
          */
         ScreenTemplate: {
+            base_version?: number;
             /**
              * 创建时间
              * Format: date-time
@@ -24397,7 +24461,7 @@ export interface components {
             SECURITY_LOGIN_LIMIT_TIME: number;
             /**
              * 最大并发会话数
-             * @description Kick the least recently active session beyond this limit (0 = unlimited)
+             * @description 超出该上限时踢出最近最少活跃的会话（0 = 不限制）
              * @default 0
              */
             SECURITY_LOGIN_MAX_SESSIONS: number;
@@ -24436,7 +24500,7 @@ export interface components {
             SECURITY_MFA_LOGIN_TOKEN_TTL: number;
             /**
              * 允许的二次验证方式
-             * @description Global whitelist of MFA methods available to accounts (empty = all enabled methods)
+             * @description 账号可用的 MFA 方法全局白名单（空 = 全部已启用方法）
              * @default []
              */
             SECURITY_MFA_METHODS: components["schemas"]["SECURITYMFAMETHODSEnum"][];
@@ -24498,19 +24562,19 @@ export interface components {
             SECURITY_ADMIN_USER_PASSWORD_MIN_LENGTH: number;
             /**
              * 密码有效期（天）
-             * @description Force password change after N days (0 = never)
+             * @description 密码 N 天后强制修改（0 = 不强制）
              * @default 90
              */
             SECURITY_PASSWORD_EXPIRATION_DAYS: number;
             /**
              * 密码历史次数
-             * @description Recent passwords that cannot be reused (0 = disabled)
+             * @description 不可复用的近期密码数量（0 = 关闭）
              * @default 3
              */
             SECURITY_PASSWORD_HISTORY_COUNT: number;
             /**
              * 密码泄露检测
-             * @description Reject passwords found in known breach corpora
+             * @description 拒绝已知泄露密码库中的密码
              * @default true
              */
             SECURITY_PASSWORD_LEAK_CHECK_ENABLED: boolean;
@@ -24887,21 +24951,20 @@ export interface components {
              */
             file_url?: (string) | null;
             /** 文件名称 */
-            filename: string;
+            readonly filename: string;
             /** 文件大小 */
-            filesize: number;
+            readonly filesize: number;
             /**
              * 临时文件
              * @description 临时文件会被定时任务自动清理
-             * @default false
              */
-            is_tmp: boolean;
+            readonly is_tmp: boolean;
             /** 上传文件 */
             readonly is_upload: boolean;
             /** 文件MD5 */
-            md5sum: string;
+            readonly md5sum: string;
             /** 文件类型 */
-            mime_type: string;
+            readonly mime_type: string;
             /** ID */
             readonly pk: number;
             /** 预览类型 */
@@ -25363,9 +25426,11 @@ export interface components {
              * Format: uuid
              */
             readonly pk: string;
+            /** 请求头 */
             readonly request_headers: unknown;
             /** 响应内容 */
             readonly response_body: string;
+            /** 响应体已截断 */
             readonly response_body_truncated: boolean;
             /** 响应码 */
             readonly response_code: number | null;
@@ -25424,7 +25489,7 @@ export interface components {
              * @description 事件键（来自 EVENT_CATALOG）
              */
             events?: unknown;
-            /** Secret configured */
+            /** 密钥已配置 */
             readonly has_secret: boolean;
             /**
              * 激活状态
@@ -30454,6 +30519,7 @@ export interface operations {
                 system?: string;
                 updated_time_after?: string;
                 updated_time_before?: string;
+                username?: string;
             };
             header?: never;
             path?: never;
@@ -32148,16 +32214,20 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        celery_error?: string;
                         celery_status?: boolean;
                         /** Format: float */
                         celery_time?: number;
+                        db_error?: string;
                         db_status?: boolean;
                         /** Format: float */
                         db_time?: number;
+                        redis_error?: string;
                         redis_status?: boolean;
                         /** Format: float */
                         redis_time?: number;
                         status?: boolean;
+                        storage_error?: string;
                         storage_status?: boolean;
                         /** Format: float */
                         storage_time?: number;
@@ -36394,7 +36464,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["UploadFile"];
                 "application/x-www-form-urlencoded": components["schemas"]["UploadFile"];
@@ -36926,7 +36996,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["UploadFile"];
                 "application/x-www-form-urlencoded": components["schemas"]["UploadFile"];
@@ -50441,7 +50511,7 @@ export interface operations {
                 ordering?: string;
                 /** @description 分页结果集中的页码。 */
                 page?: number;
-                pk?: string;
+                pk?: number;
                 /** @description 每页返回的结果数量。 */
                 size?: number;
                 spm?: unknown;
@@ -50980,7 +51050,7 @@ export interface operations {
                 owner_id?: number[];
                 /** @description 分页结果集中的页码。 */
                 page?: number;
-                pk?: string;
+                pk?: number;
                 /** @description 每页返回的结果数量。 */
                 size?: number;
                 spm?: unknown;
@@ -54458,18 +54528,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: {
+            /** @description No response body */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": {
-                        code?: number;
-                        detail?: string;
-                        requestId?: string;
-                        timestamp?: string;
-                    };
-                };
+                content?: never;
             };
         };
     };

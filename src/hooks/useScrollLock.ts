@@ -27,6 +27,8 @@ export function useScrollLock(options: ScrollLockOptions = {}) {
   const lockTarget = shallowRef<HTMLElement | null>(null);
   const isTargetLocked = _useScrollLock(lockTarget);
   const compensator = createScrollCompensator();
+  /** 本实例是否已做补偿：补偿按实例计数，不能用全局锁状态判定（多弹层并存会跳过） */
+  let compensated = false;
 
   const isLocked = computed({
     get: () => isTargetLocked.value,
@@ -35,15 +37,18 @@ export function useScrollLock(options: ScrollLockOptions = {}) {
       lockTarget.value = target;
 
       if (value) {
-        if (isTargetLocked.value) return;
-        if (needsScrollbar(target)) {
+        if (!compensated && needsScrollbar(target)) {
           compensator.apply(target);
+          compensated = true;
         }
         isTargetLocked.value = true;
         return;
       }
       isTargetLocked.value = false;
-      compensator.reset(target);
+      if (compensated) {
+        compensated = false;
+        compensator.reset(target);
+      }
     }
   });
 

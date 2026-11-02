@@ -90,7 +90,13 @@ const loadMembers = async (resetPage = false) => {
 async function loadTagOptions() {
   // 元数据失败为可选能力降级（标签下拉缺失）：归一异常，不产生 unhandled rejection
   const res = await directoryApi.fields().catch(normalizeError);
-  if (!res || !isSuccess(res)) return;
+  if (!res || !isSuccess(res)) {
+    // 可选能力降级：不打断页面，但 DEV 下留痕便于排查「标签下拉为空」
+    if (import.meta.env.DEV) {
+      console.warn("[directory] 标签候选加载失败，已降级", res?.detail);
+    }
+    return;
+  }
   const field = res.data?.find(item => item.key === "tag");
   tagOptions.value = (field?.choices ?? []).map(choice => ({
     value: String(choice.value),
@@ -314,7 +320,10 @@ function openDetail(row: DirectoryMember) {
             <span class="hidden min-w-0 truncate lg:block">
               {{ row.dept?.name || "-" }}
             </span>
-            <span class="hidden min-w-0 items-center gap-1 lg:flex">
+            <span
+              class="hidden min-w-0 items-center gap-1 lg:flex"
+              data-testid="member-post"
+            >
               <el-tag
                 v-if="row.posts?.length"
                 size="small"

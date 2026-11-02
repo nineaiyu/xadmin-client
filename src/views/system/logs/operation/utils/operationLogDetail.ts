@@ -1,8 +1,5 @@
-import type { useI18n } from "vue-i18n";
 import { operationLogApi } from "@/api/audit/logs/operation";
 import { isSuccess } from "@/api/types";
-
-type TFunction = ReturnType<typeof useI18n>["t"];
 
 /**
  * 详情抽屉口径：列表的 changes 已降为有界预览，详情必须按主键
@@ -12,7 +9,6 @@ type TFunction = ReturnType<typeof useI18n>["t"];
 export async function fetchOperationLogDetail({
   row
 }: {
-  t: TFunction;
   row: Record<string, unknown>;
 }) {
   const pk = row.pk;

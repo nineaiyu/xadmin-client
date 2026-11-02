@@ -8,6 +8,12 @@ import {
   getAccessToken,
   login
 } from "./helpers";
+import {
+  cleanupApprovalIsolation,
+  startApprovalIsolation
+} from "./approval-isolation";
+
+test.afterEach(async ({ page }) => cleanupApprovalIsolation(page));
 
 /**
  * 审批流深度用例（审批中心增强）：
@@ -158,6 +164,7 @@ test("通过弹窗填审批意见：意见入流转记录时间线", async ({ pa
 
 test("申请人催办：发送提醒并命中 10 分钟节流", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const suffix = Math.random().toString(36).slice(2, 8);
   const title = `E2E催办-${suffix}`;
@@ -216,6 +223,7 @@ test("申请人催办：发送提醒并命中 10 分钟节流", async ({ page })
 test("驳回后重新提交：按原流程与原内容预填发起弹窗", async ({ page }) => {
   const approverToken = await tokenFor(page, APPROVER);
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const suffix = Math.random().toString(36).slice(2, 8);
   const title = `E2E重提-${suffix}`;
@@ -282,6 +290,7 @@ test("驳回后重新提交：按原流程与原内容预填发起弹窗", async
 
 test("流程定义：分支路由只能指向后续节点并落库", async ({ page }) => {
   await login(page);
+  await startApprovalIsolation(page);
   const token = await getAccessToken(page);
   const suffix = Math.random().toString(36).slice(2, 8);
   const flowName = `E2E分支流程-${suffix}`;

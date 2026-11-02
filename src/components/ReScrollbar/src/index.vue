@@ -7,6 +7,7 @@ import {
   ref,
   watch
 } from "vue";
+import { useMutationObserver } from "@vueuse/core";
 
 import type { ReScrollbarProps, ScrollArrivalState } from "./types";
 
@@ -32,7 +33,8 @@ const props = withDefaults(defineProps<ReScrollbarProps>(), {
   native: false,
   shadow: true,
   always: false,
-  label: undefined
+  label: undefined,
+  keyboard: false
 });
 
 const emit = defineEmits<{ "scroll-at": [state: ScrollArrivalState] }>();
@@ -77,12 +79,22 @@ function updateArrival(): void {
   });
 }
 
-/** 键盘可达：滚动容器可聚焦后可用方向键 / PageUp / PageDown 滚动内容 */
+/**
+ * 键盘可达：滚动容器可聚焦后可用方向键 / PageUp / PageDown 滚动内容。
+ *
+ * 默认不加 `tabindex`：页面里多个滚动容器会让 Tab 停靠点显著变多；
+ * 仅在调用方显式要求键盘可达（`keyboard`）或提供了可访问名（`label`）时开启。
+ */
 function applyWrapA11y(): void {
   const wrap = wrapRef.value;
   if (!wrap) return;
-  wrap.setAttribute("tabindex", "0");
-  wrap.setAttribute("role", "region");
+  if (props.keyboard || props.label) {
+    wrap.setAttribute("tabindex", "0");
+    wrap.setAttribute("role", "region");
+  } else {
+    wrap.removeAttribute("tabindex");
+    wrap.removeAttribute("role");
+  }
   if (props.label) {
     wrap.setAttribute("aria-label", props.label);
   } else {
@@ -99,7 +111,7 @@ async function bindWrap(): Promise<void> {
   updateArrival();
 }
 
-watch(() => props.label, applyWrapA11y);
+watch(() => [props.label, props.keyboard], applyWrapA11y);
 // native 切换（或 el-scrollbar 内部 DOM 重建）后重新绑定：仅 onMounted 绑一次时，
 // 重建后的新 wrap 节点没有监听器，scroll-at 与阴影会静默停在上次状态。
 // 当前 EP 版本两种模式都渲染 .el-scrollbar__wrap，此处兜底的是节点重建场景。
@@ -128,6 +140,14 @@ function setScrollTop(top: number): void {
 
 onMounted(bindWrap);
 onBeforeUnmount(unbindWrap);
+
+// 内容增长（消息追加 / 日志增量）不会触发 scroll：监听子节点变化后重算到达态，
+// 否则「已到底」判定会一直停留在初始值
+useMutationObserver(rootRef, () => updateArrival(), {
+  childList: true,
+  subtree: true,
+  characterData: true
+});
 
 defineExpose({ scrollTo, setScrollTop, updateArrival });
 </script>

@@ -116,9 +116,9 @@ test("通知公告：新增（富文本 + 字典级别）→ 列表可见含字�
   await expect(levelText).toHaveAttribute("style", /color:\s*rgb/);
 
   // 查看弹层（NoticeShow 只读编辑器）：与新增弹窗同源的高度修复须生效（≥300px 告警阈值）。
-  // 行内按钮顺序为 编辑/删除/详情，「详情」无文字（icon=View、仅 tooltip），故按序号取
+  // 「详情」为 icon-only 按钮，框架按 tooltip 文案补 aria-label，按可访问名定位
   await row.hover();
-  await row.locator("button").nth(2).click();
+  await row.getByRole("button", { name: /详情|查看|Detail|View/ }).click();
   const detailDialog = page.locator(".el-dialog:visible");
   await expect(detailDialog).toBeVisible({ timeout: 10_000 });
   await expect(detailDialog.locator(".w-e-scroll").first()).toBeVisible({
@@ -272,7 +272,7 @@ test("通知公告：Markdown 正文创建 → 列表 → 详情渲染 → 编�
 
   // 详情：按 Markdown 渲染（标题/表格/代码块），且不加载 WangEditor
   await row.hover();
-  await row.locator("button").nth(2).click();
+  await row.getByRole("button", { name: /详情|查看|Detail|View/ }).click();
   const detailDialog = page.locator(".el-dialog:visible");
   await expect(detailDialog).toBeVisible({ timeout: 10_000 });
   await expect(detailDialog.locator(".md-view h2")).toHaveText("维护窗口");

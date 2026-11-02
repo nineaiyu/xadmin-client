@@ -73,6 +73,19 @@ describe("parseTemplateJson", () => {
     expect(created.h).toBeGreaterThanOrEqual(FREE_MIN_PANE_SIZE);
   });
 
+  it("越界字号 / 旋转角在导入时按服务端范围夹取", () => {
+    const result = parseTemplateJson(
+      JSON.stringify([
+        pane({ size: 99999, rotate: 720 }),
+        pane({ type: "clock", size: -10, rotate: -720 })
+      ])
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.panes[0]).toMatchObject({ size: 200, rotate: 180 });
+    expect(result.value.panes[1]).toMatchObject({ size: 14, rotate: -180 });
+  });
+
   it("形状不合法的窗格被丢弃并计数（不写半成品）", () => {
     const raw = JSON.stringify({
       panes: [

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { watch } from "vue";
 import OverlayDrawer from "@/components/overlay/OverlayDrawer.vue";
 import { drawerSize } from "@/components/ReDialog/size";
 
@@ -22,6 +23,14 @@ const props = withDefaults(
 );
 
 const visible = defineModel<boolean>({ required: true });
+
+// 宽屏态抽屉不渲染：主动复位可见性，避免窄→宽→窄后带着旧状态重新打开
+watch(
+  () => props.narrow,
+  narrow => {
+    if (!narrow) visible.value = false;
+  }
+);
 </script>
 
 <template>

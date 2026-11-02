@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 大屏画布设计器：
@@ -36,6 +44,7 @@ test("大屏设计器：加窗格 → 拖动 → 保存 → 投屏按画布渲�
   const paneText = `画布标题-${suffix}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   // ---- 素材：数据集 → 看板（1 张指标卡）→ 大屏（轮播字段并存） ----
@@ -199,6 +208,7 @@ test("大屏主题：直开设计器主题已初始化，切换保存后投屏�
   const screenName = `E2E主题大屏-${suffix}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const dataset = await postJson(

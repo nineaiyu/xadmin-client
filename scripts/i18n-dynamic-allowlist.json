@@ -1,0 +1,122 @@
+{
+  "note": "动态 i18n 键登记表（check-i18n-keys.mjs）：templates 登记无法由静态前缀校验的模板字面量（键的前缀来自运行时变量）；files 登记键完全由数据驱动的调用文件（变量/映射表传入），运行时缺键会显示原文。新增条目必须写明理由；条目失效时门禁只提示不失败。",
+  "templates": [
+    {
+      "pattern": "`${namespace}.leaveConfirm`",
+      "reason": "设计器守卫的命名空间由调用方传入（每个设计器页面一组词条）"
+    },
+    {
+      "pattern": "`${namespace}.unsaved`",
+      "reason": "设计器守卫的命名空间由调用方传入（每个设计器页面一组词条）"
+    },
+    {
+      "pattern": "`${namespace}.leave`",
+      "reason": "设计器守卫的命名空间由调用方传入（每个设计器页面一组词条）"
+    },
+    {
+      "pattern": "`${namespace}.stay`",
+      "reason": "设计器守卫的命名空间由调用方传入（每个设计器页面一组词条）"
+    },
+    {
+      "pattern": "`${localeName}.formsLoadFailed`",
+      "reason": "表单选择器按当前语言包的 localeName 拼接状态文案"
+    },
+    {
+      "pattern": "`${localeName}.retry`",
+      "reason": "表单选择器按当前语言包的 localeName 拼接状态文案"
+    },
+    {
+      "pattern": "`${localeName}.noForms`",
+      "reason": "表单选择器按当前语言包的 localeName 拼接状态文案"
+    },
+    {
+      "pattern": "`${localePrefix}.logTitle`",
+      "reason": "导出中心按资源前缀拼接日志文案"
+    },
+    {
+      "pattern": "`${localePrefix}.download`",
+      "reason": "导出中心按资源前缀拼接日志文案"
+    },
+    {
+      "pattern": "`${localePrefix}.log`",
+      "reason": "导出中心按资源前缀拼接日志文案"
+    },
+    {
+      "pattern": "`${pane.item.localeName}.${pane.item.title ?? \"title\"}`",
+      "reason": "设置面板窗格的 localeName / title 由面板注册表提供"
+    }
+  ],
+  "files": {
+    "src/components/AiActionCard/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/ApiScopeEditor/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/AuthorizedAppTable/useAuthorizedAppList.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePermissionPreview/src/presets.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePlusPage/src/components/ReRecycleBin.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePlusPage/src/components/SavedViewForm.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePlusPage/src/components/SavedViewMenu.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePlusPage/src/utils/index.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/components/RePlusPage/src/utils/usePlusPageState.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-navbar/NavbarActions.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-notice/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-panel/appearancePackMessages.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-search/useCommandPalette.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingAnimation.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingGeneral.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingLogoSettings.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingNavbarWidgets.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingSemanticColors.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingShortcut.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingTheme.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/layout/components/lay-setting/components/SettingThemePreset.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/plugins/i18n.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/utils/password.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/about/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/report/components/ReportDesignSidebar.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/report/components/ReportForm.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/report/utils/useDesignMutations.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/report/utils/useReportColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/screen/components/MultiSelectInspector.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/screen/components/PaneAnimationFields.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/screen/components/PaneInspector.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/screen/components/RichTextEditor.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/analysis/screen/utils/useScreenColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/components/ApprovalResourceTabs.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/components/ApprovalStats.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/flow/components/FlowCanvas.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/flow/components/FlowConfigDrawer.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/flow/components/FlowNodesEditor.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/rule/components/RuleLevelsEditor.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/approval/rule/components/RulePathsEditor.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/dashboard/components/DashboardToolbar.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/error/components/ErrorPage.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/form/designer/components/FormFieldDialog.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/form/designer/components/FormFieldTable.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/form/designer/components/FormLinkageDialog.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/form/designer/components/SchemaHistoryDialog.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/integration/ai/components/AiActiveProfilesBar.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/integration/ai/hooks/useAiConsoleStream.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/integration/ai/utils/aiProfilePanel.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/integration/ai/utils/useAiProfileColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/integration/knowledge/utils/useKnowledgeColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/login/components/Basic.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/playground/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/settings/captcha/components/CaptchaDataSetting.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/settings/login-policy/components/PolicyPreviewPanel.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/settings/sms/index.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/account-risk/components/RiskHandleForm.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/account-risk/utils/statsGroups.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/account-risk/utils/useRiskColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/account-risk/utils/useRiskDetail.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/codegen/utils/useCodegenPlans.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/components/useActiveBatchUpdate.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/config/system/utils/configKeyHints.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/export/utils/recordCenter.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/file/components/AccessLogPanel.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/logs/login/utils/loginLogColumns.tsx": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/monitor/components/HistoryChart.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/monitor/components/MonitorAlertPanel.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/monitor/utils/useMonitorView.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/notice/components/markdown/MarkdownToolbar.vue": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文",
+    "src/views/system/notice/components/markdown/useMarkdownUpload.ts": "键由数据驱动（labelKey / title / 枚举映射等字段传入），运行时缺键显示原文"
+  }
+}

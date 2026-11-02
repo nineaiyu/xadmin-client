@@ -11,7 +11,7 @@ import type {
 } from "@/api/dataset/dform";
 
 /**
- * 复杂控件结构化编辑器（P2-159）：选项 / 明细子表列 / 级联路径
+ * 复杂控件结构化编辑器：选项 / 明细子表列 / 级联路径
  * 不再用逗号或竖线文本协议，改为可增删的行/子表；保存时写回字段。
  */
 defineOptions({ name: "FormFieldOptionsDialog" });

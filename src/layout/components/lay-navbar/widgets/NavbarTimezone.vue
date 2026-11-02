@@ -4,13 +4,16 @@
 //
 // 与日期格式化链路的关系：本项目时间列口径为「浏览器本地时区」（utils/format.ts），
 // 本项只影响此处时钟展示与后续按需接入的展示层，不改写全站时间列语义。
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import { syncSelectInputsA11y } from "@/utils/tableA11y";
 import { useConfigureStorage } from "../../lay-setting/hooks/useConfigureStorage";
-import { resolveTimezoneOptions } from "@/layout/hooks/timezoneOptions";
+import {
+  resolveTimezoneOptions,
+  timezoneOffsetMinutes
+} from "@/layout/hooks/timezoneOptions";
 import WorldClockIcon from "~icons/fluent-mdl2/world-clock";
 
 const { t } = useNav();
@@ -36,11 +39,16 @@ function startClock() {
   now.value = new Date();
   stopClock();
   timer = setInterval(() => (now.value = new Date()), 1000);
-  // 时区下拉的可访问名（EP el-select 无 props 入口，渲染后补名）
-  syncSelectInputsA11y(
-    document.querySelector(".timezone-popover"),
-    t("layout.timezone")
-  );
+  // 时区下拉的可访问名（EP el-select 无 props 入口，渲染后补名）。
+  // 弹层首帧可能尚未挂载，nextTick + rAF 后再补，避免静默返回 0 个节点
+  void nextTick(() => {
+    requestAnimationFrame(() =>
+      syncSelectInputsA11y(
+        document.querySelector(".timezone-popover"),
+        t("layout.timezone")
+      )
+    );
+  });
 }
 function stopClock() {
   if (timer) clearInterval(timer);
@@ -83,11 +91,9 @@ const clockText = computed(() => {
 /** 当前时区的 UTC 偏移文案（如 UTC+08:00） */
 const offsetText = computed(() => {
   const zone = timezone.value;
-  const target = new Date(
-    now.value.toLocaleString("en-US", zone ? { timeZone: zone } : {})
-  );
-  const local = new Date(now.value.toLocaleString("en-US"));
-  const minutes = Math.round((target.getTime() - local.getTime()) / 60000);
+  const minutes = zone
+    ? timezoneOffsetMinutes(zone, now.value)
+    : -now.value.getTimezoneOffset();
   const sign = minutes >= 0 ? "+" : "-";
   const abs = Math.abs(minutes);
   return `UTC${sign}${String(Math.floor(abs / 60)).padStart(2, "0")}:${String(

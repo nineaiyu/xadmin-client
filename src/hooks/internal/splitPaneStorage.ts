@@ -48,7 +48,12 @@ export function createSplitPaneStorage({
 
   /** 单键 PATCH 远端（其余站点配置字段由后端 merge 保留） */
   const patchRemote = () => {
-    configApi.setSiteConfig({ SplitPanes: { ...readLocalMap() } });
+    Promise.resolve(
+      configApi.setSiteConfig({ SplitPanes: { ...readLocalMap() } })
+    ).catch(error => {
+      // 远端同步失败不阻塞本地交互，但必须留痕（否则跨设备静默不同步）
+      console.warn("[split-pane] remote save failed:", error);
+    });
   };
 
   return { readLocalMap, writeLocal, patchRemote };

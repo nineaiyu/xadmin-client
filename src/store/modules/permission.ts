@@ -70,7 +70,10 @@ export const usePermissionStore = defineStore("pure-permission", {
           this.clearCache();
           break;
         case "add":
-          this.cachePageList.push(String(name));
+          // 守卫每次进入 keepAlive 页面都会 add：先判存在，避免会话内数组无界增长
+          if (!this.cachePageList.includes(String(name))) {
+            this.cachePageList.push(String(name));
+          }
           break;
         case "delete":
           if (delIndex !== -1) {
@@ -86,6 +89,8 @@ export const usePermissionStore = defineStore("pure-permission", {
       this.cachePageList = [];
       this.flatteningRoutes = [];
       this.menusLoaded = false;
+      // 登录态重置后按钮授权快照属于上一账号：不清会让 hasAuth 继续放行
+      this.permissionAuths = {};
     }
   }
 });

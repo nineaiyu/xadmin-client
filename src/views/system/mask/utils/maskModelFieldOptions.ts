@@ -16,6 +16,16 @@ const parentPkOf = (parent: unknown) =>
     ? (parent as { pk?: string }).pk
     : (parent as string | undefined);
 
+/** 可选候选加载失败按降级处理，但 DEV 下留痕（排查「模型下拉为空」） */
+function warnDegraded(scope: string, error: unknown) {
+  if (!import.meta.env.DEV) return;
+  const detail =
+    (error as { detail?: unknown; message?: unknown })?.detail ??
+    (error as { message?: unknown })?.message ??
+    error;
+  console.warn(`[mask] ${scope}加载失败，已降级`, detail);
+}
+
 /** labeled_choice 可能是 {value,label} 或裸字符串 */
 export const rawValueOf = (value: unknown) =>
   value && typeof value === "object"
@@ -59,7 +69,10 @@ export function useMaskModelFieldOptions({
     if (!canPickModel) return;
     fetchAllRows(modelLabelFieldApi.list, { field_type: FieldChoices.ROLE })
       .then(res => {
-        if (!isSuccess(res) || !res.data) return;
+        if (!isSuccess(res) || !res.data) {
+          warnDegraded("脱敏模型字段候选", res);
+          return;
+        }
         const rows = res.data.results as Array<{
           pk: string;
           name: string;
@@ -97,7 +110,7 @@ export function useMaskModelFieldOptions({
         });
         fieldOptionsMap.value = map;
       })
-      .catch(() => undefined);
+      .catch(error => warnDegraded("脱敏模型字段候选", error));
   };
 
   onMounted(loadModelFieldOptions);

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { formatBytes } from "@pureadmin/utils";
 import { StatBar, type StatItem } from "@/components/ReStat";
 import { epColor } from "@/utils/chartTheme";
 import { buildFileStatsBarData, type FileStats } from "../utils/fileStats";
@@ -52,7 +53,11 @@ const metrics = computed<StatItem[]>(() => [
 /** 使用率悬停提示：有配额给「已用 / 配额」，无配额说明「0 = 不限」的计入口径 */
 const usageTip = computed(() =>
   data.value.hasQuota
-    ? `${data.value.used} / ${props.stats.quota_mb} MB`
+    ? t("systemUploadFile.quotaUsage", {
+        used: data.value.used,
+        // 配额同样走 formatBytes：与「已用」统一单位，避免同一行混用 GB 与 MB
+        quota: formatBytes(props.stats.quota_mb * 1024 * 1024)
+      })
     : t("systemUploadFile.quotaTip")
 );
 </script>

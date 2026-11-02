@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 大屏自由画布二期（编辑效率）：显示缩放（档位 / 适应窗口 / Ctrl+滚轮锚点缩放）、
@@ -50,6 +58,7 @@ test("自由画布二期：缩放 → 框选对齐 → 组拖动 → 复制粘�
   const screenName = `E2E自由二期-${suffix}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   const dataset = await postJson(

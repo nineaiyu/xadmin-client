@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 大屏自由画布（像素级自由排版）：
@@ -56,6 +64,7 @@ test("自由画布：拖动缩放保存 → 投屏等比缩放；切回栅格不
   const paneText = `自由标题-${suffix}`;
 
   await login(page);
+  await startResourceIsolation(page);
   const token = await getAccessToken(page);
 
   // ---- 素材：数据集 → 看板（1 张指标卡）→ 大屏 ----

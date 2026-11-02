@@ -63,7 +63,7 @@ export function buildDefaultToolbarButtons({
       show: isTree
     },
     {
-      text: t("buttons.add"),
+      text: computed(() => t("buttons.add")),
       code: "create",
       props: {
         type: "primary",

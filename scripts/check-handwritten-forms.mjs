@@ -33,8 +33,13 @@ const REGISTRY = path.join(ROOT, "scripts", "handwritten-forms-exempt.json");
 const MAX_FORM_ITEMS = 12;
 /** 就地豁免标记：`<!-- @form-exempt: 理由 -->`（理由不可为空） */
 const MARKER = /<!--\s*@form-exempt:\s*([\s\S]*?)-->/;
-/** RePlusPage 页面判定（模板使用；仅 import 工具函数不算页面） */
-const REPLUS_PAGE = /<RePlusPage\b/;
+/** RePlusPage 页面判定（模板 / 渲染函数两种写法；仅 import 工具函数不算页面） */
+const REPLUS_PAGE = /<(?:RePlusPage|replus-page)\b|\bh\(\s*RePlusPage\b/;
+/** 扫描面：SFC + tsx 渲染函数 */
+const SOURCE_EXT = new Set([".vue", ".tsx"]);
+/** 表单项：小写模板与 PascalCase / 渲染函数形态 */
+const FORM_ITEM =
+  /<(?:el-form-item|ElFormItem)\b|\bh\(\s*(?:ElFormItem\b|["']el-form-item["'])/g;
 
 const reportOnly = process.argv.includes("--report");
 
@@ -43,23 +48,24 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) rows.push(...walk(full));
-    else if (entry.endsWith(".vue")) rows.push(full);
+    else if (SOURCE_EXT.has(path.extname(entry))) rows.push(full);
   }
   return rows;
 }
 
 const rel = file => path.relative(ROOT, file).split(path.sep).join("/");
 const read = file => readFileSync(file, "utf-8");
-const countFormItems = source =>
-  (source.match(/<el-form-item\b/g) ?? []).length;
+const countFormItems = source => (source.match(FORM_ITEM) ?? []).length;
 
-/** 就近模块页面：向上找到第一个含 RePlusPage 页面的目录 */
+/** 就近模块页面：向上找到第一个含 RePlusPage 页面的目录（index.vue / index.tsx） */
 function replusModuleOf(file) {
   let dir = path.dirname(file);
   const stop = path.dirname(VIEW_DIR);
   while (dir.startsWith(VIEW_DIR) && dir !== stop) {
-    const page = path.join(dir, "index.vue");
-    if (existsSync(page) && REPLUS_PAGE.test(read(page))) return rel(dir);
+    for (const pageName of ["index.vue", "index.tsx"]) {
+      const page = path.join(dir, pageName);
+      if (existsSync(page) && REPLUS_PAGE.test(read(page))) return rel(dir);
+    }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;

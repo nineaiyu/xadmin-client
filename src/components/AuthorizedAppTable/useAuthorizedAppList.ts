@@ -52,12 +52,13 @@ export function useAuthorizedAppList(options: {
     if (!ok) return;
     revoking.value = row.application.pk;
     try {
-      const res = await api.revoke(row.application.pk);
+      const res = await api.revoke(row.application.pk).catch(normalizeError);
       if (isSuccess(res)) {
         message(t(successKey), { type: "success" });
         await load();
-      } else if (res.detail) {
-        message(String(res.detail), { type: "warning" });
+      } else {
+        // 网络异常/业务失败都必须显式提示，不能静默停在原列表
+        message(String(res.detail || t("results.failed")), { type: "warning" });
       }
     } finally {
       revoking.value = "";

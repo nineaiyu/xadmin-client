@@ -2,7 +2,8 @@ import "./index.css";
 import type { OptionsType } from "./type";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { Z_INDEX } from "@/utils/zIndex";
-import { isFunction, isNumber, useResizeObserver } from "@pureadmin/utils";
+import { isFunction, isNumber } from "@pureadmin/utils";
+import { useResizeObserver } from "@vueuse/core";
 import {
   computed,
   defineComponent,
@@ -62,6 +63,7 @@ export default defineComponent({
   props,
   emits: ["change", "update:modelValue"],
   setup(props, { emit }) {
+    const rootRef = ref<HTMLElement>();
     const width = ref(0);
     const translateX = ref(0);
     const initStatus = ref(false);
@@ -123,17 +125,10 @@ export default defineComponent({
       });
     }
 
-    function handleResizeInit() {
-      useResizeObserver(".pure-segmented", () => {
-        nextTick(() => {
-          handleInit(curIndex.value);
-        });
-      });
-    }
-
-    if (props.block || props.resize) {
-      handleResizeInit();
-    }
+    // 观察自身容器（不再用文档级选择器，也不会在 size 变化时重复创建观察器）
+    useResizeObserver(rootRef, () => {
+      nextTick(() => handleInit(curIndex.value));
+    });
 
     watch(
       () => curIndex.value,
@@ -146,10 +141,6 @@ export default defineComponent({
         immediate: true
       }
     );
-
-    watch(() => props.size, handleResizeInit, {
-      immediate: true
-    });
 
     const rendLabel = () => {
       return props.options.map((option, index) => {
@@ -221,6 +212,7 @@ export default defineComponent({
 
     return () => (
       <div
+        ref={rootRef}
         class={{
           "pure-segmented": true,
           "pure-segmented-block": props.block,

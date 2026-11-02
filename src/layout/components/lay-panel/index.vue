@@ -15,9 +15,31 @@ import PinOffIcon from "~icons/ri/pushpin-2-fill";
 import PinIcon from "~icons/ri/pushpin-2-line";
 import { useI18n } from "vue-i18n";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const target = ref<HTMLElement | null>(null);
-const show = ref<Boolean>(false);
+const show = ref(false);
+// 面板是常驻浮层（v-show 语义），打开时圈定焦点并支持 Esc 关闭
+useFocusTrap(target, show, {
+  initialFocus: ".lay-panel__header button",
+  onEscape: () => {
+    // 快捷键录制中：Esc 由录制控件负责取消（不能被面板关闭抢走）
+    if (document.querySelector(".shortcut-input__trigger.is-recording")) {
+      return;
+    }
+    // 面板内打开的弹层（下拉/确认框/消息盒）：Esc 先交给弹层关闭，
+    // 不连带关闭整个设置面板
+    const popupOpen = Array.from(
+      document.querySelectorAll<HTMLElement>(".el-popper, .el-message-box")
+    ).some(
+      el =>
+        el.getBoundingClientRect().width > 0 &&
+        getComputedStyle(el).display !== "none"
+    );
+    if (popupOpen) return;
+    show.value = false;
+  }
+});
 /**
  * 内容重挂载键（透传给面板内容）：批量回退（撤销本次调整 / 恢复站点默认）后
  * 让持有本地快照的设置组件（页签条 / 页脚 / 通用）重新按存储渲染，
@@ -114,7 +136,16 @@ onBeforeUnmount(() => {
 <template>
   <div :class="{ show }" class="lay-panel">
     <div class="right-panel-background" @click="closeByMask" />
-    <div ref="target" class="right-panel flex flex-col bg-bg-card">
+    <div
+      ref="target"
+      class="right-panel flex flex-col bg-bg-card"
+      :role="show ? 'dialog' : undefined"
+      :aria-modal="show ? 'true' : undefined"
+      :aria-hidden="show ? undefined : 'true'"
+      :inert="!show"
+      :aria-label="t('layout.settings')"
+      tabindex="-1"
+    >
       <!-- 头部：标题 + 版本 + 关闭 -->
       <header class="lay-panel__header">
         <div class="lay-panel__heading">

@@ -5,7 +5,7 @@
  * 全部落在 PRESETS 一张表里。`api-search-*` 注册名与后端通知载荷的
  * `SearchXxx` 组件名字符串仍是既有契约，见 index.ts 的具名包装。
  */
-import { computed, h, reactive, type Ref } from "vue";
+import { computed, h, type Ref } from "vue";
 import { ElImage } from "element-plus";
 import { hasAuth } from "@/router/utils";
 import { transformI18n } from "@/plugins/i18n";
@@ -150,7 +150,7 @@ const emit = defineEmits<{
 const selectValue = defineModel<object | object[] | string>();
 
 const preset = computed(() => SEARCH_PRESETS[props.entity]);
-const api = computed(() => reactive(preset.value.api));
+const api = computed(() => preset.value.api);
 </script>
 
 <template>

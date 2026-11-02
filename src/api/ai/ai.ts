@@ -281,12 +281,14 @@ class AiProfileApi extends BaseApi {
     pk: string,
     data?: { capabilities?: string[]; vision?: boolean }
   ) => {
-    return this.request<Record<string, { ok?: boolean } | undefined>>(
-      "post",
-      {},
-      data ?? {},
-      `${this.baseApi}/${pk}/probe`
-    );
+    // eager/测试环境直接回能力字典；生产返回 {task_id,state}（data 内）
+    return this.request<{
+      code?: number;
+      detail?: string;
+      data?:
+        | Record<string, { ok?: boolean } | undefined>
+        | { task_id: string; state: string };
+    }>("post", {}, data ?? {}, `${this.baseApi}/${pk}/probe`);
   };
 }
 

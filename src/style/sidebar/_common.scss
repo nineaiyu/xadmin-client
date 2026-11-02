@@ -1,3 +1,4 @@
+/* stylelint-disable scss/operator-no-newline-after */
 @use "../tokens/breakpoints" as bp;
 
 /* $sideBarWidth: vertical 模式下主体内容距离网页文档左侧的距离
@@ -25,7 +26,7 @@
   /* popper menu 超出内容区可滚动 */
   .pure-scrollbar {
     max-height: calc(100vh - calc(var(--layout-header-h) * 2.5));
-    max-height: calc(100dvh - calc(50px * 2.5));
+    max-height: calc(100dvh - calc(var(--layout-header-h) * 2.5));
     overflow: hidden auto;
   }
 
@@ -131,7 +132,7 @@
          内联 padding-top（calc(chromeHeight)）不知情仍按「顶栏+页签」让位——
          本规则以内联样式为对手，把让位收敛到页签条高度（37px） */
       + .app-main {
-        padding-top: 37px !important;
+        padding-top: var(--layout-tags-item-h) !important;
       }
     }
   }
@@ -255,12 +256,15 @@
        此处按本项目的层级口径重写 */
     .el-menu-item,
     .el-sub-menu__title {
-      padding-left: calc(16px + var(--el-menu-level, 0) * 16px);
+      padding-left: calc(
+        var(--nav-item-indent) + var(--el-menu-level, 0) *
+          var(--nav-item-indent)
+      );
     }
 
     .outer-most > .el-menu-item,
     .outer-most > .el-sub-menu > .el-sub-menu__title {
-      padding-left: 16px;
+      padding-left: var(--nav-item-indent);
     }
 
     .is-active > .el-sub-menu__title,
@@ -668,7 +672,7 @@
     font-size: var(--font-size-2xs);
     font-weight: var(--font-weight-medium);
     line-height: 1;
-    color: var(--pure-theme-menu-active-text);
+    color: var(--el-color-white);
     background: var(--el-color-danger);
     border-radius: 9px;
 

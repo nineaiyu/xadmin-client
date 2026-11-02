@@ -1,5 +1,13 @@
 import { BaseApi } from "@/api/base";
 import type { BaseResult, ListResult } from "@/api/types";
+
+/** PAT 调用统计（后端近 7 天窗口） */
+export interface PatStatsResult {
+  total: number;
+  failed: number;
+  window_days: number;
+  last_used_time: string | null;
+}
 import {
   SCOPE_CATALOG_KEYS,
   fetchScopeCatalog,
@@ -20,7 +28,7 @@ export const personalAccessTokenApi = new (class extends BaseApi {
 
   /** 调用统计（近 7 天调用数 / 失败数 / 末次调用时间） */
   stats = (pk: string | number) => {
-    return this.request<BaseResult>(
+    return this.request<BaseResult & { data?: PatStatsResult }>(
       "get",
       {},
       {},

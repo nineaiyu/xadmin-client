@@ -7,7 +7,8 @@ import {
   BACKEND_URL,
   FRONT_URL,
   getAccessToken,
-  login
+  login,
+  setSystemConfigByKey
 } from "./helpers";
 
 /**
@@ -133,6 +134,8 @@ test.describe("移动端形态（iPhone 13）", () => {
       });
     };
 
+    // 捕获原值：写死 false 会改变「本测试前已是 true」的部署状态
+    const originalDraggable = (await readConfig()).value.SidebarDraggable;
     await writeDraggable(true);
     try {
       await page.reload();
@@ -147,7 +150,7 @@ test.describe("移动端形态（iPhone 13）", () => {
       await expect(page.locator(".sidebar-container")).toBeVisible();
       await expect(page.locator(".sidebar-resizer")).toHaveCount(0);
     } finally {
-      await writeDraggable(false);
+      await writeDraggable(originalDraggable === true);
     }
   });
 });
@@ -156,15 +159,9 @@ test.describe("移动端形态（iPhone 13）", () => {
  * 敏感操作审批拦截开关（与 approval.e2e.ts 同款口径）：用例内开启，finally 复位，
  * 不污染其他用例的删除链路。
  */
-const APPROVAL_PATHS_CONFIG_PK = "e9a6b7c8-d9e0-4f1a-9b2c-3d4e5f6a7b0f";
-
 async function setApprovalPaths(page: Page, token: string, paths: string[]) {
-  // router 为 trailing_slash=False：detail 路由不能带尾斜杠（否则 Django 404 HTML 页）
-  const response = await page.request.patch(
-    `${BACKEND_URL}/api/system/config/system/${APPROVAL_PATHS_CONFIG_PK}`,
-    { headers: { Authorization: `Bearer ${token}` }, data: { value: paths } }
-  );
-  expect(response.ok(), await response.text()).toBeTruthy();
+  // 主键按 key 查询（种子 UUID 换库/重建即变）；router trailing_slash=False 由 helper 处理
+  await setSystemConfigByKey(page, "APPROVAL_REQUIRED_PATHS", paths, token);
 }
 
 /**

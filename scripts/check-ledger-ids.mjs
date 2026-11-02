@@ -16,12 +16,32 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
-const SCAN_DIRS = ["src", "e2e", "scripts", "tests", "contract"];
+const SCAN_DIRS = [
+  "src",
+  "e2e",
+  "scripts",
+  "tests",
+  "contract",
+  "build",
+  "types",
+  "locales",
+  "public",
+  ".github"
+];
 const SCAN_ROOT_FILES = [
   "renovate.json",
   "package.json",
   "vite.config.ts",
-  "playwright.config.ts"
+  "vitest.config.ts",
+  "playwright.config.ts",
+  "eslint.config.js",
+  "commitlint.config.js",
+  "postcss.config.js",
+  "stylelint.config.js",
+  "tsconfig.json",
+  "pnpm-workspace.yaml",
+  "index.html",
+  "Dockerfile"
 ];
 const SCAN_SUFFIXES = [
   ".ts",
@@ -59,7 +79,11 @@ const PATTERNS = [
   // 评审编号：LOG-P1-01 / FE-DATA-P1-04 / SEC-ID-P0-01 / ROB-APPR-P2-01
   /\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-P\d+-\d+\b/,
   // 运行时清偿编号：C-03 / C-31 / C-36
-  /\bC-\d{1,2}\b/
+  /\bC-\d{1,2}\b/,
+  // 裸评审编号：P2-067 / P1-112（历史正则要求前面带 XXX- 前缀，裸编号整类漏检）
+  /\bP\d+-\d{2,}\b/,
+  // 裸前端审查编号：F-3
+  /\bF-\d+\b/
 ];
 
 function walk(dir) {

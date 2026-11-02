@@ -341,7 +341,10 @@ export function parseLookupConditions(
       values: []
     };
     if (lookup === "isnull") {
-      row.value = String(Boolean(value));
+      row.value =
+        value === false || value === "false" || value === 0 || value === "0"
+          ? "false"
+          : "true";
     } else if (Array.isArray(value)) {
       row.values = value.map(item => String(item));
     } else if (typeof value === "object") {

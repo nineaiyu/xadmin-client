@@ -16,12 +16,19 @@
 //   node scripts/check-success-code.mjs            # 门禁（CI 用）
 //   node scripts/check-success-code.mjs --report   # 仅报告分布，恒不失败
 //   node scripts/check-success-code.mjs --update   # 收敛基线（迁移后）
-import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync
+} from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const SCAN_DIR = "src";
+// 扫描面：业务源码 + 构建脚本 / 类型声明（同属源码，避免「换目录就绕过」）
+const SCAN_DIRS = ["src", "build", "scripts", "types"];
 const BASELINE_PATH = join(ROOT, "scripts/success-code-baseline.json");
 const EXTENSIONS = new Set([".ts", ".tsx", ".vue"]);
 
@@ -59,7 +66,7 @@ function extractScript(file, raw) {
   return blocks.join("\n");
 }
 
-const rows = walk(join(ROOT, SCAN_DIR)).map(file => {
+const rows = SCAN_DIRS.flatMap(dir => walk(join(ROOT, dir))).map(file => {
   const raw = readFileSync(file, "utf-8");
   const code = stripComments(extractScript(file, raw));
   const hits = code.match(COMPARE_RE)?.length ?? 0;
@@ -84,7 +91,31 @@ if (process.argv.includes("--update")) {
     note: "业务码判定散点基线（文件 -> `code === SUCCESS_CODE` 式比较计数，只减不增）。迁移到 isSuccess() 后 --update 收敛；计数降为 0 的文件自动移出。",
     baseline: Object.fromEntries(found.map(({ rel, hits }) => [rel, hits]))
   };
-  writeFileSync(BASELINE_PATH, JSON.stringify(payload, null, 2) + "\n");
+  const serialized = `${JSON.stringify(payload, null, 2)}\n`;
+  const previous = existsSync(BASELINE_PATH)
+    ? readFileSync(BASELINE_PATH, "utf-8")
+    : null;
+  if (previous === serialized) {
+    console.log("业务码基线一致，未写入（--update 只在内容确有变化时落盘）。");
+    process.exit(0);
+  }
+  if (previous) {
+    const previousData = JSON.parse(previous).baseline ?? {};
+    const next = payload.baseline;
+    const diffs = [];
+    for (const rel of Object.keys(next)) {
+      if (previousData[rel] === undefined)
+        diffs.push(`+ ${rel}: ${next[rel]} 处（新增登记）`);
+      else if (next[rel] !== previousData[rel])
+        diffs.push(`~ ${rel}: ${previousData[rel]} → ${next[rel]} 处`);
+    }
+    for (const rel of Object.keys(previousData)) {
+      if (next[rel] === undefined) diffs.push(`- ${rel}（已清零移出）`);
+    }
+    console.log(`差异摘要（${diffs.length} 条）：`);
+    for (const item of diffs) console.log(`  ${item}`);
+  }
+  writeFileSync(BASELINE_PATH, serialized);
   console.log(
     `已写回基线：scripts/success-code-baseline.json（${found.length} 文件）`
   );

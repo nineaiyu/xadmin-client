@@ -2,6 +2,15 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import { login, openMenuPath } from "./helpers";
+import {
+  cleanupAiIsolation,
+  resetAiIsolation,
+  startAiIsolation
+} from "./ai-isolation";
+
+/** E2E 桩 LLM（playwright webServer 常驻，AI 档案配置指向它） */
+const STUB_LLM_URL =
+  process.env.E2E_STUB_LLM_URL ?? "http://127.0.0.1:18897/v1";
 
 /**
  * a11y 自动化门禁：axe-core 对关键页面做 wcag2a/wcag2aa 基线扫描。
@@ -72,10 +81,8 @@ async function scanOnce(
       id: violation.id,
       impact: violation.impact,
       help: violation.help,
-      nodes: violation.nodes
-        .map(node => node.target.join(" "))
-        .slice(0, 5)
-        .join(" | ")
+      // 保留全部命中节点：豁免判定要求「每个节点都匹配」，截断会让第 6 个起的新命中静默放行
+      nodes: violation.nodes.map(node => node.target.join(" ")).join(" | ")
     }))
     .filter(violation => !isAllowed(violation));
 }
@@ -99,10 +106,11 @@ async function scanBlockingViolations(
 
 function formatViolations(violations: ViolationSummary[]): string {
   return violations
-    .map(
-      violation =>
-        `[${violation.impact}] ${violation.id}（${violation.help}）→ ${violation.nodes}`
-    )
+    .map(violation => {
+      // 汇报只展示前 5 个节点（完整集合已在豁免判定中使用）
+      const nodes = violation.nodes.split(" | ").slice(0, 5).join(" | ");
+      return `[${violation.impact}] ${violation.id}（${violation.help}）→ ${nodes}`;
+    })
     .join("\n");
 }
 
@@ -323,17 +331,44 @@ test("a11y 扩面：AI 控制台（左右分栏会话面）无 critical/serious 
   page
 }) => {
   await login(page);
-  await openMenuPath(page, ["集成管理"], "/integration/ai/index");
-  // AI 未启用时渲染引导占位、启用时渲染控制台分栏——两种形态都属合法扫描面
-  await expect(
-    page.locator('[data-testid="ai-console"], .el-card').first()
-  ).toBeVisible({ timeout: 15_000 });
+  // 确定性进入「控制台形态」：开启助手并激活桩 LLM 档案（只建配置，不发起模型调用），
+  // 扫描面不再随共享库里 AI 开关的残留状态漂移；结束后恢复开关并删除档案
+  resetAiIsolation();
+  await startAiIsolation(page);
+  try {
+    const toggled = await page.request.patch("/api/ai/assistant/config", {
+      data: { AI_ASSISTANT_ENABLED: true, AI_ACTION_ENABLED: true }
+    });
+    expect(toggled.ok(), await toggled.text()).toBeTruthy();
+    const created = await page.request.post("/api/ai/profiles", {
+      data: {
+        name: `E2E-a11y-${Date.now()}`,
+        base_url: STUB_LLM_URL,
+        api_key: "sk-e2e-stub",
+        model: "stub-model"
+      }
+    });
+    expect(created.ok(), await created.text()).toBeTruthy();
+    const profilePk = (await created.json())?.data?.pk;
+    expect(profilePk).toBeTruthy();
+    const activated = await page.request.post(
+      `/api/ai/profiles/${profilePk}/activate`
+    );
+    expect(activated.ok(), await activated.text()).toBeTruthy();
 
-  const violations = await scanBlockingViolations(page);
-  expect(
-    violations,
-    `AI 控制台 a11y 违规：\n${formatViolations(violations)}`
-  ).toEqual([]);
+    await openMenuPath(page, ["集成管理"], "/integration/ai/index");
+    await expect(page.getByTestId("ai-console")).toBeVisible({
+      timeout: 15_000
+    });
+
+    const violations = await scanBlockingViolations(page);
+    expect(
+      violations,
+      `AI 控制台 a11y 违规：\n${formatViolations(violations)}`
+    ).toEqual([]);
+  } finally {
+    await cleanupAiIsolation(page);
+  }
 });
 
 test("a11y 扩面：仪表盘页（图表卡片网格）无 critical/serious 违规", async ({
@@ -359,7 +394,7 @@ test("a11y 扩面：仪表盘页（图表卡片网格）无 critical/serious 违
 
 /**
  * 投屏页（full-content 全屏路由）不挂 Layout：skip-link / a11y-live 等由 Layout
- * 装配的设施天然缺席（展示场景键盘交互少，非缺陷——2026.10 前端审查 F-3 登记）。
+ * 装配的设施天然缺席（展示场景键盘交互少，非缺陷——2026.10 前端审查已登记）。
  * 本用例钉住「无 Layout 时仍守住 a11y 底线」：页面语言、文档标题、主题装配
  * （bootTheme 在 main.ts 挂载前执行，不依赖 Layout）与 axe 基线扫描。
  */

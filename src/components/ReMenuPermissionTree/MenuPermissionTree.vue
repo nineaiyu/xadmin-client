@@ -195,6 +195,14 @@ watch(treeData, () => {
       expandAncestors(selection.value);
     });
   }
+  // 关键词先于树数据到达：数据到位后重算命中集并重新应用 filter，
+  // 否则树全量展示、命中数为 0，直到用户再改一次输入
+  const needle = keyword.value.trim();
+  if (!needle) return;
+  const matched = new Set<string>();
+  collectMatched(treeData.value, matched);
+  keywordMatched.value = matched;
+  nextTick(() => treeRef.value?.filter(needle));
 });
 
 onMounted(() => {

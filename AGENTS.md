@@ -14,7 +14,7 @@
 | `src/layout/` `src/router/` `src/hooks/` `src/plugins/` | 布局体系（7 种布局模式，见 `docs/layout-modes`）/ 路由与组件解析（`resolve-component.ts` 候选链，`check:menu-components` 与它同链）/ 组合式函数 / 插件装配（Element Plus 组件登记处：`src/plugins/elementPlus.ts`）                                                                  |
 | `src/utils/`                                            | 工具（sse、dict、auth、desktopNotify、fetchAllRows…）                                                                                                                                                                                                                                |
 | `src/style/`                                            | 样式与设计令牌（Tailwind CSS v4 + scss + tokens）                                                                                                                                                                                                                                    |
-| `locales/`                                              | i18n 词条（`zh-CN.yaml` + `en.yaml`，unplugin-vue-i18n 的 include 面；zh/en 必须对称）                                                                                                                                                                                               |
+| `locales/`                                              | i18n 词条（`zh-CN.yaml` + `en.yaml`，由 `build/plugins.ts` 的 yamlLoader 转成 JS 对象；zh/en 必须对称）                                                                                                                                                                              |
 | `contract/`                                             | 契约镜像（`openapi.json` + `schema/*.json`，`sync:contract` / `check:contract` 的对账对象）                                                                                                                                                                                          |
 | `docs/`                                                 | 仓库内文档（development-guide、layout-modes、metadata-driven-crud、perf-firstscreen、component-dependencies）                                                                                                                                                                        |
 | `CONTRIBUTING.md`                                       | 分支模型、**上游 vue-pure-admin 不可覆盖清单**、组件 / 工具移植规范                                                                                                                                                                                                                  |
@@ -25,6 +25,7 @@
 ## 二、常用命令
 
 ```bash
+# 需 Node ≥ 24 / pnpm ≥ 11（package.json engines；npm/yarn 会被 preinstall 拒绝）
 pnpm install
 pnpm dev                     # :8848，代理 /api /media /api-docs（http）与 /ws（ws）→ :8896（后端）
 pnpm build                   # 生产构建（含图标/动画子集预生成 + 版本文件）
@@ -86,7 +87,8 @@ pnpm gen:module              # 模块脚手架
   （登记处：`src/plugins/elementPlus.ts`）。
 - 图表统一走 `useECharts` 封装；canvas 导出动画需等待渲染完成。
 - 组合式函数 ≥ 120 行、单文件超过 500 行会被门禁拦（`check:hook-length` 阈值 120 /
-  `check-file-length`），拆分而不是登记基线。
+  `check-file-length`；扫描面 `.ts` / `.tsx` / `.vue` / `.js`，`.scss` / `.css` 不在此门禁内），
+  单函数超过 100 行由 `check:function-length` 拦（存量基线只减不增）；拆分而不是登记基线。
 - 模块依赖环由 `pnpm check:module-cycles` 拦截；新增跨模块引用前先想清楚方向。
 - **SFC 必须单根，模板注释写在根元素内部**（`<template>` 后不要直接跟 `<!-- -->`）：
   根级注释会让组件在 dev 下渲染成「多根」（dev Fragment 根），与布局的
@@ -99,11 +101,12 @@ pnpm gen:module              # 模块脚手架
 pnpm test:run                                  # vitest（含契约 / 词条 / 格式函数等纯逻辑用例）
 pnpm typecheck && pnpm lint
 for g in api-routes as-unknown bundle-size color-literals contract contract-usage docs-components \
-         entry-closure font-size-literals forms hook-length i18n ledger-ids menu-components \
+         entry-closure font-size-literals forms function-length hook-length i18n ledger-ids menu-components \
          menu-permissions module-cycles openapi-types overlays platform-config quarantine success-code \
-         tables template-root version; do pnpm check:$g || break; done
+         tables template-root version e2e-waits; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（≤500；ReIcon/data.ts 与 api/types/openapi.d.ts
                                           # 在脚本内 EXEMPT 豁免，其余基线只减不增）
+                                          # 单函数 ≤100 行由 check:function-length 守护（基线只减不增）
 ```
 
 `check:*` 补充说明：`contract` / `contract-usage` / `openapi-types` / `api-routes` 是契约四件套

@@ -71,16 +71,20 @@ const finalOptions = computed(() =>
   options.value.length ? options.value : props.options
 );
 
-watch(finalOptions, list => {
-  emit("optionsChange", list);
-  if (
-    props.autoSelect &&
-    (modelValue.value === undefined || modelValue.value === null) &&
-    list.length
-  ) {
-    modelValue.value = list[0].value;
-  }
-});
+watch(
+  finalOptions,
+  list => {
+    emit("optionsChange", list);
+    if (
+      props.autoSelect &&
+      (modelValue.value === undefined || modelValue.value === null) &&
+      list.length
+    ) {
+      modelValue.value = list[0].value;
+    }
+  },
+  { immediate: true }
+);
 
 function onVisibleChange(visible: boolean) {
   if (visible) fetch();

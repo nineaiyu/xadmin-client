@@ -19,7 +19,12 @@ import { fileURLToPath } from "node:url";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC_DIR = path.join(ROOT, "src");
 const REGISTRY = path.join(ROOT, "scripts", "bare-tables-baseline.json");
-const BARE_TABLE = /<el-table(?![-A-Za-z0-9_])/g;
+/** 模板内小写 / PascalCase 组件形态（`el-table-column` 不算） */
+const BARE_TABLE = /<(?:el-table|ElTable)(?![-A-Za-z0-9_])/g;
+/** 渲染函数形态：h(ElTable) / h("el-table")（.tsx / .jsx） */
+const RENDER_TABLE = /\bh\(\s*(?:ElTable\b|["']el-table["'])/g;
+/** 扫描面：SFC 模板 + 渲染函数 */
+const SOURCE_EXT = new Set([".vue", ".tsx", ".jsx"]);
 
 const reportOnly = process.argv.includes("--report");
 
@@ -28,13 +33,16 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) rows.push(...walk(full));
-    else if (entry.endsWith(".vue")) rows.push(full);
+    else if (SOURCE_EXT.has(path.extname(entry))) rows.push(full);
   }
   return rows;
 }
 
 const rel = file => path.relative(ROOT, file).split(path.sep).join("/");
 const read = file => readFileSync(file, "utf-8");
+const countTables = source =>
+  (source.match(BARE_TABLE) ?? []).length +
+  (source.match(RENDER_TABLE) ?? []).length;
 
 const registry = JSON.parse(read(REGISTRY));
 const violations = [];
@@ -43,7 +51,7 @@ const hits = [];
 
 for (const file of walk(SRC_DIR)) {
   const key = rel(file);
-  const count = (read(file).match(BARE_TABLE) ?? []).length;
+  const count = countTables(read(file));
   if (!count) continue;
   hits.push({ key, count, exempt: Object.hasOwn(registry, key) });
   if (Object.hasOwn(registry, key)) {
@@ -64,7 +72,7 @@ for (const key of Object.keys(registry)) {
     violations.push(`${key}: 登记项文件不存在（已迁移/改名？请清理登记表）`);
     continue;
   }
-  if (!(read(file).match(BARE_TABLE) ?? []).length) {
+  if (!countTables(read(file))) {
     warnings.push(`${key}: 已不再直接使用 el-table，请从登记表移除`);
   }
 }

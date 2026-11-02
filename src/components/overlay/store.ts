@@ -23,6 +23,8 @@ export function createOverlayStore<
 >() {
   const store = ref<TOptions[]>([]) as Ref<TOptions[]>;
   let uid = 0;
+  /** 已触发过 closeCallBack 的条目：关闭动画结束时 EP 会再次进入关闭路径 */
+  const notified = new WeakSet<TOptions>();
 
   const getUid = (options: TOptions): number | undefined =>
     (options as TOptions & WithUid)?._uid;
@@ -84,33 +86,64 @@ export function createOverlayStore<
     return channel;
   }
 
-  /** 关闭弹层：按 options 引用重新定位，避免延迟关闭期间下标漂移。 */
+  /**
+   * 关闭弹层：按 options 引用重新定位，避免延迟关闭期间下标漂移。
+   *
+   * 只负责隐藏 + 回调（去重），**不做延时出队**：出队由 `finalize` 在
+   * Element Plus 的 `@closed` 上执行，保证离场过渡完整、不出现卸载跳变。
+   */
   const close = (options: TOptions, index: number, args?: OverlayArgs) => {
     const byRef = store.value.indexOf(options);
     const targetIndex = byRef > -1 ? byRef : index;
     const target = store.value[targetIndex];
     if (!target) return;
     target.visible = false;
-    options.closeCallBack?.({ options, index: targetIndex, args });
-
-    const closeDelay = options.closeDelay ?? 200;
-    useTimeoutFn(() => {
-      const currentIndex = store.value.indexOf(options);
-      if (currentIndex > -1) store.value.splice(currentIndex, 1);
-    }, closeDelay);
+    if (!notified.has(options)) {
+      notified.add(options);
+      options.closeCallBack?.({ options, index: targetIndex, args });
+    }
   };
+
+  /** 关闭动画结束（EP `@closed`）：出队并复位关闭去重标记 */
+  const finalize = (options: TOptions) => {
+    const currentIndex = store.value.indexOf(options);
+    if (currentIndex > -1) store.value.splice(currentIndex, 1);
+    notified.delete(options);
+  };
+
+  /**
+   * 更新目标定位：优先 options 引用，其次实例 uid，最后才用下标兜底。
+   * 关闭动画窗口内下标记账会漂移，按下标直接改属性会改到别的弹层。
+   */
+  function resolveTarget(
+    target: number | TOptions | undefined
+  ): TOptions | undefined {
+    if (target === undefined) return store.value[0];
+    if (typeof target !== "number") {
+      const byRef = store.value.indexOf(target);
+      if (byRef > -1) return store.value[byRef];
+      const id = getUid(target);
+      return id === undefined
+        ? undefined
+        : store.value.find(item => getUid(item) === id);
+    }
+    return store.value[target];
+  }
 
   const update = <K extends keyof TOptions>(
     value: TOptions[K],
     key: K,
-    index = 0
+    target: number | TOptions = 0
   ) => {
-    store.value[index][key] = value;
+    const options = resolveTarget(target);
+    // 目标已出队（或尚未入队）时静默跳过：调用方无需感知队列时序
+    if (!options) return;
+    options[key] = value;
   };
 
   const closeAll = () => {
     store.value = [];
   };
 
-  return { store, getUid, add, close, update, closeAll };
+  return { store, getUid, add, close, finalize, update, closeAll };
 }

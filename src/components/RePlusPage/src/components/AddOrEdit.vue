@@ -34,38 +34,33 @@ const emit = defineEmits<{
   change: [payload: { values: FieldValues; column: PlusColumn }];
 }>();
 
-const isTabs = computed(() => {
-  return (
-    props.columns.length > 0 &&
-    props.columns[0]._column?.tabs_index !== undefined
-  );
-});
+const isTabs = computed(() =>
+  props.columns.some(column => column._column?.tabs_index !== undefined)
+);
 
 const tabsColumns = computed(() => {
-  const _tabsColumns: Record<string | number, typeof props.columns> = {};
-  const _tabsLabels: Record<string | number, string> = {};
+  const explicit = props.columns
+    .map(column => column._column?.tabs_index)
+    .filter((index): index is number => typeof index === "number");
+  const first = explicit.length ? Math.min(...explicit) : 0;
+  const indices = Array.from(new Set([first, ...explicit])).sort(
+    (a, b) => a - b
+  );
+  const _tabsColumns: Record<number, typeof props.columns> = {};
+  const _tabsLabels: Record<number, string> = {};
   props.columns.forEach(column => {
-    const index = column._column.tabs_index;
-    _tabsLabels[index] = column._column.tabs_label;
-    if (_tabsColumns[index]) {
-      _tabsColumns[index].push(column);
-    } else {
-      _tabsColumns[index] = [column];
+    // 页面注入的扩展列没有 tabs_index：并入第一个页签
+    const index = column._column?.tabs_index ?? first;
+    if (column._column?.tabs_label) {
+      _tabsLabels[index] = column._column.tabs_label;
     }
+    (_tabsColumns[index] ??= []).push(column);
   });
-  const result: Array<{
-    label: string;
-    index: number;
-    columns: typeof props.columns;
-  }> = [];
-  for (let i = 0; i < Object.keys(_tabsLabels).length; i++) {
-    result.push({
-      label: _tabsLabels[i],
-      index: i,
-      columns: _tabsColumns[i]
-    });
-  }
-  return result;
+  return indices.map((index, order) => ({
+    label: _tabsLabels[index] ?? String(order + 1),
+    index: order,
+    columns: _tabsColumns[index]
+  }));
 });
 
 /**

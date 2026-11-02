@@ -1,7 +1,7 @@
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref, type Ref } from "vue";
 import { hasAuth } from "@/router/utils";
-import { FieldChoices, MenuChoices } from "@/views/system/constants";
+import { FieldChoices } from "@/views/system/constants";
 import { menuApi } from "@/api/system/menu";
 import { handleTree, type TreeResult } from "@/utils/tree";
 import { fetchMetaList, META_KEYS } from "@/utils/metaCache";
@@ -11,7 +11,10 @@ import { transformI18n } from "@/plugins/i18n";
 import { formatFiledAppParent } from "@/views/system/hooks";
 import type { RecordType } from "plus-pro-components";
 import type { FieldLookupItem } from "../components/utils/types";
-import { menuTypeOf, type MenuScopeRow } from "../components/utils/menuScope";
+import {
+  buildMenuContextOptions,
+  type MenuScopeRow
+} from "../components/utils/menuScope";
 
 /**
  * 数据权限页注册表数据源：规则字段/字段权限注册表、规则类型选项与匹配符文案、
@@ -50,12 +53,7 @@ export function usePermissionLookups() {
   );
   /** 试算的菜单上下文候选 = 页面菜单（绑定菜单的授权只在该页面上下文生效） */
   const menuContextOptions = computed(() =>
-    menuRows.value
-      .filter(item => menuTypeOf(item) === MenuChoices.MENU)
-      .map(item => ({
-        value: String(item.pk),
-        label: transformI18n(item.meta?.title) ?? String(item.pk)
-      }))
+    buildMenuContextOptions(menuRows.value, transformI18n)
   );
 
   const markFailed = () => {

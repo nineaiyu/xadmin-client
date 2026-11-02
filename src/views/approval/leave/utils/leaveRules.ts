@@ -19,3 +19,6 @@ export const statusOf = (row: Record<string, unknown>) => {
 
 /** 可重新提交的状态（草稿 / 已驳回 / 已撤回） */
 export const RESUBMITTABLE = ["DRAFT", "REJECTED", "CANCELLED"];
+
+/** 可编辑的状态：审批中/已通过为审批留痕，业务字段不可再改写（与删除同口径） */
+export const EDITABLE_STATUSES = ["", "DRAFT", "REJECTED", "CANCELLED"];

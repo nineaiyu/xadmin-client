@@ -8,6 +8,14 @@ import {
   login,
   openMenuPath
 } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 导入导出全流程 E2E：导出文件下载 + 导入建数据（用户管理，ImportExportDataAction）。
@@ -20,6 +28,7 @@ const BACKEND = FRONT_URL;
 
 async function openUserManagement(page: import("@playwright/test").Page) {
   await login(page);
+  await startResourceIsolation(page);
   await openMenuPath(page, ["系统管理"], "/system/user/index");
   await expect(page.locator(".el-table").first()).toBeVisible({
     timeout: 15_000
@@ -30,8 +39,7 @@ function toolbarButton(page: import("@playwright/test").Page, name: string) {
   // 按可访问名定位：工具栏是图标按钮（无文本，hasText 匹配不到），且按钮集合
   // 会随功能演进（高级筛选/视图等），序号定位会错点
   return page
-    .locator("div.flex.mr-4")
-    .first()
+    .getByTestId("table-bar-buttons")
     .getByRole("button", { name, exact: true });
 }
 
@@ -95,6 +103,7 @@ test("导入：API 同步链路（celery=false）返回成功且数据落库", a
   page
 }) => {
   await login(page);
+  await startResourceIsolation(page);
   const username = `e2e_sync_${Date.now()}`;
   const response = await page.request.post(
     `${BACKEND}/api/identity/user/import-data?action=create&task=false`,

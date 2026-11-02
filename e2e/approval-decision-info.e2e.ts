@@ -5,7 +5,8 @@ import {
   BACKEND_URL,
   getAccessToken,
   login,
-  openMenuPath
+  openMenuPath,
+  setSystemConfigByKey
 } from "./helpers";
 
 /**
@@ -16,17 +17,9 @@ import {
  * 2. 流程审批：请假实例详情抽屉展示「关联业务对象」卡片（业务类型 / 对象 / 状态）。
  */
 
-const APPROVAL_PATHS_CONFIG_PK = "e9a6b7c8-d9e0-4f1a-9b2c-3d4e5f6a7b0f";
-
 async function setApprovalPaths(page: Page, token: string, paths: string[]) {
-  const response = await page.request.patch(
-    `${BACKEND_URL}/api/system/config/system/${APPROVAL_PATHS_CONFIG_PK}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      data: { value: paths }
-    }
-  );
-  expect(response.ok(), await response.text()).toBeTruthy();
+  // 主键按 key 查询（种子 UUID 换库/重建即变），不与具体种子主键绑定
+  await setSystemConfigByKey(page, "APPROVAL_REQUIRED_PATHS", paths, token);
 }
 
 test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page }) => {
@@ -61,7 +54,7 @@ test("敏感操作审批：详情弹窗展示目标对象快照", async ({ page 
       .getByRole("button", { name: "确定" })
       .first()
       .click();
-    await expect(page.locator(".el-message").first()).toContainText(
+    await expect(page.locator(".el-message").last()).toContainText(
       "已提交审批",
       { timeout: 10_000 }
     );

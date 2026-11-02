@@ -20,14 +20,21 @@ export function useCodegenPlans({
   t,
   state,
   pendingPlanState,
+  planError,
   loadPlan
 }: {
   t: TFunction;
   state: CodegenFormState;
   pendingPlanState: Ref<CodegenFormState | null>;
+  /** 模型计划装载错误：载入方案后按结果决定提示成功还是失败 */
+  planError: Ref<string>;
   loadPlan: (label: string) => Promise<void>;
 }) {
   const savedPlans = ref<SavedPlan[]>([]);
+
+  /** 方案操作失败提示：统一带服务端 detail，避免各 catch 重复拼装 */
+  const notifyFailure = (key: string, error: unknown) =>
+    message(`${t(key)}：${normalizeError(error).detail}`, { type: "error" });
 
   async function refreshPlans() {
     savedPlans.value = await listPlans();
@@ -42,19 +49,23 @@ export function useCodegenPlans({
       );
       message(t("codegen.planSaved"), { type: "success" });
     } catch (error) {
-      message(
-        `${t("codegen.planSaveFailed")}：${normalizeError(error).detail}`,
-        { type: "error" }
-      );
+      notifyFailure("codegen.planSaveFailed", error);
     }
   }
 
-  function onLoadPlan(plan: SavedPlan) {
+  async function onLoadPlan(plan: SavedPlan) {
     const restored = normalizeFormState(plan.state);
     pendingPlanState.value = restored;
     Object.assign(state, restored);
     state.fields = [...restored.fields];
-    if (state.model) void loadPlan(state.model);
+    if (state.model) {
+      await loadPlan(state.model);
+      // 字段计划装载失败时不能先报「方案已载入」：文案要与实际结果一致
+      if (planError.value) {
+        message(planError.value, { type: "error" });
+        return;
+      }
+    }
     message(t("codegen.planLoaded"), { type: "success" });
   }
 
@@ -72,10 +83,7 @@ export function useCodegenPlans({
       await refreshPlans();
       message(t("codegen.planUpdated"), { type: "success" });
     } catch (error) {
-      message(
-        `${t("codegen.planUpdateFailed")}：${normalizeError(error).detail}`,
-        { type: "error" }
-      );
+      notifyFailure("codegen.planUpdateFailed", error);
     }
   }
 
@@ -84,10 +92,7 @@ export function useCodegenPlans({
       savedPlans.value = await removePlan(pk);
       message(t("codegen.planDeleted"), { type: "success" });
     } catch (error) {
-      message(
-        `${t("codegen.planDeleteFailed")}：${normalizeError(error).detail}`,
-        { type: "error" }
-      );
+      notifyFailure("codegen.planDeleteFailed", error);
     }
   }
 
@@ -97,10 +102,7 @@ export function useCodegenPlans({
       await refreshPlans();
       message(t("codegen.planImported"), { type: "success" });
     } catch (error) {
-      message(
-        `${t("codegen.planImportFailed")}：${normalizeError(error).detail}`,
-        { type: "error" }
-      );
+      notifyFailure("codegen.planImportFailed", error);
     }
   }
 

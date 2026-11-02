@@ -2,6 +2,8 @@ import type { Ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { chatApi, type ChatMessageItem } from "@/api/chat";
 import { useHistoryPagination } from "@/hooks/useHistoryPagination";
+import { message } from "@/utils/message";
+import { transformI18n } from "@/plugins/i18n";
 
 /**
  * 聊天室历史分页（before_id 游标向上翻页，保留滚动位置）：分页机制收敛于
@@ -31,7 +33,13 @@ export function useChatHistory({
       const res = await chatApi.history(
         initial ? { room, limit } : { room, before_id: beforeId, limit }
       );
-      if (!isSuccess(res)) return null;
+      if (!isSuccess(res)) {
+        // 业务码失败必须显式提示；返回 null 让分页层标记失败态（不显示「暂无消息」）
+        message(String(res.detail || transformI18n("chat.historyFailed")), {
+          type: "warning"
+        });
+        return null;
+      }
       return {
         results: res.data?.results ?? [],
         hasMore: !!res.data?.has_more

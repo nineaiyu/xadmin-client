@@ -127,6 +127,8 @@ export function useRecordCenter(options: RecordCenterOptions) {
   const startProgressPolling = () => {
     if (pollTimer !== null) return;
     pollTimer = window.setInterval(() => {
+      // 页签切走/最小化时跳过本轮（回到前台后下一轮自然恢复）
+      if (document.visibilityState !== "visible") return;
       if (!hasInFlightRows()) {
         stopProgressPolling();
         return;

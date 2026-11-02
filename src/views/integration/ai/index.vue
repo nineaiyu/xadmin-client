@@ -224,7 +224,7 @@ onActivated(() => {
     <!-- 控制台面板满宽铺开（不再 pr-[1%]：与聊天室口径一致，四边只保留
          main-content 的 24px 统一边距）；高度按视口实测（useFullHeightPanel） -->
     <template v-if="statusFailed && !canUseConsole">
-      <el-card shadow="never">
+      <el-card shadow="never" data-testid="ai-status-state">
         <ReResult status="error" :title="t('ai.statusLoadFailed')">
           <template #extra>
             <el-button type="primary" @click="loadStatus">
@@ -235,12 +235,12 @@ onActivated(() => {
       </el-card>
     </template>
     <template v-else-if="status && !status.enabled">
-      <el-card shadow="never">
+      <el-card shadow="never" data-testid="ai-status-state">
         <ReResult status="warning" :title="t('ai.disabledHint')" />
       </el-card>
     </template>
     <template v-else-if="status && !status.configured">
-      <el-card shadow="never">
+      <el-card shadow="never" data-testid="ai-status-state">
         <ReResult status="info" :title="t('ai.notConfiguredHint')">
           <template #extra>
             <router-link to="/integration/ai/config">
@@ -344,6 +344,10 @@ onActivated(() => {
 <style lang="scss" scoped>
 /* 控制台面板：与卡片同一视觉语言（圆角 + 浅阴影 + 主题边框），此前仅 1px 边线 */
 .ai-console {
+  /* a11y：控制台内大量小号说明文字，secondary 档在浅色表面仅约 3.5:1；
+     收口到 regular 档（≥4.5:1），局部覆盖不影响其它页面 */
+  --el-text-color-secondary: var(--el-text-color-regular);
+
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-xl);

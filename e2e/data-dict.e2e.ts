@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { FRONT_URL, login, openMenuPath } from "./helpers";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => resetResourceIsolation());
+test.afterEach(async ({ page }) => cleanupResourceIsolation(page));
 
 /**
  * 数据字典全流程：创建类型与字典项 → 列表页可见 → items 消费接口（含缓存失效）。
@@ -8,6 +16,7 @@ import { FRONT_URL, login, openMenuPath } from "./helpers";
  */
 test("数据字典：类型/字典项创建、页面展示与 items 消费", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   const code = `e2e_dict_${Date.now()}`;
   const typeResp = await page.request.post(`${FRONT_URL}/api/system/dict`, {
@@ -115,6 +124,7 @@ test("数据字典：类型/字典项创建、页面展示与 items 消费", asy
  */
 test("数据字典：树表新增子项与工具栏按钮", async ({ page }) => {
   await login(page);
+  await startResourceIsolation(page);
 
   const code = `e2e_tree_${Date.now()}`;
   const typeResp = await page.request.post(`${FRONT_URL}/api/system/dict`, {
@@ -189,7 +199,7 @@ test("数据字典：树表新增子项与工具栏按钮", async ({ page }) => 
     page.getByRole("button", { name: "批量停用" }).first()
   ).toBeVisible();
   await page.getByRole("button", { name: "刷新缓存" }).first().click();
-  await expect(page.locator(".el-message--success").first()).toBeVisible({
+  await expect(page.locator(".el-message--success").last()).toBeVisible({
     timeout: 15_000
   });
 });

@@ -77,4 +77,18 @@ describe("useRenderIcon 图标渲染分支", () => {
     expect(Offline.name).toBe("OfflineIcon");
     expect(() => mount(Offline as never)).not.toThrow();
   });
+
+  it("同 icon + 同 attrs 复用同一渲染组件（逐格渲染不重建图标子树）", () => {
+    expect(useRenderIcon("ep:home")).toBe(useRenderIcon("ep:home"));
+    expect(useRenderIcon("ep:home", { style: { color: "red" } })).toBe(
+      useRenderIcon("ep:home", { style: { color: "red" } })
+    );
+    // attrs 不同则不复用：属性是组件闭包里的快照
+    expect(useRenderIcon("ep:home", { style: { color: "red" } })).not.toBe(
+      useRenderIcon("ep:home", { style: { color: "blue" } })
+    );
+
+    const iconData = { body: '<path d="M0 0h24v24H0z"/>' };
+    expect(useRenderIcon(iconData)).toBe(useRenderIcon(iconData));
+  });
 });

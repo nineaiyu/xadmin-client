@@ -1,10 +1,17 @@
 import { mount } from "@vue/test-utils";
+import { createI18n } from "vue-i18n";
 import { describe, expect, it } from "vitest";
 
 import ReSkeleton from "../src/index.vue";
 
+const i18n = createI18n({
+  legacy: false,
+  locale: "zh-CN",
+  messages: { "zh-CN": { labels: { loading: "加载中…" } } }
+});
+
 const mountSkeleton = (props: Record<string, unknown> = {}) =>
-  mount(ReSkeleton, { props });
+  mount(ReSkeleton, { props, global: { plugins: [i18n] } });
 
 describe("ReSkeleton 轻量骨架屏", () => {
   it("默认 text 变体渲染 3 行，末行宽度收窄", () => {
@@ -37,7 +44,13 @@ describe("ReSkeleton 轻量骨架屏", () => {
     expect(animated.classes()).toContain("re-skeleton--animated");
   });
 
-  it("装饰性输出：容器对读屏隐藏（aria-hidden）", () => {
-    expect(mountSkeleton().attributes("aria-hidden")).toBe("true");
+  it("加载态语义：容器对读屏播报加载中，装饰块 aria-hidden", () => {
+    const wrapper = mountSkeleton();
+    expect(wrapper.attributes("role")).toBe("status");
+    expect(wrapper.attributes("aria-busy")).toBe("true");
+    expect(wrapper.find(".sr-only").exists()).toBe(true);
+    expect(wrapper.find(".re-skeleton__line").attributes("aria-hidden")).toBe(
+      "true"
+    );
   });
 });

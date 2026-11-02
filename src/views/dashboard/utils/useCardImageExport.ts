@@ -28,6 +28,7 @@ export function useCardImageExport(t: TFunction) {
   const setCardRef = (cardId: string) => (el: unknown) => {
     const handle = el as CardImageHandle | null;
     if (handle) cardRefs.value[cardId] = handle;
+    else delete cardRefs.value[cardId];
   };
   const exportingCard = ref("");
 

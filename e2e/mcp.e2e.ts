@@ -1,6 +1,25 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { BACKEND_URL, FRONT_URL, login } from "./helpers";
+import {
+  cleanupAiIsolation,
+  resetAiIsolation,
+  startAiIsolation
+} from "./ai-isolation";
+import {
+  cleanupResourceIsolation,
+  resetResourceIsolation,
+  startResourceIsolation
+} from "./resource-isolation";
+
+test.beforeEach(() => {
+  resetAiIsolation();
+  resetResourceIsolation();
+});
+test.afterEach(async ({ page }) => {
+  await cleanupResourceIsolation(page);
+  await cleanupAiIsolation(page);
+});
 
 /**
  * MCP（Model Context Protocol）Streamable HTTP 端点 E2E。
@@ -107,6 +126,8 @@ test("MCP 端点：PAT 认证 → initialize → tools/list → tools/call → �
   page
 }) => {
   await login(page);
+  await startAiIsolation(page);
+  await startResourceIsolation(page);
   await enableAi(page);
 
   // PAT 创建（个人中心 → 访问令牌）

@@ -55,8 +55,8 @@ export class BaseRequest {
     const notNullParams: Record<string, unknown> = {};
     const source = (params ?? {}) as Record<string, unknown>;
     Object.keys(source).forEach(item => {
-      // 空串视为「未填写」从查询串中剔除（0/false 等合法值保留）
-      if (source[item] !== "") {
+      // 空串 / null / undefined 视为「未填写」从查询串中剔除（0/false 等合法值保留）
+      if (source[item] !== "" && source[item] != null) {
         notNullParams[item] = source[item];
       }
     });
@@ -68,15 +68,17 @@ export class BaseRequest {
    */
   /** 类型谓词：命中文件字段时把 data 收窄为 object（供 dataToFormData 使用） */
   private hasFileObject = (data?: object): data is object => {
-    for (const item of Object.values(data ?? {})) {
-      if (File.prototype.isPrototypeOf(item)) return true;
-      if (item instanceof Array) {
-        for (const i of item) {
-          if (File.prototype.isPrototypeOf(i)) return true;
-        }
-      }
-    }
-    return false;
+    // 递归探测嵌套对象/数组中的 File（深层附件字段不能被 axios 序列化成 {}）
+    const seen = new WeakSet<object>();
+    const containsFile = (value: unknown): boolean => {
+      if (typeof value !== "object" || value === null) return false;
+      if (File.prototype.isPrototypeOf(value)) return true;
+      if (seen.has(value)) return false;
+      seen.add(value);
+      if (Array.isArray(value)) return value.some(containsFile);
+      return Object.values(value).some(containsFile);
+    };
+    return containsFile(data);
   };
 
   request<T>(
@@ -112,12 +114,30 @@ export class BaseRequest {
   }
 }
 
+/**
+ * 导入原始文件 body 的 Content-Type。
+ *
+ * 不能只看浏览器 `File.type`：Windows 上常见空串 / `application/vnd.ms-excel`
+ * （Office 关联）等非标准值，按「非 csv」一律当 xlsx 会让 .csv 被 Excel 解析器
+ * 接管，导入/校验/表头解析全部报「解析失败」。以文件扩展名为主、MIME 为辅。
+ */
+export function importContentType(file: File): "text/csv" | "text/xlsx" {
+  const name = String(file?.name ?? "").toLowerCase();
+  const mime = String(file?.type ?? "").toLowerCase();
+  const isCsv =
+    name.endsWith(".csv") ||
+    mime === "text/csv" ||
+    mime === "application/csv" ||
+    mime === "text/comma-separated-values";
+  return isCsv ? "text/csv" : "text/xlsx";
+}
+
 export class BaseApi extends BaseRequest {
   choices = () => {
     return this.request<ChoicesResult>(
       "get",
       {},
-      {},
+      undefined,
       `${this.baseApi}/choices`
     );
   };
@@ -125,7 +145,7 @@ export class BaseApi extends BaseRequest {
     return this.request<SearchFieldsResult>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/search-fields`
     );
   };
@@ -133,14 +153,14 @@ export class BaseApi extends BaseRequest {
     return this.request<SearchColumnsResult>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/search-columns`
     );
   };
   // 泛型默认与既有 ListResult 一致（RecordType）：调用方按接口契约收窄行类型，
   // 免去消费侧 `res.data.results as Xxx[]` 断言（类型逃逸门禁）
   list = <T = RecordType>(params?: object) => {
-    return this.request<ListResult<T>>("get", params, {});
+    return this.request<ListResult<T>>("get", params, undefined);
   };
   // 泛型默认与既有 DetailResult 一致（RecordType）；调用方可用具体契约收窄
   // res.data 的类型，避免调用侧双重断言绕过类型检查（类型逃逸门禁）。
@@ -153,7 +173,7 @@ export class BaseApi extends BaseRequest {
     return this.request<DetailResult<T>>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/${pk}`
     );
   };
@@ -204,7 +224,7 @@ export class BaseApi extends BaseRequest {
     return this.request<ListResult>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/recycle`
     );
   };
@@ -250,9 +270,7 @@ export class BaseApi extends BaseRequest {
       params,
       data,
       {
-        headers: {
-          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
-        }
+        headers: { "Content-Type": importContentType(data) }
       }
     );
   };
@@ -264,9 +282,7 @@ export class BaseApi extends BaseRequest {
       params,
       data,
       {
-        headers: {
-          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
-        }
+        headers: { "Content-Type": importContentType(data) }
       }
     );
   };
@@ -278,9 +294,7 @@ export class BaseApi extends BaseRequest {
       params,
       data,
       {
-        headers: {
-          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
-        }
+        headers: { "Content-Type": importContentType(data) }
       }
     );
   };
@@ -292,9 +306,7 @@ export class BaseApi extends BaseRequest {
       params,
       data,
       {
-        headers: {
-          "Content-Type": data.type === "text/csv" ? "text/csv" : "text/xlsx"
-        }
+        headers: { "Content-Type": importContentType(data) }
       }
     );
   };
@@ -304,7 +316,7 @@ export class BaseApi extends BaseRequest {
     return this.request<ListResult<ImportTemplateItem>>(
       "get",
       params,
-      {},
+      undefined,
       IMPORT_TEMPLATE_API
     );
   };
@@ -320,7 +332,7 @@ export class ViewBaseApi extends BaseRequest {
     return this.request<SearchColumnsResult>(
       "get",
       params,
-      {},
+      undefined,
       `${this.baseApi}/search-columns`
     );
   };
@@ -328,7 +340,12 @@ export class ViewBaseApi extends BaseRequest {
     return this.request<DetailResult>("post", params, data);
   };
   retrieve = (params?: object) => {
-    return this.request<DetailResult>("get", params, {}, `${this.baseApi}`);
+    return this.request<DetailResult>(
+      "get",
+      params,
+      undefined,
+      `${this.baseApi}`
+    );
   };
   update = (params?: object, data?: object) => {
     return this.request<DetailResult>("put", params, data, `${this.baseApi}`);

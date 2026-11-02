@@ -19,4 +19,19 @@ describe("resolveOperationRow", () => {
     expect(resolveOperationRow({}, 99, dataList)).toEqual({});
     expect(resolveOperationRow({}, "x", undefined)).toEqual({});
   });
+
+  it("树表按展开后的扁平行号取行（子行不会落到别的顶层行）", () => {
+    const parent = { pk: "p", name: "P" };
+    const childA = { pk: "c1", name: "C1" };
+    const childB = { pk: "c2", name: "C2" };
+    const sibling = { pk: "s", name: "S" };
+    const tree = [
+      { ...parent, children: [childA, childB] },
+      { ...sibling, children: [] }
+    ];
+    // 展开序：p(0) / c1(1) / c2(2) / s(3)
+    expect(resolveOperationRow({}, 1, tree)).toBe(tree[0].children[0]);
+    expect(resolveOperationRow({}, 2, tree)).toBe(tree[0].children[1]);
+    expect(resolveOperationRow({}, 3, tree)).toBe(tree[1]);
+  });
 });

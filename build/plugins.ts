@@ -74,10 +74,11 @@ export async function getPluginsList(
     }),
     VITE_CDN ? (await import("./cdn.ts")).cdn : null,
     configCompressPlugin(VITE_COMPRESSION),
-    // 线上环境删除 console（unplugin-remove 自带 apply:'build'，仅打包时生效；dev 不受影响）
+    // 线上环境删除 console（unplugin-remove 自带 apply:'build'，仅打包时生效；dev 不受影响）。
+    // 保留 error：启动链/线上诊断依赖 console.error，全部删除会让故障只剩白屏
     viteRemove({
       external: ["src/assets/iconfont/iconfont.js"],
-      consoleType: ["log", "warn", "error", "info", "debug"]
+      consoleType: ["log", "warn", "info", "debug"]
     }),
     // 打包分析
     ...(lifecycle === "report"

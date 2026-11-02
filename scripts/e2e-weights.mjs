@@ -42,11 +42,18 @@ for (const name of readdirSync(inputPath).sort()) {
       const file = suite.file ?? "";
       for (const spec of suite.specs ?? []) {
         for (const test of spec.tests ?? []) {
-          const last = test.results?.[test.results.length - 1];
+          const results = test.results ?? [];
+          const last = results[results.length - 1];
           if (!last || !file) continue;
           // skipped 用例（如未开启 E2E_VISUAL 的视觉档）不计入权重
           if (last.status === "skipped") continue;
-          files[file] = (files[file] ?? 0) + (last.duration ?? 0) / 1000;
+          // 只取最近一次成功耗时：失败/中断（如 dev server 掉线）的短耗时会
+          // 把重 spec 的低估权重写进分片表，导致 LPT 装箱失衡
+          const passed = [...results]
+            .reverse()
+            .find(item => item.status === "passed");
+          if (!passed) continue;
+          files[file] = (files[file] ?? 0) + (passed.duration ?? 0) / 1000;
         }
       }
       walk(suite.suites);
@@ -62,9 +69,9 @@ if (!shardCount || Object.keys(files).length === 0) {
 
 const payload = {
   $comment:
-    "E2E 分片时长权重（秒/文件，最后一次尝试口径）。由 scripts/e2e-weights.mjs 从一次全量跑批的 JSON 报告生成；新增大文件或明显改动用例结构后请重跑生成，避免分片失衡。",
+    "E2E 分片时长权重（秒/文件，最后一次成功尝试口径；失败/中断不计）。由 scripts/e2e-weights.mjs 从一次全量跑批的 JSON 报告生成；新增大文件或明显改动用例结构后请重跑生成，避免分片失衡。",
   generated_at: new Date().toISOString(),
-  source: inputDir,
+  source: `${inputDir}（${shardCount} 分片，${new Date().toISOString().slice(0, 10)}）`,
   shards_observed: shardCount,
   files: Object.fromEntries(
     Object.entries(files)

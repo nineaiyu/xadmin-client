@@ -34,6 +34,8 @@ const props = defineProps<{
   serverTemplates?: FreeTemplate[];
   /** 元素级网格吸附（默认关） */
   gridSnap?: FreeGridSnap;
+  /** 团队模板回滚实现（返回成功与否；弹窗据此重拉历史） */
+  rollbackTemplate?: (_id: string, _version: number) => Promise<boolean>;
 }>();
 
 const emit = defineEmits<FreeCanvasToolbarEmits>();
@@ -43,6 +45,11 @@ const { t } = useI18n();
 const zoomLabel = (value: number) => `${Math.round(value * 100)}%`;
 
 const serverTemplates = computed(() => props.serverTemplates ?? []);
+const rollbackHandler = computed(() =>
+  props.rollbackTemplate
+    ? (version: number) => props.rollbackTemplate!(versionsId.value, version)
+    : undefined
+);
 /** 团队模板按分组聚合（空分组排最后并归到「未分组」；排序口径在纯函数里，可单测） */
 const serverGroups = computed(() => groupTemplates(serverTemplates.value));
 
@@ -227,6 +234,7 @@ const {
       v-model="versionsVisible"
       :template-id="versionsId"
       :template-name="versionsName"
+      :rollback-handler="rollbackHandler"
       @rollback="emit('rollbackTemplate', { id: versionsId, version: $event })"
     />
 

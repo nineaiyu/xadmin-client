@@ -44,7 +44,11 @@ export function useCodegenPlanLoader({
     { rebuild?: (plan: CodegenModelPlan) => void } | undefined
   >;
 }) {
+  /** 请求序号：快速切模型时旧响应不得覆盖新模型的字段表/命名默认值 */
+  let planSeq = 0;
+
   async function loadPlan(label: string) {
+    const seq = ++planSeq;
     // 切换模型先清场：请求失败时不再残留上一个模型的字段表与产物
     planData.value = null;
     state.fields = [];
@@ -69,9 +73,13 @@ export function useCodegenPlanLoader({
     planError.value = "";
     try {
       const res = await systemCodeGenApi.modelFields(label).catch(error => {
-        planError.value = normalizeError(error).detail || t("results.failed");
+        if (seq === planSeq)
+          planError.value = normalizeError(error).detail || t("results.failed");
         return null;
       });
+      // 过期响应直接丢弃：A→B 快速切换时 A 的慢响应不能把 A 的字段与
+      // component/url_prefix/frontend_dir 写进 B（preview/download 会生成错路径）
+      if (seq !== planSeq) return;
       if (!res) {
         pendingPlanState.value = null;
         return;
@@ -98,7 +106,7 @@ export function useCodegenPlanLoader({
       // 模型计划装配完成即基线：后续字段/命名改动才触发离开确认
       baselineSignature.value = payloadSignature.value;
     } finally {
-      planLoading.value = false;
+      if (seq === planSeq) planLoading.value = false;
     }
   }
 

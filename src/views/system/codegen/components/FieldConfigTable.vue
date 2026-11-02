@@ -99,6 +99,16 @@ function resetAll() {
   });
 }
 
+/** 键盘可达的排序入口（拖拽之外）：上移/下移一行，顺序即生成字段序 */
+function moveRow(index: number, offset: number) {
+  const target = index + offset;
+  if (target < 0 || target >= fields.value.length) return;
+  const rows = [...fields.value];
+  const [moved] = rows.splice(index, 1);
+  rows.splice(target, 0, moved);
+  fields.value = rows;
+}
+
 // ------------------------------------------------------------- 拖拽排序
 useSortable(
   () =>
@@ -142,9 +152,29 @@ useSortable(
       max-height="460"
       :label="t('codegen.fields')"
     >
-      <el-table-column width="28" align="center">
-        <template #default>
+      <el-table-column width="76" align="center">
+        <template #default="{ $index }">
           <span class="drag-handle cursor-move text-fg-muted">⠿</span>
+          <el-button
+            link
+            size="small"
+            :disabled="$index === 0"
+            :aria-label="t('codegen.moveFieldUp')"
+            :title="t('codegen.moveFieldUp')"
+            @click="moveRow($index, -1)"
+          >
+            ↑
+          </el-button>
+          <el-button
+            link
+            size="small"
+            :disabled="$index === fields.length - 1"
+            :aria-label="t('codegen.moveFieldDown')"
+            :title="t('codegen.moveFieldDown')"
+            @click="moveRow($index, 1)"
+          >
+            ↓
+          </el-button>
         </template>
       </el-table-column>
       <el-table-column

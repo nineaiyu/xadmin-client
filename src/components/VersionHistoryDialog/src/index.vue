@@ -56,7 +56,8 @@ watch(
   () => props.modelValue,
   visible => {
     if (visible) void reload();
-  }
+  },
+  { immediate: true }
 );
 
 const formatTime = (value?: string) => formatDateTime(value);

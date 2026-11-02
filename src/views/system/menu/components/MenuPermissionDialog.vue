@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { message } from "@/utils/message";
@@ -81,6 +81,8 @@ const previewEmptyText = computed(() =>
 );
 
 let timer: ReturnType<typeof setTimeout> | null = null;
+/** 预览请求序号：300ms 防抖只清定时器，在途请求的慢响应不得覆盖新预览 */
+let previewSeq = 0;
 const fetchPreview = () => {
   if (timer) clearTimeout(timer);
   if (!views.value.length) {
@@ -88,6 +90,7 @@ const fetchPreview = () => {
     return;
   }
   timer = setTimeout(async () => {
+    const seq = ++previewSeq;
     loading.value = true;
     try {
       const res = await menuApi.permissions(props.row.pk, {
@@ -96,6 +99,7 @@ const fetchPreview = () => {
         skip_existing: skipExisting.value,
         dry_run: true
       });
+      if (seq !== previewSeq) return;
       if (isSuccess(res)) {
         preview.value = res.data ?? null;
       } else {
@@ -103,15 +107,20 @@ const fetchPreview = () => {
         message(`${t("results.failed")}，${res.detail}`, { type: "error" });
       }
     } catch (error) {
+      if (seq !== previewSeq) return;
       preview.value = null;
-      message(String((error as { detail?: string })?.detail ?? error), {
+      message(normalizeError(error).detail || t("results.failed"), {
         type: "error"
       });
     } finally {
-      loading.value = false;
+      if (seq === previewSeq) loading.value = false;
     }
   }, 300);
 };
+
+onBeforeUnmount(() => {
+  if (timer) clearTimeout(timer);
+});
 
 watch([views, component, skipExisting], fetchPreview);
 

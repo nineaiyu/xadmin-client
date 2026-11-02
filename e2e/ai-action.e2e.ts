@@ -7,6 +7,11 @@ import {
   openMenuPath,
   waitAppWebSocket
 } from "./helpers";
+import {
+  cleanupAiIsolation,
+  resetAiIsolation,
+  startAiIsolation
+} from "./ai-isolation";
 
 /**
  * AI 受限动作 E2E：AI 配置（桩 LLM）→ 聊天室 /do 生成动作草稿 →
@@ -22,6 +27,9 @@ import {
 const STUB_LLM_URL =
   process.env.E2E_STUB_LLM_URL ?? "http://127.0.0.1:18897/v1";
 const CHAT_PATH = "/default/chat/index";
+
+test.beforeEach(() => resetAiIsolation());
+test.afterEach(async ({ page }) => cleanupAiIsolation(page));
 
 async function jsonRequest(
   page: Page,
@@ -111,6 +119,7 @@ test("AI 受限动作：/do 草稿 → 确认卡片 → 执行动态表单提交
   test.setTimeout(150_000);
   const wsOpened = waitAppWebSocket(page);
   await login(page);
+  await startAiIsolation(page);
   await wsOpened;
 
   const form = await createE2eForm(page);
@@ -163,6 +172,7 @@ test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }
   const wsOpened = waitAppWebSocket(page);
   // 独立用户：其 AI 房间无历史卡片，避免共享库里先跑用例的卡片干扰计数断言
   await login(page, APPROVER);
+  await startAiIsolation(page);
   await wsOpened;
 
   // 先完整启用（助手开关 + 档案 + 动作灰度），再单独关闭动作灰度，隔离被测变量
@@ -202,6 +212,7 @@ test("AI 受限动作：灰度关闭时 /do 给出可读降级", async ({ page }
 test("AI 配置页展示 AI 动作灰度开关", async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);
+  await startAiIsolation(page);
   await openMenuPath(page, ["集成管理"], "/integration/ai/config");
   // 配置页已改为 Tab 骨架（默认停在「配置档案」）；全局开关在「功能开关」页签
   await page.getByRole("tab", { name: "功能开关" }).click();
@@ -215,6 +226,7 @@ test("新增只读动作声明可直接执行（API 直调确认卡片后端链�
 }) => {
   test.setTimeout(120_000);
   await login(page);
+  await startAiIsolation(page);
   await enableAiAction(page);
   for (const action of [
     "post.list",
@@ -233,6 +245,7 @@ test("新增只读动作声明可直接执行（API 直调确认卡片后端链�
 
 test("AI 受限动作：/do 发全体公告 → 确认卡片 → 执行发布", async ({ page }) => {
   await login(page);
+  await startAiIsolation(page);
   await enableAiAction(page);
 
   const input = await openAiRoom(page);
@@ -270,6 +283,7 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
   page
 }) => {
   await login(page);
+  await startAiIsolation(page);
   await enableAiAction(page);
 
   // 目标用户（API 创建，随机名避免双浏览器共享库冲突）
@@ -314,6 +328,7 @@ test("AI 受限动作：/do 禁用用户 → 确认卡片 → 执行（复用现
 test("AI 受限动作：/do 多步串联 → 两张确认卡片逐项执行", async ({ page }) => {
   test.setTimeout(150_000);
   await login(page);
+  await startAiIsolation(page);
   await enableAiAction(page);
 
   const input = await openAiRoom(page);
@@ -361,6 +376,7 @@ test("AI 受限动作：/do 查询用户数 → 结果表渲染（dashboard.over
   page
 }) => {
   await login(page);
+  await startAiIsolation(page);
   await enableAiAction(page);
 
   const input = await openAiRoom(page);

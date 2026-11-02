@@ -42,7 +42,7 @@
   }
 
   :deep(th) {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     background: var(--el-fill-color-light);
   }
 }

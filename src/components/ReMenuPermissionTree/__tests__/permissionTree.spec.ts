@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPermissionTreeIndex,
+  invertSelection,
   menuDescendants,
   nodeKind,
   nodeKey
@@ -44,5 +45,28 @@ describe("权限树索引推导", () => {
   it("nodeKey 统一字符串化，空主键返回空串", () => {
     expect(nodeKey({ pk: 9 } as never)).toBe("9");
     expect(nodeKey({} as never)).toBe("");
+  });
+});
+
+describe("反选与页面级折叠勾选", () => {
+  const tree = [
+    node(1, 0, [node(2, 1, [node(3, 2), node(4, 2)])]),
+    node(5, 1, [node(6, 2)])
+  ];
+  const index = buildPermissionTreeIndex(tree);
+
+  it("折叠页面（只选页面键）反选后整页权限确实被收回", () => {
+    // 选中 = 页面 2 的折叠勾选（3/4 不在集合内，语义上整页生效）
+    const next = invertSelection(index, ["2"]);
+    // 页面 2 及其权限点全部取消；目录 1 无选中子级随之取消；
+    // 另一分支 5/6 未被选中 → 反选后勾选
+    expect([...next].sort()).toEqual(["5", "6"]);
+  });
+
+  it("部分选中的子树按逐节点取反（未被折叠语义误展开）", () => {
+    const next = invertSelection(index, ["1", "2", "3"]);
+    // 已选 1/2/3（4 未选）→ 反选后 3 取消、4 勾选；页面 2 变为部分选中，
+    // 父链规范化保留 2/1；另一分支 5/6 勾选
+    expect([...next].sort()).toEqual(["1", "2", "4", "5", "6"]);
   });
 });

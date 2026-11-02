@@ -4,18 +4,14 @@
 // 此前两侧没有任何一致性校验——服务端改了 schema 而镜像未同步时，
 // 客户端 CI 依然全绿，生成的 TS 类型会与线上协议静默漂移。
 //
+// 口径：schema 清单从两侧目录动态发现（不再硬编码文件名），取并集逐份比较，
+// 任何一侧多出/缺少的 schema 都失败；openapi.json 单独比较。
+//
 // 服务端目录默认取 ../xadmin-server（两个仓库在同一工作区时的约定），
 // 可用 XADMIN_SERVER_DIR 覆盖；找不到服务端时跳过（单仓检出/CI 场景），并打印提示。
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-const SCHEMA_NAMES = [
-  "search-columns",
-  "search-fields",
-  "api-response",
-  "routes-payload",
-  "ws-frame"
-];
 const mirrorDir = path.resolve("contract", "schema");
 const serverDir = path.resolve(
   process.env.XADMIN_SERVER_DIR ?? "../xadmin-server"
@@ -30,24 +26,58 @@ if (!existsSync(sourceDir)) {
   process.exit(0);
 }
 
-/** 规范化 JSON 文本：忽略缩进/键序差异，只比对语义 */
-const normalize = filePath =>
-  JSON.stringify(JSON.parse(readFileSync(filePath, "utf-8")));
+const SCHEMA_SUFFIX = ".schema.json";
 
+/** 目录下的 schema 文件名集合（去掉后缀，便于两侧并集比较） */
+function schemaNames(dir) {
+  if (!existsSync(dir)) return new Set();
+  return new Set(
+    readdirSync(dir)
+      .filter(name => name.endsWith(SCHEMA_SUFFIX))
+      .map(name => name.slice(0, -SCHEMA_SUFFIX.length))
+  );
+}
+
+/** 规范化 JSON 文本：忽略缩进/键序差异，只比对语义 */
+function normalize(filePath) {
+  try {
+    return JSON.stringify(JSON.parse(readFileSync(filePath, "utf-8")));
+  } catch (error) {
+    return `__parse_error__:${String(error.message ?? error).split("\n")[0]}`;
+  }
+}
+
+const mirrorNames = schemaNames(mirrorDir);
+const sourceNames = schemaNames(sourceDir);
 const drifted = [];
-for (const name of SCHEMA_NAMES) {
-  const mirror = path.join(mirrorDir, `${name}.schema.json`);
-  const source = path.join(sourceDir, `${name}.schema.json`);
+
+for (const name of [...new Set([...mirrorNames, ...sourceNames])].sort()) {
+  const mirror = path.join(mirrorDir, `${name}${SCHEMA_SUFFIX}`);
+  const source = path.join(sourceDir, `${name}${SCHEMA_SUFFIX}`);
   if (!existsSync(mirror)) {
     drifted.push(`${name}: 镜像文件缺失（contract/schema）`);
-  } else if (!existsSync(source)) {
+    continue;
+  }
+  if (!existsSync(source)) {
     drifted.push(`${name}: 服务端契约源缺失（docs/schema）`);
-  } else if (normalize(mirror) !== normalize(source)) {
+    continue;
+  }
+  const normalizedMirror = normalize(mirror);
+  const normalizedSource = normalize(source);
+  if (normalizedMirror.startsWith("__parse_error__")) {
+    drifted.push(
+      `${name}: 镜像 JSON 解析失败（${normalizedMirror.slice(15)}）`
+    );
+  } else if (normalizedSource.startsWith("__parse_error__")) {
+    drifted.push(
+      `${name}: 服务端 JSON 解析失败（${normalizedSource.slice(15)}）`
+    );
+  } else if (normalizedMirror !== normalizedSource) {
     drifted.push(`${name}: 镜像与服务端契约源不一致`);
   }
 }
 
-const openapiMirror = path.join(mirrorDir, "..", "openapi.json");
+const openapiMirror = path.resolve("contract", "openapi.json");
 const openapiSource = path.join(sourceDir, "openapi.json");
 if (!existsSync(openapiMirror)) {
   drifted.push("openapi: 镜像文件缺失（contract/openapi.json）");
@@ -65,4 +95,6 @@ if (drifted.length) {
   );
   process.exit(1);
 }
-console.log("[ok] 契约镜像与服务端 docs/schema 一致");
+console.log(
+  `[ok] 契约镜像与服务端 docs/schema 一致（schema ${sourceNames.size} 份 + openapi.json）`
+);

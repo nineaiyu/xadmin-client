@@ -35,14 +35,13 @@ function fakeApi(
   overrides: Record<string, unknown> = {}
 ): Parameters<typeof useMenuMutations>[0]["api"] {
   return {
-    baseApi: "/api/system/menu",
-    request: vi.fn(),
     create: vi.fn(),
     partialUpdate: vi.fn(),
     destroy: vi.fn(),
     batchDestroy: vi.fn(),
     batchUpdate: vi.fn(),
     rank: vi.fn(),
+    impact: vi.fn(),
     ...overrides
   };
 }

@@ -9,6 +9,7 @@ import {
   closeAllDialog,
   closeDialog,
   dialogStore,
+  finalizeDialog,
   getDialogUid,
   updateDialog,
   ReDialog
@@ -79,7 +80,23 @@ describe("ReDialog 弹层容器", () => {
     expect(dialogStore.value[0].title).toBe("新");
   });
 
-  it("closeDialog：置 visible=false 并回调 closeCallBack，延迟后移出 store", async () => {
+  it("updateDialog 按实例引用定位：出队后下标漂移不误改其他弹层", () => {
+    const first = { title: "一" };
+    const second = { title: "二" };
+    addDialog(first);
+    addDialog(second);
+    // 第一条先出队：第二条下标由 1 变成 0
+    finalizeDialog(first);
+    updateDialog("新二", "title", second);
+    expect(dialogStore.value[0].title).toBe("新二");
+
+    // 目标已出队：静默跳过，不按下标改到仍在队列的弹层
+    finalizeDialog(second);
+    updateDialog("幽灵", "title", second);
+    expect(dialogStore.value).toHaveLength(0);
+  });
+
+  it("closeDialog：置 visible=false 并回调 closeCallBack，@closed 后移出 store", async () => {
     const closeCallBack = vi.fn();
     const options = { title: "标题", closeCallBack };
     addDialog(options);
@@ -88,9 +105,16 @@ describe("ReDialog 弹层容器", () => {
     expect(closeCallBack).toHaveBeenCalledWith(
       expect.objectContaining({ args: { command: "cancel" } })
     );
+    // 关闭动画期间条目仍在队列：出队由 EP @closed → finalizeDialog 驱动
     expect(dialogStore.value).toHaveLength(1);
+    // 重复关闭（@closed 路径）不重复回调
+    closeDialog(dialogStore.value[0], 0, { command: "close" });
+    expect(closeCallBack).toHaveBeenCalledTimes(1);
 
     vi.advanceTimersByTime(200);
+    await nextTick();
+    expect(dialogStore.value).toHaveLength(1);
+    finalizeDialog(dialogStore.value[0]);
     await nextTick();
     expect(dialogStore.value).toHaveLength(0);
   });

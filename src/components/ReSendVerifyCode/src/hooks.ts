@@ -61,7 +61,10 @@ export const useSendVerifyCode = (
     verify_token: undefined
   };
 
-  formData.value = Object.assign(formData.value, defaultValue);
+  // 只补齐缺失键：直接 Object.assign 会覆写父级预填的 phone/email/form_type
+  for (const [key, value] of Object.entries(defaultValue)) {
+    if (formData.value[key] === undefined) formData.value[key] = value;
+  }
 
   const verifyCodeConfig = reactive<{
     access: boolean;
@@ -89,11 +92,16 @@ export const useSendVerifyCode = (
 
   const initToken = () => {
     if (access.value && verifyCodeConfig.token) {
-      getTempTokenApi().then(res => {
-        if (isSuccess(res)) {
-          formData.value.token = res.token;
-        }
-      });
+      getTempTokenApi()
+        .then(res => {
+          if (isSuccess(res)) {
+            formData.value.token = res.token;
+          }
+        })
+        .catch(error => {
+          // 预取失败不产生 unhandled rejection；发码请求会按缺 token 正常失败并提示
+          console.warn("[send-verify-code] token prefetch failed", error);
+        });
     }
   };
 

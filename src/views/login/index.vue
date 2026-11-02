@@ -104,7 +104,7 @@ watch(
 
 <template>
   <div class="select-none" :data-auth-panel="authPanel">
-    <img :src="bg" alt="" class="wave" />
+    <img :src="bg" alt="" class="login-wave" />
     <div class="flex-c absolute right-5 top-3">
       <!-- 主题 -->
       <el-switch
@@ -156,12 +156,12 @@ watch(
       </el-dropdown>
     </div>
     <div class="login-container">
-      <div class="img enter-y">
+      <div class="login-img enter-y">
         <component :is="toRaw(illustration)" />
       </div>
       <div class="login-box enter-y">
         <div class="login-form">
-          <avatar class="avatar" />
+          <avatar class="login-avatar" />
           <Motion>
             <h2 class="outline-hidden">
               <TypeIt

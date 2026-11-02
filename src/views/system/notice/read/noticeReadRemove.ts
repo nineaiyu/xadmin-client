@@ -1,6 +1,7 @@
 import type { Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
+import { normalizeError } from "@/utils/apiError";
 import type { noticeReadApi } from "@/api/system/notice";
 import { message } from "@/utils/message";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -31,19 +32,20 @@ export function createNoticeReadRemove({
     ) {
       return;
     }
-    try {
-      const res = await api.destroy(row.pk as string | number);
-      if (isSuccess(res)) {
-        message(t("results.success"), { type: "success" });
-        tableRef.value?.handleGetData();
-      } else {
-        message(`${t("results.failed")}，${res.detail}`, { type: "error" });
-      }
-    } catch (error) {
-      message(
-        `${t("results.failed")}，${(error as { message?: string })?.message ?? ""}`,
-        { type: "error" }
-      );
+    const res = await api
+      .destroy(row.pk as string | number)
+      .catch(normalizeError);
+    if (isSuccess(res)) {
+      message(t("results.success"), { type: "success" });
+      tableRef.value?.handleGetData();
+      return;
+    }
+    // 请求失败（normalizeError → code -1）已由 http 层统一提示，不重复弹窗；
+    // 仅 HTTP 200 + 业务码失败需要页面显式提示
+    if (res.code !== -1 && res.detail) {
+      message(t("results.failedWithDetail", { detail: res.detail }), {
+        type: "error"
+      });
     }
   };
 }

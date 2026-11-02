@@ -66,47 +66,49 @@ const animationLoop = computed({
 </script>
 
 <template>
-  <el-form-item :label="t('dataScreen.paneAnimation')">
-    <el-select
-      v-model="animation"
-      size="small"
-      data-testid="inspector-animation"
-    >
-      <el-option
-        v-for="item in animationOptions"
-        :key="item.value"
-        :label="t(item.label)"
-        :value="item.value"
-      />
-    </el-select>
-  </el-form-item>
+  <div class="contents">
+    <el-form-item :label="t('dataScreen.paneAnimation')">
+      <el-select
+        v-model="animation"
+        size="small"
+        data-testid="inspector-animation"
+      >
+        <el-option
+          v-for="item in animationOptions"
+          :key="item.value"
+          :label="t(item.label)"
+          :value="item.value"
+        />
+      </el-select>
+    </el-form-item>
 
-  <template v-if="hasAnimation">
-    <el-form-item :label="t('dataScreen.paneAnimationDuration')">
-      <el-input-number
-        v-model="animationDuration"
-        :min="100"
-        :max="PANE_ANIMATION_MS_MAX"
-        :step="50"
-        controls-position="right"
-        data-testid="inspector-animation-duration"
-      />
-    </el-form-item>
-    <el-form-item :label="t('dataScreen.paneAnimationDelay')">
-      <el-input-number
-        v-model="animationDelay"
-        :min="0"
-        :max="PANE_ANIMATION_MS_MAX"
-        :step="50"
-        controls-position="right"
-        data-testid="inspector-animation-delay"
-      />
-    </el-form-item>
-    <el-form-item :label="t('dataScreen.paneAnimationLoop')">
-      <el-switch
-        v-model="animationLoop"
-        data-testid="inspector-animation-loop"
-      />
-    </el-form-item>
-  </template>
+    <template v-if="hasAnimation">
+      <el-form-item :label="t('dataScreen.paneAnimationDuration')">
+        <el-input-number
+          v-model="animationDuration"
+          :min="100"
+          :max="PANE_ANIMATION_MS_MAX"
+          :step="50"
+          controls-position="right"
+          data-testid="inspector-animation-duration"
+        />
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.paneAnimationDelay')">
+        <el-input-number
+          v-model="animationDelay"
+          :min="0"
+          :max="PANE_ANIMATION_MS_MAX"
+          :step="50"
+          controls-position="right"
+          data-testid="inspector-animation-delay"
+        />
+      </el-form-item>
+      <el-form-item :label="t('dataScreen.paneAnimationLoop')">
+        <el-switch
+          v-model="animationLoop"
+          data-testid="inspector-animation-loop"
+        />
+      </el-form-item>
+    </template>
+  </div>
 </template>

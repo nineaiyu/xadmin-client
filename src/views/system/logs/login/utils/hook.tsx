@@ -85,11 +85,14 @@ export function useLoginLog() {
       })
     })
   });
-  const { t, api } = page;
+  const { t } = page;
 
-  /** 详情入口消费 retrieve 权限：按主键取完整行，而不是仅展示列表快照 */
-  const detailRowFetch = (row: Record<string, unknown>) =>
-    api.retrieve(String(row.pk ?? "")).then(res => res.data);
+  /**
+   * 详情直接使用列表行：登录日志是只读审计数据、列表已下发完整字段；
+   * 视图集为 OnlyListModelSet（无 detail 路由、种子也无 retrieve 权限点），
+   * 调 api.retrieve 只会 404 并让抽屉永久打不开。
+   */
+  const detailRowFetch = (row: Record<string, unknown>) => Promise.resolve(row);
 
   const listColumnsFormat = buildLoginLogColumns({
     t,

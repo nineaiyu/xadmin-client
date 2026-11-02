@@ -6,6 +6,7 @@ import { ExportImportFormatOptions } from "../utils/constants";
 import UploadIcon from "~icons/ep/upload";
 import { useI18n } from "vue-i18n";
 import { renderBooleanSegmentedOption } from "../utils/renders";
+import { normalizeError } from "@/utils/apiError";
 import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
 import type { UploadUserFile } from "element-plus";
@@ -141,12 +142,11 @@ const applyMapping = (mapping: Record<string, string>) => {
 const loadTemplates = async () => {
   if (!templateAuth.list) return;
   if (!state.value.api?.importTemplates || !modelLabel.value) return;
-  const res = await state.value.api.importTemplates({
-    model: modelLabel.value,
-    size: 100
-  });
+  const res = await state.value.api
+    .importTemplates({ model: modelLabel.value, size: 100 })
+    .catch(normalizeError);
   if (isSuccess(res)) {
-    templates.value = res.data.results ?? [];
+    templates.value = res.data?.results ?? [];
   }
 };
 
@@ -212,13 +212,15 @@ const saveTemplate = async () => {
     message(t("exportImport.templateNameRequired"), { type: "warning" });
     return;
   }
-  const res = await state.value.api.createImportTemplate({
-    model: modelLabel.value,
-    name,
-    mapping: state.value.mapping ?? {},
-    options: { ignore_unknown: state.value.ignore_unknown !== false },
-    is_shared: false
-  });
+  const res = await state.value.api
+    .createImportTemplate({
+      model: modelLabel.value,
+      name,
+      mapping: state.value.mapping ?? {},
+      options: { ignore_unknown: state.value.ignore_unknown !== false },
+      is_shared: false
+    })
+    .catch(normalizeError);
   if (isSuccess(res)) {
     message(t("exportImport.templateSaved"), { type: "success" });
     newTemplateName.value = "";

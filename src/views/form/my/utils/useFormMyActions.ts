@@ -31,29 +31,31 @@ export function useFormMyActions({
   const openFill = (form: FillableFormItem) => openForm(form, null);
 
   const openEdit = async (row: SubmissionItem) => {
-    let form = forms.value.find(item => item.pk === row.form);
-    if (!form) {
-      // 表单停用后不在可填清单：按提交详情取 schema 快照，历史 DRAFT/REJECTED 仍可编辑
-      const res = await submissionApi.retrieve(row.pk).catch(() => null);
-      const detail = res?.data as SubmissionItem | null;
-      if (detail?.form_schema) {
-        form = {
+    const detailRes = await submissionApi.retrieve(row.pk).catch(() => null);
+    const detail = detailRes?.data as SubmissionItem | null;
+    const current = forms.value.find(item => item.pk === row.form);
+    let form = current;
+    if (detail?.form_schema) {
+      // 编辑既有提交必须按**提交时的 schema 快照**渲染：服务端按快照校验，
+      // 用当前 schema 渲染会让改版后的旧草稿出现「未知键 / 必填缺失」
+      form = {
+        ...(current ?? {
           pk: detail.form,
           name: detail.form_name,
           description: "",
-          schema: { fields: detail.form_schema },
           approval_required: false,
           approval_flow: null,
           approval_flow_pk: null
-        };
-      }
+        }),
+        pk: detail.form,
+        name: detail.form_name || current?.name || "",
+        schema: { fields: detail.form_schema }
+      };
     }
     if (!form) {
       message(t("dform.formUnavailable"), { type: "warning" });
       return;
     }
-    // 编辑既有提交按提交时的 schema 快照渲染（服务端同样按快照校验）；
-    // 表单定义不可用时保留表单自身 schema，仍由后端兜底校验
     openForm(form, row);
   };
 

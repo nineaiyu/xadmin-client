@@ -1,4 +1,4 @@
-import { computed, h, type Ref, type VNode } from "vue";
+import { computed, h, unref, type Ref, type VNode } from "vue";
 import type { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -31,6 +31,14 @@ type ColumnCtx = {
 
 type ColumnHandler = (ctx: ColumnCtx) => Record<string, unknown>;
 
+/** 列 options 在框架侧恒为 ComputedRef：列处理器必须解包后再遍历 */
+function optionList(column: ColumnCtx["column"]): SelectOption[] {
+  const options = unref(
+    column?.options as SelectOption[] | Ref<SelectOption[]>
+  );
+  return Array.isArray(options) ? options : [];
+}
+
 /**
  * 通知公告表单列装配（自 useNoticeFormOptions 拆出）：等级选项着色、类型联动
  * 接收对象列显隐（映射见 NOTICE_TARGET_AUTH）、富文本消息渲染。
@@ -53,7 +61,7 @@ export function buildNoticeFormColumns({ t }: { t: TFunction }) {
   /** 等级：字典驱动（notice_level）——选项色字典 color 优先（style），
    * 无色回退「value 即 el-text 类型色」契约 */
   const level: ColumnHandler = ({ column }) => {
-    (column?.options as SelectOption[]).forEach(option => {
+    optionList(column).forEach(option => {
       option["fieldSlot"] = () => (
         <el-text
           type={option.value?.value as ElTextType}
@@ -75,11 +83,15 @@ export function buildNoticeFormColumns({ t }: { t: TFunction }) {
 
   /** 类型：编辑态锁定；公告类型选项按 `announcement:SystemNotice` 权限放开 */
   const noticeType: ColumnHandler = ({ column, isAdd }) => {
+    const fieldProps = (column["fieldProps"] ?? {}) as { disabled?: boolean };
+    column["fieldProps"] = fieldProps;
     if (!isAdd) {
-      (column["fieldProps"] as { disabled?: boolean })["disabled"] = true;
+      fieldProps.disabled = true;
     }
-    (column?.options as SelectOption[]).forEach(option => {
-      const fieldItemProps = option.fieldItemProps as { disabled?: boolean };
+    optionList(column).forEach(option => {
+      const fieldItemProps = (option.fieldItemProps ??= {}) as {
+        disabled?: boolean;
+      };
       if (
         noticeTypeOptionLocked(
           option.value?.value,

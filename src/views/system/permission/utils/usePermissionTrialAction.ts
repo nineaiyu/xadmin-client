@@ -6,6 +6,7 @@ import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import type { OperationProps } from "@/components/RePlusPage";
 import TrialPanel from "../components/TrialPanel.vue";
+import type { FieldRuleRow } from "../components/utils/types";
 import type { usePermissionLookups } from "./usePermissionLookups";
 
 /**
@@ -46,7 +47,7 @@ export function usePermissionTrialAction(
         destroyOnClose: true,
         contentRenderer: () =>
           h(TrialPanel, {
-            rules: (row.rules ?? []) as never,
+            rules: (row.rules ?? []) as FieldRuleRow[],
             ruleList: lookups.fieldLookupsData.value,
             fieldRuleList: lookups.fieldLookupsRole.value,
             menus: lookups.menuContextOptions.value,

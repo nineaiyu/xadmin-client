@@ -36,7 +36,12 @@ export function createTablePrefsStorage({
   };
 
   const patchRemote = () => {
-    configApi.setSiteConfig({ TablePrefs: { ...readLocalMap() } });
+    // 后台合并保存：失败不能产生 unhandled rejection（本地缓存已生效，下次操作重试）
+    void Promise.resolve(
+      configApi.setSiteConfig({ TablePrefs: { ...readLocalMap() } })
+    ).catch(error => {
+      console.warn("[tablePrefs] remote save failed", error);
+    });
   };
 
   const writeLocal = (key: string, value: TablePrefs) => {

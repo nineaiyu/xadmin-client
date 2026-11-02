@@ -58,7 +58,7 @@ const { loading, data: preview } = usePermissionPreview<RolePreviewResult>(
       <el-collapse-item :title="t('permissionPreview.roleFields')" name="field">
         <ReEmpty
           v-if="!data.field_permissions.length"
-          :description="t('permissionPreview.fieldBlank')"
+          :description="t('permissionPreview.fieldEmpty')"
           :image-size="70"
         />
         <PreviewFieldMatrix

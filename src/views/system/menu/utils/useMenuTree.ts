@@ -16,13 +16,15 @@ import {
   menuTreeDefaultProps,
   parseCheckedPks
 } from "./treeInteractions";
-import type { MenuRow } from "./types";
+import type { MenuAuths, MenuRow } from "./types";
 
 interface MenuTreeDeps {
   treeRef: Ref<TreeInstance | undefined>;
   visibleTree: Ref<MenuRow[]>;
   expandPks: Ref<Set<string>>;
   firstMatchPk: Ref<string>;
+  /** 页面权限：换父级需要 partialUpdate（仅有 rank 时只能同层排序） */
+  auth: MenuAuths;
   onNodeClick: (row: MenuRow) => void;
   /** el-tree 拖拽回调入参为内部 Node 实例：边界收窄为 unknown，内部按 data 取值 */
   onDrop: (draggingNode: unknown, dropNode: unknown, dropType: string) => void;
@@ -34,6 +36,7 @@ export function useMenuTree({
   visibleTree,
   expandPks,
   firstMatchPk,
+  auth,
   onNodeClick,
   onDrop,
   onCheck
@@ -85,6 +88,11 @@ export function useMenuTree({
 
   const nodeClick = (data: MenuRow) => onNodeClick(data);
 
+  /** 同层排序只需 rank；拖进节点内部会换父级（PATCH parent），需 partialUpdate */
+  const allowDrop = (draggingNode: unknown, dropNode: unknown, type: string) =>
+    allowDropByType(draggingNode, dropNode, type) &&
+    (type !== "inner" || Boolean(auth.partialUpdate));
+
   watch(
     [visibleTree, expandPks],
     () => {
@@ -103,7 +111,7 @@ export function useMenuTree({
     defaultProps: menuTreeDefaultProps,
     applyExpansion,
     scrollToPk,
-    allowDrop: allowDropByType,
+    allowDrop,
     handleDrop,
     handleCheck,
     nodeClick

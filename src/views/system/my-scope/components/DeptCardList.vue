@@ -42,81 +42,83 @@ const foldUsers = (users: ManagedUserRef[]) => {
 </script>
 
 <template>
-  <div class="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
-    <el-card
-      v-for="dept in depts"
-      :key="dept.pk"
-      shadow="hover"
-      data-testid="my-scope-dept"
-    >
-      <div class="flex-bc gap-2">
-        <span class="font-medium truncate">{{ dept.name }}</span>
-        <el-tag v-if="dept.is_direct" size="small" type="primary">
-          {{ t("systemMyScope.direct") }}
-        </el-tag>
-      </div>
-      <div class="mt-1 text-xs opacity-60">{{ dept.code }}</div>
-      <div
-        v-if="dept.parent_id && parentNames.get(dept.parent_id)"
-        class="mt-1 text-xs opacity-60"
+  <div>
+    <div class="grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
+      <el-card
+        v-for="dept in depts"
+        :key="dept.pk"
+        shadow="hover"
+        data-testid="my-scope-dept"
       >
-        {{ t("systemMyScope.parentDept") }}:
-        {{ parentNames.get(dept.parent_id) }}
-      </div>
-
-      <el-divider class="my-2!" />
-
-      <div class="flex items-center gap-1 text-xs">
-        <span class="opacity-60 shrink-0">
-          {{ t("systemMyScope.leader") }}
-        </span>
-        <span class="truncate">
-          {{ dept.leader ? userLabel(dept.leader) : "-" }}
-        </span>
-      </div>
-      <div class="flex items-center gap-1 text-xs mt-1">
-        <span class="opacity-60 shrink-0">
-          {{ t("systemMyScope.managers") }}
-        </span>
-        <span
-          v-if="dept.managers.length"
-          class="truncate"
-          :title="dept.managers.map(userLabel).join('、')"
+        <div class="flex-bc gap-2">
+          <span class="font-medium truncate">{{ dept.name }}</span>
+          <el-tag v-if="dept.is_direct" size="small" type="primary">
+            {{ t("systemMyScope.direct") }}
+          </el-tag>
+        </div>
+        <div class="mt-1 text-xs opacity-60">{{ dept.code }}</div>
+        <div
+          v-if="dept.parent_id && parentNames.get(dept.parent_id)"
+          class="mt-1 text-xs opacity-60"
         >
-          {{ foldUsers(dept.managers) }}
-        </span>
-        <span v-else>-</span>
-      </div>
+          {{ t("systemMyScope.parentDept") }}:
+          {{ parentNames.get(dept.parent_id) }}
+        </div>
 
-      <div class="flex-bc mt-3">
-        <el-link
-          :disabled="!canListUsers"
-          underline="never"
-          data-testid="my-scope-members"
-          @click="emit('openMembers', dept)"
-        >
-          {{ t("systemMyScope.members", { count: dept.user_count }) }}
-        </el-link>
-        <el-button
-          link
-          type="primary"
-          :disabled="!canListUsers"
-          :title="t('systemMyScope.viewInUserPage')"
-          @click="emit('goDeptUsers', dept.pk)"
-        >
-          {{ t("systemMyScope.manageMembers") }}
-        </el-button>
-      </div>
-    </el-card>
-  </div>
-  <div v-if="remainingCount > 0" class="mt-3 text-center">
-    <el-button
-      link
-      type="primary"
-      data-testid="my-scope-load-more"
-      @click="emit('loadMore')"
-    >
-      {{ t("systemMyScope.loadMore", { count: remainingCount }) }}
-    </el-button>
+        <el-divider class="my-2!" />
+
+        <div class="flex items-center gap-1 text-xs">
+          <span class="opacity-60 shrink-0">
+            {{ t("systemMyScope.leader") }}
+          </span>
+          <span class="truncate">
+            {{ dept.leader ? userLabel(dept.leader) : "-" }}
+          </span>
+        </div>
+        <div class="flex items-center gap-1 text-xs mt-1">
+          <span class="opacity-60 shrink-0">
+            {{ t("systemMyScope.managers") }}
+          </span>
+          <span
+            v-if="dept.managers.length"
+            class="truncate"
+            :title="dept.managers.map(userLabel).join('、')"
+          >
+            {{ foldUsers(dept.managers) }}
+          </span>
+          <span v-else>-</span>
+        </div>
+
+        <div class="flex-bc mt-3">
+          <el-link
+            :disabled="!canListUsers"
+            underline="never"
+            data-testid="my-scope-members"
+            @click="emit('openMembers', dept)"
+          >
+            {{ t("systemMyScope.members", { count: dept.user_count }) }}
+          </el-link>
+          <el-button
+            link
+            type="primary"
+            :disabled="!canListUsers"
+            :title="t('systemMyScope.viewInUserPage')"
+            @click="emit('goDeptUsers', dept.pk)"
+          >
+            {{ t("systemMyScope.manageMembers") }}
+          </el-button>
+        </div>
+      </el-card>
+    </div>
+    <div v-if="remainingCount > 0" class="mt-3 text-center">
+      <el-button
+        link
+        type="primary"
+        data-testid="my-scope-load-more"
+        @click="emit('loadMore')"
+      >
+        {{ t("systemMyScope.loadMore", { count: remainingCount }) }}
+      </el-button>
+    </div>
   </div>
 </template>

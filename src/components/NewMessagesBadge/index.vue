@@ -24,7 +24,12 @@ const { t } = useI18n();
   <div
     v-if="count > 0"
     class="absolute bottom-40 left-1/2 -translate-x-1/2 cursor-pointer"
+    role="button"
+    tabindex="0"
+    :aria-label="t('chat.newMessages', { count })"
     @click="emit('jump')"
+    @keydown.enter.prevent="emit('jump')"
+    @keydown.space.prevent="emit('jump')"
   >
     <el-tag type="primary" effect="dark" round>
       {{ t("chat.newMessages", { count }) }}

@@ -21,8 +21,7 @@ function toolbarButton(page: import("@playwright/test").Page, name: string) {
   // 按可访问名定位：工具栏是图标按钮（无文本，hasText 匹配不到），且按钮集合
   // 会随功能演进（高级筛选/视图等），序号定位会错点
   return page
-    .locator("div.flex.mr-4")
-    .first()
+    .getByTestId("table-bar-buttons")
     .getByRole("button", { name, exact: true });
 }
 

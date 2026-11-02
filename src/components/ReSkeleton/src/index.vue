@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 /**
  * 轻量骨架屏：脉冲占位块（无第三方依赖，颜色走 EP 令牌、暗色自动适配）。
@@ -11,6 +12,8 @@ import { computed } from "vue";
  * 占位策略（RePlusPage 的搜索卡片高度占位 + 列首帧隐藏），避免破坏 CLS 收口。
  */
 defineOptions({ name: "ReSkeleton" });
+
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -39,16 +42,20 @@ const rowWidth = (index: number, total: number) => {
   <div
     class="re-skeleton"
     :class="{ 're-skeleton--animated': animated }"
-    aria-hidden="true"
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
   >
+    <span class="sr-only">{{ t("labels.loading") }}</span>
     <template v-if="variant === 'fill'">
-      <span class="re-skeleton__fill" />
+      <span class="re-skeleton__fill" aria-hidden="true" />
     </template>
     <template v-else>
       <span
         v-for="index in rowList"
         :key="index"
         class="re-skeleton__line"
+        aria-hidden="true"
         :style="{ width: rowWidth(index, rowList.length) }"
       />
     </template>

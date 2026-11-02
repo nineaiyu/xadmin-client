@@ -129,6 +129,11 @@ export interface OperationProps {
    */
   hideEdit?: boolean;
   /**
+   * 行级编辑准入：返回 false 时隐藏该行「编辑」按钮（如审批中/已通过的请假单）。
+   * 缺省不收敛，保持既有页面零回归。
+   */
+  editAllowed?: (row: Record<string, unknown>) => boolean;
+  /**
    * 操作按钮集合   默认值为 `[]`
    */
   buttons?: OperationButtonsRow[];

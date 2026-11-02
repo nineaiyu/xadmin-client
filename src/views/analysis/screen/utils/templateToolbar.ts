@@ -2,12 +2,16 @@ import { ref, type ComputedRef } from "vue";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePrompt } from "@/hooks/useMessageBox";
 import type { FreeTemplate } from "./freeTemplates";
-import { showServerTemplateDetail } from "./freeTemplateDetail";
 import type { TemplateApplyMode } from "./createFreeEditor";
+import { runTemplateCommand } from "./freeTemplateCommands";
+import {
+  handleTemplateFilePicked,
+  promptSaveServerTemplate
+} from "./freeTemplateToolbarActions";
 import type { FreeGridSnap } from "./freeSnap";
 import type { useI18n } from "vue-i18n";
 
-type TFunction = ReturnType<typeof useI18n>["t"];
+export type TFunction = ReturnType<typeof useI18n>["t"];
 
 /** FreeCanvasToolbar 的完整事件表（defineEmits 与组合层 emit 调用共用同一形状） */
 export type FreeCanvasToolbarEmits = {
@@ -124,22 +128,12 @@ export function useTemplateToolbarCommands(deps: {
 
   /** 另存为团队模板：名称 + 可见性（确认 = 团队共享，取消 = 仅自己可见） */
   async function onSaveServerTemplate() {
-    const name = await askName(t("dataScreen.templateSaveServer"));
-    if (!name) return;
-    const group = await askOptionalText(
-      t("dataScreen.templateGroup"),
-      t("dataScreen.templateGroupPrompt")
-    );
-    const shared = await confirm(t("dataScreen.templateVisibilityHint"), {
-      type: "",
-      title: t("dataScreen.templateSaveServer"),
-      confirmButtonText: t("dataScreen.templateVisibilityShared"),
-      cancelButtonText: t("dataScreen.templateVisibilityPersonal")
-    });
-    emit("saveServerTemplate", {
-      name,
-      group: group ?? "",
-      visibility: shared ? "shared" : "personal"
+    await promptSaveServerTemplate({
+      t,
+      emit,
+      confirm,
+      askName,
+      askOptionalText
     });
   }
 
@@ -151,83 +145,21 @@ export function useTemplateToolbarCommands(deps: {
 
   /** 导入：读文件 → 选方式（确认 = 替换当前画布，取消 = 追加） */
   async function onFilePicked(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
-    const raw = await file.text().catch(() => "");
-    if (!raw) return;
-    const replace = await confirm(t("dataScreen.templateImportModeHint"), {
-      type: "",
-      title: t("dataScreen.templateImport"),
-      confirmButtonText: t("dataScreen.templateApplyReplace"),
-      cancelButtonText: t("dataScreen.templateApplyAppend")
-    });
-    emit("importTemplate", { raw, mode: replace ? "replace" : "append" });
+    await handleTemplateFilePicked({ t, emit, confirm }, event);
   }
 
   async function onCommand(command: string) {
-    const [action, id] = command.split(":");
-    if (!id) return;
-    if (action === "append") {
-      emit("applyTemplate", { id, mode: "append" });
-      return;
-    }
-    if (action === "replace") {
-      // 替换会覆盖当前画布内容：危险色确认 + 焦点不落确认钮（防回车误触）
-      if (
-        await confirm(t("dataScreen.templateReplaceConfirm"), {
-          title: t("dataScreen.templateMenu"),
-          confirmButtonText: t("dataScreen.templateApplyReplace"),
-          danger: true
-        })
-      ) {
-        emit("applyTemplate", { id, mode: "replace" });
-      }
-      return;
-    }
-    if (action === "rename") {
-      const name = await askName(t("dataScreen.templateRename"));
-      if (name) emit("renameTemplate", { id, name });
-      return;
-    }
-    if (action === "remove") {
-      if (
-        await confirm(t("dataScreen.templateDeleteConfirm"), {
-          title: t("dataScreen.templateDelete"),
-          danger: true
-        })
-      ) {
-        emit("removeTemplate", id);
-      }
-      return;
-    }
-    if (action === "server-rename") {
-      const name = await askName(t("dataScreen.templateRename"));
-      if (name) emit("renameServerTemplate", { id, name });
-      return;
-    }
-    if (action === "server-remove") {
-      if (
-        await confirm(t("dataScreen.templateDeleteConfirm"), {
-          title: t("dataScreen.templateDelete"),
-          danger: true
-        })
-      ) {
-        emit("removeServerTemplate", id);
-      }
-      return;
-    }
-    if (action === "versions") {
-      const target = deps.serverTemplates.value.find(item => item.id === id);
-      openVersions(id, target?.name ?? "");
-      return;
-    }
-    if (action === "server-detail") {
-      await showServerTemplateDetail(id, t);
-      return;
-    }
-    if (action === "export") emit("exportTemplate", id);
+    await runTemplateCommand(
+      {
+        t,
+        emit,
+        confirm,
+        askName,
+        openVersions,
+        serverTemplates: deps.serverTemplates
+      },
+      command
+    );
   }
 
   return {

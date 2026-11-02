@@ -43,7 +43,7 @@ test("登录策略：元数据表单渲染与保存", async ({ page }) => {
 
     await item("策略名称").locator("input").fill(name);
     await dialog.getByRole("button", { name: "保存" }).click();
-    await expect(page.locator(".el-message--success").first()).toBeVisible({
+    await expect(page.locator(".el-message--success").last()).toBeVisible({
       timeout: 15_000
     });
     await expect(page.getByRole("row", { name: new RegExp(name) })).toBeVisible(

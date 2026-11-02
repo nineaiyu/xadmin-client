@@ -37,6 +37,7 @@ const {
   filter,
   visibleTree,
   matchCount,
+  filterActive,
   checkStrictly,
   isExpandAll,
   busyPks,
@@ -71,7 +72,7 @@ const {
 const { height } = useTreeHeight(rootRef, ".menu-page__scroll");
 
 const emptyText = computed(() =>
-  matchCount.value === 0 && renderedTree.value.length === 0
+  filterActive.value && matchCount.value === 0
     ? t("systemMenu.empty.noMatch")
     : t("systemMenu.empty.noData")
 );
@@ -89,7 +90,7 @@ const emptyText = computed(() =>
         :auth="auth"
         :checked-count="checkedCount"
         :is-expand-all="isExpandAll"
-        :match-count="matchCount"
+        :match-count="filterActive ? matchCount : 0"
         :multi-mode="multiMode"
         :selected="currentRow"
         :stats="stats"

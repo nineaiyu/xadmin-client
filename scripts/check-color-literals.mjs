@@ -35,8 +35,10 @@ const PATTERNS = [
   // 函数色：rgb() / rgba() / hsl()——参数里带 var( 的是令牌消费，单独过滤
   /\brgba?\([^)]*\)/g,
   /\bhsl\([^)]*\)/g,
-  // Tailwind 调色板类：绕过语义令牌（text-fg / bg-bg-card / border-(--el-*)）
-  /(?:^|[\s"'`])(?:text|bg|border|fill|stroke)-(?:gray|slate|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d{2,3})?(?![\w-])/g
+  // Tailwind 调色板类：绕过语义令牌（text-fg / bg-bg-card / border-(--el-*)）。
+  // 变体前缀（dark: / hover: / md: 等）同样要拦：历史正则只认空白/引号前的裸类，
+  // dark:text-white / hover:bg-gray-100 会整类漏检
+  /(?:^|[\s"'`])(?:(?:[a-z-]+):)*(?:text|bg|border|fill|stroke)-(?:gray|slate|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d{2,3})?(?![\w-])/g
 ];
 
 /**

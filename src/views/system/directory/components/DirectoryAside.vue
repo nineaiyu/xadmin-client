@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { hasAuth } from "@/router/utils";
 import { isSuccess } from "@/api/types";
@@ -75,6 +75,10 @@ function loadDeptTree() {
     .then(res => {
       if (isSuccess(res) && res.data) {
         deptTree.value = handleTree(res.data.results);
+      } else if (!isSuccess(res)) {
+        message(String(res.detail || t("directory.deptLoadFailed")), {
+          type: "warning"
+        });
       }
     })
     .catch(() => message(t("directory.deptLoadFailed"), { type: "warning" }))
@@ -96,6 +100,10 @@ function loadPosts() {
     .then(res => {
       if (isSuccess(res) && res.data) {
         postOptions.value = res.data.results;
+      } else if (!isSuccess(res)) {
+        message(String(res.detail || t("directory.postLoadFailed")), {
+          type: "warning"
+        });
       }
     })
     .catch(() => message(t("directory.postLoadFailed"), { type: "warning" }))
@@ -114,7 +122,10 @@ onMounted(() => {
   if (canUseDept && !canUsePost) mode.value = "dept";
 });
 
-watch(filterText, value => {
+// 部门树随维度切换被销毁重建：切回部门视角要按当前关键字重新过滤
+watch([filterText, mode], async ([value]) => {
+  if (mode.value !== "dept") return;
+  await nextTick();
   treeRef.value?.filter(value);
 });
 
@@ -134,10 +145,13 @@ function onPostClick(item: DirectoryPostOption) {
   post.value = post.value === String(item.pk) ? "" : String(item.pk);
 }
 
-/** 节点/条目过滤：部门按名称，岗位按名称或编码 */
+/** 节点/条目过滤：部门按名称，岗位按名称或编码（大小写不敏感，与岗位口径一致） */
 function filterNode(value: string, data: Record<string, unknown>) {
-  if (!value) return true;
-  return String(data.name ?? "").includes(value);
+  return (
+    filterByKeyword([{ name: String(data.name ?? "") }], value, item => [
+      item.name
+    ]).length > 0
+  );
 }
 
 function postTitle(item: DirectoryPostOption) {

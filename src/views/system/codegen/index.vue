@@ -11,6 +11,7 @@ import {
 import { useI18n } from "vue-i18n";
 import { MagicStick, Download } from "@element-plus/icons-vue";
 import { normalizeError } from "@/utils/apiError";
+import { message } from "@/utils/message";
 import { hasAuth } from "@/router/utils";
 import { useDesignerGuard } from "@/hooks/useDesignerGuard";
 import { isSuccess } from "@/api/types";
@@ -81,6 +82,17 @@ const canAiDraft = computed(
  * （pk 恒首），未触及字段保持原序殿后——与 apply_field_overrides 的顺序语义一致。
  */
 function applyAiDraft(overrides: CodegenFieldOverride[]) {
+  const planNames = new Set(
+    (planData.value?.fields ?? []).map(row => row.name)
+  );
+  const unknown = overrides
+    .filter(row => planNames.size > 0 && !planNames.has(row.name))
+    .map(row => row.name);
+  if (unknown.length) {
+    message(t("codegen.aiDraftUnknownFields", { names: unknown.join("、") }), {
+      type: "warning"
+    });
+  }
   const draftNames = new Set(overrides.map(row => row.name));
   const byName = new Map(state.fields.map(row => [row.name, row]));
   const adopted = overrides.map(draft => ({
@@ -169,6 +181,7 @@ const {
   t,
   state,
   pendingPlanState,
+  planError,
   loadPlan
 });
 
@@ -209,9 +222,7 @@ async function handlePreview() {
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 const dirty = computed(
   () =>
-    mode.value === "single" &&
-    Boolean(state.model) &&
-    payloadSignature.value !== baselineSignature.value
+    Boolean(state.model) && payloadSignature.value !== baselineSignature.value
 );
 useDesignerGuard({ dirty, namespace: "codegen" });
 
@@ -232,8 +243,15 @@ watch(payloadSignature, () => {
   if (previewTimer) clearTimeout(previewTimer);
   previewTimer = setTimeout(() => {
     previewTimer = null;
-    if (hasPreviewed.value && autoPreview.value) void runPreview();
+    // 窗口内切到批量模式：不再发单模型预览请求
+    if (mode.value === "single" && hasPreviewed.value && autoPreview.value) {
+      void runPreview();
+    }
   }, 600);
+});
+watch(mode, () => {
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = null;
 });
 onBeforeUnmount(() => {
   if (previewTimer) clearTimeout(previewTimer);
@@ -423,7 +441,7 @@ onMounted(() => {
               {{ t("codegen.batchDownload") }}
             </el-button>
           </el-form-item>
-          <div v-if="downloadError" class="mt-2">
+          <div v-if="downloadError && mode === 'batch'" class="mt-2">
             <el-alert
               type="error"
               :closable="false"

@@ -37,13 +37,14 @@ export function useAccountRisk(selectedRows: Ref<RecordType[]>) {
     api,
     tableRef,
     onHandled: refreshStats,
-    actions: stats.value?.actions
+    actions: () => stats.value?.actions
   });
   const { openDetail } = useRiskDetail();
   refreshStats();
 
   /** 统计 chip 快捷筛选：按分组映射到对应搜索字段，空对象=清除筛选 */
-  const { beforeSearchSubmit, onStatsChip } = useRiskQuickFilter(tableRef);
+  const { beforeSearchSubmit, onStatsChip, quickFilter, clearQuickFilter } =
+    useRiskQuickFilter(tableRef);
 
   /** 异步巡检：投递后轮询进度，终态刷新列表与统计 */
   const {
@@ -79,6 +80,8 @@ export function useAccountRisk(selectedRows: Ref<RecordType[]>) {
     refreshStats,
     beforeSearchSubmit,
     onStatsChip,
+    quickFilter,
+    clearQuickFilter,
     tableBarButtonsProps,
     operationButtonsProps,
     scanning,

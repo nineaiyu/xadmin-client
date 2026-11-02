@@ -99,9 +99,9 @@ export function useMenuMutations({
 
   /** 提交排序：前序 pk 列表（后端单条 SQL 落库 rank） */
   const submitRank = async (pks: Array<number | string>) => {
-    const res = await api.rank(pks);
+    const res = await api.rank(pks).catch(normalizeError);
     if (!isSuccess(res)) {
-      message(res.detail, { type: "error" });
+      message(res.detail || t("results.failed"), { type: "error" });
       return false;
     }
     return true;
