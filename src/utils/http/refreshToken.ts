@@ -16,6 +16,23 @@ export type RefreshOutcome =
  */
 let inflight: Promise<RefreshOutcome> | null = null;
 
+/**
+ * 从拒绝原因提取可读文案：http 层对 4xx/5xx 以响应体对象收尾（`{code, detail}`），
+ * 直接 `String(error)` 只会得到 `[object Object]`。优先取业务 detail，其次
+ * `Error.message`；无法识别的形态归一为空串，交由调用方决定是否提示。
+ */
+function resolveFailureDetail(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const detail = (error as { detail?: unknown }).detail;
+    if (typeof detail === "string") return detail;
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return "";
+}
+
 export function refreshAccessToken(): Promise<RefreshOutcome> {
   if (inflight) return inflight;
   const refresh = getRefreshToken();
@@ -33,7 +50,7 @@ export function refreshAccessToken(): Promise<RefreshOutcome> {
     })()
       .catch(error => ({
         ok: false as const,
-        detail: String(error?.message ?? error),
+        detail: resolveFailureDetail(error),
         error
       }))
       .finally(() => {

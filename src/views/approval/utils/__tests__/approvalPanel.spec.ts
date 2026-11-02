@@ -4,6 +4,7 @@ import {
   approverText,
   batchFailedDetail,
   canActRow,
+  currentAssigneeNames,
   isChainRow
 } from "../approvalHelpers";
 
@@ -54,6 +55,26 @@ describe("approverText", () => {
   it("renders flat rows with the actual approver username", () => {
     expect(approverText({ approver: { username: "carol" } }, t)).toBe("carol");
     expect(approverText({}, t)).toBe("approval.pendingApprover");
+  });
+});
+
+describe("currentAssigneeNames", () => {
+  it("maps username with pk fallback and drops empty entries", () => {
+    expect(
+      currentAssigneeNames({
+        current_assignees: [
+          { username: "alice" },
+          { pk: 2 },
+          { username: "" },
+          {}
+        ]
+      })
+    ).toEqual(["alice", 2]);
+  });
+
+  it("returns empty list for flat rows", () => {
+    expect(currentAssigneeNames({})).toEqual([]);
+    expect(currentAssigneeNames(undefined)).toEqual([]);
   });
 });
 

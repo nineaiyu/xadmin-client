@@ -1,4 +1,4 @@
-import { h, type Ref } from "vue";
+import { computed, h, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
 import { ElButton, ElTag } from "element-plus";
 import {
@@ -33,10 +33,15 @@ export function useDeliveryColumns({
           filterable: true,
           clearable: true
         };
-        column.options = events.value.map(item => ({
-          label: item.label,
-          value: item.key
-        }));
+        // 框架下发的 options 是 computed ref；直接赋普通数组会命中 reactive 的
+        // 「旧值是 readonly ref」分支，赋值被静默丢弃并告警。这里同样包一层
+        // computed：事件目录异步到达后下拉选项自动刷新
+        column.options = computed(() =>
+          events.value.map(item => ({
+            label: item.label,
+            value: item.key
+          }))
+        );
       }
       return column;
     });

@@ -63,6 +63,30 @@ const clickApproverLink = async (row: RecordType) => {
   await flushPromises();
 };
 
+describe("当前级候选人列渲染", () => {
+  it("数组值拼显示名，空值占位（不再降级为 JSON 文本）", () => {
+    const tableRef = ref();
+    const { listColumnsFormat } = useApprovalPanel("pending", tableRef);
+    const [column] = listColumnsFormat([
+      { _column: { key: "current_assignees" } }
+    ]);
+    const render = (row: RecordType) =>
+      column!.cellRenderer!({
+        row,
+        index: 0,
+        props: {},
+        attrs: {},
+        column: {},
+        $index: 0
+      } as TableColumnRenderer);
+
+    expect(
+      render({ current_assignees: [{ pk: 1, username: "alice" }, { pk: 2 }] })
+    ).toBe("alice、2");
+    expect(render({ current_assignees: [] })).toBe("—");
+  });
+});
+
 describe("审批进度弹窗详情拉取失败提示", () => {
   it("业务码非成功时提示且不打开弹窗", async () => {
     mocks.retrieve.mockResolvedValue({ code: 500, data: null });

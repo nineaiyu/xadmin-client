@@ -13,9 +13,12 @@
  */
 export function resolveComponentKey(
   target: string | undefined,
-  keys: string[]
+  keys: string[],
+  isDirectory = false
 ): number {
-  if (!target) return -1;
+  // 目录节点（含子路由）自身不渲染页面：交给 redirect 与拍平后的子记录，
+  // 否则空 component 会退化为 path，被下方子串兜底误绑到某个子页面。
+  if (!target || isDirectory) return -1;
   const normalized = target.replace(/^@\//, "").replace(/^\/+/, "");
   const base = target.startsWith("/src/")
     ? target

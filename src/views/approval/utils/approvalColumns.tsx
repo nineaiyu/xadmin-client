@@ -7,7 +7,11 @@ import {
   type PageTableColumn
 } from "@/components/RePlusPage";
 import { statusTagProps } from "@/utils/dict";
-import { APPROVAL_STATUS_TAG_TYPE, approverText } from "./approvalHelpers";
+import {
+  APPROVAL_STATUS_TAG_TYPE,
+  approverText,
+  currentAssigneeNames
+} from "./approvalHelpers";
 
 type TFunction = ReturnType<typeof useI18n>["t"];
 
@@ -48,6 +52,12 @@ export function useApprovalColumns({
             },
             () => approverText(row, t)
           );
+      },
+      // 当前级候选人列：值是 [{pk, username}] 数组，框架无该类型的列表渲染器，
+      // 不接管会降级成 JSON 文本；这里按「、」拼显示名，空值占位
+      current_assignees: column => {
+        column.cellRenderer = ({ row }) =>
+          currentAssigneeNames(row).join("、") || "—";
       }
     });
 

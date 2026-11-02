@@ -38,7 +38,7 @@ vi.mock("@/api/system/notice", () => ({
 }));
 
 vi.mock("../useNoticeReadColumns", () => ({
-  useNoticeReadColumns: () => ({ listColumnsFormat: columnsFormat })
+  useNoticeReadColumns: vi.fn(() => ({ listColumnsFormat: columnsFormat }))
 }));
 
 vi.mock("../noticeReadDetail", () => ({ openNoticeReadDetail: vi.fn() }));
@@ -46,11 +46,15 @@ vi.mock("../noticeReadRemove", () => ({
   createNoticeReadRemove: () => vi.fn()
 }));
 
+import { useNoticeReadColumns } from "../useNoticeReadColumns";
 import { useNoticeRead } from "../hook";
 
 describe("useNoticeRead 列接线", () => {
-  it("listColumnsFormat 透传到页面（防止 notice_info 退回 JSON 渲染）", () => {
+  it("列组合式函数在 setup 同步执行（不延迟到 columns 回调）", () => {
     const page = useNoticeRead();
+    // useNoticeReadColumns 内部有 inject / onBeforeMount：延迟到列格式化回调
+    // 才调用会脱离组件实例，必须在本 hook 同步执行
+    expect(useNoticeReadColumns).toHaveBeenCalledTimes(1);
     expect(page.listColumnsFormat).toBeTypeOf("function");
 
     const column = { _column: { key: "notice_info" } };

@@ -23,12 +23,18 @@ type Translate = (key: string, params?: Record<string, unknown>) => string;
  * 审批列表文案（纯函数，自 useApprovalPanel 抽出便于单测直测）。
  */
 
+/** 当前级候选人显示名：`current_assignees` 为 `[{pk, username}]` 数组，空值项剔除 */
+export const currentAssigneeNames = (
+  row?: RecordType
+): Array<string | number> =>
+  ((row?.current_assignees ?? []) as Array<RecordType>)
+    .map(item => item?.username ?? item?.pk)
+    .filter((name): name is string | number => Boolean(name));
+
 /** 「审批人」列文案：多级链显示当前级候选人；扁平单显示实际审批人（未处理时占位说明） */
 export const approverText = (row: RecordType | undefined, t: Translate) => {
   if (isChainRow(row)) {
-    const names = ((row?.current_assignees ?? []) as Array<RecordType>)
-      .map(item => item?.username ?? item?.pk)
-      .filter(Boolean);
+    const names = currentAssigneeNames(row);
     return `${t("approval.levelNo", { n: row?.current_level })}：${
       names.join("、") || t("approval.pendingApprover")
     }`;

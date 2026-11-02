@@ -89,4 +89,25 @@ describe("refreshAccessToken 单飞原语", () => {
       expect(outcome.error).toBe(error);
     }
   });
+
+  it("http 层以响应体对象拒绝时取业务 detail（不再渲染 [object Object]）", async () => {
+    getRefreshTokenMock.mockReturnValue("refresh-1");
+    const rejection = { code: 40002, status: 401, detail: "令牌无效或已过期" };
+    refreshTokenApiMock.mockRejectedValue(rejection);
+    const outcome = await refreshAccessToken();
+    expect(outcome).toMatchObject({
+      ok: false,
+      detail: "令牌无效或已过期",
+      error: rejection
+    });
+  });
+
+  it("无法识别拒绝值形态时 detail 归一为空串", async () => {
+    getRefreshTokenMock.mockReturnValue("refresh-1");
+    refreshTokenApiMock.mockRejectedValue({ code: 40002 });
+    await expect(refreshAccessToken()).resolves.toMatchObject({
+      ok: false,
+      detail: ""
+    });
+  });
 });

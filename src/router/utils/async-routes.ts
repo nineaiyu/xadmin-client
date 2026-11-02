@@ -237,11 +237,12 @@ function addAsyncRoutes(
         typeof rawComponent === "string" && rawComponent
           ? rawComponent
           : String(v.path ?? "");
-      const index = resolveComponentKey(target, modulesRoutesKeys);
       // 目录/分组节点（有子菜单）自身不带页面，页面完全由子路由渲染：
       // 后端对这类节点可能不下发 component，也可能残留历史脏值（如 /system/notice/ 上
-      // 挂着 system/notify/index），两种情况都不是「组件漏配」，开发态不报错
+      // 挂着 system/notify/index），两种情况都不是「组件漏配」，且不应参与路径解析
+      // （空 component 会退化为 path，被包含匹配误绑到目录内第一个文件）
       const hasChildren = Boolean(v.children?.length);
+      const index = resolveComponentKey(target, modulesRoutesKeys, hasChildren);
       if (index === -1 && !hasChildren) {
         // 叶子菜单组件未匹配：生产态也要留痕（否则用户只看到空白页，无任何诊断线索）
         console.error(

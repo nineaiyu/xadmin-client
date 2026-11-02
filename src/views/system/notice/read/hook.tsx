@@ -16,17 +16,6 @@ export function useNoticeRead() {
     api: noticeReadApi,
     localeName: "noticeRead",
     extraAuth: ["state", "allRead"],
-    // 列格式化必须走工厂的 columns 选项：buttons 回调只透传按钮属性，
-    // 在其中返回 listColumnsFormat 会被丢弃，导致 notice_info 退回 JSON 渲染。
-    columns: ({ t, api, auth, tableRef, columns }) => {
-      const { listColumnsFormat } = useNoticeReadColumns({
-        t,
-        api,
-        auth,
-        tableRef
-      });
-      return listColumnsFormat(columns);
-    },
     buttons: ({ t, api, auth, tableRef }) => {
       // 能力位快照：本 hook 末尾会把 page.auth.destroy 关掉（避免框架默认
       // 「删除」入口与「移除」重叠），而函数型 show 逐次求值读实时值——
@@ -88,9 +77,18 @@ export function useNoticeRead() {
       };
     }
   });
+  // 列渲染依赖 useRouter / usePublicHooks（内部有 inject 与 onBeforeMount），
+  // 必须在 setup 同步执行；defineListPage 的 columns 回调延迟到列表元数据返回
+  // 后才触发，放在里面会告警「no active component instance」。
+  const { listColumnsFormat } = useNoticeReadColumns({
+    t: page.t,
+    api: page.api,
+    auth: page.auth,
+    tableRef: page.tableRef
+  });
   // 默认删除/批量删除与「移除」语义重叠且确认文案是「删除」：
   // 关闭框架默认入口，只保留带明确确认的「移除」
   page.auth.destroy = false;
   page.auth.batchDestroy = false;
-  return page;
+  return { ...page, listColumnsFormat };
 }

@@ -392,14 +392,14 @@ class PureHttp {
                           config.headers!["Authorization"] = formatToken(token);
                           PureHttp.flushPendingRequests(token);
                         } else {
-                          // 刷新被拒 / 网络异常：提示一次并让排队请求以失败收尾
-                          const error = outcome.error;
-                          const detail =
-                            outcome.detail ||
-                            (error instanceof Error
-                              ? error.message
-                              : String(error ?? ""));
-                          if (detail) message(detail, { type: "warning" });
+                          // 刷新失败：http 层已负责提示（401 策略带业务 detail，
+                          // 网络异常走 send 兜底）；这里只补「HTTP 200 + 业务码
+                          // 失败」这一种没有 http 层提示的路径，避免同一次失败
+                          // 连弹两次（旧实现在此重算文案，对象会被渲染成
+                          // [object Object]）。排队请求统一以失败收尾并跳登录。
+                          if (!outcome.error && outcome.detail) {
+                            message(outcome.detail, { type: "warning" });
+                          }
                           PureHttp.flushPendingRequests(null);
                           removeToken();
                           redirectToLogin();

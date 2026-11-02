@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { resolveComponentKey } from "./resolve-component";
 
@@ -61,6 +61,14 @@ describe("resolveComponentKey", () => {
     expect(
       resolveComponentKey("/src/extensions/demo-portal/index.vue", KEYS)
     ).toBe(KEYS.indexOf("/src/extensions/demo-portal/index.vue"));
+  });
+
+  it("目录节点不解析页面组件（避免 path 兜底误绑子页面）", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(resolveComponentKey("/settings", KEYS, true)).toBe(-1);
+    expect(resolveComponentKey("settings/security/index", KEYS, true)).toBe(-1);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("不存在与空值返回 -1", () => {
