@@ -105,7 +105,7 @@ const moduleColumns = computed<ReadonlyColumn[]>(() => [
     <template v-else>
       <el-card v-loading="loading" shadow="never" class="mb-4">
         <div class="flex flex-wrap items-center gap-4">
-          <div class="text-base font-medium">
+          <div class="text-md font-medium">
             {{ t("systemModule.currentPreset") }}：
             <el-tag type="primary" effect="dark">{{ data?.preset }}</el-tag>
           </div>

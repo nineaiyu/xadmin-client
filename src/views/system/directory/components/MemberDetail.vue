@@ -34,7 +34,7 @@ function copy(text: string) {
         {{ initial }}
       </el-avatar>
       <div class="min-w-0">
-        <div class="truncate text-base font-medium">
+        <div class="truncate text-md font-medium">
           {{ row.nickname || row.username }}
         </div>
         <div class="mt-0.5 truncate text-sm text-(--el-text-color-secondary)">

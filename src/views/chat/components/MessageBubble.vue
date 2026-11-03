@@ -269,7 +269,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
               link
               type="primary"
               size="small"
-              class="text-base opacity-0 transition-opacity group-hover:opacity-100"
+              class="text-md opacity-0 transition-opacity group-hover:opacity-100"
               :aria-label="t('chat.react')"
               :title="t('chat.react')"
               data-testid="chat-react"

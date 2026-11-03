@@ -115,12 +115,14 @@
      等全部数值间距类由它派生（改 --space-1 即全站间距类同步） */
   --spacing: var(--space-1);
 
-  /* 字号：xs/lg/xl/2xl 与 Tailwind 默认逐档同值；2xs/md 为项目独有档（新增工具类）。
-     sm/base 两档值不同（项目 13/14px vs Tailwind 14/16px）——保留 Tailwind 默认，
-     不改全站既有 text-sm/text-base 的渲染：页面排版走 Tailwind 梯度、
-     组件排版走 --font-size-* 阶梯，两套语义各有归属 */
+  /* 字号：全站单一阶梯（与 Element Plus / --font-size-* 对齐）——
+     text-sm=13px、text-base=14px 覆写 Tailwind 缺省（14/16px），
+     消灭「页面 14px 与组件 13px 并存」的双轨；需要 16px 用 text-md。
+     2xs/md 为项目独有档；xs/lg/xl/2xl 与 Tailwind 缺省逐档同值。 */
   --text-2xs: var(--font-size-2xs);
   --text-xs: var(--font-size-xs);
+  --text-sm: var(--font-size-sm);
+  --text-base: var(--font-size-base);
   --text-md: var(--font-size-md);
   --text-lg: var(--font-size-lg);
   --text-xl: var(--font-size-xl);
@@ -191,4 +193,47 @@
 
 @utility animate-scale-bounce {
   animation: pure-scale-bounce var(--duration-base) var(--ease-standard);
+}
+
+/* 布局面板（贴边分栏 / 侧栏面板 / 整页壳）：「无内边距的卡片壳」——与内容卡
+   同源的底色 / 描边 / 圆角 / 投影，但不带 el-card 的内边距与 hover 上浮。
+   内容卡唯一形态是 el-card（.app-card 加 hover 上浮）；面板一律用本类，
+   禁止再各自复制 border + radius + shadow 三行。 */
+@utility app-pane {
+  background: hsl(var(--bg-card));
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* 自绘可点元素的按下反馈：点击时 0.98 微缩，hover 色系过渡走默认令牌时长 */
+@utility pressable {
+  cursor: pointer;
+  transition:
+    transform var(--duration-instant) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* 减弱动效偏好：卡片上浮 / 按下缩放降级为纯颜色反馈（ CountTo 等 JS 动画
+   由组件自查 prefers-reduced-motion ） */
+@media (prefers-reduced-motion: reduce) {
+  .el-card.app-card {
+    transition: box-shadow var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .pressable {
+    transition: background-color var(--duration-fast) var(--ease-standard);
+
+    &:active {
+      transform: none;
+    }
+  }
 }

@@ -50,7 +50,7 @@ const defaultProps = {
 };
 const buttonClass = computed(() => {
   return [
-    "h-[20px]!",
+    "h-5!",
     "text-sm!",
     "reset-margin",
     "text-(--el-text-color-regular)!",
@@ -124,7 +124,8 @@ watch(
     :style="
       props.compact ? undefined : { minHeight: DESKTOP_CONTAINER_MIN_HEIGHT }
     "
-    class="user-tree-panel bg-bg-card overflow-hidden relative"
+    class="user-tree-panel overflow-hidden relative"
+    :class="props.compact ? '' : 'app-pane'"
   >
     <div class="flex items-center h-8.5">
       <el-input
@@ -211,14 +212,8 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-/* 面板卡片化：与右侧列表（RePlusPage 搜索卡/表格卡）同一张「卡片纸」，
-   分栏两侧观感一致；圆角/描边/阴影取设计令牌 */
-.user-tree-panel {
-  border: var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-}
-
+/* 面板壳取 app-pane 工具类（compact 弹层模式由父级提供壳）：与右侧列表
+   （RePlusPage 搜索卡/表格卡）同一张「卡片纸」，分栏两侧观感一致 */
 :deep(.el-divider) {
   margin: 0;
 }
@@ -241,7 +236,7 @@ watch(
 .user-tree-label {
   display: flex;
   flex: 1;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   min-width: 0;
   height: 100%;
@@ -254,7 +249,7 @@ watch(
   flex-shrink: 0;
   min-width: 18px;
   height: 16px;
-  padding: 0 5px;
+  padding: 0 var(--space-1);
   font-size: var(--font-size-2xs);
   line-height: 16px;
   color: var(--el-text-color-secondary);

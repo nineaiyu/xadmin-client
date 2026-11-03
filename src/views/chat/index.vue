@@ -155,7 +155,7 @@ async function recall(item: ChatMessageItem) {
 <template>
   <div
     ref="pageRef"
-    class="chat-page flex overflow-hidden bg-bg-card"
+    class="chat-page app-pane flex overflow-hidden"
     :style="{ height: `${panelHeight}px`, minHeight: `${panelMinHeight}px` }"
     data-testid="chat-page"
   >
@@ -230,12 +230,3 @@ async function recall(item: ChatMessageItem) {
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-/* 整页容器接入全局卡片体系（见 style/appearance.scss）：与列表页卡片、通讯录同一观感 */
-.chat-page {
-  border: var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-}
-</style>

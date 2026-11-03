@@ -6,7 +6,7 @@
 
 .el-breadcrumb__inner,
 .el-breadcrumb__inner a {
-  font-weight: 400 !important;
+  font-weight: var(--font-weight-normal) !important;
 }
 
 .el-dropdown-menu {
@@ -22,7 +22,7 @@
 
 /* 重置 el-button 中 icon 的 margin */
 .reset-margin [class*="el-icon"] + span {
-  margin-left: 2px !important;
+  margin-left: var(--space-0-5) !important;
 }
 
 /* 自定义 popover 的类名 */
@@ -43,12 +43,12 @@
 
 .pure-dialog {
   .el-dialog__header.show-close {
-    padding-right: 16px;
+    padding-right: var(--space-4);
   }
 
   .el-dialog__headerbtn {
-    top: 16px;
-    right: 12px;
+    top: var(--space-4);
+    right: var(--space-3);
     width: 24px;
     height: 24px;
   }
@@ -148,12 +148,10 @@
   }
 
   .el-dialog__footer {
-    width: calc(100% + 32px);
-    padding: 10px 20px;
-    margin: auto -16px -16px;
-    box-shadow:
-      0 -1px 0 0 hsl(var(--border-strong)),
-      0 -3px 6px 0 hsl(var(--fg) / 12%);
+    width: calc(100% + var(--space-8));
+    padding: var(--space-2-5) var(--space-5);
+    margin: auto calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+    box-shadow: var(--shadow-footer-edge);
   }
 }
 

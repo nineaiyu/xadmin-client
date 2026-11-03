@@ -149,8 +149,8 @@ function openDetail(row: DirectoryMember) {
     class="directory-members bg-bg-card flex flex-col overflow-hidden"
     :class="
       compact
-        ? 'max-h-150 rounded-lg border border-(--el-border-color-light)'
-        : 'directory-desktop'
+        ? 'max-h-150 rounded-lg border border-border-light'
+        : 'directory-desktop app-pane'
     "
   >
     <!-- 工具条：关键字搜索 + 总数 + 视图切换 -->
@@ -404,17 +404,14 @@ function openDetail(row: DirectoryMember) {
 .directory-desktop {
   height: calc(100vh - 141px);
 
-  /* 卡片化：与侧栏及全局卡片体系同一观感（圆角/描边/阴影取设计令牌） */
-  border: var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  /* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源） */
 }
 
 .member-card {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
-  padding: 12px;
+  padding: var(--space-3);
   overflow: hidden;
   text-align: left;
   cursor: pointer;
@@ -423,16 +420,24 @@ function openDetail(row: DirectoryMember) {
   border-radius: var(--radius-lg);
   transition:
     border-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-instant) var(--ease-standard);
 
   &:hover {
     border-color: var(--el-color-primary-light-5);
     box-shadow: var(--el-box-shadow-lighter);
   }
+
+  &:active {
+    transform: scale(0.99); // 按下微缩反馈
+
+    @media (prefers-reduced-motion: reduce) {
+      transform: none;
+    }
+  }
 }
 
-// 岗位标签宽约束：flex 单元格内标签不收缩且不裁剪时长岗位名会溢出到相邻列，
-// 统一限制在单元格宽度内并按省略号截断（全名由 title 兜底）
+// 岗位标签宽约束：flex 单元格内标签按省略号截断（全名由 title 兜底）
 .member-card,
 .member-row {
   :deep(.el-tag) {
@@ -464,12 +469,12 @@ function openDetail(row: DirectoryMember) {
 
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
 .member-head {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-light);
@@ -477,7 +482,7 @@ function openDetail(row: DirectoryMember) {
 
 .member-row {
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   text-align: left;
   cursor: pointer;
   background: transparent;

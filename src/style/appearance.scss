@@ -48,8 +48,8 @@
 
     &::before {
       position: absolute;
-      top: 8px;
-      bottom: 8px;
+      top: var(--space-2);
+      bottom: var(--space-2);
       left: 0;
       width: 3px;
       content: "";
@@ -98,4 +98,41 @@
 /* 只改常态文字；hover / active 保持 EP 的「主色底 + 白字」高对比组合 */
 .el-button.el-button--primary.is-plain {
   --el-button-text-color: var(--el-color-primary-dark-2);
+}
+
+/* ================ 数字排版 ================
+   表格单元格的数字列（ID / 次数 / 大小）刷新或横向滚动时，等宽数字避免列宽
+   跳动与逐行错位；统计数值组件同理。 */
+.el-table,
+.el-statistic {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================ 暗色层次（elevated 顶部高光） ================
+   暗色下阴影与亮色同值（见 tokens/semantic.scss），卡片 / 弹层这类抬升面
+   在原有投影上叠加一条顶部 1px 内高光，用「边缘受光」拉开与背景的层次。 */
+html.dark {
+  .el-card {
+    box-shadow:
+      var(--shadow-md),
+      inset 0 1px 0 hsl(var(--fg) / 5%);
+  }
+
+  .el-card.app-card:hover {
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 0 hsl(var(--fg) / 5%);
+  }
+
+  .el-dialog {
+    box-shadow:
+      var(--el-box-shadow),
+      inset 0 1px 0 hsl(var(--fg) / 5%);
+  }
+
+  .el-drawer {
+    box-shadow:
+      var(--el-box-shadow-dark),
+      inset 0 1px 0 hsl(var(--fg) / 5%);
+  }
 }

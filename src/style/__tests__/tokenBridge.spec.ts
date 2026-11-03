@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
  * - 引用的令牌必须在 tokens 层（primitives/semantic/ep-bridge/presets）真实定义，
  *   令牌改名/删除而映射未同步即失败；
  * - 映射清单与预期逐项一致（防误删导致工具类悄悄退回 Tailwind 默认尺度）。
- * 另守护「差异档保留 Tailwind 默认」的口径：text-sm / text-base / 阴影三档不得被覆盖。
+ * 字号已单轨化：text-sm/text-base 覆写为项目阶梯（13/14px）；
+ * 阴影三档仍保留 Tailwind 默认（项目阴影走 --shadow-* 令牌，不进命名空间）。
  */
 describe("Tailwind 令牌桥接（@theme inline 映射）", () => {
   const read = (path: string) =>
@@ -40,6 +41,8 @@ describe("Tailwind 令牌桥接（@theme inline 映射）", () => {
     "--spacing",
     "--text-2xs",
     "--text-xs",
+    "--text-sm",
+    "--text-base",
     "--text-md",
     "--text-lg",
     "--text-xl",
@@ -87,16 +90,16 @@ describe("Tailwind 令牌桥接（@theme inline 映射）", () => {
     }
   });
 
-  it("差异档保留 Tailwind 默认（text-sm/text-base 与阴影三档不被覆盖）", () => {
+  it("阴影三档保留 Tailwind 默认（不被映射块覆盖）", () => {
     const properties = new Set(mappings.map(item => item.property));
-    for (const kept of [
-      "--text-sm",
-      "--text-base",
-      "--shadow-sm",
-      "--shadow-md",
-      "--shadow-lg"
-    ]) {
+    for (const kept of ["--shadow-sm", "--shadow-md", "--shadow-lg"]) {
       expect(properties.has(kept), `${kept} 不应出现在映射块中`).toBe(false);
     }
+  });
+
+  it("字号单轨：text-sm/text-base 映射到项目阶梯（13/14px）", () => {
+    const map = new Map(mappings.map(item => [item.property, item.token]));
+    expect(map.get("--text-sm")).toBe("--font-size-sm");
+    expect(map.get("--text-base")).toBe("--font-size-base");
   });
 });

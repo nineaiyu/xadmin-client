@@ -41,7 +41,7 @@ const {
     >
       <IconifyIconOffline
         :icon="Info"
-        class="shrink-0 text-base text-(--el-color-primary)"
+        class="shrink-0 text-md text-(--el-color-primary)"
       />
       <span>{{ t("apiApp.tip") }}</span>
     </div>

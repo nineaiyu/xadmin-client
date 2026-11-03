@@ -166,8 +166,8 @@ function postTitle(item: DirectoryPostOption) {
     class="directory-aside bg-bg-card flex flex-col overflow-hidden"
     :class="
       compact
-        ? 'max-h-90 rounded-lg border border-(--el-border-color-light)'
-        : 'directory-desktop'
+        ? 'max-h-90 rounded-lg border border-border-light'
+        : 'directory-desktop app-pane'
     "
   >
     <!-- 浏览维度切换 -->
@@ -298,10 +298,7 @@ function postTitle(item: DirectoryPostOption) {
 .directory-desktop {
   height: calc(100vh - 141px);
 
-  /* 卡片化：与列表区及全局卡片体系同一观感（圆角/描边/阴影取设计令牌） */
-  border: var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  /* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源） */
 }
 
 .directory-mode {
@@ -316,11 +313,11 @@ function postTitle(item: DirectoryPostOption) {
 
 .directory-item {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   width: 100%;
   height: 30px;
-  padding: 0 8px;
+  padding: 0 var(--space-2);
   overflow: hidden;
   font-size: var(--font-size-sm);
   color: var(--el-text-color-regular);
@@ -351,7 +348,7 @@ function postTitle(item: DirectoryPostOption) {
   flex-shrink: 0;
   min-width: 18px;
   height: 16px;
-  padding: 0 5px;
+  padding: 0 var(--space-1);
   font-size: var(--font-size-2xs);
   line-height: 16px;
   color: var(--el-text-color-secondary);
