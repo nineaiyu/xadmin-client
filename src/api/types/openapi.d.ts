@@ -3501,7 +3501,7 @@ export interface paths {
          *
          *     ``filters``：请求级行过滤（卡片联动），与数据集定义 filters 叠加，
          *     校验口径同 ``execute``（``validate_filters``：字段白名单 + op 白名单 + 类型
-         *     + 浏览者字段权限收敛）。
+         *     + 浏览者字段权限收敛）。语句超时同样由执行入口统一设置。
          */
         post: operations["api_dataset_datasets_aggregate_create"];
         delete?: never;
@@ -3530,6 +3530,9 @@ export interface paths {
          *     ``filters``：请求级行过滤（卡片下钻），与数据集定义 filters 叠加，
          *     校验口径同保存侧（``validate_filters``：字段白名单 + op 白名单 + 类型），
          *     并按浏览者字段权限收敛（无该列权限即 1001，防隐藏列布尔预言机）。
+         *
+         *     语句超时由执行入口 ``execute_dataset`` 统一设置（DATASET_QUERY_TIMEOUT_MS，
+         *     与 WS 推送 / Celery 报表同口径），视图层不再单独设置。
          */
         post: operations["api_dataset_datasets_execute_create"];
         delete?: never;
