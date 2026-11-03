@@ -181,6 +181,13 @@ interface RecycleBinColumn {
 interface RePlusPageProps {
   api: Partial<BaseApi>;
   title?: string;
+  /**
+   * 页面头（默认开）：路由标题 20/600 + 可选辅助说明。嵌入式复用（弹窗内列表等）
+   * 传 false 关闭；副标题经 pageSubtitle 传入（无则只渲染标题行）。
+   */
+  pageHead?: boolean;
+  /** 页面头副标题（页面口径说明 / 数据范围），空串不渲染 */
+  pageSubtitle?: string;
   auth: Partial<ApiAuthProps>;
   /**
    * 四态策略：framework（默认）在无 list 权限时渲染拒绝态、请求失败时渲染

@@ -191,6 +191,24 @@
     color var(--duration-fast) var(--ease-standard);
 }
 
+/* 表格工具栏动作项统一热区（与顶栏 navbar-action 同口径，28px 档）：
+   图标本身保持 16px，热区用 padding 撑开，hover 底色圆形 */
+@utility table-bar-action {
+  @apply inline-flex cursor-pointer items-center justify-center select-none;
+  box-sizing: border-box;
+  width: var(--tablebar-action-size);
+  height: var(--tablebar-action-size);
+  padding: var(--space-1-5);
+  border-radius: var(--radius-full);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    background: hsl(var(--fill-muted));
+  }
+}
+
 @utility animate-scale-bounce {
   animation: pure-scale-bounce var(--duration-base) var(--ease-standard);
 }
@@ -203,7 +221,7 @@
   background: hsl(var(--bg-card));
   border: var(--card-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
 }
 
 /* 自绘可点元素的按下反馈：点击时 0.98 微缩，hover 色系过渡走默认令牌时长 */

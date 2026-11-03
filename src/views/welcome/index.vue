@@ -9,7 +9,7 @@ import ReEmpty from "@/components/ReEmpty";
 import { ChartBar, ChartClock, ChartLine, ChartRound } from "./components";
 import { AiDailyReportCard } from "./components";
 import Segmented from "@/components/ReSegmented";
-import { epColor, epColorLight, type EpColorName } from "@/utils/chartTheme";
+import { epColor } from "@/utils/chartTheme";
 import { useDashboard } from "@/views/welcome/hook";
 import dayjs from "dayjs";
 
@@ -39,22 +39,24 @@ const {
 } = useDashboard();
 let curWeek = ref(1);
 
-/** 操作日志时间线节点色：按 EP 语义色循环（原为随机渐变，刷新观感不一致且不跟主题）；
+/** 操作日志时间线节点色：首条主色标记「最新」，其余禁用灰——五色循环无信息含义；
     组件实例一次性创建——渲染期重复创建会让节点在每次重渲染时闪动 */
-const timelineTones: EpColorName[] = [
-  "primary",
-  "success",
-  "warning",
-  "danger",
-  "info"
-];
-const timelineIcons = timelineTones.map(tone =>
-  markRaw(useRenderFlicker({ background: `var(--el-color-${tone})` }))
+const timelineIconLatest = markRaw(
+  useRenderFlicker({ background: "var(--el-color-primary)" })
 );
+const timelineIconRest = markRaw(
+  useRenderFlicker({ background: "var(--el-text-color-disabled)" })
+);
+const timelineIconOf = (index: number) =>
+  index === 0 ? timelineIconLatest : timelineIconRest;
 </script>
 
 <template>
   <div>
+    <div class="page-head">
+      <h2 class="page-head__title">{{ t("welcome.title") }}</h2>
+      <p class="page-head__subtitle">{{ t("welcome.subtitle") }}</p>
+    </div>
     <el-alert
       v-if="loadFailed"
       type="error"
@@ -92,20 +94,14 @@ const timelineIcons = timelineTones.map(tone =>
       >
         <el-card class="app-card line-card group" shadow="never">
           <div class="flex justify-between">
-            <span class="text-md font-medium">
-              {{ item.name }}
-            </span>
-            <div
-              :style="{ backgroundColor: epColorLight(item.tone) }"
-              class="size-8 flex-c rounded-md group-hover:[&>svg]:animate-scale-bounce"
-            >
-              <IconifyIconOffline
-                :color="epColor(item.tone)"
-                :icon="item.icon"
-                width="18"
-                height="18"
-              />
-            </div>
+            <span class="text-sm text-fg-muted">{{ item.name }}</span>
+            <IconifyIconOffline
+              :color="epColor(item.tone)"
+              :icon="item.icon"
+              width="20"
+              height="20"
+              class="group-hover:animate-scale-bounce"
+            />
           </div>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
@@ -113,11 +109,11 @@ const timelineIcons = timelineTones.map(tone =>
                 v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value"
-                :fontSize="'var(--display-size-md)'"
+                :fontSize="'var(--display-size-stat)'"
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
-              <p class="font-medium text-(--success-text)">
+              <p class="text-xs font-medium text-(--success-text)">
                 {{ item.percent }}
               </p>
             </div>
@@ -153,7 +149,7 @@ const timelineIcons = timelineTones.map(tone =>
       >
         <el-card class="app-card line-card" shadow="never">
           <div class="flex justify-between">
-            <span class="text-md font-medium"> {{ item.name }}</span>
+            <span class="text-sm text-fg-muted">{{ item.name }}</span>
           </div>
           <div class="flex justify-between items-start mt-3">
             <div class="w-1/2">
@@ -161,11 +157,11 @@ const timelineIcons = timelineTones.map(tone =>
                 v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[1]"
-                :fontSize="'var(--display-size-md)'"
+                :fontSize="'var(--display-size-stat)'"
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
-              <p class="text-sm font-medium text-(--success-text)">
+              <p class="text-xs font-medium text-(--success-text)">
                 {{ t("welcome.registerUser") }}
               </p>
             </div>
@@ -174,7 +170,7 @@ const timelineIcons = timelineTones.map(tone =>
                 v-if="!loading"
                 :duration="item.duration"
                 :endVal="item.value[2]"
-                :fontSize="'var(--display-size-md)'"
+                :fontSize="'var(--display-size-stat)'"
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
@@ -189,7 +185,7 @@ const timelineIcons = timelineTones.map(tone =>
       <re-col :value="16" :xs="24" class="mb-5">
         <el-card class="app-card bar-card" shadow="never">
           <div class="flex justify-between">
-            <span class="text-md font-medium">{{
+            <span class="text-base font-semibold">{{
               t("welcome.userAnalysis")
             }}</span>
             <Segmented v-model="curWeek" :options="optionsBasis" />
@@ -209,7 +205,7 @@ const timelineIcons = timelineTones.map(tone =>
       <re-col :value="8" :xs="24" class="mb-5">
         <el-card class="app-card" shadow="never">
           <div class="flex justify-between">
-            <span class="text-md font-medium">{{
+            <span class="text-base font-semibold">{{
               t("welcome.operateLog")
             }}</span>
           </div>
@@ -223,7 +219,7 @@ const timelineIcons = timelineTones.map(tone =>
               <el-timeline-item
                 v-for="(item, index) in operateLogList"
                 :key="item.pk ?? item.id ?? index"
-                :icon="timelineIcons[index % timelineIcons.length]"
+                :icon="timelineIconOf(index)"
                 :timestamp="
                   dayjs(item.created_time).format('YYYY-MM-DD HH:mm:ss')
                 "

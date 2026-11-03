@@ -12,7 +12,7 @@
    仅作用于显式标注 `.app-card` 的卡片（看板 / 工作台 / 图表卡），不影响列表页与表单容器。 */
 .el-card.app-card {
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
   transition:
     transform var(--duration-base) var(--ease-standard),
     box-shadow var(--duration-base) var(--ease-standard);
@@ -24,13 +24,32 @@
 }
 
 /* 全站 el-card 兜底统一（监控 / 表单采集 / 分析等页的普通卡片）：
-   EP 缺省是 4px 小圆角 + 无阴影，与全局卡片体系（--radius-lg / --shadow-md）脱节；
-   描边沿用 EP 自带的 border（--el-border-color-light）。
+   贴地阴影（--shadow-card）替代雾化；描边沿用 EP 自带的 border（--el-border-color-light，
+   已由 ep-bridge 收回语义槽）。
    标注 .app-card 的卡片仍走上方规则获得 hover 上浮。 */
 .el-card {
   --el-card-border-radius: var(--radius-lg);
 
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
+}
+
+/* ================ 页面头（全局） ================
+   「页面 > 区 > 块」三级节奏的页面级锚点：20/600 标题 + 13px 辅助说明。
+   列表页由 RePlusPage 内置（pageHead 默认开）；非列表页（看板/工作台）直接用本类。 */
+.page-head {
+  margin-bottom: var(--space-6);
+
+  &__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 0.01em;
+  }
+
+  &__subtitle {
+    margin-top: var(--space-1-5);
+    font-size: var(--font-size-sm);
+    color: hsl(var(--fg-muted));
+  }
 }
 
 /* 侧栏列表项（聊天会话 / 联系人 / AI 功能导航）：
@@ -114,7 +133,7 @@
 html.dark {
   .el-card {
     box-shadow:
-      var(--shadow-md),
+      var(--shadow-card),
       inset 0 1px 0 hsl(var(--fg) / 5%);
   }
 

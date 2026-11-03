@@ -38,6 +38,8 @@ defineOptions({ name: "RePlusPage" });
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
   title: undefined,
+  pageHead: true,
+  pageSubtitle: "",
   isTree: false,
   tableBar: true,
   localeName: "",
@@ -275,41 +277,51 @@ defineExpose({
       @reset="handleReset"
     />
     <template v-if="frameworkState === 'ready'">
-      <div
-        v-if="api?.fields"
-        ref="searchCardRef"
-        :class="[
-          're-plus-search-card bg-bg-card w-99/100 px-6 py-3',
-          { 're-plus-search-card--pending': !searchMetaReady }
-        ]"
-      >
-        <PlusSearch
-          v-model="searchFields"
-          :col-props="{
-            xs: 24,
-            sm: 12,
-            md: 6,
-            lg: 6,
-            xl: 6
-          }"
-          :columns="searchColumns as never"
-          :default-values="cloneDeep(defaultValue)"
-          :row-props="{
-            gutter: 24
-          }"
-          :search-loading="loadingStatus"
-          :show-number="deviceDetection() ? 1 : 3"
-          :needValidate="true"
-          label-width="100px"
-          v-bind="plusSearchProps"
-          @change="onSearchColumnChange"
-          @reset="handleReset"
-          @search="handleSearch"
-          @collapse="onSearchCollapse"
-          @keyup.enter="handleSearch"
-        />
+      <div v-if="pageHead" class="page-head">
+        <h2 class="page-head__title truncate" :title="title ?? pageTitle">
+          {{ title ?? pageTitle }}
+        </h2>
+        <p v-if="pageSubtitle" class="page-head__subtitle">
+          {{ pageSubtitle }}
+        </p>
       </div>
       <div class="re-plus-table-card" :class="tableBarData.renderClass">
+        <!-- 搜索区并入表格卡顶部（「一张工作纸」）：去独立卡壳，与工具栏之间走
+             hairline 分隔；搜索是表格的前置条件，本属同一工作面 -->
+        <div
+          v-if="api?.fields"
+          ref="searchCardRef"
+          :class="[
+            're-plus-search-card px-6 py-5',
+            { 're-plus-search-card--pending': !searchMetaReady }
+          ]"
+        >
+          <PlusSearch
+            v-model="searchFields"
+            :col-props="{
+              xs: 24,
+              sm: 12,
+              md: 6,
+              lg: 6,
+              xl: 6
+            }"
+            :columns="searchColumns as never"
+            :default-values="cloneDeep(defaultValue)"
+            :row-props="{
+              gutter: 24
+            }"
+            :search-loading="loadingStatus"
+            :show-number="deviceDetection() ? 1 : 3"
+            :needValidate="true"
+            label-width="100px"
+            v-bind="plusSearchProps"
+            @change="onSearchColumnChange"
+            @reset="handleReset"
+            @search="handleSearch"
+            @collapse="onSearchCollapse"
+            @keyup.enter="handleSearch"
+          />
+        </div>
         <el-scrollbar class="max-h-15!">
           <PureTableBar
             v-if="tableBar"
@@ -322,7 +334,12 @@ defineExpose({
           >
             <template #title>
               <el-space>
-                <p class="font-bold truncate mr-3">
+                <!-- 页面头开启时标题已在页头呈现；工具栏标题仅在页面显式传
+                     title 或关闭页头时渲染，避免同文重复 -->
+                <p
+                  v-if="title || !pageHead"
+                  class="font-semibold text-base truncate mr-3"
+                >
                   {{ title ?? pageTitle }}
                 </p>
                 <div
@@ -457,39 +474,4 @@ defineExpose({
   </div>
 </template>
 
-<style scoped lang="scss">
-/* 搜索卡片高度占位（CLS 主因修复）：**仅在列元数据到达前生效**。
-   搜索列元数据随列表首包（with_meta=1）到达，此前卡片只渲染按钮行（56px），到达后
-   叠加一行字段（+50px），同帧还伴随 el-table 列宽首绘与自适应高度重算，中间帧会被
-   真实绘制（表头换行 155px → 41px 的瞬态位移）。数值 = py-3(24) + 按钮行(32) + 行间距
-   与字段行(50) = 106px，作为下限；元数据到达后必须撤掉占位改由内容自适应——字段与按钮
-   同行的页面实际约 74px，固定 106px 会在卡片底部留出可见空白（2026-09-18 回归修复）。 */
-.re-plus-search-card--pending {
-  min-height: 106px;
-}
-
-/* 列表页卡片化：搜索卡与表格区统一应用外观层卡片体系（圆角 / 描边 / 静态阴影，
-   取值同源设计令牌）；全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
-.re-plus-search-card,
-.re-plus-table-card {
-  border: var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-}
-
-.re-plus-table-card {
-  overflow: hidden;
-}
-
-.re-plus-table-card--fullscreen {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可消除
-   「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
-.re-plus-table-layout-pending {
-  visibility: hidden;
-}
-</style>
+<style scoped lang="scss" src="./page-shell.scss"></style>

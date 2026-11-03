@@ -1,0 +1,50 @@
+/* 页面头样式为全局 .page-head（见 style/appearance.scss），非列表页可复用同构 */
+
+/* 搜索区并入表格卡（「一张工作纸」）：卡片化只留在表格卡；搜索区去卡壳，
+   与工具栏之间走 --divider hairline。
+   高度占位（CLS 主因修复）：**仅在列元数据到达前生效**。搜索列元数据随列表首包
+   （with_meta=1）到达，此前搜索区只渲染按钮行，到达后叠加字段行，同帧还伴随
+   el-table 列宽首绘与自适应高度重算，中间帧会被真实绘制产生位移。数值 =
+   py-5(40) + 按钮行(32) + 行间距与字段行(50) = 122px，作为下限；元数据到达后
+   必须撤掉占位改由内容自适应（2026-09-18 回归修复口径）。 */
+.re-plus-search-card--pending {
+  min-height: 122px;
+}
+
+.re-plus-search-card {
+  border-bottom: 1px solid var(--divider);
+
+  /* 控件主次重量：查询 = 实色主按钮（EP 缺省即 primary），重置 = 文字按钮
+     （PlusSearch 按钮行内非 primary 者即重置） */
+  :deep(.plus-search__button__wrapper .el-button:not(.el-button--primary)) {
+    padding: 0 var(--space-2);
+    color: var(--el-color-primary);
+    background: transparent;
+    border-color: transparent;
+
+    &:hover {
+      background: hsl(var(--fill-muted));
+    }
+  }
+}
+
+/* 表格卡（一张工作纸）：圆角 / 描边 / 贴地阴影取自设计令牌；
+   全屏态铺满视口时撤除描边与圆角，避免四边露出边框线。 */
+.re-plus-table-card {
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.re-plus-table-card--fullscreen {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 列首帧隐藏（同上）：el-table 列宽在 rAF 内才落位，隐藏这一两帧即可消除
+   「表头换行 → 回弹」的瞬态位移；visibility 保留占位、不影响自适应高度测量 */
+.re-plus-table-layout-pending {
+  visibility: hidden;
+}

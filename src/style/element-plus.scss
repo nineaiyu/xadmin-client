@@ -210,3 +210,20 @@
 .re-plus-table-card .el-table__row.is-viewed {
   color: var(--el-text-color-secondary);
 }
+
+/* ================ 表格分层与密度（默认档） ================
+   表头退为结构线（--fill-subtle 底纹 + 12px/600 muted，由 TABLE_HEADER_CELL_STYLE
+   承担）；表体行高 47→41（默认档 cell padding 12→8）、正文 14→13、行分隔走
+   --divider hairline。密度偏好（工具栏 small/large 档）走 EP 自身的
+   .el-table--small/--large 规则，不受本默认档覆写影响。 */
+.el-table--default {
+  font-size: var(--font-size-sm);
+
+  .el-table__cell {
+    padding: var(--space-2) 0;
+  }
+}
+
+.el-table {
+  --el-table-border-color: var(--divider);
+}

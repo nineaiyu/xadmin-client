@@ -89,6 +89,9 @@ html.dark {
   --el-box-shadow-light: var(--shadow-md);
   --el-box-shadow: var(--shadow-lg);
   --el-box-shadow-dark: var(--shadow-float);
+
+  /* 卡片内边距：EP 缺省 20px → 24px（页 32 / 区 24 / 卡内 24 三档节奏） */
+  --el-card-padding: var(--space-6);
 }
 
 /* ================ 主色与色阶 ================

@@ -2788,6 +2788,8 @@ login:
   smsVerify: 短信验证
 
 welcome:
+  title: 运营概览
+  subtitle: 关键指标与最新动态一览
   noOperateLog: 暂无操作日志
   aiDailyTitle: AI 日报
   aiDailyPending: 待办审批

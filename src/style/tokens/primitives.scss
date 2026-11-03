@@ -118,6 +118,10 @@
   --navbar-action-gap: 4px;
   --navbar-action-pad-right: 12px;
 
+  /* 表格工具栏动作项：与顶栏动作同口径（圆形热区 + hover 底色），
+     28px 档位适配 54px 工具栏高度 */
+  --tablebar-action-size: 28px;
+
   /* 侧栏结构高度：品牌区与顶栏等高，底部折叠条固定高 */
   --sidebar-logo-h: var(--layout-header-h);
   --sidebar-collapse-bar-h: 44px;
@@ -137,8 +141,9 @@
   --sidebar-mixed-narrow-width: 80px;
 
   /* 内容区留白（密度令牌）：在 lay-content 一处应用，页面不再各自覆写外边距；
-     窄屏收紧值见 style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
-  --content-gap: 24px;
+     桌面 32px（页 > 区 > 内 = 32/24/24 三档节奏），窄屏收紧值见
+     style/index.scss 的媒体查询；贴边页面用 content-flush 类 */
+  --content-gap: 32px;
 
   /* 内容面板留白（系统设置 / 账户设置两模块共用）：面板 = 承载表单或列表的「内容纸」 */
   --panel-pad-y: var(--space-5);
@@ -212,6 +217,9 @@
      但同随字号缩放设置同比放大。正文/标签/标题一律用上方 --font-size-* 阶梯。 */
   --display-size-sm: calc(21px * var(--font-scale));
   --display-size-md: calc(26px * var(--font-scale));
+
+  /* 看板统计大数字（数字是看板主角）：28px/700 + tabular-nums */
+  --display-size-stat: calc(28px * var(--font-scale));
   --display-size-lg: calc(32px * var(--font-scale));
   --display-size-xl: calc(34px * var(--font-scale));
   --display-size-2xl: calc(48px * var(--font-scale));

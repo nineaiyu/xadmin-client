@@ -2788,6 +2788,8 @@ login:
   smsVerify: SMS Auth
 
 welcome:
+  title: Operations overview
+  subtitle: Key metrics and recent activity at a glance
   noOperateLog: No operation logs yet
   aiDailyTitle: AI Daily Report
   aiDailyPending: Pending approvals

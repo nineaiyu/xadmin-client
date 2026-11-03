@@ -226,7 +226,7 @@ export default defineComponent({
     const reference = {
       reference: () => (
         <SettingIcon
-          class={["w-4", iconClass.value]}
+          class={["w-4", "table-bar-action", iconClass.value]}
           v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
           // a11y：图标按钮需可访问名；显式 aria-hidden=false 保证名称生效
           aria-label={t("tableBar.columnSettings")}
@@ -244,7 +244,7 @@ export default defineComponent({
           {...attrs}
           class={[attrs.class, slots?.default ? renderClass.value : ""]}
         >
-          <div class="flex justify-between w-full h-15 p-4">
+          <div class="flex-bc w-full h-13.5 px-6">
             {slots?.title ? (
               slots.title()
             ) : (
@@ -259,7 +259,7 @@ export default defineComponent({
               {props.tableRef?.size ? (
                 <>
                   <ExpandIcon
-                    class={["w-4", iconClass.value]}
+                    class={["w-4", "table-bar-action", iconClass.value]}
                     style={{
                       transform: isExpandAll.value ? "none" : "rotate(-90deg)"
                     }}
@@ -279,12 +279,12 @@ export default defineComponent({
                     onClick={() => onExpand()}
                     onKeydown={iconKeydown(onExpand)}
                   />
-                  <el-divider direction="vertical" />
                 </>
               ) : null}
               <RefreshIcon
                 class={[
                   "w-4",
+                  "table-bar-action",
                   iconClass.value,
                   loading.value ? "animate-spin" : ""
                 ]}
@@ -296,14 +296,13 @@ export default defineComponent({
                 onClick={() => onReFresh()}
                 onKeydown={iconKeydown(onReFresh)}
               />
-              <el-divider direction="vertical" />
               <el-dropdown
                 v-slots={dropdown}
                 trigger="click"
                 v-tippy={rendTippyProps(t("tableBar.density"))}
               >
                 <CollapseIcon
-                  class={["w-4", iconClass.value]}
+                  class={["w-4", "table-bar-action", iconClass.value]}
                   aria-label={t("tableBar.density")}
                   aria-hidden={false}
                   role="button"
@@ -311,7 +310,6 @@ export default defineComponent({
                   onKeydown={triggerKeydown}
                 />
               </el-dropdown>
-              <el-divider direction="vertical" />
 
               <el-popover
                 v-slots={reference}
@@ -458,10 +456,9 @@ export default defineComponent({
                   </el-scrollbar>
                 </div>
               </el-popover>
-              <el-divider direction="vertical" />
 
               <iconify-icon-offline
-                class={["w-4", iconClass.value]}
+                class={["w-4", "table-bar-action", iconClass.value]}
                 icon={isFullscreen.value ? ExitFullscreen : Fullscreen}
                 v-tippy={
                   isFullscreen.value
