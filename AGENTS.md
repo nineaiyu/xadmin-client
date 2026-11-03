@@ -81,7 +81,11 @@ pnpm gen:module              # 模块脚手架
 - 样式用 Tailwind CSS v4 原子类（`src/style/tailwind.css` 的 `@theme` 桥接语义令牌；
   UnoCSS 已全量移除，不存在 `uno.config.*`）+ 设计令牌（`src/style/tokens/`）；
   **不要写死字号与颜色字面量，也不要用 Tailwind 调色板类（`text-gray-500` / `bg-white` 等）**
-  （`pnpm check:font-size-literals` / `check:color-literals` 会拦），用语义令牌。
+  （`pnpm check:font-size-literals` / `check:color-literals` 会拦），用语义令牌；
+  **间距 / 字重 / 行高 / 阴影 / z-index 同样只走令牌**（刻度表见 tokens 注释，
+  `pnpm check:spacing-literals` 会拦刻度外 px 与裸字重/行高/阴影/层级）；
+  **width/height 等定尺寸**走「登记只减不增」（`pnpm check:size-literals`）——
+  新增定尺寸优先复用布局令牌或 Tailwind 数值类，元件私有固定尺寸登记并注释语义。
 - 暗色适配走令牌（`html.dark` 分支），别用 `!important` 堆叠。
 - 新用 Element Plus 组件要同时登记组件与 `element-plus/es/components/xxx/style/css`
   （登记处：`src/plugins/elementPlus.ts`）。
@@ -102,7 +106,7 @@ pnpm test:run                                  # vitest（含契约 / 词条 / �
 pnpm typecheck && pnpm lint
 for g in api-routes as-unknown bundle-size color-literals contract contract-usage docs-components \
          entry-closure font-size-literals forms function-length hook-length i18n ledger-ids menu-components \
-         menu-permissions module-cycles openapi-types overlays platform-config quarantine success-code \
+         menu-permissions module-cycles openapi-types overlays platform-config quarantine size-literals spacing-literals success-code \
          tables template-root version e2e-waits; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（≤500；ReIcon/data.ts 与 api/types/openapi.d.ts
                                           # 在脚本内 EXEMPT 豁免，其余基线只减不增）

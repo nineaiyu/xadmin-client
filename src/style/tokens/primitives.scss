@@ -49,10 +49,18 @@
   --radius-xl: calc(12px * var(--radius-scale));
   --radius-full: 9999px;
 
-  /* ================ 间距尺度（4px 基准） ================ */
+  /* ================ 间距尺度（4px 基准） ================
+     合法刻度仅此一组（与 Tailwind 0.5 步进对齐：p-1.5 / gap-2.5 等数值工具类
+     由 --spacing 派生、天然合规）；0-5 / 1-5 / 2-5 / 3-5 四个半档是「微距」，
+     用于图标-文字、紧凑型行内间距，块级间距优先整档。3/5/7/9/15/18px 等
+     奇数值禁止（门禁 check:spacing-literals 守护）。 */
+  --space-0-5: 2px;
   --space-1: 4px;
+  --space-1-5: 6px;
   --space-2: 8px;
+  --space-2-5: 10px;
   --space-3: 12px;
+  --space-3-5: 14px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
@@ -136,16 +144,30 @@
   --panel-pad-y: var(--space-5);
   --panel-pad-x: var(--space-6);
 
+  /* 设置面板表单项控件宽度（仅两档，禁止内联 style 写宽度）：
+     sm = 短输入（下拉选择 / 短文本），md = 长输入（地址 / 路径类） */
+  --setting-field-width-sm: 120px;
+  --setting-field-width-md: 180px;
+
   /* ================ 栈层级（z-index 阶梯） ================
      集中定义避免魔法数字互斗；JS 侧同值常量见 src/utils/zIndex.ts。
-     - layout 1000：侧栏/头部等布局固定层（sidebar/common 内 998/1001/1002 属该层内部细分）
+     - fixedHeader 998 / layout 1000 / sidebar 1001 / sidebarCtrl 1002：
+       布局固定层及其内部细分（头部 < 通用层 < 侧栏 < 侧栏钉住/折叠按钮）
      - settingMask 1005 / settingPanel 1010：设置面板——必须低于 Element Plus
        弹层起点 2000，否则打开的面板会遮挡 dialog/confirm
+     - appMask 2001：移动端侧栏打开时的内容遮罩，需压过 EP 弹层起点 2000
      - Element Plus 弹层：2000 起动态递增（dialog/message-box/popper，不干预）
-     - tippy 9999：v-tippy 是独立于 EP 的 popper 引擎，必须高于 EP 弹层 */
+     - lockScreen 2500：锁屏遮罩——必须盖住 EP 弹层，否则被遮挡界面仍可交互
+     - tippy 9999：v-tippy 是独立于 EP 的 popper 引擎，必须高于 EP 弹层
+     组件内部局部叠放（0~10）属私有上下文，不进阶梯。 */
+  --z-index-fixed-header: 998;
   --z-index-layout: 1000;
+  --z-index-sidebar: 1001;
+  --z-index-sidebar-ctrl: 1002;
   --z-index-setting-mask: 1005;
   --z-index-setting-panel: 1010;
+  --z-index-app-mask: 2001;
+  --z-index-lock-screen: 2500;
   --z-index-tippy: 9999;
 
   /* ================ 动效尺度 ================
@@ -200,10 +222,15 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* ================ 行高 ================ */
+  /* ================ 行高 ================
+     五档（命名与 Tailwind 对齐）：none 单行/图标、snug 紧凑说明、
+     relaxed 为存量舒适档（1.625，说明文字/表单辅助文本的事实标准）。 */
+  --line-height-none: 1;
   --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
   --line-height-normal: 1.5;
-  --line-height-relaxed: 1.75;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 1.75;
 
   /* ================ 字体族 ================
      完整值（含逗号，非三元组）：西文系统字体优先、其后是 CJK 回退栈，

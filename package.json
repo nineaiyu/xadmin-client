@@ -26,6 +26,8 @@
     "check:function-length": "node scripts/check-function-length.mjs",
     "check:font-size-literals": "node scripts/check-font-size-literals.mjs",
     "check:color-literals": "node scripts/check-color-literals.mjs",
+    "check:spacing-literals": "node scripts/check-spacing-literals.mjs",
+    "check:size-literals": "node scripts/check-size-literals.mjs",
     "check:module-cycles": "node scripts/check-module-cycles.mjs",
     "check:forms": "node scripts/check-handwritten-forms.mjs",
     "check:tables": "node scripts/check-bare-tables.mjs",

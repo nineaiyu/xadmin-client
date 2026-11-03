@@ -26,7 +26,6 @@
     "src/layout/hooks/layoutPreferences.ts::buildConfigureDefaults": 101,
     "src/layout/hooks/preferenceAttributes.ts::applyPreferenceAttributes": 122,
     "src/layout/hooks/useHeaderAutoHide.ts::useHeaderAutoHide": 103,
-    "src/layout/hooks/useSidebarNarrow.ts::useSidebarNarrow": 102,
     "src/store/modules/notice.ts::messageHandler": 147,
     "src/store/modules/notice.ts::onMessage": 131,
     "src/utils/responsive.ts::injectResponsiveStorage": 132,
