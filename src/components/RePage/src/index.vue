@@ -142,10 +142,11 @@ const contentStyle = computed(() =>
     min-width: 0;
   }
 
-  /* 语义标题（h1）：显式清零 UA 外边距，字号/字重沿用骨架样式 */
+  /* 语义标题（h1）：显式清零 UA 外边距；页面头全站同档（20/600，与 .page-head /
+     RePlusPage 内置页头一致），字号/字重走令牌 */
   &__title {
     margin: 0;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
     color: hsl(var(--fg));
   }

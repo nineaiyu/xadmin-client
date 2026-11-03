@@ -81,7 +81,7 @@ Object.keys(devDependencies).forEach(key => {
          内容区也不再自行加横向内边距——否则页头贴边、卡片多缩一层，两者不对齐 -->
     <!-- 关于卡：与下方「平台信息 / 依赖」卡同构（同一 el-card + card-header 版式）；
          简介限宽避免整行铺满，下接技术栈徽章行 -->
-    <el-card class="mb-4 box-card" shadow="never">
+    <el-card class="mb-6 box-card" shadow="never">
       <template #header>
         <div class="card-header flex items-center">
           <span class="font-medium">{{ pageTitle }}</span>
@@ -104,7 +104,7 @@ Object.keys(devDependencies).forEach(key => {
       </div>
     </el-card>
 
-    <el-card class="mb-4 box-card" shadow="never">
+    <el-card class="mb-6 box-card" shadow="never">
       <template #header>
         <div class="card-header">
           <span class="font-medium">{{ t("about.platformInfo") }}</span>
@@ -130,7 +130,7 @@ Object.keys(devDependencies).forEach(key => {
       </div>
     </el-card>
 
-    <el-card class="mb-4 box-card" shadow="never">
+    <el-card class="mb-6 box-card" shadow="never">
       <template #header>
         <div class="card-header flex items-center">
           <span class="font-medium">{{ t("about.prodDeps") }}</span>
@@ -163,7 +163,7 @@ Object.keys(devDependencies).forEach(key => {
       </el-scrollbar>
     </el-card>
 
-    <el-card class="mb-4 box-card" shadow="never">
+    <el-card class="mb-6 box-card" shadow="never">
       <template #header>
         <div class="card-header flex items-center">
           <span class="font-medium">{{ t("about.devDeps") }}</span>

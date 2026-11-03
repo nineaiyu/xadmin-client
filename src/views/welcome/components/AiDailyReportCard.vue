@@ -85,7 +85,9 @@ const visit = (link?: string) => {
 <template>
   <el-card class="app-card" shadow="never" data-testid="ai-daily-report">
     <div class="flex-bc flex-wrap gap-y-1">
-      <span class="text-md font-medium">{{ t("welcome.aiDailyTitle") }}</span>
+      <span class="text-base font-semibold">{{
+        t("welcome.aiDailyTitle")
+      }}</span>
       <span class="text-xs text-fg-muted">
         {{ generatedAt || t("welcome.aiDailyEmpty") }}
       </span>

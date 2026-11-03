@@ -339,7 +339,6 @@ const onMoreCommand = (command: string) => {
     >
       {{ t("buttons.unSelectAll") }}
     </el-button>
-    <el-divider direction="vertical" />
     <!-- 批量启停走 batch-update（白名单只有 is_active）：只看 batchUpdate 权限点，
          旧条件把 partialUpdate 也算进来，只有单行编辑权的角色点开必 403 -->
     <el-button

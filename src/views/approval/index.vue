@@ -20,6 +20,10 @@ const { pendingCount } = useApprovalBadge();
     <!-- 单根包裹：layout 注入的 main-content（24px 外边距）只有单根组件才会继承，
          多根 Fragment 会让该 class 被丢弃。不加右侧内边距：统计卡与下方列表卡
          同为容器满宽，右边缘对齐（pr-[1%] 会让统计卡比列表卡窄约 1%） -->
+    <div class="page-head">
+      <h2 class="page-head__title">{{ t("approval.pageTitle") }}</h2>
+      <p class="page-head__subtitle">{{ t("approval.pageSubtitle") }}</p>
+    </div>
     <ApprovalResourceTabs />
     <ApprovalStats />
     <el-tabs v-model="activeTab" class="mt-2">

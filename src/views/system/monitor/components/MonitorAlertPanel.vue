@@ -77,7 +77,7 @@ const columns = computed<ReadonlyColumn[]>(() => [
 </script>
 
 <template>
-  <el-card shadow="never" class="mb-4" data-testid="monitor-alert-panel">
+  <el-card shadow="never" class="mb-6" data-testid="monitor-alert-panel">
     <template #header>
       <div class="flex flex-wrap items-center gap-3">
         <span>{{ t("systemMonitor.alertsTitle") }}</span>

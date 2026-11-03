@@ -1368,6 +1368,8 @@ credential:
   noMatch: 无匹配凭据
 
 approval:
+  pageTitle: 审批中心
+  pageSubtitle: 集中处理待办审批，跟踪我发起的申请
   pendingTab: 待我审批
   mineTab: 我发起的
   candidateTruncated: 审批人候选目录已截断（用户数超出上限），本地搜索结果可能不全，请用关键字精确搜索

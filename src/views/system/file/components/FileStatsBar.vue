@@ -78,7 +78,7 @@ const usageTip = computed(() =>
           :show-text="false"
         />
         <span
-          class="text-md font-semibold"
+          class="text-md font-semibold tabular-nums"
           :style="{ color: data.hasQuota ? quotaColor : undefined }"
           data-testid="stat-usage"
         >

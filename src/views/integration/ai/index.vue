@@ -15,6 +15,7 @@ import { useAiConsole } from "./hooks/useAiConsole";
 import { resolveAiConsoleReady } from "./utils/aiConsoleState";
 import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import { addDrawer } from "@/components/ReDrawer";
+import { drawerSize } from "@/components/ReDialog/size";
 import { ReNavDrawer } from "@/components/ReNavDrawer";
 import ReResult from "@/components/ReResult";
 import AiFeatureNav, {
@@ -63,7 +64,7 @@ const statusFailed = ref(false);
 const openToolCatalog = () => {
   addDrawer({
     title: t("ai.toolCatalogTitle"),
-    size: "420px",
+    size: drawerSize("sm"),
     hideFooter: true,
     contentRenderer: () =>
       h(ToolCatalogDrawer, { tools: tools.value?.tools ?? [] })

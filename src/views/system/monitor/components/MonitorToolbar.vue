@@ -27,7 +27,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <el-card shadow="never" class="mb-4">
+  <el-card shadow="never" class="mb-6">
     <div class="flex flex-wrap items-center gap-3">
       <span class="font-medium">{{ t("menus.systemMonitor") }}</span>
       <el-tag

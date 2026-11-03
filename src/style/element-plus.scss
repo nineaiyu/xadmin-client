@@ -205,6 +205,14 @@
   color: var(--el-text-color-regular);
 }
 
+/* 表单辅助说明（项目约定类，EP 无此槽位；校验错误仍走 EP 自带 __error 危险色）：
+   次级文字档承载说明性文字，不抢字段值的阅读层级 */
+.el-form-item__help {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: hsl(var(--fg-muted));
+}
+
 /* 表格已读行（RePlusPage 的 viewedRow 开关开启后挂 is-viewed 行类）：整行文字降级为
    次要色（操作列仍可辨识）；未开启的页面不产生该类，零视觉变化。 */
 .re-plus-table-card .el-table__row.is-viewed {

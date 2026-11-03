@@ -80,7 +80,7 @@ const timelineIconOf = (index: number) =>
     <!-- 首屏不使用入场动画：内容首帧可见（LCP），位移动画也不计入布局位移（CLS） -->
     <el-row :gutter="24" justify="space-around">
       <!-- AI 日报卡：开关关闭 / 未授权 / 未配置时 dailyReport 为 null，整卡不渲染（视觉零变更） -->
-      <re-col v-if="dailyReport" :xs="24" class="mb-5">
+      <re-col v-if="dailyReport" :xs="24" class="mb-6">
         <AiDailyReportCard :report="dailyReport" />
       </re-col>
       <re-col
@@ -90,7 +90,7 @@ const timelineIconOf = (index: number) =>
         :sm="12"
         :value="6"
         :xs="24"
-        class="mb-5"
+        class="mb-6"
       >
         <el-card class="app-card line-card group" shadow="never">
           <div class="flex justify-between">
@@ -129,7 +129,7 @@ const timelineIconOf = (index: number) =>
           </div>
         </el-card>
       </re-col>
-      <re-col :md="12" :sm="12" :value="6" :xs="24" class="mb-5">
+      <re-col :md="12" :sm="12" :value="6" :xs="24" class="mb-6">
         <el-card
           :body-style="{ padding: '0' }"
           class="app-card line-card"
@@ -145,7 +145,7 @@ const timelineIconOf = (index: number) =>
         :sm="12"
         :value="6"
         :xs="24"
-        class="mb-5"
+        class="mb-6"
       >
         <el-card class="app-card line-card" shadow="never">
           <div class="flex justify-between">
@@ -182,7 +182,7 @@ const timelineIconOf = (index: number) =>
         </el-card>
       </re-col>
 
-      <re-col :value="16" :xs="24" class="mb-5">
+      <re-col :value="16" :xs="24" class="mb-6">
         <el-card class="app-card bar-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-base font-semibold">{{
@@ -202,7 +202,7 @@ const timelineIconOf = (index: number) =>
         </el-card>
       </re-col>
 
-      <re-col :value="8" :xs="24" class="mb-5">
+      <re-col :value="8" :xs="24" class="mb-6">
         <el-card class="app-card" shadow="never">
           <div class="flex justify-between">
             <span class="text-base font-semibold">{{

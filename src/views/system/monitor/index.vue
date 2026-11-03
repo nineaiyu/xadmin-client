@@ -249,7 +249,7 @@ onMounted(() => {
 
     <MonitorResourceCards :cards="resourceCards" :net-rates="netRates" />
 
-    <el-card v-loading="historyLoading" shadow="never" class="mb-4">
+    <el-card v-loading="historyLoading" shadow="never" class="mb-6">
       <template #header>
         <div class="flex flex-wrap items-center gap-3">
           <span>{{ t("systemMonitor.historyTrend") }}</span>

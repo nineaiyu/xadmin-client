@@ -1368,6 +1368,8 @@ credential:
   noMatch: No matching credentials
 
 approval:
+  pageTitle: Approval Center
+  pageSubtitle: Handle pending approvals and track my requests
   pendingTab: Pending My Approval
   mineTab: Submitted By Me
   candidateTruncated: The approver candidate list was truncated (too many users); local search may be incomplete, please refine by keyword

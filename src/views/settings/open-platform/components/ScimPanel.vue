@@ -154,7 +154,7 @@ onMounted(loadSyncStatus);
       </div>
       <template v-if="canSyncStatus">
         <div class="flex-bc">
-          <h4 class="text-md font-medium">
+          <h4 class="text-base font-semibold">
             {{ t("settingScim.syncStatus") }}
           </h4>
           <span class="text-sm text-(--el-text-color-secondary)">

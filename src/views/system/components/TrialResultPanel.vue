@@ -98,7 +98,9 @@ const grantColumns = computed<ReadonlyColumn[]>(() => {
       <span class="text-sm text-(--el-text-color-regular)">{{
         t("permissionPreview.hitCount")
       }}</span>
-      <span class="text-xl font-semibold">{{ props.result.count }}</span>
+      <span class="font-semibold tabular-nums text-(--display-size-sm)">{{
+        props.result.count
+      }}</span>
       <el-tag v-if="props.result.scope_mode" size="small" type="info">
         {{ scopeModeTexts[props.result.scope_mode] }}
       </el-tag>

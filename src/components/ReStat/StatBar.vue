@@ -111,7 +111,7 @@ const onClick = (item: StatItem) => {
             {{ item.label }}
           </span>
           <span
-            class="max-w-40 truncate text-sm font-medium"
+            class="max-w-40 truncate text-sm font-medium tabular-nums"
             :data-testid="`stat-${item.key}`"
           >
             {{ displayOf(item) }}
