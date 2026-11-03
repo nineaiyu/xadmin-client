@@ -8,6 +8,7 @@ import {
   setPendingApproval
 } from "./pendingApproval";
 import { redirectToLogin, redirectToModuleDisabled } from "./redirect";
+import { sanitizeDetail } from "./detailGuard";
 import type { PureHttpRequestConfig } from "./types.d";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
@@ -59,7 +60,7 @@ const tokenExpiredStrategy: SendErrorStrategy = {
   handle: ({ config, data, reissue, resolve, reject }) => {
     if (config._tokenRetried) {
       // 重试后仍 40001（如刷新失败），跳登录防止死循环
-      message(String(data?.detail ?? ""), { type: "error" });
+      message(sanitizeDetail(String(data?.detail ?? "")), { type: "error" });
       removeToken();
       redirectToLogin();
       reject(data);
@@ -76,7 +77,7 @@ const tokenExpiredStrategy: SendErrorStrategy = {
 const unauthorizedStrategy: SendErrorStrategy = {
   match: ({ status }) => status === 401,
   handle: ({ data, reject }) => {
-    message(String(data?.detail ?? ""), { type: "error" });
+    message(sanitizeDetail(String(data?.detail ?? "")), { type: "error" });
     removeToken();
     // 跳转登录页并携带回跳地址，替代整页 reload（保留路由上下文）
     redirectToLogin();
@@ -92,7 +93,7 @@ const mfaConfirmStrategy: SendErrorStrategy = {
   handle: ({ config, data, resend, resolve, reject }) => {
     if (config._mfaRetried) {
       // 重发后仍未通过（如确认过期），不再递归弹窗
-      message(String(data?.detail ?? ""), { type: "error" });
+      message(sanitizeDetail(String(data?.detail ?? "")), { type: "error" });
       reject(data);
       return true;
     }
@@ -123,7 +124,7 @@ const approvalPendingStrategy: SendErrorStrategy = {
         approvalId
       );
     }
-    message(String(data?.detail ?? ""), { type: "warning" });
+    message(sanitizeDetail(String(data?.detail ?? "")), { type: "warning" });
     reject(data);
     return true;
   }
@@ -138,7 +139,7 @@ const approvalRejectedStrategy: SendErrorStrategy = {
     deletePendingApproval(
       rejectedKey ?? approvalKey(config.method, config.url, config.data)
     );
-    message(String(data?.detail ?? ""), { type: "error" });
+    message(sanitizeDetail(String(data?.detail ?? "")), { type: "error" });
     reject(data);
     return true;
   }
@@ -172,9 +173,12 @@ const moduleDisabledStrategy: SendErrorStrategy = {
   handle: ({ config, data, reject }) => {
     // detail 由后端按请求语言翻译（zh: 功能未启用 / en: Feature not enabled）；module 指明命中的模块 id
     const moduleId = typeof data?.module === "string" ? data.module : "";
-    message(`${data?.detail ?? ""}${moduleId ? ` (${moduleId})` : ""}`, {
-      type: "warning"
-    });
+    message(
+      `${sanitizeDetail(String(data?.detail ?? ""))}${moduleId ? ` (${moduleId})` : ""}`,
+      {
+        type: "warning"
+      }
+    );
     // 页面取数（GET）失败 → 整页化：跳「模块已停用」页（带返回入口），替代停留在必然
     // 空数据的页面上；变更类请求失败只提示，避免打断用户正在进行的操作。
     // 已在该页时不再跳转（页面自身的轮询/刷新会再次命中网关）。
@@ -210,7 +214,8 @@ export function notifyRateLimited(detail: string): void {
   // 仅「窗口内且时间未倒流」去重：系统时钟回拨不应吞掉真实提示
   if (elapsed >= 0 && elapsed < RATE_LIMIT_DEDUP_WINDOW_MS) return;
   lastRateLimitToastAt.set(detail, now);
-  message(detail || "Too many requests", { type: "error" });
+  // 去重键用原文（不同原文收敛为同文案时不误去重），展示过统一防线
+  message(sanitizeDetail(detail) || "Too many requests", { type: "error" });
 }
 
 /** 解析 Retry-After（仅支持秒数形态；非法/缺失返回默认值，并钳制到上限内） */
@@ -252,7 +257,7 @@ const rateLimitStrategy: SendErrorStrategy = {
 const badRequestStrategy: SendErrorStrategy = {
   match: ({ status }) => status === 400,
   handle: ({ data, reject }) => {
-    const detail = String(data?.detail ?? "");
+    const detail = sanitizeDetail(String(data?.detail ?? ""));
     message(detail, { type: "error" });
     announce(detail);
     reject(data);

@@ -30,6 +30,12 @@ async function createToken(page: Page, tokenName: string): Promise<string> {
     .locator("input")
     .first()
     .fill(tokenName);
+  // 空范围创建必须显式确认「不限范围」开关（提交体携带 unrestricted: true）；
+  // 本组用例全部依赖不限范围凭证（创建后按用例各自再收窄 scope / IP 白名单）
+  await createDialog
+    .locator(".el-form-item", { hasText: "不限范围" })
+    .locator(".el-switch")
+    .click();
   // 弹窗按钮文案统一为框架口径「保存」（原手写弹窗为「创建令牌」）
   await createDialog.getByRole("button", { name: "保存" }).click();
 

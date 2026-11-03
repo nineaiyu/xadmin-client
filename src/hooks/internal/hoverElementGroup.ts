@@ -36,7 +36,11 @@ export function createHoverElementGroup(
     hovers.value = elements.value.map(target => {
       if (!target) return ref(false);
       const elRef = computed<HTMLElement | null>(() => resolveElement(target));
-      const scope = effectScope();
+      /* detached 作用域：悬停监听的生命周期只归本组管理（rebuild 重建 / dispose
+         清理）。若用默认的关联作用域，rebuild 常在 watch 回调里执行——彼时
+         活动作用域是任意一个恰在渲染的组件（如侧栏菜单文字），监听会随该
+         组件卸载被级联停止（折叠菜单即触发），悬停展开从此失效。 */
+      const scope = effectScope(true);
       const hoverRef = scope.run(() => useElementHover(elRef)) ?? ref(false);
       scopes.push(scope);
       return hoverRef;

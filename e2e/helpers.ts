@@ -63,6 +63,23 @@ export const LEADER_MEMBER_USERNAME = "e2e_member";
 export const FP_USER = { username: "e2e_fp", password: "E2E-FieldPer-2026!" };
 /** 登录锁定场景专用账号（用例内会连续输错密码） */
 export const LOCK_USER = { username: "e2e_lock", password: "E2E-Lock-2026!" };
+/**
+ * 页面级拒绝态账号：有「岗位管理」页面菜单但无任何接口权限点
+ * （种子只挂页面与父目录菜单），列表页应渲染 plus-page-state 拒绝态
+ * （岗位页为 RePlusPage 薄壳；用户管理页有自有兜底不走框架分支）。
+ */
+export const DENIED_USER = {
+  username: "e2e_denied",
+  password: "E2E-Denied-2026!"
+};
+/**
+ * 只读账号：有用户管理读接口（GET：list/retrieve/导出）但无任何写权限点，
+ * 操作列编辑/删除按钮与工具栏新增按钮应隐藏，写接口直调应 403。
+ */
+export const RO_USER = {
+  username: "e2e_ro",
+  password: "E2E-Readonly-2026!"
+};
 
 export type Credentials = { username: string; password: string };
 

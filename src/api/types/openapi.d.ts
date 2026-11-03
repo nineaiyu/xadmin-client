@@ -21437,13 +21437,18 @@ export interface components {
             readonly pk?: number;
             /**
              * 接口范围
-             * @description 允许调用的路径前缀/正则清单；留空表示不限
+             * @description 允许调用的路径前缀/正则清单；留空须显式确认不限范围
              */
             scopes?: unknown;
             /** 令牌 */
             readonly token?: unknown;
             /** 令牌前缀 */
             readonly token_prefix?: string;
+            /**
+             * 不限范围
+             * @description 确认允许该令牌访问属主权限内的全部接口
+             */
+            unrestricted?: boolean;
             /**
              * 更新时间
              * Format: date-time
@@ -23220,13 +23225,18 @@ export interface components {
             readonly pk: number;
             /**
              * 接口范围
-             * @description 允许调用的路径前缀/正则清单；留空表示不限
+             * @description 允许调用的路径前缀/正则清单；留空须显式确认不限范围
              */
             scopes?: unknown;
             /** 令牌 */
             readonly token: unknown;
             /** 令牌前缀 */
             readonly token_prefix: string;
+            /**
+             * 不限范围
+             * @description 确认允许该令牌访问属主权限内的全部接口
+             */
+            unrestricted?: boolean;
             /**
              * 更新时间
              * Format: date-time

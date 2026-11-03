@@ -3256,7 +3256,9 @@ accessToken:
   revoke: 吊销
   scope: 接口范围
   scopeCount: "接口范围：{n} 条"
-  scopeUnrestricted: 不限
+  unrestricted: 不限范围
+  unrestrictedTip: 开启后该令牌可调用账号权限内的全部接口（含未来新增的接口），请仅在可信环境使用
+  unrestrictedRequired: 请至少勾选一个接口范围；如需不限范围，请先打开「不限范围」开关确认
   revokeConfirm: 吊销后「{name}」立即失效，所有用它调用的接口都会返回 401，且不可恢复。确定吊销吗？
   ipAllowlist: IP 白名单
   ipCount: "IP 白名单：{n} 条"

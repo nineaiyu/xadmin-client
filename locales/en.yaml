@@ -3256,7 +3256,9 @@ accessToken:
   revoke: Revoke
   scope: Scopes
   scopeCount: "Scopes: {n}"
-  scopeUnrestricted: Unrestricted
+  unrestricted: Unrestricted
+  unrestrictedTip: When enabled, this token can call every API your account can access, including future ones. Use only in trusted environments.
+  unrestrictedRequired: Select at least one scope; to allow all APIs, turn on the "Unrestricted" switch first
   revokeConfirm: Revoking "{name}" takes effect immediately — every call with it returns 401 and this cannot be undone. Continue?
   ipAllowlist: IP allowlist
   ipCount: "IP allowlist: {n}"

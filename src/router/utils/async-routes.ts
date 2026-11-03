@@ -13,6 +13,7 @@ import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import { clearRouteSnapshot } from "@/utils/routeSnapshot";
 
 import { router } from "../router";
+import { reconcileRoutesVersionOnce } from "./routeSnapshotReconcile";
 import { resolveComponentKey } from "./resolve-component";
 import { ascending, formatFlatteningRoutes } from "./route-tree";
 
@@ -169,41 +170,21 @@ function initRouter(loadConfig: boolean = false): Promise<Router> {
 /** 每次页面会话仅做一次快照版本校验（失败按退避重试覆盖） */
 let routesVersionChecked = false;
 
-/** 快照版本校验失败的重试节奏：30s 退避、最多 2 次（校验请求偶发失败不再整会话放弃） */
-const ROUTES_VERSION_RETRY_DELAY_MS = 30_000;
-const ROUTES_VERSION_MAX_RETRIES = 2;
-
 /**
- * 后台比对快照版本：不一致（菜单/授权已变更）则清快照整页刷新，重走正常拉取注册链路。
+ * 后台比对快照版本：不一致（菜单/授权已变更）、或校验请求重试耗尽，都丢弃
+ * 快照并整页刷新重走全量拉取注册链路——收权不再被旧快照遮蔽到下次刷新。
  *
- * 校验请求失败（网络抖动/网关瞬时错误）按 30s 退避重试最多 2 次：只校验一次且失败
- * 静默时，「会话内被收权」的旧快照会一直用到下次刷新；退避重试把窗口收敛到一个
- * 校验周期内，重试期间不阻塞快照渲染（渲染早已完成）。
+ * 调度与 fail-closed 语义见 `routeSnapshotReconcile`（重试耗尽同样丢弃快照，
+ * 而非沿用旧快照等到下次启动）；刷新后拉取失败的兜底在调用方（/error/500 可重试）。
  */
 function reconcileRoutesVersion(cachedVersion?: string) {
   if (routesVersionChecked || !cachedVersion) return;
   routesVersionChecked = true;
-
-  const attempt = (retriesLeft: number) => {
-    getAsyncRoutes()
-      .then(({ version }) => {
-        if (version && version !== cachedVersion) {
-          clearRouteSnapshot();
-          window.location.reload();
-        }
-      })
-      .catch(() => {
-        if (retriesLeft > 0) {
-          window.setTimeout(
-            () => attempt(retriesLeft - 1),
-            ROUTES_VERSION_RETRY_DELAY_MS
-          );
-        }
-        // 重试耗尽：保持快照渲染，下次启动再校验
-      });
-  };
-
-  attempt(ROUTES_VERSION_MAX_RETRIES);
+  reconcileRoutesVersionOnce(cachedVersion, {
+    fetchVersion: () => getAsyncRoutes().then(({ version }) => version),
+    clearSnapshot: clearRouteSnapshot,
+    reload: () => window.location.reload()
+  });
 }
 
 /** 过滤后端传来的动态路由 重新生成规范路由 */

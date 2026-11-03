@@ -59,6 +59,17 @@ function cookieSecureOptions() {
   } as Cookies.CookieAttributes;
 }
 
+/**
+ * 【取舍登记】access/refresh token 存 JS 可读 Cookie，不用 HttpOnly：
+ * - 为什么不可行：请求鉴权走 axios 拦截器拼 `Authorization: Bearer` 头（见 utils/http），
+ *   HttpOnly 对前端代码同样不可读，无感刷新与刷新期请求排队链路即失效；改走
+ *   HttpOnly 需要后端整体切换为 Set-Cookie 会话制契约，属架构级变更而非本文件可解；
+ * - 残余风险：XSS 可窃取 token，在有效期内冒用调用 API；
+ * - 现有缓解（保持不放松，缺一不可）：全站 CSP（后端下发，e2e/csp-page.e2e.ts 守护）、
+ *   净化链（utils/sanitize.ts 白名单 + style 二次过滤；Markdown html:false）、
+ *   外链 rel=noopener、本文件的 SameSite=Lax + Secure；
+ * - 结论：已知设计权衡，登记在案、维持现状；后端若改会话制，此处一并移除。
+ */
 export function setAccessToken(token: string, expires = 864e3) {
   Cookies.remove(TokenKey);
   return Cookies.set(TokenKey, token, {

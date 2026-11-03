@@ -37,6 +37,7 @@ import {
 } from "./pendingApproval";
 import { registerPending, unregisterPending } from "./routeCancel";
 import { redirectToLogin } from "./redirect";
+import { sanitizeDetail } from "./detailGuard";
 import {
   SEND_ERROR_STRATEGIES,
   type SendErrorContext
@@ -221,8 +222,10 @@ class PureHttp {
             for (const strategy of SEND_ERROR_STRATEGIES) {
               if (strategy.match(ctx) && strategy.handle(ctx)) return;
             }
-            const detail = String(
-              data?.detail ?? error.response.statusText ?? ""
+            // detail 展示前过统一防线（脱敏 + 截断，原文留在控制台），
+            // 后端一旦把堆栈/内部路径放进 detail 不会原样直达终端用户
+            const detail = sanitizeDetail(
+              String(data?.detail ?? error.response.statusText ?? "")
             );
             message(detail, { type: "error" });
             // 读屏播报：全局兜底错误提示同步播报到 aria-live 区域
