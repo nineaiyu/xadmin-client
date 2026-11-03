@@ -286,6 +286,15 @@ const onPaneKeydown = (event: KeyboardEvent) => {
   &.is-editable {
     cursor: grab;
     user-select: none;
+
+    /* 描边/hover 过渡与全站节奏同源 */
+    transition: border-color var(--duration-fast) var(--ease-standard);
+
+    /* 预选中反馈：hover 先给一档强描边（未选中才生效，选中态主色优先），
+       让「点下去会选中谁」在悬停时即可预判 */
+    &:hover:not(.is-selected) {
+      border-color: var(--screen-border-strong);
+    }
   }
 
   &.is-selected {

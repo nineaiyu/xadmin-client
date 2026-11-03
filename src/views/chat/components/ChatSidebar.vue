@@ -229,6 +229,7 @@ function avatarText(peer: ChatPeer) {
             </div>
             <el-badge
               v-if="room.unread_count > 0"
+              class="tabular-nums"
               :value="room.unread_count > 99 ? '99+' : room.unread_count"
               type="danger"
             />

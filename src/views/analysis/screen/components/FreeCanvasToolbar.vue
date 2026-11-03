@@ -318,11 +318,11 @@ const {
 }
 
 .free-toolbar__zoom {
-  width: 110px;
+  width: var(--setting-field-width-sm);
 }
 
 .free-toolbar__grid {
-  width: 90px;
+  width: var(--setting-field-width-sm);
 }
 
 /* 文件选择由按钮代理（原生 input 隐藏，避免多一个可见控件） */

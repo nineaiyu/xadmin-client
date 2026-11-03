@@ -164,7 +164,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
     />
 
     <div
-      class="flex min-w-0 max-w-[72%] flex-col"
+      class="relative flex min-w-0 max-w-[72%] flex-col"
       :class="{ 'items-end': mine }"
     >
       <div
@@ -173,7 +173,9 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         <span v-if="showName !== false" class="truncate">{{
           displayName
         }}</span>
-        <span>{{ formatMessageTime(item.created_time) }}</span>
+        <span class="tabular-nums">{{
+          formatMessageTime(item.created_time)
+        }}</span>
       </div>
 
       <!-- AI 回复（含思考过程与引用出处）统一走 AiMessageBlock：与 AI 助手页同一套布局 -->
@@ -233,11 +235,14 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
           @click="toggleReaction(entry.emoji)"
         >
           <span>{{ entry.emoji }}</span>
-          <span>{{ entry.count }}</span>
+          <span class="tabular-nums">{{ entry.count }}</span>
         </button>
       </div>
 
-      <div class="mt-1 flex items-center gap-2 text-xs">
+      <div
+        v-if="item.failed || item.sending"
+        class="mt-1 flex items-center gap-2 text-xs"
+      >
         <span v-if="item.failed" class="text-(--el-color-danger)">
           <el-icon class="mr-1 align-middle">
             <component :is="useRenderIcon(WarningIcon)" />
@@ -255,6 +260,15 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
         <span v-else-if="item.sending" class="text-(--el-text-color-secondary)">
           {{ t("chat.sending") }}
         </span>
+      </div>
+
+      <!-- 消息操作行（回应 / 撤回）：绝对定位 + group-hover 显现，不参与布局——
+           此前该行为每条消息恒占约 24px 的隐形行 -->
+      <div
+        v-if="canReact || (canRecall && item.can_recall && !item.is_recalled)"
+        class="absolute -top-2 z-10 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+        :class="mine ? 'left-0' : 'right-0'"
+      >
         <!-- 表情回应入口：悬停显现（快捷表情网格，点击即切换自己的回应） -->
         <el-popover
           v-if="canReact"
@@ -269,7 +283,7 @@ const chatActionExecutor = async (draft: AiActionDraft) => {
               link
               type="primary"
               size="small"
-              class="text-md opacity-0 transition-opacity group-hover:opacity-100"
+              class="text-md"
               :aria-label="t('chat.react')"
               :title="t('chat.react')"
               data-testid="chat-react"

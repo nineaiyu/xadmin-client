@@ -153,7 +153,7 @@ onMounted(load);
     <OverlayDialog
       v-model="rawVisible"
       :title="t('oauthProvider.rawMode')"
-      width="720px"
+      width="640px"
       destroy-on-close
     >
       <el-alert

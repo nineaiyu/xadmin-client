@@ -305,7 +305,7 @@ const LAYER_ACTIONS: { action: FreeLayerAction; key: string }[] = [
   gap: var(--space-1);
 
   :deep(.el-input-number) {
-    width: 96px;
+    width: var(--setting-field-width-sm);
   }
 
   :deep(.el-select) {

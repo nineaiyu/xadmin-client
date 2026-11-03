@@ -177,6 +177,27 @@ html.dark {
   --screen-fg-faint: rgb(255 255 255 / 45%); /* 画布空态 */
 }
 
+/* ================ 大屏主题下的 EP 控件映射 ================
+   设计器属性面板/工具条里的 EP 控件（input/select/number 等）只消费 --el-*；
+   在 data-screen-theme="dark" 作用域把 --el-* 映射到 --screen-* 语义槽，
+   组件零改动。此前 data-screen-theme 属性只写不读（死属性），本段即其消费方；
+   浅色档由 .screen-root--light 的令牌覆写 + 站点 EP 缺省承担，无需映射。 */
+[data-screen-theme="dark"] {
+  --el-bg-color: var(--screen-surface-raised);
+  --el-bg-color-overlay: var(--screen-surface-strong);
+  --el-fill-color: var(--screen-surface-strong);
+  --el-fill-color-light: var(--screen-surface-raised);
+  --el-fill-color-lighter: var(--screen-surface);
+  --el-fill-color-blank: var(--screen-surface-raised);
+  --el-border-color: var(--screen-border-strong);
+  --el-border-color-light: var(--screen-border);
+  --el-border-color-lighter: var(--screen-border-subtle);
+  --el-text-color-primary: var(--screen-fg-bold);
+  --el-text-color-regular: var(--screen-fg);
+  --el-text-color-secondary: var(--screen-fg-muted);
+  --el-text-color-placeholder: var(--screen-fg-dim);
+}
+
 /* 浅色档：大屏 theme=light（或 auto 且站点为浅色）时由 `.screen-root--light`
    挂到投屏 / 设计器根节点，成对覆写令牌——`--screen-*` 仍不随站点 html.dark 切换，
    明暗只由大屏自身主题决定。取值与深色档同构反转（同透明度、色相反转）。 */

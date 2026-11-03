@@ -34,6 +34,8 @@ const props = defineProps<{
   selection: string[];
   /** 可编辑（预览 / 只读态为 false：不接手势） */
   editable: boolean;
+  /** 数据加载中：与 GridCanvasBoard 同口径——加载期不渲染空态文案，避免闪现 */
+  loading?: boolean;
   clock?: string;
   dashboards: DashboardItem[];
   /** 显示缩放因子（只影响渲染与指针换算） */
@@ -201,7 +203,10 @@ const {
           :style="rectStyle(marquee)"
           data-testid="free-marquee"
         />
-        <span v-if="editable && panes.length === 0" class="free-board__empty">
+        <span
+          v-if="editable && !loading && panes.length === 0"
+          class="free-board__empty"
+        >
           {{ t("dataScreen.emptyCanvas") }}
         </span>
       </div>

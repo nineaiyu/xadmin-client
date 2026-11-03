@@ -184,7 +184,7 @@ describe("ChatWindow 右栏挂载冒烟", () => {
     expect(wrapper.emitted("scroll")).toHaveLength(1);
 
     expect(wrapper.text()).toContain("chat.newMessages");
-    await wrapper.find(".absolute.bottom-40").trigger("click");
+    await wrapper.find(".absolute.bottom-full").trigger("click");
     expect(wrapper.emitted("scrollToBottom")).toHaveLength(1);
   });
 });

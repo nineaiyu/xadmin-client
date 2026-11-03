@@ -14,7 +14,7 @@ defineProps<MessageTimeDividerProps>();
 <template>
   <div class="my-3 text-center">
     <span
-      class="rounded bg-(--el-fill-color-light) px-2 py-0.5 text-xs text-(--el-text-color-secondary)"
+      class="rounded bg-(--el-fill-color-light) px-2 py-0.5 text-xs text-(--el-text-color-secondary) tabular-nums"
     >
       {{ label }}
     </span>

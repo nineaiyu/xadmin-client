@@ -408,6 +408,7 @@ const back = () => {
         :design="freeDesign"
         :selection="freeSelection"
         :editable="!locked"
+        :loading="loading"
         :zoom="freeZoom"
         :clock="clock"
         :dashboards="dashboards"

@@ -87,9 +87,10 @@ defineExpose({ scrollEl });
       <slot />
     </ChatMessageList>
 
-    <NewMessagesBadge :count="pendingCount" @jump="emit('jumpToLatest')" />
-
-    <div class="border-0 border-t border-solid border-(--divider) p-3">
+    <!-- 新消息悬浮条锚定 composer 顶边（bottom-full）：composer 随输入行数
+         长高时悬浮条始终贴其上方，不再重叠（原 bottom-40 定死偏移会重叠） -->
+    <div class="relative border-0 border-t border-solid border-(--divider) p-3">
+      <NewMessagesBadge :count="pendingCount" @jump="emit('jumpToLatest')" />
       <slot name="composer" />
     </div>
   </div>
