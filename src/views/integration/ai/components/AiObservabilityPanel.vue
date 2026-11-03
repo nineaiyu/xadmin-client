@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import { computed, defineAsyncComponent, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { AiUsageDimensionStat } from "@/api/ai/ai";
@@ -138,106 +139,109 @@ const dimensionPercent = (
       </el-radio-group>
     </div>
 
-    <template v-if="hasUsageData">
-      <!-- 统计卡等分（el-statistic + grid，对齐 ApprovalStats；窄屏 2 列回退） -->
-      <StatGrid
-        :items="statCards"
-        :columns="4"
-        :sm-columns="4"
-        animate
-        class="mb-5 gap-y-4!"
-      />
+    <ReStateContainer :state="hasUsageData ? 'ready' : 'empty'">
+      <template #empty>
+        <ReEmpty :description="t('aiConfig.dashboardEmpty')" />
+      </template>
+      <template v-if="hasUsageData">
+        <!-- 统计卡等分（el-statistic + grid，对齐 ApprovalStats；窄屏 2 列回退） -->
+        <StatGrid
+          :items="statCards"
+          :columns="4"
+          :sm-columns="4"
+          animate
+          class="mb-5 gap-y-4!"
+        />
 
-      <p v-if="p95Hint" class="text-xs text-(--el-text-color-secondary) mb-3">
-        {{ p95Hint }}
-      </p>
+        <p v-if="p95Hint" class="text-xs text-(--el-text-color-secondary) mb-3">
+          {{ p95Hint }}
+        </p>
 
-      <div class="flex flex-col gap-6 xl:flex-row">
-        <!-- 日调用趋势：echarts 懒加载未就绪时等高骨架占位（防塌陷） -->
-        <div class="flex-1">
-          <div class="text-sm text-(--el-text-color-secondary) mb-1">
-            {{ t("aiConfig.dashboardTrend") }}
-          </div>
-          <template v-if="echartsReady && usageTrend.length > 1">
-            <ChartLine :data="usageTrend" />
-            <div class="text-xs text-(--el-text-color-secondary) mt-1">
-              {{ trendDates[0] }} ~ {{ trendDates[trendDates.length - 1] }}
+        <div class="flex flex-col gap-6 xl:flex-row">
+          <!-- 日调用趋势：echarts 懒加载未就绪时等高骨架占位（防塌陷） -->
+          <div class="flex-1">
+            <div class="text-sm text-(--el-text-color-secondary) mb-1">
+              {{ t("aiConfig.dashboardTrend") }}
             </div>
-          </template>
-          <div
-            v-else-if="echartsReady"
-            class="h-15 flex-c text-sm text-(--el-text-color-secondary)"
-          >
-            {{ t("aiConfig.dashboardEmpty") }}
+            <template v-if="echartsReady && usageTrend.length > 1">
+              <ChartLine :data="usageTrend" />
+              <div class="text-xs text-(--el-text-color-secondary) mt-1">
+                {{ trendDates[0] }} ~ {{ trendDates[trendDates.length - 1] }}
+              </div>
+            </template>
+            <div
+              v-else-if="echartsReady"
+              class="h-15 flex-c text-sm text-(--el-text-color-secondary)"
+            >
+              {{ t("aiConfig.dashboardEmpty") }}
+            </div>
+          </div>
+
+          <!-- 按档案分布 -->
+          <div class="flex-1">
+            <div class="text-sm text-(--el-text-color-secondary) mb-2">
+              {{ t("aiConfig.dashboardByProfile") }}
+            </div>
+            <div
+              v-for="row in usage?.by_profile || []"
+              :key="row.profile_name"
+              class="mb-2"
+            >
+              <div class="flex-bc gap-2 text-sm">
+                <span class="truncate">{{ row.profile_name }}</span>
+                <span class="shrink-0 opacity-70">
+                  {{ row.calls }} · {{ row.success_rate }}%
+                  <template v-if="row.avg_latency_ms !== null">
+                    · {{ row.avg_latency_ms }} ms
+                  </template>
+                </span>
+              </div>
+              <el-progress
+                :percentage="dimensionPercent(row.calls, usage?.by_profile)"
+                :show-text="false"
+              />
+            </div>
+            <p
+              v-if="!(usage?.by_profile || []).length"
+              class="text-sm text-(--el-text-color-secondary)"
+            >
+              {{ t("aiConfig.dashboardEmpty") }}
+            </p>
+          </div>
+
+          <!-- 按模型分布 -->
+          <div class="flex-1">
+            <div class="text-sm text-(--el-text-color-secondary) mb-2">
+              {{ t("aiConfig.dashboardByModel") }}
+            </div>
+            <div
+              v-for="row in usage?.by_model || []"
+              :key="row.model"
+              class="mb-2"
+            >
+              <div class="flex-bc gap-2 text-sm">
+                <span class="truncate">{{ row.model }}</span>
+                <span class="shrink-0 opacity-70">
+                  {{ row.calls }} · {{ row.success_rate }}%
+                  <template v-if="row.avg_latency_ms !== null">
+                    · {{ row.avg_latency_ms }} ms
+                  </template>
+                </span>
+              </div>
+              <el-progress
+                :percentage="dimensionPercent(row.calls, usage?.by_model)"
+                :show-text="false"
+              />
+            </div>
+            <p
+              v-if="!(usage?.by_model || []).length"
+              class="text-sm text-(--el-text-color-secondary)"
+            >
+              {{ t("aiConfig.dashboardEmpty") }}
+            </p>
           </div>
         </div>
-
-        <!-- 按档案分布 -->
-        <div class="flex-1">
-          <div class="text-sm text-(--el-text-color-secondary) mb-2">
-            {{ t("aiConfig.dashboardByProfile") }}
-          </div>
-          <div
-            v-for="row in usage?.by_profile || []"
-            :key="row.profile_name"
-            class="mb-2"
-          >
-            <div class="flex-bc gap-2 text-sm">
-              <span class="truncate">{{ row.profile_name }}</span>
-              <span class="shrink-0 opacity-70">
-                {{ row.calls }} · {{ row.success_rate }}%
-                <template v-if="row.avg_latency_ms !== null">
-                  · {{ row.avg_latency_ms }} ms
-                </template>
-              </span>
-            </div>
-            <el-progress
-              :percentage="dimensionPercent(row.calls, usage?.by_profile)"
-              :show-text="false"
-            />
-          </div>
-          <p
-            v-if="!(usage?.by_profile || []).length"
-            class="text-sm text-(--el-text-color-secondary)"
-          >
-            {{ t("aiConfig.dashboardEmpty") }}
-          </p>
-        </div>
-
-        <!-- 按模型分布 -->
-        <div class="flex-1">
-          <div class="text-sm text-(--el-text-color-secondary) mb-2">
-            {{ t("aiConfig.dashboardByModel") }}
-          </div>
-          <div
-            v-for="row in usage?.by_model || []"
-            :key="row.model"
-            class="mb-2"
-          >
-            <div class="flex-bc gap-2 text-sm">
-              <span class="truncate">{{ row.model }}</span>
-              <span class="shrink-0 opacity-70">
-                {{ row.calls }} · {{ row.success_rate }}%
-                <template v-if="row.avg_latency_ms !== null">
-                  · {{ row.avg_latency_ms }} ms
-                </template>
-              </span>
-            </div>
-            <el-progress
-              :percentage="dimensionPercent(row.calls, usage?.by_model)"
-              :show-text="false"
-            />
-          </div>
-          <p
-            v-if="!(usage?.by_model || []).length"
-            class="text-sm text-(--el-text-color-secondary)"
-          >
-            {{ t("aiConfig.dashboardEmpty") }}
-          </p>
-        </div>
-      </div>
-    </template>
-
-    <ReEmpty v-else :description="t('aiConfig.dashboardEmpty')" />
+      </template>
+    </ReStateContainer>
   </div>
 </template>

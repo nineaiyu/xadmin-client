@@ -37,7 +37,8 @@ const animateClass = computed(() => {
     "transition-all",
     "border-(--el-border-color-lighter)",
     "hover:text-primary",
-    "hover:duration-700"
+    "hover:duration-700",
+    "active:scale-[0.98]"
   ];
 });
 

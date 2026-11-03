@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import {
   ReActionPanel,
   type PanelActionGroup
@@ -97,42 +98,45 @@ const activeLabel = computed(() =>
     </template>
 
     <div v-loading="loading" class="min-h-40">
-      <template v-if="detail">
-        <h4 class="section-title">{{ t("aiKnowledge.contentTitle") }}</h4>
-        <pre class="doc-content" data-testid="knowledge-preview-content">{{
-          detail.content
-        }}</pre>
-
-        <h4 class="section-title mt-4">
-          {{ t("aiKnowledge.chunksTitle") }} ({{ detail.chunks.length }})
-        </h4>
-        <el-collapse>
-          <el-collapse-item
-            v-for="chunk in detail.chunks"
-            :key="chunk.index"
-            :name="chunk.index"
+      <ReStateContainer :state="detailFailed ? 'error' : 'ready'">
+        <template #error>
+          <ReEmpty
+            :description="t('aiKnowledge.detailLoadFailed')"
+            :image-size="70"
           >
-            <template #title>
-              <span class="text-xs">
-                {{ t("aiKnowledge.chunkLabel", { n: chunk.index + 1 }) }} ·
-                {{ t("aiKnowledge.chunkSize", { size: chunk.size }) }}
-              </span>
-            </template>
-            <div class="chunk-preview">
-              {{ chunk.preview }}
-            </div>
-          </el-collapse-item>
-        </el-collapse>
-      </template>
-      <ReEmpty
-        v-else-if="detailFailed"
-        :description="t('aiKnowledge.detailLoadFailed')"
-        :image-size="70"
-      >
-        <el-button size="small" type="primary" @click="loadDetail">
-          {{ t("aiKnowledge.retry") }}
-        </el-button>
-      </ReEmpty>
+            <el-button size="small" type="primary" @click="loadDetail">
+              {{ t("aiKnowledge.retry") }}
+            </el-button>
+          </ReEmpty>
+        </template>
+        <template v-if="detail">
+          <h4 class="section-title">{{ t("aiKnowledge.contentTitle") }}</h4>
+          <pre class="doc-content" data-testid="knowledge-preview-content">{{
+            detail.content
+          }}</pre>
+
+          <h4 class="section-title mt-4">
+            {{ t("aiKnowledge.chunksTitle") }} ({{ detail.chunks.length }})
+          </h4>
+          <el-collapse>
+            <el-collapse-item
+              v-for="chunk in detail.chunks"
+              :key="chunk.index"
+              :name="chunk.index"
+            >
+              <template #title>
+                <span class="text-xs">
+                  {{ t("aiKnowledge.chunkLabel", { n: chunk.index + 1 }) }} ·
+                  {{ t("aiKnowledge.chunkSize", { size: chunk.size }) }}
+                </span>
+              </template>
+              <div class="chunk-preview">
+                {{ chunk.preview }}
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </template>
+      </ReStateContainer>
     </div>
   </ReActionPanel>
 </template>
@@ -140,21 +144,21 @@ const activeLabel = computed(() =>
 <style scoped lang="scss">
 .doc-title {
   font-size: var(--font-size-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 22px;
   color: var(--el-text-color-primary);
   word-break: break-all;
 }
 
 .doc-meta {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
 }
 
 .doc-path {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
@@ -162,15 +166,15 @@ const activeLabel = computed(() =>
 }
 
 .section-title {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-base);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 20px;
 }
 
 .doc-content {
   max-height: 420px;
-  padding: 12px;
+  padding: var(--space-3);
   margin: 0;
   overflow: auto;
   font-size: var(--el-font-size-extra-small);

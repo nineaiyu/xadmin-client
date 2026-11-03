@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import ReEmpty from "@/components/ReEmpty";
-import { onMounted } from "vue";
+import ReStateContainer from "@/components/ReStateContainer";
+import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import AuthorizedAppTable from "@/components/AuthorizedAppTable";
 import { useAuthorizedAppList } from "@/components/AuthorizedAppTable/useAuthorizedAppList";
@@ -29,36 +29,44 @@ const { rows, loading, error, revoking, load, revoke } = useAuthorizedAppList({
   successKey: "authorizedApps.revokedAll"
 });
 
+/** 四态归一：无权限 / 失败 / 空 / 就绪（加载态由表格自身 loading 表达） */
+const panelState = computed(() => {
+  if (!props.canRead) return "denied" as const;
+  if (error.value) return "error" as const;
+  if (!loading.value && rows.value.length === 0) return "empty" as const;
+  return "ready" as const;
+});
+
 onMounted(() => {
   if (props.canRead) load();
 });
 </script>
 
 <template>
-  <ReEmpty
-    v-if="!canRead"
-    data-testid="authorized-admin-no-permission"
-    :description="t('setting.noPermission')"
-  />
-  <div v-else class="space-y-3">
-    <el-alert v-if="error" type="error" :title="error" :closable="false">
-      <el-button link type="primary" @click="load">
-        {{ t("buttons.retry") }}
-      </el-button>
-    </el-alert>
-    <AuthorizedAppTable
-      :rows="rows"
-      :loading="loading"
-      :revoking-pk="revoking"
-      :label="t('settingOpenPlatform.authorized')"
-      :show-user-count="true"
-      :can-revoke="canRevoke"
-      data-testid="authorized-admin-table"
-      @revoke="revoke"
-    />
-    <ReEmpty
-      v-if="!loading && !error && rows.length === 0"
-      :description="t('authorizedApps.empty')"
-    />
-  </div>
+  <ReStateContainer
+    :state="panelState"
+    :denied-text="t('setting.noPermission')"
+    :error-detail="error"
+    :empty-hint="t('authorizedApps.empty')"
+  >
+    <div class="space-y-3">
+      <AuthorizedAppTable
+        :rows="rows"
+        :loading="loading"
+        :revoking-pk="revoking"
+        :label="t('settingOpenPlatform.authorized')"
+        :show-user-count="true"
+        :can-revoke="canRevoke"
+        data-testid="authorized-admin-table"
+        @revoke="revoke"
+      />
+    </div>
+    <template #error>
+      <el-alert type="error" :title="error" :closable="false">
+        <el-button link type="primary" @click="load">
+          {{ t("buttons.retry") }}
+        </el-button>
+      </el-alert>
+    </template>
+  </ReStateContainer>
 </template>

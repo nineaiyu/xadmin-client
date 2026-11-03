@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import { computed, h, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
@@ -30,6 +31,14 @@ const rawText = ref("");
 const rawError = ref("");
 
 const canEdit = computed(() => props.canEdit);
+
+/** 四态归一：无权限 / 失败 / 空 / 就绪（加载态由容器 v-loading 表达） */
+const panelState = computed(() => {
+  if (!props.canRead) return "denied" as const;
+  if (loadFailed.value) return "error" as const;
+  if (!loading.value && providers.value.length === 0) return "empty" as const;
+  return "ready" as const;
+});
 
 const addProvider = () => {
   providers.value.push(emptyProvider());
@@ -89,18 +98,25 @@ onMounted(load);
 </script>
 
 <template>
-  <ReEmpty
-    v-if="!canRead"
-    data-testid="oauth-no-permission"
-    :description="t('setting.noPermission')"
-  />
-  <div v-else v-loading="loading" class="space-y-3">
-    <ReEmpty v-if="loadFailed" :description="t('setting.loadFailed')">
-      <el-button type="primary" plain @click="load">
-        {{ t("buttons.reload") }}
-      </el-button>
-    </ReEmpty>
-    <template v-else>
+  <ReStateContainer
+    :state="panelState"
+    :denied-text="t('setting.noPermission')"
+    :empty-hint="t('oauthProvider.empty')"
+  >
+    <template #denied>
+      <ReEmpty
+        data-testid="oauth-no-permission"
+        :description="t('setting.noPermission')"
+      />
+    </template>
+    <template #error>
+      <ReEmpty :description="t('setting.loadFailed')">
+        <el-button type="primary" plain @click="load">
+          {{ t("buttons.reload") }}
+        </el-button>
+      </ReEmpty>
+    </template>
+    <div v-loading="loading" class="space-y-3">
       <div class="flex-bc flex-wrap gap-2">
         <p class="text-sm text-(--el-text-color-secondary)">
           {{ t("oauthProvider.desc") }}
@@ -122,10 +138,6 @@ onMounted(load);
           </el-button>
         </div>
       </div>
-      <ReEmpty
-        v-if="providers.length === 0"
-        :description="t('oauthProvider.empty')"
-      />
       <OAuthProviderCard
         v-for="(provider, index) in providers"
         :key="`${provider.key}-${index}`"
@@ -137,7 +149,7 @@ onMounted(load);
         @remove="removeProvider(index)"
         @test="onTest"
       />
-    </template>
+    </div>
     <OverlayDialog
       v-model="rawVisible"
       :title="t('oauthProvider.rawMode')"
@@ -163,5 +175,5 @@ onMounted(load);
         </el-button>
       </template>
     </OverlayDialog>
-  </div>
+  </ReStateContainer>
 </template>

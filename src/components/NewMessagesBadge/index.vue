@@ -23,7 +23,7 @@ const { t } = useI18n();
 <template>
   <div
     v-if="count > 0"
-    class="absolute bottom-40 left-1/2 -translate-x-1/2 cursor-pointer"
+    class="absolute bottom-40 left-1/2 -translate-x-1/2 cursor-pointer transition-transform active:scale-95"
     role="button"
     tabindex="0"
     :aria-label="t('chat.newMessages', { count })"

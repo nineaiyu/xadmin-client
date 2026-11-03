@@ -251,6 +251,10 @@ watch(
     transform: scaleX(1.05);
     transition: all var(--duration-slow) var(--ease-standard);
   }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 :deep(.el-tabs__nav-next) {
@@ -288,10 +292,10 @@ watch(
 }
 
 :deep(.el-tabs__nav-wrap) {
-  padding: 0 24px;
+  padding: 0 var(--space-6);
 }
 
 :deep(.el-tabs__content) {
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 </style>

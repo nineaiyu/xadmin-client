@@ -42,7 +42,7 @@ const {
           v-for="form in forms"
           :key="form.pk"
           shadow="hover"
-          class="w-72 cursor-pointer"
+          class="w-72 pressable"
           data-testid="fill-form-card"
           @click="openFill(form)"
         >

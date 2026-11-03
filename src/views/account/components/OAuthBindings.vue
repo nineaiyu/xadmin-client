@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import ReEmpty from "@/components/ReEmpty";
+import ReStateContainer from "@/components/ReStateContainer";
 import { isSuccess } from "@/api/types";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -142,35 +143,37 @@ defineExpose({ load });
 <template>
   <AccountPanel :title="t('oauth.tabTitle')" :description="t('oauth.bindTip')">
     <p class="account-section-title">{{ t("oauth.bound") }}</p>
-    <el-alert
-      v-if="loadError"
-      type="error"
-      :title="loadError"
-      :closable="false"
-      class="mb-2"
-    >
-      <el-button link type="primary" @click="load">
-        {{ t("buttons.retry") }}
-      </el-button>
-    </el-alert>
     <div v-loading="loading">
-      <div v-if="!loadError && rows.length === 0" class="account-empty">
-        <ReEmpty :description="t('oauth.noBindings')" :image-size="60" />
-      </div>
-      <!-- provider-row / binding-row：既有 E2E 的行定位钩子，与样式类并存 -->
-      <div v-for="row in rows" :key="row.pk" class="account-row binding-row">
-        <div class="account-row__main">
-          <div class="account-row__title truncate">
-            {{ row.provider_name || row.provider }} · {{ displayName(row) }}
+      <ReStateContainer
+        :state="loadError ? 'error' : rows.length === 0 ? 'empty' : 'ready'"
+      >
+        <template #error>
+          <el-alert type="error" :title="loadError" :closable="false">
+            <el-button link type="primary" @click="load">
+              {{ t("buttons.retry") }}
+            </el-button>
+          </el-alert>
+        </template>
+        <template #empty>
+          <div class="account-empty">
+            <ReEmpty :description="t('oauth.noBindings')" :image-size="60" />
           </div>
-          <span class="account-row__desc">
-            {{ formatDateTime(row.created_time) || "-" }}
-          </span>
+        </template>
+        <!-- provider-row / binding-row：既有 E2E 的行定位钩子，与样式类并存 -->
+        <div v-for="row in rows" :key="row.pk" class="account-row binding-row">
+          <div class="account-row__main">
+            <div class="account-row__title truncate">
+              {{ row.provider_name || row.provider }} · {{ displayName(row) }}
+            </div>
+            <span class="account-row__desc">
+              {{ formatDateTime(row.created_time) || "-" }}
+            </span>
+          </div>
+          <el-button link type="danger" @click="unbind(row)">
+            {{ t("oauth.unbind") }}
+          </el-button>
         </div>
-        <el-button link type="danger" @click="unbind(row)">
-          {{ t("oauth.unbind") }}
-        </el-button>
-      </div>
+      </ReStateContainer>
     </div>
 
     <p class="account-section-title">{{ t("oauth.bindable") }}</p>

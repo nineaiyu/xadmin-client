@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import OverlayDialog from "@/components/overlay/OverlayDialog.vue";
+import ReStateContainer from "@/components/ReStateContainer";
 /**
  * 个人 MFA 安全管理：OTP(TOTP) 绑定 / 开关 / 解绑 / 恢复码。
  * - 关闭：仅停用登录二次验证开关，密钥保留，重新开启时校验一次动态码即可（无需重新扫码）；
@@ -218,174 +219,177 @@ onMounted(loadStatus);
 
 <template>
   <div v-loading="statusLoading">
-    <el-form label-position="top">
-      <el-alert
-        v-if="statusLoadFailed"
-        class="mb-3"
-        type="error"
-        :closable="false"
-        show-icon
-        :title="$t('mfa.statusLoadFailed')"
-      >
-        <el-button link type="primary" size="small" @click="loadStatus">
-          {{ $t("buttons.reload") }}
-        </el-button>
-      </el-alert>
-      <el-form-item v-if="!statusLoadFailed" :label="$t('mfa.otpStatus')">
-        <div class="w-full">
-          <el-tag :type="status.enabled ? 'success' : 'info'">
-            {{ statusText() }}
-          </el-tag>
-          <el-alert
-            :title="
-              status.enabled
-                ? $t('mfa.otpEnabledTip')
-                : status.bound
-                  ? $t('mfa.otpClosedTip')
-                  : $t('mfa.otpDisabledTip')
-            "
-            :type="status.enabled ? 'info' : 'warning'"
-            :closable="false"
-            show-icon
-            class="mt-2! w-full!"
-          />
-        </div>
-      </el-form-item>
-
-      <!-- 恢复码：已绑定即可查看剩余数量并重新生成（重新生成为敏感操作走全局验证弹窗） -->
-      <el-form-item
-        v-if="status.bound && !statusLoadFailed"
-        :label="$t('mfa.recoveryRemaining')"
-      >
-        <div class="flex w-full items-center gap-2">
-          <el-tag type="info">{{ recoveryRemainText }}</el-tag>
-          <el-button
-            size="small"
-            :loading="regenerateLoading"
-            @click="handleRegenerate"
-          >
-            {{ $t("mfa.recoveryRegenerate") }}
+    <ReStateContainer :state="statusLoadFailed ? 'error' : 'ready'">
+      <template #error>
+        <el-alert
+          type="error"
+          :closable="false"
+          show-icon
+          :title="$t('mfa.statusLoadFailed')"
+        >
+          <el-button link type="primary" size="small" @click="loadStatus">
+            {{ $t("buttons.reload") }}
           </el-button>
-        </div>
-      </el-form-item>
-
-      <!-- 未绑定：发起绑定 → 扫码 → 输码确认 -->
-      <template v-if="!status.bound && !statusLoadFailed">
-        <el-form-item v-if="!bindInfo">
-          <el-button
-            type="primary"
-            :loading="bindLoading"
-            @click="handleStartBind"
-          >
-            {{ $t("mfa.startBind") }}
-          </el-button>
+        </el-alert>
+      </template>
+      <el-form label-position="top">
+        <el-form-item :label="$t('mfa.otpStatus')">
+          <div class="w-full">
+            <el-tag :type="status.enabled ? 'success' : 'info'">
+              {{ statusText() }}
+            </el-tag>
+            <el-alert
+              :title="
+                status.enabled
+                  ? $t('mfa.otpEnabledTip')
+                  : status.bound
+                    ? $t('mfa.otpClosedTip')
+                    : $t('mfa.otpDisabledTip')
+              "
+              :type="status.enabled ? 'info' : 'warning'"
+              :closable="false"
+              show-icon
+              class="mt-2! w-full!"
+            />
+          </div>
         </el-form-item>
-        <template v-else>
-          <el-form-item :label="$t('mfa.scanTip')">
-            <div class="flex flex-col gap-1">
-              <ReQrcode :text="bindInfo.uri" :width="160" />
-              <span class="text-xs text-(--el-text-color-secondary)">
-                {{ $t("mfa.manualEntry") }}：{{ bindInfo.secret }}
-              </span>
-            </div>
+
+        <!-- 恢复码：已绑定即可查看剩余数量并重新生成（重新生成为敏感操作走全局验证弹窗） -->
+        <el-form-item v-if="status.bound" :label="$t('mfa.recoveryRemaining')">
+          <div class="flex w-full items-center gap-2">
+            <el-tag type="info">{{ recoveryRemainText }}</el-tag>
+            <el-button
+              size="small"
+              :loading="regenerateLoading"
+              @click="handleRegenerate"
+            >
+              {{ $t("mfa.recoveryRegenerate") }}
+            </el-button>
+          </div>
+        </el-form-item>
+
+        <!-- 未绑定：发起绑定 → 扫码 → 输码确认 -->
+        <template v-if="!status.bound">
+          <el-form-item v-if="!bindInfo">
+            <el-button
+              type="primary"
+              :loading="bindLoading"
+              @click="handleStartBind"
+            >
+              {{ $t("mfa.startBind") }}
+            </el-button>
           </el-form-item>
+          <template v-else>
+            <el-form-item :label="$t('mfa.scanTip')">
+              <div class="flex flex-col gap-1">
+                <ReQrcode :text="bindInfo.uri" :width="160" />
+                <span class="text-xs text-(--el-text-color-secondary)">
+                  {{ $t("mfa.manualEntry") }}：{{ bindInfo.secret }}
+                </span>
+              </div>
+            </el-form-item>
+            <el-form-item :label="$t('mfa.code')">
+              <el-input
+                v-model="code"
+                class="w-55!"
+                :placeholder="$t('mfa.codePlaceholder')"
+                clearable
+                @keyup.enter="handleConfirmBind"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button
+                type="primary"
+                :loading="bindLoading"
+                @click="handleConfirmBind"
+              >
+                {{ $t("mfa.confirmBind") }}
+              </el-button>
+              <el-button @click="bindInfo = null">{{
+                $t("mfa.cancelBind")
+              }}</el-button>
+            </el-form-item>
+          </template>
+        </template>
+
+        <!-- 已绑定且开启：动态码可校验自检 / 关闭开关（保留密钥）/ 解绑（清除密钥），
+           关闭与解绑均为敏感操作走全局验证弹窗 -->
+        <template v-else-if="status.enabled">
           <el-form-item :label="$t('mfa.code')">
             <el-input
-              v-model="code"
+              v-model="verifyCode"
               class="w-55!"
               :placeholder="$t('mfa.codePlaceholder')"
               clearable
-              @keyup.enter="handleConfirmBind"
+              @keyup.enter="handleTest"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button :loading="testLoading" @click="handleTest">{{
+              $t("mfa.testKey")
+            }}</el-button>
+            <el-popconfirm
+              :title="$t('mfa.closeConfirmTip')"
+              width="260"
+              @confirm="handleClose"
+            >
+              <template #reference>
+                <el-button type="warning" plain>{{
+                  $t("mfa.closeMfa")
+                }}</el-button>
+              </template>
+            </el-popconfirm>
+            <el-popconfirm
+              :title="$t('mfa.disableConfirmTip')"
+              width="260"
+              @confirm="handleDisable"
+            >
+              <template #reference>
+                <el-button type="danger" plain>{{
+                  $t("mfa.disableBind")
+                }}</el-button>
+              </template>
+            </el-popconfirm>
+          </el-form-item>
+        </template>
+
+        <!-- 已绑定但开关关闭：动态码可校验自检 / 重新开启（无需重新扫码）/ 解绑 -->
+        <template v-else>
+          <el-form-item :label="$t('mfa.code')">
+            <el-input
+              v-model="verifyCode"
+              class="w-55!"
+              :placeholder="$t('mfa.codePlaceholder')"
+              clearable
+              @keyup.enter="handleOpen"
             />
           </el-form-item>
           <el-form-item>
             <el-button
               type="primary"
-              :loading="bindLoading"
-              @click="handleConfirmBind"
+              :loading="openLoading"
+              @click="handleOpen"
             >
-              {{ $t("mfa.confirmBind") }}
+              {{ $t("mfa.openMfa") }}
             </el-button>
-            <el-button @click="bindInfo = null">{{
-              $t("mfa.cancelBind")
+            <el-button :loading="testLoading" @click="handleTest">{{
+              $t("mfa.testKey")
             }}</el-button>
+            <el-popconfirm
+              :title="$t('mfa.disableConfirmTip')"
+              width="260"
+              @confirm="handleDisable"
+            >
+              <template #reference>
+                <el-button type="danger" plain>{{
+                  $t("mfa.disableBind")
+                }}</el-button>
+              </template>
+            </el-popconfirm>
           </el-form-item>
         </template>
-      </template>
-
-      <!-- 已绑定且开启：动态码可校验自检 / 关闭开关（保留密钥）/ 解绑（清除密钥），
-           关闭与解绑均为敏感操作走全局验证弹窗 -->
-      <template v-else-if="status.enabled">
-        <el-form-item :label="$t('mfa.code')">
-          <el-input
-            v-model="verifyCode"
-            class="w-55!"
-            :placeholder="$t('mfa.codePlaceholder')"
-            clearable
-            @keyup.enter="handleTest"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="testLoading" @click="handleTest">{{
-            $t("mfa.testKey")
-          }}</el-button>
-          <el-popconfirm
-            :title="$t('mfa.closeConfirmTip')"
-            width="260"
-            @confirm="handleClose"
-          >
-            <template #reference>
-              <el-button type="warning" plain>{{
-                $t("mfa.closeMfa")
-              }}</el-button>
-            </template>
-          </el-popconfirm>
-          <el-popconfirm
-            :title="$t('mfa.disableConfirmTip')"
-            width="260"
-            @confirm="handleDisable"
-          >
-            <template #reference>
-              <el-button type="danger" plain>{{
-                $t("mfa.disableBind")
-              }}</el-button>
-            </template>
-          </el-popconfirm>
-        </el-form-item>
-      </template>
-
-      <!-- 已绑定但开关关闭：动态码可校验自检 / 重新开启（无需重新扫码）/ 解绑 -->
-      <template v-else>
-        <el-form-item :label="$t('mfa.code')">
-          <el-input
-            v-model="verifyCode"
-            class="w-55!"
-            :placeholder="$t('mfa.codePlaceholder')"
-            clearable
-            @keyup.enter="handleOpen"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="openLoading" @click="handleOpen">
-            {{ $t("mfa.openMfa") }}
-          </el-button>
-          <el-button :loading="testLoading" @click="handleTest">{{
-            $t("mfa.testKey")
-          }}</el-button>
-          <el-popconfirm
-            :title="$t('mfa.disableConfirmTip')"
-            width="260"
-            @confirm="handleDisable"
-          >
-            <template #reference>
-              <el-button type="danger" plain>{{
-                $t("mfa.disableBind")
-              }}</el-button>
-            </template>
-          </el-popconfirm>
-        </el-form-item>
-      </template>
-    </el-form>
+      </el-form>
+    </ReStateContainer>
 
     <OverlayDialog
       v-model="recoveryDialogVisible"
