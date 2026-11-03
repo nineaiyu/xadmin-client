@@ -242,7 +242,7 @@ defineExpose({ toggleCollapsed, resetValues, updateValues });
     align-items: center;
     padding: var(--space-2) var(--space-4);
     font-size: var(--font-size-base);
-    line-height: 1.5;
+    line-height: var(--line-height-normal);
 
     &--name {
       flex-basis: 180px;

@@ -190,7 +190,7 @@ const sidebarAutoActivateChild = computed({
           :step="10"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>
@@ -206,7 +206,7 @@ const sidebarAutoActivateChild = computed({
           :step="2"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>
@@ -224,7 +224,7 @@ const sidebarAutoActivateChild = computed({
           :disabled="!isMixLayout"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>

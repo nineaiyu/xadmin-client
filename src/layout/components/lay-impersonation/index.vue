@@ -50,7 +50,7 @@ const { exiting, exitImpersonation } = useImpersonationExit();
 <style lang="scss" scoped>
 .impersonation-banner {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: center;
   height: 32px;
@@ -80,7 +80,7 @@ const { exiting, exitImpersonation } = useImpersonationExit();
 
   .banner-action {
     flex-shrink: 0;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     text-decoration: underline;
     text-underline-offset: 3px;
 

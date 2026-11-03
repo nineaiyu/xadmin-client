@@ -242,7 +242,11 @@ async function checkUpdate() {
     </PrefRow>
     <PrefRow :label="t('layout.language')" :tip="t('layout.languageTip')">
       <template #control>
-        <el-select v-model="language" size="small" style="width: 132px">
+        <el-select
+          v-model="language"
+          size="small"
+          class="w-(--setting-field-width-sm)"
+        >
           <el-option
             v-for="item in languageOptions"
             :key="item.value"
@@ -257,7 +261,7 @@ async function checkUpdate() {
         <el-select
           v-model="timezone"
           size="small"
-          style="width: 180px"
+          class="w-(--setting-field-width-md)"
           filterable
           :placeholder="t('layout.timezoneFollowBrowser')"
         >

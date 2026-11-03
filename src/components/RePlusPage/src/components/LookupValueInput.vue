@@ -60,7 +60,7 @@ const placeholder = computed(() => {
     v-model="value"
     :disabled="disabled"
     :placeholder="placeholder"
-    style="width: 100%"
+    class="w-full"
   >
     <el-option :label="t('advancedFilter.true')" value="true" />
     <el-option :label="t('advancedFilter.false')" value="false" />
@@ -74,7 +74,7 @@ const placeholder = computed(() => {
     filterable
     :disabled="disabled"
     :placeholder="t('advancedFilter.multiPlaceholder')"
-    style="width: 100%"
+    class="w-full"
   >
     <el-option
       v-for="item in options"
@@ -99,7 +99,7 @@ const placeholder = computed(() => {
     clearable
     :disabled="disabled"
     :placeholder="placeholder"
-    style="width: 100%"
+    class="w-full"
   >
     <el-option
       v-for="item in options"
@@ -115,7 +115,7 @@ const placeholder = computed(() => {
     :value-format="pickerFormats.format"
     :disabled="disabled"
     :placeholder="placeholder"
-    style="width: 100%"
+    class="w-full"
   />
   <el-time-picker
     v-else-if="kind === 'time'"
@@ -123,7 +123,7 @@ const placeholder = computed(() => {
     value-format="HH:mm:ss"
     :disabled="disabled"
     :placeholder="placeholder"
-    style="width: 100%"
+    class="w-full"
   />
   <el-input
     v-else
@@ -132,6 +132,6 @@ const placeholder = computed(() => {
     clearable
     :disabled="disabled"
     :placeholder="placeholder"
-    style="width: 100%"
+    class="w-full"
   />
 </template>

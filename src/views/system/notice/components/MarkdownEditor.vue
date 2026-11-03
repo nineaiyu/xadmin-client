@@ -333,12 +333,12 @@ const {
   display: block;
   width: 100%;
   height: 100%;
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   font-family:
     ui-monospace, sfmono-regular, menlo, monaco, consolas, "liberation mono",
     "courier new", monospace;
   font-size: var(--font-size-sm);
-  line-height: 1.75;
+  line-height: var(--line-height-loose);
   color: var(--el-text-color-primary);
   resize: none;
   outline: none;
@@ -347,17 +347,17 @@ const {
 }
 
 .md-editor__pane--preview {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   overflow: auto;
   background: var(--el-bg-color);
 }
 
 .md-editor__footer {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2-5);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-lighter);

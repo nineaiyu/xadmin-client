@@ -480,7 +480,7 @@ defineExpose({ open, reset, refresh, close: session.cancel });
   right: var(--space-2);
   z-index: 1;
   font-size: var(--el-font-size-large);
-  line-height: 1;
+  line-height: var(--line-height-none);
   color: var(--el-text-color-secondary);
   cursor: pointer;
   background: transparent;

@@ -240,12 +240,12 @@ const pageTransition = computed<PageTransitionType>({
 .anim-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .anim-card {
   position: relative;
-  padding: 5px;
+  padding: var(--space-1);
   cursor: pointer;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
@@ -268,8 +268,8 @@ const pageTransition = computed<PageTransitionType>({
 
   &__mark {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: var(--space-0-5);
+    right: var(--space-0-5);
     font-size: var(--font-size-xs);
     color: var(--el-color-primary);
   }
@@ -324,10 +324,10 @@ const pageTransition = computed<PageTransitionType>({
 
   &__label {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
     justify-content: center;
-    padding-top: 4px;
+    padding-top: var(--space-1);
     font-size: var(--font-size-sm);
     color: var(--el-text-color-regular);
   }

@@ -99,12 +99,12 @@ function detailOf(row: RecordType): string {
 .login-timeline {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .section-title {
   font-size: var(--el-font-size-small);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-text-color-primary);
 }
 

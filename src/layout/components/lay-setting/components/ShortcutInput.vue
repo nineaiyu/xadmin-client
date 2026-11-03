@@ -115,7 +115,7 @@ function onKeydown(event: KeyboardEvent) {
 <style lang="scss" scoped>
 .shortcut-input {
   display: inline-flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   align-items: center;
 }
 
@@ -125,7 +125,7 @@ function onKeydown(event: KeyboardEvent) {
   justify-content: center;
   min-width: 104px;
   height: 26px;
-  padding: 0 10px;
+  padding: 0 var(--space-2-5);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-primary);

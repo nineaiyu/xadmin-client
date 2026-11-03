@@ -129,20 +129,20 @@ const retry = () => feed.retry();
   background: var(--el-fill-color-darker);
 
   &__mode {
-    padding: 6px 12px 0;
+    padding: var(--space-1-5) var(--space-3) 0;
   }
 
   &__pre {
-    padding: 12px;
+    padding: var(--space-3);
     margin: 0;
     font-size: var(--el-font-size-extra-small);
-    line-height: 1.6;
+    line-height: var(--line-height-relaxed);
     word-break: break-all;
     white-space: pre-wrap;
   }
 
   &__footer {
-    margin-top: 12px;
+    margin-top: var(--space-3);
     text-align: right;
   }
 }

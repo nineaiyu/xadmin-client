@@ -258,13 +258,13 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
 .theme-color {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px 6px;
-  margin-top: 6px;
+  gap: var(--space-2) var(--space-1-5);
+  margin-top: var(--space-1-5);
 
   &__item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
     cursor: pointer;
   }
@@ -314,7 +314,7 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: var(--font-size-xs);
-    line-height: 1.2;
+    line-height: var(--line-height-tight);
 
     /* 常规文字色（对比度达标，随色卡扫描通过无障碍门禁） */
     color: var(--el-text-color-regular);
@@ -323,7 +323,7 @@ function onThemeChange(theme: { index: number; option: { theme: string } }) {
   }
 
   &__item.is-active &__name {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: var(--el-color-primary);
   }
 

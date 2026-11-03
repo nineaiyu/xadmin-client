@@ -143,7 +143,7 @@ const handleTagClick = (value: string, index: number) => {
    直接定义，作用域选择器权重不足；这里的 !important 是压过 EP 内置规则的必需项，
    不是可清理的样式债（新增 !important 由 stylelint 统一拦截）。 */
 .el-tag + .el-tag {
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .filter-field {
@@ -151,7 +151,7 @@ const handleTagClick = (value: string, index: number) => {
   flex-wrap: wrap;
   align-items: center;
   width: 100%;
-  padding: 1px 2px;
+  padding: 1px var(--space-0-5);
   line-height: 30px;
   border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
   box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color));
@@ -172,7 +172,7 @@ const handleTagClick = (value: string, index: number) => {
 
   & :deep(.el-input__inner) {
     max-width: 100%;
-    padding-left: 10px;
+    padding-left: var(--space-2-5);
     border: none;
   }
 }

@@ -330,10 +330,7 @@ defineExpose({
                   v-motion-fade
                   class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
                 >
-                  <span
-                    class="text-fg-subtle"
-                    style="font-size: var(--font-size-base)"
-                  >
+                  <span class="text-fg-subtle text-base">
                     {{ t("buttons.selected", { count: selectedNum }) }}
                   </span>
                   <el-button text type="primary" @click="onSelectionCancel">

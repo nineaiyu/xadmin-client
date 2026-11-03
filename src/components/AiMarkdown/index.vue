@@ -119,8 +119,8 @@ watch(
 .ai-md h5,
 .ai-md h6 {
   margin: 0.9em 0 0.45em;
-  font-weight: 600;
-  line-height: 1.35;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
 }
 
 .ai-md h1 {
@@ -171,7 +171,7 @@ watch(
 }
 
 .ai-md code {
-  padding: 1px 4px;
+  padding: 1px var(--space-1);
   font-family:
     ui-monospace, sfmono-regular, menlo, monaco, consolas, "liberation mono",
     "courier new", monospace;
@@ -181,7 +181,7 @@ watch(
 }
 
 .ai-md .ai-md__pre {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   margin: 0.6em 0;
   overflow-x: auto;
   background: var(--el-fill-color-dark);
@@ -191,7 +191,7 @@ watch(
 .ai-md .ai-md__pre code {
   padding: 0;
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   background: transparent;
   border-radius: 0;
 }
@@ -206,12 +206,12 @@ watch(
 
 .ai-md th,
 .ai-md td {
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--el-border-color);
 }
 
 .ai-md th {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   background: var(--el-fill-color);
 }
 
@@ -241,7 +241,7 @@ watch(
   display: inline-block;
   width: 2px;
   height: 1em;
-  margin-left: 2px;
+  margin-left: var(--space-0-5);
   vertical-align: -0.15em;
   content: "";
   background: var(--el-color-primary);
@@ -300,7 +300,7 @@ watch(
 }
 
 .ai-md .hljs-strong {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 @keyframes ai-md-blink {

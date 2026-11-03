@@ -140,10 +140,7 @@ const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
       <template #dropdown>
         <el-dropdown-menu class="logout">
           <el-dropdown-item @click="toAccountSettings">
-            <IconifyIconOffline
-              :icon="AccountSettingsIcon"
-              style="margin: 5px"
-            />
+            <IconifyIconOffline :icon="AccountSettingsIcon" class="m-1" />
             {{ t("menus.accountSettings") }}
           </el-dropdown-item>
           <!-- 模拟态专属：退出模拟（恢复原身份），与退出登录语义不同 -->
@@ -156,11 +153,11 @@ const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
             <span class="widget-menu__label">{{ t(entry.item.labelKey) }}</span>
           </el-dropdown-item>
           <el-dropdown-item v-if="preferencesInDropdown" @click="onPanel">
-            <IconifyIconOffline :icon="Setting" style="margin: 5px" />
+            <IconifyIconOffline :icon="Setting" class="m-1" />
             {{ t("buttons.systemSet") }}
           </el-dropdown-item>
           <el-dropdown-item @click="logout">
-            <IconifyIconOffline :icon="LogoutCircleRLine" style="margin: 5px" />
+            <IconifyIconOffline :icon="LogoutCircleRLine" class="m-1" />
             {{ t("buttons.loginOut") }}
           </el-dropdown-item>
         </el-dropdown-menu>
@@ -184,11 +181,11 @@ const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
 
 .el-dropdown-link {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: center;
   height: var(--navbar-action-size);
-  padding: 0 10px;
+  padding: 0 var(--space-2-5);
   color: hsl(var(--fg));
   cursor: pointer;
   border-radius: var(--navbar-action-radius);

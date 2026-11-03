@@ -140,5 +140,5 @@ watch(isDark, applyOptions);
 </script>
 
 <template>
-  <div ref="chartRef" style="width: 100%; height: 400px" />
+  <div ref="chartRef" class="w-full h-100" />
 </template>

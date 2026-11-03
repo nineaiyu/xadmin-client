@@ -61,7 +61,7 @@ const emit = defineEmits<{ change: [value: string] }>();
 .pref-choice {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 
   /* 显式撑满控件区：stack 行里控件区被拉伸后，网格若不撑满会按 max-content
      结算宽度，auto-fit 的重复次数退化为 1（每行只剩一列卡片） */
@@ -72,11 +72,11 @@ const emit = defineEmits<{ change: [value: string] }>();
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 8px 6px;
+  padding: var(--space-2) var(--space-1-5);
   font: inherit;
   color: var(--el-text-color-regular);
   cursor: pointer;
@@ -129,8 +129,8 @@ const emit = defineEmits<{ change: [value: string] }>();
 
 .pref-choice__mark {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: var(--space-0-5);
+  right: var(--space-0-5);
   font-size: var(--font-size-xs);
   color: var(--el-color-primary);
 }

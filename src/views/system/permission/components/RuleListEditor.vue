@@ -398,7 +398,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
 .rule-editor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .rule-editor-head {
@@ -409,14 +409,14 @@ const plainRules = computed(() => stripRuleIds(rules.value));
 
 .rule-editor-title {
   font-size: var(--el-font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-text-color-primary);
 }
 
 .rule-editor-presets {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -426,9 +426,9 @@ const plainRules = computed(() => stripRuleIds(rules.value));
 }
 
 .rule-notes p {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: var(--el-font-size-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--el-text-color-regular);
 }
 
@@ -439,15 +439,15 @@ const plainRules = computed(() => stripRuleIds(rules.value));
 .rule-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .rule-row {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);
@@ -467,7 +467,7 @@ const plainRules = computed(() => stripRuleIds(rules.value));
 
 .rule-row-main {
   display: flex;
-  gap: 10px;
+  gap: var(--space-2-5);
   align-items: center;
   min-width: 0;
 }

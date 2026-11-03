@@ -114,14 +114,14 @@ const onSelect = (action: MenuNodeAction) => {
 .menu-context {
   position: fixed;
   width: 210px;
-  padding: 4px;
+  padding: var(--space-1);
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-md);
   box-shadow: var(--el-box-shadow-light);
 
   &__title {
-    padding: 4px 10px;
+    padding: var(--space-1) var(--space-2-5);
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: var(--el-font-size-extra-small);
@@ -132,11 +132,11 @@ const onSelect = (action: MenuNodeAction) => {
 
   &__item {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
     width: 100%;
     height: 30px;
-    padding: 0 10px;
+    padding: 0 var(--space-2-5);
     font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
     cursor: pointer;
@@ -160,7 +160,7 @@ const onSelect = (action: MenuNodeAction) => {
     }
 
     &.is-divided {
-      margin-top: 4px;
+      margin-top: var(--space-1);
       border-top: 1px solid var(--el-border-color-lighter);
     }
   }

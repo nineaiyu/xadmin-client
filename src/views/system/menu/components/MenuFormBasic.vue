@@ -77,7 +77,7 @@ const MENU_RANK_MAX = 100000;
         :key="item"
         :value="item"
       >
-        <span style="float: left">{{ item }}</span>
+        <span class="float-left">{{ item }}</span>
         <span class="menu-form__option-hint">{{ ctx.viewList[item] }}</span>
       </el-option>
     </el-select>

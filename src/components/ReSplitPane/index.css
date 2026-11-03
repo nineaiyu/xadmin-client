@@ -25,7 +25,7 @@
 }
 
 .vue-splitter-container-mask {
-  z-index: 9999;
+  z-index: var(--z-index-layout);
   width: 100%;
   height: 100%;
   position: absolute;
@@ -55,19 +55,19 @@ body.splitter-dragging * {
 }
 
 .splitter-pane.vertical.splitter-paneL {
-  padding-right: 3px;
+  padding-right: var(--space-1);
 }
 
 .splitter-pane.vertical.splitter-paneR {
-  padding-left: 3px;
+  padding-left: var(--space-1);
 }
 
 .splitter-pane.horizontal.splitter-paneL {
   flex: 0 0 auto;
-  padding-bottom: 3px;
+  padding-bottom: var(--space-1);
 }
 
 .splitter-pane.horizontal.splitter-paneR {
   flex: 1 1 0;
-  padding-top: 3px;
+  padding-top: var(--space-1);
 }

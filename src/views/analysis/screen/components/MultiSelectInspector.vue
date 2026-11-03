@@ -274,7 +274,7 @@ const LAYER_ACTIONS: { action: FreeLayerAction; key: string }[] = [
 
 .multi-panel__count {
   font-size: var(--font-size-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .multi-panel__group {
@@ -323,7 +323,7 @@ const LAYER_ACTIONS: { action: FreeLayerAction; key: string }[] = [
 
 .multi-panel__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--screen-fg-dim);
 }
 </style>

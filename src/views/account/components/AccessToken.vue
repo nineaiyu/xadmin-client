@@ -1,7 +1,14 @@
 <script lang="ts" setup>
-import { h, reactive, ref, shallowRef } from "vue";
+import { defineComponent, h, reactive, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElAlert, ElButton, ElInput, ElTag, ElTooltip } from "element-plus";
+import {
+  ElAlert,
+  ElButton,
+  ElInput,
+  ElSwitch,
+  ElTag,
+  ElTooltip
+} from "element-plus";
 import type { RecordType } from "plus-pro-components";
 import { isSuccess } from "@/api/types";
 import {
@@ -28,6 +35,10 @@ import { buildScopeIndex, formatScopeLines } from "@/utils/scopeDisplay";
 import AccountPanel from "./AccountPanel.vue";
 import PatCallLogs from "./PatCallLogs.vue";
 import AccessTokenCreateForm from "./AccessTokenCreateForm.vue";
+import {
+  resolveTokenScopePayload,
+  type TokenScopePayload
+} from "./tokenScopePayload";
 import Lock from "~icons/ep/lock";
 import Location from "~icons/ep/location";
 import Document from "~icons/ep/document";
@@ -236,15 +247,28 @@ const openListEditor = (options: {
 /**
  * 接口范围编辑：勾选「我有权限的接口」（选项来自 scope-options，按本人权限收口）
  * + 自定义条目兜底（白名单接口/正则/历史条目，一行一条）。
+ * 清空范围保存与创建表单同口径：必须显式打开「不限范围」开关（提交体携带
+ * `unrestricted: true`，与后端 PATCH 校验对齐），否则拦下并保持弹窗打开。
  */
 const openScopeEditor = (row: RecordType) => {
-  // 编辑态由弹窗自己持有：组件挂载后会把已保存条目分流到勾选/自定义
-  const state = reactive<{ value: string[] }>({
-    value: [...(row.scopes ?? [])]
+  // 编辑态由弹窗自己持有：组件挂载后会把已保存条目分流到勾选/自定义；
+  // 「不限范围」初始值与令牌现状一致（存量空范围凭证原样保存仍合法）
+  const state = reactive<{ value: string[]; unrestricted: boolean }>({
+    value: [...(row.scopes ?? [])],
+    unrestricted:
+      row.unrestricted === undefined
+        ? !(row.scopes ?? []).length
+        : Boolean(row.unrestricted)
   });
-  const { beforeSure } = useDialogForm<string[]>({
-    readPayload: () => state.value,
-    submit: scopes => personalAccessTokenApi.partialUpdate(row.pk, { scopes }),
+  const { beforeSure } = useDialogForm<TokenScopePayload>({
+    readPayload: () => {
+      const payload = resolveTokenScopePayload(state.value, state.unrestricted);
+      if (!payload) {
+        message(t("accessToken.unrestrictedRequired"), { type: "warning" });
+      }
+      return payload;
+    },
+    submit: payload => personalAccessTokenApi.partialUpdate(row.pk, payload),
     onSuccess: res => {
       invalidateMetaCache();
       message(String(res.detail ?? t("results.success")), { type: "success" });
@@ -253,18 +277,47 @@ const openScopeEditor = (row: RecordType) => {
     onFail: res =>
       message(`${t("results.failed")}，${res.detail}`, { type: "error" })
   });
+  // h() 产物不是响应式上下文：包一层本地组件，开关随勾选联动（复位/禁用）
+  const ScopeEditorContent = defineComponent({
+    name: "PatScopeEditorContent",
+    setup() {
+      return () =>
+        h("div", [
+          h(ApiScopeEditor, {
+            modelValue: state.value,
+            "onUpdate:modelValue": (value: string[]) => {
+              state.value = value;
+              // 勾选了范围时开关失去意义：与创建表单同口径自动复位
+              if (value.length) state.unrestricted = false;
+            },
+            loadOptions: loadPatScopeCatalog
+          }),
+          h("div", { class: "mt-3 flex-c gap-2" }, [
+            h(ElSwitch, {
+              modelValue: state.unrestricted,
+              // ElSwitch 的更新回调按其类型面收窄为 boolean
+              "onUpdate:modelValue": (value: string | number | boolean) => {
+                state.unrestricted = Boolean(value);
+              },
+              disabled: state.value.length > 0
+            }),
+            h("span", { class: "text-sm" }, t("accessToken.unrestricted"))
+          ]),
+          h(
+            "div",
+            { class: "el-form-item__help mt-1" },
+            t("accessToken.unrestrictedTip")
+          )
+        ]);
+    }
+  });
   addDialog({
     title: t("accessToken.scope"),
     width: dialogSize("md"),
     draggable: true,
     destroyOnClose: true,
     closeOnClickModal: false,
-    contentRenderer: () =>
-      h(ApiScopeEditor, {
-        modelValue: state.value,
-        "onUpdate:modelValue": (value: string[]) => (state.value = value),
-        loadOptions: loadPatScopeCatalog
-      }),
+    contentRenderer: () => h(ScopeEditorContent),
     beforeSure
   });
 };
@@ -305,10 +358,20 @@ const listColumnsFormat = (columns: PageTableColumn[]) => {
           );
         break;
       case "scopes":
-        // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径
+        // 明细走 tooltip：条目本体是锚定正则，列内只显示条数，hover 看到可读路径。
+        // 不限范围用醒目的警示标签区分（空范围 = 不限是运行时既定语义；后端
+        // 下发显式 unrestricted 字段时以它为准）
         column.cellRenderer = ({ row }) => {
           const items: string[] = row.scopes ?? [];
-          if (!items.length) return t("accessToken.scopeUnrestricted");
+          const unrestricted =
+            row.unrestricted === undefined
+              ? !items.length
+              : Boolean(row.unrestricted);
+          if (unrestricted) {
+            return h(ElTag, { type: "warning", size: "small" }, () =>
+              t("accessToken.unrestricted")
+            );
+          }
           return h(
             ElTooltip,
             { placement: "top" },

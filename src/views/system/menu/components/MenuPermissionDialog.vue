@@ -168,7 +168,7 @@ defineExpose({ submit });
           :label="item.label"
           :value="item.value"
         >
-          <span style="float: left">{{ item.label }}</span>
+          <span class="float-left">{{ item.label }}</span>
           <span class="menu-permission__hint">{{ item.hint }}</span>
         </el-option>
       </el-select>
@@ -237,11 +237,11 @@ defineExpose({ submit });
 
   &__preview {
     min-height: 160px;
-    margin-top: 8px;
+    margin-top: var(--space-2);
   }
 
   &__summary {
-    margin-top: 8px;
+    margin-top: var(--space-2);
     font-size: var(--el-font-size-small);
     color: var(--el-text-color-regular);
   }

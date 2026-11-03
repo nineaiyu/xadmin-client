@@ -155,7 +155,7 @@ const unknownType = computed(
 
   &__title {
     font-size: var(--font-size-base);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: var(--el-text-color-primary);
   }
 
@@ -184,7 +184,7 @@ const unknownType = computed(
 
   &__success-text {
     font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: var(--el-color-success);
   }
 }

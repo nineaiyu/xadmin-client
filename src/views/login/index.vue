@@ -222,17 +222,17 @@ watch(
 
 .translation {
   :deep(.el-dropdown-menu__item) {
-    padding: 5px 40px;
+    padding: var(--space-1) var(--space-10);
   }
 
   .check-zh {
     position: absolute;
-    left: 20px;
+    left: var(--space-5);
   }
 
   .check-en {
     position: absolute;
-    left: 20px;
+    left: var(--space-5);
   }
 }
 </style>

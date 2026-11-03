@@ -89,8 +89,8 @@ if (unref(layoutTheme)) {
 /* 悬浮球：默认右下角圆钮（拖动后以 left/top 还原），层级低于设置面板（面板打开时收在其下） */
 .setting-fab {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: var(--space-6);
+  bottom: var(--space-6);
   z-index: var(--z-index-layout);
   display: flex;
   align-items: center;

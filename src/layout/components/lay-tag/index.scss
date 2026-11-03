@@ -37,19 +37,19 @@
     position: relative;
     display: inline-block;
     height: var(--layout-tags-item-h);
-    padding-left: 6px;
+    padding-left: var(--space-1-5);
     line-height: var(--layout-tags-item-h);
     cursor: pointer;
     transition: all var(--duration-slow) var(--ease-standard);
 
     &:not(:first-child) {
-      padding-right: 24px;
+      padding-right: var(--space-6);
     }
 
     &.chrome-item {
       padding-right: 0;
       padding-left: 0;
-      margin-right: 6px;
+      margin-right: var(--space-1-5);
       border-radius: var(--radius-md);
       box-shadow: none;
     }
@@ -78,7 +78,7 @@
   }
 
   .tag-title {
-    padding: 0 4px;
+    padding: 0 var(--space-1);
     color: var(--el-text-color-primary);
     text-decoration: none;
   }
@@ -87,7 +87,7 @@
   .tag-icon {
     display: inline-flex;
     align-items: center;
-    margin-right: 2px;
+    margin-right: var(--space-0-5);
     vertical-align: middle;
 
     svg {
@@ -103,7 +103,7 @@
     white-space: nowrap;
 
     &.chrome-scroll-container {
-      padding-top: 4px;
+      padding-top: var(--space-1);
 
       .fixed-tag {
         padding: 0 !important;
@@ -121,7 +121,7 @@
         transition: all var(--duration-fast) var(--ease-standard);
 
         &:nth-child(1) {
-          padding: 0 12px;
+          padding: 0 var(--space-3);
         }
 
         &.chrome-item {
@@ -132,7 +132,7 @@
       }
 
       .fixed-tag {
-        padding: 0 12px;
+        padding: 0 var(--space-3);
       }
     }
   }
@@ -140,7 +140,7 @@
   /* 右键菜单 */
   .contextmenu {
     position: absolute;
-    padding: 5px 0;
+    padding: var(--space-1) 0;
     margin: 0;
     font-size: var(--font-size-sm);
     font-weight: normal;
@@ -156,7 +156,7 @@
       display: flex;
       align-items: center;
       width: 100%;
-      padding: 7px 12px;
+      padding: var(--space-1-5) var(--space-3);
       margin: 0;
       cursor: pointer;
 
@@ -193,7 +193,7 @@
 }
 
 :deep(.el-dropdown-menu__item) i {
-  margin-right: 10px;
+  margin-right: var(--space-2-5);
 }
 
 :deep(.el-dropdown-menu__item--divided) {
@@ -349,10 +349,10 @@
   position: relative;
   z-index: 0;
   display: inline-flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   white-space: nowrap;
   cursor: pointer;
 
@@ -362,7 +362,7 @@
 
   .chrome-tab-divider {
     position: absolute;
-    left: 7px;
+    left: var(--space-1-5);
     width: 1px;
     height: 14px;
   }
@@ -419,15 +419,15 @@
 /* 朴素风格（plain）：激活页签用主色浅底圆角块标识，无下划线、无浏览器页签形状 */
 .tags-view .scroll-container.plain-scroll-container {
   .scroll-item {
-    padding-right: 22px;
-    margin-right: 4px;
+    padding-right: var(--space-5);
+    margin-right: var(--space-1);
     border-radius: var(--radius-sm);
     transition:
       background-color var(--duration-instant),
       color var(--duration-instant);
 
     &:nth-child(1) {
-      margin-left: 4px;
+      margin-left: var(--space-1);
     }
 
     &:hover:not(.is-active) {
@@ -440,7 +440,7 @@
       box-shadow: none;
 
       .tag-title {
-        font-weight: 500;
+        font-weight: var(--font-weight-medium);
       }
 
       .el-icon-close {

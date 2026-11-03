@@ -340,9 +340,9 @@ onMounted(() => {
 /* 钉住展开按钮：贴在底部折叠条上方（折叠态下仍居中可辨） */
 .sidebar-fixed-button {
   position: absolute;
-  right: 10px;
-  bottom: 46px;
-  z-index: 1002;
+  right: var(--space-2-5);
+  bottom: calc(var(--sidebar-collapse-bar-h) + var(--space-0-5));
+  z-index: var(--z-index-sidebar-ctrl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,7 +372,7 @@ onMounted(() => {
   &::after {
     position: absolute;
     top: 0;
-    left: 3px;
+    left: var(--space-0-5);
     width: 1px;
     height: 100%;
     content: "";
@@ -453,7 +453,7 @@ onMounted(() => {
   height: var(--sidebar-logo-h);
   padding: 0 var(--space-4);
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--pure-theme-menu-text);
 
   .sub-menu-icon {

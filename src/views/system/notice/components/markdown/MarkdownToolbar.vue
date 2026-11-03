@@ -122,10 +122,10 @@ const formatTools: FormatTool[] = [
 .md-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
-  padding: 5px 10px;
+  padding: var(--space-1) var(--space-2-5);
   background: var(--el-fill-color-lighter);
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
@@ -133,24 +133,24 @@ const formatTools: FormatTool[] = [
 .md-toolbar__tools {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: var(--space-0-5);
   align-items: center;
 }
 
 .md-toolbar__sep {
   width: 1px;
   height: 18px;
-  margin: 0 6px;
+  margin: 0 var(--space-1-5);
   background: var(--el-border-color);
 }
 
 .md-toolbar__label {
-  margin-left: 2px;
+  margin-left: var(--space-0-5);
 }
 
 .md-toolbar__text {
   font-size: var(--font-size-xs);
-  font-weight: 600;
-  line-height: 1;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-none);
 }
 </style>

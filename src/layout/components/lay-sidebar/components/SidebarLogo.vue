@@ -97,7 +97,7 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
     flex-wrap: nowrap;
     align-items: center;
     height: 100%;
-    padding-left: 10px;
+    padding-left: var(--space-2-5);
 
     img {
       display: inline-block;
@@ -107,11 +107,11 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
     .sidebar-title {
       display: inline-block;
       height: 32px;
-      margin: 2px 0 0 12px;
+      margin: var(--space-0-5) 0 0 var(--space-3);
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: var(--font-size-lg);
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       line-height: 32px;
       color: var(--pure-theme-sub-menu-active-text);
       white-space: nowrap;
@@ -130,7 +130,7 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
    子组件根元素时受样式加载顺序影响（曾导致居中失效、图标偏左）。 */
 .sidebar-logo-container.compact .sidebar-logo-link {
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   justify-content: center;
   padding-left: 0;
 
@@ -144,7 +144,7 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: var(--font-size-xs);
-    line-height: 1.2;
+    line-height: var(--line-height-tight);
   }
 }
 </style>

@@ -48,18 +48,18 @@ withDefaults(
 
 <style lang="scss" scoped>
 .pref-block {
-  padding: 12px 12px 8px;
+  padding: var(--space-3) var(--space-3) var(--space-2);
   background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-extra-light);
   border-radius: var(--radius-lg);
 
   & + & {
-    margin-top: 12px;
+    margin-top: var(--space-3);
   }
 
   &__head {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 
@@ -78,10 +78,10 @@ withDefaults(
 
   &__title {
     display: inline-flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
     font-size: var(--font-size-base);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     line-height: 22px;
     color: var(--el-text-color-primary);
   }
@@ -93,22 +93,22 @@ withDefaults(
   }
 
   &__desc {
-    margin: 2px 0 0;
+    margin: var(--space-0-5) 0 0;
     font-size: var(--font-size-xs);
     line-height: var(--line-height-normal);
     color: var(--el-text-color-secondary);
   }
 
   &__body {
-    margin-top: 8px;
+    margin-top: var(--space-2);
   }
 
   .setting {
-    margin: 4px -6px -2px;
+    margin: var(--space-1) -6px -2px;
   }
 
   .setting--flush {
-    margin: 8px 0 0;
+    margin: var(--space-2) 0 0;
   }
 }
 </style>

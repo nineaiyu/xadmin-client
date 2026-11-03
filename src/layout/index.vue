@@ -488,13 +488,9 @@ const LayHeader = defineComponent({
 .app-mask {
   position: absolute;
   top: 0;
-  z-index: 2001;
+  z-index: var(--z-index-app-mask);
   width: 100%;
   height: 100%;
   background: hsl(var(--overlay-soft));
-}
-
-.re-screen {
-  margin-top: 12px;
 }
 </style>

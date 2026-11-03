@@ -160,11 +160,11 @@ const navStyleOptions = computed<PrefChoiceOption[]>(() => [
 .nav-style-preview {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   justify-content: center;
   width: 46px;
   height: 30px;
-  padding: 0 6px;
+  padding: 0 var(--space-1-5);
 
   &__item {
     display: block;

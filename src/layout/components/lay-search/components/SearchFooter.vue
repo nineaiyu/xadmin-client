@@ -40,12 +40,12 @@ const { device, t } = useNav();
   .search-footer-item {
     display: flex;
     align-items: center;
-    margin-right: 14px;
+    margin-right: var(--space-3-5);
   }
 
   .icon {
-    padding: 2px;
-    margin-right: 3px;
+    padding: var(--space-0-5);
+    margin-right: var(--space-1);
     font-size: var(--font-size-xl);
     box-shadow:
       inset 0 -2px hsl(var(--border-lighter)),
@@ -55,7 +55,7 @@ const { device, t } = useNav();
 
   .search-footer-total {
     position: absolute;
-    right: 20px;
+    right: var(--space-5);
   }
 }
 </style>

@@ -256,7 +256,7 @@ onMounted(load);
 .captcha-risk__guide {
   padding-left: 1.25rem;
   margin: var(--space-1) 0 0;
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   list-style: disc;
 }
 </style>

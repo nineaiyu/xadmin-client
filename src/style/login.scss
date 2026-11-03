@@ -81,7 +81,7 @@
   width: 360px;
 
   h2 {
-    margin: 15px 0;
+    margin: var(--space-4) 0;
 
     // 站点标题的等宽展示字体走令牌（原为硬编码 Consolas/Monaco 栈）
     font: bold 200% var(--font-family-mono);
@@ -104,7 +104,7 @@
     width: 290px;
 
     h2 {
-      margin: 8px 0;
+      margin: var(--space-2) 0;
       font-size: 2.4rem;
     }
   }

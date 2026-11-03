@@ -373,12 +373,12 @@ const back = () => {
 
 .designer-title {
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .designer-subtitle {
   font-size: var(--el-font-size-base);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--el-text-color-secondary);
 }
 
@@ -399,7 +399,7 @@ const back = () => {
 
 .designer-inspector__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--el-text-color-secondary);
 }
 
@@ -441,7 +441,7 @@ const back = () => {
   align-items: center;
   margin-bottom: var(--space-2);
   font-size: var(--el-font-size-small);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .designer-component__body {

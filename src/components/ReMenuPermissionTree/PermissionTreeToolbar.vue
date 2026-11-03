@@ -143,12 +143,12 @@ const { t } = useI18n();
 .permission-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 
   &__row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-2-5);
     align-items: center;
   }
 
@@ -165,7 +165,7 @@ const { t } = useI18n();
   &__stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--space-1-5);
     align-items: center;
     margin-left: auto;
   }

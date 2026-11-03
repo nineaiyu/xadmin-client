@@ -77,7 +77,7 @@ const footerHeight = computed<number>({
           :step="FOOTER_HEIGHT_RANGE.step"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>

@@ -72,12 +72,12 @@ const stickyNav = computed(
   position: sticky;
   top: -8px;
   z-index: 1;
-  padding-top: 4px;
-  margin-bottom: 10px;
+  padding-top: var(--space-1);
+  margin-bottom: var(--space-2-5);
   background: var(--el-bg-color);
 }
 
 :deep(.el-tabs__nav-wrap) {
-  padding: 0 4px;
+  padding: 0 var(--space-1);
 }
 </style>

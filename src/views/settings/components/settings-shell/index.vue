@@ -220,7 +220,7 @@ function onKeydown(event: KeyboardEvent, key: string) {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   width: 200px;
   padding: var(--space-2);
   background-color: var(--el-bg-color);
@@ -251,7 +251,7 @@ function onKeydown(event: KeyboardEvent, key: string) {
   }
 
   &.is-active {
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     color: var(--el-color-primary);
     background-color: var(--el-fill-color-light);
   }
@@ -291,8 +291,8 @@ function onKeydown(event: KeyboardEvent, key: string) {
 
 .setting-page__panel-title {
   font-size: var(--font-size-lg);
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
   color: var(--el-text-color-primary);
 }
 

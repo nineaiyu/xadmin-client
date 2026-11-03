@@ -447,6 +447,6 @@ function handleDrag(item: dragItem) {
 
 <style lang="scss" scoped>
 .search-content {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 </style>

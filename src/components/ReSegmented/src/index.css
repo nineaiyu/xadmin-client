@@ -1,7 +1,7 @@
 .pure-segmented {
   /* 组件内部几何：轨道内边距、选中块描边宽、项水平内边距
      （水平内边距对齐 EP 控件尺寸步进：默认 12px / small 8px） */
-  --segmented-track-padding: 2px;
+  --segmented-track-padding: var(--space-0-5);
   --segmented-line-width: 1px;
   --segmented-padding-horizontal: var(--space-3);
   --segmented-padding-horizontal-sm: var(--space-2);

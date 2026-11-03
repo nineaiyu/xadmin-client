@@ -275,7 +275,7 @@ const tagsVisitHistory = computed({
           :step="5"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>
@@ -288,7 +288,7 @@ const tagsVisitHistory = computed({
           :step="TAGS_HEIGHT_RANGE.step"
           size="small"
           controls-position="right"
-          style="width: 108px"
+          class="w-(--setting-field-width-sm)"
         />
       </template>
     </PrefRow>
@@ -325,11 +325,11 @@ const tagsVisitHistory = computed({
 .tab-preview {
   position: relative;
   display: flex;
-  gap: 3px;
+  gap: var(--space-0-5);
   align-items: flex-end;
   width: 46px;
   height: 30px;
-  padding: 5px 5px 0;
+  padding: var(--space-1) var(--space-1) 0;
   overflow: hidden;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
@@ -349,9 +349,9 @@ const tagsVisitHistory = computed({
 
   &__body {
     position: absolute;
-    right: 5px;
-    bottom: 5px;
-    left: 5px;
+    right: var(--space-1);
+    bottom: var(--space-1);
+    left: var(--space-1);
     height: 12px;
     background: var(--el-fill-color-light);
     border: 1px solid var(--el-border-color-lighter);
@@ -360,7 +360,7 @@ const tagsVisitHistory = computed({
   /* 灵动：胶囊标签 */
   &--smart {
     align-items: center;
-    padding: 5px;
+    padding: var(--space-1);
 
     .tab-preview__item {
       height: 6px;
@@ -371,7 +371,7 @@ const tagsVisitHistory = computed({
   /* 卡片：独立圆角卡片 */
   &--card {
     align-items: center;
-    padding: 5px;
+    padding: var(--space-1);
 
     .tab-preview__item {
       height: 9px;

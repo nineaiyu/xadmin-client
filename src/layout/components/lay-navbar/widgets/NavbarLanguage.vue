@@ -59,13 +59,13 @@ const [zhOption, enOption] = LOCALE_OPTIONS;
 <style lang="scss" scoped>
 .translation {
   :deep(.el-dropdown-menu__item) {
-    padding: 5px 40px;
+    padding: var(--space-1) var(--space-10);
   }
 
   .check-zh,
   .check-en {
     position: absolute;
-    left: 20px;
+    left: var(--space-5);
   }
 }
 </style>

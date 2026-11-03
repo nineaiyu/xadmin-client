@@ -10,6 +10,12 @@ import {
 import { countToProps } from "./props";
 import { isNumber } from "@pureadmin/utils";
 
+/** 减弱动效偏好：跳过计数动画（时长置 0，直出终值） */
+const motionSafeDuration = (duration: number) =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ? 0
+    : duration;
+
 export default defineComponent({
   name: "ReNormalCountTo",
   props: countToProps,
@@ -64,7 +70,7 @@ export default defineComponent({
       const { startVal, duration, color, fontSize } = props;
       state.localStartVal = startVal;
       state.startTime = null;
-      state.localDuration = duration;
+      state.localDuration = motionSafeDuration(duration);
       state.paused = false;
       state.color = color;
       state.fontSize = fontSize;
@@ -72,7 +78,6 @@ export default defineComponent({
       state.rAF = requestAnimationFrame(count);
       emit("started");
     }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function pauseResume() {
       if (state.paused) {
@@ -184,7 +189,8 @@ export default defineComponent({
       <span
         style={{
           color: props.color,
-          fontSize: props.fontSize
+          fontSize: props.fontSize,
+          fontVariantNumeric: "tabular-nums" // 等宽数字：计数动画位宽不跳动
         }}
       >
         {slots.prefix?.()}

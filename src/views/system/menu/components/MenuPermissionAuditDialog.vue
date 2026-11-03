@@ -251,7 +251,7 @@ const onLocateRow = (pk: string | null) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
   }
 
   &__summary {
@@ -260,19 +260,19 @@ const onLocateRow = (pk: string | null) => {
   }
 
   &__group {
-    margin-top: 12px;
+    margin-top: var(--space-3);
   }
 
   &__group-head {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: var(--space-1-5);
   }
 
   &__group-title {
     font-size: var(--el-font-size-base);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
   }
 }
 </style>

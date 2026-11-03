@@ -271,7 +271,7 @@ const TOOLS: {
   padding: var(--space-2);
   font-family: var(--el-font-family);
   font-size: var(--el-font-size-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--el-text-color-primary);
   resize: vertical;
   background: var(--el-fill-color-blank);
@@ -326,7 +326,7 @@ const TOOLS: {
 
 .rich-editor__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--screen-fg-dim);
 }
 </style>

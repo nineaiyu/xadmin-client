@@ -202,7 +202,7 @@ const emptyText = computed(() =>
 
   /* 高度由 useTreeHeight 实测写入（取代旧实现两处口径不一致的 calc 魔法值） */
   &__scroll {
-    padding: 4px 10px 8px;
+    padding: var(--space-1) var(--space-2-5) var(--space-2);
     overflow: auto;
   }
 

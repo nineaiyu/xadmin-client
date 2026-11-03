@@ -86,7 +86,7 @@ function resetColor(key: SemanticColorKey) {
 <style lang="scss" scoped>
 .semantic-color {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 
   &__swatch {

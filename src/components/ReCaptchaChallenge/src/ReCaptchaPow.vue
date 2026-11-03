@@ -103,7 +103,7 @@ const { t } = useI18n();
 
 .re-captcha-pow__title {
   font-size: var(--el-font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .re-captcha-pow__tip {

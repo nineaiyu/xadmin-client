@@ -51,7 +51,7 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
   flex-wrap: nowrap;
   align-items: center;
   height: 100%;
-  padding: 0 16px 0 12px;
+  padding: 0 var(--space-4) 0 var(--space-3);
   transition: background var(--duration-fast) var(--ease-standard);
 
   &:hover {
@@ -67,11 +67,11 @@ const logoStyle = computed(() => resolveLogoImageStyle(configure.value));
 .navbar-logo__title {
   display: inline-block;
   height: 32px;
-  margin: 2px 0 0 12px;
+  margin: var(--space-0-5) 0 0 var(--space-3);
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 32px;
   color: var(--el-text-color-primary);
   white-space: nowrap;

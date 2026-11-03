@@ -110,7 +110,7 @@ defineExpose({ stageEl });
 
 .setting-preview__title {
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-text-color-primary);
 }
 

@@ -55,8 +55,8 @@ const toggleClick = () => {
 .center-collapse {
   position: absolute;
   top: 50%;
-  right: 2px;
-  z-index: 1002;
+  right: var(--space-0-5);
+  z-index: var(--z-index-sidebar-ctrl);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -72,12 +72,12 @@ withDefaults(defineProps<Props>(), {
 .re-action-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 2px 2px 12px;
+  gap: var(--space-4);
+  padding: var(--space-0-5) var(--space-0-5) var(--space-3);
 }
 
 .panel-card {
-  padding: 16px;
+  padding: var(--space-4);
   background: var(--el-fill-color-light);
   border-radius: var(--radius-lg);
 }
@@ -85,7 +85,7 @@ withDefaults(defineProps<Props>(), {
 .meta-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
+  gap: var(--space-2-5) var(--space-4);
   margin: 0;
 }
 
@@ -112,11 +112,11 @@ withDefaults(defineProps<Props>(), {
 .action-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .group-title {
-  padding-left: 2px;
+  padding-left: var(--space-0-5);
   font-size: var(--el-font-size-extra-small);
   line-height: 16px;
   color: var(--el-text-color-secondary);
@@ -124,10 +124,10 @@ withDefaults(defineProps<Props>(), {
 
 .action-item {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   text-align: left;
   cursor: pointer;
   background: var(--el-bg-color);

@@ -167,7 +167,7 @@ function handleLogout() {
   flex-direction: column;
   align-items: center;
   width: 320px;
-  padding: 24px 24px 20px;
+  padding: var(--space-6) var(--space-6) var(--space-5);
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-xl);
@@ -206,10 +206,10 @@ function handleLogout() {
 
 .lock-screen__brand {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   align-items: center;
   align-self: stretch;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
   color: var(--el-text-color-secondary);
 }
 
@@ -233,38 +233,38 @@ function handleLogout() {
 }
 
 .lock-screen__name {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   font-size: var(--font-size-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-text-color-primary);
 }
 
 .lock-screen__clock {
-  margin: 2px 0 0;
+  margin: var(--space-0-5) 0 0;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-2xl);
   color: var(--el-text-color-primary);
 }
 
 .lock-screen__time {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-placeholder);
 }
 
 .lock-screen__error {
   align-self: stretch;
-  margin: 6px 0 0;
+  margin: var(--space-1-5) 0 0;
   font-size: var(--font-size-xs);
   color: var(--el-color-danger);
 }
 
 .lock-screen__submit {
   align-self: stretch;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .lock-screen__back {
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 </style>

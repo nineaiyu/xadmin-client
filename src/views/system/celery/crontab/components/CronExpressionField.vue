@@ -232,20 +232,20 @@ const displayRun = (value: string) => formatDateTime(value);
 .cron-field__presets {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-2-5);
 }
 
 .cron-field__grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .cron-field__item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .cron-field__item--wide {
@@ -258,14 +258,14 @@ const displayRun = (value: string) => formatDateTime(value);
 }
 
 .cron-field__hint {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
 }
 
 .cron-field__preview {
-  padding: 10px;
-  margin-top: 10px;
+  padding: var(--space-2-5);
+  margin-top: var(--space-2-5);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
 }
@@ -274,20 +274,20 @@ const displayRun = (value: string) => formatDateTime(value);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin-bottom: var(--space-1-5);
+  font-weight: var(--font-weight-medium);
 }
 
 .cron-field__runs {
-  padding-left: 20px;
+  padding-left: var(--space-5);
   margin: 0;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
-  line-height: 1.8;
+  line-height: var(--line-height-loose);
 }
 
 .cron-field__preview-tip {
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   font-size: var(--font-size-xs);
   color: var(--el-text-color-secondary);
 }

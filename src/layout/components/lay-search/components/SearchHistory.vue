@@ -187,14 +187,14 @@ defineExpose({ handleScroll });
 
 <style lang="scss" scoped>
 .history {
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
 
   &-item {
     display: flex;
     align-items: center;
     height: 56px;
-    padding: 14px;
-    margin: 8px auto 10px;
+    padding: var(--space-3-5);
+    margin: var(--space-2) auto var(--space-2-5);
     cursor: pointer;
     border: 0.1px solid hsl(var(--border));
     border-radius: var(--radius-sm);

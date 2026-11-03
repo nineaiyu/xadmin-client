@@ -168,7 +168,7 @@ defineExpose({ getRules });
       <div class="flex w-full items-center gap-2">
         <el-select
           v-model="form.op"
-          style="width: 130px"
+          class="w-32"
           data-testid="linkage-op"
           @change="onOpChanged"
         >
@@ -227,7 +227,7 @@ defineExpose({ getRules });
     <el-form-item :label="t('dform.linkageEffect')">
       <el-select
         v-model="form.effect"
-        style="width: 160px"
+        class="w-40"
         data-testid="linkage-effect"
       >
         <el-option

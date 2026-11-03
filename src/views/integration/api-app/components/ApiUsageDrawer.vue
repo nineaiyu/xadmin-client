@@ -204,9 +204,9 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
 
 .usage-range {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .usage-range-label {
@@ -216,12 +216,12 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
 
 .usage-row {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .usage-card {
   flex: 1;
-  padding: 12px;
+  padding: var(--space-3);
   text-align: center;
   background: var(--el-fill-color-lighter);
   border-radius: var(--radius-md);
@@ -233,9 +233,9 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
 }
 
 .usage-value {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-size: var(--el-font-size-extra-large);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .usage-danger {
@@ -243,17 +243,17 @@ const statusCodesColumns = computed<ReadonlyColumn[]>(() => [
 }
 
 .usage-section {
-  margin-top: 18px;
+  margin-top: var(--space-4);
 }
 
 .usage-section-title {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-small);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .usage-note {
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-secondary);
 }

@@ -106,13 +106,13 @@ const iconComp = computed(() => ICONS[tone.value]);
 
   &__icon {
     font-size: var(--display-size-2xl);
-    line-height: 1;
+    line-height: var(--line-height-none);
   }
 
   &__title {
     margin-top: var(--space-4);
     font-size: var(--font-size-md);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: hsl(var(--fg));
   }
 

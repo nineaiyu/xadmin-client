@@ -58,7 +58,7 @@ withDefaults(
 .account-panel__title {
   margin: 0;
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 26px;
   color: var(--el-text-color-primary);
 }
@@ -120,9 +120,9 @@ withDefaults(
 
 /* 行内分组小标题（已绑定 / 可绑定等）：与行标题同字号，靠颜色与位置区分层级 */
 .account-panel .account-section-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: var(--font-size-base);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 22px;
   color: var(--el-text-color-regular);
 }

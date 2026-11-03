@@ -211,7 +211,7 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
   align-items: center;
   margin-bottom: var(--space-2);
   font-size: var(--el-font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .component-form__toolbar {
@@ -229,7 +229,7 @@ const onMetricChange = (metric: "count" | "sum" | "avg") => {
 .component-form__type {
   padding: 1px var(--space-2);
   font-size: var(--el-font-size-extra-small);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-light);
   border-radius: var(--radius-full);

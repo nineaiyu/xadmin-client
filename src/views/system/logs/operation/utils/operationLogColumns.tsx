@@ -90,7 +90,7 @@ export function useOperationLogColumns({
               style:
                 row.exec_time != null &&
                 Number(row.exec_time) > slowThreshold.value
-                  ? "color:var(--el-color-danger);font-weight:600"
+                  ? "color:var(--el-color-danger);font-weight:var(--font-weight-semibold)"
                   : ""
             },
             row.exec_time == null ? "—" : `${Number(row.exec_time).toFixed(3)}s`

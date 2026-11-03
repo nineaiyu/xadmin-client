@@ -382,7 +382,7 @@ onMounted(loadScreen);
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  padding: 14px 24px;
+  padding: var(--space-3-5) var(--space-6);
   margin-bottom: var(--space-1);
   background: var(--screen-surface);
   border-bottom: 1px solid var(--screen-border-subtle);
@@ -391,19 +391,19 @@ onMounted(loadScreen);
 
 .screen-title {
   font-size: var(--font-size-xl);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.02em;
 }
 
 /* 看板名：同层级内的次要信息（字号与透明度降一档） */
 .screen-subtitle {
   font-size: var(--el-font-size-base);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--screen-fg-subtle);
 }
 
 .screen-page {
-  padding: 1px 8px;
+  padding: 1px var(--space-2);
   font-size: var(--el-font-size-extra-small);
   color: var(--screen-fg-muted);
   background: var(--screen-surface-strong);

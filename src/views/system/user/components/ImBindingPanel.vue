@@ -114,7 +114,7 @@ onMounted(load);
     </ElAlert>
     <el-form :model="form" label-width="110px" class="mb-3">
       <el-form-item :label="t('imBinding.provider')">
-        <el-select v-model="form.provider" :style="{ width: '190px' }">
+        <el-select v-model="form.provider" class="w-48">
           <el-option
             v-for="item in PROVIDERS"
             :key="item"
@@ -167,6 +167,6 @@ onMounted(load);
 
 <style scoped>
 .im-binding-panel {
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 </style>

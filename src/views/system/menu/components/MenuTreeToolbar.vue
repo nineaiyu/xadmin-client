@@ -382,17 +382,17 @@ const onMoreCommand = (command: string) => {
 .menu-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-lighter);
 
   &__locate {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 
@@ -425,7 +425,7 @@ const onMoreCommand = (command: string) => {
 
   &__actions {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 
@@ -436,9 +436,9 @@ const onMoreCommand = (command: string) => {
 
 .menu-batchbar {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   background: var(--el-color-primary-light-9);
 
   &__count {

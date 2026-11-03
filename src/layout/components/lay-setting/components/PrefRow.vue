@@ -50,7 +50,7 @@ withDefaults(
   /* 窄屏（面板 100% 宽）：标签在上、控件在下左对齐 */
   @include bp.below("md") {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-1-5);
     align-items: flex-start;
 
     &__control {
@@ -60,10 +60,10 @@ withDefaults(
   }
 
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  padding: 7px 6px;
+  padding: var(--space-2) var(--space-1-5);
   border-radius: var(--radius-sm);
   transition: background-color var(--duration-fast) var(--ease-standard);
 
@@ -83,13 +83,13 @@ withDefaults(
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-0-5);
     min-width: 0;
   }
 
   &__text {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
     font-size: var(--font-size-base);
     line-height: 20px;
@@ -111,14 +111,14 @@ withDefaults(
   &__control {
     display: flex;
     flex: none;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
   }
 }
 
 .pref-row--stack {
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: flex-start;
 
   .pref-row__control {

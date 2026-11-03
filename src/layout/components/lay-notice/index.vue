@@ -196,7 +196,7 @@ const getLabel = computed(
                故把该路数量直接挂在入口上（悬停可看拆分），否则站内信为 0 时
                用户点开弹层只看到「暂无结果」，无从解释角标数字。 -->
           <el-divider />
-          <el-row style="height: 30px; text-align: center">
+          <el-row class="h-8 text-center">
             <el-col :span="canViewNotice ? 12 : 24">
               <el-link
                 v-if="canViewNotice"
@@ -293,7 +293,7 @@ const getLabel = computed(
 
 .dropdown-tabs {
   .noticeList-container {
-    padding: 5px 10px 0;
+    padding: var(--space-1) var(--space-2-5) 0;
   }
 
   .notice-scroll__spacer {
@@ -309,11 +309,11 @@ const getLabel = computed(
   }
 
   :deep(.el-tabs__nav-wrap) {
-    padding: 0 36px;
+    padding: 0 var(--space-10);
   }
 
   :deep(.el-divider--horizontal) {
-    margin: 8px 0;
+    margin: var(--space-2) 0;
   }
 }
 </style>

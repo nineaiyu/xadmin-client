@@ -308,7 +308,7 @@ const datasets = computed(() => props.datasets ?? []);
 }
 
 .pane-inspector__type {
-  padding: 1px 6px;
+  padding: 1px var(--space-1-5);
   font-size: var(--el-font-size-extra-small);
   color: var(--screen-fg-muted);
   background: var(--screen-surface-strong);
@@ -340,7 +340,7 @@ const datasets = computed(() => props.datasets ?? []);
 
 .pane-inspector__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--screen-fg-dim);
 }
 

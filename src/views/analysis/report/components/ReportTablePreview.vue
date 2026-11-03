@@ -162,7 +162,7 @@ defineExpose({ load, notifyFull });
 
 .report-table__title {
   font-size: var(--el-font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .report-table__meta,

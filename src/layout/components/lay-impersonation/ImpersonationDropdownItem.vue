@@ -26,7 +26,7 @@ const { exiting, exitImpersonation } = useImpersonationExit();
     :class="{ 'is-exiting': exiting }"
     @click="exitImpersonation"
   >
-    <IconifyIconOffline :icon="UserShared" style="margin: 5px" />
+    <IconifyIconOffline :icon="UserShared" class="m-1" />
     {{ t("layout.impersonateExit") }}
   </el-dropdown-item>
 </template>

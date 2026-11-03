@@ -330,7 +330,7 @@ const receiverLabels = (row: DefaultRow) => {
 /* 行内操作按钮同行排布：默认的块级间距会让两枚按钮各占一行、把行高撑到两倍 */
 .notification-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
   justify-content: center;
 }

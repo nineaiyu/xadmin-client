@@ -82,7 +82,7 @@ const items = computed(
    因此用唯一的 popper-class 承载全局样式（类名互斥，不影响其他弹层）。
    颜色全部取自 EP 变量，明暗主题随站点自动适配 */
 .el-popover.el-popper.chat-emoji-popper {
-  padding: 12px;
+  padding: var(--space-3);
   background:
     radial-gradient(
       120% 72% at 50% 0%,
@@ -100,14 +100,14 @@ const items = computed(
 .chat-emoji-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
   transform-origin: bottom left;
   animation: chat-emoji-panel-in var(--duration-fast) var(--ease-out);
 
   &__tabs {
     display: flex;
-    gap: 2px;
-    padding: 3px;
+    gap: var(--space-0-5);
+    padding: var(--space-0-5);
     background: var(--el-fill-color-light);
     border-radius: var(--radius-xl);
   }
@@ -119,7 +119,7 @@ const items = computed(
     justify-content: center;
     height: 28px;
     font-size: var(--el-font-size-medium);
-    line-height: 1;
+    line-height: var(--line-height-none);
     cursor: pointer;
     user-select: none;
     border-radius: var(--radius-lg);
@@ -143,7 +143,7 @@ const items = computed(
   &__grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 3px;
+    gap: var(--space-0-5);
   }
 
   &__item {
@@ -153,7 +153,7 @@ const items = computed(
     aspect-ratio: 1;
     padding: 0;
     font-size: var(--display-size-sm);
-    line-height: 1;
+    line-height: var(--line-height-none);
     cursor: pointer;
     user-select: none;
     background: transparent;

@@ -302,8 +302,8 @@ defineExpose({ normalize });
 }
 
 .grant-item {
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  padding: var(--space-2-5) var(--space-3);
+  margin-bottom: var(--space-2);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-md);
 }
@@ -311,9 +311,9 @@ defineExpose({ normalize });
 .grant-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
 }
 
 .grant-model {
@@ -329,7 +329,7 @@ defineExpose({ normalize });
 }
 
 .row-filter {
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-2);
   background: var(--el-fill-color-lighter);
   border-radius: var(--el-border-radius-base);
 }
@@ -347,9 +347,9 @@ defineExpose({ normalize });
 
 .row-filter-line {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
 }
 
 .rule-field {

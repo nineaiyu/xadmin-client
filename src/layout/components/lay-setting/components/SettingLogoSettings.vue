@@ -109,7 +109,7 @@ const logoFitOptions = computed(() => [
         :disabled="!siteWideEditable"
         size="small"
         clearable
-        style="width: 168px"
+        class="w-(--setting-field-width-md)"
       />
     </template>
   </PrefRow>
@@ -138,7 +138,7 @@ const logoFitOptions = computed(() => [
         v-model="logoFit"
         :disabled="!siteWideEditable"
         size="small"
-        style="width: 128px"
+        class="w-(--setting-field-width-sm)"
       >
         <el-option
           v-for="item in logoFitOptions"
@@ -178,7 +178,7 @@ const logoFitOptions = computed(() => [
         :disabled="logoMode !== 'full' || !siteWideEditable"
         size="small"
         controls-position="right"
-        style="width: 108px"
+        class="w-(--setting-field-width-sm)"
       />
     </template>
   </PrefRow>
@@ -194,7 +194,7 @@ const logoFitOptions = computed(() => [
         :disabled="!siteWideEditable"
         size="small"
         clearable
-        style="width: 168px"
+        class="w-(--setting-field-width-md)"
       />
     </template>
   </PrefRow>

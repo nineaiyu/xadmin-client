@@ -129,7 +129,7 @@ const offsetText = computed(() => {
       <el-select
         v-model="timezone"
         size="small"
-        style="width: 100%"
+        class="w-full"
         filterable
         :placeholder="t('layout.timezoneFollowBrowser')"
       >
@@ -149,7 +149,7 @@ const offsetText = computed(() => {
 .timezone-panel {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 
   &__clock {
     font-family: var(--font-family-mono);

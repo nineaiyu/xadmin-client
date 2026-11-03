@@ -212,7 +212,7 @@ const beforeUpload = (rawFile: File) => {
         :defaultConfig="toolbarConfig as IToolbarConfig"
         :editor="editorRef"
         :mode="mode"
-        style="border-bottom: 1px solid hsl(var(--border))"
+        class="border-0 border-b border-solid border-border"
       />
       <Editor
         v-model="messages"

@@ -124,7 +124,7 @@ const onColor = (next: string | null) =>
 
 .screen-theme-panel__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.5;
+  line-height: var(--line-height-normal);
   color: var(--el-text-color-secondary);
 }
 

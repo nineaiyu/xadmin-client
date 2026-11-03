@@ -114,7 +114,7 @@ const headerToggleVisible = computed(
 
   .breadcrumb-container {
     float: left;
-    margin-left: 16px;
+    margin-left: var(--space-4);
   }
 }
 </style>

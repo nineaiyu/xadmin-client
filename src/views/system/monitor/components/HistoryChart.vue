@@ -158,8 +158,7 @@ defineExpose({ exportImage });
 <template>
   <div
     ref="chartRef"
-    class="history-chart w-full"
-    style="height: 260px"
+    class="history-chart w-full h-65"
     data-testid="monitor-history-chart"
   />
 </template>

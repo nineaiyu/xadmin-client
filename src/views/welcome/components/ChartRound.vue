@@ -77,5 +77,5 @@ watch(isDark, applyOptions);
 </script>
 
 <template>
-  <div ref="chartRef" style="width: 100%; height: 60px" />
+  <div ref="chartRef" class="w-full h-15" />
 </template>

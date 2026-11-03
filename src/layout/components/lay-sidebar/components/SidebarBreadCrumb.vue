@@ -185,7 +185,7 @@ watch(
 .breadcrumb-icon {
   display: inline-flex;
   align-items: center;
-  margin-right: 4px;
+  margin-right: var(--space-1);
   vertical-align: middle;
 
   svg {
@@ -196,7 +196,7 @@ watch(
 
 /* 浅底样式（设置面板「面包屑样式」→「浅底」） */
 .breadcrumb--background {
-  padding: 3px 10px;
+  padding: var(--space-0-5) var(--space-2-5);
   background: var(--el-fill-color-light);
   border-radius: var(--radius-md);
 }

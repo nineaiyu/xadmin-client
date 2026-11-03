@@ -124,7 +124,7 @@ const isMenu = computed(() => form.menuType === MenuChoices.MENU);
 /* 双控件行：主输入自适应、附属控件定宽（.el-select 默认 100% 会挤占主输入） */
 .menu-form-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   width: 100%;
 

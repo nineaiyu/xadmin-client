@@ -74,7 +74,7 @@ const SEARCH_PRESETS: Record<
               lazy: true,
               src: row[column._column?.key as string],
               alt: row[column._column?.key as string],
-              class: ["w-[36px]", "h-[36px]", "align-middle"],
+              class: ["w-9", "h-9", "align-middle"],
               previewSrcList: [row[column._column?.key as string]],
               previewTeleported: true
             });

@@ -169,7 +169,7 @@ const showRootActions = computed(
 .permission-node {
   display: flex;
   flex: 1;
-  gap: 6px;
+  gap: var(--space-1-5);
   align-items: center;
   min-width: 0;
 

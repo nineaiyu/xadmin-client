@@ -66,7 +66,7 @@ const rowWidth = (index: number, total: number) => {
 .re-skeleton {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
   height: 100%;
 

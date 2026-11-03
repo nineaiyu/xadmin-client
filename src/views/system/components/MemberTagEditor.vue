@@ -108,7 +108,7 @@ defineExpose({ getPayload });
       :remote-method="searchUsers"
       :loading="searching"
       :placeholder="placeholder"
-      style="width: 100%"
+      class="w-full"
       :data-testid="testid"
     >
       <el-option

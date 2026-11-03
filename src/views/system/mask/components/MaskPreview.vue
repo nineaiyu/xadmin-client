@@ -166,7 +166,7 @@ const onPreview = () => {
       />
     </el-form-item>
     <el-form-item :label="t('mask.mask_type')">
-      <el-select v-model="form.maskType" style="width: 100%">
+      <el-select v-model="form.maskType" class="w-full">
         <el-option
           v-for="opt in maskTypeChoices"
           :key="opt.value"
@@ -180,7 +180,7 @@ const onPreview = () => {
         v-model="form.keepHead"
         :min="0"
         :controls-position="'right'"
-        style="width: 100%"
+        class="w-full"
       />
     </el-form-item>
     <el-form-item :label="t('mask.keep_tail')">
@@ -188,7 +188,7 @@ const onPreview = () => {
         v-model="form.keepTail"
         :min="0"
         :controls-position="'right'"
-        style="width: 100%"
+        class="w-full"
       />
     </el-form-item>
     <el-form-item :label="t('mask.mask_char')">
@@ -205,7 +205,7 @@ const onPreview = () => {
           multiple
           clearable
           filterable
-          style="width: 100%"
+          class="w-full"
         >
           <el-option
             v-for="opt in roleOptions"

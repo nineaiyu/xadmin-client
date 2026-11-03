@@ -108,7 +108,7 @@
     position: fixed;
     top: 0;
     right: 0;
-    z-index: 998;
+    z-index: var(--z-index-fixed-header);
     width: calc(100% - #{$sideBarWidth});
 
     /* fixed-header 属性左上角动画 */
@@ -147,7 +147,7 @@
     top: 0;
     bottom: 0;
     left: 0;
-    z-index: 1001;
+    z-index: var(--z-index-sidebar);
     width: $sideBarWidth;
     height: 100%;
     overflow: visible;
@@ -163,7 +163,7 @@
 
     /* 菜单区顶部留白（padding-top 8px） */
     .el-scrollbar__view {
-      padding-top: 8px;
+      padding-top: var(--space-2);
     }
 
     .scrollbar-wrapper {
@@ -516,7 +516,7 @@
       width: auto;
       min-width: 200px;
       height: 100%;
-      padding-left: 10px;
+      padding-left: var(--space-2-5);
       cursor: pointer;
       transition: all var(--duration-base) var(--ease-standard);
 
@@ -528,11 +528,11 @@
       span {
         display: inline-block;
         height: 32px;
-        margin: 2px 0 0 12px;
+        margin: var(--space-0-5) 0 0 var(--space-3);
         overflow: hidden;
         text-overflow: ellipsis;
         font-size: var(--font-size-lg);
-        font-weight: 600;
+        font-weight: var(--font-weight-semibold);
         line-height: 32px;
         color: var(--pure-theme-sub-menu-active-text);
         white-space: nowrap;
@@ -587,11 +587,11 @@
 
       .el-dropdown-link {
         display: flex;
-        gap: 8px;
+        gap: var(--space-2);
         align-items: center;
         justify-content: center;
         height: var(--navbar-action-size);
-        padding: 0 10px;
+        padding: 0 var(--space-2-5);
         color: var(--pure-theme-sub-menu-active-text);
         cursor: pointer;
         border-radius: var(--navbar-action-radius);
@@ -623,7 +623,7 @@
     .el-sub-menu__title {
       height: var(--nav-item-height-horizontal);
       padding-right: var(--el-menu-base-level-padding);
-      padding-left: 12px;
+      padding-left: var(--space-3);
       line-height: var(--nav-item-height-horizontal);
       color: var(--pure-theme-menu-text);
       background: var(--pure-theme-menu-bg);
@@ -663,11 +663,11 @@
     justify-content: center;
     min-width: 18px;
     height: 18px;
-    padding: 0 6px;
-    margin-left: 6px;
+    padding: 0 var(--space-1-5);
+    margin-left: var(--space-1-5);
     font-size: var(--font-size-2xs);
     font-weight: var(--font-weight-medium);
-    line-height: 1;
+    line-height: var(--line-height-none);
     color: var(--el-color-white);
     background: var(--el-color-danger);
     border-radius: 9px;
@@ -685,13 +685,13 @@
   .el-menu--collapse {
     .sidebar-menu-badge {
       position: absolute;
-      top: 5px;
-      right: 6px;
+      top: var(--space-1);
+      right: var(--space-1-5);
       z-index: 2;
       visibility: visible;
       min-width: 16px;
       height: 16px;
-      padding: 0 4px;
+      padding: 0 var(--space-1);
       margin-left: 0;
     }
   }
@@ -733,7 +733,7 @@
     }
 
     .sidebar-container {
-      z-index: 2001;
+      z-index: var(--z-index-app-mask);
       width: $sideBarWidth;
       transition: transform var(--duration-base);
     }
@@ -761,12 +761,12 @@
       align-items: center;
       height: auto;
       min-height: 54px;
-      padding: 8px 0;
-      line-height: 1.4;
+      padding: var(--space-2) 0;
+      line-height: var(--line-height-snug);
 
       .sub-menu-icon {
-        height: 18px;
-        line-height: 1;
+        height: var(--nav-item-icon-size);
+        line-height: var(--line-height-none);
       }
 
       > span {
@@ -774,11 +774,11 @@
         width: auto;
         max-width: 100%;
         height: auto;
-        margin-top: 4px;
+        margin-top: var(--space-1);
         overflow: hidden;
         text-overflow: ellipsis;
         font-size: var(--font-size-xs);
-        line-height: 1.4;
+        line-height: var(--line-height-snug);
         text-align: center;
         white-space: nowrap;
       }
@@ -788,7 +788,7 @@
     .el-menu-item {
       height: auto;
       min-height: 54px;
-      line-height: 1.4;
+      line-height: var(--line-height-snug);
 
       .el-menu-tooltip__trigger {
         flex-direction: column;
@@ -799,11 +799,11 @@
       .collapse-show-title-text {
         display: block;
         max-width: 48px;
-        margin-top: 4px;
+        margin-top: var(--space-1);
         overflow: hidden;
         text-overflow: ellipsis;
         font-size: var(--font-size-xs);
-        line-height: 1.4;
+        line-height: var(--line-height-snug);
         white-space: nowrap;
       }
     }

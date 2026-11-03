@@ -12,7 +12,7 @@
           v-model="selectedCode"
           :disabled="disabled"
           filterable
-          style="width: 160px"
+          class="w-40"
           default-first-option
           @change="onCodeChange"
         >
@@ -23,9 +23,7 @@
             :value="country.value"
           >
             <span class="country-name">{{ country.name }}</span>
-            <span style="float: right; font-size: var(--font-size-sm)">{{
-              country.value
-            }}</span>
+            <span class="float-right text-sm">{{ country.value }}</span>
           </el-option>
           <template #label>{{ selectedLabel }}</template>
         </el-select>
@@ -140,7 +138,7 @@ const onInputChange = () => {
 .country-name {
   display: inline-block;
   width: 150px;
-  padding-right: 5px;
+  padding-right: var(--space-1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

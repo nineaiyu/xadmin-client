@@ -106,7 +106,7 @@ const isMarkdown = computed(
         <el-tag
           v-if="hasPublish"
           :type="newFormInline.publish ? 'success' : 'warning'"
-          style="float: right"
+          class="float-right"
           >{{
             newFormInline.publish ? t("labels.publish") : t("labels.unPublish")
           }}
@@ -127,7 +127,7 @@ const isMarkdown = computed(
           :model-value="sanitizedMessage"
           :defaultConfig="editorConfig"
           :mode="mode"
-          style="min-height: 500px; overflow-y: hidden"
+          class="min-h-125 overflow-y-hidden"
           @onCreated="handleCreated"
         />
       </div>

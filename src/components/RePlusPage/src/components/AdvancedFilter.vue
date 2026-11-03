@@ -160,13 +160,13 @@ defineExpose({ getConditions });
         >
           {{ index + 1 }}
         </span>
-        <div data-testid="af-field" style="width: 220px">
+        <div data-testid="af-field" class="w-55">
           <el-select
             v-model="row.field"
             filterable
             clearable
             :placeholder="t('advancedFilter.fieldPlaceholder')"
-            style="width: 100%"
+            class="w-full"
             @change="() => changeField(row)"
           >
             <el-option
@@ -184,11 +184,11 @@ defineExpose({ getConditions });
             </el-option>
           </el-select>
         </div>
-        <div data-testid="af-lookup" style="width: 150px">
+        <div data-testid="af-lookup" class="w-38">
           <el-select
             v-model="row.lookup"
             :disabled="!row.field"
-            style="width: 100%"
+            class="w-full"
             @change="() => changeLookup(row)"
           >
             <el-option

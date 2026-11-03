@@ -146,7 +146,7 @@ const contentStyle = computed(() =>
   &__title {
     margin: 0;
     font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: hsl(var(--fg));
   }
 

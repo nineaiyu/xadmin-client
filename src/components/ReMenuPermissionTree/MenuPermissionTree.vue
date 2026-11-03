@@ -298,8 +298,8 @@ defineExpose({ setCheckedKeys });
   &__tree-wrap {
     min-height: 200px;
     max-height: 46vh;
-    padding: 4px 0;
-    margin-top: 10px;
+    padding: var(--space-1) 0;
+    margin-top: var(--space-2-5);
     overflow: auto;
     border: 1px solid var(--el-border-color-lighter);
     border-radius: var(--el-border-radius-base);
@@ -308,16 +308,16 @@ defineExpose({ setCheckedKeys });
   &__legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--space-3);
     align-items: center;
-    margin-top: 8px;
+    margin-top: var(--space-2);
     font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-secondary);
   }
 
   &__legend-item {
     display: inline-flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
   }
 

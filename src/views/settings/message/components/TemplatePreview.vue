@@ -24,16 +24,16 @@ defineProps<{
 
 <style lang="scss" scoped>
 .template-preview {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   background: var(--el-fill-color-light);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-md);
 
   &__subject {
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    padding-bottom: var(--space-1-5);
+    margin-bottom: var(--space-1-5);
     font-size: var(--font-size-base);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     color: var(--el-text-color-primary);
     border-bottom: 1px dashed var(--el-border-color-lighter);
   }

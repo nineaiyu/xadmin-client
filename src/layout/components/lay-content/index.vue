@@ -277,9 +277,9 @@ const transitionMain = defineComponent({
 .skip-link {
   position: fixed;
   top: -100px;
-  left: 12px;
+  left: var(--space-3);
   z-index: var(--z-index-layout);
-  padding: 8px 14px;
+  padding: var(--space-2) var(--space-3-5);
   font-size: var(--font-size-base);
   color: var(--el-color-white);
   background-color: var(--el-color-primary);

@@ -379,7 +379,7 @@ onBeforeUnmount(() => {
         <div
           v-for="(item, key) in tagsViews"
           :key="key"
-          style="display: flex; align-items: center"
+          class="flex items-center"
         >
           <li v-if="item.show" @click="selectTag(key, item)">
             <IconifyIconOffline :icon="item.icon" />

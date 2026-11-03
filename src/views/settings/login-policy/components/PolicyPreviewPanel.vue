@@ -211,7 +211,7 @@ const echoLine = (data: LoginPolicyPreview) =>
         type="warning"
         :title="t('loginPolicy.previewMfaDegraded')"
       />
-      <div class="mb-2 text-sm" style="color: var(--el-text-color-secondary)">
+      <div class="mb-2 text-sm text-fg-subtle">
         {{ echoLine(result) }}
       </div>
 

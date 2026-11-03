@@ -7,7 +7,7 @@
     :fullWidthButton="false"
     height="400"
     mode="text"
-    style="width: 100%; text-align: left"
+    class="w-full text-left"
     :readOnly="attr?.disabled as boolean"
     :dark-theme="isDark"
     @change="handleChange"

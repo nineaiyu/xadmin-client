@@ -81,8 +81,8 @@ watch(
 .md-view h5,
 .md-view h6 {
   margin: 0.9em 0 0.45em;
-  font-weight: 600;
-  line-height: 1.35;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
 }
 
 .md-view h1 {
@@ -133,7 +133,7 @@ watch(
 }
 
 .md-view code {
-  padding: 1px 4px;
+  padding: 1px var(--space-1);
   font-family:
     ui-monospace, sfmono-regular, menlo, monaco, consolas, "liberation mono",
     "courier new", monospace;
@@ -143,7 +143,7 @@ watch(
 }
 
 .md-view .md-pre {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   margin: 0.6em 0;
   overflow-x: auto;
   background: var(--el-fill-color-dark);
@@ -153,7 +153,7 @@ watch(
 .md-view .md-pre code {
   padding: 0;
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   background: transparent;
   border-radius: 0;
 }
@@ -168,12 +168,12 @@ watch(
 
 .md-view th,
 .md-view td {
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--el-border-color);
 }
 
 .md-view th {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   background: var(--el-fill-color);
 }
 
@@ -250,6 +250,6 @@ watch(
 }
 
 .md-view .hljs-strong {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 </style>

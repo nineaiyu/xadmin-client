@@ -15,6 +15,7 @@
  * 而本项目只需要「顶栏细进度条」这一点能力，替换成本远低于长期依赖风险。
  */
 import { readConfigurePreferences } from "@/utils/preferences";
+import { Z_INDEX } from "@/utils/zIndex";
 
 type ProgressOptions = {
   /** 初始化时的最小百分比（0-1） */
@@ -51,7 +52,7 @@ function ensureBar(): HTMLDivElement {
     "left:0",
     "width:100%",
     "height:2px",
-    "z-index:9999",
+    `z-index:${Z_INDEX.tippy}`,
     "pointer-events:none",
     "background:transparent",
     "opacity:0",

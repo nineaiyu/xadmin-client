@@ -135,7 +135,7 @@ watch(
                 "
               />
             </div>
-            <div style="display: flex; align-items: center; width: 100%">
+            <div class="flex items-center w-full">
               <span class="select-none">
                 {{ transformI18n(route.meta?.title ?? "") }}
               </span>

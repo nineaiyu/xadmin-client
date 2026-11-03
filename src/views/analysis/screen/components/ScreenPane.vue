@@ -275,7 +275,7 @@ const onPaneKeydown = (event: KeyboardEvent) => {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px 14px 14px;
+  padding: var(--space-3) var(--space-3-5) var(--space-3-5);
   overflow: hidden;
   background: var(--screen-surface-raised);
   border: 1px solid var(--screen-border);
@@ -322,7 +322,7 @@ const onPaneKeydown = (event: KeyboardEvent) => {
 
 .screen-card {
   position: relative;
-  padding: 10px 12px 12px;
+  padding: var(--space-2-5) var(--space-3) var(--space-3);
   background: var(--screen-surface-raised);
   border: 1px solid var(--screen-border);
   border-radius: var(--radius-xl);
@@ -352,8 +352,8 @@ const onPaneKeydown = (event: KeyboardEvent) => {
 .screen-pane__text {
   flex: 1;
   overflow: auto;
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
   color: var(--screen-fg-bold);
   white-space: pre-wrap;
 }
@@ -388,8 +388,8 @@ const onPaneKeydown = (event: KeyboardEvent) => {
 /* 设计态操作件：拖拽区（左上角抓手）与缩放柄（右下角） */
 .screen-pane__grip {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: var(--space-1-5);
+  left: var(--space-1-5);
   width: 18px;
   height: 18px;
   cursor: grab;
@@ -399,8 +399,8 @@ const onPaneKeydown = (event: KeyboardEvent) => {
 
 .screen-pane__resize {
   position: absolute;
-  right: 2px;
-  bottom: 2px;
+  right: var(--space-0-5);
+  bottom: var(--space-0-5);
   width: 16px;
   height: 16px;
   cursor: nwse-resize;
@@ -415,8 +415,8 @@ const onPaneKeydown = (event: KeyboardEvent) => {
 
 .screen-pane__tools {
   position: absolute;
-  top: 2px;
-  right: 6px;
+  top: var(--space-0-5);
+  right: var(--space-1-5);
   z-index: 2;
 }
 </style>

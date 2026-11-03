@@ -179,12 +179,12 @@ const locked = () => props.preview || props.readonly;
 
 .designer-title {
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .designer-subtitle {
   font-size: var(--el-font-size-base);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: var(--screen-fg-subtle);
 }
 

@@ -34,5 +34,5 @@
 .re-table-action-more .el-dropdown-menu__item .el-button {
   justify-content: flex-start;
   width: 100%;
-  padding: 5px 16px;
+  padding: 5px var(--space-4);
 }

@@ -135,7 +135,7 @@ const emitClear = () => {
 
 .designer-side__title-row {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
   justify-content: space-between;
   margin-top: var(--space-1);
@@ -143,7 +143,7 @@ const emitClear = () => {
 
 .designer-side__title {
   font-size: var(--el-font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .designer-side__quick {
@@ -153,7 +153,7 @@ const emitClear = () => {
 
 .designer-side__hint {
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--el-text-color-secondary);
 }
 
@@ -167,7 +167,7 @@ const emitClear = () => {
 
 .designer-limit {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
   font-size: var(--el-font-size-extra-small);

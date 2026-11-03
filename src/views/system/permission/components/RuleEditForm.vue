@@ -383,7 +383,7 @@ defineExpose({ validate });
 
 <style lang="scss" scoped>
 .rule-edit-card {
-  padding: 16px;
+  padding: var(--space-4);
   background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);

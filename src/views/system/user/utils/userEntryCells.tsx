@@ -28,7 +28,7 @@ export function userEntryCells({
         src,
         // 有头像给可访问名；无头像回落的装饰图 alt 置空（读屏器可忽略）
         alt: src ? t("systemUser.avatarAlt") : "",
-        class: ["w-[36px]", "h-[36px]", "align-middle"]
+        class: ["w-9", "h-9", "align-middle"]
       });
       if (isReadonlyCell(scope)) return image;
       return h(

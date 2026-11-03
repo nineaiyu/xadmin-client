@@ -45,6 +45,6 @@ function handleDelete(item: optionsItem) {
 .history-item-title {
   display: flex;
   flex: 1;
-  margin-left: 5px;
+  margin-left: var(--space-1);
 }
 </style>

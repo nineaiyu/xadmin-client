@@ -19,6 +19,20 @@
   height: calc(100% - var(--sidebar-logo-h) - var(--sidebar-collapse-bar-h));
 }
 
+/* 双列嵌套菜单项宽度按次级列算：公共段（merge-style）给内嵌子菜单项声明了
+   `min-width: 整栏宽`（窄列 + 次级列），双列布局的嵌套项实际住在次级列里，
+   304px 的最小宽度会让长标题被列边界硬裁（无省略号）、悬停底色溢出列缘。
+   此处收回为次级列宽（--sidebar-width）。公共段选择器带 body[layout]（元素位
+   +1，(0,4,1)/(0,5,1)），本规则补 .sidebar-main 抬到 (0,5,0)/(0,6,0) 稳赢。 */
+.sidebar-container.is-two-column
+  .sidebar-main
+  .el-menu
+  .el-menu--inline
+  .el-sub-menu__title,
+.sidebar-container.is-two-column .sidebar-main .el-sub-menu .el-menu-item {
+  min-width: var(--sidebar-width);
+}
+
 /* 窄列菜单项：竖排布局（覆盖公共菜单的横向项高与缩进） */
 .sidebar-container.is-two-column .sidebar-mixed-menu .el-menu-item {
   display: flex;
@@ -56,7 +70,7 @@
   .sidebar-mixed-narrow__name {
   max-width: 100%;
   height: auto;
-  margin-top: 8px;
+  margin-top: var(--space-2);
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: var(--font-size-xs);

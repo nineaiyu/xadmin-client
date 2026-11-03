@@ -102,10 +102,10 @@ const divClass = computed(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: var(--space-2) 0;
 
   .notice-container-avatar {
-    margin-right: 16px;
+    margin-right: var(--space-4);
     background: hsl(var(--bg-card));
   }
 
@@ -117,10 +117,10 @@ const divClass = computed(() => {
 
     .notice-text-title {
       display: flex;
-      margin-bottom: 4px;
+      margin-bottom: var(--space-1);
       font-size: var(--font-size-base);
-      font-weight: 400;
-      line-height: 1.5715;
+      font-weight: var(--font-weight-normal);
+      line-height: var(--line-height-relaxed);
       cursor: pointer;
 
       .notice-title-content {
@@ -133,15 +133,15 @@ const divClass = computed(() => {
 
       .notice-title-extra {
         float: right;
-        margin-top: -1.5px;
-        font-weight: 400;
+        margin-top: calc(-1 * var(--space-0-5));
+        font-weight: var(--font-weight-normal);
       }
     }
 
     .notice-text-description,
     .notice-text-datetime {
       font-size: var(--font-size-xs);
-      line-height: 1.5715;
+      line-height: var(--line-height-relaxed);
     }
 
     .notice-text-description {
@@ -153,7 +153,7 @@ const divClass = computed(() => {
     }
 
     .notice-text-datetime {
-      margin-top: 4px;
+      margin-top: var(--space-1);
     }
   }
 }

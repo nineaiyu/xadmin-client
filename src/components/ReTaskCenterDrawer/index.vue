@@ -240,7 +240,7 @@ defineExpose({ load });
 
 <style lang="scss" scoped>
 .task-center {
-  padding: 4px 2px;
+  padding: var(--space-1) var(--space-0-5);
 
   .record-list {
     border: 1px solid var(--el-border-color-lighter);
@@ -249,9 +249,9 @@ defineExpose({ load });
 
   .record-row {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
-    padding: 8px 10px;
+    padding: var(--space-2) var(--space-2-5);
 
     & + .record-row {
       border-top: 1px solid var(--el-border-color-lighter);

@@ -58,7 +58,7 @@ html.semi-dark-header:not(.dark) {
     }
 
     .widget-menu__label {
-      margin-left: 8px;
+      margin-left: var(--space-2);
     }
   }
 }

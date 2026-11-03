@@ -245,13 +245,13 @@ const onSwitch = (value: boolean | string | number) => {
 
   &__label {
     display: inline-flex;
-    gap: 6px;
+    gap: var(--space-1-5);
     align-items: center;
-    padding-right: 4px;
+    padding-right: var(--space-1);
   }
 
   &__icon {
-    margin-right: 2px;
+    margin-right: var(--space-0-5);
   }
 
   &__title {
@@ -269,14 +269,14 @@ const onSwitch = (value: boolean | string | number) => {
 
   &__right {
     display: inline-flex;
-    gap: 10px;
+    gap: var(--space-2-5);
     align-items: center;
-    margin-right: 10px;
+    margin-right: var(--space-2-5);
     margin-left: auto;
   }
 
   &__count {
-    padding: 0 6px;
+    padding: 0 var(--space-1-5);
     font-size: var(--el-font-size-extra-small);
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
@@ -317,7 +317,7 @@ const onSwitch = (value: boolean | string | number) => {
 
   &__actions {
     display: inline-flex;
-    gap: 2px;
+    gap: var(--space-0-5);
     align-items: center;
     opacity: 0;
     transition: opacity var(--duration-fast) var(--ease-standard);

@@ -202,13 +202,13 @@ const decide = async (approved: boolean) => {
 
 .oauth-header {
   font-size: var(--el-font-size-medium);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .oauth-app {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .oauth-user {
@@ -217,18 +217,18 @@ const decide = async (approved: boolean) => {
 }
 
 .oauth-section-title {
-  margin: 16px 0 8px;
+  margin: var(--space-4) 0 var(--space-2);
   font-size: var(--el-font-size-small);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .oauth-scopes {
-  padding-left: 18px;
+  padding-left: var(--space-4);
   margin: 0;
   font-size: var(--el-font-size-extra-small);
 
   li {
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
   }
 }
 
@@ -239,8 +239,8 @@ const decide = async (approved: boolean) => {
 
 .oauth-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 </style>

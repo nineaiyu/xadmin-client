@@ -192,7 +192,7 @@ onMounted(async () => {
   /* MFA 步骤复用登录页卡片形态：限宽居中，避免整屏拉伸 */
   &__mfa {
     width: min(420px, 90vw);
-    padding: 24px;
+    padding: var(--space-6);
     background: var(--el-bg-color-overlay);
     border-radius: var(--radius-xl);
   }

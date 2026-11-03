@@ -103,7 +103,7 @@ const badgeText = computed(
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-color-primary);
   user-select: none;
   background: var(--el-color-primary-light-7);
@@ -127,7 +127,7 @@ const badgeText = computed(
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: var(--el-font-size-medium);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 22px;
   color: var(--el-text-color-primary);
   white-space: nowrap;

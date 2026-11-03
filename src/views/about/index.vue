@@ -154,10 +154,7 @@ Object.keys(devDependencies).forEach(key => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <span
-                :class="getMainLabel(item.label)"
-                style="color: var(--el-color-primary)"
-              >
+              <span :class="getMainLabel(item.label)" class="text-primary">
                 {{ item.field }}
               </span>
             </a>
@@ -190,10 +187,7 @@ Object.keys(devDependencies).forEach(key => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <span
-                :class="getMainLabel(item.label)"
-                style="color: var(--el-color-primary)"
-              >
+              <span :class="getMainLabel(item.label)" class="text-primary">
                 {{ item.field }}
               </span>
             </a>
@@ -209,19 +203,19 @@ Object.keys(devDependencies).forEach(key => {
 .about-intro {
   margin: 0;
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-relaxed);
+  line-height: var(--line-height-loose);
   color: hsl(var(--fg-muted));
 }
 
 .about-stack {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-3);
 }
 
 .about-chip {
-  padding: 1px 10px;
+  padding: 1px var(--space-2-5);
   font-size: var(--font-size-xs);
   color: hsl(var(--fg-muted));
   background: var(--el-fill-color-light);
@@ -232,9 +226,9 @@ Object.keys(devDependencies).forEach(key => {
 .about-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 28px;
-  padding-top: 14px;
-  margin-top: 14px;
+  gap: var(--space-2) 28px;
+  padding-top: var(--space-3-5);
+  margin-top: var(--space-3-5);
   border-top: 1px solid var(--el-border-color-lighter);
 }
 
@@ -248,7 +242,7 @@ Object.keys(devDependencies).forEach(key => {
 
 :deep(.pure-version) {
   font-size: var(--el-font-size-base) !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-semibold) !important;
   opacity: 0.6;
 
   &:hover {

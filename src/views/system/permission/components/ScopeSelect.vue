@@ -239,7 +239,7 @@ function handleConfirm() {
 .scope-select {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -255,20 +255,20 @@ function handleConfirm() {
 .scope-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
 }
 
 .scope-tree {
-  padding: 4px;
+  padding: var(--space-1);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-lg);
 }
 
 .scope-node {
   display: inline-flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 

@@ -92,14 +92,14 @@ defineExpose({ handleScroll });
 
 <style lang="scss" scoped>
 .result {
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
 
   &-item {
     display: flex;
     align-items: center;
     height: 56px;
-    padding: 14px;
-    margin-top: 8px;
+    padding: var(--space-3-5);
+    margin-top: var(--space-2);
     cursor: pointer;
     border: 0.1px solid hsl(var(--border));
     border-radius: var(--radius-sm);
@@ -108,7 +108,7 @@ defineExpose({ handleScroll });
     &-title {
       display: flex;
       flex: 1;
-      margin-left: 5px;
+      margin-left: var(--space-1);
     }
   }
 }

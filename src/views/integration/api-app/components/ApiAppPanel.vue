@@ -176,8 +176,8 @@ const metaItems = computed(() => [
 }
 
 .scope-list {
-  padding-left: 16px;
-  margin: 6px 0 0;
+  padding-left: var(--space-4);
+  margin: var(--space-1-5) 0 0;
   font-size: var(--el-font-size-extra-small);
   line-height: 18px;
   color: var(--el-text-color-regular);
@@ -186,21 +186,21 @@ const metaItems = computed(() => [
 .probe-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .probe-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
   min-height: 32px;
 }
 
 .probe-item {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-light);
   border-radius: var(--radius-lg);

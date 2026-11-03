@@ -13,7 +13,7 @@
 
 .screen-card {
   position: relative;
-  padding: 12px 14px 14px;
+  padding: var(--space-3) var(--space-3-5) var(--space-3-5);
   background: var(--screen-surface-raised);
   border: 1px solid var(--screen-border);
   border-radius: var(--radius-xl);

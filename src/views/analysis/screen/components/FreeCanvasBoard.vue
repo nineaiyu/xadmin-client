@@ -221,7 +221,7 @@ const {
 
 .free-board__stage {
   box-sizing: border-box;
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .free-board__canvas {

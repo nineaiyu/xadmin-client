@@ -124,7 +124,7 @@ watch(
 
 <style scoped>
 .ai-thinking {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: var(--el-font-size-extra-small);
   background: var(--el-fill-color-lighter);
   border-left: 2px solid var(--el-border-color);
@@ -138,10 +138,10 @@ watch(
 
 .ai-thinking__head {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   align-items: center;
   width: 100%;
-  padding: 6px 10px;
+  padding: var(--space-1-5) var(--space-2-5);
   color: var(--el-text-color-secondary);
   text-align: left;
   cursor: pointer;
@@ -171,7 +171,7 @@ watch(
 
 .ai-thinking__dots {
   display: inline-flex;
-  gap: 2px;
+  gap: var(--space-0-5);
   align-items: center;
 }
 
@@ -221,13 +221,13 @@ watch(
 }
 
 .ai-thinking__body {
-  padding: 0 10px 8px;
+  padding: 0 var(--space-2-5) var(--space-2);
 }
 
 .ai-thinking__content {
   max-height: 200px;
   overflow-y: auto;
-  line-height: 1.7;
+  line-height: var(--line-height-loose);
   color: var(--el-text-color-regular);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -237,7 +237,7 @@ watch(
   display: inline-block;
   width: 2px;
   height: 1em;
-  margin-left: 2px;
+  margin-left: var(--space-0-5);
   vertical-align: -0.15em;
   background: var(--el-color-primary);
   animation: ai-thinking-blink 1s steps(1) infinite;

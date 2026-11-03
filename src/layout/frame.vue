@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { ref, unref, watch, onMounted, nextTick } from "vue";
+import { computed, ref, unref, watch, onMounted, nextTick } from "vue";
 import SafeFrame from "@/components/SafeFrame";
+import { resolveFrameSandbox } from "./frameSandbox";
 
 defineOptions({
   name: "LayFrame"
@@ -21,6 +22,10 @@ const currentRoute = useRoute();
 const frameSrc = ref<string>("");
 const frameRef = ref<InstanceType<typeof SafeFrame> | null>(null);
 const fallbackTimer = ref<number | null>(null);
+// 同源 frameSrc 不下发 allow-same-origin（该组合对同源文档等于无沙箱）
+const sandbox = computed(() =>
+  resolveFrameSandbox(frameSrc.value, window.location.origin)
+);
 
 if (unref(currentRoute.meta)?.frameSrc) {
   frameSrc.value = unref(currentRoute.meta)?.frameSrc as string;
@@ -107,7 +112,7 @@ onMounted(() => {
       ref="frameRef"
       :src="frameSrc"
       title="route-frame"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+      :sandbox="sandbox"
       referrerpolicy="same-origin"
       loading="eager"
       class="frame-iframe"

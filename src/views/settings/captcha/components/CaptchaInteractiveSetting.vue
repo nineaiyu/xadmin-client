@@ -160,7 +160,7 @@ onMounted(load);
 .captcha-preview__hint {
   margin-top: var(--space-2);
   font-size: var(--font-size-sm);
-  line-height: 1.5;
+  line-height: var(--line-height-normal);
   color: var(--el-text-color-secondary);
 }
 

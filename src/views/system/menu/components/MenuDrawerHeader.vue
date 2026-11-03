@@ -84,13 +84,13 @@ const { t } = useI18n();
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 12px;
+    padding-bottom: var(--space-3);
     border-bottom: 1px dashed var(--el-border-color-lighter);
   }
 
   &__head-main {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
     min-width: 0;
   }
@@ -99,12 +99,12 @@ const { t } = useI18n();
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: var(--font-size-md);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     white-space: nowrap;
   }
 
   &__crumb {
-    margin: 10px 0 4px;
+    margin: var(--space-2-5) 0 var(--space-1);
   }
 
   &__tag {

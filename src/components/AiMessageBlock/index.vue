@@ -69,9 +69,9 @@ const showThinking = () => Boolean(props.reasoning);
   display: block;
   width: fit-content;
   max-width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   font-size: var(--el-font-size-base);
-  line-height: 1.7;
+  line-height: var(--line-height-loose);
   color: var(--el-text-color-primary);
   white-space: pre-wrap;
   background: var(--el-fill-color-light);
@@ -85,14 +85,14 @@ const showThinking = () => Boolean(props.reasoning);
 /* 等待首字：三点跳动 + 文案（替代纯文字占位） */
 .ai-message__pending {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   color: var(--el-text-color-secondary);
 }
 
 .ai-message__dots {
   display: inline-flex;
-  gap: 3px;
+  gap: var(--space-0-5);
   align-items: center;
   height: 1em;
 }
@@ -114,16 +114,16 @@ const showThinking = () => Boolean(props.reasoning);
 }
 
 .ai-message__sources {
-  padding-top: 6px;
-  margin-top: 8px;
+  padding-top: var(--space-1-5);
+  margin-top: var(--space-2);
   font-size: var(--el-font-size-extra-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   color: var(--el-text-color-secondary);
   border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .ai-message__sources-title {
-  margin-bottom: 2px;
+  margin-bottom: var(--space-0-5);
 }
 
 .ai-message__source {

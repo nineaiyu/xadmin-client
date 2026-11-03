@@ -326,19 +326,19 @@ onBeforeUnmount(() => {
   flex: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--divider);
 }
 
 .lay-panel__heading {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: baseline;
 }
 
 .lay-panel__title {
   font-size: var(--font-size-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--el-text-color-primary);
 }
 
@@ -350,7 +350,7 @@ onBeforeUnmount(() => {
 
 .lay-panel__actions {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
 }
 
@@ -384,7 +384,7 @@ onBeforeUnmount(() => {
   display: inline-block;
   width: 6px;
   height: 6px;
-  margin-right: 4px;
+  margin-right: var(--space-1);
   vertical-align: 1px;
   background: var(--el-color-danger);
   border-radius: var(--radius-full);
@@ -399,17 +399,17 @@ onBeforeUnmount(() => {
   display: flex;
   flex: none;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: center;
   justify-content: flex-end;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--divider);
 }
 
 /* 「更多」触发按钮：文案与下拉箭头同排居中，箭头降透明度不抢主操作的视线 */
 .lay-panel__footer-more {
   display: inline-flex;
-  gap: 2px;
+  gap: var(--space-0-5);
   align-items: center;
 
   :deep(svg) {

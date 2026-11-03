@@ -105,7 +105,7 @@ const cascaderOptions = computed(() => ctx.modelList as CascaderOption[]);
 
 <style lang="scss" scoped>
 .menu-form__hint {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-size: var(--el-font-size-extra-small);
   color: var(--el-text-color-regular);
 }

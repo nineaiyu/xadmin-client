@@ -183,11 +183,11 @@ onUnmounted(() => {
 
 .preview-text {
   max-height: 70vh;
-  padding: 12px;
+  padding: var(--space-3);
   margin: 0;
   overflow: auto;
   font-size: var(--el-font-size-small);
-  line-height: 1.6;
+  line-height: var(--line-height-relaxed);
   word-break: break-all;
   white-space: pre-wrap;
 }

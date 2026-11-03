@@ -49,7 +49,7 @@ $--element-tree-line-width: 1px !default;
 .element-tree-node-label-line {
   flex: 1;
   align-self: center;
-  margin: 0 10px;
+  margin: 0 var(--space-2-5);
   border-top: $--element-tree-line-width $--element-tree-line-style
     $--element-tree-line-color;
 }

@@ -293,7 +293,7 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
               clearable
               filterable
               node-key="pk"
-              style="width: 100%"
+              class="w-full"
             />
           </el-form-item>
           <menu-form-basic />
@@ -322,7 +322,7 @@ defineExpose({ validate, getPayload, isDirty, getCascadePks });
 <style lang="scss" scoped>
 .menu-form {
   &__groups {
-    margin-top: 8px;
+    margin-top: var(--space-2);
     border-top: none;
   }
 }

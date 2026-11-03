@@ -61,7 +61,7 @@ const footerStyle = computed(() => {
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 0 0 8px;
+  padding: 0 0 var(--space-2);
   font-size: var(--font-size-base);
 
   /* 固定页脚由内联样式接管高度与吸附（sticky），此处只去掉底部留白并加一条分隔线 */

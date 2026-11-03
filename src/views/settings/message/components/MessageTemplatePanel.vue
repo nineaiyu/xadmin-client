@@ -227,13 +227,13 @@ onMounted(load);
       <el-input
         v-model="keyword"
         clearable
-        style="width: 240px"
+        class="w-60"
         :placeholder="t('messageTemplate.searchPlaceholder')"
       />
       <el-select
         v-model="categoryFilter"
         clearable
-        style="width: 180px"
+        class="w-45"
         :placeholder="t('messageTemplate.filterCategory')"
       >
         <el-option

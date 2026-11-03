@@ -177,7 +177,7 @@ const handleChildAction = (params: ButtonsCallBackParams) => {
       height: 100%;
       padding: 0 var(--space-3);
       font-size: var(--font-size-sm);
-      font-weight: 400;
+      font-weight: var(--font-weight-normal);
       color: var(--el-text-color-regular);
       border-radius: inherit;
 

@@ -200,7 +200,7 @@ useSortable(listDom, {
         <el-select
           :model-value="positionOf(item.key)"
           size="small"
-          style="width: 118px"
+          class="w-(--setting-field-width-sm)"
           @change="value => changePosition(item.key, value as string)"
         >
           <el-option
@@ -219,14 +219,14 @@ useSortable(listDom, {
 .navbar-widgets {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1-5);
 
   &__item {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     align-items: center;
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     background: var(--el-fill-color-light);
     border: 1px solid var(--el-border-color-lighter);
     border-radius: var(--radius-md);
@@ -255,7 +255,7 @@ useSortable(listDom, {
 
   &__kbd {
     flex: none;
-    padding: 1px 5px;
+    padding: 1px var(--space-1);
     font-family: var(--font-family-mono);
     font-size: var(--font-size-2xs);
     color: var(--el-text-color-secondary);
