@@ -102,6 +102,13 @@ const CORE_PAGES: CorePage[] = [
     open: async page => {
       await page.goto("/#/account-settings");
     }
+  },
+  {
+    // 系统设置代表：基本设置（设置面板 + 表单控件宽度两档口径）
+    name: "settings-basic",
+    open: async page => {
+      await page.goto("/#/settings/basic");
+    }
   }
 ];
 
@@ -181,6 +188,28 @@ test("视觉基线：system-user-add-dialog-invalid", async ({ page }) => {
   await stabilize(page);
   await expect(dialog).toHaveScreenshot(
     "core-system-user-add-dialog-invalid.png",
+    { animations: "disabled", maxDiffPixelRatio: 0.02 }
+  );
+});
+
+/**
+ * 详情抽屉基线：通讯录成员详情（资料头 + el-descriptions 字段表）。
+ * 种子成员数据稳定（E2E 演示成员），只截抽屉本体，页面其余部分不进场。
+ */
+test("视觉基线：system-directory-member-detail", async ({ page }) => {
+  test.setTimeout(120_000);
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/directory/index");
+  const card = page.locator(".member-card").first();
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await card.click();
+  const drawer = page.locator(".el-drawer:visible").first();
+  await expect(drawer).toBeVisible({ timeout: 10_000 });
+  // 字段值渲染完成（抽屉内容为行快照，无二次请求，但等字体/动画稳定）
+  await expect(drawer.locator(".el-descriptions").first()).toBeVisible();
+  await stabilize(page);
+  await expect(drawer).toHaveScreenshot(
+    "core-system-directory-member-detail.png",
     { animations: "disabled", maxDiffPixelRatio: 0.02 }
   );
 });
