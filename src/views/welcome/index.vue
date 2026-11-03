@@ -49,6 +49,10 @@ const timelineIconRest = markRaw(
 );
 const timelineIconOf = (index: number) =>
   index === 0 ? timelineIconLatest : timelineIconRest;
+
+/** 环比百分比着色：按符号取语义色（负向 danger / 正向 success），字符串形如 +9% / -62.5% */
+const trendClass = (percent: string) =>
+  percent.startsWith("-") ? "text-(--danger-text)" : "text-(--success-text)";
 </script>
 
 <template>
@@ -113,7 +117,7 @@ const timelineIconOf = (index: number) =>
                 :startVal="0"
               />
               <ReSkeleton v-else variant="fill" class="h-8! w-1/2!" />
-              <p class="text-xs font-medium text-(--success-text)">
+              <p class="text-xs font-medium" :class="trendClass(item.percent)">
                 {{ item.percent }}
               </p>
             </div>

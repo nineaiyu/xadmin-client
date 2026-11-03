@@ -55,7 +55,7 @@ const {
             @confirm="handleUpdate(userInfo)"
           >
             <template #reference>
-              <el-button>{{ t("buttons.save") }}</el-button>
+              <el-button type="primary">{{ t("buttons.save") }}</el-button>
             </template>
           </el-popconfirm>
         </div>

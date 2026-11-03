@@ -192,7 +192,11 @@
 }
 
 /* 表格工具栏动作项统一热区（与顶栏 navbar-action 同口径，28px 档）：
-   图标本身保持 16px，热区用 padding 撑开，hover 底色圆形 */
+   图标本身保持 16px，热区用 padding 撑开，hover 底色圆形。
+   消费约束（实测踩坑）：本类直接挂在 svg 图标上时**不得再挂尺寸类**（w-4/size-4 等）——
+   同为单类选择器时尺寸类的 width 会后置胜出，border-box 下内容盒被压到
+   (w-4 − 12px)×16px（glyph 挤成 4px 细条、肉眼不可见）。glyph 尺寸由
+   「28px 盒 − 6px padding」推导即 16px，无需额外尺寸类。 */
 @utility table-bar-action {
   @apply inline-flex cursor-pointer items-center justify-center select-none;
   box-sizing: border-box;

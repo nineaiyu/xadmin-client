@@ -93,13 +93,15 @@ describe("About 平台信息卡排版", () => {
   });
 });
 
-describe("About 主依赖高亮派生自 package.json", () => {
-  it("生产依赖全部命中高亮类名，开发依赖不高亮", async () => {
+describe("About 主依赖高亮（技术栈键集）", () => {
+  it("仅技术栈键集命中高亮类名（非技术栈依赖不高亮）", async () => {
     const wrapper = await mountAbout();
 
     const labeled = wrapper.findAll(".main-label").map(node => node.text());
-    // 生产依赖条目：label 单元格（包名）与版本 span（版本号）各命中一次
-    expect(labeled).toEqual(["vue", "^3.5.0", "axios", "^1.0.0"]);
+    // 高亮集 = 页头技术栈徽章的依赖键（vue/vite/…）：mock 里仅 vue 命中，
+    // label 单元格（包名）与版本 span（版本号）各命中一次
+    expect(labeled).toEqual(["vue", "^3.5.0"]);
+    expect(labeled).not.toContain("axios");
     expect(labeled).not.toContain("eslint");
   });
 

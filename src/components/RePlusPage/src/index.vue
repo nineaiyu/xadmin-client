@@ -38,7 +38,9 @@ defineOptions({ name: "RePlusPage" });
 const props = withDefaults(defineProps<RePlusPageProps>(), {
   api: undefined,
   title: undefined,
-  pageHead: true,
+  // 页面头默认关：列表页标题统一由表格卡内工具栏标题承载（全站同构）；
+  // 需要「页面级头 + 副标题」形态的页面显式传 pageHead/pageSubtitle 开启
+  pageHead: false,
   pageSubtitle: "",
   isTree: false,
   tableBar: true,

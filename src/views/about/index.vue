@@ -56,8 +56,9 @@ const techStack = Object.entries(TECH_LABELS)
   .map(([, label]) => label);
 const isNarrow = useMediaQuery("(width <= 768px)");
 
-/** 主依赖高亮 = 生产依赖键集：构建期随 package.json 派生，不再手维护名单 */
-const mainLabels = new Set(Object.keys(dependencies));
+/** 主依赖高亮 = 页头技术栈徽章同源的依赖键集：只标框架级依赖（vue/element-plus 等），
+    不要把整个生产依赖集当高亮集——否则依赖表整表命中高亮，失去区分意义 */
+const mainLabels = new Set(Object.keys(TECH_LABELS));
 
 /** 命中主依赖集合时返回高亮类名（普通函数：入参即全部依赖，无响应式状态） */
 const getMainLabel = (label: string) =>
@@ -134,7 +135,7 @@ Object.keys(devDependencies).forEach(key => {
       <template #header>
         <div class="card-header flex items-center">
           <span class="font-medium">{{ t("about.prodDeps") }}</span>
-          <el-tag class="ml-1" effect="dark" round size="small" type="primary">
+          <el-tag class="ml-1" effect="plain" round size="small" type="primary">
             {{ schema.length }}
           </el-tag>
         </div>
@@ -167,7 +168,7 @@ Object.keys(devDependencies).forEach(key => {
       <template #header>
         <div class="card-header flex items-center">
           <span class="font-medium">{{ t("about.devDeps") }}</span>
-          <el-tag class="ml-1" effect="dark" round size="small" type="primary">
+          <el-tag class="ml-1" effect="plain" round size="small" type="primary">
             {{ devSchema.length }}
           </el-tag>
         </div>
@@ -237,17 +238,17 @@ Object.keys(devDependencies).forEach(key => {
    故这里是**必需**的 !important，不是可清理的样式债。 */
 :deep(.main-label) {
   font-size: var(--el-font-size-medium) !important;
-  color: var(--el-color-danger) !important;
+  color: var(--el-color-primary) !important;
 }
 
+/* 版本号 = 外链文本：主色 + 常态可读（不做透明度降级），hover 下划线反馈 */
 :deep(.pure-version) {
   font-size: var(--el-font-size-base) !important;
   font-weight: var(--font-weight-semibold) !important;
-  opacity: 0.6;
+}
 
-  &:hover {
-    opacity: 1;
-  }
+:deep(a:hover .pure-version) {
+  text-decoration: underline;
 }
 
 /* descriptions 自带表头间距在本页不需要（卡片 header 已提供） */

@@ -182,8 +182,9 @@ interface RePlusPageProps {
   api: Partial<BaseApi>;
   title?: string;
   /**
-   * 页面头（默认开）：路由标题 20/600 + 可选辅助说明。嵌入式复用（弹窗内列表等）
-   * 传 false 关闭；副标题经 pageSubtitle 传入（无则只渲染标题行）。
+   * 页面头（默认关）：路由标题 20/600 + 可选辅助说明。列表页标题默认由表格卡
+   * 内工具栏标题承载（全站同构）；需要「页面级头 + 副标题」形态的页面显式
+   * 传 true 开启，副标题经 pageSubtitle 传入（无则只渲染标题行）。
    */
   pageHead?: boolean;
   /** 页面头副标题（页面口径说明 / 数据范围），空串不渲染 */

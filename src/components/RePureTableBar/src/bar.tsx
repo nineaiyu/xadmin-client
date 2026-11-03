@@ -226,7 +226,9 @@ export default defineComponent({
     const reference = {
       reference: () => (
         <SettingIcon
-          class={["w-4", "table-bar-action", iconClass.value]}
+          // 尺寸只由 table-bar-action 承担：再挂 w-4 会在级联里压过 28px 热区宽，
+          // border-box 下 glyph 内容盒被挤到 4px（图标肉眼不可见，见 utility 注释）
+          class={["table-bar-action", iconClass.value]}
           v-tippy={rendTippyProps(t("tableBar.columnSettings"))}
           // a11y：图标按钮需可访问名；显式 aria-hidden=false 保证名称生效
           aria-label={t("tableBar.columnSettings")}
@@ -259,7 +261,7 @@ export default defineComponent({
               {props.tableRef?.size ? (
                 <>
                   <ExpandIcon
-                    class={["w-4", "table-bar-action", iconClass.value]}
+                    class={["table-bar-action", iconClass.value]}
                     style={{
                       transform: isExpandAll.value ? "none" : "rotate(-90deg)"
                     }}
@@ -283,7 +285,6 @@ export default defineComponent({
               ) : null}
               <RefreshIcon
                 class={[
-                  "w-4",
                   "table-bar-action",
                   iconClass.value,
                   loading.value ? "animate-spin" : ""
@@ -302,7 +303,7 @@ export default defineComponent({
                 v-tippy={rendTippyProps(t("tableBar.density"))}
               >
                 <CollapseIcon
-                  class={["w-4", "table-bar-action", iconClass.value]}
+                  class={["table-bar-action", iconClass.value]}
                   aria-label={t("tableBar.density")}
                   aria-hidden={false}
                   role="button"
@@ -458,7 +459,7 @@ export default defineComponent({
               </el-popover>
 
               <iconify-icon-offline
-                class={["w-4", "table-bar-action", iconClass.value]}
+                class={["table-bar-action", iconClass.value]}
                 icon={isFullscreen.value ? ExitFullscreen : Fullscreen}
                 v-tippy={
                   isFullscreen.value

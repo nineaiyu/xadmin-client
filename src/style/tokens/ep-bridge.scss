@@ -122,10 +122,11 @@ html.dark {
   /* 遮罩：EP 弹层遮罩统一走 --overlay 语义槽（带透明度） */
   --el-overlay-color-lighter: hsl(var(--overlay));
 
-  /* 成功文本（正文可读档）：success / dark-2 档做数字与徽标装饰色，但白底上
-     对比度不足 4.5:1（WCAG AA，axe color-contrast 拦截）；正文级绿字（增长
+  /* 成功/危险文本（正文可读档）：success / dark-2 档做数字与徽标装饰色，但白底上
+     对比度不足 4.5:1（WCAG AA，axe color-contrast 拦截）；正文级语义色文字（增长
      百分比等）用本档——亮色向黑再压暗，暗色深底本色已可读保持原值。 */
   --success-text: var(--el-color-success-dark-2);
+  --danger-text: var(--el-color-danger-dark-2);
 }
 
 @supports (color: color-mix(in srgb, red, blue)) {
@@ -146,10 +147,12 @@ html.dark {
 
   :root {
     --success-text: color-mix(in srgb, hsl(var(--success)) 55%, black);
+    --danger-text: color-mix(in srgb, hsl(var(--danger)) 55%, black);
   }
 
   html.dark {
     --success-text: hsl(var(--success));
+    --danger-text: hsl(var(--danger));
   }
 
   :root,
