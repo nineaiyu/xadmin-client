@@ -81,6 +81,27 @@ const CORE_PAGES: CorePage[] = [
       // 全屏投屏页（无 layout 静态路由），示例大屏仅一张看板、不轮播
       await page.goto(`/#/analysis/screen/display?pk=${SCREEN_PK}`);
     }
+  },
+  {
+    // 第二个典型列表页（system 域）：搜索卡 + 工具栏 + 表格（角色数据随种子固定）
+    name: "system-role",
+    open: async page => {
+      await openMenuPath(page, ["系统管理", "权限管理"], "/system/role/index");
+    }
+  },
+  {
+    // 业务列表代表：二开样板页（generate_crud 产物，菜单由 e2e_seed 现场生成）
+    name: "demo-book",
+    open: async page => {
+      await page.goto("/#/default/demo/book/index");
+    }
+  },
+  {
+    // 详情/表单页代表：账户设置（当前用户资料，种子内稳定）
+    name: "account-settings",
+    open: async page => {
+      await page.goto("/#/account-settings");
+    }
   }
 ];
 
@@ -136,6 +157,33 @@ for (const core of CORE_PAGES) {
     });
   });
 }
+
+/**
+ * 表单弹窗校验错误态基线：用户新增弹窗空表单提交，覆盖必填校验文案与
+ * 表单错误排版（i18n 静态词条，逐帧稳定；只截弹窗本体，页面其余部分不进场）。
+ */
+test("视觉基线：system-user-add-dialog-invalid", async ({ page }) => {
+  test.setTimeout(120_000);
+  await login(page);
+  await openMenuPath(page, ["系统管理"], "/system/user/index");
+  await expect(page.locator(".el-table").first()).toBeVisible({
+    timeout: 20_000
+  });
+
+  await page.getByRole("button", { name: "新增" }).first().click();
+  const dialog = page.locator(".el-dialog:visible").first();
+  await expect(dialog.getByLabel("用户名")).toBeVisible({ timeout: 20_000 });
+  // 空表单提交触发校验错误态（不满足必填即留在弹窗内，不产生写库副作用）
+  await dialog.getByRole("button", { name: "保存" }).click();
+  await expect(dialog.locator(".el-form-item__error").first()).toBeVisible({
+    timeout: 10_000
+  });
+  await stabilize(page);
+  await expect(dialog).toHaveScreenshot(
+    "core-system-user-add-dialog-invalid.png",
+    { animations: "disabled", maxDiffPixelRatio: 0.02 }
+  );
+});
 
 /**
  * 浅色主题投屏基线：示例大屏临时切 `theme=light` 截图后还原（深色档由上面的
