@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
-import { useI18n } from "vue-i18n";
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import type { DashboardCard, DashboardItem } from "@/api/dataset/datasets";
 import { ReResize, type Box } from "@/components/ReResize";
 import ScreenPane from "./ScreenPane.vue";
+import CanvasEmpty from "./CanvasEmpty.vue";
 import { FREE_MIN_PANE_SIZE, type FreeDesign } from "../utils/freeLayout";
 import type { FreeGridSnap } from "../utils/freeSnap";
 import {
@@ -63,8 +63,6 @@ const emit = defineEmits<{
   /** 组件库拖放：类型 + 画布内落点（px，越界已夹回） */
   drop: [payload: { type: ScreenPaneType; dashboard?: string; box: Box }];
 }>();
-
-const { t } = useI18n();
 
 const viewportEl = ref<HTMLElement>();
 const canvasRef = ref<HTMLElement>();
@@ -203,12 +201,12 @@ const {
           :style="rectStyle(marquee)"
           data-testid="free-marquee"
         />
-        <span
+        <div
           v-if="editable && !loading && panes.length === 0"
           class="free-board__empty"
         >
-          {{ t("dataScreen.emptyCanvas") }}
-        </span>
+          <CanvasEmpty />
+        </div>
       </div>
     </div>
   </div>
@@ -278,8 +276,6 @@ const {
   position: absolute;
   top: 50%;
   left: 50%;
-  font-size: var(--el-font-size-base);
-  color: var(--screen-fg-faint);
   transform: translate(-50%, -50%);
 }
 </style>

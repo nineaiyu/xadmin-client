@@ -154,6 +154,11 @@
   --setting-field-width-sm: 120px;
   --setting-field-width-md: 180px;
 
+  /* 头像尺寸只此两档：md = 会话行 / 消息气泡（36px），sm = 联系人 / 成员 / 通知行（32px）；
+     el-avatar 不要传 :size 数字，挂 .avatar-md / .avatar-sm 全局类（覆写 --el-avatar-size） */
+  --avatar-size-md: 36px;
+  --avatar-size-sm: 32px;
+
   /* ================ 栈层级（z-index 阶梯） ================
      集中定义避免魔法数字互斗；JS 侧同值常量见 src/utils/zIndex.ts。
      - fixedHeader 998 / layout 1000 / sidebar 1001 / sidebarCtrl 1002：

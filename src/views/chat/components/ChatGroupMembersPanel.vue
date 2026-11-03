@@ -255,7 +255,7 @@ onUnmounted(() => window.clearTimeout(memberSearchTimer));
       class="flex items-center gap-2 border-0 border-b border-solid border-(--divider) py-1.5"
       :data-testid="`chat-group-member-${member.pk}`"
     >
-      <el-avatar :size="30" :src="member.avatar || undefined" class="shrink-0">
+      <el-avatar class="avatar-sm shrink-0" :src="member.avatar || undefined">
         {{ avatarText(member) }}
       </el-avatar>
       <div class="min-w-0 grow truncate text-sm">

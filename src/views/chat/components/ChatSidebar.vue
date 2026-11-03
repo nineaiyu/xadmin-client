@@ -4,9 +4,11 @@ import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import ReEmpty from "@/components/ReEmpty";
 import { addDialog, type DialogOptions } from "@/components/ReDialog";
+import { dialogSize } from "@/components/ReDialog/size";
 import { message } from "@/utils/message";
 import { useDialogForm } from "@/hooks/useDialogForm";
 import { filterByKeyword } from "@/utils/keywordFilter";
+import { formatTimeDivider } from "@/utils/timeGroups";
 import {
   chatApi,
   type ChatGroupCreatePayload,
@@ -60,7 +62,7 @@ function openCreateGroupDialog() {
     payload: ChatGroupCreatePayload;
   } = {
     title: t("chat.newGroup"),
-    width: "420px",
+    width: dialogSize("sm"),
     destroyOnClose: true,
     closeOnClickModal: false,
     sureBtnLoading: true,
@@ -129,6 +131,14 @@ function roomAvatar(room: ChatRoomItem) {
   return room.room_type === "private" ? room.peer?.avatar || "" : "";
 }
 
+/** 会话行时间戳：复用消息流分组口径（今天 HH:mm / 昨天 / 月-日 HH:mm） */
+function roomTime(room: ChatRoomItem) {
+  return formatTimeDivider(
+    new Date(room.last_message_time).getTime(),
+    t("chat.yesterday")
+  );
+}
+
 function avatarText(peer: ChatPeer) {
   return Array.from(peer.nickname || peer.username || "?")[0].toUpperCase();
 }
@@ -177,29 +187,42 @@ function avatarText(peer: ChatPeer) {
           @click="emit('select', room.id)"
         >
           <div class="flex items-center gap-2">
-            <el-avatar
-              :size="34"
-              :src="roomAvatar(room) || undefined"
-              class="shrink-0"
-              :class="
-                room.room_type === 'private'
-                  ? 'bg-(--el-color-info-light-3)'
-                  : 'bg-(--el-color-primary)'
-              "
-            >
-              <el-icon v-if="room.room_type === 'ai'">
-                <component :is="useRenderIcon(AiIcon)" />
-              </el-icon>
-              <el-icon v-else-if="room.room_type === 'public'">
-                <component :is="useRenderIcon(RoomIcon)" />
-              </el-icon>
-              <el-icon v-else-if="room.room_type === 'group'">
-                <component :is="useRenderIcon(GroupIcon)" />
-              </el-icon>
-              <span v-else>{{
-                Array.from(room.peer?.nickname || room.peer?.username || "?")[0]
-              }}</span>
-            </el-avatar>
+            <div class="relative shrink-0">
+              <el-avatar
+                class="avatar-md"
+                :src="roomAvatar(room) || undefined"
+                :class="
+                  room.room_type === 'private'
+                    ? 'bg-(--el-color-info-light-3)'
+                    : 'bg-(--el-color-primary)'
+                "
+              >
+                <el-icon v-if="room.room_type === 'ai'">
+                  <component :is="useRenderIcon(AiIcon)" />
+                </el-icon>
+                <el-icon v-else-if="room.room_type === 'public'">
+                  <component :is="useRenderIcon(RoomIcon)" />
+                </el-icon>
+                <el-icon v-else-if="room.room_type === 'group'">
+                  <component :is="useRenderIcon(GroupIcon)" />
+                </el-icon>
+                <span v-else>{{
+                  Array.from(
+                    room.peer?.nickname || room.peer?.username || "?"
+                  )[0]
+                }}</span>
+              </el-avatar>
+              <!-- 私聊在线点：头像右下角标（会话行与联系人行同位同语义） -->
+              <span
+                v-if="room.room_type === 'private'"
+                class="absolute right-0 bottom-0 size-2.5 rounded-full border border-solid border-(--el-bg-color)"
+                :class="
+                  room.peer?.online
+                    ? 'bg-(--el-color-success)'
+                    : 'bg-(--el-color-info-light-5)'
+                "
+              />
+            </div>
             <div class="min-w-0 grow">
               <div class="flex items-center gap-1">
                 <span class="truncate text-sm">{{ roomTitle(room) }}</span>
@@ -213,26 +236,26 @@ function avatarText(peer: ChatPeer) {
                     })
                   }}
                 </span>
-                <span
-                  v-if="room.room_type === 'private'"
-                  class="size-2 shrink-0 rounded-full"
-                  :class="
-                    room.peer?.online
-                      ? 'bg-(--el-color-success)'
-                      : 'bg-(--el-color-info-light-5)'
-                  "
-                />
               </div>
               <div class="truncate text-xs text-(--el-text-color-secondary)">
                 {{ roomSubtitle(room) }}
               </div>
             </div>
-            <el-badge
-              v-if="room.unread_count > 0"
-              class="tabular-nums"
-              :value="room.unread_count > 99 ? '99+' : room.unread_count"
-              type="danger"
-            />
+            <!-- 右列：未读 badge 在上、最近消息时间在下（最新在上，与排序语义一致） -->
+            <div class="flex shrink-0 flex-col items-end gap-0.5 self-center">
+              <el-badge
+                v-if="room.unread_count > 0"
+                class="tabular-nums"
+                :value="room.unread_count > 99 ? '99+' : room.unread_count"
+                type="danger"
+              />
+              <span
+                v-if="room.last_message_time"
+                class="text-xs text-fg-muted tabular-nums"
+              >
+                {{ roomTime(room) }}
+              </span>
+            </div>
           </div>
         </div>
         <ReEmpty
@@ -271,13 +294,20 @@ function avatarText(peer: ChatPeer) {
           @click="emit('openPrivate', peer.pk)"
         >
           <div class="flex items-center gap-2">
-            <el-avatar
-              :size="30"
-              :src="peer.avatar || undefined"
-              class="shrink-0"
-            >
-              {{ avatarText(peer) }}
-            </el-avatar>
+            <div class="relative shrink-0">
+              <el-avatar class="avatar-sm" :src="peer.avatar || undefined">
+                {{ avatarText(peer) }}
+              </el-avatar>
+              <!-- 联系人在线点：与会话行同一位置同一语义 -->
+              <span
+                class="absolute right-0 bottom-0 size-2.5 rounded-full border border-solid border-(--el-bg-color)"
+                :class="
+                  peer.online
+                    ? 'bg-(--el-color-success)'
+                    : 'bg-(--el-color-info-light-5)'
+                "
+              />
+            </div>
             <div class="min-w-0 grow">
               <div class="truncate text-sm">
                 {{ peer.nickname || peer.username }}
@@ -286,14 +316,6 @@ function avatarText(peer: ChatPeer) {
                 {{ peer.online ? t("chat.online") : t("chat.offline") }}
               </div>
             </div>
-            <span
-              class="size-2 rounded-full"
-              :class="
-                peer.online
-                  ? 'bg-(--el-color-success)'
-                  : 'bg-(--el-color-info-light-5)'
-              "
-            />
           </div>
         </div>
         <ReEmpty

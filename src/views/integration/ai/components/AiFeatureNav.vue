@@ -58,8 +58,7 @@ const { t } = useI18n();
         >
           <div class="flex items-center gap-2">
             <el-avatar
-              :size="34"
-              class="shrink-0"
+              class="avatar-md shrink-0"
               :class="
                 entry.key === active
                   ? 'bg-(--el-color-primary)'

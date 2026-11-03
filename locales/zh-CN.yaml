@@ -3900,6 +3900,7 @@ dataScreen:
   inspector: 窗格属性
   noSelection: 选中画布上的窗格后可编辑属性
   emptyCanvas: 从左侧组件库添加窗格（文本 / 时钟 / 仪表盘）
+  emptyCanvasHint: 拖放落位后在右侧属性面板编辑，Ctrl+S 保存
   canvasFull: 画布剩余空间放不下该组件，请先调整或删除窗格
   panesFull: 窗格数量已达上限（{max} 个）
   overlapRejected: 该位置与其他窗格重叠

@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { ref } from "vue";
-import { useI18n } from "vue-i18n";
 import type { ScreenLayoutPane, ScreenPaneType } from "@/api/dataset/analysis";
 import type { DashboardCard, DashboardItem } from "@/api/dataset/datasets";
 import ScreenPane from "./ScreenPane.vue";
+import CanvasEmpty from "./CanvasEmpty.vue";
 import { canvasGridVars, gridMetrics, type PaneBox } from "../utils/layout";
 import { createCanvasDropHandler } from "../utils/dnd";
 
@@ -40,8 +40,6 @@ const emit = defineEmits<{
   drop: [payload: { type: ScreenPaneType; dashboard?: string; at: PaneBox }];
 }>();
 
-const { t } = useI18n();
-
 const canvasRef = ref<HTMLElement>();
 defineExpose({ canvasEl: canvasRef });
 
@@ -74,9 +72,9 @@ const onDrop = createCanvasDropHandler({
     @dragover.prevent
     @drop.prevent="onDrop"
   >
-    <span v-if="!loading && panes.length === 0" class="grid-board__empty">
-      {{ t("dataScreen.emptyCanvas") }}
-    </span>
+    <div v-if="!loading && panes.length === 0" class="grid-board__empty">
+      <CanvasEmpty />
+    </div>
     <ScreenPane
       v-for="pane in panes"
       :key="pane.pk"
@@ -126,9 +124,9 @@ const onDrop = createCanvasDropHandler({
 }
 
 .grid-board__empty {
+  display: flex;
   grid-column: 1 / -1;
+  justify-content: center;
   padding: var(--space-10) 0;
-  color: var(--screen-fg-faint);
-  text-align: center;
 }
 </style>

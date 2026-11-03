@@ -52,6 +52,16 @@
   }
 }
 
+/* 头像两档（令牌见 primitives）：覆写 EP 的 --el-avatar-size，
+   不要再给 el-avatar 传 :size 数字 */
+.avatar-md {
+  --el-avatar-size: var(--avatar-size-md);
+}
+
+.avatar-sm {
+  --el-avatar-size: var(--avatar-size-sm);
+}
+
 /* 侧栏列表项（聊天会话 / 联系人 / AI 功能导航）：
    选中态以左侧主题色条 + 主题浅底强化（此前仅换底色，选中与 hover 难以区分） */
 .sidebar-item {

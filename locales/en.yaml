@@ -3900,6 +3900,7 @@ dataScreen:
   inspector: Pane properties
   noSelection: Select a pane on the canvas to edit its properties
   emptyCanvas: Add panes from the left (text / clock / dashboard)
+  emptyCanvasHint: Drop to place, edit props in the right panel, Ctrl+S to save
   canvasFull: Not enough free space for this component; adjust or remove panes first
   panesFull: Pane limit reached ({max})
   overlapRejected: This position overlaps another pane

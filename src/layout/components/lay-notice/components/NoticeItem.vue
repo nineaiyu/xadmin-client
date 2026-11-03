@@ -56,9 +56,8 @@ const divClass = computed(() => {
   <div :class="divClass">
     <el-avatar
       v-if="noticeItem.avatar"
-      :size="30"
       :src="noticeItem.avatar"
-      class="notice-container-avatar"
+      class="notice-container-avatar avatar-sm"
     />
     <div class="notice-container-text">
       <div class="notice-text-title text-fg dark:text-(--el-color-white)">

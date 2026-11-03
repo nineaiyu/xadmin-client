@@ -21,9 +21,8 @@ const avatarText = computed(() =>
 
 <template>
   <el-avatar
-    :size="36"
     :src="ai ? undefined : src || undefined"
-    class="shrink-0"
+    class="avatar-md shrink-0"
     :class="ai ? 'bg-(--el-color-primary)' : 'bg-(--el-color-info-light-3)'"
   >
     <el-icon v-if="ai"><component :is="useRenderIcon(AiIcon)" /></el-icon>
