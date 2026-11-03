@@ -37,8 +37,17 @@ const DECL =
   /(?:min-|max-)?(?:width|height|flex-basis)\s*:\s*(-?\d+(?:\.\d+)?)px/g;
 const TEMPLATE =
   /(?:^|[\s"'`])(?:[a-z-]+:)*(?:w|h|min-w|min-h|max-w|max-h|size|basis)-\[(-?\d+(?:\.\d+)?)px\]/g;
+/** prop 型字面量：模板属性里的 px 尺寸（label-width="72px" / width="245px" 等）与
+    静态内联 style 里的 width/height px。EP 数字型 prop（width="245" 无单位）不计。 */
+const PROP_ATTR =
+  /(?:label-width|min-width|max-width|width|min-height|max-height|height)="(-?\d+(?:\.\d+)?)px"/g;
+const INLINE_STYLE = /style="[^"]*(?:width|height):\s*(-?\d+(?:\.\d+)?)px/g;
 
-function exempt(abs) {
+/** 文档约定的三档弹层宽度（420px / 640px / 60%）属合法口径，prop 型匹配时放行 */
+const DIALOG_TIERS = new Set([420, 640]);
+
+function exempt(abs, isProp = false) {
+  if (isProp && DIALOG_TIERS.has(abs)) return true;
   return abs <= 2 || abs >= 9999;
 }
 
@@ -54,33 +63,34 @@ const BASELINE = {
   // 页签（lay-tag）：关闭图标 14/16/18px、分隔条、滚动按钮
   // AiThinking：节点圆点 4/12/14px、内容最大高 200px
   // ReSplitPane（第三方移植）：拖拽手柄握把尺寸
-  // login.scss：登录卡/表单定宽（280~500px）与品牌插画高
+  // login.scss：登录卡/表单定宽与品牌插画高
   // ReActionPanel：头像 44px、图标徽章
-  // SettingTabbar/SettingMenuLayout/SettingTheme*：微缩预览线框的骨架条
-  // 其余条目：组件私有固定尺寸（图标/头像/进度条/验证码元件等），
+  // Setting*：微缩预览线框的骨架条；label-width="72/90px" 等表单标签宽
+  // 其余条目：组件私有固定尺寸（图标/头像/弹层/prop 尺寸等），
   // 新增定尺寸优先复用布局令牌或 Tailwind 数值类，确需新增在此登记语义。
   "src/style/sidebar/_common.scss": 20,
+  "src/layout/components/lay-panel/index.vue": 11,
   "src/layout/components/lay-tag/index.scss": 10,
   "src/components/AiThinking/index.vue": 9,
   "src/components/ReActionPanel/src/PanelProfile.vue": 8,
   "src/components/ReSplitPane/resizer.css": 8,
   "src/style/login.scss": 8,
   "src/components/ReActionPanel/src/index.vue": 7,
+  "src/components/ReIcon/src/Select.vue": 7,
   "src/layout/components/lay-setting/components/SettingTabbar.vue": 7,
   "src/views/integration/knowledge/components/KnowledgePanel.vue": 7,
   "src/views/analysis/screen/components/ScreenPane.vue": 6,
   "src/views/settings/components/settings-shell/index.vue": 6,
   "src/components/ReWordClickCaptcha/src/index.vue": 5,
-  "src/layout/components/lay-panel/index.vue": 5,
   "src/layout/components/lay-setting/components/SettingMenuLayout.vue": 5,
   "src/style/element-plus.scss": 5,
   "src/views/account/components/AccountPanel.vue": 5,
   "src/views/system/directory/components/DirectoryAside.vue": 5,
-  "src/components/ReIcon/src/Select.vue": 4,
   "src/layout/components/lay-setting/components/PrefRow.vue": 4,
   "src/layout/components/lay-setting/components/ShortcutInput.vue": 4,
   "src/views/dashboard/index.vue": 4,
   "src/views/integration/api-app/components/ApiGrantEditor.vue": 4,
+  "src/views/settings/captcha/components/CaptchaInteractiveSetting.vue": 4,
   "src/views/system/menu/components/MenuTreeRow.vue": 4,
   "src/views/system/user/components/UserTree.vue": 4,
   "src/components/ReCollapseParams/src/index.vue": 3,
@@ -99,16 +109,18 @@ const BASELINE = {
   "src/layout/components/lay-sidebar/components/SidebarLogo.vue": 3,
   "src/layout/components/lay-sidebar/NavVertical.vue": 3,
   "src/views/integration/api-app/components/ApiAppPanel.vue": 3,
-  "src/views/settings/captcha/components/CaptchaInteractiveSetting.vue": 3,
   "src/views/settings/components/settings-shell/SettingPreview.vue": 3,
+  "src/views/system/menu/components/MenuTreeToolbar.vue": 3,
   "src/components/AiMessageBlock/index.vue": 2,
   "src/components/ReBackTop/src/index.vue": 2,
   "src/components/ReCaptchaChallenge/src/Panel.vue": 2,
   "src/components/ReMenuPermissionTree/PermissionNodeLabel.vue": 2,
+  "src/components/ReNoticeShow/index.vue": 2,
   "src/components/ReSegmented/src/index.css": 2,
   "src/components/ReSkeleton/src/index.vue": 2,
   "src/components/ReStateContainer/src/index.vue": 2,
   "src/layout/components/lay-notice/components/NoticeItem.vue": 2,
+  "src/layout/components/lay-notice/index.vue": 2,
   "src/layout/components/lay-setting/components/SettingScale.vue": 2,
   "src/layout/components/lay-setting/components/SettingStretch.vue": 2,
   "src/layout/components/lay-setting/index.vue": 2,
@@ -120,50 +132,82 @@ const BASELINE = {
   "src/style/screen-carousel.scss": 2,
   "src/views/account/components/AccountSidebar.vue": 2,
   "src/views/account/components/BindEmailOrPhone.vue": 2,
+  "src/views/account/index.vue": 2,
   "src/views/analysis/report/components/ReportDesignSidebar.vue": 2,
   "src/views/analysis/report/designer.vue": 2,
-  "src/views/analysis/screen/components/FreeCanvasToolbar.vue": 2,
-  "src/views/analysis/screen/components/MultiSelectInspector.vue": 2,
+  "src/views/login/components/LoginPrivacyNotice.vue": 2,
+  "src/views/settings/captcha/components/CaptchaImageSetting.vue": 2,
   "src/views/settings/captcha/components/CaptchaRiskSetting.vue": 2,
   "src/views/system/menu/components/MenuContextMenu.vue": 2,
-  "src/views/system/menu/components/MenuTreeToolbar.vue": 2,
+  "src/views/system/menu/components/MenuPermissionDialog.vue": 2,
   "src/views/system/monitor/components/HealthBanner.vue": 2,
   "src/views/system/permission/components/RuleListEditor.vue": 2,
+  "src/views/system/permission/components/ScopeSelect.vue": 2,
+  "src/components/ReAnimateSelector/src/index.vue": 1,
   "src/components/ReCaptchaChallenge/src/index.vue": 1,
   "src/components/ReJsonViewer/src/index.vue": 1,
   "src/components/ReMenuPermissionTree/PermissionTreeToolbar.vue": 1,
-  "src/components/ReNoticeShow/index.vue": 1,
+  "src/components/RePlusPage/src/components/ExportData.vue": 1,
+  "src/components/RePlusPage/src/components/ImportData.vue": 1,
   "src/components/RePlusPage/src/components/PhoneInput.vue": 1,
+  "src/components/RePlusPage/src/components/SavedViewMenu.vue": 1,
   "src/components/RePlusPage/src/index.vue": 1,
+  "src/components/RePlusPage/src/page-shell.scss": 1,
   "src/components/ReScrollbar/src/index.vue": 1,
   "src/components/ReSliderCaptcha/src/index.vue": 1,
   "src/layout/components/lay-content/index.vue": 1,
   "src/layout/components/lay-navbar/index.vue": 1,
-  "src/layout/components/lay-notice/index.vue": 1,
   "src/layout/components/lay-search/components/SearchHistory.vue": 1,
   "src/layout/components/lay-search/components/SearchResult.vue": 1,
   "src/layout/components/lay-setting/components/PrefChoice.vue": 1,
   "src/style/appearance.scss": 1,
   "src/utils/progress/index.ts": 1,
+  "src/views/account/components/AccessTokenCreateForm.vue": 1,
+  "src/views/account/components/ChangePassword.vue": 1,
   "src/views/account/components/Profile.vue": 1,
-  "src/views/account/index.vue": 1,
+  "src/views/analysis/report/components/ReportComponentForm.vue": 1,
+  "src/views/analysis/report/components/ReportForm.vue": 1,
   "src/views/analysis/screen/components/DesignerPalette.vue": 1,
+  "src/views/analysis/screen/components/MultiSelectInspector.vue": 1,
+  "src/views/analysis/screen/components/PaneInspector.vue": 1,
+  "src/views/analysis/screen/components/ScreenControlForm.vue": 1,
   "src/views/analysis/screen/designer.scss": 1,
+  "src/views/approval/flow/components/FlowConfigDrawer.vue": 1,
+  "src/views/approval/instance/components/StartInstanceDialog.vue": 1,
   "src/views/chat/components/ChatEmojiPanel.vue": 1,
+  "src/views/chat/components/ChatGroupCreateForm.vue": 1,
+  "src/views/dashboard/components/CardForm.vue": 1,
+  "src/views/dashboard/components/DashboardCreateForm.vue": 1,
+  "src/views/dashboard/dataset/components/DatasetForm.vue": 1,
   "src/views/error/components/ErrorPage.vue": 1,
+  "src/views/form/designer/components/DynamicFormForm.vue": 1,
+  "src/views/form/designer/components/FormFieldDialog.vue": 1,
+  "src/views/form/designer/components/FormFieldOptionsDialog.vue": 1,
+  "src/views/form/designer/components/FormLinkageDialog.vue": 1,
+  "src/views/form/my/components/SubmissionForm.vue": 1,
+  "src/views/integration/ai/mcp/components/McpCallPanel.vue": 1,
   "src/views/integration/api-app/components/ApiUsageDrawer.vue": 1,
-  "src/views/login/components/LoginPrivacyNotice.vue": 1,
+  "src/views/integration/knowledge/components/KnowledgeUploadDialog.vue": 1,
+  "src/views/login/components/Register.vue": 1,
   "src/views/oauth/authorize.vue": 1,
+  "src/views/settings/basic/components/WatermarkSetting.vue": 1,
   "src/views/settings/captcha/components/CaptchaDataSetting.vue": 1,
-  "src/views/settings/captcha/components/CaptchaImageSetting.vue": 1,
   "src/views/settings/components/settings-shell/SettingItem.vue": 1,
+  "src/views/settings/message/components/MessageTemplateForm.vue": 1,
+  "src/views/system/account-risk/components/RiskHandleForm.vue": 1,
   "src/views/system/codegen/components/ArtifactPreview.vue": 1,
+  "src/views/system/codegen/components/BaseConfig.vue": 1,
+  "src/views/system/codegen/components/OptionSwitches.vue": 1,
+  "src/views/system/codegen/index.vue": 1,
+  "src/views/system/components/BatchUpdateForm.vue": 1,
+  "src/views/system/file/components/FileUpload.vue": 1,
   "src/views/system/file/components/PreviewDrawer.vue": 1,
+  "src/views/system/mask/components/MaskPreview.vue": 1,
+  "src/views/system/menu/components/MenuDrawerForm.vue": 1,
   "src/views/system/menu/components/MenuPermissionAuditDialog.vue": 1,
-  "src/views/system/menu/components/MenuPermissionDialog.vue": 1,
   "src/views/system/notice/components/markdown/MarkdownToolbar.vue": 1,
   "src/views/system/notice/components/MarkdownEditor.vue": 1,
-  "src/views/system/permission/components/ScopeSelect.vue": 1
+  "src/views/system/user/components/ImBindingPanel.vue": 1
 };
 
 function walk(dir) {
@@ -204,6 +248,12 @@ function countLiterals(file) {
       if (!exempt(Math.abs(parseFloat(m[1])))) count++;
     }
     for (const m of line.matchAll(TEMPLATE)) {
+      if (!exempt(Math.abs(parseFloat(m[1])))) count++;
+    }
+    for (const m of line.matchAll(PROP_ATTR)) {
+      if (!exempt(Math.abs(parseFloat(m[1])), true)) count++;
+    }
+    for (const m of line.matchAll(INLINE_STYLE)) {
       if (!exempt(Math.abs(parseFloat(m[1])))) count++;
     }
   }
