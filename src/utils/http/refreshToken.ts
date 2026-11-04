@@ -1,5 +1,11 @@
 import { isSuccess } from "@/api/types";
-import { getRefreshToken, setToken } from "@/utils/auth";
+import Cookies from "js-cookie";
+import {
+  getRefreshToken,
+  isCookieAuthSession,
+  multipleTabsKey,
+  setToken
+} from "@/utils/auth";
 import type { TokenInfo } from "@/api/auth";
 
 export type RefreshOutcome =
@@ -10,6 +16,12 @@ export type RefreshOutcome =
  * 无感刷新单飞原语：axios 拦截器与 WebSocket 重连共用同一在途 Promise，
  * 避免并发 401 / 重连同时打刷新接口。成功时统一写回 token，失败不清理
  * 凭证（清 token / 跳登录由调用方按各自语义处理）。
+ *
+ * 凭证**双读**（与服务端刷新端点同口径）：
+ * - header 模式：refresh 在 JS Cookie，随请求体提交；
+ * - cookie 模式：refresh 在 HttpOnly Cookie（本文件读不到），提交空载荷，
+ *   服务端回落 X-Refresh-Token Cookie 轮换后经 Set-Cookie 重下——本地无需
+ *   （也无法）写 token，setToken 只落会话标记。
  *
  * `refreshTokenApi` 动态引入：api/auth → utils/http 是既有依赖方向，
  * 静态引入会让 http 层与 api 层成环（模块环门禁会拦）。
@@ -35,13 +47,20 @@ function resolveFailureDetail(error: unknown): string {
 
 export function refreshAccessToken(): Promise<RefreshOutcome> {
   if (inflight) return inflight;
+  const cookieSession = isCookieAuthSession();
   const refresh = getRefreshToken();
-  if (!refresh) return Promise.resolve({ ok: false, detail: "" });
+  // Cookie 模式没有本地 token 可判：以 multiple-tabs 会话标记为「有会话」判据；
+  // header 模式维持既有口径（无可读 refresh 即无可刷新）
+  const hasCredential = cookieSession
+    ? Boolean(Cookies.get(multipleTabsKey))
+    : Boolean(refresh);
+  if (!hasCredential) return Promise.resolve({ ok: false, detail: "" });
 
   const pending: Promise<RefreshOutcome> =
     (async (): Promise<RefreshOutcome> => {
       const { refreshTokenApi } = await import("@/api/auth");
-      const res = await refreshTokenApi({ refresh });
+      // Cookie 模式空载荷：服务端按 X-Refresh-Token Cookie 双读 + Origin 兜底
+      const res = await refreshTokenApi(cookieSession ? {} : { refresh });
       if (!isSuccess(res)) {
         return { ok: false, detail: res.detail ?? "" };
       }

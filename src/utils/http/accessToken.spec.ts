@@ -11,7 +11,10 @@ const { getTokenMock, getRefreshTokenMock, setTokenMock, refreshTokenApiMock } =
 vi.mock("@/utils/auth", () => ({
   getToken: getTokenMock,
   getRefreshToken: getRefreshTokenMock,
-  setToken: setTokenMock
+  setToken: setTokenMock,
+  // refreshToken 模块按双模式分流；本文件只测 header 模式行为
+  isCookieAuthSession: vi.fn(() => false),
+  multipleTabsKey: "multiple-tabs"
 }));
 
 vi.mock("@/api/auth", () => ({

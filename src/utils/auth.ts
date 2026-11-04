@@ -9,6 +9,17 @@ import Storage from "responsive-storage";
 export const userKey = "user-info";
 const TokenKey = "X-Token";
 const RefreshTokenKey = "X-Refresh-Token";
+/**
+ * 服务端签发的认证承载模式标记 Cookie（JS 可读，非敏感布尔标记）。
+ *
+ * 登录 / 刷新 / 模拟换签的响应 Set-Cookie 同时下发本标记（值 `cookie` / `header`，
+ * **两种模式都下发**——开关回退后旧标记不残留误导新会话），是前端判定「token
+ * 在哪」的唯一事实源，不靠猜：缺失（旧版本服务端 / 清理后）一律按 header 模式。
+ */
+const AuthModeKey = "X-Auth-Mode";
+
+/** 认证承载模式：header = 响应体下发、前端写 JS Cookie；cookie = HttpOnly Cookie */
+export type AuthTransport = "header" | "cookie";
 
 /**
  * 通过`multiple-tabs`是否在`cookie`中，判断用户是否已经登录系统，
@@ -21,12 +32,36 @@ export const multipleTabsKey = "multiple-tabs";
 /** 获取`token` */
 export function getToken(): string {
   // 此处与`TokenKey`相同，此写法解决初始化时`Cookies`中不存在`TokenKey`报错；
-  // 未登录时归一为空串（调用方统一按 falsy 判定）
+  // 未登录时归一为空串（调用方统一按 falsy 判定）。
+  // Cookie 会话模式下 token 在 HttpOnly Cookie 里，此处恒为空串——登录态判定
+  // 用 hasSession()，不要用本函数的真伪区分「未登录」
   return Cookies.get(TokenKey) ?? "";
 }
 
 export function getRefreshToken() {
   return Cookies.get(RefreshTokenKey);
+}
+
+/** 当前认证承载模式（服务端 X-Auth-Mode 标记；缺失按 header 模式，保持现状） */
+export function getAuthTransport(): AuthTransport {
+  return Cookies.get(AuthModeKey) === "cookie" ? "cookie" : "header";
+}
+
+/** 当前会话是否为 HttpOnly Cookie 承载（token 不可被 JS 读取） */
+export function isCookieAuthSession(): boolean {
+  return getAuthTransport() === "cookie";
+}
+
+/**
+ * 本机是否存在「可能有效」的登录态（路由守卫 / 跨标签登出判定口径）：
+ *
+ * - header 模式：multiple-tabs 标记 + 可读 refresh token（既有口径不变）；
+ * - cookie 模式：token 不可读（HttpOnly），只看 multiple-tabs 标记；会话真实
+ *   有效性由后续 userinfo 请求的 401 兜底（与 header 模式的过期 token 同路）。
+ */
+export function hasSession(): boolean {
+  if (!Cookies.get(multipleTabsKey)) return false;
+  return isCookieAuthSession() || Boolean(getRefreshToken());
 }
 
 /**
@@ -60,15 +95,15 @@ function cookieSecureOptions() {
 }
 
 /**
- * 【取舍登记】access/refresh token 存 JS 可读 Cookie，不用 HttpOnly：
- * - 为什么不可行：请求鉴权走 axios 拦截器拼 `Authorization: Bearer` 头（见 utils/http），
- *   HttpOnly 对前端代码同样不可读，无感刷新与刷新期请求排队链路即失效；改走
- *   HttpOnly 需要后端整体切换为 Set-Cookie 会话制契约，属架构级变更而非本文件可解；
- * - 残余风险：XSS 可窃取 token，在有效期内冒用调用 API；
- * - 现有缓解（保持不放松，缺一不可）：全站 CSP（后端下发，e2e/csp-page.e2e.ts 守护）、
- *   净化链（utils/sanitize.ts 白名单 + style 二次过滤；Markdown html:false）、
- *   外链 rel=noopener、本文件的 SameSite=Lax + Secure；
- * - 结论：已知设计权衡，登记在案、维持现状；后端若改会话制，此处一并移除。
+ * 【双模式登记】access/refresh token 的承载由服务端 `AUTH_COOKIE_HTTPONLY` 开关决定：
+ * - header 模式（开关关，默认）：token 在登录/刷新响应体里，本函数照旧写入
+ *   JS 可读 Cookie（拼 `Authorization: Bearer` 头鉴权，见 utils/http）——
+ *   历史取舍：HttpOnly 对前端代码不可读，无感刷新与刷新期请求排队依赖可读 token；
+ * - cookie 模式（开关开）：服务端已在响应 Set-Cookie 下发 HttpOnly 的
+ *   X-Token / X-Refresh-Token（响应体已剥离明文），本函数**不写 token Cookie**，
+ *   只保留 multiple-tabs 会话标记；请求凭证由浏览器自动携带（withCredentials）。
+ * 模式判定不靠猜：响应头的 X-Auth-Mode 标记 Cookie 已先于本函数写入 cookie jar
+ * （见 getAuthTransport）。CSP / 净化链 / SameSite=Lax 等缓解两模式都保持不放松。
  */
 export function setAccessToken(token: string, expires = 864e3) {
   Cookies.remove(TokenKey);
@@ -92,11 +127,18 @@ export function setRefreshToken(token: string, expires = 864e3) {
  * 将`username`、`roles`、`refreshToken`、`expires`这四条信息放在key值为`user-info`的storageLocal里
  */
 export function setToken(data: TokenInfo) {
-  if (data.access && data.access_token_lifetime) {
-    setAccessToken(data.access, data.access_token_lifetime - 10);
-  }
-  if (data.refresh && data.refresh_token_lifetime) {
-    setRefreshToken(data.refresh, data.refresh_token_lifetime - 10);
+  if (isCookieAuthSession()) {
+    // Cookie 模式：token 已由服务端 Set-Cookie 承载（HttpOnly，本函数不可读不可写）；
+    // 只清掉 header 模式遗留的可读 token Cookie（防 XSS 从旧会话残留里读到 token）
+    Cookies.remove(TokenKey);
+    Cookies.remove(RefreshTokenKey);
+  } else {
+    if (data.access && data.access_token_lifetime) {
+      setAccessToken(data.access, data.access_token_lifetime - 10);
+    }
+    if (data.refresh && data.refresh_token_lifetime) {
+      setRefreshToken(data.refresh, data.refresh_token_lifetime - 10);
+    }
   }
   // 免登录勾选态归登录页 UI store（auth ↔ store 均为函数体内调用 hook）
   const { isRemembered, loginDay } = useLoginPageStoreHook();
@@ -119,6 +161,10 @@ export function removeToken() {
   Cookies.remove(TokenKey);
   Cookies.remove(RefreshTokenKey);
   Cookies.remove(multipleTabsKey);
+  // 模式标记一并清除（登出响应也会服务端清理；本地同步清是同标签立即生效兜底）。
+  // Cookie 模式下 X-Token/X-Refresh-Token 是 HttpOnly，本地删不掉——由登出接口的
+  // Set-Cookie(Max-Age=0) 清理，本地登出兜底口径见 user store 的 logOut
+  Cookies.remove(AuthModeKey);
   storageLocal().removeItem(userKey);
 }
 

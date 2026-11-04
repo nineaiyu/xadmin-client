@@ -8,7 +8,7 @@ import { transformI18n } from "@/plugins/i18n";
 import type { TokenInfo, UserInfo, UserInfoResult } from "@/api/auth";
 import {
   getRefreshToken,
-  getToken,
+  hasSession,
   removeToken,
   setToken,
   userKey
@@ -217,7 +217,7 @@ export const useUserStore = defineStore("pure-user", {
      * 也不整页 reload——保留当前页签，路由跳登录让守卫接管回跳参数。
      */
     async handleRemoteLogout() {
-      if (!getToken() && !getRefreshToken()) return;
+      if (!hasSession()) return;
       this.username = "";
       this.roles = [];
       clearPendingApprovals();

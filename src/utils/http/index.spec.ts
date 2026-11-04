@@ -6,6 +6,7 @@ const {
   buildUUIDMock,
   confirmMfaMock,
   elMessageMock,
+  isCookieAuthSessionMock,
   interceptorHooks
 } = vi.hoisted(() => {
   const request = vi.fn();
@@ -38,6 +39,7 @@ const {
     buildUUIDMock: vi.fn(() => "uuid-123"),
     confirmMfaMock: vi.fn(),
     elMessageMock: vi.fn(),
+    isCookieAuthSessionMock: vi.fn(() => false),
     interceptorHooks
   };
 });
@@ -56,7 +58,9 @@ vi.mock("@/utils/auth", () => ({
   remoteAccessToken: vi.fn(),
   removeToken: vi.fn(),
   setApiLanguage: vi.fn(),
-  setToken: vi.fn()
+  setToken: vi.fn(),
+  isCookieAuthSession: isCookieAuthSessionMock,
+  hasSession: vi.fn(() => false)
 }));
 
 // 提示统一走项目 message 包装（pure-message 视觉）：断言按包装签名 (text, params)

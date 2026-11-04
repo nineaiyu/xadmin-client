@@ -18,6 +18,8 @@ import {
   resolveBootLocale,
   resolveSiteTitle
 } from "@/utils/preferences";
+// APM 挂载点的上报入口（无注册者时静默，不进任何三方依赖）
+import { reportGlobalError } from "@/utils/errorReporter";
 import { MotionPlugin } from "@vueuse/motion";
 import { useEcharts } from "@/plugins/echarts";
 import { createApp, defineAsyncComponent, type Directive } from "vue";
@@ -45,12 +47,16 @@ const app = createApp(App);
 // HTTP 层 reject 依赖每个调用点 catch，一旦遗漏即成无人接管的 unhandled
 // rejection（无任何提示、控制台外不可见）；渲染期异常同样无全局网。
 // 此处只做「上报 + 开发期提示」，不重复弹错（业务提示由调用方负责）。
+// APM 挂载点：接入 Sentry/APM 时启动早期 registerErrorReporter 即可同时
+// 覆盖两条链路（默认无注册者，静默——控制台输出仍保留）。
 app.config.errorHandler = (err, _instance, info) => {
   console.error("[app] render error:", err, info);
+  reportGlobalError(err, "render", info);
 };
 if (typeof window !== "undefined") {
   window.addEventListener("unhandledrejection", event => {
     console.error("[app] unhandled rejection:", event.reason);
+    reportGlobalError(event.reason, "unhandledrejection");
   });
 }
 
@@ -92,7 +98,7 @@ app.component(
   )
 );
 
-import { getToken } from "@/utils/auth";
+import { hasSession } from "@/utils/auth";
 import { useSiteConfigStoreHook } from "@/store/modules/siteConfig";
 import { applyBootTheme } from "@/utils/bootTheme";
 
@@ -118,7 +124,8 @@ getPlatformConfig(app)
     // 占位在首次路由跳转前与 platform-config 的 Title 保持一致
     const siteTitle = resolveSiteTitle();
     if (siteTitle) document.title = siteTitle;
-    if (getToken()) {
+    // 登录态判定用 hasSession（Cookie 会话模式下 token 不可读，见 utils/auth）
+    if (hasSession()) {
       try {
         await useSiteConfigStoreHook().getSiteConfig();
       } catch (error) {

@@ -1,4 +1,4 @@
-import { formatToken, getApiLanguage } from "@/utils/auth";
+import { formatToken, getApiLanguage, isCookieAuthSession } from "@/utils/auth";
 import { getUsedAccessToken } from "@/utils/http/accessToken";
 
 /**
@@ -148,6 +148,9 @@ export async function postSse(
       ...(token ? { Authorization: formatToken(token) } : {})
     },
     body: JSON.stringify(body),
+    // Cookie 会话：凭证在 HttpOnly Cookie（token 读不到、不能拼头），跨域部署
+    // 必须显式 include 才携带（同源默认即带，no-op）
+    credentials: isCookieAuthSession() ? "include" : "same-origin",
     signal: options.signal
   });
 

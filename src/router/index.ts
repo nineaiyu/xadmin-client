@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import { resolveSiteTitle } from "@/utils/preferences";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
@@ -30,12 +29,7 @@ import {
 import remainingRouter from "./modules/remaining";
 import { isGuestOnlyRoutePath, isPublicRoutePath } from "./publicRoutes";
 import type { Router, RouteRecordRaw } from "vue-router";
-import {
-  removeToken,
-  multipleTabsKey,
-  getRefreshToken,
-  getToken
-} from "@/utils/auth";
+import { removeToken, hasSession } from "@/utils/auth";
 import { router } from "./router";
 import {
   constantMenus,
@@ -133,7 +127,6 @@ router.beforeEach((to: ToRouteType, _from) => {
       handleAliveRoute(to);
     }
   }
-  const refresh = getRefreshToken();
   const externalLink = isExternalRoute(to?.name as string);
   // 动态标题关闭时保持平台标题不随路由变化（偏好在设置面板 →「动态标题」）
   if (!externalLink && readConfigurePreferences().dynamicTitle !== false) {
@@ -148,14 +141,14 @@ router.beforeEach((to: ToRouteType, _from) => {
 
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
-    if (to.path === "/login" && getToken()) {
+    if (to.path === "/login" && hasSession()) {
       return (to?.query?.redirect as string) ?? "/";
     }
     // 按 path 判断（白名单页面可能带 query，如邀请激活 token）
     return isGuestOnlyRoutePath(to.path) ? _from.fullPath : undefined;
   }
 
-  if (Cookies.get(multipleTabsKey) && refresh) {
+  if (hasSession()) {
     // 无权限跳转403页面（meta.roles 配置的路由需与当前用户角色有交集）
     if (
       to.meta?.roles &&

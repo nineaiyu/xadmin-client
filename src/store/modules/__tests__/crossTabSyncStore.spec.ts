@@ -6,6 +6,8 @@ const authMock = vi.hoisted(() => ({
   getRefreshToken: vi.fn((): string | null => "refresh-token"),
   removeToken: vi.fn(),
   setToken: vi.fn(),
+  // user store 的跨标签登出用 hasSession 判定（header 模式语义：标记 + refresh）
+  hasSession: vi.fn(() => true),
   userKey: "user-info"
 }));
 
@@ -32,6 +34,8 @@ describe("user store 跨标签登出", () => {
     setActivePinia(createPinia());
     authMock.getToken.mockReturnValue("access-token");
     authMock.getRefreshToken.mockReturnValue("refresh-token");
+    // hasSession 是 handleRemoteLogout 的会话判定口径（header 模式 = 标记 + refresh）
+    authMock.hasSession.mockReturnValue(true);
     authMock.removeToken.mockClear();
     routerMock.resetRouter.mockClear();
     routerMock.push.mockClear();
@@ -52,9 +56,8 @@ describe("user store 跨标签登出", () => {
     });
   });
 
-  it("本标签已无 token 时忽略（避免重复跳转）", async () => {
-    authMock.getToken.mockReturnValue("");
-    authMock.getRefreshToken.mockReturnValue(null);
+  it("本标签已无会话时忽略（避免重复跳转）", async () => {
+    authMock.hasSession.mockReturnValue(false);
     const store = useUserStore();
     await store.handleRemoteLogout();
     expect(authMock.removeToken).not.toHaveBeenCalled();

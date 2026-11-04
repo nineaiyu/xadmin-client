@@ -17,6 +17,7 @@ import {
   formatToken,
   getRefreshToken,
   getToken,
+  isCookieAuthSession,
   removeToken,
   setApiLanguage
 } from "@/utils/auth";
@@ -342,6 +343,13 @@ class PureHttp {
         config: PureHttpRequestConfig
       ): Promise<InternalAxiosRequestConfig> => {
         setApiLanguage(config);
+        // Cookie 会话模式：token 在 HttpOnly Cookie（JS 不可读），凭证由浏览器自动
+        // 携带——跨域部署须显式 withCredentials 才会带 Cookie（同源是 no-op）。
+        // 不拼 Authorization 头、不触发本地无感刷新（刷新由 401-40001 策略经
+        // 刷新端点的 Cookie 双读轮换，见 errorStrategies / refreshToken）
+        if (isCookieAuthSession()) {
+          config.withCredentials = true;
+        }
         // 票据弱绑定：业务请求携带环境指纹（服务端只存哈希，缺失时跳过比对）
         if (typeof window !== "undefined" && config.headers) {
           config.headers["X-Captcha-Fp"] = getCaptchaFingerprint();
@@ -374,59 +382,69 @@ class PureHttp {
           PureHttp.initConfig.beforeRequestCallback(config);
           return config as InternalAxiosRequestConfig;
         }
-        /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        return AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url))
+        /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题）。
+         *  Cookie 会话模式同白名单处理：token 不可读、无需拼头，凭证随 Cookie 自动
+         *  携带；过期轮换由 401-40001 策略统一触发（避免每个请求都先打一遍刷新端点） */
+        return AUTH_EXEMPT_URLS.some(url => (config.url ?? "").endsWith(url)) ||
+          isCookieAuthSession()
           ? (config as InternalAxiosRequestConfig)
-          : new Promise(resolve => {
-              const token = getToken();
-              if (token) {
-                config.headers!["Authorization"] = formatToken(token);
-                resolve(config as InternalAxiosRequestConfig);
-              } else {
-                const refresh_token = getRefreshToken();
-                if (refresh_token) {
-                  if (!PureHttp.isRefreshing) {
-                    PureHttp.isRefreshing = true;
-                    // 与 WebSocket 重连共享同一单飞刷新（见 ./refreshToken）
-                    refreshAccessToken()
-                      .then(outcome => {
-                        if (outcome.ok) {
-                          const token = outcome.data.access;
-                          config.headers!["Authorization"] = formatToken(token);
-                          PureHttp.flushPendingRequests(token);
-                        } else {
-                          // 刷新失败：http 层已负责提示（401 策略带业务 detail，
-                          // 网络异常走 send 兜底）；这里只补「HTTP 200 + 业务码
-                          // 失败」这一种没有 http 层提示的路径，避免同一次失败
-                          // 连弹两次（旧实现在此重算文案，对象会被渲染成
-                          // [object Object]）。排队请求统一以失败收尾并跳登录。
-                          if (!outcome.error && outcome.detail) {
-                            message(outcome.detail, { type: "warning" });
-                          }
-                          PureHttp.flushPendingRequests(null);
-                          removeToken();
-                          redirectToLogin();
-                        }
-                      })
-                      .finally(() => {
-                        PureHttp.isRefreshing = false;
-                      });
-                  }
-                  resolve(
-                    PureHttp.retryOriginalRequest(
-                      config
-                    ) as Promise<InternalAxiosRequestConfig>
-                  );
-                } else {
-                  resolve(config as InternalAxiosRequestConfig);
-                }
-              }
-            });
+          : this.attachBearerToken(config);
       },
       error => {
         return Promise.reject(error);
       }
     );
+  }
+
+  /** Header 会话模式：拼 Authorization 头；本地无 token 时经单飞刷新换新后排队重发 */
+  private attachBearerToken(
+    config: PureHttpRequestConfig
+  ): Promise<InternalAxiosRequestConfig> {
+    return new Promise(resolve => {
+      const token = getToken();
+      if (token) {
+        config.headers!["Authorization"] = formatToken(token);
+        resolve(config as InternalAxiosRequestConfig);
+      } else {
+        const refresh_token = getRefreshToken();
+        if (refresh_token) {
+          if (!PureHttp.isRefreshing) {
+            PureHttp.isRefreshing = true;
+            // 与 WebSocket 重连共享同一单飞刷新（见 ./refreshToken）
+            refreshAccessToken()
+              .then(outcome => {
+                if (outcome.ok) {
+                  const token = outcome.data.access;
+                  config.headers!["Authorization"] = formatToken(token);
+                  PureHttp.flushPendingRequests(token);
+                } else {
+                  // 刷新失败：http 层已负责提示（401 策略带业务 detail，
+                  // 网络异常走 send 兜底）；这里只补「HTTP 200 + 业务码
+                  // 失败」这一种没有 http 层提示的路径，避免同一次失败
+                  // 连弹两次（旧实现在此重算文案，对象会被渲染成
+                  // [object Object]）。排队请求统一以失败收尾并跳登录。
+                  if (!outcome.error && outcome.detail) {
+                    message(outcome.detail, { type: "warning" });
+                  }
+                  PureHttp.flushPendingRequests(null);
+                  removeToken();
+                  redirectToLogin();
+                }
+              })
+              .finally(() => {
+                PureHttp.isRefreshing = false;
+              });
+          }
+          resolve(
+            PureHttp.retryOriginalRequest(
+              config
+            ) as Promise<InternalAxiosRequestConfig>
+          );
+        } else {
+          resolve(config as InternalAxiosRequestConfig);
+        }
+      }
+    });
   }
 
   /** 响应拦截 */

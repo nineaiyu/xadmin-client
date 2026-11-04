@@ -1,7 +1,13 @@
 import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
 import { message } from "@/utils/message";
 import { announce } from "@/utils/announcer";
-import { remoteAccessToken, removeToken } from "@/utils/auth";
+import {
+  hasSession,
+  isCookieAuthSession,
+  remoteAccessToken,
+  removeToken
+} from "@/utils/auth";
+import { refreshAccessToken } from "./refreshToken";
 import {
   approvalKey,
   deletePendingApproval,
@@ -54,9 +60,17 @@ interface SendErrorStrategy {
   handle: (ctx: SendErrorContext) => boolean;
 }
 
-/** 401 + 业务码 40001：access 过期，静默换新 access 后重发一次（`_tokenRetried` 防死循环） */
+/** 401 + 业务码 40001（或 Cookie 会话的缺凭证形态）：access 过期，静默换新后重发一次（`_tokenRetried` 防死循环） */
 const tokenExpiredStrategy: SendErrorStrategy = {
-  match: ({ status, data }) => status === 401 && data?.code === 40001,
+  match: ({ status, data }) =>
+    status === 401 &&
+    (data?.code === 40001 ||
+      // Cookie 会话特有形态：HttpOnly 的 X-Token Cookie 到期即消失，服务端按
+      // 「缺凭证」返回业务码 401（区别于凭证存在但被拒的 40001）——此时 refresh
+      // Cookie（15 天）可能仍在有效期内。与 header 模式「本地无 token 先经单飞
+      // 刷新再排队」等价，先尝试无感轮换；无会话标记（multiple-tabs 缺失）属
+      // 真实未登录，不在此匹配，交 unauthorizedStrategy 处理。
+      (data?.code === 401 && isCookieAuthSession() && hasSession())),
   handle: ({ config, data, reissue, resolve, reject }) => {
     if (config._tokenRetried) {
       // 重试后仍 40001（如刷新失败），跳登录防止死循环
@@ -67,6 +81,24 @@ const tokenExpiredStrategy: SendErrorStrategy = {
       return true;
     }
     config._tokenRetried = true;
+    if (isCookieAuthSession()) {
+      // Cookie 会话：本地无可删/可读的 access（HttpOnly），不能走 header 模式的
+      // 「删 Cookie → 拦截器触发刷新」链路——这里直接经单飞刷新（服务端按
+      // X-Refresh-Token Cookie 轮换并重下 Cookie），成功后重发一次；
+      // 失败对齐拦截器口径：可读 detail 提示 + 清本地标记 + 跳登录
+      resolve(
+        refreshAccessToken().then(outcome => {
+          if (outcome.ok) return reissue();
+          if (!outcome.error && outcome.detail) {
+            message(outcome.detail, { type: "warning" });
+          }
+          removeToken();
+          redirectToLogin();
+          return Promise.reject(data);
+        })
+      );
+      return true;
+    }
     remoteAccessToken();
     resolve(reissue());
     return true;

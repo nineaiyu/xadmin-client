@@ -43,7 +43,8 @@ vi.mock("@/utils/auth", () => ({
   remoteAccessToken: vi.fn(),
   removeToken: vi.fn(),
   setApiLanguage: vi.fn(),
-  setToken: vi.fn()
+  setToken: vi.fn(),
+  isCookieAuthSession: vi.fn(() => false)
 }));
 
 vi.mock("@/utils/message", () => ({

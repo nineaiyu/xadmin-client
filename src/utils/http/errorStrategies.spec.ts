@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { elMessageMock } = vi.hoisted(() => ({ elMessageMock: vi.fn() }));
+const { elMessageMock, hasSessionMock, isCookieAuthSessionMock, refreshMock } =
+  vi.hoisted(() => ({
+    elMessageMock: vi.fn(),
+    hasSessionMock: vi.fn(),
+    isCookieAuthSessionMock: vi.fn(),
+    refreshMock: vi.fn()
+  }));
 
 // 提示统一走项目 message 包装（pure-message 视觉）：断言按包装签名 (text, params)
 vi.mock("@/utils/message", () => ({
@@ -8,7 +14,12 @@ vi.mock("@/utils/message", () => ({
 }));
 vi.mock("@/utils/auth", () => ({
   remoteAccessToken: vi.fn(),
-  removeToken: vi.fn()
+  removeToken: vi.fn(),
+  isCookieAuthSession: isCookieAuthSessionMock,
+  hasSession: hasSessionMock
+}));
+vi.mock("./refreshToken", () => ({
+  refreshAccessToken: refreshMock
 }));
 vi.mock("./pendingApproval", () => ({
   approvalKey: vi.fn(() => "key"),
@@ -327,5 +338,96 @@ describe("业务 400 策略（PROTECT 引用不可删除 code=998 等）", () =>
     );
     expect(badRequest!.match(makeCtx({ status: 401, data: {} }))).toBe(false);
     expect(badRequest!.match(makeCtx({ status: 404, data: {} }))).toBe(false);
+  });
+});
+
+describe("401+40001 access 过期策略（双模式）", () => {
+  const tokenExpired = SEND_ERROR_STRATEGIES.find(candidate =>
+    candidate.match(makeCtx({ status: 401, data: { code: 40001 } }))
+  );
+
+  afterEach(() => {
+    elMessageMock.mockClear();
+    redirectToLoginMock.mockClear();
+    refreshMock.mockReset();
+    isCookieAuthSessionMock.mockReset().mockReturnValue(false);
+    hasSessionMock.mockReset().mockReturnValue(false);
+  });
+
+  it("header 模式：删本地 access 后原样重发（不在此处刷新）", () => {
+    expect(tokenExpired).toBeDefined();
+    const ctx = makeCtx({ status: 401, data: { code: 40001 } });
+    expect(tokenExpired!.handle(ctx)).toBe(true);
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(ctx.reissue).toHaveBeenCalled();
+  });
+
+  it("Cookie 模式：经单飞刷新（Cookie 轮换）后重发一次", async () => {
+    isCookieAuthSessionMock.mockReturnValue(true);
+    const ctx = makeCtx({ status: 401, data: { code: 40001 } });
+    refreshMock.mockResolvedValue({ ok: true, data: {} });
+    expect(tokenExpired!.handle(ctx)).toBe(true);
+    // resolve 采纳了「刷新后重发」的 Promise，等它落定
+    const chained = (ctx.resolve as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    await chained;
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(ctx.reissue).toHaveBeenCalled();
+  });
+
+  it("Cookie 模式刷新失败：清本地标记 + 跳登录，外层以原错误体拒绝", async () => {
+    isCookieAuthSessionMock.mockReturnValue(true);
+    const errorBody = { code: 40001, detail: "令牌无效或已过期" };
+    const ctx = makeCtx({ status: 401, data: errorBody });
+    refreshMock.mockResolvedValue({ ok: false, detail: "refresh expired" });
+    expect(tokenExpired!.handle(ctx)).toBe(true);
+    const chained = (ctx.resolve as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    await expect(chained).rejects.toEqual(errorBody);
+    expect(redirectToLoginMock).toHaveBeenCalled();
+  });
+
+  it("重试后仍 40001：防死循环，提示 + 清 token + 跳登录", () => {
+    const ctx = makeCtx({
+      status: 401,
+      data: { code: 40001, detail: "令牌无效或已过期" }
+    });
+    (ctx.config as Record<string, unknown>)._tokenRetried = true;
+    expect(tokenExpired!.handle(ctx)).toBe(true);
+    expect(redirectToLoginMock).toHaveBeenCalled();
+    expect(ctx.reject).toHaveBeenCalled();
+  });
+
+  it("Cookie 模式缺凭证（code=401，access Cookie 自然过期消失）且有会话标记：命中本策略经单飞刷新后重发", async () => {
+    isCookieAuthSessionMock.mockReturnValue(true);
+    hasSessionMock.mockReturnValue(true);
+    const ctx = makeCtx({ status: 401, data: { code: 401, detail: "未授权" } });
+    expect(tokenExpired!.match(ctx)).toBe(true);
+    refreshMock.mockResolvedValue({ ok: true, data: {} });
+    expect(tokenExpired!.handle(ctx)).toBe(true);
+    const chained = (ctx.resolve as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    await chained;
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(ctx.reissue).toHaveBeenCalled();
+  });
+
+  it("Cookie 模式缺凭证但无会话标记（真实未登录）：不命中本策略，交 unauthorizedStrategy 清 token 跳登录", () => {
+    isCookieAuthSessionMock.mockReturnValue(true);
+    hasSessionMock.mockReturnValue(false);
+    const ctx = makeCtx({ status: 401, data: { code: 401, detail: "未授权" } });
+    expect(tokenExpired!.match(ctx)).toBe(false);
+    const unauthorized = SEND_ERROR_STRATEGIES.find(
+      candidate =>
+        candidate !== tokenExpired &&
+        candidate.match(makeCtx({ status: 401, data: { code: 401 } }))
+    );
+    expect(unauthorized).toBeDefined();
+    isCookieAuthSessionMock.mockReturnValue(false);
+    expect(unauthorized!.handle(ctx)).toBe(true);
+    expect(redirectToLoginMock).toHaveBeenCalled();
+    expect(ctx.reject).toHaveBeenCalled();
+  });
+
+  it("header 模式 code=401（缺凭证）不命中本策略（本地无 token 由请求拦截器先行刷新兜底）", () => {
+    const ctx = makeCtx({ status: 401, data: { code: 401, detail: "未授权" } });
+    expect(tokenExpired!.match(ctx)).toBe(false);
   });
 });

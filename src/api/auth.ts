@@ -3,12 +3,12 @@ import { http } from "@/utils/http";
 import type { LoginMfaRequired } from "@/api/mfa";
 
 export interface TokenInfo {
-  /** token */
+  /** token（Cookie 会话模式下恒为空串：token 明文只经 Set-Cookie HttpOnly 下发） */
   refresh: string;
   /** `accessToken`的过期时间（时间戳） */
   access_token_lifetime: number;
   refresh_token_lifetime: number;
-  /** 用于调用刷新accessToken的接口时所需的token */
+  /** 用于调用刷新accessToken的接口时所需的token（Cookie 会话模式下恒为空串） */
   access: string;
   /**
    * 巡检处置联动：管理员要求改密时为 true，
@@ -225,6 +225,14 @@ export type AuthCapabilitiesResult = {
     access: boolean;
     /** 免登录天数(refresh token 生命周期,天) */
     lifetime: number;
+    /**
+     * 登录态 token 承载模式(服务端 AUTH_COOKIE_HTTPONLY 开关的只读投影)：
+     * header = token 在登录/刷新响应体(前端写 JS Cookie)；cookie = 服务端
+     * Set-Cookie HttpOnly 下发、响应体剥离明文。运行时会话内的判定以签发
+     * 响应的 X-Auth-Mode 标记 Cookie 为准(见 utils/auth 的 getAuthTransport)；
+     * 旧版本服务端不下发该字段(undefined 按 header 处理)
+     */
+    auth_transport?: "header" | "cookie";
     basic: {
       enabled: boolean;
       captcha: boolean;

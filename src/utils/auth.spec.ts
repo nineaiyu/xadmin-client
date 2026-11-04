@@ -39,8 +39,11 @@ import Cookies from "js-cookie";
 
 import {
   formatToken,
+  getAuthTransport,
   getRefreshToken,
   getToken,
+  hasSession,
+  isCookieAuthSession,
   multipleTabsKey,
   remoteAccessToken,
   removeToken,
@@ -99,6 +102,75 @@ describe("token 工具", () => {
     remoteAccessToken();
     expect(getToken()).toBe("");
     expect(getRefreshToken()).toBe("refresh-1");
+  });
+});
+
+describe("认证承载双模式（X-Auth-Mode 标记）", () => {
+  beforeEach(() => {
+    Object.keys(Cookies.get()).forEach(key => Cookies.remove(key));
+  });
+
+  it("标记缺失时默认 header 模式（旧版服务端兼容，不靠猜）", () => {
+    expect(getAuthTransport()).toBe("header");
+    expect(isCookieAuthSession()).toBe(false);
+  });
+
+  it("标记为 cookie 时进入 Cookie 会话模式", () => {
+    Cookies.set("X-Auth-Mode", "cookie");
+    expect(getAuthTransport()).toBe("cookie");
+    expect(isCookieAuthSession()).toBe(true);
+  });
+
+  it("Cookie 模式 setToken：不写 token Cookie，清遗留可读 Cookie，仍写会话标记", () => {
+    // 模拟 header 模式遗留的可读 token（服务端翻开关前的旧会话残留）
+    Cookies.set("X-Token", "legacy-access");
+    Cookies.set("X-Refresh-Token", "legacy-refresh");
+    Cookies.set("X-Auth-Mode", "cookie");
+    setToken({
+      access: "",
+      refresh: "",
+      access_token_lifetime: 100,
+      refresh_token_lifetime: 200
+    } as never);
+    // token Cookie：既没写入新值，遗留可读值也被清掉（XSS 读不到）
+    expect(getToken()).toBe("");
+    expect(getRefreshToken()).toBeUndefined();
+    // multiple-tabs 会话标记照常维护（路由守卫 / 跨标签登出的判定依据）
+    expect(Cookies.get(multipleTabsKey)).toBe("true");
+  });
+
+  it("header 模式 setToken 行为不变：照常写 token Cookie", () => {
+    setToken({
+      access: "access-1",
+      refresh: "refresh-1",
+      access_token_lifetime: 100,
+      refresh_token_lifetime: 200
+    } as never);
+    expect(getToken()).toBe("access-1");
+    expect(getRefreshToken()).toBe("refresh-1");
+  });
+
+  it("hasSession：header 模式要求标记 + refresh；cookie 模式只看标记", () => {
+    // header 模式：无 refresh 不算登录
+    Cookies.set(multipleTabsKey, "true");
+    expect(hasSession()).toBe(false);
+    Cookies.set("X-Refresh-Token", "refresh-1");
+    expect(hasSession()).toBe(true);
+    // cookie 模式：refresh 不可读，multiple-tabs 即会话判据
+    Cookies.set("X-Auth-Mode", "cookie");
+    Cookies.remove("X-Refresh-Token");
+    expect(hasSession()).toBe(true);
+    // 标记清空（登出）后无会话
+    Cookies.remove(multipleTabsKey);
+    expect(hasSession()).toBe(false);
+  });
+
+  it("removeToken 同步清除模式标记（同标签立即生效；HttpOnly token 由登出接口清理）", () => {
+    Cookies.set("X-Auth-Mode", "cookie");
+    Cookies.set(multipleTabsKey, "true");
+    removeToken();
+    expect(getAuthTransport()).toBe("header");
+    expect(Cookies.get(multipleTabsKey)).toBeUndefined();
   });
 });
 
