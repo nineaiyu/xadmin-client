@@ -7497,7 +7497,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description 刷新Token */
+        /**
+         * @description 刷新Token
+         *
+         *     匿名可达（simplejwt TokenViewBase 自带空认证/权限链，过期 access 不会阻断
+         *     刷新）；refresh 凭证支持**双读**：请求体优先，缺失时回落 ``X-Refresh-Token``
+         *     Cookie（HttpOnly Cookie 模式下前端读不到 token，只能走 Cookie）。Cookie 凭证
+         *     是浏览器自动携带的环境凭证，回落时按登录态 API 同一口径执行 Origin/Referer
+         *     的 CSRF 兜底（跨站源拒绝），body 凭证不受影响。
+         */
         post: operations["api_identity_refresh_create"];
         delete?: never;
         options?: never;
@@ -37972,6 +37980,7 @@ export interface operations {
                         code?: number;
                         data?: {
                             access?: boolean;
+                            auth_transport?: string;
                             basic?: {
                                 captcha?: boolean;
                                 captcha_flow?: string;
