@@ -9,14 +9,22 @@
 //   3. 服务端种子：xadmin-server 平台层 `loadjson/*.json` + 各应用 `<app>/seeds/*.json`
 //      的 `icon: "<set>:<name>"`（菜单元数据；跨仓缺失时跳过——与 check_doc_facts 的跨仓口径一致）。
 //
+// 可选「精选候选面」构建档（图标裁剪方案 B，产品决策项的落地开关）：
+//   ICON_CANDIDATES_CURATED=1 时，选择器候选按 scripts/icon-candidates.curated.json
+//   裁剪（键缺席 = 该集合保持全候选面；键为空数组 = 该集候选清零并从选择器页签隐藏）；
+//   子集与运行时候选（picker-candidates.json）同源生成，一致性不靠对账靠生成。
+//   代码 + 种子引用图标始终保底入子集（已用图标保底集，防存量菜单渲染空白）。
+//
 // 产物：src/components/ReIcon/data/subsets/<set>.json（iconify 集合格式，剥除 info/
-// lastModified 元数据），gitignore 不入库；postinstall + prebuild 自动再生成，
+// lastModified 元数据）与 src/components/ReIcon/data/picker-candidates.json（选择器
+// 运行时候选面），均 gitignore 不入库；postinstall + prebuild 自动再生成，
 // vite 构建期 import 缺文件即失败（自检）。别名入选时其父图标 body 一并写入。
 //
 // fail-closed：候选/引用名在全集合不存在（上游改名/删除，如 ri 的 celery-* 曾
 // 陈旧且可被选中后渲染空白）即退出码 1 并列出——陈旧名在构建期暴露而非线上空白。
 //
 // 用法：node scripts/gen-icon-subset.mjs [--report]
+//       ICON_CANDIDATES_CURATED=1 node scripts/gen-icon-subset.mjs   # 精选候选面档
 import {
   existsSync,
   mkdirSync,
@@ -29,11 +37,59 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const OUT_DIR = join(ROOT, "src/components/ReIcon/data/subsets");
+const DATA_DIR = join(ROOT, "src/components/ReIcon/data");
 const DATA_TS = join(ROOT, "src/components/ReIcon/data.ts");
+const CURATED_FILE = join(ROOT, "scripts/icon-candidates.curated.json");
 const SETS = ["ep", "ri", "fa-solid"];
 const reportOnly = process.argv.includes("--report");
+const curatedMode = ["1", "true"].includes(
+  String(process.env.ICON_CANDIDATES_CURATED ?? "").toLowerCase()
+);
 
-/** 1. 选择器候选（IconJson） */
+/** 精选候选面清单（仅 curated 档读取）：键缺席 = 保持全候选面 */
+function curatedManifest() {
+  if (!existsSync(CURATED_FILE)) {
+    console.error(
+      `[icon-subset] ICON_CANDIDATES_CURATED 已开启但未找到 ${CURATED_FILE}。\n` +
+        '             精选清单是产品口径的输入文件（形状 {"ri": [...], "fa-solid": [...]}，\n' +
+        "             ep 全集合本就只有 293 个通常无需裁剪）；补齐后重跑。"
+    );
+    process.exit(1);
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(CURATED_FILE, "utf-8"));
+  } catch (error) {
+    console.error(`[icon-subset] 精选清单解析失败：${error.message}`);
+    process.exit(1);
+  }
+  const unknown = Object.keys(manifest).filter(k => !SETS.includes(k));
+  if (unknown.length > 0) {
+    console.error(
+      `[icon-subset] 精选清单含未知集合键：${unknown.join("/")}（合法键：${SETS.join("/")}）`
+    );
+    process.exit(1);
+  }
+  for (const [set, names] of Object.entries(manifest)) {
+    if (!Array.isArray(names) || names.some(n => typeof n !== "string")) {
+      console.error(`[icon-subset] 精选清单 ${set} 的值必须是字符串数组`);
+      process.exit(1);
+    }
+    if (names.length === 0) {
+      // 空数组 =「整套下线」：图标注册链路对每套集合都有静态懒加载
+      //（iconRegistry import 缺产物文件会让 vite 构建失败），整套下线需先改造
+      // 页签与注册链路，不能经空清单表达——保留至少一个图标即可隐藏大半个页签
+      console.error(
+        `[icon-subset] 精选清单 ${set} 为空数组：整套下线需同步改造 iconRegistry 的静态懒加载链路，` +
+          "请至少保留一个候选图标（或先经产品确认后再立项改造）"
+      );
+      process.exit(1);
+    }
+  }
+  return manifest;
+}
+
+/** 1. 选择器候选（IconJson；curated 档按清单裁剪） */
 function pickerNames() {
   const src = readFileSync(DATA_TS, "utf-8");
   const names = {};
@@ -120,9 +176,31 @@ if (!existsSync(DATA_TS)) {
 }
 
 const picker = pickerNames();
+const manifest = curatedMode ? curatedManifest() : {};
 const code = codeNames();
 const seeds = seedNames();
 const summary = [];
+
+// curated 档的有效候选面：清单键缺席 = 该集合保持全候选面（ep 通常无需裁剪）；
+// 空数组 = 该集候选清零（子集仍含代码/种子保底图标，选择器页签隐藏）
+const effectivePicker = {};
+for (const set of SETS) {
+  const curated = manifest[set];
+  effectivePicker[set] =
+    curated === undefined
+      ? picker[set]
+      : new Set(curated.filter(name => picker[set].has(name)));
+}
+// 精选名单里不在全候选面的名字（含上游改名/删除）必须构建期暴露，不能静默丢弃
+for (const [set, curated] of Object.entries(manifest)) {
+  const stale = curated.filter(name => !picker[set].has(name));
+  if (stale.length > 0) {
+    console.error(
+      `[icon-subset] 精选清单 ${set} 中的名字不在候选面（data.ts 全集合或上游已改名/删除）：\n  ${stale.join("\n  ")}`
+    );
+    process.exit(1);
+  }
+}
 
 for (const set of SETS) {
   let full;
@@ -144,7 +222,7 @@ for (const set of SETS) {
   const inFull = name => name in fullIcons || name in fullAliases;
 
   const wanted = new Set([
-    ...picker[set],
+    ...effectivePicker[set],
     ...(code[set] ?? []),
     ...(seeds[set] ?? [])
   ]);
@@ -196,12 +274,28 @@ for (const set of SETS) {
   }
   const outBytes = Buffer.byteLength(JSON.stringify(subset));
   summary.push(
-    `${set}: ${wanted.size} 图标（选择器 ${picker[set].size} / 代码 ${code[set].size} / 种子 ${seeds[set].size}）` +
+    `${set}: ${wanted.size} 图标（选择器 ${effectivePicker[set].size} / 代码 ${code[set].size} / 种子 ${seeds[set].size}）` +
       ` ${(fullBytes / 1024).toFixed(0)}KB → ${(outBytes / 1024).toFixed(0)}KB`
   );
 }
 
+// 选择器运行时候选面（与子集同源生成，键形态与 IconJson 一致带「:」）；
+// 候选清零的集合不写键 → Select.vue 按 Object.keys 出页签，自动隐藏
+const pickerCandidates = {};
+for (const set of SETS) {
+  if (effectivePicker[set].size > 0) {
+    pickerCandidates[`${set}:`] = [...effectivePicker[set]];
+  }
+}
+if (!reportOnly) {
+  mkdirSync(DATA_DIR, { recursive: true });
+  writeFileSync(
+    join(DATA_DIR, "picker-candidates.json"),
+    JSON.stringify(pickerCandidates)
+  );
+}
+
 console.log(
-  `[icon-subset] ${reportOnly ? "报告" : "已生成到 src/components/ReIcon/data/subsets/"}：`
+  `[icon-subset] ${curatedMode ? "精选候选面档" : "默认全候选面档"}${reportOnly ? "（报告）" : ""}，已生成到 src/components/ReIcon/data/：`
 );
 for (const line of summary) console.log(`  ${line}`);

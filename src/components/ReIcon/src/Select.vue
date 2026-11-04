@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import ReEmpty from "@/components/ReEmpty";
-import { IconJson } from "@/components/ReIcon/data";
+// 选择器候选面是构建期产物（gen-icon-subset 同源生成）：默认档与 data.ts 全候选面
+// 逐名一致；「精选候选面」构建档（ICON_CANDIDATES_CURATED=1）按产品清单裁剪——
+// 候选清零的集合不出现在产物键里，对应页签随 Object.keys 自动隐藏
+import pickerCandidates from "@/components/ReIcon/data/picker-candidates.json";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { ref, computed, CSSProperties, watch } from "vue";
 import Search from "~icons/ri/search-eye-line";
@@ -18,7 +21,7 @@ defineOptions({
 
 const inputValue = defineModel({ type: String, default: "" });
 
-const iconList = ref(IconJson);
+const iconList = ref(pickerCandidates as Record<string, string[]>);
 const icon = ref();
 const currentActiveType = ref("ep:");
 // 深拷贝图标数据，前端做搜索
@@ -29,20 +32,16 @@ const PAGE_SIZE = 35;
 // 搜索条件
 const filterValue = ref("");
 const { t } = useI18n();
-const tabsList = [
-  {
-    label: "Element Plus",
-    name: "ep:"
-  },
-  {
-    label: "Remix Icon",
-    name: "ri:"
-  },
-  {
-    label: "Font Awesome 5 Solid",
-    name: "fa-solid:"
-  }
-];
+/** 集合页签标签（按生成产物键序输出；产物键序 = ep → ri → fa-solid） */
+const SET_LABELS: Record<string, string> = {
+  "ep:": "Element Plus",
+  "ri:": "Remix Icon",
+  "fa-solid:": "Font Awesome 5 Solid"
+};
+const tabsList = Object.keys(copyIconList).map(name => ({
+  label: SET_LABELS[name] ?? name,
+  name
+}));
 
 /** 当前图标集下的搜索结果（前端过滤；翻页与「总数变化回首页」由 usePagination 承担） */
 const filteredIconList = computed(() =>

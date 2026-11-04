@@ -4,13 +4,15 @@
 
 ## 本目录
 
-| 文档                                                   | 内容                                                                                                                              |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| [development-guide.md](development-guide.md)           | **前端开发指引（含独立检出）**：独立检出场景与前置、目录速览、高频任务索引、跨仓文档地图、提交前自检、常见问题                    |
-| [layout-modes.md](layout-modes.md)                     | **布局模式（7 种）**：形态约定、判定函数、渲染落点、切换与持久化、新增布局步骤                                                    |
-| [perf-firstscreen.md](perf-firstscreen.md)             | 首屏画像与体积治理：闭包体积构成 / 资源瀑布与 Long Task·TBT·LCP / 拆包改动账与遗留，含 `scripts/firstscreen-profile.mjs` 复跑方式 |
-| [metadata-driven-crud.md](metadata-driven-crud.md)     | 元数据驱动 CRUD 前端方案（RePlusPage + contract/schema）的复用说明：最小依赖集、后端前置、移植步骤、边界与耦合                    |
-| [component-dependencies.md](component-dependencies.md) | 依赖 → 消费组件映射：`vue-json-pretty` / `vue-tippy` / `sortablejs` / `echarts` 等既有依赖的实际使用方，用于裁剪与升级评估        |
+| 文档                                                   | 内容                                                                                                                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [development-guide.md](development-guide.md)           | **前端开发指引（含独立检出）**：独立检出场景与前置、目录速览、高频任务索引、跨仓文档地图、提交前自检、常见问题                                                                             |
+| [layout-modes.md](layout-modes.md)                     | **布局模式（7 种）**：形态约定、判定函数、渲染落点、切换与持久化、新增布局步骤                                                                                                             |
+| [perf-firstscreen.md](perf-firstscreen.md)             | 首屏画像与体积治理：闭包体积构成 / 资源瀑布与 Long Task·TBT·LCP / 拆包改动账与遗留，含 `scripts/firstscreen-profile.mjs` 复跑方式                                                          |
+| [perf-icon-subset.md](perf-icon-subset.md)             | 图标子集 chunk 量化与裁剪决策记录：首屏零影响的证据链（随包注册 + 按需懒加载）、候选面裁剪方案与产品决策门槛（维持现状 + 触发条件）                                                        |
+| [metadata-driven-crud.md](metadata-driven-crud.md)     | 元数据驱动 CRUD 前端方案（RePlusPage + contract/schema）的复用说明：最小依赖集、后端前置、移植步骤、边界与耦合                                                                             |
+| [component-dependencies.md](component-dependencies.md) | 依赖 → 消费组件映射：`vue-json-pretty` / `vue-tippy` / `sortablejs` / `echarts` 等既有依赖的实际使用方，用于裁剪与升级评估                                                                 |
+| [design/](design/README.md)                            | UI 设计专项：[4.2 vs 5.0 对比诊断](design/ui-4.2-vs-5.0-audit.md)、[精致化整改规范](design/ui-refinement-spec.md)、[并排预览页](design/ui-4.2-vs-5.0-preview.html)（评审材料，方案未落码） |
 
 ## 仓库内其他约定文档
 

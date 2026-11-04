@@ -42,6 +42,7 @@ tmp
 
 # 图标集引用子集（scripts/gen-icon-subset.mjs 生成物，postinstall/prebuild 再生成）
 src/components/ReIcon/data/subsets/
+src/components/ReIcon/data/picker-candidates.json
 
 # animate.css 按需子集（scripts/gen-animate-subset.mjs 生成物，postinstall/prebuild 再生成）
 src/style/animate-subset.css
