@@ -5,6 +5,7 @@ import type {
   FormUserOption
 } from "@/api/dataset/dform";
 import { getDictItems, type DictItem } from "@/utils/dict";
+import { createKeyedRequestSeqGuard } from "@/utils/requestSeq";
 import {
   buildFilterPayload,
   filterableFieldsOf,
@@ -64,9 +65,14 @@ export function useFormDataFilters({
     filterUserOptions[field.key] ?? [];
   const filterUserLabel = userLabelText;
 
+  /** 选人搜索请求序号（按字段键隔离）：多个选人筛选可并发搜索，A 字段的
+   * 新请求不作废 B 字段的在途响应；同键内仅最新一次可写（remote-method
+   * 逐键触发无防抖，竞态窗口更大；见 utils/requestSeq） */
+  const filterUserSeq = createKeyedRequestSeqGuard<string>();
   /** 选人筛选项远程搜索（空关键字清空候选，避免无边界枚举通讯录） */
   const searchFilterUsers = (field: FormField, keyword: string) => {
     const value = (keyword ?? "").trim();
+    const ticket = filterUserSeq.start(field.key);
     if (!value) {
       filterUserOptions[field.key] = [];
       return;
@@ -74,9 +80,11 @@ export function useFormDataFilters({
     api
       .userOptions({ keyword: value })
       .then(res => {
+        if (!filterUserSeq.isLatest(field.key, ticket)) return;
         filterUserOptions[field.key] = res?.data ?? [];
       })
       .catch(() => {
+        if (!filterUserSeq.isLatest(field.key, ticket)) return;
         filterUserOptions[field.key] = [];
       });
   };

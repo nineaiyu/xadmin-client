@@ -130,6 +130,7 @@ const { t } = useI18n();
   flex-direction: column;
   gap: var(--space-2);
   max-height: 40vh;
+  max-height: 40dvh;
   overflow: auto;
 }
 

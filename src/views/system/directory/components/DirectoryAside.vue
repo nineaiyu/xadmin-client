@@ -165,9 +165,7 @@ function postTitle(item: DirectoryPostOption) {
   <div
     class="directory-aside bg-bg-card flex flex-col overflow-hidden"
     :class="
-      compact
-        ? 'max-h-90 rounded-lg border border-border-light'
-        : 'directory-desktop app-pane'
+      compact ? 'max-h-90 rounded-lg border border-border-light' : 'app-pane'
     "
   >
     <!-- 浏览维度切换 -->
@@ -295,11 +293,8 @@ function postTitle(item: DirectoryPostOption) {
 </template>
 
 <style scoped lang="scss">
-.directory-desktop {
-  height: calc(100vh - 141px);
-
-  /* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源） */
-}
+/* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源）；
+   桌面高度由页面层 useFullHeightPanel 实测后以内联 style 提供 */
 
 .directory-mode {
   :deep(.el-radio-button) {

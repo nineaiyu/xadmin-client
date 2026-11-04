@@ -347,12 +347,17 @@ defineExpose({
                 <div
                   v-if="selectedNum > 0"
                   v-motion-fade
-                  class="bg-(--el-fill-color-light) w-40 h-10 m-2 pl-4 flex items-center rounded-md"
+                  class="bg-(--el-fill-color-light) h-10 m-2 pl-4 pr-2 flex items-center rounded-md max-w-60 shrink-0"
                 >
-                  <span class="text-fg-subtle text-base">
+                  <span class="text-fg-subtle text-base truncate min-w-0">
                     {{ t("buttons.selected", { count: selectedNum }) }}
                   </span>
-                  <el-button text type="primary" @click="onSelectionCancel">
+                  <el-button
+                    text
+                    type="primary"
+                    class="shrink-0"
+                    @click="onSelectionCancel"
+                  >
                     {{ t("buttons.cancel") }}
                   </el-button>
                 </div>

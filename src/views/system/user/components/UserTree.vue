@@ -121,9 +121,7 @@ watch(
 <template>
   <div
     v-loading="props.treeLoading"
-    :style="
-      props.compact ? undefined : { minHeight: DESKTOP_CONTAINER_MIN_HEIGHT }
-    "
+    :style="props.compact ? undefined : DESKTOP_CONTAINER_MIN_HEIGHT"
     class="user-tree-panel overflow-hidden relative"
     :class="props.compact ? '' : 'app-pane'"
   >
@@ -170,8 +168,9 @@ watch(
       </el-dropdown>
     </div>
     <el-divider />
+    <!-- 高度经 style 字符串双写（vh → dvh 级联兜底），见 utils/userTreeHeight -->
     <el-scrollbar
-      :height="props.compact ? COMPACT_SCROLL_HEIGHT : DESKTOP_SCROLL_HEIGHT"
+      :style="props.compact ? COMPACT_SCROLL_HEIGHT : DESKTOP_SCROLL_HEIGHT"
     >
       <el-tree
         ref="treeRef"

@@ -242,7 +242,10 @@ export const builtinDetailRenderers: PlusColumnRegistry = {
         }
       }
       return (
-        <el-scrollbar max-height="calc(100vh - 240px)">
+        // 详情抽屉是覆盖层（不随布局 chrome 变化，--layout-chrome-h 不适用）：
+        // 240px 为抽屉头/描述区让位（抽屉私有）；单值属性取 dvh（移动端动态
+        // 工具栏），不支持 dvh 的旧浏览器整值失效、长 JSON 退化为不封顶——可接受
+        <el-scrollbar max-height="calc(100dvh - 240px)">
           <VueJsonPretty data={jsonValue as never} v-copy={stringValue} />
         </el-scrollbar>
       );

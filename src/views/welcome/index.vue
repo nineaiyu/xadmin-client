@@ -249,10 +249,8 @@ const trendClass = (percent: string) =>
 
 <style lang="scss" scoped>
 :deep(.el-card) {
-  /* 隐藏 el-scrollbar 滚动条 */
-  .el-scrollbar__bar {
-    display: none;
-  }
+  /* 操作日志滚动区保留 EP 默认滚动条（悬停显现）：键盘/触屏用户需要
+     「此处可滚」的视觉提示，此前 display:none 把提示一并隐藏 */
 
   /* el-timeline 每一项上下、左右边距 */
   .el-timeline-item {

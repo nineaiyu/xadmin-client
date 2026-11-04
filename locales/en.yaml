@@ -1207,6 +1207,8 @@ buttons:
   unpinTab: Unpin Tab
   openInNewWindow: Open in new window
   fullScreenToggle: Toggle full screen
+  fullscreen: Fullscreen
+  exitFullscreen: Exit fullscreen
   language: Switch language
   splitPaneReset: Reset pane width
   userMenu: User menu

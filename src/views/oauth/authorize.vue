@@ -192,7 +192,10 @@ const decide = async (approved: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* vh/dvh 双写：移动浏览器动态工具栏下取动态视口高（全站惯例） */
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--el-bg-color-page);
 }
 

@@ -188,6 +188,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 60vh;
+  min-height: 60dvh;
 
   /* MFA 步骤复用登录页卡片形态：限宽居中，避免整屏拉伸 */
   &__mfa {

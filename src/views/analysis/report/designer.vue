@@ -385,7 +385,12 @@ const back = () => {
 .designer-body {
   display: flex;
   align-items: stretch;
-  min-height: calc(100vh - 120px);
+
+  /* 最低高度按布局 chrome 令牌推导（120px 魔数 → chrome + 内容留白）：
+     跟随「隐藏页签 / 隐藏顶栏 / 紧凑模式 / 模拟横幅」偏好自适应；
+     vh/dvh 双写兼顾移动端动态工具栏（全站惯例） */
+  min-height: calc(100vh - var(--layout-chrome-h) - var(--content-gap));
+  min-height: calc(100dvh - var(--layout-chrome-h) - var(--content-gap));
 }
 
 .designer-inspector {

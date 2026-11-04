@@ -148,9 +148,7 @@ function openDetail(row: DirectoryMember) {
   <div
     class="directory-members bg-bg-card flex flex-col overflow-hidden"
     :class="
-      compact
-        ? 'max-h-150 rounded-lg border border-border-light'
-        : 'directory-desktop app-pane'
+      compact ? 'max-h-150 rounded-lg border border-border-light' : 'app-pane'
     "
   >
     <!-- 工具条：关键字搜索 + 总数 + 视图切换 -->
@@ -401,11 +399,8 @@ function openDetail(row: DirectoryMember) {
 <style scoped lang="scss">
 @use "@/style/tokens/breakpoints" as bp;
 
-.directory-desktop {
-  height: calc(100vh - 141px);
-
-  /* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源） */
-}
+/* 卡片壳取 app-pane 工具类（圆角/描边/阴影与全局卡片体系同源）；
+   桌面高度由页面层 useFullHeightPanel 实测后以内联 style 提供 */
 
 .member-card {
   display: flex;

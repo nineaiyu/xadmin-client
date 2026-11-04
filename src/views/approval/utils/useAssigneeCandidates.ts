@@ -1,6 +1,7 @@
 import { onMounted, ref } from "vue";
 import { isSuccess } from "@/api/types";
 import { approvalRuleApi } from "@/api/approval/approvalRule";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 
 /** 用户候选项（值=用户名；label 形如「昵称(用户名)」） */
 export type AssigneeCandidateUser = { username: string; label: string };
@@ -46,14 +47,20 @@ export function useAssigneeCandidates(
         : user.username
     }));
 
+  /** 远程搜索请求序号：仅最新一次可写候选与收口 loading（网络乱序时旧
+   * 响应作废，见 utils/requestSeq；remote-method 逐键触发无防抖，竞态窗口更大） */
+  const searchSeq = createRequestSeqGuard();
+
   /** 远程搜索（下拉 remote-method）：命中项 + 已选未命中项保留 */
   async function searchUsers(query: string) {
+    const ticket = searchSeq.start();
     userLoading.value = true;
     try {
       const res = await fetcher({
         keyword: query,
         limit: REMOTE_SEARCH_LIMIT
       }).catch(() => null);
+      if (!searchSeq.isLatest(ticket)) return;
       if (!(res && isSuccess(res) && res.data)) return;
       const matched = mapUsers(
         ((
@@ -66,7 +73,8 @@ export function useAssigneeCandidates(
         ...userOptions.value.filter(item => !matchedNames.has(item.username))
       ];
     } finally {
-      userLoading.value = false;
+      // 仅最新一次负责收口 loading：过期请求不得提前关掉新请求的加载态
+      if (searchSeq.isLatest(ticket)) userLoading.value = false;
     }
   }
 

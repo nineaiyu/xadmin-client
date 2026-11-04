@@ -162,6 +162,7 @@ const emitClear = () => {
   flex-direction: column;
   gap: var(--space-1);
   max-height: 32vh;
+  max-height: 32dvh;
   overflow: auto;
 }
 

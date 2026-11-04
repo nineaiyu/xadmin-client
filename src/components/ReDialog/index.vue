@@ -67,15 +67,21 @@ const {
   }
 });
 
-const fullscreenClass = computed(() => {
-  return [
-    "el-icon",
-    "el-dialog__close",
-    "-translate-x-2",
-    "cursor-pointer",
-    "hover:text-[red]!"
-  ];
-});
+/**
+ * 全屏切换按钮类：复用 EP 关闭图标的视觉基线（el-dialog__close），但用原生
+ * button 承载——键盘 Enter/Space 原生可达、可访问名随全屏态切换；
+ * hover 色取语义 danger（原 text-[red]! 任意值绕过色值门禁且与 danger 脱节）。
+ * border-0 / bg-transparent 中和原生按钮默认描边与底色（reset 只清 padding）。
+ */
+const fullscreenClass = computed(() => [
+  "el-icon",
+  "el-dialog__close",
+  "-translate-x-2",
+  "border-0",
+  "bg-transparent",
+  "cursor-pointer",
+  "hover:text-danger!"
+]);
 
 function eventsCallBack(
   event: EventType,
@@ -159,9 +165,15 @@ function contentProps(options: DialogOptions) {
         <span :id="titleId" :class="titleClass">{{ options?.title }}</span>
         <!-- 静态 fullscreen 选项 = 常驻全屏（无可切换按钮）；
              运行时全屏（点击切换）保留按钮，允许再点退出 -->
-        <i
+        <button
           v-if="!options?.fullscreen"
           :class="fullscreenClass"
+          type="button"
+          :aria-label="
+            isFullscreen(options, index)
+              ? t('buttons.exitFullscreen')
+              : t('buttons.fullscreen')
+          "
           data-testid="dialog-fullscreen-toggle"
           @click="() => toggleFullscreen(options, index)"
         >
@@ -169,7 +181,7 @@ function contentProps(options: DialogOptions) {
             class="pure-dialog-svg"
             :icon="isFullscreen(options, index) ? ExitFullscreen : Fullscreen"
           />
-        </i>
+        </button>
       </div>
     </template>
     <component

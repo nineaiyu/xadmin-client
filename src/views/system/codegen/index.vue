@@ -451,8 +451,9 @@ onMounted(() => {
             />
           </div>
         </el-col>
-        <!-- 右：产物预览 -->
-        <el-col :xs="24" :md="14">
+        <!-- 右：产物预览（flex 纵列：候选/错误条自然高，预览区吃满剩余空间——
+             产物预览高度由左列表单列决定，不再按视口推算） -->
+        <el-col :xs="24" :md="14" class="flex flex-col">
           <el-alert
             v-if="mode === 'single' && selectedLabel"
             :title="`${selectedLabel.label} → ${t('codegen.artifactTip')}`"

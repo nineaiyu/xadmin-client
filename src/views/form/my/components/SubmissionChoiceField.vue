@@ -43,6 +43,7 @@ const userLabel = (user: FormUserOption) =>
     :placeholder="t('dform.userSearchPlaceholder')"
     @update:model-value="emit('update:modelValue', $event)"
   >
+    <!-- 竞态守卫：搜索链路在父级 SubmissionForm.searchUsers（createKeyedRequestSeqGuard，按字段键） -->
     <el-option
       v-for="user in userOptions"
       :key="user.pk"

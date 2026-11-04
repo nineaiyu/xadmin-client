@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { isSuccess } from "@/api/types";
 import { searchRoleApi, searchUserApi } from "@/api/system/search";
 import { normalizeError } from "@/utils/apiError";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 
 /**
  * 登录策略目标选择器：按 target_type 远程搜索用户名 / 角色 code。
@@ -62,9 +63,13 @@ const update = (values: string[]) => {
   emit("update:modelValue", values.join(","));
 };
 
+/** 远程搜索请求序号：仅最新一次可写候选与收口 loading（网络乱序时旧响应作废） */
+const remoteSeq = createRequestSeqGuard();
+
 const remoteSearch = async (keyword: string) => {
   const query = keyword.trim();
   if (!query) return;
+  const ticket = remoteSeq.start();
   loading.value = true;
   try {
     const res = await (
@@ -72,6 +77,7 @@ const remoteSearch = async (keyword: string) => {
         ? searchRoleApi.list({ code: query, page_size: 20 })
         : searchUserApi.list({ username: query, page_size: 20 })
     ).catch(normalizeError);
+    if (!remoteSeq.isLatest(ticket)) return;
     if (!isSuccess(res)) return;
     const rows =
       (res.data as { results?: Record<string, unknown>[] })?.results ?? [];
@@ -87,7 +93,7 @@ const remoteSearch = async (keyword: string) => {
       };
     });
   } finally {
-    loading.value = false;
+    if (remoteSeq.isLatest(ticket)) loading.value = false;
   }
 };
 </script>

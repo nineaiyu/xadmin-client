@@ -4,6 +4,7 @@
 // 由 props 承载，提交载荷（add / remove 增量）在此统一生成。
 import { computed, ref } from "vue";
 import { message } from "@/utils/message";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 import type { MemberTagOption } from "./memberTag";
 
 defineOptions({ name: "MemberTagEditor" });
@@ -43,14 +44,21 @@ const displayMembers = computed(() =>
   props.members.filter(item => !removing.value.includes(item.pk))
 );
 
+/** 远程搜索请求序号：仅最新一次可写候选与收口 loading（网络乱序时旧响应作废） */
+const searchSeq = createRequestSeqGuard();
+
 async function searchUsers(keyword: string) {
+  const ticket = searchSeq.start();
   searching.value = true;
   try {
-    options.value = (await props.search(keyword ?? "")) ?? [];
+    const rows = (await props.search(keyword ?? "")) ?? [];
+    if (!searchSeq.isLatest(ticket)) return;
+    options.value = rows;
   } catch {
+    if (!searchSeq.isLatest(ticket)) return;
     options.value = [];
   } finally {
-    searching.value = false;
+    if (searchSeq.isLatest(ticket)) searching.value = false;
   }
 }
 

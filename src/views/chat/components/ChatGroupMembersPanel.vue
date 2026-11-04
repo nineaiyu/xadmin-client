@@ -12,6 +12,7 @@ import {
   type ChatRoomItem,
   type ChatUserOption
 } from "@/api/chat";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 
 /**
  * 群成员管理面板（弹层内容组件形态）。
@@ -67,18 +68,24 @@ function mergeMemberOptions(rows: ChatUserOption[]) {
   }
 }
 
+/** 远程搜索请求序号：仅最新一次可写候选与收口 loading（防抖只降低并发
+ * 窗口、不消除网络乱序，见 utils/requestSeq） */
+const memberSearchSeq = createRequestSeqGuard();
+
 /** 远程搜索待添加成员（防抖 300ms） */
 function searchMemberOptions(value: string) {
   window.clearTimeout(memberSearchTimer);
   const word = (value ?? "").trim();
   if (!word) return;
   memberSearchTimer = window.setTimeout(async () => {
+    const ticket = memberSearchSeq.start();
     searchingMembers.value = true;
     try {
       const res = await chatApi.searchChatUsers(word);
+      if (!memberSearchSeq.isLatest(ticket)) return;
       if (isSuccess(res)) mergeMemberOptions(res.data ?? []);
     } finally {
-      searchingMembers.value = false;
+      if (memberSearchSeq.isLatest(ticket)) searchingMembers.value = false;
     }
   }, 300);
 }

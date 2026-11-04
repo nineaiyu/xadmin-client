@@ -21,15 +21,24 @@ const timer = ref<ReturnType<typeof setInterval>>();
 // 画布上下文在 initCanvas 就绪后保存，供定时器与可见性恢复共用
 let renderContext: CanvasRenderingContext2D | undefined;
 
+// 减弱动效偏好：装饰性小球物理动画退化为静态时钟（每秒仅重绘时间，
+// 不做 20fps 掉落物理）——全站 CSS 动画已有该降级（tailwind.css / transition.scss），
+// 此前 JS 画布动画是唯一漏网点
+const reducedMotionQuery = window.matchMedia(
+  "(prefers-reduced-motion: reduce)"
+);
+const prefersReducedMotion = () => reducedMotionQuery.matches;
+
 const startTimer = () => {
   // 已在跑或画布尚未初始化时不重复启动；页面在后台时不启动（恢复可见时由
   // visibilitychange 拉起），避免重建画布发生在后台时空转
   if (timer.value || document.hidden) return;
   const context = renderContext;
   if (!context) return;
-  timer.value = setInterval(() => {
-    render(context);
-  }, 50);
+  timer.value = setInterval(
+    () => render(context),
+    prefersReducedMotion() ? 1000 : 50
+  );
 };
 
 const stopTimer = () => {
@@ -49,12 +58,21 @@ const handleVisibilityChange = () => {
 };
 document.addEventListener("visibilitychange", handleVisibilityChange);
 
+const balls = ref<Ball[]>([]);
+// 减弱动效偏好实时变化：清掉已生成的小球并按新节奏重启（否则切到「减弱」时
+// 旧小球以静止姿态残留在画布上）
+const handleMotionChange = () => {
+  if (prefersReducedMotion()) balls.value = [];
+  stopTimer();
+  startTimer();
+};
+reducedMotionQuery.addEventListener("change", handleMotionChange);
+
 const maxBallCount = ref(100);
 const storeTime = ref(new Date());
 const radius = ref(7);
 const winWidth = ref(0);
 const winHeight = ref(0);
-const balls = ref<Ball[]>([]);
 const marginLeft = ref(10);
 const marginTop = ref(30);
 const distNumber = ref(15);
@@ -155,16 +173,19 @@ const render = (cxt: CanvasRenderingContext2D) => {
   const beforeSeconds = storeTime.value.getSeconds();
 
   cxt.clearRect(0, 0, cxt.canvas.width, cxt.canvas.height); //清除画布
-  renderBall(
-    nextHours,
-    nextMinutes,
-    nextSeconds,
-    beforeHours,
-    beforeMinutes,
-    beforeSeconds
-  ); //添加小球
+  // 减弱动效：跳过小球物理（balls 保持为空，renderTime 不绘制任何小球）
+  if (!prefersReducedMotion()) {
+    renderBall(
+      nextHours,
+      nextMinutes,
+      nextSeconds,
+      beforeHours,
+      beforeMinutes,
+      beforeSeconds
+    ); //添加小球
 
-  updateBalls(); //更新小球信息
+    updateBalls(); //更新小球信息
+  }
   renderTime(nextHours, nextMinutes, nextSeconds, cxt); //绘制时间
   storeTime.value = nextTime;
 };
@@ -314,6 +335,7 @@ watch(isDark, restart);
 
 onBeforeUnmount(() => {
   document.removeEventListener("visibilitychange", handleVisibilityChange);
+  reducedMotionQuery.removeEventListener("change", handleMotionChange);
   stopTimer();
 });
 </script>

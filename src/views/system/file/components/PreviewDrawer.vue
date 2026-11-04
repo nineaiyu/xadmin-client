@@ -173,16 +173,19 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   max-height: 70vh;
+  max-height: 70dvh;
 }
 
 .preview-frame {
   width: 100%;
   height: 70vh;
+  height: 70dvh;
   border: none;
 }
 
 .preview-text {
   max-height: 70vh;
+  max-height: 70dvh;
   padding: var(--space-3);
   margin: 0;
   overflow: auto;

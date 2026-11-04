@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { deviceDetection } from "@pureadmin/utils";
 import { hasAuth } from "@/router/utils";
+import { useFullHeightPanel } from "@/hooks/useFullHeightPanel";
 import { ReSplitPane } from "@/components/ReSplitPane";
 import ReEmpty from "@/components/ReEmpty";
 import RePage from "@/components/RePage";
@@ -33,29 +34,45 @@ const { percent, handleDragEnd } = useSplitPaneConfig("system/directory", {
   defaultPercent: 20,
   minPercent: 10
 });
+
+/**
+ * 桌面双栏高度：按视口实测（顶栏/页签/页脚/紧凑模式/用户模拟横幅等偏好组合
+ * 全部自适应），替代两栏各自 calc(100vh - 141px) 魔数——旧值按默认 chrome 校准，
+ * 「隐藏页签」偏好下留出一条空白、默认页脚下还会把页脚顶出视口 ~10px 产生
+ * 整页滚动条。聊天室 / AI 控制台同一布局口径（hooks/useFullHeightPanel）。
+ */
+const { pageRef, panelHeight } = useFullHeightPanel();
 </script>
 
 <template>
   <RePage>
     <template v-if="hasAuth('list:SystemDirectory')">
-      <ReSplitPane
-        v-if="!isMobile"
-        v-model:percent="percent"
-        :split-set="{ minPercent: 10, defaultPercent: 20, split: 'vertical' }"
-        @drag-end="handleDragEnd"
-      >
-        <template #paneL>
-          <DirectoryAside
-            v-model:mode="mode"
-            v-model:dept="dept"
-            v-model:post="post"
-          />
-        </template>
-        <template #paneR>
-          <DirectoryMembers :mode="mode" :dept="dept" :post="post" />
-        </template>
-      </ReSplitPane>
-      <!-- 移动端：上下堆叠（左栏限高，成员名录紧随其后） -->
+      <!-- pageRef 锚定实测起点：双栏高度 = 视口 − 实测顶距 − 页脚（见 useFullHeightPanel） -->
+      <div v-if="!isMobile" ref="pageRef">
+        <ReSplitPane
+          v-model:percent="percent"
+          :split-set="{ minPercent: 10, defaultPercent: 20, split: 'vertical' }"
+          @drag-end="handleDragEnd"
+        >
+          <template #paneL>
+            <DirectoryAside
+              v-model:mode="mode"
+              v-model:dept="dept"
+              v-model:post="post"
+              :style="{ height: `${panelHeight}px` }"
+            />
+          </template>
+          <template #paneR>
+            <DirectoryMembers
+              :mode="mode"
+              :dept="dept"
+              :post="post"
+              :style="{ height: `${panelHeight}px` }"
+            />
+          </template>
+        </ReSplitPane>
+      </div>
+      <!-- 移动端：上下堆叠（左栏限高，成员名录紧随其后；compact 分支高度自适应） -->
       <div v-else class="flex flex-col gap-2">
         <DirectoryAside
           v-model:mode="mode"

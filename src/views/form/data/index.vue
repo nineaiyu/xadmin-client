@@ -168,6 +168,7 @@ const applyFiltersDebounced = debounce(applyFilters, 300);
               :data-testid="`form-data-filter-${field.key}`"
               @change="applyFilters"
             >
+              <!-- 竞态守卫：在 useFormDataFilters.searchFilterUsers（createKeyedRequestSeqGuard，按字段键） -->
               <el-option
                 v-for="user in filterUserOptionsOf(field)"
                 :key="user.pk"

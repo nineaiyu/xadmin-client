@@ -238,18 +238,23 @@ function downloadActive() {
 
 <style lang="scss" scoped>
 .codegen-preview {
-  height: calc(100vh - 420px);
+  /* 右列 flex 流式分配：高度 = 列内剩余空间（页面 el-row 两列等高，由较高的
+     左列表单列决定行高），代码区内部滚动——不按视口推算，偏好组合与视口
+     高度变化天然自适应；360px 为左列表单极短时的可用地板（size-literals 登记） */
+  flex: 1 1 0;
   min-height: 360px;
 }
 
 .codegen-preview__body {
-  :deep(.el-card__body) {
-    height: calc(100% - 57px);
-    padding: 0;
-  }
+  /* 卡头高度随内容换行而变（原 calc(100% - 57px) 是按默认卡头估的魔法值），
+     改纵向 flex 让卡体精确吃满卡头以下剩余空间 */
+  display: flex;
+  flex-direction: column;
 
-  .codegen-preview__code {
-    min-height: 100%;
+  :deep(.el-card__body) {
+    flex: 1 1 0;
+    min-height: 0;
+    padding: 0;
   }
 }
 </style>

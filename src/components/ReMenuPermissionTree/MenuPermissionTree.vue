@@ -298,6 +298,7 @@ defineExpose({ setCheckedKeys });
   &__tree-wrap {
     min-height: 200px;
     max-height: 46vh;
+    max-height: 46dvh;
     padding: var(--space-1) 0;
     margin-top: var(--space-2-5);
     overflow: auto;

@@ -147,9 +147,12 @@ function reload() {
         </el-button>
       </ReEmpty>
       <div v-else v-loading="loading">
+        <!-- 抽屉是覆盖层（不随布局 chrome 变化，--layout-chrome-h 不适用）：
+             220px 为抽屉头/筛选条/分页让位；单值属性取 dvh（移动端动态工具栏，
+             不支持 dvh 的旧浏览器整值失效、表格退化为不封顶——可接受的降级） -->
         <DataTable
           :data="drillRows"
-          max-height="calc(100vh - 220px)"
+          max-height="calc(100dvh - 220px)"
           :label="t('dashboard.drillRows')"
         >
           <el-table-column

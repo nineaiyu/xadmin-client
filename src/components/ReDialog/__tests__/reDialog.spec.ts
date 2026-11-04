@@ -27,7 +27,12 @@ const i18n = createI18n({
   locale: "zh-CN",
   messages: {
     "zh-CN": {
-      buttons: { cancel: "取消", save: "保存" },
+      buttons: {
+        cancel: "取消",
+        save: "保存",
+        fullscreen: "全屏",
+        exitFullscreen: "退出全屏"
+      },
       layout: { more: "更多" }
     }
   }
@@ -275,6 +280,27 @@ describe("ReDialog 弹层容器", () => {
     expect(
       document.querySelector(".el-dialog")?.classList.contains("is-fullscreen")
     ).toBe(false);
+  });
+
+  it("全屏切换是原生 button 且可访问名随全屏态切换（键盘可达）", async () => {
+    mountContainer();
+    addDialog({
+      title: "岗位",
+      contentRenderer: () => h("div", "正文")
+    });
+    await nextTick();
+    await flushPromises();
+
+    const button = document.querySelector(
+      '[data-testid="dialog-fullscreen-toggle"]'
+    ) as HTMLButtonElement | null;
+    expect(button, "必须是原生 button（Enter/Space 原生激活）").not.toBeNull();
+    expect(button!.tagName).toBe("BUTTON");
+    expect(button!.getAttribute("aria-label")).toBe("全屏");
+
+    button!.click();
+    await nextTick();
+    expect(button!.getAttribute("aria-label")).toBe("退出全屏");
   });
 
   it("全屏按钮显式关闭：fullscreenIcon=false 时走 EP 默认头部", async () => {

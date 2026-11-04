@@ -151,6 +151,7 @@ const roleOrPostLabel = (item: { code: string; name: string }) =>
         @focus="ensureSelectedUsers"
         @update:model-value="emitCandidateValue"
       >
+        <!-- 竞态守卫：搜索在 useAssigneeCandidates.searchUsers（createRequestSeqGuard） -->
         <el-option
           v-for="user in userOptions"
           :key="user.username"

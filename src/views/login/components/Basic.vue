@@ -309,7 +309,10 @@ onMounted(() => {
       <!-- 入口按钮按能力清单过滤:验证码通道全关/注册关闭时对应入口隐藏;
            服务整体禁用时全部隐藏(目标页同样是「服务已禁止」,保留即成死循环点击面) -->
       <Motion v-if="accessEnabled && visibleOperates.length" :delay="300">
-        <el-form-item>
+        <!-- 普通容器而非 el-form-item：本块在 el-form 之外（无表单上下文，
+             label 关联与校验挂载语义均失效，EP 不保证该用法的前向兼容）；
+             mb-4 承接原 el-form-item 的下间距（18px → 刻度内 16px） -->
+        <div class="w-full mb-4">
           <div class="w-full h-5 flex-bc">
             <el-button
               v-for="item in visibleOperates"
@@ -321,7 +324,7 @@ onMounted(() => {
               {{ t(item.title) }}
             </el-button>
           </div>
-        </el-form-item>
+        </div>
       </Motion>
       <Motion :delay="450">
         <LoginPrivacyNotice />

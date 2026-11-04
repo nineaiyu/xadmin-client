@@ -1,5 +1,7 @@
 <script lang="ts" setup>
+import { useWindowSize } from "@vueuse/core";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { Z_INDEX } from "@/utils/zIndex";
 import type { MenuNodeAction } from "../utils/types";
 
 /**
@@ -36,18 +38,20 @@ watch(
 
 const MENU_WIDTH = 210;
 const ITEM_HEIGHT = 30;
-// 压层依据：需盖过 el-popper 系弹层（Element Plus popper 层级默认 2000+，右键菜单
-// 与树行「更多」下拉同屏出现时必须在其上），故取 3000 并提为常量防止后续误调低
-const MENU_Z_INDEX = 3000;
+// 压层取 z-index 阶梯的 contextMenu 档：盖过 EP popper 系弹层（与树行「更多」
+// 下拉同屏出现时必须在其上），但低于锁屏遮罩（锁屏应盖住一切交互面；
+// 旧值硬编码 3000 高于锁屏 2500，菜单开着锁屏时会浮在遮罩上）
+// 贴边收敛用响应式视口尺寸：旋转屏幕/改窗口后按当前视口重新夹取
+const { width: winWidth, height: winHeight } = useWindowSize();
 
 const style = computed(() => {
   const height = props.actions.length * ITEM_HEIGHT + 40;
-  const left = Math.min(props.x, window.innerWidth - MENU_WIDTH - 8);
-  const top = Math.min(props.y, window.innerHeight - height - 8);
+  const left = Math.min(props.x, winWidth.value - MENU_WIDTH - 8);
+  const top = Math.min(props.y, winHeight.value - height - 8);
   return {
     left: `${Math.max(4, left)}px`,
     top: `${Math.max(4, top)}px`,
-    zIndex: MENU_Z_INDEX
+    zIndex: Z_INDEX.contextMenu
   };
 });
 

@@ -310,6 +310,7 @@ onMounted(loadFlows);
           :placeholder="t('approvalDiscussion.ccPlaceholder')"
           @focus="form.ccUsers.forEach(ensureUserOption)"
         >
+          <!-- 竞态守卫：搜索在 useAssigneeCandidates.searchUsers（createRequestSeqGuard） -->
           <el-option
             v-for="user in userOptions"
             :key="user.username"

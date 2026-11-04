@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDebounceFn } from "@vueuse/core";
+import { createKeyedRequestSeqGuard } from "@/utils/requestSeq";
 import { getDictItems, type DictItem } from "@/utils/dict";
 import {
   submissionApi,
@@ -104,9 +105,14 @@ const removeRow = (field: FormField, index: number) => {
 /** 选人控件候选缓存：key → 候选列表（远程搜索与编辑回显共用） */
 const userOptionCache = reactive<Record<string, FormUserOption[]>>({});
 const userOptionsOf = (field: FormField) => userOptionCache[field.key] ?? [];
+/** 选人搜索请求序号（按字段键隔离）：同一表单多个选人字段可并发搜索，
+ * A 字段的新请求不作废 B 字段的在途响应；同键内仅最新一次可写（防抖只
+ * 降低并发窗口、不消除网络乱序，见 utils/requestSeq） */
+const userSearchSeq = createKeyedRequestSeqGuard<string>();
 /** 选人远程搜索（300ms 防抖）：避免逐键打请求；空关键字立即清空候选 */
 const searchUsers = useDebounceFn((field: FormField, keyword: string) => {
   const value = (keyword ?? "").trim();
+  const ticket = userSearchSeq.start(field.key);
   if (!value) {
     userOptionCache[field.key] = [];
     return;
@@ -114,9 +120,11 @@ const searchUsers = useDebounceFn((field: FormField, keyword: string) => {
   submissionApi
     .userOptions({ keyword: value })
     .then(res => {
+      if (!userSearchSeq.isLatest(field.key, ticket)) return;
       userOptionCache[field.key] = res?.data ?? [];
     })
     .catch(() => {
+      if (!userSearchSeq.isLatest(field.key, ticket)) return;
       userOptionCache[field.key] = [];
     });
 }, 300);

@@ -125,6 +125,7 @@ const retry = () => feed.retry();
 <style scoped lang="scss">
 .task-log {
   height: 60vh;
+  height: 60dvh;
   overflow: auto;
   background: var(--el-fill-color-darker);
 

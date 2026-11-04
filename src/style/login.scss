@@ -18,7 +18,11 @@
   gap: 18rem;
   width: 100vw;
   max-width: 100%;
+
+  /* vh 先声明、dvh 后声明：支持 dvh 的移动浏览器随工具栏收放取动态视口高，
+     不支持者保留 vh（全站双写惯例，见 lay-content / sidebar） */
   height: 100vh;
+  height: 100dvh;
   padding: 0 2rem;
 }
 
@@ -73,7 +77,10 @@
 .login-box {
   display: flex;
   align-items: center;
-  overflow: hidden;
+
+  /* 不裁内容：原 overflow: hidden 会把超宽表单左右截断且无滚动出口
+     （≤354px 视口：290px 定宽表单 + 2rem 双侧 padding 恰好放不下），
+     表单宽度已改 min() 自适应，纵向超出交给文档滚动 */
   text-align: center;
 }
 
@@ -101,7 +108,9 @@
   }
 
   .login-form {
-    width: 290px;
+    /* min() 兜底窄视口：视口 − 双侧 2rem padding 不足 290px（≤354px 档：
+       320px 手机 / 折叠屏外屏 / 分屏悬浮窗）时随列宽收缩，表单不再被裁切 */
+    width: min(290px, 100%);
 
     h2 {
       margin: var(--space-2) 0;

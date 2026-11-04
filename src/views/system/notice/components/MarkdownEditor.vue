@@ -307,6 +307,7 @@ const {
   height: var(--md-editor-min-height, 400px);
   min-height: var(--md-editor-min-height, 400px);
   max-height: 62vh;
+  max-height: 62dvh;
 }
 
 .md-editor__body--split {
