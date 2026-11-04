@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4.2 vs 5.0 UI 对照预览 · xadmin 视觉评审材料</title>
+    <!--
+  纯静态评审材料（无外部依赖、无 JS）：同一组件在 4.2（v4.2.5 tag）与
+  5.0（当前 dev）两套规格下的并排渲染，数值均来自源码比对
+  （docs/design/ui-4.2-vs-5.0-audit.md）。
+  「新实现」列为 2026-11-04 落地后的真实规格（源码已改，见 ui-refinement-spec.md §六实施记录）。
+-->
+    <style>
+      :root {
+        --doc-bg: #f6f7f9;
+        --doc-ink: #1f2329;
+        --doc-muted: #646a73;
+
+        /* 4.2 调色板 */
+        --v42-primary: #409eff;
+        --v42-success: #67c23a;
+        --v42-warning: #e6a23c;
+        --v42-danger: #f56c6c;
+        --v42-page: #f0f2f5;
+        --v42-header: #f5f7fa;
+        --v42-text: #303133;
+
+        /* 5.0 调色板 */
+        --v50-primary: #006be6;
+        --v50-success: #57d188;
+        --v50-warning: #efbd48;
+        --v50-danger: #ff3860;
+        --v50-page: #eef2f7;
+        --v50-header: #fafafa;
+        --v50-text: #303133;
+        --v50-muted: #606266;
+        --v50-border-light: #e4e7ed;
+        --v50-border-lighter: #ebeef5;
+      }
+
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        padding: 40px 24px 80px;
+        font-family:
+          -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+          sans-serif;
+        line-height: 1.6;
+        color: var(--doc-ink);
+        background: var(--doc-bg);
+      }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      header.doc-head {
+        margin-bottom: 32px;
+      }
+
+      header.doc-head h1 {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      header.doc-head p {
+        max-width: 860px;
+        margin-top: 8px;
+        font-size: 14px;
+        color: var(--doc-muted);
+      }
+
+      header.doc-head .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+
+      .chip {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .chip i {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+
+      .chip.c42 i {
+        background: #8fb7e8;
+      }
+
+      .chip.c50 i {
+        background: var(--v50-primary);
+      }
+
+      .chip.rec i {
+        background: #f0c96b;
+      }
+
+      section.block {
+        margin-bottom: 48px;
+      }
+
+      section.block > h2 {
+        padding-bottom: 10px;
+        margin-bottom: 18px;
+        font-size: 18px;
+        font-weight: 600;
+        border-bottom: 1px solid #dcdfe6;
+      }
+
+      section.block > p.desc {
+        margin: -8px 0 16px;
+        font-size: 13px;
+        color: var(--doc-muted);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+      }
+
+      @media (width <= 960px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .cell {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #dcdfe6;
+        border-radius: 10px;
+      }
+
+      .cell .tag {
+        display: block;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        background: #fafafa;
+        border-bottom: 1px solid #e4e7ed;
+      }
+
+      .cell.c42 .tag {
+        color: #2c5d9e;
+      }
+
+      .cell.c50 .tag {
+        color: var(--v50-primary);
+      }
+
+      .cell.rec .tag {
+        color: #8a6100;
+      }
+
+      .stage {
+        padding: 20px;
+      }
+
+      .cell .note {
+        padding: 10px 14px;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--doc-muted);
+        background: #fcfcfd;
+        border-top: 1px dashed #e4e7ed;
+      }
+
+      .note b {
+        font-weight: 600;
+        color: var(--doc-ink);
+      }
+
+      /* ============ 1 色板 ============ */
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+
+      .sw {
+        overflow: hidden;
+        border: 1px solid rgb(0 0 0 / 8%);
+        border-radius: 8px;
+      }
+
+      .sw .c {
+        height: 44px;
+      }
+
+      .sw .l {
+        padding: 6px 8px;
+        font-size: 11.5px;
+        line-height: 1.4;
+        background: #fff;
+      }
+
+      .sw .l b {
+        display: block;
+        font-size: 12px;
+      }
+
+      /* ============ 2 侧栏菜单 ============ */
+      .sidebar-demo {
+        width: 220px;
+        padding-top: 8px;
+        background: #fff;
+        border: 1px solid transparent;
+      }
+
+      .sidebar-demo .mi {
+        position: relative;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 0 8px;
+        font-size: 14px;
+        color: rgb(0 0 0 / 60%);
+        list-style: none;
+      }
+
+      .sidebar-demo .mi .ic {
+        position: relative;
+        z-index: 1;
+        flex: none;
+        width: 18px;
+        height: 18px;
+        background: currentcolor;
+        border-radius: 4px;
+        opacity: 0.55;
+      }
+
+      .sidebar-demo.c42 .mi {
+        height: 50px;
+      }
+
+      .sidebar-demo.c50 .mi {
+        height: 42px;
+      }
+
+      .sidebar-demo.rec .mi {
+        height: 46px;
+      }
+
+      .sidebar-demo .mi.active {
+        font-weight: 500;
+        color: #fff;
+      }
+
+      .sidebar-demo.c50 .mi.active,
+      .sidebar-demo.rec.plain-mode .mi.active {
+        color: var(--v50-primary);
+      }
+
+      .sidebar-demo .mi.active::before {
+        position: absolute;
+        inset: 0 8px;
+        z-index: 0;
+        content: "";
+        border-radius: inherit;
+      }
+
+      .sidebar-demo.c42 .mi.active::before {
+        margin: 4px 0;
+        background: var(--v42-primary);
+        border-radius: 3px;
+      }
+
+      .sidebar-demo.c50 .mi.active::before {
+        background: rgb(0 107 230 / 15%);
+        border-radius: 8px;
+      }
+
+      .sidebar-demo.rec .mi.active::before {
+        margin: 2px 0;
+        background: var(--v50-primary);
+        border-radius: 6px;
+      }
+
+      .sidebar-demo .mi .tx {
+        position: relative;
+        z-index: 1;
+      }
+
+      .sidebar-demo .mi:hover {
+        color: #303133;
+        background: #f4f4f5;
+      }
+
+      .sidebar-demo .mi.active:hover {
+        color: inherit;
+      }
+
+      /* ============ 3 顶栏 ============ */
+      .navbar-demo {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 0 16px;
+        background: #fff;
+      }
+
+      .navbar-demo.v42 {
+        height: 48px;
+        box-shadow: 0 1px 2px rgb(0 21 41 / 8%);
+      }
+
+      .navbar-demo.v50 {
+        height: 50px;
+        border-bottom: 1px solid var(--v50-border-light);
+      }
+
+      .navbar-demo .crumb {
+        margin-right: auto;
+        font-size: 13px;
+        color: #303133;
+      }
+
+      .navbar-demo .act {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #303133;
+        background: #eef1f5;
+      }
+
+      .navbar-demo.v42 .act {
+        width: 40px;
+        height: 48px;
+      }
+
+      .navbar-demo.v50 .act {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+
+      .navbar-demo .avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+        color: #fff;
+        background: #409eff;
+        border-radius: 50%;
+      }
+
+      .navbar-demo.v50 .avatar {
+        width: 24px;
+        height: 24px;
+        background: var(--v50-primary);
+      }
+
+      /* ============ 4 页签条 ============ */
+      .tags-demo {
+        display: flex;
+        align-items: flex-end;
+        height: 44px;
+        padding: 0 12px;
+        background: #fff;
+      }
+
+      .tags-demo .tg {
+        position: relative;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 13px;
+        color: #606266;
+        white-space: nowrap;
+      }
+
+      .tags-demo.v42 .tg {
+        height: 34px;
+      }
+
+      .tags-demo.v42 .tg.active {
+        color: var(--v42-primary);
+        background: #ecf5ff;
+        clip-path: polygon(0 100%, 0 38%, 12% 0, 88% 0, 100% 38%, 100% 100%);
+      }
+
+      .tags-demo.v50 .tg {
+        height: 38px;
+        margin-right: 6px;
+        border-radius: 6px;
+      }
+
+      .tags-demo.v50 .tg.active {
+        color: var(--v50-primary);
+        background: #fff;
+        box-shadow: 0 0 6px rgb(0 0 0 / 12%);
+      }
+
+      .tags-demo.v50 .tg + .tg {
+        margin-left: 6px;
+      }
+
+      .tags-demo .tg .x {
+        font-size: 11px;
+        opacity: 0.6;
+      }
+
+      .tags-demo.rec {
+        border-top: 1px solid #fff;
+      }
+
+      .tags-demo.rec .tg {
+        height: 38px;
+        margin-right: 6px;
+      }
+
+      .tags-demo.rec .tg.active {
+        color: var(--v50-primary);
+        background: #f5f7fa;
+        border-top: 2px solid var(--v50-primary);
+        border-radius: 6px 6px 0 0;
+      }
+
+      /* ============ 5 控件 ============ */
+      .ctrl-demo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        padding: 0 15px;
+        font-size: 14px;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+
+      .btn.primary {
+        color: #fff;
+        background: var(--v42-primary);
+        border-radius: 4px;
+      }
+
+      .v50row .btn.primary {
+        background: var(--v50-primary);
+        border-radius: 8px;
+      }
+
+      .recrow .btn.primary {
+        background: var(--v50-primary);
+        border-radius: 6px;
+      }
+
+      .btn.plain {
+        color: #337ecc;
+        background: #ecf5ff;
+        border-color: #d9ecff;
+        border-radius: 4px;
+      }
+
+      .v50row .btn.plain {
+        color: #0056b8;
+        background: rgb(0 107 230 / 10%);
+        border-color: transparent;
+        border-radius: 8px;
+      }
+
+      .recrow .btn.plain {
+        color: #0056b8;
+        background: rgb(0 107 230 / 10%);
+        border-color: transparent;
+        border-radius: 6px;
+      }
+
+      .btn.link {
+        color: var(--v42-primary);
+        background: none;
+      }
+
+      .v50row .btn.link,
+      .recrow .btn.link {
+        color: var(--v50-primary);
+      }
+
+      .input {
+        display: inline-flex;
+        align-items: center;
+        min-width: 170px;
+        height: 32px;
+        padding: 0 12px;
+        font-size: 14px;
+        color: #303133;
+        background: #fff;
+        border: 1px solid #dcdfe6;
+      }
+
+      .v42row .input {
+        border-radius: 4px;
+      }
+
+      .v50row .input {
+        border-radius: 8px;
+      }
+
+      .recrow .input {
+        border-radius: 6px;
+      }
+
+      .dialog-chip {
+        max-width: 300px;
+        padding: 16px;
+        margin-top: 14px;
+        font-size: 14px;
+        background: #fff;
+        box-shadow:
+          0 12px 32px 4px rgb(0 0 0 / 4%),
+          0 8px 20px rgb(0 0 0 / 8%);
+      }
+
+      .dialog-chip .t {
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      .v42row .dialog-chip {
+        border-radius: 4px;
+      }
+
+      .v50row .dialog-chip {
+        border-radius: 8px;
+      }
+
+      .recrow .dialog-chip {
+        border-radius: 6px;
+      }
+
+      /* ============ 6 表格 ============ */
+      .tbl-demo {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #ebeef5;
+        border-radius: 4px;
+      }
+
+      .v50row .tbl-demo {
+        border-radius: 8px;
+      }
+
+      .recrow .tbl-demo {
+        border-color: var(--v50-border-light);
+        border-radius: 8px;
+      }
+
+      .tbl-demo table {
+        width: 100%;
+        text-align: center;
+        border-collapse: collapse;
+      }
+
+      .tbl-demo th,
+      .tbl-demo td {
+        padding: 0 8px;
+      }
+
+      .v42row .tbl-demo th {
+        height: 47px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--v42-text);
+        background: var(--v42-header);
+        border-bottom: 1px solid #ebeef5;
+      }
+
+      .v42row .tbl-demo td {
+        height: 47px;
+        font-size: 14px;
+        color: #303133;
+        border-bottom: 1px solid #ebeef5;
+      }
+
+      .v50row .tbl-demo th {
+        height: 41px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--v50-muted);
+        background: var(--v50-header);
+        border-bottom: 1px solid rgb(48 60 80 / 6%);
+      }
+
+      .v50row .tbl-demo td {
+        height: 41px;
+        font-size: 13px;
+        color: #303133;
+        border-bottom: 1px solid rgb(48 60 80 / 6%);
+      }
+
+      .recrow .tbl-demo th {
+        height: 45px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--v42-text);
+        background: var(--v42-header);
+        border-bottom: 1px solid rgb(48 60 80 / 8%);
+      }
+
+      .recrow .tbl-demo td {
+        height: 45px;
+        font-size: 14px;
+        color: #303133;
+        border-bottom: 1px solid rgb(48 60 80 / 6%);
+      }
+
+      .tbl-demo .op {
+        font-size: 13px;
+        color: var(--v42-primary);
+      }
+
+      .v50row .tbl-demo .op,
+      .recrow .tbl-demo .op {
+        color: var(--v50-primary);
+      }
+
+      /* ============ 7 卡片层次 ============ */
+      .layer-stage {
+        min-height: 170px;
+        padding: 18px;
+        border-radius: 6px;
+      }
+
+      .layer-stage.v42 {
+        background: var(--v42-page);
+      }
+
+      .layer-stage.v50 {
+        background: var(--v50-page);
+      }
+
+      .layer-stage.rec {
+        background: var(--v50-page);
+      }
+
+      .slab {
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #303133;
+        background: #fff;
+      }
+
+      .layer-stage.v42 .slab {
+        border-radius: 0;
+      }
+
+      .layer-stage.v50 .slab {
+        border: 1px solid var(--v50-border-lighter);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgb(48 60 80 / 6%);
+      }
+
+      .layer-stage.rec .slab {
+        border: 1px solid var(--v50-border-light);
+        border-radius: 8px;
+        box-shadow:
+          0 1px 2px rgb(48 60 80 / 7%),
+          0 2px 8px rgb(48 60 80 / 5%);
+      }
+
+      .slab .hd {
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .slab .sub {
+        font-size: 12px;
+        color: #909399;
+      }
+
+      /* ============ 8 行高 ============ */
+      .lh-demo p {
+        font-size: 14px;
+        color: #303133;
+      }
+
+      .lh-demo.lh15 p {
+        line-height: 1.5;
+      }
+
+      .lh-demo.lh115 p {
+        line-height: 1.15;
+      }
+
+      /* ============ 9 动效节拍 ============ */
+      .motion-demo .btn {
+        transition: background-color 0.3s;
+      }
+
+      .motion-demo .btn:hover {
+        background: #79bbff;
+      }
+
+      .v50row .motion-demo .btn {
+        transition: background-color 0.15s;
+      }
+
+      .v50row .motion-demo .btn:hover {
+        background: #3a8ee6;
+      }
+
+      .recrow .motion-demo .btn {
+        transition: background-color 0.2s;
+      }
+
+      .recrow .motion-demo .btn:hover {
+        background: #3a8ee6;
+      }
+
+      .motion-hint {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #909399;
+      }
+
+      footer.doc-foot {
+        padding-top: 16px;
+        margin-top: 56px;
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: var(--doc-muted);
+        border-top: 1px solid #dcdfe6;
+      }
+
+      code {
+        padding: 1px 6px;
+        font-size: 12px;
+        background: #eef1f6;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="doc-head">
+        <h1>xadmin UI 对照预览：4.2 vs 5.0</h1>
+        <p>
+          左列 = 4.2（git tag <code>v4.2.5</code>，element-plus 2.11.5
+          时代口径）； 中列 = 5.0 整改前（令牌体系 + vben 对标后的口径）；
+          右列「新实现」= <b>2026-11-04 已落地的整改值</b>（实施记录见
+          docs/design/ui-refinement-spec.md §六；E2E
+          与改后截图待容器环境恢复后补跑）。
+          所有数值取自源码逐文件比对（docs/design/ui-4.2-vs-5.0-audit.md）。
+        </p>
+        <div class="legend">
+          <span class="chip c42"><i></i>4.2 规格</span>
+          <span class="chip c50"><i></i>5.0 整改前</span>
+          <span class="chip rec"><i></i>新实现（已落地）</span>
+        </div>
+      </header>
+
+      <!-- 1 色板 -->
+      <section class="block">
+        <h2>1 · 主色与语义色</h2>
+        <p class="desc">
+          主色明度 62%→45%：白字对比度 2.8:1 → 4.9:1（客观是 a11y
+          改善，主观少了鲜亮感）。
+        </p>
+        <div class="row">
+          <div class="cell c42">
+            <span class="tag">4.2</span>
+            <div class="stage">
+              <div class="swatches">
+                <div class="sw">
+                  <div class="c" style="background: #409eff"></div>
+                  <div class="l"><b>#409EFF</b>primary</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #67c23a"></div>
+                  <div class="l"><b>#67C23A</b>success</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #e6a23c"></div>
+                  <div class="l"><b>#E6A23C</b>warning</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #f56c6c"></div>
+                  <div class="l"><b>#F56C6C</b>danger</div>
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              来源：platform-config <code>EpThemeColor #409EFF</code> + EP
+              原生语义色。
+            </div>
+          </div>
+          <div class="cell c50">
+            <span class="tag">5.0 当前</span>
+            <div class="stage">
+              <div class="swatches">
+                <div class="sw">
+                  <div class="c" style="background: #006be6"></div>
+                  <div class="l"><b>#006BE6</b>primary</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #57d188"></div>
+                  <div class="l"><b>#57D188</b>success</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #efbd48"></div>
+                  <div class="l"><b>#EFBD48</b>warning</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #ff3860"></div>
+                  <div class="l"><b>#FF3860</b>danger</div>
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              来源：<code>tokens/primitives.scss</code>；语义色为 vben 基色。
+            </div>
+          </div>
+          <div class="cell rec">
+            <span class="tag">新实现 · 主色维持 #006BE6</span>
+            <div class="stage">
+              <div class="swatches">
+                <div class="sw">
+                  <div class="c" style="background: #006be6"></div>
+                  <div class="l"><b>#006BE6</b>维持（对比度 4.9:1 达 AA）</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #57d188"></div>
+                  <div class="l"><b>#57D188</b>语义色维持现值（未回退）</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #efbd48"></div>
+                  <div class="l"><b>#EFBD48</b>维持</div>
+                </div>
+                <div class="sw">
+                  <div class="c" style="background: #ff3860"></div>
+                  <div class="l"><b>#FF3860</b>维持</div>
+                </div>
+              </div>
+            </div>
+            <div class="note">
+              已落地：鲜亮感由<b>结构性手段</b>（实心激活块、灰底表头、hover
+              提亮）找回，主色不回退。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 侧栏菜单 -->
+      <section class="block">
+        <h2>2 · 侧栏菜单（浅色皮肤 · 激活态）</h2>
+        <p class="desc">
+          4.2 的实心蓝块是全站唯一高饱和锚点；5.0 改为 15% 透明底 +
+          主色字，侧栏整体变成低对比面。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · 项高 50px · 实心块</span>
+            <div
+              class="stage"
+              style="
+                display: flex;
+                justify-content: center;
+                background: #f6f7f9;
+              "
+            >
+              <ul class="sidebar-demo c42">
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">首页</span>
+                </li>
+                <li class="mi active">
+                  <span class="ic" style="background: #fff"></span
+                  ><span class="tx">系统管理</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">数据分析</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">系统监控</span>
+                </li>
+              </ul>
+            </div>
+            <div class="note">
+              激活块：<b>#409EFF 实心 + 白字</b>，inset 8px / 纵距 4px /
+              <b>圆角 3px</b>；hover 仅文字变黑。<br />白字对比 ≈2.8:1（AA
+              不达标，但这是 4.2 的观感来源）。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 · 项高 42px · 15% tint</span>
+            <div
+              class="stage"
+              style="
+                display: flex;
+                justify-content: center;
+                background: #f6f7f9;
+              "
+            >
+              <ul class="sidebar-demo c50">
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">首页</span>
+                </li>
+                <li class="mi active">
+                  <span class="ic" style="background: currentcolor"></span
+                  ><span class="tx">系统管理</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">数据分析</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">系统监控</span>
+                </li>
+              </ul>
+            </div>
+            <div class="note">
+              激活块：<b>主色/15% 底 + 主色字</b>，inset 8px / 纵距 0 /
+              <b>圆角 8px</b>；hover 有浅底块 + 图标 scale 1.2；对比
+              ≈4.15:1（仍略低于 AA）。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 项高 46px · 实心块</span>
+            <div
+              class="stage"
+              style="
+                display: flex;
+                justify-content: center;
+                background: #f6f7f9;
+              "
+            >
+              <ul class="sidebar-demo rec">
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">首页</span>
+                </li>
+                <li class="mi active">
+                  <span class="ic" style="background: #fff"></span
+                  ><span class="tx">系统管理</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">数据分析</span>
+                </li>
+                <li class="mi">
+                  <span class="ic"></span><span class="tx">系统监控</span>
+                </li>
+              </ul>
+            </div>
+            <div class="note">
+              实心 <b>#006BE6 + 白字 = 4.9:1（达标又鲜亮）</b>，圆角 6px、纵距
+              2px；15% tint 保留为「导航风格=朴素」偏好档。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 顶栏 -->
+      <section class="block">
+        <h2>3 · 顶栏分隔与图标热区</h2>
+        <p class="desc">
+          4.2 用投影分隔 + 整条按压热区；5.0 改 1px 描边 + 32px 圆形热区。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · 48px · 投影分隔</span>
+            <div class="stage">
+              <div class="navbar-demo v42">
+                <span class="crumb">首页 / 系统管理</span>
+                <span class="act">搜</span><span class="act">屏</span>
+                <span class="avatar">A</span><span class="act">设</span>
+              </div>
+              <div style="height: 14px; background: #f6f7f9"></div>
+            </div>
+            <div class="note">
+              白底 + <b>shadow rgba(0,21,41,.08)</b>；图标热区
+              40×48（整条），头像 22px。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 · 50px · 描边分隔</span>
+            <div class="stage">
+              <div class="navbar-demo v50">
+                <span class="crumb">首页 / 系统管理</span>
+                <span class="act">搜</span><span class="act">屏</span>
+                <span class="avatar">A</span><span class="act">设</span>
+              </div>
+              <div style="height: 14px; background: #f6f7f9"></div>
+            </div>
+            <div class="note">
+              白底 + <b>1px #e4e7ed 描边</b>；图标热区 <b>32px 圆形</b>，头像
+              24px（令牌 --navbar-action-*）。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 维持描边与圆热区</span>
+            <div class="stage">
+              <div class="navbar-demo v50">
+                <span class="crumb">首页 / 系统管理</span>
+                <span class="act">搜</span><span class="act">屏</span>
+                <span class="avatar">A</span><span class="act">设</span>
+              </div>
+              <div style="height: 14px; background: #f6f7f9"></div>
+            </div>
+            <div class="note">
+              本次维持 50px + <b>1px 描边</b> + 32px
+              圆热区不变（不在阶段清单内，投影分隔作为后续候选另行评审）；
+              顶栏图标 hover 已统一 <b>scale(1.08) / 0.2s</b> 微放大。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 页签 -->
+      <section class="block">
+        <h2>4 · 页签条（默认 chrome 风格）</h2>
+        <p class="desc">
+          5.0 把浏览器页签形状改成了圆角块，「页签」隐喻消失（项高 34→38px）。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · 浏览器页签形 · 34px</span>
+            <div class="stage">
+              <div
+                class="tags-demo v42"
+                style="border-bottom: 1px solid #ebeef5"
+              >
+                <span class="tg active">首页 <span class="x">✕</span></span>
+                <span class="tg">系统管理 <span class="x">✕</span></span>
+              </div>
+            </div>
+            <div class="note">
+              激活项 = <b>#ecf5ff 梯形 + 主色字</b>（chrome-tab__bg 曲线形状）。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 · 圆角块 · 38px</span>
+            <div class="stage">
+              <div class="tags-demo v50" style="box-shadow: 0 0 1px #d4d7de">
+                <span class="tg active">首页 <span class="x">✕</span></span>
+                <span class="tg">系统管理 <span class="x">✕</span></span>
+              </div>
+            </div>
+            <div class="note">
+              激活项 =
+              <b>白底圆角块(6px) + shadow-sm + 主色字</b>；chrome-tab__bg 已全局
+              display:none。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 恢复浏览器页签形</span>
+            <div class="stage">
+              <div
+                class="tags-demo rec"
+                style="border-bottom: 1px solid #ebeef5"
+              >
+                <span class="tg active">首页 <span class="x">✕</span></span>
+                <span class="tg">系统管理 <span class="x">✕</span></span>
+              </div>
+            </div>
+            <div class="note">
+              已落地：chrome 风格<b>恢复 SVG 页签形</b>（激活填
+              primary-light-9、暗色 primary-light-8、负边距咬合
+              -18px）；圆角块形态保留在 plain 偏好档，两形态并存。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 控件 -->
+      <section class="block">
+        <h2>5 · 按钮 / 输入 / 弹窗圆角</h2>
+        <p class="desc">
+          EP 基础圆角 4→8px：控件、弹窗全部变圆；整改后折中
+          6px（控件小、容器大，同心）。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · 4px</span>
+            <div class="stage">
+              <div class="ctrl-demo">
+                <button class="btn primary">新增</button>
+                <button class="btn plain">导出</button>
+                <button class="btn link">查看详情</button>
+              </div>
+              <div class="ctrl-demo" style="margin-top: 12px">
+                <span class="input">用户名 / 手机号</span>
+              </div>
+              <div class="dialog-chip">
+                <div class="t">新增用户</div>
+                弹窗标题 18px，圆角随 base = 4px。
+              </div>
+            </div>
+            <div class="note">
+              EP 2.11 默认：<code>--el-border-radius-base: 4px</code>。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 当前 · 8px</span>
+            <div class="stage">
+              <div class="ctrl-demo">
+                <button class="btn primary">新增</button>
+                <button class="btn plain">导出</button>
+                <button class="btn link">查看详情</button>
+              </div>
+              <div class="ctrl-demo" style="margin-top: 12px">
+                <span class="input">用户名 / 手机号</span>
+              </div>
+              <div class="dialog-chip">
+                <div class="t">新增用户</div>
+                弹窗圆角随 base = 8px；页脚吸边 + 1px 描边。
+              </div>
+            </div>
+            <div class="note">
+              <code>ep-bridge.scss</code>：<code
+                >--el-border-radius-base → --radius-lg(8px)</code
+              >。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 控件 6px / 容器 8px</span>
+            <div class="stage">
+              <div class="ctrl-demo">
+                <button class="btn primary">新增</button>
+                <button class="btn plain">导出</button>
+                <button class="btn link">查看详情</button>
+              </div>
+              <div class="ctrl-demo" style="margin-top: 12px">
+                <span class="input">用户名 / 手机号</span>
+              </div>
+              <div class="dialog-chip">
+                <div class="t">新增用户</div>
+                控件/弹窗 6px、卡片容器 8px——<b>外大内小同心</b>。
+              </div>
+            </div>
+            <div class="note">
+              改法仅一行：<code>--el-border-radius-base: var(--radius-md)</code
+              >；卡片在 appearance.scss 显式取 radius-lg。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 表格 -->
+      <section class="block">
+        <h2>6 · 表格（表头 / 行高 / 字号）</h2>
+        <p class="desc">
+          表头从「灰底深字 14px」变「近白底灰字 12px」（对比 12:1→5.9:1），行高
+          47→41、正文 14→13。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag"
+              >4.2 · 表头 #f5f7fa/#303133 · 行高 47 · 正文 14</span
+            >
+            <div class="stage">
+              <div class="tbl-demo">
+                <table>
+                  <tr>
+                    <th>用户名</th>
+                    <th>手机号</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                  <tr>
+                    <td>admin</td>
+                    <td>138****8888</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>alice</td>
+                    <td>139****9999</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>bob</td>
+                    <td>137****6666</td>
+                    <td>禁用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="note">
+              header-cell-style：<code
+                >background: row-hover-bg(#f5f7fa); color: #303133</code
+              >；表头 600 加粗（EP 默认）。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag"
+              >5.0 · 表头 #fafafa/#606266 · 行高 41 · 正文 13</span
+            >
+            <div class="stage">
+              <div class="tbl-demo">
+                <table>
+                  <tr>
+                    <th>用户名</th>
+                    <th>手机号</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                  <tr>
+                    <td>admin</td>
+                    <td>138****8888</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>alice</td>
+                    <td>139****9999</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>bob</td>
+                    <td>137****6666</td>
+                    <td>禁用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="note">
+              <code>TABLE_HEADER_CELL_STYLE</code> +
+              <code>.el-table--default</code> 覆写（padding 12→8、14→13）。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 灰底深字 14px · 行高 45 · 正文 14</span>
+            <div class="stage">
+              <div class="tbl-demo">
+                <table>
+                  <tr>
+                    <th>用户名</th>
+                    <th>手机号</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                  <tr>
+                    <td>admin</td>
+                    <td>138****8888</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>alice</td>
+                    <td>139****9999</td>
+                    <td>启用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                  <tr>
+                    <td>bob</td>
+                    <td>137****6666</td>
+                    <td>禁用</td>
+                    <td class="op">编辑</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div class="note">
+              已落地：灰底（--fill-muted）+ 深字（--fg）恢复结构线，
+              <b>表头回 14px/600、正文回 14px、行距回 10px</b>（行高 ≈45）。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 卡片层次 -->
+      <section class="block">
+        <h2>7 · 卡片与页面层次</h2>
+        <p class="desc">
+          页底与卡面明度差两版相同（~5%）；差异在边界语言——4.2
+          无卡也无妨（靠灰表头带），5.0 的描边+贴地阴影在浅色下几乎不可读。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · 白板无边界</span>
+            <div class="stage layer-stage v42">
+              <div class="slab">
+                <div class="hd">查询条件</div>
+                <div class="sub">bg-bg_color · 无圆角 · 无描边 · 无阴影</div>
+              </div>
+              <div class="slab">
+                <div class="hd">用户列表</div>
+                <div class="sub">层次由「灰表头带 + 实心蓝块」承担</div>
+              </div>
+            </div>
+            <div class="note">
+              列表页 =
+              两个全宽白色块（w-99/100）；看板卡显式去边框（--el-card-border-color:
+              none）。
+            </div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 · 一张工作纸</span>
+            <div class="stage layer-stage v50">
+              <div class="slab">
+                <div class="hd">查询条件 → 工具栏 → 表体</div>
+                <div class="sub">
+                  1px #ebeef5 描边 · 8px 圆角 · 阴影 0 1px 2px 6%
+                </div>
+              </div>
+              <div class="slab">
+                <div class="hd">边界读不出来</div>
+                <div class="sub">页底 #eef2f7 上描边明度差 ≈2%</div>
+              </div>
+            </div>
+            <div class="note">
+              搜索区并入表格卡 +
+              hairline；结构更现代，但浅色下「纸」的轮廓近乎消失。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 可读的边界</span>
+            <div class="stage layer-stage rec">
+              <div class="slab">
+                <div class="hd">描边 #e4e7ed + 双层贴地阴影</div>
+                <div class="sub">0 1px 2px 7% + 0 2px 8px 5%</div>
+              </div>
+              <div class="slab">
+                <div class="hd">边界恢复可读</div>
+                <div class="sub">不回到雾化悬浮，保持「贴地」语言</div>
+              </div>
+            </div>
+            <div class="note">
+              `--card-border` 提一档 + `--shadow-card`
+              补第二层扩散；配合表头灰带，页面层次同时有「色」与「影」两条腿。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8 行高 -->
+      <section class="block">
+        <h2>8 · 全局行高（html line-height）</h2>
+        <p class="desc">
+          1.5 → 1.15：正文（描述、详情、通知、聊天）被压缩；控件行高本由 EP
+          变量自持，正文不需要跟着紧。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row">
+            <span class="tag">4.2 · line-height 1.5</span>
+            <div class="stage lh-demo lh15">
+              <p>
+                审计日志模块提供全站操作留痕能力：谁在什么时间、从哪个
+                IP、对哪个对象执行了什么动作，支持按时间段与关键字检索。
+              </p>
+            </div>
+            <div class="note">多行文本段间有呼吸，行内「灰带」节奏清晰。</div>
+          </div>
+          <div class="cell c50 v50row">
+            <span class="tag">5.0 当前 · line-height 1.15</span>
+            <div class="stage lh-demo lh115">
+              <p>
+                审计日志模块提供全站操作留痕能力：谁在什么时间、从哪个
+                IP、对哪个对象执行了什么动作，支持按时间段与关键字检索。
+              </p>
+            </div>
+            <div class="note">
+              vben 控件口径被误用作正文口径：中文行几乎相碰，阅读密度陡增。
+            </div>
+          </div>
+          <div class="cell rec recrow">
+            <span class="tag">新实现 · 正文回 1.5</span>
+            <div class="stage lh-demo lh15">
+              <p>
+                审计日志模块提供全站操作留痕能力：谁在什么时间、从哪个
+                IP、对哪个对象执行了什么动作，支持按时间段与关键字检索。
+              </p>
+            </div>
+            <div class="note">
+              改 <code>reset.scss</code> 一处；控件行高由 EP
+              变量自持，不受影响。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9 动效 -->
+      <section class="block">
+        <h2>9 · 动效节拍（hover 时长）</h2>
+        <p class="desc">
+          把指针悬停到按钮上看反馈速度：4.2 菜单 hover 0.3s（顺滑），5.0 是
+          0.15s（跟手），页签却是 0.4s——三种节拍并存。
+        </p>
+        <div class="row">
+          <div class="cell c42 v42row motion-demo">
+            <span class="tag">4.2 · 0.3s</span>
+            <div class="stage">
+              <button class="btn primary">悬停我</button>
+              <div class="motion-hint">菜单/激活色过渡 0.3s ease。</div>
+            </div>
+            <div class="note">
+              慢而顺滑；但 hover 无底色反馈（仅文字变色）。
+            </div>
+          </div>
+          <div class="cell c50 v50row motion-demo">
+            <span class="tag">5.0 当前 · 0.15s（按钮 0.1s / 页签 0.4s）</span>
+            <div class="stage">
+              <button class="btn primary">悬停我</button>
+              <div class="motion-hint">
+                菜单 hover 0.15s + 图标 scale 1.2；页签项仍 0.4s。
+              </div>
+            </div>
+            <div class="note">
+              反馈更快更强（改善），但三档节拍不一致是「哪里都不对劲」的隐性来源。
+            </div>
+          </div>
+          <div class="cell rec recrow motion-demo">
+            <span class="tag">新实现 · 统一 0.2s</span>
+            <div class="stage">
+              <button class="btn primary">悬停我</button>
+              <div class="motion-hint">
+                全站 hover 单一节拍 0.2s（--duration-hover 改值）。
+              </div>
+            </div>
+            <div class="note">
+              按钮维持 EP 原生 0.1s；页签 0.4s 收敛到 0.2s。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="doc-foot">
+        <div>
+          落地结论（2026-11-04）：① 主色<b>不回退</b>，保 #006BE6（4.9:1 达
+          AA）+ 结构性补偿；② 圆角取 <b>控件 6 / 容器 8</b>；③
+          菜单激活块<b>回实心</b>（tint 保留在 plain 偏好档）；④ 表格<b
+            >表头 14px/600 灰底深字、正文 14px、行距 10px</b
+          >； 其余见左上「新实现」各节。
+        </div>
+        <div style="margin-top: 6px">
+          证据与文件位置见
+          <code>docs/design/ui-4.2-vs-5.0-audit.md</code>；实施记录与逐项改动见
+          <code>docs/design/ui-refinement-spec.md</code>
+          §六。本页为静态评审材料，未接入构建、不受样式门禁约束；改后截图 / E2E
+          / 视觉基线待容器环境恢复后补跑。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

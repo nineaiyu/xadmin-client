@@ -35,8 +35,12 @@ const stubLlmPort = process.env.E2E_STUB_LLM_PORT ?? "18897";
 // 让 webkit 接收 Secure 认证 Cookie（src/utils/auth.ts 的 PROD 分支），纳入双浏览器验证
 const cspPort = process.env.E2E_CSP_PORT ?? "18899";
 const cspTls = process.env.E2E_CSP_TLS === "1";
-const apiURL = `http://127.0.0.1:${apiPort}`;
-const stubLlmURL = `http://127.0.0.1:${stubLlmPort}`;
+// 服务宿主地址：默认回环（本地/CI 同机）；在容器里跑 Playwright（linux 视觉基线，
+// 见 e2e/README.md「视觉基线」）时经 host.docker.internal 访问宿主服务——
+// 此时配合 E2E_REUSE_SERVER=1 复用宿主已起的服务（容器内无法执行 seed/daphne/vite）
+const loopback = process.env.E2E_HOST ?? "127.0.0.1";
+const apiURL = `http://${loopback}:${apiPort}`;
+const stubLlmURL = `http://${loopback}:${stubLlmPort}`;
 const cspPageURL = `${cspTls ? "https" : "http"}://127.0.0.1:${cspPort}`;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${frontPort}`;
 // E2E 超管密码：本地默认固定口令（仅回环地址可访问）；通过 webServer.env 传递，

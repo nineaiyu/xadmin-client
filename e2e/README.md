@@ -394,11 +394,11 @@ expect(consoleNoise).toEqual([]);
 
 核心页（登录 / 首页 / 用户 / 菜单 / 仪表盘 / 大屏 / 聊天室）全页像素比对，为样式类与观感类改动提供安全网。页面选择口径=**结构稳定、数据稳定**（静态骨架 / 种子数据）；数据随运行时刻变化的页面不入基线，避免 flaky——2026-09-25 实测排除：**系统监控**（心跳/告警数据与图表时间轴随运行变化）、**AI 控制台**（对话历史服务端持久化，跑批累积消息）、**操作日志**（依赖其它用例产生的记录）。无 layout 的独立页（登录页、大屏）用自有根元素（`.login-box` / `.screen-root`）做可见性锚点：
 
-| 场景                    | 命令                                                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 本地比对（darwin 基线） | `pnpm test:e2e:visual`（按需，不进常规全量；默认双浏览器）                                                             |
-| 本地更新基线            | `pnpm test:e2e:visual:update`                                                                                          |
-| 生成 ubuntu 基线        | 手动触发 **Visual Baseline** workflow → 下载 `visual-baseline` artifact → 解压到 `e2e/visual.e2e.ts-snapshots/` 并提交 |
+| 场景                    | 命令                                                                                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 本地比对（darwin 基线） | `pnpm test:e2e:visual`（按需，不进常规全量；默认双浏览器）                                                                                                                                   |
+| 本地更新基线            | `pnpm test:e2e:visual:update`                                                                                                                                                                |
+| 生成 ubuntu 基线        | ①（CI）手动触发 **Visual Baseline** workflow → 下载 `visual-baseline` artifact → 解压到 `e2e/visual.e2e.ts-snapshots/` 并提交；②（本地容器，2026-11-04 实测）见下方「本地容器跑 linux 基线」 |
 
 - 快照按平台后缀存放（`*-chromium-linux.png` / `*-chromium-darwin.png`），**跨平台像素必然差异**：ubuntu 基线只能在 CI 生成，本地 darwin 基线仅供本地比对；
 - 大屏有**深 / 浅两档**基线：`core-analysis-screen`（示例大屏缺省深色）与 `core-analysis-screen-light`（用例内 PATCH `theme=light` 截图后还原 `dark`）——改大屏主题 / `--screen-*` 令牌时必须两档一起重录；
@@ -407,6 +407,41 @@ expect(consoleNoise).toEqual([]);
 - `e2e.yml` 的 `Visual Regression` job 与 full 同档（PR / main / 夜间 / 手动）跑 chromium 单浏览器；**基线未入库时自动跳过**（notice 提示先生成基线），入库后自动启用常态比对；
 - 判定 `maxDiffPixelRatio 2%`（容忍字体渲染亚像素差）；stabilize 已禁 CSS 动画/光标闪烁并等 ECharts canvas 绘制结束（≥1.5s）；
 - 失败产物见 `playwright-report-visual` artifact / `test-results/`（含 expected / actual / diff 三图）。
+
+### 本地容器跑 linux 基线（docker run --rm，2026-11-04 实测）
+
+linux 基线除 CI workflow 外，可在本地用 Playwright 官方镜像（本地已有，无需拉取）直接生成——
+服务链（seed / daphne / stub / vite）仍在**宿主**跑，容器内只跑 Playwright（浏览器与截图），
+经 `host.docker.internal` 回连宿主。三处配套基建：
+
+- `playwright.config.ts` 的 `E2E_HOST`（apiURL / stubLlmURL 的宿主地址，默认 127.0.0.1）；
+- `e2e/helpers.ts` 的 `E2E_API_URL`（BACKEND_URL 覆盖，既有能力）；
+- `xadmin-server/scripts/stub_llm.py` 的 `STUB_LLM_HOST`（默认 127.0.0.1，容器跑时置 0.0.0.0）。
+
+步骤（三个宿主服务须各自前台常驻，端口 18896/18897/8848）：
+
+```bash
+# 1) 宿主起服务链（三个终端 / 后台任务；daphne 与 stub 绑 0.0.0.0，vite 须带 E2E_API_PORT）
+cd xadmin-server && DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD='E2E-Admin-2026!' \
+  .venv/bin/python scripts/e2e_seed.py
+cd xadmin-server && DJANGO_SETTINGS_MODULE=tests.settings_e2e XADMIN_ADMIN_PASSWORD='E2E-Admin-2026!' \
+  .venv/bin/python -m daphne -b 0.0.0.0 -p 18896 server.asgi:application
+cd xadmin-server && STUB_LLM_HOST=0.0.0.0 .venv/bin/python scripts/stub_llm.py
+cd xadmin-client && E2E_API_PORT=18896 pnpm dev --port 8848 --strictPort --host 0.0.0.0
+# 2) 容器内跑（E2E_BASE_URL 走宿主 LAN IP：vite allowedHosts 拒绝 host.docker.internal 域名、放行 IP 字面量）
+docker run --rm -v "$PWD/..:/workspace" -w /workspace/xadmin-client \
+  -e E2E_VISUAL=1 -e E2E_API_PORT=18896 -e E2E_API_URL=http://host.docker.internal:18896 \
+  -e E2E_HOST=host.docker.internal -e E2E_BASE_URL=http://<宿主LAN-IP>:8848 \
+  -e E2E_REUSE_SERVER=1 -e E2E_SEED=0 -e E2E_SERVER_DIR=/workspace/xadmin-server \
+  mcr.microsoft.com/playwright:v1.63.0-noble \
+  node node_modules/.pnpm/playwright@1.63.0/node_modules/playwright/cli.js \
+  test e2e/visual.e2e.ts --project=chromium --project=webkit --update-snapshots
+```
+
+坑位：① vite 的 proxy target 读**启动时**的 `E2E_API_PORT`（漏注入会回落 8896 撞 docker nginx，页面登录 502）；
+② 容器内 `127.0.0.1` 是容器自身，API/前端地址必须显式换成宿主可达地址；
+③ 宿主服务必须常驻（一次性 `nohup &` 会被工具/终端收割）；
+④ `--update-snapshots` 去掉即为基线比对（26/26 验证方式）。
 
 ## 体验基线（`perf.e2e.ts`）与跑批时长预算
 
