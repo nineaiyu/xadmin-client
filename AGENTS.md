@@ -104,10 +104,10 @@ pnpm gen:module              # 模块脚手架
 ```bash
 pnpm test:run                                  # vitest（含契约 / 词条 / 格式函数等纯逻辑用例）
 pnpm typecheck && pnpm lint
-for g in api-routes as-unknown bundle-size color-literals contract contract-usage docs-components \
+for g in api-routes as-unknown bundle-size candidate-lists color-literals contract contract-usage docs-components \
          entry-closure font-size-literals forms function-length hook-length i18n ledger-ids menu-components \
-         menu-permissions module-cycles openapi-types overlays platform-config quarantine size-literals spacing-literals success-code \
-         tables template-root version e2e-waits; do pnpm check:$g || break; done
+         menu-permissions module-cycles openapi-types overlays platform-config quarantine request-races \
+         size-literals spacing-literals success-code tables template-root version viewport-heights e2e-waits; do pnpm check:$g || break; done
 node scripts/check-file-length.mjs        # 行数门禁（≤500；ReIcon/data.ts 与 api/types/openapi.d.ts
                                           # 在脚本内 EXEMPT 豁免，其余基线只减不增）
                                           # 单函数 ≤100 行由 check:function-length 守护（基线只减不增）
@@ -118,6 +118,12 @@ node scripts/check-file-length.mjs        # 行数门禁（≤500；ReIcon/data.
 防菜单种子里的组件片段静默断路由；`docs-components` 对账 xadmin-docs 组件示例的 props；
 `check:version` 需要同工作区的 `xadmin-server`（或 `XADMIN_SERVER_DIR`）才能核对版本。
 `check:menu-permissions` 同样跨仓读取 server 种子（`XADMIN_SERVER_DIR` 可覆盖）。
+`viewport-heights` 拦视口高度魔数（`calc(100vh - 字面量px)` 一律改走 `--layout-chrome-h` /
+`useFullHeightPanel` / 列内 flex 流式分配，覆盖层单值 dvh + 注释）并要求 vh 高度声明带
+dvh 伴随（基线只减不增）；`request-races` 拦「remote-method / 防抖 + API」搜索链路缺序号
+守卫（范式：单槽位 `createRequestSeqGuard` / 多字段 `createKeyedRequestSeqGuard`，均见
+`src/utils/requestSeq.ts`）；`candidate-lists` 拦候选列表（v-for + 悬停跟随 + 点击）缺
+combobox/listbox/option 语义。
 首屏闭包预算为「代码 / i18n 两个账本各 15 KB 增长」，超预算需在 PR 说明后 `--update`。
 CI（`lint-code.yml`）会全量跑这些门禁 + coverage 覆盖率门禁，PR / 推送自动把关。
 

@@ -146,6 +146,23 @@ jobs:
         # 裸 px 字号绕开全局字号档位缩放（scripts/check-font-size-literals.mjs）
         run: pnpm check:font-size-literals
 
+      - name: Viewport height gate
+        # 视口高度魔数零容忍（calc(100vh - 字面量px) 改走 --layout-chrome-h /
+        # useFullHeightPanel / flex 流式分配），vh 高度声明缺 dvh 伴随按基线只减不增
+        # （scripts/check-viewport-heights.mjs）
+        run: pnpm check:viewport-heights
+
+      - name: Request race gate
+        # 搜索/长列表链路竞态防护收口：remote-method 绑定与「防抖 + @/api 值导入」
+        # 必须给出序号守卫证据（createRequestSeqGuard / AbortController / 指路注释，
+        # scripts/check-request-races.mjs）
+        run: pnpm check:request-races
+
+      - name: Candidate list a11y gate
+        # 可键盘导航的候选列表必须带 combobox/listbox/option 语义（静态可检出部分：
+        # 三层接线完整性 + 候选签名缺 role="option"，scripts/check-candidate-lists.mjs）
+        run: pnpm check:candidate-lists
+
       - name: i18n keys gate
         # 代码引用的静态词条必须同时存在于 zh/en（缺失时界面显示 key 原文）；
         # 两侧键集合 / 值类型 / 占位符必须对称；词条值含 <tag> 或裸 | / @ 会让
