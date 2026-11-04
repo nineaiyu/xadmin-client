@@ -37,6 +37,43 @@ const MOBILE_PAGES = [
   { name: "仪表盘", hash: "/#/analysis/dashboard/index" }
 ];
 
+/**
+ * CDP 两指捏合手势：双指间距从 from 渐变到 to（px），10 步、每步 25ms。
+ * 手势识别需要时间域连续推进（一次性跳变不触发 pinch 判定），固定延时属
+ * 拖拽轨迹类时间域场景（wait-for-timeout-allowlist 已登记）。
+ * 终验留档（2026-11-04）：该通道经过 viewport meta 拦截（user-scalable=0 时
+ * scale 恒 1）；运行时改写 meta content 不被移动仿真重读，负对照必须改写 HTML
+ * 后重载，不能在页面里注入。
+ */
+async function pinchByTouch(page: Page, from: number, to: number) {
+  const session = await page.context().newCDPSession(page);
+  const vp = page.viewportSize()!;
+  const cx = Math.round(vp.width / 2);
+  const cy = Math.round(vp.height / 2);
+  const send = (
+    type: "touchStart" | "touchMove" | "touchEnd",
+    spread: number
+  ) =>
+    session.send("Input.dispatchTouchEvent", {
+      type,
+      touchPoints: [
+        { x: cx - spread, y: cy },
+        { x: cx + spread, y: cy }
+      ]
+    });
+  await send("touchStart", from);
+  for (let i = 1; i <= 10; i++) {
+    await send("touchMove", Math.round(from + ((to - from) * i) / 10));
+    await page.waitForTimeout(25);
+  }
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: []
+  });
+  await page.waitForTimeout(400);
+  await session.detach();
+}
+
 test.use({ ...devices["iPhone 13"] });
 
 test.describe("移动端形态（iPhone 13）", () => {
@@ -106,6 +143,106 @@ test.describe("移动端形态（iPhone 13）", () => {
     expect(metrics.treeHeight).toBeLessThan(metrics.viewportHeight / 2);
     expect(metrics.tableTop).toBeGreaterThan(0);
     expect(metrics.tableTop).toBeLessThan(metrics.viewportHeight);
+  });
+
+  test("登录页窄视口无裁切且可完整登录（320/344/375 + 分屏比例）", async ({
+    page
+  }) => {
+    // FE-H2 的守护：≤968px 断点表单列宽 min(290px, 100%) + 容器不再 overflow hidden
+    // （裁切时用户名/密码/登录按钮部分出屏且无滚动出口）。窄视口必须满足：
+    // 表单不出视口水平边界 + 无页面级横向溢出 + **能真实完成登录**（不只是可见）。
+    const NARROW_VIEWPORTS = [
+      { name: "iPhone SE（320）", width: 320, height: 568 },
+      { name: "Galaxy Fold 外屏（344）", width: 344, height: 784 },
+      { name: "iPhone 8/SE3（375）", width: 375, height: 667 },
+      // 分屏形态：横向半屏（宽为主、高受限），钉 100vh/100dvh 类回归
+      { name: "分屏横向（667×375）", width: 667, height: 375 }
+    ];
+
+    for (const vp of NARROW_VIEWPORTS) {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.context().clearCookies();
+      await page.goto(`${FRONT_URL}/#/login`);
+      const account = page.getByPlaceholder("账号");
+      await expect(account, `${vp.name} 登录表单不可见`).toBeVisible({
+        timeout: 15_000
+      });
+
+      // 无裁切：登录表单盒完全落在视口水平范围内，页面无横向溢出
+      const clipped = await account.evaluate(el => {
+        const form = el.closest(".login-form") ?? el;
+        const box = form.getBoundingClientRect();
+        return {
+          left: Math.round(box.left),
+          right: Math.round(box.right),
+          overflow: document.documentElement.scrollWidth - window.innerWidth
+        };
+      });
+      expect(
+        clipped.overflow,
+        `${vp.name} 出现页面级横向溢出`
+      ).toBeLessThanOrEqual(1);
+      expect(clipped.left, `${vp.name} 表单左缘被裁`).toBeGreaterThanOrEqual(0);
+      expect(
+        clipped.right,
+        `${vp.name} 表单右缘被裁（left=${clipped.left} right=${clipped.right} viewport=${vp.width}）`
+      ).toBeLessThanOrEqual(vp.width);
+
+      // 可完整操作：输入凭证 → 登录成功离开登录页（每个视口真实登录一次）
+      await account.fill(APPROVER.username);
+      await page.getByPlaceholder("密码").fill(APPROVER.password);
+      await page.getByRole("button", { name: "登录", exact: true }).click();
+      await expect(page, `${vp.name} 登录未成功`).not.toHaveURL(/#\/login/, {
+        timeout: 30_000
+      });
+    }
+  });
+
+  test("双指捏合缩放可用且负对照自证（viewport meta 不得禁缩放）", async ({
+    page
+  }) => {
+    await page.goto(`${FRONT_URL}/#/login`);
+    await expect(page.getByPlaceholder("账号")).toBeVisible({
+      timeout: 15_000
+    });
+
+    // 主断言：外放 → 放大；内收 → 复位（FE-H1：viewport meta 无 user-scalable=0 /
+    // maximum-scale=1，低视力用户必须能靠捏合放大页面）
+    const scale = () => page.evaluate(() => window.visualViewport?.scale ?? -1);
+    expect(await scale()).toBe(1);
+    await pinchByTouch(page, 20, 160);
+    expect(
+      await scale(),
+      "双指外放未放大（viewport meta 疑似被加了禁缩放声明，见 index.html）"
+    ).toBeGreaterThan(1.2);
+    await pinchByTouch(page, 160, 20);
+    expect(await scale(), "双指内收未回落").toBeLessThanOrEqual(1.05);
+
+    // 方法自证（负对照）：路由改写把 index.html 的 meta 注入 user-scalable=0 后
+    // 重载，同手势必须被拦截（scale 恒 1）。若主断言失败而本对照通过，优先怀疑
+    // 页面被加禁缩放声明（真回归）；若本对照失败而主断言通过，说明手势通道绕过
+    // 了 meta 拦截（playwright/chromium 行为变化），用例方法失效需复核。
+    await page.route(`${FRONT_URL}/`, async route => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(
+        /<meta\b[^>]*name="viewport"[^>]*>/,
+        '<meta content="width=device-width, initial-scale=1.0, user-scalable=0, maximum-scale=1" name="viewport" />'
+      );
+      await route.fulfill({ response, body });
+    });
+    await page.reload();
+    await expect(page.getByPlaceholder("账号")).toBeVisible({
+      timeout: 15_000
+    });
+    const meta = await page.evaluate(() =>
+      document.querySelector('meta[name="viewport"]')?.getAttribute("content")
+    );
+    expect(meta).toContain("user-scalable=0");
+    await pinchByTouch(page, 20, 160);
+    expect(
+      await scale(),
+      "注入 user-scalable=0 后手势仍放大——手势通道绕过 meta 拦截，本用例方法失效"
+    ).toBe(1);
   });
 
   test("移动端不渲染侧栏拖拽把手（桌面专属能力）", async ({ page }) => {
