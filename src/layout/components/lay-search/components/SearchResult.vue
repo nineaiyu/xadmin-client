@@ -3,6 +3,8 @@ import type { Props } from "../types";
 import { transformI18n } from "@/plugins/i18n";
 import { useResizeObserver } from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import { pickSelectedForeground } from "@/utils/colorContrast";
+import { paletteOptionId } from "../paletteA11y";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { computed, getCurrentInstance, onMounted, ref } from "vue";
 import type { optionsItem } from "../types";
@@ -19,11 +21,19 @@ const props = withDefaults(defineProps<Props>(), {});
 
 const itemStyle = computed(() => {
   return (item: optionsItem) => {
+    const isActive = item.path === active.value;
     return {
-      background:
-        item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "var(--el-color-white)" : "",
-      fontSize: item.path === active.value ? "16px" : "14px"
+      background: isActive ? useEpThemeStoreHook().epThemeColor : "",
+      // 选中态文字按底色亮度自适应：浅主色（用户自定义）下白字对比度不足，
+      // 切正文色（WCAG 4.5:1 口径）；选中差异改字重表达（字号跳变会引发布局位移）
+      color: isActive
+        ? pickSelectedForeground(
+            useEpThemeStoreHook().epThemeColor,
+            "var(--el-text-color-primary)",
+            "var(--el-color-white)"
+          )
+        : "",
+      fontWeight: isActive ? "var(--font-weight-semibold)" : ""
     };
   };
 });
@@ -74,10 +84,13 @@ defineExpose({ handleScroll });
   <div ref="resultRef" class="result">
     <div
       v-for="(item, index) in options"
+      :id="paletteOptionId(item.path)"
       :key="item.path"
       :ref="'resultItemRef' + index"
       :style="itemStyle(item)"
       class="result-item dark:bg-fill-subtle"
+      role="option"
+      :aria-selected="item.path === active"
       @click="handleTo"
       @mouseenter="handleMouse(item)"
     >
@@ -103,7 +116,11 @@ defineExpose({ handleScroll });
     cursor: pointer;
     border: 0.1px solid hsl(var(--border));
     border-radius: var(--radius-sm);
-    transition: font-size var(--duration-fast) var(--ease-standard);
+
+    /* 字号恒定（选中态用字重/底色表达，箭头键移动不再引发布局位移） */
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
 
     &-title {
       display: flex;

@@ -167,6 +167,8 @@
        弹层起点 2000，否则打开的面板会遮挡 dialog/confirm
      - appMask 2001：移动端侧栏打开时的内容遮罩，需压过 EP 弹层起点 2000
      - Element Plus 弹层：2000 起动态递增（dialog/message-box/popper，不干预）
+     - contextMenu 2100：树行右键菜单——需盖过 EP popper 系弹层，
+       但必须低于锁屏（锁屏应盖住一切交互面）
      - lockScreen 2500：锁屏遮罩——必须盖住 EP 弹层，否则被遮挡界面仍可交互
      - tippy 9999：v-tippy 是独立于 EP 的 popper 引擎，必须高于 EP 弹层
      组件内部局部叠放（0~10）属私有上下文，不进阶梯。 */
@@ -177,6 +179,7 @@
   --z-index-setting-mask: 1005;
   --z-index-setting-panel: 1010;
   --z-index-app-mask: 2001;
+  --z-index-context-menu: 2100;
   --z-index-lock-screen: 2500;
   --z-index-tippy: 9999;
 

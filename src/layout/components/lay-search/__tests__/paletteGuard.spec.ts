@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
-import { resetActiveWhenClosed, whenPaletteOpen } from "../paletteGuard";
+import {
+  resetActiveWhenClosed,
+  resolvePaletteToggle,
+  whenPaletteOpen
+} from "../paletteGuard";
 
 describe("whenPaletteOpen（全局按键守卫）", () => {
   it("面板关闭时 Enter/↑↓ 处理器不执行（避免在输入框里意外跳路由）", () => {
@@ -48,5 +52,15 @@ describe("resetActiveWhenClosed（关闭即清激活项）", () => {
 
     reset(true);
     expect(activeNav.value).toBe("command:2");
+  });
+});
+
+describe("resolvePaletteToggle（唤起键位 toggle 决策）", () => {
+  it("面板已开时再按唤起键 → 关（此前恒开，与主流命令面板 toggle 习惯相悖）", () => {
+    expect(resolvePaletteToggle(true)).toBe("close");
+  });
+
+  it("面板未开时按唤起键 → 开", () => {
+    expect(resolvePaletteToggle(false)).toBe("open");
   });
 });

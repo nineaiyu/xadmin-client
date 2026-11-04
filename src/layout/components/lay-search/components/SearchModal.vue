@@ -5,13 +5,17 @@ import { isSuccess } from "@/api/types";
 import { match } from "pinyin-pro";
 import { useI18n } from "vue-i18n";
 import { getConfig, responsiveStorageNameSpace } from "@/config";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 import { useRouter } from "vue-router";
+import { PALETTE_LISTBOX_ID, paletteOptionId } from "../paletteA11y";
+import { applyPaletteComboboxRole } from "../paletteA11y";
 import SearchResult from "./SearchResult.vue";
 import SearchFooter from "./SearchFooter.vue";
 import { useNav } from "@/layout/hooks/useNav";
 import { useCommandPalette } from "../useCommandPalette";
 import { transformI18n } from "@/plugins/i18n";
 import SearchHistory from "./SearchHistory.vue";
+import type { InputInstance } from "element-plus";
 import type { dragItem, optionsItem } from "../types";
 import { computed, ref, shallowRef, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
@@ -63,7 +67,7 @@ const globalGroups = shallowRef<GlobalSearchGroup[]>([]);
 const globalLoading = ref(false);
 const handleSearch = useDebounceFn(search, 300);
 const historyNum = getConfig().MenuSearchHistory;
-const inputRef = ref<HTMLInputElement | null>(null);
+const inputRef = ref<InputInstance | null>(null);
 
 const menusData = computed(() => {
   return cloneDeep(usePermissionStoreHook().wholeMenus);
@@ -85,12 +89,13 @@ watch(
   }
 );
 
-/** 命令面板：Cmd/Ctrl+K 唤起 + 快捷动作 + 键盘全导航（实现见 useCommandPalette） */
+/** 命令面板：Cmd/Ctrl+K 唤起（已开再按关闭）+ 快捷动作 + 键盘全导航（实现见 useCommandPalette） */
 const {
   commandItems,
   commandActive,
   globalActive,
   askAiActive,
+  activeNav,
   handleEnter,
   runQuickAction
 } = useCommandPalette({
@@ -111,6 +116,15 @@ const {
   updateHistory,
   handleClose
 });
+
+/**
+ * aria-activedescendant：指向当前导航选中项（activeNav 是唯一导航指针，键形
+ * cmd:<id> / 菜单路径 / global:<组>:<pk> / ask:ai / 历史路径）；各选项节点
+ * 以 paletteOptionId 同源声明 id（读屏按指针播报选中项，键盘 ↑↓/Enter 既有）。
+ */
+const activeOptionId = computed(() =>
+  activeNav.value ? paletteOptionId(activeNav.value) : undefined
+);
 
 const showSearchResult = computed(() => {
   return keyword.value && resultOptions.value.length > 0;
@@ -133,13 +147,11 @@ const showEmpty = computed(() => {
   );
 });
 
-function getStorageItem(key: string) {
-  return storageLocal().getItem<optionsItem[]>(key) || [];
-}
+const getStorageItem = (key: string) =>
+  storageLocal().getItem<optionsItem[]>(key) || [];
 
-function setStorageItem(key: string, value: optionsItem[]) {
+const setStorageItem = (key: string, value: optionsItem[]) =>
   storageLocal().setItem(key, value);
-}
 
 /** 将菜单树形结构扁平化为一维数组，用于菜单查询 */
 function flatTree(arr: optionsItem[]) {
@@ -185,22 +197,34 @@ async function search() {
   await fetchGlobalResults();
 }
 
+/** 全局搜索请求序号：仅最新一次请求可写结果（网络乱序时旧响应作废），
+ * 与列表页 plusPageRequest 的 latestRequestSeq 同源；300ms 防抖只降低并发
+ * 窗口、不消除乱序 */
+const globalSearchSeq = createRequestSeqGuard();
+
 /** 全局搜索：跨实体检索，失败静默降级为仅菜单结果 */
 async function fetchGlobalResults() {
   if (!globalSearchAuth.value) return;
   const kw = keyword.value.trim();
   if (!kw) {
+    // 清空关键词也使在途请求过期：否则旧词的响应后到会把已清空的结果区回填
+    globalSearchSeq.start();
     globalGroups.value = [];
+    globalLoading.value = false;
     return;
   }
+  const ticket = globalSearchSeq.start();
   globalLoading.value = true;
   try {
     const res = await searchGlobal(kw);
+    if (!globalSearchSeq.isLatest(ticket)) return;
     globalGroups.value = isSuccess(res) ? res.data.groups : [];
   } catch {
+    if (!globalSearchSeq.isLatest(ticket)) return;
     globalGroups.value = [];
   } finally {
-    globalLoading.value = false;
+    // 仅最新一次负责收口 loading：过期请求不得提前关掉新请求的加载态
+    if (globalSearchSeq.isLatest(ticket)) globalLoading.value = false;
   }
 }
 
@@ -325,7 +349,7 @@ function handleDrag(item: dragItem) {
     :style="{
       borderRadius: '6px'
     }"
-    :width="device === 'mobile' ? '80vw' : '40vw'"
+    :width="device === 'mobile' ? '80vw' : 'min(40vw, 560px)'"
     append-to-body
     class="pure-search-dialog"
     top="5vh"
@@ -338,29 +362,46 @@ function handleDrag(item: dragItem) {
       :placeholder="t('layout.searchPlaceholder')"
       clearable
       size="large"
+      aria-haspopup="listbox"
+      :aria-expanded="show"
+      :aria-controls="PALETTE_LISTBOX_ID"
+      :aria-activedescendant="activeOptionId"
+      @vue:mounted="applyPaletteComboboxRole(inputRef)"
       @input="handleSearch"
     >
       <template #prefix>
         <IconifyIconOffline :icon="SearchIcon" class="text-primary size-6" />
       </template>
     </el-input>
-    <div class="search-content">
-      <el-scrollbar ref="scrollbarRef" max-height="calc(90vh - 140px)">
+    <div
+      :id="PALETTE_LISTBOX_ID"
+      class="search-content"
+      role="listbox"
+      :aria-label="t('layout.searchPlaceholder')"
+    >
+      <el-scrollbar
+        ref="scrollbarRef"
+        data-testid="palette-results-scrollbar"
+        max-height="calc(90dvh - 140px)"
+      >
         <!-- 命令面板：无关键字时的快捷动作（键盘 ↑↓ 可达，Enter 执行） -->
         <div
           v-if="!keyword && commandItems.length"
           data-testid="command-palette"
         >
-          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
+          <div class="px-5 py-1.5 text-xs text-fg-muted">
             {{ t("commandPalette.title") }}
           </div>
           <div
             v-for="item in commandItems"
+            :id="paletteOptionId(item.id)"
             :key="item.id"
             class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
             :class="{
               'bg-fill-muted': commandActive === item.id
             }"
+            role="option"
+            :aria-selected="commandActive === item.id"
             :data-testid="`command-${item.id.replace('cmd:', '')}`"
             :data-active="commandActive === item.id ? 'true' : undefined"
             @click="runQuickAction(item.id)"
@@ -390,24 +431,25 @@ function handleDrag(item: dragItem) {
           @click="handleEnter"
         />
         <div v-if="globalSearchAuth && keyword && globalGroups.length">
-          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
+          <div class="px-5 py-1.5 text-xs text-fg-muted">
             {{ t("search.globalResult") }}
           </div>
           <div v-for="group in globalGroups" :key="group.key">
-            <div
-              class="flex-bc px-5 py-1 text-xs text-(--el-text-color-secondary)"
-            >
+            <div class="flex-bc px-5 py-1 text-xs text-fg-muted">
               <span>{{ group.label }}</span>
               <span>{{ group.total }}</span>
             </div>
             <div
               v-for="item in group.items"
+              :id="paletteOptionId(`global:${group.key}:${item.pk}`)"
               :key="item.pk"
               class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
               :class="{
                 'bg-fill-muted':
                   globalActive === `global:${group.key}:${item.pk}`
               }"
+              role="option"
+              :aria-selected="globalActive === `global:${group.key}:${item.pk}`"
               :data-testid="`global-search-item-${group.key}`"
               @click="goGlobalResult(group)"
             >
@@ -423,12 +465,15 @@ function handleDrag(item: dragItem) {
           data-testid="ask-ai-entry"
           :data-active="askAiActive ? 'true' : undefined"
         >
-          <div class="px-5 py-1.5 text-xs text-(--el-text-color-secondary)">
+          <div class="px-5 py-1.5 text-xs text-fg-muted">
             {{ t("commandPalette.askAi") }}
           </div>
           <div
+            :id="paletteOptionId('ask:ai')"
             class="mx-2.5 my-0.5 flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-fill-muted"
             :class="{ 'bg-fill-muted': askAiActive }"
+            role="option"
+            :aria-selected="askAiActive !== ''"
             @click="runAskAi"
           >
             <IconifyIconOffline :icon="AskAiIcon" class="size-4 text-primary" />

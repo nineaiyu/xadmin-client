@@ -2,6 +2,8 @@
 import SearchHistoryItem from "./SearchHistoryItem.vue";
 import type { dragItem, optionsItem, Props } from "../types";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
+import { pickSelectedForeground } from "@/utils/colorContrast";
+import { paletteOptionId } from "../paletteA11y";
 import { delay, isArray, useResizeObserver } from "@pureadmin/utils";
 import { computed, getCurrentInstance, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -24,11 +26,19 @@ const props = withDefaults(defineProps<Props>(), {});
 
 const itemStyle = computed(() => {
   return (item: optionsItem) => {
+    const isActive = item.path === active.value;
     return {
-      background:
-        item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "var(--el-color-white)" : "",
-      fontSize: item.path === active.value ? "16px" : "14px"
+      background: isActive ? useEpThemeStoreHook().epThemeColor : "",
+      // 选中态文字按底色亮度自适应（浅主色下白字对比度不足）；字号恒定，
+      // 选中差异用字重表达（与 SearchResult 同口径）
+      color: isActive
+        ? pickSelectedForeground(
+            useEpThemeStoreHook().epThemeColor,
+            "var(--el-text-color-primary)",
+            "var(--el-color-white)"
+          )
+        : "",
+      fontWeight: isActive ? "var(--font-weight-semibold)" : ""
     };
   };
 });
@@ -149,10 +159,13 @@ defineExpose({ handleScroll });
       <div :style="titleStyle">{{ t("layout.searchHistory") }}</div>
       <div
         v-for="(item, index) in historyList"
+        :id="paletteOptionId(item.path)"
         :key="item.path"
         :ref="'historyItemRef' + index"
         :style="itemStyle(item)"
         class="history-item dark:bg-fill-subtle"
+        role="option"
+        :aria-selected="item.path === active"
         @click="handleTo"
         @mouseenter="handleMouse(item)"
       >
@@ -171,10 +184,13 @@ defineExpose({ handleScroll });
       <div class="collect-container">
         <div
           v-for="(item, index) in collectList"
+          :id="paletteOptionId(item.path)"
           :key="item.path"
           :ref="'historyItemRef' + (index + historyList.length)"
           :style="itemStyle(item)"
           class="history-item dark:bg-fill-subtle"
+          role="option"
+          :aria-selected="item.path === active"
           @click="handleTo"
           @mouseenter="handleMouse(item)"
         >
@@ -198,7 +214,11 @@ defineExpose({ handleScroll });
     cursor: pointer;
     border: 0.1px solid hsl(var(--border));
     border-radius: var(--radius-sm);
-    transition: font-size var(--duration-fast) var(--ease-standard);
+
+    /* 字号恒定（选中态用字重/底色表达，与 SearchResult 同口径） */
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
   }
 }
 </style>

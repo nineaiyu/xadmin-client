@@ -85,3 +85,29 @@ describe("静态范式守护", () => {
     );
   });
 });
+
+describe("无障碍静态守护", () => {
+  it("viewport 不得禁用缩放（WCAG 1.4.4：禁 maximum-scale / minimum-scale / user-scalable）", () => {
+    const html = fs.readFileSync(
+      path.resolve(process.cwd(), "index.html"),
+      "utf8"
+    );
+    const viewport = html.match(/<meta[^>]*name="viewport"[^>]*>/)?.[0] ?? "";
+    expect(viewport, "index.html 必须声明 viewport meta").toBeTruthy();
+    expect(viewport).not.toMatch(/maximum-scale/i);
+    expect(viewport).not.toMatch(/minimum-scale/i);
+    expect(viewport).not.toMatch(/user-scalable/i);
+  });
+
+  it("登录页窄视口兜底与 dvh 双写不得回退", () => {
+    const raw = fs.readFileSync(path.join(SRC, "style", "login.scss"), "utf8");
+    // 只对声明本体断言：剥掉注释，避免修复说明里的「原 overflow: hidden」字样误报
+    const scss = raw.replace(/\/\*[\s\S]*?\*\//g, "");
+    // ≤1180px 断点内的窄视口兜底（≤354px 视口表单不再被裁）
+    expect(scss).toContain("width: min(290px, 100%)");
+    // vh/dvh 双写（移动端动态工具栏）
+    expect(scss).toContain("height: 100dvh");
+    // .login-box 不得重新裁内容（裁切曾使窄视口登录不可用且无滚动出口）
+    expect(scss).not.toMatch(/\.login-box\s*\{[^}]*overflow:\s*hidden/);
+  });
+});

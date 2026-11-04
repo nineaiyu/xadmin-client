@@ -25,7 +25,7 @@ const STUB_LLM_URL =
 const IMPACT_BLOCKING = new Set(["critical", "serious"]);
 
 /**
- * 豁免登记（规则 id → 节点选择器摘要的匹配正则）：**当前无豁免项**。
+ * 豁免登记（规则 id → 节点选择器摘要的匹配正则）。
  *
  * 2026-10-11 收尾：侧栏菜单最后两项结构性违规已本地收口——EP 的 `el-menu` 根渲染
  * `ul[role=menubar]`，叶子项本应是 `li[role=menuitem]` 直挂其下，但本项目用 `<a>`
@@ -34,6 +34,13 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  * （menuitem 的父级是链接）critical。修复 = 把 `menuitem` 语义上移到链接、内层 li 置
  * `presentation`（EP 无键盘焦点导航，不依赖该 li 语义），见
  * `src/layout/components/lay-sidebar/components/SidebarItem.vue`。
+ *
+ * 2026-11-04 新增一条登记（命令面板打开态扫描面，见下方用例）：
+ * `scrollable-region-focusable`（palette-results-scrollbar）——ARIA combobox 模式的
+ * 规则误报：结果区内容经输入框 `aria-activedescendant` + ↑↓ 键盘全量可达
+ * （scrollIntoView 跟随选中项滚动）；ARIA combobox 模式规定 Tab 应离开组合框，
+ * 给 wrap 补 tabindex=0 会凭空插入 Tab 停留点破坏键盘流，tabindex=-1 规则不认
+ * （axe 实测仍判违规）。故登记豁免而不是补 tabindex。
  *
  * 此前已消化的豁免：`color-contrast`（主题色收口与对比度修复）、`button-name` /
  * `aria-command-name`（页签「更多」、开关渲染器补名）、`label`（el-switch 渲染器 +
@@ -44,7 +51,11 @@ const IMPACT_BLOCKING = new Set(["critical", "serious"]);
  * 新增豁免必须先在 `ALLOWED_VIOLATIONS` 注释与 `e2e/README.md` 登记跟踪项，禁止静默放行；
  * 摘除项若在其他扫描面重新命中，按「先本地收口、再登记」路径处理。
  */
-const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {};
+const ALLOWED_VIOLATIONS: Record<string, RegExp[]> = {
+  "scrollable-region-focusable": [
+    /^div\[data-testid="palette-results-scrollbar"\] > \.el-scrollbar__wrap/
+  ]
+};
 
 /** axe 阻断级违规摘要（豁免剔除后的最小结构） */
 type ViolationSummary = {
@@ -303,6 +314,46 @@ test("a11y 扩面：用户新增弹窗（元数据密集表单）无 critical/se
   expect(
     violations,
     `用户新增弹窗 a11y 违规：\n${formatViolations(violations)}`
+  ).toEqual([]);
+});
+
+test("a11y 扩面：命令面板（打开态）无 critical/serious 违规", async ({
+  page
+}) => {
+  await login(page);
+  await expect(page.locator("#header-translation")).toBeVisible({
+    timeout: 15_000
+  });
+  // 打开态是 FE-M2 修复的 ARIA 面首次纳入扫描（此前 12 项基线均未覆盖打开态，
+  // 2026-11-04 浅主色复验发现 role 接线缺陷后补入）：输入 + 键盘导航 + 选中态。
+  await page.keyboard.press("ControlOrMeta+k");
+  const input = page.getByPlaceholder("搜索菜单");
+  await expect(input).toBeVisible({ timeout: 15_000 });
+  // 全局搜索请求在菜单过滤后异步发出：等它收口再扫描，分组标题与分组
+  // option 同属打开态扫描面（waitForResponse 等信号收口，非盲等）
+  const globalSearchDone = page.waitForResponse(
+    res =>
+      res.request().method() === "GET" &&
+      res.url().includes("/api/system/global-search")
+  );
+  await input.fill("用户");
+  // 菜单搜索经 300ms 防抖触发：footer 总数（total>0 才渲染）出现即
+  // 「搜索结果已渲染」的信号（问 AI 入口只随 keyword 出现，不能当完成信号）
+  await expect(page.locator(".search-footer-total")).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  // 导航指针落定：activedescendant 同体指向首个候选（信号等待兼接线断言）
+  await expect(input).toHaveAttribute(
+    "aria-activedescendant",
+    /^palette-option-/
+  );
+  // combobox 角色与 aria-* 必须同体（EP el-input 丢弃 role，经 paletteA11y 补写）
+  await expect(input).toHaveAttribute("role", "combobox");
+  await globalSearchDone;
+
+  const violations = await scanBlockingViolations(page);
+  expect(
+    violations,
+    `命令面板 a11y 违规：\n${formatViolations(violations)}`
   ).toEqual([]);
 });
 

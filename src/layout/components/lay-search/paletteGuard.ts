@@ -27,3 +27,12 @@ export function resetActiveWhenClosed(
     if (!visible) activeNav.value = "";
   };
 }
+
+/**
+ * 唤起键位（Cmd/Ctrl+K）的 toggle 决策：已开 → 关（与 VSCode/Spotlight 习惯一致，
+ * 此前恒为「开」——面板开着再按只重置导航指针）；已关 → 开。
+ * 纯函数便于单测直测；关闭动作由调用方走 handleClose（与 Esc/遮罩同口径）。
+ */
+export function resolvePaletteToggle(isOpen: boolean): "open" | "close" {
+  return isOpen ? "close" : "open";
+}
