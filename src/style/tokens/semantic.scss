@@ -30,9 +30,10 @@
 
   /* ================ 组合值 ================ */
 
-  /* 卡片/面板描边（1px 实线 + 边框色）：取最浅档 --border-lighter，
-     卡片层次交给「页底/卡面明度差 + 贴地阴影」，描边退为辅助 */
-  --card-border: 1px solid hsl(var(--border-lighter));
+  /* 卡片/面板描边（1px 实线 + 边框色）：取 --border-light（#e4e7ed），
+     在 #eef2f7 页底上保持肉眼可读的卡面轮廓；更浅的 --border-lighter
+     在浅色模式近乎隐形，会连带「一张工作纸」失去边界（4.2 口径回填） */
+  --card-border: 1px solid hsl(var(--border-light));
 
   /* ================ 填充（区块底色 / hover 态） ================ */
   --fill: 216 20% 95.1%; /* #f0f2f5 */
@@ -62,8 +63,10 @@
     0 16px 48px 16px #00000014, 0 12px 32px #0000001f, 0 8px 16px -8px #00000029;
 
   /* 卡片贴地阴影：定向轻投影（替代 0 0 12px 雾化）——卡片「贴」在页底上，
-     层次靠页底/卡面/浮层三级明度差，不靠雾化投影悬浮 */
-  --shadow-card: 0 1px 2px hsl(220deg 30% 20% / 6%);
+     层次靠页底/卡面/浮层三级明度差，不靠雾化投影悬浮；
+     双层结构（1px 接触 + 2~8px 定向扩散）保证在浅色页底上可感知 */
+  --shadow-card:
+    0 1px 2px hsl(220deg 30% 20% / 7%), 0 2px 8px hsl(220deg 30% 20% / 5%);
 
   /* 组件级投影：导航区（顶栏 / 页签条）下沿的分隔投影；
      设置面板等右侧浮层的向左投影 */
@@ -251,7 +254,9 @@ html.dark {
   --pure-theme-sidebar-border: transparent;
 }
 
-/* 亮白色（白底 + 主色浅底激活块的侧栏形态） */
+/* 亮白色（白底 + 主色实心激活块的侧栏形态）：
+   激活块回实心主色 + 白字（4.2 观感回归）——全站唯一高饱和锚点，
+   且 #006be6 底 + 白字对比 ≈4.9:1 达 WCAG AA（浅 tint + 主色字仅 ≈4.15:1） */
 html[data-theme="light"] {
   --pure-theme-sub-menu-active-text: hsl(var(--primary));
   --pure-theme-menu-bg: #fff;
@@ -261,11 +266,11 @@ html[data-theme="light"] {
   --pure-theme-sidebar-logo: #fff;
   --pure-theme-menu-title-hover: hsl(var(--fg));
   --pure-theme-menu-active-before: hsl(var(--primary));
-  --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
-  --pure-theme-menu-active-text: hsl(var(--primary));
+  --pure-theme-menu-active-bg: hsl(var(--primary));
+  --pure-theme-menu-active-text: #fff;
 }
 
-/* 道奇蓝（默认皮肤：白底浅色侧栏） */
+/* 道奇蓝（默认皮肤：白底浅色侧栏，激活态同 light 皮肤） */
 html[data-theme="default"] {
   --pure-theme-sub-menu-active-text: hsl(var(--primary));
   --pure-theme-menu-bg: #fff;
@@ -275,8 +280,8 @@ html[data-theme="default"] {
   --pure-theme-sidebar-logo: #fff;
   --pure-theme-menu-title-hover: hsl(var(--fg));
   --pure-theme-menu-active-before: hsl(var(--primary));
-  --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
-  --pure-theme-menu-active-text: hsl(var(--primary));
+  --pure-theme-menu-active-bg: hsl(var(--primary));
+  --pure-theme-menu-active-text: #fff;
 }
 
 /* 深色模式下的浅色皮肤（default / light）：侧栏与顶栏此时是深色面板，
@@ -444,4 +449,13 @@ html[data-theme="auroraGreen"] {
   --pure-theme-menu-active-bg: rgb(96 172 128 / 22%);
   --pure-theme-menu-active-text: #fff;
   --pure-theme-sidebar-border: hsl(var(--fg) / 8%);
+}
+
+/* 导航风格 = 朴素（plain）：整行铺满的「无装饰」形态下，实心激活块过于强烈，
+   回退为浅 tint + 主色文字（即默认导航风格的轻量替代）；
+   只覆写浅色皮肤系的激活槽——深色皮肤自带深色 tint 调色板，不受影响 */
+html[data-nav-style="plain"][data-theme="light"],
+html[data-nav-style="plain"][data-theme="default"] {
+  --pure-theme-menu-active-bg: hsl(var(--primary) / 15%);
+  --pure-theme-menu-active-text: hsl(var(--primary));
 }

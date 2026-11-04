@@ -80,10 +80,11 @@ html.dark {
 :root {
   --el-border-radius-small: var(--radius-xs);
 
-  /* EP 基础圆角取 8px 档（--radius = 0.5rem），
-     按钮 / 输入 / 下拉等基础控件的圆角随之外观一致；
+  /* EP 基础圆角取 6px 档（--radius-md）：按钮 / 输入 / 下拉 / 弹窗等控件
+     小于容器一档（卡片与面板 8px，见 appearance.scss 的 --el-card-border-radius
+     与 .app-pane），保持「外大内小」的嵌套同心关系；
      small（2px）与 round 与 EP 缺省同值，保持像素中性。 */
-  --el-border-radius-base: var(--radius-lg);
+  --el-border-radius-base: var(--radius-md);
   --el-border-radius-round: var(--radius-full);
   --el-box-shadow-lighter: var(--shadow-sm);
   --el-box-shadow-light: var(--shadow-md);

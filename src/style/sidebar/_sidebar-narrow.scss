@@ -58,9 +58,9 @@
     }
   }
 
-  /* 悬停：图标微放大（与侧栏主列同口径） */
+  /* 悬停：图标微放大（与侧栏主列同口径 scale 1.08） */
   &:hover .sub-menu-icon > * {
-    transform: scale(1.2);
+    transform: scale(1.08);
   }
 }
 

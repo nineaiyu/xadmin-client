@@ -180,7 +180,8 @@
 /* 顶栏动作项统一热区（规格见 tokens/primitives.scss 的 --navbar-action-*）：
    尺寸 / 圆角 / 居中 / 过渡 / hover 底色；图标尺寸在 sidebar/_common.scss 的
    `navbar-actions svg` 规则。所有顶栏图标按钮必须挂本类；半暗顶栏的 hover
-   叠加色由 _header.scss 的 `.navbar-bg-hover:hover` 覆写。 */
+   叠加色由 _header.scss 的 `.navbar-bg-hover:hover` 覆写。
+   图标 hover 微放大 scale(1.08)：与侧栏菜单同一微动效口径（单一节拍 0.2s）。 */
 @utility navbar-action {
   @apply inline-flex cursor-pointer items-center justify-center select-none hover:bg-fill-muted;
   width: var(--navbar-action-size);
@@ -189,6 +190,14 @@
   transition:
     background var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);
+
+  svg {
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  &:hover svg {
+    transform: scale(1.08);
+  }
 }
 
 /* 表格工具栏动作项统一热区（与顶栏 navbar-action 同口径，28px 档）：
@@ -210,6 +219,15 @@
 
   &:hover {
     background: hsl(var(--fill-muted));
+
+    /* 与顶栏动作同口径的图标微放大（scale 1.08 / 0.2s） */
+    svg {
+      transform: scale(1.08);
+    }
+  }
+
+  svg {
+    transition: transform var(--duration-fast) var(--ease-standard);
   }
 }
 

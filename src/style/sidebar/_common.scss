@@ -58,10 +58,11 @@
     }
   }
 
-  /* 菜单项 hover：图标放大 `scale(1.2)`（强化操作目标） */
+  /* 菜单项 hover：图标轻微放大 scale(1.08)——全站导航入口（侧栏主列 / 窄列 /
+     顶栏动作 / 表格工具栏）同一微动效口径；1.2 过猛，1.08 是「可感知不抢戏」 */
   .el-menu-item:hover .sub-menu-icon > *,
   .el-sub-menu__title:hover .sub-menu-icon > * {
-    transform: scale(1.2);
+    transform: scale(1.08);
   }
 
   /* 顶栏动作项：热区尺寸 / 圆角 / 居中由 `navbar-action` 工具类提供
