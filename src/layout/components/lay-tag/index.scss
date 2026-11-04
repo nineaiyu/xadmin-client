@@ -40,7 +40,9 @@
     padding-left: var(--space-1-5);
     line-height: var(--layout-tags-item-h);
     cursor: pointer;
-    transition: all var(--duration-slow) var(--ease-standard);
+
+    /* 全站 hover 单一节拍：页签项与菜单 / 图标缩放同为 0.2s（此前 0.4s 独立节拍） */
+    transition: all var(--duration-fast) var(--ease-standard);
 
     &:not(:first-child) {
       padding-right: var(--space-6);
@@ -49,8 +51,11 @@
     &.chrome-item {
       padding-right: 0;
       padding-left: 0;
-      margin-right: var(--space-1-5);
-      border-radius: var(--radius-md);
+
+      /* 浏览器页签形（TagChrome SVG 曲线）：负边距让相邻页签的斜坡咬合，
+         形状由 .chrome-tab__bg 的 currentColor 提供，不走圆角块 */
+      margin-right: calc(-1 * (var(--space-4) + var(--space-0-5)));
+      border-radius: 0;
       box-shadow: none;
     }
 
@@ -216,10 +221,6 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 
-  .chrome-tab__bg {
-    display: none;
-  }
-
   .tag-title {
     color: var(--el-color-primary) !important;
   }
@@ -237,10 +238,27 @@
   }
 }
 
+/* chrome 风格的激活项：撤掉通用块的圆角块形态，页签形状（.chrome-tab__bg 的
+   currentColor）重新承担底色——浅色填 primary-light-9（4.2 口径），
+   暗色填 primary-light-8（dark.scss 覆写）；z-index 高于两侧咬合的邻居 */
+.chrome-item.is-active {
+  z-index: 10;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: 0 0 1px hsl(var(--border-strong));
+
+  .chrome-tab__bg {
+    color: var(--el-color-primary-light-9) !important;
+  }
+}
+
 .chrome-item:hover:not(.is-active) {
   z-index: 3;
-  background: hsl(var(--fill));
-  border-radius: var(--radius-md);
+
+  /* 非激活页签 hover 走形状填色（4.2 的 #dee1e6 同位色），不用圆角块底色 */
+  .chrome-tab__bg {
+    color: hsl(var(--fill-strong));
+  }
 }
 
 .scroll-item.is-active + .scroll-item .chrome-tab-divider,
@@ -448,10 +466,4 @@
       }
     }
   }
-}
-
-/* 圆角块之间不画分隔线，页签形状（chrome-tab__bg）整体隐藏 */
-.tags-view .chrome-tab-divider,
-.tags-view .chrome-tab .chrome-tab__bg {
-  display: none;
 }
