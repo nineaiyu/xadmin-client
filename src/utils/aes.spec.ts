@@ -100,3 +100,37 @@ describe("aes 旧协议（OpenSSL Salted__ 兼容格式）", () => {
     expect(AesDecryptedLegacy("key", b)).toBe("same");
   });
 });
+
+describe("aes v4 协议（服务端挑战密钥，改密链路）", () => {
+  it("加密产出 v4: 前缀且 payload 与 v2 同构可解", async () => {
+    const { AesEncryptedChallenge } = await import("./aes");
+    const encrypted = await AesEncryptedChallenge(
+      "srv-random-challenge",
+      "NewP@ss2026"
+    );
+    expect(encrypted.startsWith("v4:")).toBe(true);
+    // payload 与 v2 同构：同密钥按 v2 协议解密应得到原文
+    const { AesDecryptedV2 } = await import("./aes");
+    expect(
+      await AesDecryptedV2("srv-random-challenge", `v2:${encrypted.slice(3)}`)
+    ).toBe("NewP@ss2026");
+  });
+
+  it("同一明文每次密文不同（随机盐 + 随机 IV）", async () => {
+    const { AesEncryptedChallenge } = await import("./aes");
+    const a = await AesEncryptedChallenge("challenge", "same");
+    const b = await AesEncryptedChallenge("challenge", "same");
+    expect(a).not.toBe(b);
+  });
+
+  it("挑战之外的密钥（如 username）解不开 v4 密文（防降级）", async () => {
+    const { AesEncryptedChallenge, AesDecryptedV2 } = await import("./aes");
+    const encrypted = await AesEncryptedChallenge(
+      "srv-random-challenge",
+      "secret"
+    );
+    await expect(
+      AesDecryptedV2("predictable-username", `v2:${encrypted.slice(3)}`)
+    ).rejects.toThrow();
+  });
+});

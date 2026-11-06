@@ -2913,6 +2913,8 @@ export interface paths {
          *
          *     口径与选人控件同源（identity/utils/user_options.py）；权限与该视图 list 权限
          *     同口径（packages/xadmin-common/common/core/permission.py 的 user-options 特例），无需新增权限点。
+         *     跨域功能选人：不套数据权限（显式豁免，理由与约束见 user_options 模块
+         *     docstring——建群/加成员须可搜到全公司用户）。
          */
         get: operations["api_chat_contacts_user_options_retrieve"];
         put?: never;
@@ -3704,6 +3706,8 @@ export interface paths {
          *     可带 pks 批量回显已选用户（同样字段收敛，仅主键命中）。
          *     权限与对应 list 权限同口径（见 packages/xadmin-common/common/core/permission.py 的 user-options
          *     特例），存量角色无需为控件单独授权。
+         *     跨域功能选人：不套数据权限（显式豁免，理由与约束见 user_options 模块
+         *     docstring——填报选人/过滤目标须可搜到全公司用户）。
          */
         get: operations["api_dataset_dynamic_form_submissions_user_options_retrieve"];
         put?: never;
@@ -4063,6 +4067,8 @@ export interface paths {
          *
          *     与「我的填报」的 user-options 同源（common 轻量数据源），供管理端列表把
          *     选人字段的 pk 展示为用户名；权限与对应 list 权限同口径。
+         *     跨域功能选人：不套数据权限（显式豁免，理由与约束见 user_options 模块
+         *     docstring——过滤目标须可搜到全公司用户）。
          */
         get: operations["api_dataset_form_data_user_options_retrieve"];
         put?: never;
@@ -4198,6 +4204,8 @@ export interface paths {
          *
          *     口径与选人控件同源（identity/utils/user_options.py）；权限与该视图 list
          *     权限同口径（packages/xadmin-common/common/core/permission.py 的 user-options 特例）。
+         *     跨域功能选人：不套数据权限（显式豁免，理由与约束见 user_options 模块
+         *     docstring——功能作者选择目标收件人须可搜到全公司用户）。
          */
         get: operations["api_dataset_reports_user_options_retrieve"];
         put?: never;
@@ -8661,6 +8669,29 @@ export interface paths {
         };
         /** @description 获取{cls}的字段选择 */
         get: operations["api_identity_userinfo_choices_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/identity/userinfo/password-challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description 修改{cls}密码加密挑战
+         *
+         *     下发改密口令加密挑战（v4 密钥材料：随机、5 分钟有效、重复调用轮换）：
+         *     改密前端以挑战为密钥加密新旧口令，替代历史 username 可预测密钥协议
+         *     （存量客户端密文继续兼容解密，见 decrypt_submitted_password）
+         */
+        get: operations["api_identity_userinfo_password_challenge_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -44352,6 +44383,34 @@ export interface operations {
                             }[];
                         };
                         code?: number;
+                        detail?: string;
+                        requestId?: string;
+                        timestamp?: string;
+                    };
+                };
+            };
+        };
+    };
+    api_identity_userinfo_password_challenge_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: number;
+                        data?: {
+                            challenge?: string;
+                            expires_in?: number;
+                        };
                         detail?: string;
                         requestId?: string;
                         timestamp?: string;

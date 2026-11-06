@@ -5,12 +5,17 @@ import { AES, Utf8 } from "crypto-es";
  * - 旧协议：OpenSSL `Salted__` 兼容格式（EVP_BytesToKey(MD5) + AES-256-CBC），
  *   由 crypto-es 产出，无前缀，服务端 AESCipherV2 原生支持；
  * - v2 协议：浏览器 WebCrypto PBKDF2-HMAC-SHA256（100k 迭代）派生 AES-256-GCM
- *   密钥，密文以 `v2:` 前缀标记：`v2:` + base64(salt[16] | iv[12] | ct | tag[16])。
+ *   密钥，密文以 `v2:` 前缀标记：`v2:` + base64(salt[16] | iv[12] | ct | tag[16])；
+ * - v4 协议：payload 与 v2 同构（算法一致），密钥材料改为**服务端下发的一次性
+ *   随机挑战**（改密链路先经 password-challenge 端点领取），密文以 `v4:` 前缀
+ *   标记——替代历史「以可预测的 username 为密钥」的协议。
  *
- * 加密优先走 v2；非安全上下文（http 非 localhost，无 crypto.subtle）或 WebCrypto
- * 异常时自动回退旧协议。解密按 `v2:` 前缀双格式自适应，服务端同规则。
+ * 加密优先走 v2（通用）/ v4（改密）；非安全上下文（http 非 localhost，无
+ * crypto.subtle）或 WebCrypto 异常时自动回退旧协议。解密按前缀双格式自适应，
+ * 服务端同规则（v4 认证失败不回退低版本密钥，防降级）。
  */
 const V2_PREFIX = "v2:";
+const V4_PREFIX = "v4:";
 const V2_PBKDF2_ITERATIONS = 100_000;
 const V2_SALT_LENGTH = 16;
 const V2_IV_LENGTH = 12;
@@ -151,4 +156,19 @@ export async function AesDecrypted(
     return AesDecryptedV2(key, encryptedMessage);
   }
   return AesDecryptedLegacy(key, encryptedMessage);
+}
+
+/**
+ * v4 协议加密：以服务端下发的随机挑战为密钥（改密链路）。
+ *
+ * 算法与 v2 完全一致（PBKDF2 + AES-GCM），仅前缀与密钥来源不同——服务端按
+ * `v4:` 前缀选择挑战密钥解密，绝不回退 username 密钥（防降级）。非安全上下文
+ * （无 WebCrypto）无法产出 v4，由调用方回退旧协议。
+ */
+export async function AesEncryptedChallenge(
+  challenge: string,
+  msg: string
+): Promise<string> {
+  const v2Payload = await AesEncryptedV2(challenge, msg);
+  return V4_PREFIX + v2Payload.slice(V2_PREFIX.length);
 }

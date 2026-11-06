@@ -9,6 +9,7 @@ export function useApiAuth() {
     bind: userInfoApi.bind,
     partialUpdate: userInfoApi.partialUpdate,
     resetPassword: userInfoApi.resetPassword,
+    passwordChallenge: userInfoApi.passwordChallenge,
     upload: userInfoApi.upload,
     choices: userInfoApi.choices
   });

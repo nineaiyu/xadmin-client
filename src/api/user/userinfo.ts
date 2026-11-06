@@ -24,6 +24,13 @@ class UserInfoApi extends ViewBaseApi {
     );
   };
 
+  /** 领取改密口令加密挑战（v4 密钥材料：随机、5 分钟有效，重复调用轮换） */
+  passwordChallenge = () => {
+    return this.request<
+      BaseResult & { data: { challenge: string; expires_in: number } }
+    >("get", {}, {}, `${this.baseApi}/password-challenge`);
+  };
+
   /** 核验当前登录用户口令（锁屏解锁）：后端只校验，不签发凭证、不改动状态 */
   verifyPassword = (data?: object) => {
     return this.request<BaseResult>(
