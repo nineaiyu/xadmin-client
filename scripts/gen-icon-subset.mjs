@@ -9,11 +9,12 @@
 //   3. 服务端种子：xadmin-server 平台层 `loadjson/*.json` + 各应用 `<app>/seeds/*.json`
 //      的 `icon: "<set>:<name>"`（菜单元数据；跨仓缺失时跳过——与 check_doc_facts 的跨仓口径一致）。
 //
-// 可选「精选候选面」构建档（图标裁剪方案 B，产品决策项的落地开关）：
-//   ICON_CANDIDATES_CURATED=1 时，选择器候选按 scripts/icon-candidates.curated.json
-//   裁剪（键缺席 = 该集合保持全候选面；键为空数组 = 该集候选清零并从选择器页签隐藏）；
+// 「精选候选面」构建档（图标裁剪方案 B，产品口径已定稿启用，2026-11-06）：
+//   默认按 scripts/icon-candidates.curated.json 裁剪选择器候选
+//   （键缺席 = 该集合保持全候选面；键为空数组 = 该集候选清零并从选择器页签隐藏）；
 //   子集与运行时候选（picker-candidates.json）同源生成，一致性不靠对账靠生成。
 //   代码 + 种子引用图标始终保底入子集（已用图标保底集，防存量菜单渲染空白）。
+//   回退全量候选面（一行）：ICON_CANDIDATES_CURATED=0 pnpm build。
 //
 // 产物：src/components/ReIcon/data/subsets/<set>.json（iconify 集合格式，剥除 info/
 // lastModified 元数据）与 src/components/ReIcon/data/picker-candidates.json（选择器
@@ -24,7 +25,7 @@
 // 陈旧且可被选中后渲染空白）即退出码 1 并列出——陈旧名在构建期暴露而非线上空白。
 //
 // 用法：node scripts/gen-icon-subset.mjs [--report]
-//       ICON_CANDIDATES_CURATED=1 node scripts/gen-icon-subset.mjs   # 精选候选面档
+//       ICON_CANDIDATES_CURATED=0 node scripts/gen-icon-subset.mjs   # 回退全候选面档
 import {
   existsSync,
   mkdirSync,
@@ -42,17 +43,20 @@ const DATA_TS = join(ROOT, "src/components/ReIcon/data.ts");
 const CURATED_FILE = join(ROOT, "scripts/icon-candidates.curated.json");
 const SETS = ["ep", "ri", "fa-solid"];
 const reportOnly = process.argv.includes("--report");
-const curatedMode = ["1", "true"].includes(
-  String(process.env.ICON_CANDIDATES_CURATED ?? "").toLowerCase()
-);
+// 精选候选面为默认档（产品口径 2026-11-06 定稿）；
+// ICON_CANDIDATES_CURATED=0/false 关闭回退到全候选面
+const curatedFlag = String(
+  process.env.ICON_CANDIDATES_CURATED ?? ""
+).toLowerCase();
+const curatedMode = !["0", "false", "off"].includes(curatedFlag);
 
 /** 精选候选面清单（仅 curated 档读取）：键缺席 = 保持全候选面 */
 function curatedManifest() {
   if (!existsSync(CURATED_FILE)) {
     console.error(
-      `[icon-subset] ICON_CANDIDATES_CURATED 已开启但未找到 ${CURATED_FILE}。\n` +
-        '             精选清单是产品口径的输入文件（形状 {"ri": [...], "fa-solid": [...]}，\n' +
-        "             ep 全集合本就只有 293 个通常无需裁剪）；补齐后重跑。"
+      `[icon-subset] 精选候选面为默认档但未找到 ${CURATED_FILE}。\n` +
+        '             清单形状 {"ri": [...], "fa-solid": [...]}（ep 全集合本就只有 293 个通常无需裁剪）；\n' +
+        "             补齐后重跑，或 ICON_CANDIDATES_CURATED=0 回退全候选面构建。"
     );
     process.exit(1);
   }
@@ -296,6 +300,6 @@ if (!reportOnly) {
 }
 
 console.log(
-  `[icon-subset] ${curatedMode ? "精选候选面档" : "默认全候选面档"}${reportOnly ? "（报告）" : ""}，已生成到 src/components/ReIcon/data/：`
+  `[icon-subset] ${curatedMode ? "精选候选面档（默认）" : "全候选面档（ICON_CANDIDATES_CURATED=0 回退）"}${reportOnly ? "（报告）" : ""}，已生成到 src/components/ReIcon/data/：`
 );
 for (const line of summary) console.log(`  ${line}`);

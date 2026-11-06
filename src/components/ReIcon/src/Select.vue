@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import ReEmpty from "@/components/ReEmpty";
-// 选择器候选面是构建期产物（gen-icon-subset 同源生成）：默认档与 data.ts 全候选面
-// 逐名一致；「精选候选面」构建档（ICON_CANDIDATES_CURATED=1）按产品清单裁剪——
-// 候选清零的集合不出现在产物键里，对应页签随 Object.keys 自动隐藏
+// 选择器候选面是构建期产物（gen-icon-subset 同源生成）：默认即「精选候选面」档
+// （icon-candidates.curated.json 按产品口径裁剪），ICON_CANDIDATES_CURATED=0 构建
+// 回退全候选面——候选清零的集合不出现在产物键里，对应页签随 Object.keys 自动隐藏
 import pickerCandidates from "@/components/ReIcon/data/picker-candidates.json";
 import { cloneDeep, isAllEmpty } from "@pureadmin/utils";
 import { ref, computed, CSSProperties, watch } from "vue";
