@@ -10,6 +10,17 @@ import { fallbackColor, waitChartSized } from "../utils/chart";
 
 defineOptions({ name: "FileCategoryPieChart" });
 
+/** HTML 实体转义（tooltip 拼接用，与 codegen ArtifactPreview 的局部实现同模式） */
+function escapeHtml(text: string): string {
+  return text.replace(
+    /[&<>"']/g,
+    ch =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        ch
+      ] ?? ch
+  );
+}
+
 const props = defineProps<{
   items: FileCategoryStat[];
   totalSize: number;
@@ -76,8 +87,11 @@ const buildOptions = (): UtilsEChartsOption => ({
         percent?: number;
       };
       const data = p.data ?? {};
+      // ECharts tooltip 默认按 HTML 渲染：分类名来自后端字典 label / 历史
+      // 分类 code（管理员可配文本），拼接前必须转义，否则构成存储型注入面
+      const name = escapeHtml(String(p.name ?? ""));
       return [
-        p.name,
+        name,
         `${t("systemUploadFile.size")}: ${formatBytes(data.size || 0)}`,
         `${t("systemUploadFile.fileCount")}: ${data.count || 0}`,
         `${p.percent ?? 0}%`
