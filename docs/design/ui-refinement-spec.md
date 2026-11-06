@@ -337,6 +337,11 @@ build + bundle-size 全部通过。
 - [x] darwin 连续 3 轮比对全绿：**26/26 × 3 轮**（2.5m / 2.4m / 2.8m；期间治理两个新根因——
       菜单 rank 并列排序、侧栏滚动落点漂移，治理后复跑三轮全绿）+ welcome 单用例连续
       **5/5 通过**（chromium，容差不放大，51.3s）
-- [ ] linux（docker 容器）基线重录 + 连续 3 轮全绿
-- [ ] mobile.e2e + a11y.e2e 回归（移动端顶栏收敛不破坏既有断言）；design-screenshots 移动端重拍（顶栏变化）
-- [ ] 360px 档顶栏目检截图（一次性证据，不入基线）
+- [x] linux（docker 容器）基线重录 + 连续 3 轮全绿：重录 8 张（system-user/menu/role ×2 浏览器
+      = 排序与滚动归一变化）+ 时钟页 6 张强制固化；**26/26 × 3 轮**（2.3m / 2.1m / 2.1m）+
+      welcome 5/5（23.7s）
+- [x] mobile.e2e 回归 **5/5**、a11y.e2e 回归 **26/26**；design-screenshots 移动端重拍通过
+      （修复会话复用已登录证据的移动端回归：`#header-translation` 语言图标被收敛后快路径误判，
+      改用 `#main-content` 布局级锚点）
+- [x] 360px 档顶栏目检：search / 通知 / 「更多」/ 设置 / 头像间距正常，无拥挤溢出
+      （一次性证据，不入基线）
