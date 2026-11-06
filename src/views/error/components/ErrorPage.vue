@@ -96,8 +96,12 @@ const copyDiagnostics = async () => {
         class="mt-4 max-w-[560px] text-xs text-(--el-text-color-secondary)"
         data-testid="error-diagnostics"
       >
-        <p v-if="detail" class="break-all">detail: {{ detail }}</p>
-        <p v-if="requestId" class="break-all">requestId: {{ requestId }}</p>
+        <p v-if="detail" class="break-all">
+          {{ t("error.diagDetailLabel") }}: {{ detail }}
+        </p>
+        <p v-if="requestId" class="break-all">
+          {{ t("error.diagRequestIdLabel") }}: {{ requestId }}
+        </p>
         <el-button link type="primary" size="small" @click="copyDiagnostics">
           {{ t("error.copyDiagnostics") }}
         </el-button>

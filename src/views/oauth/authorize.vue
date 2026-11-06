@@ -118,7 +118,7 @@ const decide = async (approved: boolean) => {
           {{ t("oauthAuthorize.appRequest", { app: info.application.name }) }}
         </div>
         <div class="oauth-user">
-          {{ t("oauthAuthorize.user") }}：{{ info.user.username }}
+          {{ t("oauthAuthorize.user", { name: info.user.username }) }}
         </div>
         <div v-if="redirectHost" class="oauth-user">
           {{ t("oauthAuthorize.redirectHost", { host: redirectHost }) }}

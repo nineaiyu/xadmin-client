@@ -831,6 +831,8 @@ error:
   copied: 已复制诊断信息
   copyFailed: 复制失败，请手动选择
   copyDiagnostics: 复制诊断信息
+  diagDetailLabel: 详情
+  diagRequestIdLabel: 请求 ID
 
 password:
   veryWeak: 很弱
@@ -2744,6 +2746,7 @@ login:
   verifyCodeRequired: 请先获取验证码
   configLoadFailed: 登录配置加载失败，请重试
   privacyPrefix: 登录即表示同意
+  copyright: 版权所有 © {year}-present
   logoutSuccess: 登出成功
   thirdPartyLogin: 第三方登录
   serverForbidden: 当前服务器不允许登录
@@ -2896,6 +2899,8 @@ apiApp:
     rowMatch: 匹配
     rowValue: 值（属于类型用逗号分隔）
     removeRow: 删除规则
+    invalidRegex: 无效的正则表达式（保存后该规则恒不匹配）
+    invalidIpList: IP 格式无效（支持 IPv4 / IPv6 / CIDR，逗号分隔）
     catalogFailed: 授权目录加载失败，请刷新重试
     loadFailed: 资源授权未加载成功：本次保存跳过授权规则（不会清空已有规则）
     saveFailed: 资源授权保存失败
@@ -3656,6 +3661,15 @@ dashboard:
   share: 分享
   shareCopied: 仪表盘链接已复制
 dataDataset:
+  opExact: 等于
+  opIn: 属于
+  opGte: 大于等于
+  opGt: 大于
+  opLte: 小于等于
+  opLt: 小于
+  opContains: 包含
+  opStartswith: 开头是
+  opIsnull: 为空
   previewNetworkFailed: 预览请求失败（网络或服务异常），请稍后重试
   inValuesPlaceholder: 输入值后回车添加；值可包含逗号
   metaLoadFailed: 数据集元数据加载失败，编辑与字段选项暂不可用
@@ -4411,6 +4425,11 @@ aiConfig:
   capabilities: 能力画像
   probed_at: 探测时间
 dform:
+  colTypeInput: 输入框
+  colTypeTextarea: 多行文本
+  colTypeNumber: 数字
+  colTypeDate: 日期
+  colTypeSelect: 下拉选择
   removeFieldConfirm: 删除字段「{name}」？被公式/联动引用的字段会在保存时校验或剔除，删除后需重新配置。
   editOptions: "编辑选项"
   optionsEditorTitle: "编辑复杂选项"
@@ -4829,7 +4848,7 @@ aiKnowledge:
 oauthAuthorize:
   title: 授权请求
   appRequest: "{app} 请求访问你的 xadmin 账号"
-  user: 当前用户
+  user: "当前用户：{name}"
   scopesTitle: 请求的权限范围
   scopesEmpty: 该应用未限制接口范围（以你在应用中的授权面为准）
   hint: 同意后，该应用将以你的身份调用授权范围内的接口（权限仍受应用授权与你的账号权限双重约束）

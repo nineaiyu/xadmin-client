@@ -35,6 +35,15 @@ const COLUMN_TYPES: FormTableColumnType[] = [
   "select"
 ];
 
+/** 列控件类型可读名（静态键映射，保持 zh/en 对称检查可见；value 仍提交后端枚举） */
+const columnTypeLabels: Record<string, string> = {
+  input: t("dform.colTypeInput"),
+  textarea: t("dform.colTypeTextarea"),
+  number: t("dform.colTypeNumber"),
+  date: t("dform.colTypeDate"),
+  select: t("dform.colTypeSelect")
+};
+
 const kind = computed(() => {
   const type = props.field?.type;
   if (type === "table") return "columns";
@@ -232,7 +241,7 @@ const save = () => {
                 v-for="type in COLUMN_TYPES"
                 :key="type"
                 :value="type"
-                :label="type"
+                :label="columnTypeLabels[type] ?? type"
               />
             </el-select>
           </template>

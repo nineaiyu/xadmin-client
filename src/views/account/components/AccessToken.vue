@@ -221,7 +221,9 @@ const openListEditor = (options: {
       refresh();
     },
     onFail: res =>
-      message(`${t("results.failed")}，${res.detail}`, { type: "error" })
+      message(t("results.failedWithDetail", { detail: res.detail }), {
+        type: "error"
+      })
   });
   addDialog({
     title: options.title,
@@ -275,7 +277,9 @@ const openScopeEditor = (row: RecordType) => {
       refresh();
     },
     onFail: res =>
-      message(`${t("results.failed")}，${res.detail}`, { type: "error" })
+      message(t("results.failedWithDetail", { detail: res.detail }), {
+        type: "error"
+      })
   });
   // h() 产物不是响应式上下文：包一层本地组件，开关随勾选联动（复位/禁用）
   const ScopeEditorContent = defineComponent({

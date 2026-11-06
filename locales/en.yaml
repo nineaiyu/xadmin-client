@@ -831,6 +831,8 @@ error:
   copied: Diagnostics copied
   copyFailed: Copy failed, please select manually
   copyDiagnostics: Copy diagnostics
+  diagDetailLabel: Detail
+  diagRequestIdLabel: Request ID
 
 password:
   veryWeak: Very weak
@@ -2744,6 +2746,7 @@ login:
   verifyCodeRequired: Please request a verification code first
   configLoadFailed: Failed to load login configuration, please retry
   privacyPrefix: By signing in you agree to
+  copyright: Copyright © {year}-present
   logoutSuccess: Logged out
   thirdPartyLogin: Third-party login
   serverForbidden: Login is not allowed on this server
@@ -2896,6 +2899,8 @@ apiApp:
     rowMatch: Match
     rowValue: "Value (comma-separated for in)"
     removeRow: Remove rule
+    invalidRegex: "Invalid regex (rule never matches once saved)"
+    invalidIpList: "Invalid IP format (IPv4 / IPv6 / CIDR, comma-separated)"
     catalogFailed: Failed to load grant catalog, please refresh
     loadFailed: "Resource grants were not loaded: this save skips grant rules (existing rules are kept)"
     saveFailed: Failed to save resource grants
@@ -3656,6 +3661,15 @@ dashboard:
   share: Share
   shareCopied: Dashboard link copied
 dataDataset:
+  opExact: equals
+  opIn: in
+  opGte: ">="
+  opGt: ">"
+  opLte: "<="
+  opLt: "<"
+  opContains: contains
+  opStartswith: starts with
+  opIsnull: is null
   previewNetworkFailed: Preview request failed (network or service error), please retry
   inValuesPlaceholder: Type a value and press Enter; commas are allowed
   metaLoadFailed: Failed to load dataset metadata; editing and field options are unavailable
@@ -4413,6 +4427,11 @@ aiConfig:
   capabilities: Capabilities
   probed_at: Probed at
 dform:
+  colTypeInput: Input
+  colTypeTextarea: Textarea
+  colTypeNumber: Number
+  colTypeDate: Date
+  colTypeSelect: Select
   removeFieldConfirm: Delete field "{name}"? Fields referenced by formulas/linkages are validated or dropped on save; reconfigure after deletion.
   editOptions: "Edit options"
   optionsEditorTitle: "Edit complex options"
@@ -4833,7 +4852,7 @@ aiKnowledge:
 oauthAuthorize:
   title: Authorization request
   appRequest: "{app} requests access to your xadmin account"
-  user: Current user
+  user: "Current user: {name}"
   scopesTitle: Requested scopes
   scopesEmpty: This application has no API scope restriction (limited by your own authorization)
   hint: After approval, the application acts on your behalf within the approved scopes (still bounded by app grants and your permissions)

@@ -197,7 +197,7 @@ watch(
       </div>
     </div>
     <div class="w-full flex-c absolute bottom-3 text-sm text-fg-muted">
-      Copyright © 2026-present
+      {{ t("login.copyright", { year: new Date().getFullYear() }) }}
       <a
         class="hover:text-primary!"
         :href="SITE_LINKS.author"

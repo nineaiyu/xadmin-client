@@ -39,6 +39,19 @@ const opOptions = [
   "isnull"
 ];
 
+/** 操作符可读名（静态键映射，保持 zh/en 对称检查可见；value 仍提交后端枚举） */
+const opLabels: Record<string, string> = {
+  exact: t("dataDataset.opExact"),
+  in: t("dataDataset.opIn"),
+  gte: t("dataDataset.opGte"),
+  gt: t("dataDataset.opGt"),
+  lte: t("dataDataset.opLte"),
+  lt: t("dataDataset.opLt"),
+  contains: t("dataDataset.opContains"),
+  startswith: t("dataDataset.opStartswith"),
+  isnull: t("dataDataset.opIsnull")
+};
+
 // 编辑回显：`in` 过滤的 value 保持数组（tag 输入），含逗号的值不再被拆散
 // `_id` 为行稳定标识（动态增删时作 v-for key，避免 index key 导致的控件内部状态错位；
 // 仅本地使用，getPayload 按字段显式重建，不会提交给后端）
@@ -213,7 +226,7 @@ defineExpose({ getPayload });
               v-for="op in opOptions"
               :key="op"
               :value="op"
-              :label="op"
+              :label="opLabels[op] ?? op"
             />
           </el-select>
           <el-select
