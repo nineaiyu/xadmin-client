@@ -302,9 +302,41 @@
 | **linux 基线**    | `docker run --rm` playwright 镜像重录（`e2e/README.md` 已固化完整跑法与坑位）：chromium-linux 更新 7 张（login/system-menu 因 linux 字体渲染差异略超 2% 容差，同属预期变化）+ **webkit-linux 13 张全新补齐（历史从未录过）** → 复跑 26/26 全绿。配套基建：`playwright.config.ts` 新增 `E2E_HOST`、`stub_llm.py` 新增 `STUB_LLM_HOST`（默认值均不变，宿主行为零影响）                                                                                                                                                                                                                                                                                                                   |
 | **临时截图 spec** | `e2e/design-screenshots.e2e.ts` **保留**（不再按原计划移入回收站）：四轮打磨后已稳定可复用（改前/改后对照截图的常设工具），`waitForTimeout` 时间域例外已登记 `wait-for-timeout-allowlist.json`；后续 UI 改动 `E2E_DESIGN_SHOT=1` 即可复跑                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
-**剩余风险（如实）**：
+### 第二轮：视觉基线确定性根因治理（2026-11-06，轮次验证完成）
 
-1. welcome 页含**实时时钟卡**（秒级动态）——基线比对历来靠 2% 容差吸收；若未来该卡改动放大差异占比，需在 stabilize 冻结时钟（当前维持既有口径）；
-2. webkit 大屏（analysis-screen）基线本有 canvas 时序噪声面（chromium 稳定、webkit 偶发描边 diff），重录后仍可能偶发——属既有 flaky 面，按 e2e/README「视觉基线失败先分诊」处理；
-3. linux chromium 基线中 login / system-menu 已在 2% 容差边缘（linux 字体渲染差异 + 本次描边/圆角微改叠加），下次 UI 微调可能再次触发这两张超限——重录即可；
-4. 本次补齐 webkit-linux 13 张基线使 CI linux 比对面翻倍（此前仅 chromium）——CI 首跑若个别 linux webkit 抖动属新比对面的正常暴露，按分诊流程处理。
+上轮遗留的四条「剩余风险」全部按根因治理（**不放宽容差、不删用例**）。环境恢复后实测又暴露
+三个深层根因（时钟冻结与 EP/zrender 的相互作用、菜单 rank 并列），一并治掉：
+
+| 治理项                                                          | 手段（治根因）                                                                                                                                                                                                                                                                                                                                                                                                       | 状态                                                             |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| welcome 点阵实时时钟卡（靠容差吸收秒跳）                        | `setFixedTime(E2E_CLOCK_FROZEN_AT)` 固定 Date——**只在 stabilize 内、全部交互之后调用**。实测教训两条：① `install()+pauseAt()` 会连 rAF 一起暂停，DOM 静默窗永久挂起（login 连续 2.0m 超时）；② 冻结的 Date 会让 Element Plus el-menu 目录点击展开失效（A/B 实测：无 clock / install 可展开，setFixedTime 下事件到达、Vue handler 在位但状态不迁移）——登录/菜单导航必须在冻结前完成                                   | 完成，时钟区域固定为 08:00:00                                    |
+| ECharts canvas 时序噪声（2.5s 盲等）                            | 三层治理：① `chartTheme.ts` 的 `animation:false` 总闸在**模块加载时**读一次偏好——`test.use({ reducedMotion: "reduce" })` 加载即注入（stabilize 内补注入等于总闸从未激活）；② zrender 动画时间轴读 `new Date().getTime()`（zrender/lib/animation/Animation.js），冻结后 enter 动画永停第 0 帧（实测大屏三张图表全部空数据）——加载即关动画后首帧即终帧，与冻结时钟解耦；③ stabilize 以 MutationObserver 静默窗替代盲等 | 完成；旧 `waitForTimeout(2500)` 与 e2e-waits 登记已注销（48→46） |
+| 图表/时钟 canvas 重绘静默窗探不到（数据装载只发生在 canvas 上） | **canvas 指纹稳定窗**：对页面全部 canvas 取 toDataURL 滚动哈希，连续两轮 600ms 采样不变才放行（图表落定 + 时钟收敛为冻结时刻的联合信号；实测修复前大屏截图拿到「只有坐标轴」的空数据中间态）                                                                                                                                                                                                                         | 完成                                                             |
+| 菜单 rank 并列导致侧栏顺序跨会话漂移                            | 种子数据 `system` 与 `DemoBook` 同为 rank=1，`order_by("rank")` 单键排序下并列行顺序由执行计划决定——侧栏顶级菜单顺序漂移、整页基线随侧栏位移抖动（diff 分析：全侧栏 208px 宽区域红移、行签名互相关出现 ±48px 一项位移峰）。修复：菜单排序统一 `order_by("rank", "pk")`（routes 视图 ×2 / 菜单管理 / 菜单搜索 / 权限树序列化器共 5 处）+ 反序创建守护用例（`test_routes_view.py::TestRankTieOrderDeterministic`）     | 完成，18/18 通过                                                 |
+| webkit 大屏描边噪声                                             | 同上：reducedMotion 加载注入 + 冻结时钟 + canvas 指纹窗覆盖「时钟 tick + 入场动画中间帧」两个噪声源                                                                                                                                                                                                                                                                                                                  | 完成（见下方轮次数据）                                           |
+| linux login / system-menu 容差边缘                              | 定性结论（e2e/README 已登记）：chromium headless 默认 `--font-render-hinting=none`（非 hinting 所致）；边缘 = linux 字体栅格化 + 描边/圆角微调的叠加，**无需改渲染开关**                                                                                                                                                                                                                                             | 定性完成，linux 轮次见下                                         |
+
+基线重录（darwin）：9 张实际变更——时钟页 6 张（welcome ×2 / 大屏深浅 ×4，冻结时刻 08:00:00，
+`--update-snapshots` 只重写失败项，时钟页需临时收紧容差强制固化）+ reducedMotion 加载注入带来的
+**确定性**渲染位移 3 张（`system-role-webkit` 侧栏滚动锚点、`system-user-add-dialog-invalid` ×2
+弹窗高 845→848px；repeat-each×3 实测恒定）；排序修复后再补录 webkit `system-user`/`system-role`
+两张（11-04 基线恰好录到 DemoBook-first 顺序）。
+
+同轮交付：**移动端顶栏收敛**（390/360 档实测挤压）：`applyMobileNavbarLayout`（search/notice 保留、
+refresh/lock 等动作类并入既有「更多」下拉、弹层类 language/fullscreen 不渲染、用户名文字不渲染；
+纯响应式降级，偏好存储与桌面编排不受影响）+ 4 条单测（catalog.spec 12/12）；
+**产品口径建议清单** `ui-product-decisions.md`（媒体可见性 BE-L3 / 图标候选面 curated / 浅主色对比度）。
+
+离线全量复验（2026-11-04，以最终代码）：vitest **558 文件 / 3396 用例全绿**（+4 新增守护用例）、
+typecheck、eslint `--max-warnings 0`、prettier、stylelint、**check:\* 31/31**、行数门禁、
+build + bundle-size 全部通过。
+
+环境恢复后的轮次验证（2026-11-06，OrbStack 恢复方式：正确 `HOME` 下 `orb start`——沙箱把 HOME
+改到 TwinSpace 目录导致 orb CLI 用错 socket 路径，此前三次超时均为该环境问题）：
+
+- [x] darwin 连续 3 轮比对全绿：**26/26 × 3 轮**（2.5m / 2.4m / 2.8m；期间治理两个新根因——
+      菜单 rank 并列排序、侧栏滚动落点漂移，治理后复跑三轮全绿）+ welcome 单用例连续
+      **5/5 通过**（chromium，容差不放大，51.3s）
+- [ ] linux（docker 容器）基线重录 + 连续 3 轮全绿
+- [ ] mobile.e2e + a11y.e2e 回归（移动端顶栏收敛不破坏既有断言）；design-screenshots 移动端重拍（顶栏变化）
+- [ ] 360px 档顶栏目检截图（一次性证据，不入基线）
