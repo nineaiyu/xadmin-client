@@ -325,7 +325,8 @@
 同轮交付：**移动端顶栏收敛**（390/360 档实测挤压）：`applyMobileNavbarLayout`（search/notice 保留、
 refresh/lock 等动作类并入既有「更多」下拉、弹层类 language/fullscreen 不渲染、用户名文字不渲染；
 纯响应式降级，偏好存储与桌面编排不受影响）+ 4 条单测（catalog.spec 12/12）；
-**产品口径建议清单** `ui-product-decisions.md`（媒体可见性 BE-L3 / 图标候选面 curated / 浅主色对比度）。
+**产品口径决策清单** `ui-product-decisions.md`（媒体可见性 BE-L3 / 图标候选面 curated /
+浅主色对比度）——三项已于 2026-11-06 定稿：BE-L3 与主色维持现值，curated 翻正为默认构建档。
 
 离线全量复验（2026-11-04，以最终代码）：vitest **558 文件 / 3396 用例全绿**（+4 新增守护用例）、
 typecheck、eslint `--max-warnings 0`、prettier、stylelint、**check:\* 31/31**、行数门禁、
