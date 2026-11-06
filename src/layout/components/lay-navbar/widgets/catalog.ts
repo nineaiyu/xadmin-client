@@ -220,3 +220,42 @@ export function resolveNavbarLayout(
     userDropdown: entries.filter(entry => entry.position === "user-dropdown")
   };
 }
+
+/** 移动端顶栏直挂保留集：高频且为弹层类（弹层类在下拉里无法展开，不能收） */
+export const MOBILE_HEADER_KEYS: readonly string[] = ["search", "notice"];
+
+/** 移动端不渲染的弹层类组件：语言走设置面板、全屏在移动端价值低（响应式降级） */
+export const MOBILE_HIDDEN_KEYS: readonly string[] = ["language", "fullscreen"];
+
+/**
+ * 移动端顶栏收敛（390/360px 级视口实测：直挂 6+ 图标 + 用户名会挤压溢出）：
+ * - 保留集直挂（search / notice）；
+ * - 其余「可收纳」动作组件（refresh / lock / themeToggle / timezone /
+ *   sidebarToggle，无论偏好落位顶栏还是已收下拉）一律并入「更多」下拉；
+ * - 弹层类 language / fullscreen 不渲染；
+ * - 头像下拉与用户偏好存储不受影响——纯响应式降级，桌面编排原样。
+ */
+export function applyMobileNavbarLayout(
+  layout: NavbarWidgetLayout
+): NavbarWidgetLayout {
+  const keep = new Set(MOBILE_HEADER_KEYS);
+  const hidden = new Set(MOBILE_HIDDEN_KEYS);
+  const header: NavbarWidgetLayout["header"] = [];
+  const more: NavbarWidgetLayout["more"] = [];
+  let order = 0;
+  for (const entry of layout.header) {
+    if (hidden.has(entry.item.key)) continue;
+    if (keep.has(entry.item.key)) {
+      header.push({ ...entry, order: order++ });
+    } else if (entry.item.more) {
+      more.push({ ...entry, order: order++ });
+    }
+    // 弹层类（more=false）且不在保留集：隐藏
+  }
+  for (const entry of layout.more) {
+    if (!hidden.has(entry.item.key)) {
+      more.push({ ...entry, order: order++ });
+    }
+  }
+  return { header, more, userDropdown: layout.userDropdown };
+}

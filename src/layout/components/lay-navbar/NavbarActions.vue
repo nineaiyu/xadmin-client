@@ -3,7 +3,11 @@ import { computed, shallowRef, watch } from "vue";
 import { useGlobal } from "@pureadmin/utils";
 import { useNav } from "@/layout/hooks/useNav";
 import LayImpersonationDropdownItem from "../lay-impersonation/ImpersonationDropdownItem.vue";
-import { NAVBAR_FIXED_ORDER, resolveNavbarLayout } from "./widgets/catalog";
+import {
+  applyMobileNavbarLayout,
+  NAVBAR_FIXED_ORDER,
+  resolveNavbarLayout
+} from "./widgets/catalog";
 import { isFullContent } from "@/layout/hooks/layoutModes";
 import { resolvePreferencesEntry } from "@/layout/hooks/preferencesEntry";
 import AccountSettingsIcon from "~icons/ri/user-settings-line";
@@ -21,6 +25,7 @@ import MoreIcon from "~icons/ri/more-line";
 const {
   t,
   layout,
+  device,
   logout,
   onPanel,
   username,
@@ -35,20 +40,31 @@ const configure = computed(
   () => $storage?.configure as Record<string, unknown> | undefined
 );
 
+/** 移动端顶栏收敛（390/360 级视口）：search/notice 保留、动作类收「更多」、弹层类隐藏 */
+const isMobile = computed(() => device.value === "mobile");
+
 /**
  * 用「深度监听整包 configure → 写入本地快照」而非 computed：编排同时依赖对象型偏好
  * （widgetPositions）与各组件开关，逐字段依赖在响应式存储的实现下会漏更新。
  */
-const widgetLayout = shallowRef(resolveNavbarLayout(configure.value));
+const resolveLayout = (value: Record<string, unknown> | undefined) => {
+  const resolved = resolveNavbarLayout(value);
+  return isMobile.value ? applyMobileNavbarLayout(resolved) : resolved;
+};
+const widgetLayout = shallowRef(resolveLayout(configure.value));
 watch(
   () => $storage?.configure,
   value => {
-    widgetLayout.value = resolveNavbarLayout(
+    widgetLayout.value = resolveLayout(
       value as Record<string, unknown> | undefined
     );
   },
   { deep: true }
 );
+// device 判定翻转（宽窄窗互切）时收敛策略随之重算——编排快照不监听 device 本身
+watch(isMobile, () => {
+  widgetLayout.value = resolveLayout(configure.value);
+});
 
 /**
  * 设置入口形态：位置五态 + 总开关的判定收敛在 `resolvePreferencesEntry`
@@ -133,7 +149,8 @@ const preferencesInDropdown = computed(() => preferencesEntry.value.dropdown);
         :aria-label="t('buttons.userMenu')"
       >
         <img :src="userAvatar" :alt="username" :style="avatarsStyle" />
-        <p v-if="username" class="dark:text-(--el-color-white)">
+        <!-- 移动端不渲染用户名文字：390/360 下它是最宽的挤压源，头像+可访问名已足够 -->
+        <p v-if="username && !isMobile" class="dark:text-(--el-color-white)">
           {{ username }}
         </p>
       </span>
