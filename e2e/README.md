@@ -405,7 +405,35 @@ expect(consoleNoise).toEqual([]);
 - 大屏主题相关断言锚点：根节点 `data-screen-theme="dark|light"`、浅色类 `.screen-root--light`、图表 `[data-chart-theme="dark|light"]`（`ChartCard` 的 `forceDark` / `forceLight` 结果），设计器侧为 `.designer-root` 与工具条 `data-testid="designer-theme*"`，投屏页为 `screen-theme-trigger` / `screen-theme-{dark,light,auto}` / `screen-theme-reset` / `screen-theme-save`（面板内容 teleport 到 body，用 testid 全局定位即可）；投屏页「返回」为 `screen-back`；
 - 投屏页是**展板态**（路由 `meta.kiosk`）：站点公告/聊天推送在该页不弹 `ElNotification`，写投屏相关用例时别指望用推送触达 UI；
 - `e2e.yml` 的 `Visual Regression` job 与 full 同档（PR / main / 夜间 / 手动）跑 chromium 单浏览器；**基线未入库时自动跳过**（notice 提示先生成基线），入库后自动启用常态比对；
-- 判定 `maxDiffPixelRatio 2%`（容忍字体渲染亚像素差）；stabilize 已禁 CSS 动画/光标闪烁并等 ECharts canvas 绘制结束（≥1.5s）；
+- 判定 `maxDiffPixelRatio 2%`（容忍字体渲染亚像素差）。**稳定性口径（2026-11-06 根因治理后，无盲等）**：
+  visual / design-screenshots 两个 spec 顶部 `test.use({ reducedMotion: "reduce" })`（**页面加载即生效**）+
+  stabilize（`helpers.stabilizeForScreenshot`）五步——
+  ① reduced-motion 加载即注入（context 级）：`chartTheme.ts` 的 animation:false 总闸在**模块加载时**读一次
+  偏好（注册主题时固化），加载后补注入等于总闸从未激活；且 zrender 动画时间轴读 `new Date().getTime()`
+  （zrender/lib/animation/Animation.js 的 getTime），**冻结时钟后 enter 动画永停第 0 帧**——2026-11-06
+  实测冻结+补注入下大屏三张图表全部空数据。加载即关动画后图表首帧即终帧，与冻结时钟解耦；
+  ② `clock.setFixedTime(E2E_CLOCK_FROZEN_AT)` 固定 Date（**在全部交互之后**：冻结的 Date 会让
+  Element Plus el-menu 目录点击展开失效——实测事件到达、Vue handler 在位但菜单状态不迁移，登录/
+  菜单导航必须在冻结前完成；不要用 `install()+pauseAt()`，会连 rAF 一起暂停、静默窗永久挂起）；
+  ③ 菜单装配稳定：Playwright 侧轮询计数连续两窗不变；
+  ④ MutationObserver 静默窗（600ms 无 DOM 变化即就绪，4s 兜底放行——在线推送类环境 mutation 不阻塞）。
+  冻结后 DOM 文本时钟（大屏顶栏）只会再变更一次文本，静默窗天然等到它落定；
+  ⑤ canvas 指纹稳定窗：图表数据装载/动画与点阵时钟重绘只发生在 canvas 上（无 DOM mutation，静默窗
+  探不到——2026-11-06 实测大屏截图拿到「只有坐标轴」的空数据中间态），对全部 canvas 取 toDataURL
+  滚动哈希、连续两轮 600ms 采样不变才放行；
+  ⑥ 侧栏滚动位置归一：深层路由「激活项滚入可视区」的滚动落点随触发时序漂移（system-role 曾三轮
+  中一轮双浏览器同时偏移 3%），截图前把 `.sidebar-container .el-scrollbar__wrap` 的 scrollTop 归零——
+  基线恒定以「侧栏顶部」为规范形态。
+  旧版 `waitForTimeout(2500)` 盲等与对应 wait-for-timeout 登记已**全部注销**（e2e-waits 例外 48→46）；
+  基线重录口径：时钟页（welcome / 大屏深浅两档）冻结后渲染为规范基线——`--update-snapshots` 只重写
+  失败项，容差内通过的时钟漂移不会被重写，需临时收紧 `maxDiffPixelRatio`（录完即恢复 0.02）强制固化；
+  时钟页基线变更的预期差异面 = 点阵时钟/顶栏时钟区域 + 既有数据漂移（welcome 操作日志时间戳、
+  大屏趋势图按月分桶），其余页面像素不变；`system-role-webkit`（侧栏滚动锚点）与
+  `system-user-add-dialog-invalid`（弹窗 845→848px）在 reduced-motion 加载注入下有**确定性**渲染位移
+  （repeat-each×3 实测恒定），同属重录预期面；
+- linux 字体渲染差异的边界认知：chromium headless 已默认 `--font-render-hinting=none`（亚像素抖动非
+  hinting 所致）；`login` / `system-menu` 两张在 linux 上更接近 2% 容差线（linux 字体栅格化与描边/圆角
+  微调叠加）——重录即当前渲染，连续多轮实测见 docs/design/ui-refinement-spec.md §六；
 - 失败产物见 `playwright-report-visual` artifact / `test-results/`（含 expected / actual / diff 三图）。
 
 ### 本地容器跑 linux 基线（docker run --rm，2026-11-04 实测）

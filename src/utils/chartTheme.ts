@@ -57,14 +57,35 @@ export function chartFontFamily(): string {
   return value || CHART_FALLBACK_FONT_FAMILY;
 }
 
+/** 图表主题对象类型：字体栈 + 可选的全局动画开关（reduced-motion 时关闭） */
+export interface ChartTextTheme {
+  textStyle: { fontFamily: string };
+  /**
+   * 「减弱动态效果」偏好下全局关闭图表动画：canvas 内部动画 CSS 禁不掉，
+   * 这是 zrender 动画的唯一总闸。无障碍正确性（用户明确选择不看动画）
+   * 与视觉基线确定性（首帧即终帧，E2E 经 emulateMedia 注入）一并提供。
+   * 页面加载时读取一次（与全站 reduced-motion 消费口径一致，偏好变更后刷新生效）。
+   */
+  animation?: false;
+}
+
 /**
- * ECharts 主题对象：仅注入字体栈（其他全部沿用内置默认/页面 option）。
+ * ECharts 主题对象：注入字体栈 + 可选全局动画开关（其余沿用内置默认/页面 option）。
  * 由 `plugins/echarts.ts` 在加载时注册为 `light` / `dark` 两个主题名——
  * 与 `useECharts` 的 `theme: computed(() => isDark ? "dark" : "light")` 约定配对，
  * 页面侧零改动即可让图表文字跟随应用字体栈。
  */
-export function chartTextTheme(): { textStyle: { fontFamily: string } } {
-  return { textStyle: { fontFamily: chartFontFamily() } };
+export function chartTextTheme(): ChartTextTheme {
+  const theme: ChartTextTheme = {
+    textStyle: { fontFamily: chartFontFamily() }
+  };
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  ) {
+    theme.animation = false;
+  }
+  return theme;
 }
 
 export type EpColorName = keyof typeof EP_COLOR_FALLBACK;

@@ -273,7 +273,11 @@ async function trySessionLogin(page: Page): Promise<boolean> {
         .addCookies([{ name: "multiple-tabs", value: "true", url: FRONT_URL }]);
     }
     await page.goto("/");
-    const shell = page.locator("#header-translation");
+    // 已登录证据用布局级锚点（#main-content），不要用顶栏组件（如
+    // #header-translation 语言图标）：移动端顶栏收敛会把 language/fullscreen
+    // 收进「更多」或不渲染，组件级锚点在移动端永远不出现，会话复用会误判
+    // 「未登录」并回落表单登录（实测已注入有效会话后回落路径反而卡死）
+    const shell = page.locator("#main-content");
     const loginForm = page.getByPlaceholder("账号");
     await expect(shell.or(loginForm).first()).toBeVisible({ timeout: 30_000 });
     if (!(await shell.isVisible())) return false;
@@ -913,4 +917,165 @@ export async function restoreSettings(page: Page, snapshot: SettingsSnapshot) {
       .patch(`${FRONT_URL}${path}`, { data })
       .catch(() => undefined);
   }
+}
+
+/**
+ * 截图/基线用的固定时间点：视觉回归的确定性时间源。
+ * 页面内的时钟组件（工作台点阵时钟、大屏顶栏时钟）与 token TTL 逻辑读取 Date；
+ * `page.clock.setFixedTime(E2E_CLOCK_FROZEN_AT)` 只固定 Date，**计时器与
+ * requestAnimationFrame 照常运行**，时钟区域每次渲染都是同一时刻的像素。
+ *
+ * 只在 `stabilizeForScreenshot` 内调用（全部交互完成之后）：**冻结的 Date 会让
+ * Element Plus el-menu 的目录点击展开失效**（2026-11-06 A/B 实测：无 clock /
+ * clock.install 均可展开，setFixedTime 下点击事件到达、Vue handler 在位但菜单
+ * 状态不迁移），登录、菜单导航等一切交互必须在冻结前完成。
+ *
+ * 不要用 `clock.install()` + `pauseAt()`：那会连 rAF 一起暂停，页面内任何以
+ * rAF 驱动的等待（含 stabilizeForScreenshot 的 DOM 静默窗）会永久挂起，
+ * 视觉用例只能靠 120s 超时收场（实测 login 连续两次 2.0m 超时）。
+ */
+export const E2E_CLOCK_FROZEN_AT = "2026-01-01T08:00:00";
+
+/**
+ * 截图稳定化（视觉基线 / 设计对照截图共用）——全部确定性信号，无盲等：
+ * 1) `emulateMedia({ reducedMotion: "reduce" })`——页面侧消费该偏好的组件全部走稳态：
+ *    图表主题注入 animation:false（chartTheme，canvas 内部动画的总闸）、CountTo 直接
+ *    终值、搜索区高度过渡跳过；配合注入的 CSS `animation/transition-duration: 0s`
+ *    双保险，替代旧版「等 2.5s 让 ECharts 动画自己播完」的盲等；
+ * 2) `clock.setFixedTime(E2E_CLOCK_FROZEN_AT)`——固定 Date（**须在全部交互之后**，
+ *    冻结的 Date 会让 el-menu 目录点击展开失效，见 E2E_CLOCK_FROZEN_AT 注释）；
+ * 3) 菜单装配稳定：Playwright 侧轮询计数连续两窗不变；
+ * 4) MutationObserver 静默窗：600ms 无 DOM 变化视为渲染就绪，4s 兜底放行
+ *    （在线推送通知等环境级 mutation 不阻塞截图）。冻结后 DOM 文本时钟（大屏
+ *    顶栏）只会再变更一次文本（真实时间 → 冻结时刻），静默窗天然等到它落定；
+ * 5) canvas 稳定窗：图表数据装载/动画与点阵时钟重绘都只发生在 canvas 上
+ *    （无 DOM mutation，静默窗探不到），对全部 canvas 取像素指纹、连续两轮
+ *    600ms 采样不变才放行（图表落定 + 时钟收敛为冻结时刻的联合信号）；
+ * 6) 侧栏滚动位置归一：深层路由「激活项滚入可视区」的滚动落点随触发时序
+ *    漂移，截图前把侧栏滚动容器归零（基线恒定以侧栏顶部为规范形态）。
+ */
+export async function stabilizeForScreenshot(page: Page): Promise<void> {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addStyleTag({
+    content:
+      "*, *::before, *::after { animation-duration: 0s !important; animation-delay: 0s !important; " +
+      "transition-duration: 0s !important; transition-delay: 0s !important; caret-color: transparent !important; }"
+  });
+  // 固定 Date：此刻起页面所有读 Date 的动态（点阵时钟、大屏时钟文本）都是
+  // 同一时刻。注意 reducedMotion 注入在前——点阵时钟因偏好变化重启出的新
+  // interval 是真实计时器，1.2s 下界等待（第 5 步）才对它有效
+  await page.clock.setFixedTime(E2E_CLOCK_FROZEN_AT);
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+
+  // 菜单是登录后按 routes 渐进装配的（分组逐段插入）：等项计数连续两窗不变，
+  // 否则基线可能截到「只有部分菜单」的中间态（system-user 命中过）
+  let prevCount = -1;
+  let stableRounds = 0;
+  for (let i = 0; i < 30 && stableRounds < 2; i++) {
+    const count = await page
+      .evaluate(
+        () =>
+          document.querySelectorAll(".sidebar-container .el-menu-item").length
+      )
+      .catch(() => -1);
+    if (count >= 0 && count === prevCount) stableRounds += 1;
+    else {
+      stableRounds = 0;
+      prevCount = count;
+    }
+    if (stableRounds < 2) await page.waitForTimeout(250);
+  }
+
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+  // DOM 静默窗：performance.now + rAF 驱动（冻结 Date 不影响二者）
+  await page
+    .evaluate(
+      () =>
+        new Promise<void>(resolve => {
+          let lastMutation = performance.now();
+          const observer = new MutationObserver(() => {
+            lastMutation = performance.now();
+          });
+          observer.observe(document.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true
+          });
+          const startedAt = performance.now();
+          const tick = () => {
+            const now = performance.now();
+            if (now - lastMutation >= 600 || now - startedAt > 4000) {
+              observer.disconnect();
+              resolve();
+            } else {
+              requestAnimationFrame(tick);
+            }
+          };
+          requestAnimationFrame(tick);
+        })
+    )
+    .catch(() => undefined);
+
+  // canvas 稳定窗：图表数据装载、动画推进与点阵时钟重绘都只发生在 canvas 上
+  //（无 DOM mutation），上面的静默窗探不到（2026-11-06 实测大屏截图拿到
+  // 「只有坐标轴」的空数据中间态）。对页面全部 canvas 取像素指纹
+  //（toDataURL 滚动哈希），连续两轮（600ms 采样间隔）不变视为画布稳定：
+  // - 图表动画/数据到达 → 指纹持续变化直到落定；
+  // - 冻结后的点阵时钟每秒画同一时刻 → 指纹恒定；若仍显示真实时间，
+  //   1s 重绘周期下连续两轮（1.2s）无变化不可能发生 → 不会误判提前放行。
+  // 有界轮询（≤8 轮），超时放行（与静默窗 4s 兜底同口径：环境级慢查询不阻塞）。
+  // 无 canvas 的页面（多数核心页）直接跳过，不引入额外等待。
+  const canvasCount = await page
+    .evaluate(() => document.querySelectorAll("canvas").length)
+    .catch(() => 0);
+  if (canvasCount > 0) {
+    const canvasHash = () =>
+      page.evaluate(() => {
+        let h = 0;
+        for (const c of document.querySelectorAll("canvas")) {
+          try {
+            const url = (c as HTMLCanvasElement).toDataURL();
+            for (let i = 0; i < url.length; i += 97) {
+              h = (h * 31 + url.charCodeAt(i)) | 0;
+            }
+            h = (h * 31 + url.length) | 0;
+          } catch {
+            // 跨源污染画布读不出指纹：计入变化，交给有界轮询
+            h = (h * 31 + 1) | 0;
+          }
+        }
+        return h;
+      });
+    let canvasStable = 0;
+    let prevHash = await canvasHash().catch(() => 0);
+    for (let i = 0; i < 8 && canvasStable < 2; i++) {
+      await page.waitForTimeout(600);
+      const cur = await canvasHash().catch(() => -1);
+      if (cur === prevHash) {
+        canvasStable += 1;
+      } else {
+        canvasStable = 0;
+        prevHash = cur;
+      }
+    }
+  }
+
+  // 侧栏滚动位置归一：深层路由的「激活项滚入可视区」（useMenuScrollActive）
+  // 滚动落点随触发时序漂移（实测 system-role 三轮比对中一轮双浏览器同时
+  // 偏移 3%）。全部稳定窗结束后把侧栏滚动容器归零——基线恒定以「侧栏顶部」
+  // 为规范形态；此刻导航与菜单变更都已结束，不会再触发新的自动滚动。
+  // 侧栏本就放得下的页面（多数核心页）scrollTop 已是 0，此步为空操作
+  await page
+    .evaluate(() => {
+      document
+        .querySelectorAll(".sidebar-container .el-scrollbar__wrap")
+        .forEach(wrap => {
+          if ((wrap as HTMLElement).scrollTop > 0) {
+            (wrap as HTMLElement).scrollTop = 0;
+          }
+        });
+    })
+    .catch(() => undefined);
 }

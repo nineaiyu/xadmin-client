@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
+import {
+  BACKEND_URL,
+  getAccessToken,
+  login,
+  openMenuPath,
+  stabilizeForScreenshot
+} from "./helpers";
 
 /**
  * 视觉回归门禁：核心页基线截图比对，为视觉观感改动提供安全网。
@@ -20,12 +26,29 @@ import { BACKEND_URL, getAccessToken, login, openMenuPath } from "./helpers";
  * - 操作日志：日志行数据依赖其它用例产生的操作记录；
  * - 聊天室：公共房间历史由 chat / notice-push 等用例持续写入且无可用的清空接口，
  *   非 fresh 库上整页截图必然漂移，已移出基线面。
+ *
+ * 稳定性口径（2026-11-06 根因治理后）：截图前的动态全部确定性消除，无盲等——
+ * ECharts 动画由 `chartTheme` 在 reduced-motion 下注入 animation:false（总闸），
+ * 数字滚动（CountTo）同偏好直接取终值；时钟类组件（工作台点阵时钟、大屏顶栏时钟）
+ * 由 stabilize 内的 `setFixedTime` 冻结时间源（**在全部菜单交互之后**——冻结的
+ * Date 会让 el-menu 目录点击展开失效，见 helpers.E2E_CLOCK_FROZEN_AT 注释）；
+ * 渲染就绪以 MutationObserver 静默窗 + canvas 时钟冻结后首帧下界为信号。
+ * 历史教训（视觉基线曾靠 2.5s 盲等 + 2% 容差吸收时钟秒跳）已注销——详见
+ * e2e/README.md「视觉基线」与 wait-for-timeout 门禁。
  */
 
 test.skip(
   process.env.E2E_VISUAL !== "1",
   "视觉回归按需运行：E2E_VISUAL=1 pnpm test:e2e:visual"
 );
+
+// reduced-motion 从页面加载即生效（context 级），而非 stabilize 内补注入：
+// ① chartTheme 的 animation:false 总闸在**模块加载时**读一次偏好（注册主题时
+//    固化），加载后才注入等于总闸从未激活；② zrender 动画时间轴读
+//    new Date().getTime()（Animation.js 的 getTime），冻结时钟后 enter 动画
+//    永停第 0 帧——2026-11-06 实测大屏三张图表全部空数据。加载即关动画，
+//    图表首帧即终帧，与冻结时钟解耦。
+test.use({ reducedMotion: "reduce" });
 
 /** 内置示例大屏主键（load_init_json 的「示例-运营大屏」） */
 const SCREEN_PK = "5eed0003-0000-4000-8000-000000000003";
@@ -113,38 +136,11 @@ const CORE_PAGES: CorePage[] = [
 ];
 
 async function stabilize(page: Page) {
-  // 停入场动画/过渡与光标闪烁：像素比对的最大噪声源
-  await page.addStyleTag({
-    content:
-      "*, *::before, *::after { animation-duration: 0s !important; animation-delay: 0s !important; " +
-      "transition-duration: 0s !important; transition-delay: 0s !important; caret-color: transparent !important; }"
-  });
-  await page.waitForLoadState("networkidle").catch(() => undefined);
-  // 侧栏菜单是登录后按 routes 渐进装配的（分组逐段插入）：等菜单项计数
-  // 连续两个观察窗不再增长再截图，否则基线可能截到「只有部分菜单」的中间态，
-  // 复跑时菜单补全引发整页布局偏移、击穿 2% 容差（实测 system-user 命中过）
-  await page
-    .evaluate(async () => {
-      const count = () =>
-        document.querySelectorAll(".sidebar-container .el-menu-item").length;
-      let previous = count();
-      let stable = 0;
-      for (let i = 0; i < 40 && stable < 2; i++) {
-        await new Promise(resolve => setTimeout(resolve, 250));
-        const current = count();
-        if (current === previous) stable += 1;
-        else {
-          stable = 0;
-          previous = current;
-        }
-      }
-    })
-    .catch(() => undefined);
-  // 字体就绪后再截图，避免首帧字体回退
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  // ECharts 走 canvas 内部动画（CSS 禁不掉），默认时长 ~1s；首页数字滚动 2.2s，
-  // 统一取 2.5s 观察窗，避免截图落在计数动画中间态（welcome 曾因此 flaky）。
-  await page.waitForTimeout(2500);
+  // 确定性稳定化（共享实现，见 helpers.stabilizeForScreenshot）：
+  // reducedMotion 注入 + 时钟冻结 + 菜单装配稳定 + DOM 静默窗——
+  // 替代旧版「等 2.5s 让 ECharts 动画播完」的盲等（时间域例外已从
+  // wait-for-timeout-allowlist 移除，等待全部有确定性信号）。
+  await stabilizeForScreenshot(page);
 }
 
 for (const core of CORE_PAGES) {

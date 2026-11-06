@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { devices, expect, test, type Page } from "@playwright/test";
 
-import { login } from "./helpers";
+import { login, stabilizeForScreenshot } from "./helpers";
 
 /**
  * UI 整改改前/改后对照截图（design 专项，常设工具）。
@@ -24,6 +24,10 @@ test.skip(
   process.env.E2E_DESIGN_SHOT !== "1",
   "改前/改后对照截图按需运行：E2E_DESIGN_SHOT=1"
 );
+
+// reduced-motion 加载即生效（理由同 visual.e2e.ts：chartTheme 总闸在模块
+// 加载时读一次偏好；zrender 动画时间轴读 Date，冻结时钟后动画永停第 0 帧）
+test.use({ reducedMotion: "reduce" });
 
 interface ShotPage {
   name: string;
@@ -106,14 +110,9 @@ async function switchTheme(page: Page, mode: "dark" | "light") {
 }
 
 async function stabilize(page: Page) {
-  await page.addStyleTag({
-    content:
-      "*, *::before, *::after { animation-duration: 0s !important; animation-delay: 0s !important; " +
-      "transition-duration: 0s !important; transition-delay: 0s !important; caret-color: transparent !important; }"
-  });
-  await page.waitForLoadState("networkidle").catch(() => undefined);
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  await page.waitForTimeout(2500);
+  // 与 visual.e2e.ts 共享的确定性稳定化（reducedMotion + 时钟冻结 + DOM 静默窗），
+  // 替代旧版 2.5s 盲等；时钟冻结让工作台点阵时钟在对照截图中逐次可复现
+  await stabilizeForScreenshot(page);
 }
 
 async function shoot(page: Page, name: string, tag: string, root: string) {
@@ -147,6 +146,9 @@ for (const viewportTag of ["desktop", "mobile"] as const) {
       test(`对照截图：${theme} × ${viewportTag}`, async ({ page }) => {
         test.setTimeout(300_000);
         mkdirSync(outDir, { recursive: true });
+
+        // 时钟冻结由 stabilize（shoot 内）统一处理——须在全部交互（切主题/导航）
+        // 之后：冻结的 Date 会让 el-menu 目录点击展开失效（helpers 注释）
 
         // 主题切换（设置面板交互）依赖 desktop 布局（移动端下面板形态与选择器
         // 不同）；主题是服务端站点配置，在 desktop 上下文落库后，目标视口的
