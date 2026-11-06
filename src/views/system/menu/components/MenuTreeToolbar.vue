@@ -110,9 +110,18 @@ const levelOptions = computed(() => [
   { value: 3 as const, label: t("systemMenu.filter.levelAll") }
 ]);
 
-/** ⌘/Ctrl + K 聚焦搜索（列表页通用习惯） */
+/** ⌘/Ctrl + K 聚焦搜索（列表页通用习惯；输入控件内不劫持组合键，如输入框选中全部） */
 const onKeydown = (event: KeyboardEvent) => {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+  const target = event.target as HTMLElement | null;
+  const inEditable =
+    !!target &&
+    (target.isContentEditable ||
+      /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+  if (
+    !inEditable &&
+    (event.metaKey || event.ctrlKey) &&
+    event.key.toLowerCase() === "k"
+  ) {
     event.preventDefault();
     searchRef.value?.focus?.();
   }

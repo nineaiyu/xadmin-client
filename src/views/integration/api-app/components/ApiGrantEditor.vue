@@ -68,6 +68,34 @@ const matchOptions = computed(() =>
   }))
 );
 
+/**
+ * regex / ip_in 行过滤值的前端形态校验（行内提示，不阻断保存——后端对
+ * 非法 regex 按 fail-closed 恒假处理，此处只为提前暴露笔误）。
+ */
+const matchValueError = (rule: RowFilterRule): string | undefined => {
+  const value = String(ruleValueText(rule) ?? "").trim();
+  if (!value) return undefined;
+  if (rule.match === "regex") {
+    try {
+      new RegExp(value);
+    } catch {
+      return t("apiApp.grant.invalidRegex");
+    }
+  }
+  if (rule.match === "ip_in") {
+    const items = value
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean);
+    // IPv4 / IPv6 / CIDR 的轻量形态校验（后端为准）
+    const shape = /^(\d{1,3}(\.\d{1,3}){3}|[0-9a-fA-F:]+)(\/\d{1,3})?$/;
+    if (items.some(item => !shape.test(item))) {
+      return t("apiApp.grant.invalidIpList");
+    }
+  }
+  return undefined;
+};
+
 onMounted(async () => {
   loading.value = true;
   try {
@@ -271,14 +299,18 @@ defineExpose({ normalize });
               :value="option.value"
             />
           </el-select>
-          <el-input
-            :model-value="ruleValueText(rule)"
-            class="rule-value"
-            :placeholder="t('apiApp.grant.rowValue')"
-            @update:model-value="
-              (value: string) => onRuleValueChange(rule, value)
-            "
-          />
+          <div class="rule-value-cell">
+            <el-input
+              :model-value="ruleValueText(rule)"
+              :placeholder="t('apiApp.grant.rowValue')"
+              @update:model-value="
+                (value: string) => onRuleValueChange(rule, value)
+              "
+            />
+            <div v-if="matchValueError(rule)" class="rule-value-error">
+              {{ matchValueError(rule) }}
+            </div>
+          </div>
           <el-button
             type="danger"
             link
@@ -360,7 +392,13 @@ defineExpose({ normalize });
   width: 170px;
 }
 
-.rule-value {
+.rule-value-cell {
   flex: 1;
+}
+
+.rule-value-error {
+  margin-top: var(--space-0-5);
+  font-size: var(--el-font-size-extra-small);
+  color: var(--el-color-danger);
 }
 </style>

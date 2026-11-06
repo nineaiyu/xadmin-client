@@ -30,7 +30,9 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const routes = ref<RouteItem[]>(props.routes);
+// 数组层拷贝：ref(props.routes) 只持有同一数组引用，push/splice 会原地污染
+// props（「取消编辑」无法回滚到打开时快照）；元素为标量字段，浅拷贝即隔离
+const routes = ref<RouteItem[]>([...props.routes]);
 
 /** 目标节点展示名：序号 + 节点名（未命名时只显示序号） */
 const targetLabel = (order: number) => {

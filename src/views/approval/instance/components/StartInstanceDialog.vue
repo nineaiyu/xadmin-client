@@ -6,6 +6,7 @@ import { type FormInstance, type FormRules } from "element-plus";
 import { approvalInstanceApi } from "@/api/approval/approvalFlow";
 import { searchUserApi } from "@/api/system/search";
 import { message } from "@/utils/message";
+import { createRequestSeqGuard } from "@/utils/requestSeq";
 import { scrollToFirstError } from "@/hooks/useFormScrollToError";
 
 /**
@@ -75,8 +76,12 @@ function ensureUserOption(username: string) {
   }
 }
 
+// 请求序号守卫：快速输入时旧响应后到不得覆盖新选项（防抖只降频不消乱序）
+const userSearchSeq = createRequestSeqGuard();
+
 async function searchUsers(query: string) {
   if (!query) return;
+  const ticket = userSearchSeq.start();
   userLoading.value = true;
   try {
     // http 层失败已统一提示，归一为 null：搜索静默收尾即可
@@ -87,6 +92,7 @@ async function searchUsers(query: string) {
         username: query
       })
       .catch(() => null);
+    if (!userSearchSeq.isLatest(ticket)) return; // 过期响应：更新的搜索已发起
     if (res && isSuccess(res) && res.data) {
       const rows =
         (
