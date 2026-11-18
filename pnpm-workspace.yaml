@@ -33,7 +33,7 @@ overrides:
   "svelte@<5.55.7": ">=5.55.7"
   "ajv@>=7 <8.18": ">=8.18.0"
   "brace-expansion@<2.0.3": ">=2.1.4"
-  "picomatch@<2.3.2": ">=2.3.2"
+  "picomatch@<2.3.2": "4.0.7"
   "yaml@<2.8.3": ">=2.8.3"
   "postcss@<8.5.23": ">=8.5.28"
   "js-yaml@<4.3": ">=4.3.1"
@@ -84,3 +84,5 @@ minimumReleaseAgeExclude:
   - vue-i18n@11.4.14
   # Renovate security update: qs@6.16.1
   - qs@6.16.1
+  # Renovate security update: picomatch@4.0.7
+  - picomatch@4.0.7
