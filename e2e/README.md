@@ -428,8 +428,9 @@ E2E_PARALLEL=4 E2E_PLAN_ONLY=1 node scripts/e2e-parallel.mjs  # 核对各片负�
 - 解析并输出榜单 markdown（写进 GitHub step summary）与 `e2e-reports/flaky-<run>.json`；
 - 榜单口径：**抖动 = 重试后通过**（Playwright `test.status=flaky`）；一次性通过率 =
   通过 /（通过 + 抖动 + 失败）；按 `spec × project` 聚合，`chromium` / `webkit` 分别统计；
-- 夜间 main 跑批把一行汇总追加到 `e2e/flaky-history.jsonl`（bot 提交，双轨之一），
-  供跨运行看趋势；无报告数据时静默跳过；
+- 夜间 main 跑批把一行汇总写入本次 full report 的 `e2e-reports/flaky-history.jsonl`，
+  随 artifact 上传供跨运行对比；仓库内 `e2e/flaky-history.jsonl` 是历史快照，
+  不再由 bot 逐次提交（避免 main 历史被数据行提交淹没）；无报告数据时静默跳过；
 - 本地手动：`node scripts/e2e-flaky-report.mjs --help`（用 `--input-dir e2e-reports` 指定输入）。
 
 排障口径：**单浏览器抖动**优先怀疑浏览器差异或共享库状态残留（见「历史教训速查」对应行）；
