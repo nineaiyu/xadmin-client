@@ -7400,7 +7400,9 @@ export interface paths {
          *     按关键字搜索在用用户（≤20 条，仅 pk/用户名/昵称）
          *
          *     与选人控件同源（identity/utils/user_options.py）；权限与 list 同口径
-         *     （框架 shared_list 注册表，无需新增权限点）。
+         *     （框架 shared_list 注册表，无需新增权限点）。套数据权限与部门管理页
+         *     （dept.py 的 user-options）同口径：不传 user 会让仅持本 action 权限的
+         *     部门管理员跨部门探测/枚举用户。
          */
         get: operations["api_identity_posts_user_options_retrieve"];
         put?: never;
@@ -8846,6 +8848,8 @@ export interface paths {
          *
          *     绑定的落库动作同样要求密码二次确认：仅持有会话不足以接管登录因子。
          *     绑定成功同时生成一批恢复码（``data.recovery_codes``，明文仅此一次展示）。
+         *     候选密钥未入库（check_code 依赖入库密钥），此处直接 verify_code；
+         *     同码重放绑定确认会被「已绑定」前置拦截，无重放收益。
          */
         post: operations["api_mfa_otp_confirm_create"];
         delete?: never;
@@ -8889,7 +8893,9 @@ export interface paths {
         /**
          * @description 重新开启登录二次验证
          *
-         *     密钥保留时校验一次动态码证明持有，无需重新扫码
+         *     密钥保留时校验一次动态码证明持有，无需重新扫码。
+         *     走 ``check_code``（UsedOtpCodeCache 原子占位防同码重放，验码失败
+         *     自动释放不占位、不影响重试）。
          */
         post: operations["api_mfa_otp_open_create"];
         delete?: never;
@@ -8977,6 +8983,8 @@ export interface paths {
          *
          *     供关闭登录二次验证后自检密钥可用性（换设备 / 手机时间漂移场景），
          *     避免重新开启时才发现码不对而连续失败触发锁定。
+         *     刻意不走 ``check_code`` 的防重放占位：自检的产品语义就是「先试一个码、
+         *     确认可用后马上拿同一个码去 open」——占位会把这个引导流程打断。
          */
         post: operations["api_mfa_otp_test_create"];
         delete?: never;
@@ -9731,10 +9739,22 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET /Users（filter=userName eq "x" + 分页）/ POST /Users（开通）。 */
+        /**
+         * @description GET /Users（filter=userName eq "x" + 分页）/ POST /Users（开通）。
+         *
+         *     列表只返回未软删用户（软删是站内生命周期终点，目录同步不应继续见到）；
+         *     单查（UserDetailView）保留 ``all_objects``——对端按 id 回查撤销 / 审计
+         *     场景仍可定位已软删行，``active`` 如实反映其状态。
+         */
         get: operations["api_scim_v2_Users_retrieve"];
         put?: never;
-        /** @description GET /Users（filter=userName eq "x" + 分页）/ POST /Users（开通）。 */
+        /**
+         * @description GET /Users（filter=userName eq "x" + 分页）/ POST /Users（开通）。
+         *
+         *     列表只返回未软删用户（软删是站内生命周期终点，目录同步不应继续见到）；
+         *     单查（UserDetailView）保留 ``all_objects``——对端按 id 回查撤销 / 审计
+         *     场景仍可定位已软删行，``active`` 如实反映其状态。
+         */
         post: operations["api_scim_v2_Users_create"];
         delete?: never;
         options?: never;
